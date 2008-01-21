@@ -1,0 +1,6 @@
+stub.so: c.o asm.o
+	gcc -shared -o stub.so c.o asm.o
+c.o: jumptable.c
+	gcc -o c.o -c jumptable.c
+asm.o: jumptable.asm
+	nasm -o asm.o -f elf jumptable.asm

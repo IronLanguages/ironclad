@@ -1,0 +1,6 @@
+python24.dll: c.o asm.o
+	gcc -shared -o python24.dll asm.o c.o
+c.o: jumptable.c
+	gcc -o c.o -c jumptable.c
+asm.o: jumptable.asm
+	nasm -o asm.o -f win32 jumptable.asm
