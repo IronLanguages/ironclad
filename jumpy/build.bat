@@ -1,0 +1,2 @@
+call csc /t:library /r:IronPython.dll /r:IronMath.dll /out:build\jumpy.dll source\Bridge.cs source\CPythonDefs.cs source\CPythonModuleImporter.cs source\FakePython24.cs source\FunctionPointerStore.cs
+pause
