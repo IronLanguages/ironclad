@@ -1,2 +1,4 @@
 
-I can has jmp to elemants %d?
+void Jazz() {
+    int I_can_has_jmp_to_elemants[%d];
+}
