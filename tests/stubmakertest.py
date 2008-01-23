@@ -38,7 +38,7 @@ class StubMakerInitTest(unittest.TestCase):
         sm = StubMaker('tests/data/exportsymbols.dll', 'tests/data/overrides')
         self.assertEquals(sm.functions, ['Func', 'Funk', 'Jazz'],
                           'found unexpected code symbols')
-        self.assertEquals(sm.overrides, {'Jazz': '\nI can has jmp to elemants %d?\n'},
+        self.assertEquals(sm.overrides, {'Jazz': '\nvoid Jazz() {\n    int I_can_has_jmp_to_elemants[%d];\n}\n'},
                           'overrode unexpected code symbols')
 
 

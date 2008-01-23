@@ -1,2 +1,2 @@
-python buildstub.py C:\WINDOWS\system32\Python25.dll build
+python tools\buildstub.py C:\WINDOWS\system32\python25.dll build
 call runtests
