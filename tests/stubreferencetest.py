@@ -9,7 +9,7 @@ from System.Runtime.InteropServices import Marshal
 
 class StubReferenceTest(unittest.TestCase):
 
-    def testConstructMapsLibrary(self):
+    def testMapUnmapLibrary(self):
         self.assertEquals(StubReference.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library already mapped")
 
@@ -27,7 +27,7 @@ class StubReferenceTest(unittest.TestCase):
 
         sr.Dispose()
         self.assertEquals(StubReference.GetModuleHandle("python25.dll"), IntPtr.Zero,
-                          "library not unmapped")
+                          "library not unmapped on dispose")
 
 
 
