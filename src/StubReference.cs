@@ -12,16 +12,17 @@ namespace JumPy
 
     public class StubReference
     {
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetModuleHandle(string s);
+        
         private IntPtr library;
         
         [DllImport("kernel32.dll")]
-        public static extern IntPtr LoadLibrary(string s);
+        private static extern IntPtr LoadLibrary(string s);
         [DllImport("kernel32.dll")]
-        public static extern IntPtr GetModuleHandle(string s);
+        private static extern IntPtr GetProcAddress(IntPtr l, string s);
         [DllImport("kernel32.dll")]
-        public static extern IntPtr GetProcAddress(IntPtr l, string s);
-        [DllImport("kernel32.dll")]
-        public static extern bool FreeLibrary(IntPtr l);
+        private static extern bool FreeLibrary(IntPtr l);
     
         public StubReference(string dllPath)
         {
