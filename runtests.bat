@@ -1,2 +1,3 @@
-python tests\alltests.py
+python tests\tooltests.py
+ipy tests\clrtests.py
 pause

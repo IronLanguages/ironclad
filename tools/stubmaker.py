@@ -1,6 +1,6 @@
+
 import os
 import sys
-
 
 
 class StubMaker(object):
@@ -95,11 +95,11 @@ class StubMaker(object):
 
     def generate_makefile(self, stubname):
         _library = "%s.dll: asm.o c.o\n\tgcc -shared -o %s.dll asm.o c.o\n"
-        _c = "c.o:\n\tgcc -o c.o -c %s.c\n"
-        _asm = "asm.o:\n\tnasm -o asm.o -f win32 %s.asm\n"
+        _c = "c.o: %s.c\n\tgcc -o c.o -c %s.c\n"
+        _asm = "asm.o: %s.asm\n\tnasm -o asm.o -f win32 %s.asm\n"
 
         return ''.join([
             _library % (stubname, stubname),
-            _asm % (stubname, ),
-            _c % (stubname, ),
+            _asm % (stubname, stubname),
+            _c % (stubname, stubname),
         ])
