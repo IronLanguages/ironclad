@@ -159,9 +159,9 @@ class StubMakerGenerateMakefileTest(unittest.TestCase):
         expected = (
             "stubname.dll: asm.o c.o\n"
             "\tgcc -shared -o stubname.dll asm.o c.o\n"
-            "asm.o:\n"
+            "asm.o: stubname.asm\n"
             "\tnasm -o asm.o -f win32 stubname.asm\n"
-            "c.o:\n"
+            "c.o: stubname.c\n"
             "\tgcc -o c.o -c stubname.c\n"
         )
         self.assertEquals(sm.generate_makefile("stubname"), expected,
