@@ -3,7 +3,7 @@ import os
 import unittest
 
 from System import IntPtr
-from JumPy import AddressGetterDelegate, PythonMapper, StubReference
+from JumPy import AddressGetterDelegate, PydImporter, PythonMapper, StubReference
 
 
 
@@ -21,15 +21,15 @@ class FunctionalityTest(unittest.TestCase):
         sr.Init(AddressGetterDelegate(MyPM().GetAddress))
 
         pi = PydImporter()
-        pi.load("C:\\Python25\\Dlls\\_socket.pyd")
+        pi.load("C:\\Python25\\Dlls\\bz2.pyd")
 
         name, methods, doc, _self, apiver = params[0]
-        self.assertEquals(name, "_socket", "wrong name")
+        self.assertEquals(name, "bz2", "wrong name")
         self.assertNotEquals(methods, IntPtr.Zero, "expected some actual methods here")
-        self.assertEquals(doc, "Implementation module for socket operations.\n\nSee the socket module for documentation.",
-                          "wrong docstring")
+        self.assertTrue(doc.startswith("The python bz2 module provides a comprehensive interface for\n"),
+                        "wrong docstring")
         self.assertEquals(_self, IntPtr.Zero, "expected null pointer")
-        self.assertEquals(apiver, 1012, "meh, thought this would be different")
+        self.assertEquals(apiver, 1013, "meh, thought this would be different")
 
 
 
