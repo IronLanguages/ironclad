@@ -15,7 +15,6 @@ namespace JumPy
         {
             return IntPtr.Zero;
         }
-    
         
         public IntPtr GetAddress(string name)
         {

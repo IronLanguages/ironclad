@@ -14,6 +14,12 @@ suite.addTest(pydimportertest.suite)
 from tests import pythonmappertest
 suite.addTest(pythonmappertest.suite)
 
+from tests import python25structstest
+suite.addTest(python25structstest.suite)
+
+from tests import python25mappertest
+suite.addTest(python25mappertest.suite)
+
 from tests import functionalitytest
 suite.addTest(functionalitytest.suite)
 
