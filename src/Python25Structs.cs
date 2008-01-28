@@ -5,6 +5,9 @@ using System.Runtime.InteropServices;
 
 namespace JumPy
 {
+    public delegate IntPtr CPythonVarargsFunction_Delegate(IntPtr self, IntPtr args);
+
+    public delegate IntPtr CPythonVarargsKwargsFunction_Delegate(IntPtr self, IntPtr args, IntPtr kwargs);
 
     [Flags]
     public enum METH : uint

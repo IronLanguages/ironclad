@@ -7,14 +7,65 @@ using IronPython.Hosting;
 
 namespace JumPy
 {
+    public interface IAllocator
+    {
+        IntPtr Allocate(int bytes);
+        void Free(IntPtr address);
+    }
+    
+    public class HGlobalAllocator : IAllocator
+    {
+        public IntPtr Allocate(int bytes)
+        {
+            return Marshal.AllocHGlobal(bytes);
+        }
+        public void Free(IntPtr address)
+        {
+            Marshal.FreeHGlobal(address);
+        }
+    }
 
     public class Python25Mapper : PythonMapper
     {
         private PythonEngine engine;
+        private Dictionary<IntPtr, object> ptrmap;
+        private IAllocator allocator;
         
-        public Python25Mapper(PythonEngine eng)
+        public Python25Mapper(PythonEngine eng): this(eng, new HGlobalAllocator())
+        {            
+        }
+        
+        public Python25Mapper(PythonEngine eng, IAllocator alloc)
         {
             this.engine = eng;
+            this.allocator = alloc;
+            this.ptrmap = new Dictionary<IntPtr, object>();
+        }
+        
+        public IntPtr Store(object obj)
+        {
+            IntPtr ptr = this.allocator.Allocate(4);
+            Marshal.WriteInt32(ptr, 1);
+            this.ptrmap[ptr] = obj;
+            return ptr;
+        }
+        
+        public object Retrieve(IntPtr ptr)
+        {
+            return this.ptrmap[ptr];
+        }
+        
+        public void Delete(IntPtr ptr)
+        {
+            if (this.ptrmap.ContainsKey(ptr))
+            {
+                this.ptrmap.Remove(ptr);
+                this.allocator.Free(ptr);
+            }
+            else
+            {
+                throw new KeyNotFoundException("Missing key");
+            }
         }
         
         public override IntPtr Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
@@ -22,19 +73,55 @@ namespace JumPy
             Dictionary<string, object> globals = new Dictionary<string, object>();
             globals["__doc__"] = doc;
             
-            IntPtr methodPtr = methods;
+            Dictionary<string, Delegate> methodTable = new Dictionary<string, Delegate>();
+            globals["_jumpy_dispatch_table"] = methodTable;
+            
             StringBuilder moduleCode = new StringBuilder();
+            moduleCode.Append("from System import IntPtr\n");
+            moduleCode.Append("def _jumpy_dispatch(name, args):\n");
+            moduleCode.Append("  _jumpy_dispatch_table[name](IntPtr.Zero, IntPtr(1))\n");
+            moduleCode.Append("def _jumpy_dispatch_kwargs(name, args, kwargs):\n");
+            moduleCode.Append("  _jumpy_dispatch_table[name](IntPtr.Zero, IntPtr(1), IntPtr(2))\n");
+            
+            IntPtr methodPtr = methods;
             while (Marshal.ReadInt32(methodPtr) != 0)
             {
                 PyMethodDef thisMethod = (PyMethodDef)Marshal.PtrToStructure(methodPtr, typeof(PyMethodDef));
-                moduleCode.Append(String.Format("\ndef {0}(*args):\n  '''{1}'''\n  pass\n",
-                                                thisMethod.ml_name, thisMethod.ml_doc));
+                
+                switch (thisMethod.ml_flags)
+                {
+                    case METH.VARARGS:
+                        moduleCode.Append(String.Format(
+                            "\ndef {0}(*args):\n  '''{1}'''\n  _jumpy_dispatch('{0}', args)\n",
+                            thisMethod.ml_name, thisMethod.ml_doc));
+                        methodTable[thisMethod.ml_name] = 
+                            (CPythonVarargsFunction_Delegate)
+                            Marshal.GetDelegateForFunctionPointer(
+                                thisMethod.ml_meth, 
+                                typeof(CPythonVarargsFunction_Delegate));
+                        break;
+                
+                    case METH.VARARGS | METH.KEYWORDS:
+                        moduleCode.Append(String.Format(
+                            "\ndef {0}(*args, **kwargs):\n  '''{1}'''\n  _jumpy_dispatch_kwargs('{0}', args, kwargs)\n",
+                            thisMethod.ml_name, thisMethod.ml_doc));
+                        methodTable[thisMethod.ml_name] = 
+                            (CPythonVarargsKwargsFunction_Delegate)
+                            Marshal.GetDelegateForFunctionPointer(
+                                thisMethod.ml_meth, 
+                                typeof(CPythonVarargsKwargsFunction_Delegate));
+                        break;
+
+                    default:
+                        throw new Exception("unsupported method flags");
+                }
+                
                 methodPtr = (IntPtr)(methodPtr.ToInt32() + Marshal.SizeOf(typeof(PyMethodDef)));
             }
             
             EngineModule module = this.engine.CreateModule(name, globals, true);
             this.engine.Execute(moduleCode.ToString(), module);
-            return IntPtr.Zero;
+            return this.Store(module);
         }
     }
 
