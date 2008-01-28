@@ -24,47 +24,81 @@ def PythonModuleFromEngineModule(engineModule):
     return pythonModuleInfo.GetValue(engineModule, Array[object]([]))
 
 
+def GetTestAllocator(allocsList, freesList):
+    class TestAllocator(IAllocator):
+        def Allocate(self, bytes):
+            ptr = Marshal.AllocHGlobal(bytes)
+            allocsList.append(ptr)
+            return ptr
+        def Free(self, ptr):
+            freesList.append(ptr)
+            Marshal.FreeHGlobal(ptr)
+    return TestAllocator
+
 
 class Python25MapperTest(unittest.TestCase):
 
     def testBasicStoreRetrieveDelete(self):
-        allocs = []
         frees = []
-        class TestAllocator(IAllocator):
-            def Allocate(self, bytes):
-                ptr = Marshal.AllocHGlobal(bytes)
-                allocs.append(ptr)
-                return ptr
-            def Free(self, ptr):
-                frees.append(ptr)
-                Marshal.FreeHGlobal(ptr)
-
+        allocs = []
         engine = PythonEngine()
-        allocator = TestAllocator()
+        allocator = GetTestAllocator(allocs, frees)()
         mapper = Python25Mapper(engine, allocator)
 
         obj1 = object()
+        self.assertEquals(allocs, [], "unexpected allocations")
         ptr = mapper.Store(obj1)
-        self.assertNotEquals(ptr, IntPtr.Zero, "did not store reference")
-        self.assertEquals(Marshal.ReadInt32(ptr), 1, "unexpected refcount")
         self.assertEquals(allocs, [ptr], "unexpected allocations")
+        self.assertNotEquals(ptr, IntPtr.Zero, "did not store reference")
+        self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
 
         obj2 = mapper.Retrieve(ptr)
         self.assertTrue(obj1 is obj2, "retrieved wrong object")
 
+        self.assertEquals(frees, [], "unexpected deallocations")
         mapper.Delete(ptr)
         self.assertEquals(frees, [ptr], "unexpected deallocations")
         self.assertRaises(KeyError, lambda: mapper.Retrieve(ptr))
         self.assertRaises(KeyError, lambda: mapper.Delete(ptr))
+
+
+    def testIncRefDecRef(self):
+        frees = []
+        engine = PythonEngine()
+        allocator = GetTestAllocator([], frees)()
+        mapper = Python25Mapper(engine, allocator)
+
+        obj1 = object()
+        ptr = mapper.Store(obj1)
+        mapper.IncRef(ptr)
+        self.assertEquals(mapper.RefCount(ptr), 2, "unexpected refcount")
+
+        mapper.DecRef(ptr)
+        self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
+
+        self.assertEquals(frees, [], "unexpected deallocations")
+        mapper.DecRef(ptr)
         self.assertEquals(frees, [ptr], "unexpected deallocations")
+        self.assertRaises(KeyError, lambda: mapper.Retrieve(ptr))
+        self.assertRaises(KeyError, lambda: mapper.Delete(ptr))
+
+
+    def testNullPointers(self):
+        engine = PythonEngine()
+        allocator = GetTestAllocator([], [])()
+        mapper = Python25Mapper(engine, allocator)
+
+        self.assertRaises(KeyError, lambda: mapper.IncRef(IntPtr.Zero))
+        self.assertRaises(KeyError, lambda: mapper.DecRef(IntPtr.Zero))
+        self.assertRaises(KeyError, lambda: mapper.RefCount(IntPtr.Zero))
+        self.assertRaises(KeyError, lambda: mapper.Retrieve(IntPtr.Zero))
+        self.assertRaises(KeyError, lambda: mapper.Delete(IntPtr.Zero))
 
 
 
 class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
 
-    def assert_Py_InitModule4_withSingleMethod(self, method, moduleTest):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+    def assert_Py_InitModule4_withSingleMethod(self, engine, mapper, method, moduleTest):
         size = Marshal.SizeOf(PyMethodDef)
         methods = Marshal.AllocHGlobal(size * 2)
         try:
@@ -85,12 +119,14 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
 
             test_module = engine.Sys.modules['test_module']
             self.assertEquals(pythonModule, test_module, "mapping incorrect")
-            moduleTest(test_module)
+            moduleTest(test_module, mapper)
         finally:
             Marshal.FreeHGlobal(methods)
 
 
     def test_Py_InitModule4_CreatesPopulatedModuleInSys(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
         method = PyMethodDef(
             "harold",
             NullCPythonFunctionPointer,
@@ -98,7 +134,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             "harold's documentation",
         )
 
-        def testModule(test_module):
+        def testModule(test_module, _):
             self.assertEquals(test_module.__doc__, 'test_docstring',
                               'module docstring not remembered')
             self.assertTrue(callable(test_module.harold),
@@ -106,13 +142,16 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             self.assertEquals(test_module.harold.__doc__, "harold's documentation",
                               'function docstring not remembered')
 
-        self.assert_Py_InitModule4_withSingleMethod(method, testModule)
+        self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 
 
     def test_Py_InitModule4_DispatchesToOriginalVarargsFunction(self):
-        result = []
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        calls = []
         def CModuleFunction(_selfPtr, argPtr):
-            result.append((_selfPtr, argPtr))
+            calls.append((_selfPtr, argPtr))
+            mapper.IncRef(argPtr)
             return IntPtr.Zero
         cModuleDelegate = CPythonVarargsFunction_Delegate(CModuleFunction)
 
@@ -123,19 +162,29 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             "harold's documentation",
         )
 
-        def testModule(test_module):
-            test_module.harold()
-            _selfPtr, argPtr = result[0]
+        def testModule(test_module, mapper):
+            test_module.harold(1, 2, 3)
+            _selfPtr, argPtr = calls[0]
             self.assertEquals(_selfPtr, IntPtr.Zero, "no self on module functions")
-            self.assertNotEquals(argPtr, IntPtr.Zero, "did not pass potentially-sane pointer to args")
 
-        self.assert_Py_InitModule4_withSingleMethod(method, testModule)
+            # CModuleFunction retained a reference, so we could test the aftermath
+            self.assertEquals(mapper.Retrieve(argPtr), (1, 2, 3),
+                              "did not pass pointer mapping to correct tuple")
+
+            self.assertEquals(mapper.RefCount(argPtr), 1, "bad reference counting")
+            mapper.DecRef(argPtr)
+
+        self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 
 
     def test_Py_InitModule4_DispatchesToOriginalVarargsKwargsFunction(self):
-        result = []
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        calls = []
         def CModuleFunction(_selfPtr, argPtr, kwargPtr):
-            result.append((_selfPtr, argPtr, kwargPtr))
+            calls.append((_selfPtr, argPtr, kwargPtr))
+            mapper.IncRef(argPtr)
+            mapper.IncRef(kwargPtr)
             return IntPtr.Zero
         cModuleDelegate = CPythonVarargsKwargsFunction_Delegate(CModuleFunction)
 
@@ -146,14 +195,23 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             "harold's documentation",
         )
 
-        def testModule(test_module):
-            test_module.harold()
-            _selfPtr, argPtr, kwargPtr = result[0]
+        def testModule(test_module, mapper):
+            test_module.harold(1, 2, 3, four=4, five=5)
+            _selfPtr, argPtr, kwargPtr = calls[0]
             self.assertEquals(_selfPtr, IntPtr.Zero, "no self on module functions")
-            self.assertNotEquals(argPtr, IntPtr.Zero, "did not pass potentially-sane pointer to args")
-            self.assertNotEquals(argPtr, IntPtr.Zero, "did not pass potentially-sane pointer to kwargs")
 
-        self.assert_Py_InitModule4_withSingleMethod(method, testModule)
+            # CModuleFunction retained references, so we could test the aftermath
+            self.assertEquals(mapper.Retrieve(argPtr), (1, 2, 3),
+                              "did not pass pointer mapping to correct tuple")
+            self.assertEquals(mapper.Retrieve(kwargPtr), {"four": 4, "five": 5},
+                              "did not pass pointer mapping to correct dict")
+
+            self.assertEquals(mapper.RefCount(kwargPtr), 1, "bad reference counting")
+            self.assertEquals(mapper.RefCount(argPtr), 1, "bad reference counting")
+            mapper.DecRef(kwargPtr)
+            mapper.DecRef(argPtr)
+
+        self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 
 
 

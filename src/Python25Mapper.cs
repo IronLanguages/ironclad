@@ -55,6 +55,51 @@ namespace JumPy
             return this.ptrmap[ptr];
         }
         
+        public int RefCount(IntPtr ptr)
+        {
+            if (this.ptrmap.ContainsKey(ptr))
+            {
+                return Marshal.ReadInt32(ptr);
+            }
+            else
+            {
+                throw new KeyNotFoundException("Missing key in pointer map");
+            }
+        }
+        
+        public void IncRef(IntPtr ptr)
+        {
+            if (this.ptrmap.ContainsKey(ptr))
+            {
+                int count = Marshal.ReadInt32(ptr);
+                Marshal.WriteInt32(ptr, count + 1);
+            }
+            else
+            {
+                throw new KeyNotFoundException("Missing key in pointer map");
+            }
+        }
+        
+        public void DecRef(IntPtr ptr)
+        {
+            if (this.ptrmap.ContainsKey(ptr))
+            {
+                int count = Marshal.ReadInt32(ptr);
+                if (count == 1)
+                {
+                    this.Delete(ptr);
+                }
+                else
+                {
+                    Marshal.WriteInt32(ptr, count - 1);
+                }
+            }
+            else
+            {
+                throw new KeyNotFoundException("Missing key in pointer map");
+            }
+        }
+        
         public void Delete(IntPtr ptr)
         {
             if (this.ptrmap.ContainsKey(ptr))
@@ -64,13 +109,14 @@ namespace JumPy
             }
             else
             {
-                throw new KeyNotFoundException("Missing key");
+                throw new KeyNotFoundException("Missing key in pointer map");
             }
         }
         
         public override IntPtr Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
         {
             Dictionary<string, object> globals = new Dictionary<string, object>();
+            globals["_jumpy_mapper"] = this;
             globals["__doc__"] = doc;
             
             Dictionary<string, Delegate> methodTable = new Dictionary<string, Delegate>();
@@ -78,10 +124,18 @@ namespace JumPy
             
             StringBuilder moduleCode = new StringBuilder();
             moduleCode.Append("from System import IntPtr\n");
+            
             moduleCode.Append("def _jumpy_dispatch(name, args):\n");
-            moduleCode.Append("  _jumpy_dispatch_table[name](IntPtr.Zero, IntPtr(1))\n");
+            moduleCode.Append("  argPtr = _jumpy_mapper.Store(args)\n");
+            moduleCode.Append("  _jumpy_dispatch_table[name](IntPtr.Zero, argPtr)\n");
+            moduleCode.Append("  _jumpy_mapper.DecRef(argPtr)\n");
+            
             moduleCode.Append("def _jumpy_dispatch_kwargs(name, args, kwargs):\n");
-            moduleCode.Append("  _jumpy_dispatch_table[name](IntPtr.Zero, IntPtr(1), IntPtr(2))\n");
+            moduleCode.Append("  argPtr = _jumpy_mapper.Store(args)\n");
+            moduleCode.Append("  kwargPtr = _jumpy_mapper.Store(kwargs)\n");
+            moduleCode.Append("  _jumpy_dispatch_table[name](IntPtr.Zero, argPtr, kwargPtr)\n");
+            moduleCode.Append("  _jumpy_mapper.DecRef(argPtr)\n");
+            moduleCode.Append("  _jumpy_mapper.DecRef(kwargPtr)\n");
             
             IntPtr methodPtr = methods;
             while (Marshal.ReadInt32(methodPtr) != 0)
