@@ -31,10 +31,11 @@ class StubMaker(object):
         f = os.popen("pexports %s" % source)
         try:
             for line in f:
-                if line == 'EXPORTS\n':
+                if line.strip() == 'EXPORTS':
                     break
             for line in f:
-                parts = line[:-1].split(' ')
+                line = line.strip()
+                parts = line.split(' ')
                 if len(parts) == 1:
                     self.functions.append(parts[0])
                 else:
@@ -52,7 +53,7 @@ class StubMaker(object):
             if os.path.exists(path):
                 f = open(path, 'r')
                 try:
-                    self.overrides[function] = f.read()
+                    self.overrides[function] = f.read().replace('\r\n', '\n')
                 finally:
                     f.close()
 
