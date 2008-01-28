@@ -7,9 +7,9 @@ import unittest
 
 
 def GetPexportsLines(path):
-    stream = os.popen("pexports %s" % path)
+    stream = os.popen("pexports %s" % path.replace('/cygdrive/c', 'c:'))
     try:
-        return set(stream.readlines())
+        return set(map(lambda s: s.strip(), stream.readlines()))
     finally:
         stream.close()
 
@@ -48,7 +48,7 @@ class BuildStubTest(unittest.TestCase):
             inputLines = GetPexportsLines(inputPath)
             outputLines = GetPexportsLines(outputPath)
 
-            inputLines |= set(["init\n", "jumptable DATA\n"])
+            inputLines |= set(["init", "jumptable DATA"])
             self.assertEquals(outputLines, inputLines, "bad output symbols")
 
         testGenerates([inputPath, ourTempDir])
@@ -60,11 +60,11 @@ class Python25StubTest(unittest.TestCase):
     def testPython25Stub(self):
         f = open("tests/data/python25-pexports")
         try:
-            python25exports = set(f.readlines())
+            python25exports = set(map(lambda s: s.strip(), f.readlines()))
         finally:
             f.close()
 
-        python25exports |= set(["init\n", "jumptable DATA\n"])
+        python25exports |= set(["init", "jumptable DATA"])
         generatedExports = GetPexportsLines("build/python25.dll")
 
         self.assertEquals(generatedExports, python25exports,
