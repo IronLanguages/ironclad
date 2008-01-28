@@ -17,26 +17,59 @@ class PythonMapperTest(unittest.TestCase):
                           "bad result for nonsense symbol")
 
 
-    def testPythonMapperFinds_Py_InitModule4(self):
-        params = []
-        class MyPM(PythonMapper):
-            def Py_InitModule4(self, name, methods, doc, _self, apiver):
-                params.append((name, methods, doc, _self, apiver))
-                return IntPtr.Zero
-        pm = MyPM()
+    def assertDispatches(self, mapperSubclass, funcName, argTuple, expectedResult, paramsStore):
+        pm = mapperSubclass()
 
-        fp1 = pm.GetAddress("Py_InitModule4")
+        fp1 = pm.GetAddress(funcName)
         self.assertNotEquals(fp1, IntPtr.Zero, "unexpected nullity")
-        fp2 = pm.GetAddress("Py_InitModule4")
+        fp2 = pm.GetAddress(funcName)
         self.assertEquals(fp1, fp2, "2 calls produced different pointers")
 
-        dgt = Marshal.GetDelegateForFunctionPointer(fp1, PythonMapper.Py_InitModule4_Delegate)
-        result = dgt("name", IntPtr.Zero, "doc", IntPtr.Zero, 12345)
+        dgt = Marshal.GetDelegateForFunctionPointer(fp1, getattr(PythonMapper, funcName + "_Delegate"))
+        result = dgt(*argTuple)
 
-        self.assertEquals(result, IntPtr.Zero, "unexpected return address")
-        self.assertEquals(len(params), 1, "wrong number of calls")
-        self.assertEquals(params[0], ("name", IntPtr.Zero, "doc", IntPtr.Zero, 12345),
-                          "wrong params")
+        self.assertEquals(result, expectedResult, "unexpected result")
+        self.assertEquals(len(paramsStore), 1, "wrong number of calls")
+        self.assertEquals(paramsStore[0], argTuple, "wrong params stored")
+
+
+    def testPythonMapperFinds_Py_InitModule4(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def Py_InitModule4(self, name, methods, doc, _self, apiver):
+                paramsStore.append((name, methods, doc, _self, apiver))
+                return IntPtr.Zero
+
+        self.assertDispatches(
+            MyPM, "Py_InitModule4",
+            ("name", IntPtr.Zero, "doc", IntPtr.Zero, 12345),
+            IntPtr.Zero, paramsStore)
+
+
+    def testPythonMapperFinds_PyString_FromString(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyString_FromString(self, text):
+                paramsStore.append((text, ))
+                return IntPtr.Zero
+
+        self.assertDispatches(
+            MyPM, "PyString_FromString",
+            ("name", ),
+            IntPtr.Zero, paramsStore)
+
+
+    def testPythonMapperFinds_PyModule_AddObject(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyModule_AddObject(self, module, name, item):
+                paramsStore.append((module, name, item))
+                return 33
+
+        self.assertDispatches(
+            MyPM, "PyModule_AddObject",
+            (IntPtr(33), "henry", IntPtr(943)),
+            33, paramsStore)
 
 
 suite = unittest.TestSuite()

@@ -16,6 +16,20 @@ namespace JumPy
             return IntPtr.Zero;
         }
         
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate IntPtr PyString_FromString_Delegate(string text);
+        public virtual IntPtr PyString_FromString(string text)
+        {
+            return IntPtr.Zero;
+        }
+        
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int PyModule_AddObject_Delegate(IntPtr module, string name, IntPtr item);
+        public virtual int PyModule_AddObject(IntPtr module, string name, IntPtr item)
+        {
+            return 0;
+        }
+        
         public IntPtr GetAddress(string name)
         {
             if (this.map.ContainsKey(name))
@@ -27,6 +41,12 @@ namespace JumPy
             {
                 case "Py_InitModule4":
                     this.map[name] = new Py_InitModule4_Delegate(this.Py_InitModule4);
+                    break;
+                case "PyString_FromString":
+                    this.map[name] = new PyString_FromString_Delegate(this.PyString_FromString);
+                    break;
+                case "PyModule_AddObject":
+                    this.map[name] = new PyModule_AddObject_Delegate(this.PyModule_AddObject);
                     break;
             
             
