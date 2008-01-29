@@ -30,6 +30,13 @@ namespace JumPy
             return 0;
         }
         
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate bool PyArg_ParseTupleAndKeywords_Delegate(IntPtr args, IntPtr kwargs, string format, IntPtr kwlist, IntPtr argPtr);
+        public virtual bool PyArg_ParseTupleAndKeywords(IntPtr args, IntPtr kwargs, string format, IntPtr kwlist, IntPtr argPtr)
+        {
+            return false;
+        }
+        
         public IntPtr GetAddress(string name)
         {
             if (this.map.ContainsKey(name))
@@ -47,6 +54,9 @@ namespace JumPy
                     break;
                 case "PyModule_AddObject":
                     this.map[name] = new PyModule_AddObject_Delegate(this.PyModule_AddObject);
+                    break;
+                case "PyArg_ParseTupleAndKeywords":
+                    this.map[name] = new PyArg_ParseTupleAndKeywords_Delegate(this.PyArg_ParseTupleAndKeywords);
                     break;
             
             

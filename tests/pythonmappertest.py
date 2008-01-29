@@ -72,6 +72,20 @@ class PythonMapperTest(unittest.TestCase):
             33, paramsStore)
 
 
+    def testPythonMapperFinds_PyArg_ParseTupleAndKeywords(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyArg_ParseTupleAndKeywords(self, args, kwargs, format, kwlist, argsPtr):
+                paramsStore.append((args, kwargs, format, kwlist, argsPtr))
+                return True
+
+        self.assertDispatches(
+            MyPM, "PyArg_ParseTupleAndKeywords",
+            (IntPtr(33), IntPtr(95), "format", IntPtr(63), IntPtr(1234)),
+            True, paramsStore)
+
+
+
 suite = unittest.TestSuite()
 loader = unittest.TestLoader()
 suite.addTest(loader.loadTestsFromTestCase(PythonMapperTest))
