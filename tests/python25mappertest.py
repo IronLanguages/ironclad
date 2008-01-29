@@ -1,7 +1,7 @@
 
 import unittest
 
-from System import Array, IntPtr
+from System import Array, Int32, IntPtr
 from System.Reflection import BindingFlags
 from System.Runtime.InteropServices import Marshal
 from JumPy import (
@@ -214,12 +214,120 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 
 
+class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
+
+    def assertParsesTupleAndKeywords_WithInts(self, args, kwargs, format, kwlist, expectedResults):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+
+        ptrsize = Marshal.SizeOf(IntPtr)
+        intsize = Marshal.SizeOf(Int32)
+
+        # alloc
+        argsPtr = mapper.Store(args)
+        kwargsPtr = mapper.Store(kwargs)
+        outPtr = Marshal.AllocHGlobal(ptrsize * (len(kwlist) + 1))
+        actualDataPtr = Marshal.AllocHGlobal(intsize * len(kwlist))
+
+        kwlistPtr = Marshal.AllocHGlobal(ptrsize * (len(kwlist) + 1))
+        current = kwlistPtr
+        for s in kwlist:
+            addressWritten = Marshal.StringToHGlobalUni(s)
+            Marshal.WriteIntPtr(current, addressWritten)
+            current = IntPtr(current.ToInt32() + ptrsize)
+
+        try:
+            # memory setup - fill actualData with 0s
+            Marshal.WriteIntPtr(current, IntPtr.Zero)
+            for i in range(len(kwlist)):
+                Marshal.WriteInt32(IntPtr(actualDataPtr.ToInt32() + (i * intsize)), 0)
+                Marshal.WriteIntPtr(IntPtr(outPtr.ToInt32() + (i * ptrsize)),
+                                    IntPtr(actualDataPtr.ToInt32() + (i * intsize)))
+            Marshal.WriteIntPtr(IntPtr(outPtr.ToInt32() + (len(kwlist) * ptrsize)), IntPtr.Zero)
+
+            # actual test
+            retval = mapper.PyArg_ParseTupleAndKeywords(argsPtr, kwargsPtr, format, kwlistPtr, outPtr)
+            results = [Marshal.ReadInt32(IntPtr(actualDataPtr.ToInt32() + (i * intsize)))
+                       for i in range(len(kwlist))]
+
+            self.assertEquals(retval, True, "reported failure")
+            self.assertEquals(results, expectedResults, "something, somewhere, broke")
+        finally:
+            # dealloc
+            mapper.DecRef(argsPtr)
+            mapper.DecRef(kwargsPtr)
+            for i in range(len(kwlist)):
+                Marshal.FreeHGlobal(Marshal.ReadIntPtr(IntPtr(kwlistPtr.ToInt32() + (i * ptrsize))))
+            Marshal.FreeHGlobal(kwlistPtr)
+            Marshal.FreeHGlobal(outPtr)
+            Marshal.FreeHGlobal(actualDataPtr)
+
+
+    def testNone(self):
+        args = tuple()
+        kwargs = {}
+        format = 'lll'
+        kwlist = ['one', 'two', 'three']
+        expectedResults = [0, 0, 0]
+
+        self.assertParsesTupleAndKeywords_WithInts(
+            args, kwargs, format, kwlist, expectedResults)
+
+
+    def testArgsOnly(self):
+        args = (1, 2, 3)
+        kwargs = {}
+        format = 'lll'
+        kwlist = ['one', 'two', 'three']
+        expectedResults = [1, 2, 3]
+
+        self.assertParsesTupleAndKeywords_WithInts(
+            args, kwargs, format, kwlist, expectedResults)
+
+
+    def testSingleKwarg(self):
+        args = ()
+        kwargs = {'two': 2}
+        format = 'lll'
+        kwlist = ['one', 'two', 'three']
+        expectedResults = [0, 2, 0]
+
+        self.assertParsesTupleAndKeywords_WithInts(
+            args, kwargs, format, kwlist, expectedResults)
+
+
+    def testKwargsOnly(self):
+        args = ()
+        kwargs = {'one': 3, 'two': 2, 'three': 1}
+        format = 'lll'
+        kwlist = ['one', 'two', 'three']
+        expectedResults = [3, 2, 1]
+
+        self.assertParsesTupleAndKeywords_WithInts(
+            args, kwargs, format, kwlist, expectedResults)
+
+
+    def testMixture(self):
+        args = (1,)
+        kwargs = {'three': 3}
+        format = 'lll'
+        kwlist = ['one', 'two', 'three']
+        expectedResults = [1, 0, 3]
+
+        self.assertParsesTupleAndKeywords_WithInts(
+            args, kwargs, format, kwlist, expectedResults)
+
+
+
+
+
 
 
 suite = unittest.TestSuite()
 loader = unittest.TestLoader()
 suite.addTest(loader.loadTestsFromTestCase(Python25MapperTest))
 suite.addTest(loader.loadTestsFromTestCase(Python25Mapper_Py_InitModule4_Test))
+suite.addTest(loader.loadTestsFromTestCase(Python25Mapper_PyArg_ParseTupleAndKeywords_Test))
 
 if __name__ == '__main__':
     unittest.TextTestRunner().run(suite)

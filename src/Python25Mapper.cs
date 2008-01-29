@@ -1,9 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
 using IronPython.Hosting;
+using IronPython.Runtime;
 
 namespace JumPy
 {
@@ -177,7 +179,44 @@ namespace JumPy
             this.engine.Execute(moduleCode.ToString(), module);
             return this.Store(module);
         }
-    }
 
+        public override bool PyArg_ParseTupleAndKeywords(IntPtr args, IntPtr kwargs, string format, IntPtr kwlist, IntPtr argPtr)
+        {
+            Tuple actualArgs = (Tuple)this.Retrieve(args);
+            Dict actualKwargs = (Dict)this.Retrieve(kwargs);
+
+            Dictionary<int, object> nondefaults = new Dictionary<int, object>();
+            for (int i = 0; i < actualArgs.GetLength(); i++)
+            {
+                nondefaults[i] = actualArgs[i];
+            }
+            
+            int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
+            int index = 0;
+            IntPtr currentKw = kwlist;
+            while (Marshal.ReadIntPtr(currentKw) != IntPtr.Zero)
+            {
+                IntPtr addressToRead = Marshal.ReadIntPtr(currentKw);
+                string thisKey = Marshal.PtrToStringUni(addressToRead);
+                if (actualKwargs.ContainsKey(thisKey))
+                {
+                    nondefaults[index] = actualKwargs[thisKey];
+                }
+                currentKw = (IntPtr)(currentKw.ToInt32() + intPtrSize);
+                index++;
+            }
+            
+            foreach (KeyValuePair<int,object> p in nondefaults)
+            {
+                int k = (int)p.Key;
+                IntPtr addressToWrite = Marshal.ReadIntPtr((IntPtr)(argPtr.ToInt32() + (k * intPtrSize)));
+                
+                int v = (int)p.Value;
+                Marshal.WriteInt32(addressToWrite, v);
+            }
+
+            return true;
+        }
+    }
 
 }
