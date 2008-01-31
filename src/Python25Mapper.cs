@@ -17,11 +17,13 @@ namespace JumPy
     
     public class HGlobalAllocator : IAllocator
     {
-        public IntPtr Allocate(int bytes)
+        public IntPtr 
+        Allocate(int bytes)
         {
             return Marshal.AllocHGlobal(bytes);
         }
-        public void Free(IntPtr address)
+        public void 
+        Free(IntPtr address)
         {
             Marshal.FreeHGlobal(address);
         }
@@ -44,7 +46,8 @@ namespace JumPy
             this.ptrmap = new Dictionary<IntPtr, object>();
         }
         
-        public IntPtr Store(object obj)
+        public IntPtr 
+        Store(object obj)
         {
             IntPtr ptr = this.allocator.Allocate(4);
             Marshal.WriteInt32(ptr, 1);
@@ -52,12 +55,14 @@ namespace JumPy
             return ptr;
         }
         
-        public object Retrieve(IntPtr ptr)
+        public object 
+        Retrieve(IntPtr ptr)
         {
             return this.ptrmap[ptr];
         }
         
-        public int RefCount(IntPtr ptr)
+        public int 
+        RefCount(IntPtr ptr)
         {
             if (this.ptrmap.ContainsKey(ptr))
             {
@@ -69,7 +74,8 @@ namespace JumPy
             }
         }
         
-        public void IncRef(IntPtr ptr)
+        public void 
+        IncRef(IntPtr ptr)
         {
             if (this.ptrmap.ContainsKey(ptr))
             {
@@ -82,7 +88,8 @@ namespace JumPy
             }
         }
         
-        public void DecRef(IntPtr ptr)
+        public void 
+        DecRef(IntPtr ptr)
         {
             if (this.ptrmap.ContainsKey(ptr))
             {
@@ -102,7 +109,8 @@ namespace JumPy
             }
         }
         
-        public void Delete(IntPtr ptr)
+        public void 
+        Delete(IntPtr ptr)
         {
             if (this.ptrmap.ContainsKey(ptr))
             {
@@ -115,7 +123,8 @@ namespace JumPy
             }
         }
         
-        public override IntPtr Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
+        public override IntPtr 
+        Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
         {
             Dictionary<string, object> globals = new Dictionary<string, object>();
             globals["_jumpy_mapper"] = this;
@@ -180,15 +189,17 @@ namespace JumPy
             return this.Store(module);
         }
 
-        public override bool PyArg_ParseTupleAndKeywords(IntPtr args, IntPtr kwargs, string format, IntPtr kwlist, IntPtr argPtr)
+
+        protected virtual Dictionary<int, object> 
+        GetArgValues(IntPtr args, IntPtr kwargs, IntPtr kwlist)
         {
             Tuple actualArgs = (Tuple)this.Retrieve(args);
             Dict actualKwargs = (Dict)this.Retrieve(kwargs);
 
-            Dictionary<int, object> nondefaults = new Dictionary<int, object>();
+            Dictionary<int, object> result = new Dictionary<int, object>();
             for (int i = 0; i < actualArgs.GetLength(); i++)
             {
-                nondefaults[i] = actualArgs[i];
+                result[i] = actualArgs[i];
             }
             
             int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
@@ -200,21 +211,53 @@ namespace JumPy
                 string thisKey = Marshal.PtrToStringUni(addressToRead);
                 if (actualKwargs.ContainsKey(thisKey))
                 {
-                    nondefaults[index] = actualKwargs[thisKey];
+                    result[index] = actualKwargs[thisKey];
                 }
                 currentKw = (IntPtr)(currentKw.ToInt32() + intPtrSize);
                 index++;
             }
+        
+            return result;
+        }
+
+        protected virtual Dictionary<int, object> 
+        GetArgWriters(string format)
+        {
+            return new Dictionary<int, object>();
+        
+        }
+
+
+        protected virtual void 
+        SetArgValues(Dictionary<int, object> argsToWrite, 
+                     Dictionary<int, object> argWriters, 
+                     IntPtr outPtr)
+        {
             
-            foreach (KeyValuePair<int,object> p in nondefaults)
+        
+        
+            int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
+            foreach (KeyValuePair<int,object> p in argsToWrite)
             {
                 int k = (int)p.Key;
-                IntPtr addressToWrite = Marshal.ReadIntPtr((IntPtr)(argPtr.ToInt32() + (k * intPtrSize)));
+                IntPtr addressToWrite = Marshal.ReadIntPtr((IntPtr)(outPtr.ToInt32() + (k * intPtrSize)));
                 
-                int v = (int)p.Value;
-                Marshal.WriteInt32(addressToWrite, v);
+                //int v = (int)p.Value;
+                //Marshal.WriteInt32(addressToWrite, v);
             }
+        }
 
+
+        public override bool 
+        PyArg_ParseTupleAndKeywords(IntPtr args, 
+                                    IntPtr kwargs, 
+                                    string format, 
+                                    IntPtr kwlist, 
+                                    IntPtr outPtr)
+        {
+            Dictionary<int, object> argsToWrite = this.GetArgValues(args, kwargs, kwlist);
+            Dictionary<int, object> argWriters = this.GetArgWriters(format);
+            this.SetArgValues(argsToWrite, argWriters, outPtr);
             return true;
         }
     }
