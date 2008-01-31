@@ -2,6 +2,7 @@
 import unittest
 
 from System import Array, Int32, IntPtr
+from System.Collections.Generic import Dictionary
 from System.Reflection import BindingFlags
 from System.Runtime.InteropServices import Marshal
 from JumPy import (
@@ -216,7 +217,45 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
 
 class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
 
-    def assertParsesTupleAndKeywords_WithInts(self, args, kwargs, format, kwlist, expectedResults):
+    def testPyArg_ParseTupleAndKeywordsUsesGetArgValuesAndGetArgWritersAndSetArgValues(self):
+        test = self
+        argsPtr = IntPtr(123)
+        kwargsPtr = IntPtr(456)
+        kwlistPtr = IntPtr(789)
+        outPtr = IntPtr(159)
+        format = "pfhormat"
+        argDict = Dictionary[int, object]()
+        formatDict = Dictionary[int, object]()
+
+        calls = []
+        class MyP25M(Python25Mapper):
+            def GetArgValues(self, argsPtrIn, kwargsPtrIn, kwlistPtrIn):
+                calls.append("GetArgValues")
+                test.assertEquals((argsPtrIn, kwargsPtrIn, kwlistPtrIn),
+                                  (argsPtr, kwargsPtr, kwlistPtr),
+                                  "wrong params to GetArgValues")
+                return argDict
+
+            def GetArgWriters(self, formatIn):
+                calls.append("GetArgWriters")
+                test.assertEquals(formatIn,
+                                  format,
+                                  "wrong params to GetArgWriters")
+                return formatDict
+
+            def SetArgValues(self, argDictIn, formatDictIn, outPtrIn):
+                calls.append("SetArgValues")
+                test.assertEquals((argDictIn, formatDictIn, outPtrIn),
+                                  (argDict, formatDict, outPtr),
+                                  "wrong params to SetArgValues")
+
+        mapper = MyP25M(PythonEngine())
+        result = mapper.PyArg_ParseTupleAndKeywords(argsPtr, kwargsPtr, format, kwlistPtr, outPtr)
+        self.assertEquals(result, True, "should return true on 'success'")
+        self.assertEquals(calls, ["GetArgValues", "GetArgWriters", "SetArgValues"])
+
+
+    def assertGetArgValuesWorks(self, args, kwargs, kwlist, expectedResults):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
 
@@ -226,31 +265,17 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
         # alloc
         argsPtr = mapper.Store(args)
         kwargsPtr = mapper.Store(kwargs)
-        outPtr = Marshal.AllocHGlobal(ptrsize * (len(kwlist) + 1))
-        actualDataPtr = Marshal.AllocHGlobal(intsize * len(kwlist))
-
         kwlistPtr = Marshal.AllocHGlobal(ptrsize * (len(kwlist) + 1))
         current = kwlistPtr
         for s in kwlist:
             addressWritten = Marshal.StringToHGlobalUni(s)
             Marshal.WriteIntPtr(current, addressWritten)
             current = IntPtr(current.ToInt32() + ptrsize)
+        Marshal.WriteIntPtr(current, IntPtr.Zero)
 
         try:
-            # memory setup - fill actualData with 0s
-            Marshal.WriteIntPtr(current, IntPtr.Zero)
-            for i in range(len(kwlist)):
-                Marshal.WriteInt32(IntPtr(actualDataPtr.ToInt32() + (i * intsize)), 0)
-                Marshal.WriteIntPtr(IntPtr(outPtr.ToInt32() + (i * ptrsize)),
-                                    IntPtr(actualDataPtr.ToInt32() + (i * intsize)))
-            Marshal.WriteIntPtr(IntPtr(outPtr.ToInt32() + (len(kwlist) * ptrsize)), IntPtr.Zero)
-
             # actual test
-            retval = mapper.PyArg_ParseTupleAndKeywords(argsPtr, kwargsPtr, format, kwlistPtr, outPtr)
-            results = [Marshal.ReadInt32(IntPtr(actualDataPtr.ToInt32() + (i * intsize)))
-                       for i in range(len(kwlist))]
-
-            self.assertEquals(retval, True, "reported failure")
+            results = dict(mapper.GetArgValues(argsPtr, kwargsPtr, kwlistPtr))
             self.assertEquals(results, expectedResults, "something, somewhere, broke")
         finally:
             # dealloc
@@ -259,66 +284,113 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
             for i in range(len(kwlist)):
                 Marshal.FreeHGlobal(Marshal.ReadIntPtr(IntPtr(kwlistPtr.ToInt32() + (i * ptrsize))))
             Marshal.FreeHGlobal(kwlistPtr)
-            Marshal.FreeHGlobal(outPtr)
-            Marshal.FreeHGlobal(actualDataPtr)
 
 
-    def testNone(self):
+    def testGetArgValuesNone(self):
         args = tuple()
         kwargs = {}
-        format = 'lll'
         kwlist = ['one', 'two', 'three']
-        expectedResults = [0, 0, 0]
+        expectedResults = {}
 
-        self.assertParsesTupleAndKeywords_WithInts(
-            args, kwargs, format, kwlist, expectedResults)
+        self.assertGetArgValuesWorks(
+            args, kwargs, kwlist, expectedResults)
 
 
-    def testArgsOnly(self):
-        args = (1, 2, 3)
+    def testGetArgValuesArgsOnly(self):
+        args = ('a', 'b', 'c')
         kwargs = {}
-        format = 'lll'
         kwlist = ['one', 'two', 'three']
-        expectedResults = [1, 2, 3]
+        expectedResults = {0:'a', 1:'b', 2:'c'}
 
-        self.assertParsesTupleAndKeywords_WithInts(
-            args, kwargs, format, kwlist, expectedResults)
+        self.assertGetArgValuesWorks(
+            args, kwargs, kwlist, expectedResults)
 
 
-    def testSingleKwarg(self):
+    def testGetArgValuesSingleKwarg(self):
         args = ()
-        kwargs = {'two': 2}
-        format = 'lll'
+        kwargs = {'two': 'b'}
         kwlist = ['one', 'two', 'three']
-        expectedResults = [0, 2, 0]
+        expectedResults = {1:'b'}
 
-        self.assertParsesTupleAndKeywords_WithInts(
-            args, kwargs, format, kwlist, expectedResults)
+        self.assertGetArgValuesWorks(
+            args, kwargs, kwlist, expectedResults)
 
 
-    def testKwargsOnly(self):
+    def testGetArgValuesKwargsOnly(self):
         args = ()
-        kwargs = {'one': 3, 'two': 2, 'three': 1}
-        format = 'lll'
+        kwargs = {'one': 'c', 'two': 'b', 'three': 'a'}
         kwlist = ['one', 'two', 'three']
-        expectedResults = [3, 2, 1]
+        expectedResults = {0:'c', 1:'b', 2:'a'}
 
-        self.assertParsesTupleAndKeywords_WithInts(
-            args, kwargs, format, kwlist, expectedResults)
+        self.assertGetArgValuesWorks(
+            args, kwargs, kwlist, expectedResults)
 
 
-    def testMixture(self):
-        args = (1,)
-        kwargs = {'three': 3}
-        format = 'lll'
+    def testGetArgValuesMixture(self):
+        args = ('a',)
+        kwargs = {'three': 'c'}
         kwlist = ['one', 'two', 'three']
-        expectedResults = [1, 0, 3]
+        expectedResults = {0:'a', 2:'c'}
 
-        self.assertParsesTupleAndKeywords_WithInts(
-            args, kwargs, format, kwlist, expectedResults)
+        self.assertGetArgValuesWorks(
+            args, kwargs, kwlist, expectedResults)
+
+
+    def assertGetArgWritersWorks(self):
+
+        class ArgWriter(object):
+
+            def __init__(self, offset):
+                self.offset = offset
+
+            def write(self, thingToWrite, basePtr):
+                Marshal.WriteSomething(basePtr + self.offset)
 
 
 
+
+        self.fail("")
+
+
+    def testSetArgValuesWritesToCorrectPointers(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+
+        self.fail("create int-delegate writer dictionary thingumajigger")
+        format = "s#i"
+        argsDict = Dictionary[int, object]({0:"hullo!", 1:39})
+
+        intPtrSize = Marshal.SizeOf(IntPtr)
+        intSize = Marshal.SizeOf(Int32)
+        dataPtr = Marshal.AllocHGlobal(3 * intPtrSize)
+        outPtr = Marshal.AllocHGlobal(4 * intPtrSize)
+
+        try:
+            for i in range(3):
+                Marshal.WriteIntPtr(IntPtr(outPtr.ToInt32() + (i * intPtrSize)),
+                                    IntPtr(dataPtr.ToInt32() + (i * intPtrSize)))
+            Marshal.WriteIntPtr(IntPtr(outPtr.ToInt32() + (4 * intPtrSize)), IntPtr.Zero)
+
+            mapper.SetArgValues(format, argsDict, outPtr)
+
+            self.assertEquals(Marshal.PtrToStringUni(Marshal.ReadIntPtr(dataPtr)),
+                              "hullo!",
+                              "string result not set")
+            self.assertEquals(Marshal.ReadInt32(IntPtr(dataPtr.ToInt32() + intPtrSize)),
+                              6,
+                              "string length not set")
+            self.assertEquals(Marshal.ReadInt32(IntPtr(dataPtr.ToInt32() + intPtrSize + intSize)),
+                              39,
+                              "other arg not set")
+
+        finally:
+            Marshal.FreeHGlobal(outPtr)
+            Marshal.FreeHGlobal(dataPtr)
+
+        self.fail(dedent("""/
+            mapper needs to free the string it allocated; this can of
+            worms can be dealt with when we've finished writing *this*
+            test."""))
 
 
 
