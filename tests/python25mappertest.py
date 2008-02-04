@@ -1,13 +1,14 @@
 
 import unittest
+from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
 
 from System import Array, Int32, IntPtr
 from System.Collections.Generic import Dictionary
 from System.Reflection import BindingFlags
 from System.Runtime.InteropServices import Marshal
 from JumPy import (
-    CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate,
-    IAllocator, METH, PyMethodDef, Python25Mapper, StubReference
+    ArgWriter, CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate,
+    IntArgWriter, METH, PyMethodDef, Python25Mapper, SizedStringArgWriter, StubReference
 )
 from IronPython.Hosting import PythonEngine
 
@@ -25,16 +26,14 @@ def PythonModuleFromEngineModule(engineModule):
     return pythonModuleInfo.GetValue(engineModule, Array[object]([]))
 
 
-def GetTestAllocator(allocsList, freesList):
-    class TestAllocator(IAllocator):
-        def Allocate(self, bytes):
-            ptr = Marshal.AllocHGlobal(bytes)
-            allocsList.append(ptr)
-            return ptr
-        def Free(self, ptr):
-            freesList.append(ptr)
-            Marshal.FreeHGlobal(ptr)
-    return TestAllocator
+class TempPtrCheckingPython25Mapper(Python25Mapper):
+    def __init__(self, *args):
+        Python25Mapper.__init__(self, *args)
+        self.tempPtrsFreed = False
+    def FreeTempPtrs(self):
+        Python25Mapper.FreeTempPtrs(self)
+        self.tempPtrsFreed = True
+
 
 
 class Python25MapperTest(unittest.TestCase):
@@ -43,7 +42,7 @@ class Python25MapperTest(unittest.TestCase):
         frees = []
         allocs = []
         engine = PythonEngine()
-        allocator = GetTestAllocator(allocs, frees)()
+        allocator = GetAllocatingTestAllocator(allocs, frees)
         mapper = Python25Mapper(engine, allocator)
 
         obj1 = object()
@@ -66,7 +65,7 @@ class Python25MapperTest(unittest.TestCase):
     def testIncRefDecRef(self):
         frees = []
         engine = PythonEngine()
-        allocator = GetTestAllocator([], frees)()
+        allocator = GetAllocatingTestAllocator([], frees)
         mapper = Python25Mapper(engine, allocator)
 
         obj1 = object()
@@ -86,7 +85,7 @@ class Python25MapperTest(unittest.TestCase):
 
     def testNullPointers(self):
         engine = PythonEngine()
-        allocator = GetTestAllocator([], [])()
+        allocator = GetDoNothingTestAllocator([])
         mapper = Python25Mapper(engine, allocator)
 
         self.assertRaises(KeyError, lambda: mapper.IncRef(IntPtr.Zero))
@@ -94,6 +93,24 @@ class Python25MapperTest(unittest.TestCase):
         self.assertRaises(KeyError, lambda: mapper.RefCount(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.Retrieve(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.Delete(IntPtr.Zero))
+
+
+    def testRememberAndFreeTempPtrs(self):
+        # hopefully, nobody will depend on character data from PyArg_Parse* remaining
+        # available beyond the function call in which it was provided. hopefully.
+        frees = []
+        engine = PythonEngine()
+        allocator = GetDoNothingTestAllocator(frees)
+        mapper = Python25Mapper(engine, allocator)
+
+        mapper.RememberTempPtr(IntPtr(12345))
+        mapper.RememberTempPtr(IntPtr(13579))
+        mapper.RememberTempPtr(IntPtr(56789))
+        self.assertEquals(frees, [], "freed memory prematurely")
+
+        mapper.FreeTempPtrs()
+        self.assertEquals(set(frees), set([IntPtr(12345), IntPtr(13579), IntPtr(56789)]),
+                          "memory not freed")
 
 
 
@@ -123,6 +140,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             moduleTest(test_module, mapper)
         finally:
             Marshal.FreeHGlobal(methods)
+            mapper.FreeTempPtrs()
 
 
     def test_Py_InitModule4_CreatesPopulatedModuleInSys(self):
@@ -148,7 +166,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
 
     def test_Py_InitModule4_DispatchesToOriginalVarargsFunction(self):
         engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = TempPtrCheckingPython25Mapper(engine)
         calls = []
         def CModuleFunction(_selfPtr, argPtr):
             calls.append((_selfPtr, argPtr))
@@ -165,6 +183,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
 
         def testModule(test_module, mapper):
             test_module.harold(1, 2, 3)
+            self.assertTrue(mapper.tempPtrsFreed, "failed to clean up after call")
             _selfPtr, argPtr = calls[0]
             self.assertEquals(_selfPtr, IntPtr.Zero, "no self on module functions")
 
@@ -180,7 +199,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
 
     def test_Py_InitModule4_DispatchesToOriginalVarargsKwargsFunction(self):
         engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = TempPtrCheckingPython25Mapper(engine)
         calls = []
         def CModuleFunction(_selfPtr, argPtr, kwargPtr):
             calls.append((_selfPtr, argPtr, kwargPtr))
@@ -198,6 +217,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
 
         def testModule(test_module, mapper):
             test_module.harold(1, 2, 3, four=4, five=5)
+            self.assertTrue(mapper.tempPtrsFreed, "failed to clean up after call")
             _selfPtr, argPtr, kwargPtr = calls[0]
             self.assertEquals(_selfPtr, IntPtr.Zero, "no self on module functions")
 
@@ -225,7 +245,7 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
         outPtr = IntPtr(159)
         format = "pfhormat"
         argDict = Dictionary[int, object]()
-        formatDict = Dictionary[int, object]()
+        formatDict = Dictionary[int, ArgWriter]()
 
         calls = []
         class MyP25M(Python25Mapper):
@@ -268,7 +288,7 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
         kwlistPtr = Marshal.AllocHGlobal(ptrsize * (len(kwlist) + 1))
         current = kwlistPtr
         for s in kwlist:
-            addressWritten = Marshal.StringToHGlobalUni(s)
+            addressWritten = Marshal.StringToHGlobalAnsi(s)
             Marshal.WriteIntPtr(current, addressWritten)
             current = IntPtr(current.ToInt32() + ptrsize)
         Marshal.WriteIntPtr(current, IntPtr.Zero)
@@ -336,61 +356,69 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
             args, kwargs, kwlist, expectedResults)
 
 
-    def assertGetArgWritersWorks(self):
-
-        class ArgWriter(object):
-
-            def __init__(self, offset):
-                self.offset = offset
-
-            def write(self, thingToWrite, basePtr):
-                Marshal.WriteSomething(basePtr + self.offset)
-
-
-
-
-        self.fail("")
-
-
-    def testSetArgValuesWritesToCorrectPointers(self):
+    def assertGetArgWritersProduces(self, format, expected):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
+        result = dict(mapper.GetArgWriters(format))
+        self.assertEquals(len(result), len(expected), "wrong size")
+        for (i, _type, nextStartIndex) in expected:
+            writer = result[i]
+            self.assertEquals(type(writer), _type,
+                              "wrong writer type")
+            self.assertEquals(writer.NextWriterStartIndex, nextStartIndex,
+                              "writers set to access wrong memory")
 
-        self.fail("create int-delegate writer dictionary thingumajigger")
-        format = "s#i"
-        argsDict = Dictionary[int, object]({0:"hullo!", 1:39})
 
-        intPtrSize = Marshal.SizeOf(IntPtr)
-        intSize = Marshal.SizeOf(Int32)
-        dataPtr = Marshal.AllocHGlobal(3 * intPtrSize)
-        outPtr = Marshal.AllocHGlobal(4 * intPtrSize)
+    def testGetArgWritersWorks(self):
+        self.assertGetArgWritersProduces("i", [(0, IntArgWriter, 1)])
+        self.assertGetArgWritersProduces("i:someName", [(0, IntArgWriter, 1)])
+        self.assertGetArgWritersProduces("iii", [(0, IntArgWriter, 1),
+                                                 (1, IntArgWriter, 2),
+                                                 (2, IntArgWriter, 3),])
+        self.assertGetArgWritersProduces("ii|i", [(0, IntArgWriter, 1),
+                                                  (1, IntArgWriter, 2),
+                                                  (2, IntArgWriter, 3),])
 
-        try:
-            for i in range(3):
-                Marshal.WriteIntPtr(IntPtr(outPtr.ToInt32() + (i * intPtrSize)),
-                                    IntPtr(dataPtr.ToInt32() + (i * intPtrSize)))
-            Marshal.WriteIntPtr(IntPtr(outPtr.ToInt32() + (4 * intPtrSize)), IntPtr.Zero)
+        self.assertGetArgWritersProduces("s#", [(0, SizedStringArgWriter, 2)])
+        self.assertGetArgWritersProduces("s#i", [(0, SizedStringArgWriter, 2),
+                                                 (1, IntArgWriter, 3)])
+        self.assertGetArgWritersProduces("|s#i", [(0, SizedStringArgWriter, 2),
+                                                  (1, IntArgWriter, 3)])
 
-            mapper.SetArgValues(format, argsDict, outPtr)
+    def testUnrecognisedFormatString(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        self.assertRaises(NotImplementedError, lambda: mapper.GetArgWriters("arsiuhgiurshgRHALI"))
 
-            self.assertEquals(Marshal.PtrToStringUni(Marshal.ReadIntPtr(dataPtr)),
-                              "hullo!",
-                              "string result not set")
-            self.assertEquals(Marshal.ReadInt32(IntPtr(dataPtr.ToInt32() + intPtrSize)),
-                              6,
-                              "string length not set")
-            self.assertEquals(Marshal.ReadInt32(IntPtr(dataPtr.ToInt32() + intPtrSize + intSize)),
-                              39,
-                              "other arg not set")
 
-        finally:
-            Marshal.FreeHGlobal(outPtr)
-            Marshal.FreeHGlobal(dataPtr)
+    def testSetArgValuesUsesParamsToWriteAppropriateData(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        expectedPtrTable = IntPtr(5268)
 
-        self.fail(dedent("""/
-            mapper needs to free the string it allocated; this can of
-            worms can be dealt with when we've finished writing *this*
-            test."""))
+        test = self
+        class MockArgWriter(ArgWriter):
+            def __init__(self, expectedValue):
+                self.called = False
+                self.expectedValue = expectedValue
+            def Write(self, ptrTable, value):
+                self.called = True
+                test.assertEquals(value, self.expectedValue, "Wrote wrong value")
+                test.assertEquals(ptrTable, expectedPtrTable, "Wrote to wrong location")
+
+        argsToWrite = Dictionary[int, object]({0: 14, 2: 39})
+        argWriters = Dictionary[int, ArgWriter]({0: MockArgWriter(14),
+                                                 1: MockArgWriter(-1),
+                                                 2: MockArgWriter(39)})
+
+        mapper.SetArgValues(argsToWrite, argWriters, expectedPtrTable)
+        for i, writer in dict(argWriters).items():
+            if i in argsToWrite:
+                self.assertTrue(writer.called, "failed to write")
+            else:
+                self.assertFalse(writer.called, "wrote inappropriately")
+
+
 
 
 
