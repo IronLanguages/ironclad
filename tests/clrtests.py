@@ -1,6 +1,8 @@
-
+import os
 import clr
 clr.AddReferenceToFile("build/jumpy.dll")
+clr.AddReference("IronPython.dll")
+clr.AddReference("IronMath.dll")
 
 import unittest
 suite = unittest.TestSuite()

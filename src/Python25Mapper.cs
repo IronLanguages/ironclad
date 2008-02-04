@@ -33,6 +33,7 @@ namespace JumPy
     {
         private PythonEngine engine;
         private Dictionary<IntPtr, object> ptrmap;
+        private List<IntPtr> tempptrs;
         private IAllocator allocator;
         
         public Python25Mapper(PythonEngine eng): this(eng, new HGlobalAllocator())
@@ -44,12 +45,13 @@ namespace JumPy
             this.engine = eng;
             this.allocator = alloc;
             this.ptrmap = new Dictionary<IntPtr, object>();
+            this.tempptrs = new List<IntPtr>();
         }
         
         public IntPtr 
         Store(object obj)
         {
-            IntPtr ptr = this.allocator.Allocate(4);
+            IntPtr ptr = this.allocator.Allocate(Marshal.SizeOf(typeof(IntPtr)));
             Marshal.WriteInt32(ptr, 1);
             this.ptrmap[ptr] = obj;
             return ptr;
@@ -122,6 +124,20 @@ namespace JumPy
                 throw new KeyNotFoundException("Missing key in pointer map");
             }
         }
+
+        public void RememberTempPtr(IntPtr ptr)
+        {
+            this.tempptrs.Add(ptr);
+        }
+
+        public void FreeTempPtrs()
+        {
+            foreach (IntPtr ptr in this.tempptrs)
+            {
+                this.allocator.Free(ptr);
+            }
+            this.tempptrs.Clear();
+        }
         
         public override IntPtr 
         Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
@@ -139,12 +155,14 @@ namespace JumPy
             moduleCode.Append("def _jumpy_dispatch(name, args):\n");
             moduleCode.Append("  argPtr = _jumpy_mapper.Store(args)\n");
             moduleCode.Append("  _jumpy_dispatch_table[name](IntPtr.Zero, argPtr)\n");
+            moduleCode.Append("  _jumpy_mapper.FreeTempPtrs()\n");
             moduleCode.Append("  _jumpy_mapper.DecRef(argPtr)\n");
             
             moduleCode.Append("def _jumpy_dispatch_kwargs(name, args, kwargs):\n");
             moduleCode.Append("  argPtr = _jumpy_mapper.Store(args)\n");
             moduleCode.Append("  kwargPtr = _jumpy_mapper.Store(kwargs)\n");
             moduleCode.Append("  _jumpy_dispatch_table[name](IntPtr.Zero, argPtr, kwargPtr)\n");
+            moduleCode.Append("  _jumpy_mapper.FreeTempPtrs()\n");
             moduleCode.Append("  _jumpy_mapper.DecRef(argPtr)\n");
             moduleCode.Append("  _jumpy_mapper.DecRef(kwargPtr)\n");
             
@@ -208,7 +226,7 @@ namespace JumPy
             while (Marshal.ReadIntPtr(currentKw) != IntPtr.Zero)
             {
                 IntPtr addressToRead = Marshal.ReadIntPtr(currentKw);
-                string thisKey = Marshal.PtrToStringUni(addressToRead);
+                string thisKey = Marshal.PtrToStringAnsi(addressToRead);
                 if (actualKwargs.ContainsKey(thisKey))
                 {
                     result[index] = actualKwargs[thisKey];
@@ -220,30 +238,51 @@ namespace JumPy
             return result;
         }
 
-        protected virtual Dictionary<int, object> 
+        protected virtual Dictionary<int, ArgWriter> 
         GetArgWriters(string format)
         {
-            return new Dictionary<int, object>();
-        
+            Dictionary<int, ArgWriter> result = new Dictionary<int, ArgWriter>();
+            string trimmedFormat = format;
+            int argIndex = 0;
+            int nextStartPointer = 0;
+            while (trimmedFormat.Length > 0 && !trimmedFormat.StartsWith(":"))
+            {
+                if (trimmedFormat.StartsWith("|"))
+                {
+                    trimmedFormat = trimmedFormat.Substring(1);
+                    continue;
+                }
+                
+                if (trimmedFormat.StartsWith("i"))
+                {
+                    trimmedFormat = trimmedFormat.Substring(1);
+                    result[argIndex] = new IntArgWriter(nextStartPointer);
+                }
+                else if (trimmedFormat.StartsWith("s#"))
+                {
+                    trimmedFormat = trimmedFormat.Substring(2);
+                    result[argIndex] = new SizedStringArgWriter(nextStartPointer, this);
+                }
+                else
+                {
+                    throw new NotImplementedException(String.Format(
+                        "Unrecognised characters in format string, starting at: {0}", trimmedFormat));
+                }
+                nextStartPointer = result[argIndex].NextWriterStartIndex;
+                argIndex++;
+            }
+            return result;
         }
 
 
         protected virtual void 
         SetArgValues(Dictionary<int, object> argsToWrite, 
-                     Dictionary<int, object> argWriters, 
+                     Dictionary<int, ArgWriter> argWriters, 
                      IntPtr outPtr)
         {
-            
-        
-        
-            int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
             foreach (KeyValuePair<int,object> p in argsToWrite)
             {
-                int k = (int)p.Key;
-                IntPtr addressToWrite = Marshal.ReadIntPtr((IntPtr)(outPtr.ToInt32() + (k * intPtrSize)));
-                
-                //int v = (int)p.Value;
-                //Marshal.WriteInt32(addressToWrite, v);
+                argWriters[p.Key].Write(outPtr, p.Value);
             }
         }
 
@@ -256,7 +295,7 @@ namespace JumPy
                                     IntPtr outPtr)
         {
             Dictionary<int, object> argsToWrite = this.GetArgValues(args, kwargs, kwlist);
-            Dictionary<int, object> argWriters = this.GetArgWriters(format);
+            Dictionary<int, ArgWriter> argWriters = this.GetArgWriters(format);
             this.SetArgValues(argsToWrite, argWriters, outPtr);
             return true;
         }
