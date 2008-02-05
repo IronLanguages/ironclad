@@ -85,6 +85,19 @@ class PythonMapperTest(unittest.TestCase):
             True, paramsStore)
 
 
+    def testPythonMapperFinds_PyString_FromStringAndSize(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyString_FromStringAndSize(self, stringPtr, size):
+                paramsStore.append((stringPtr, size))
+                return IntPtr(12345)
+
+        self.assertDispatches(
+            MyPM, "PyString_FromStringAndSize",
+            (IntPtr(98765), 33),
+            IntPtr(12345), paramsStore)
+
+
 
 suite = unittest.TestSuite()
 loader = unittest.TestLoader()
