@@ -1,11 +1,4 @@
-REM python tests\tooltests.py
+python tests\tooltests.py
 ipy tests\leaktests.py
-ipy tests\leaktests.py
-ipy tests\leaktests.py
-ipy tests\leaktests.py
-ipy tests\leaktests.py
-ipy tests\leaktests.py
-ipy tests\leaktests.py
-ipy tests\leaktests.py
-REM ipy tests\clrtests.py
+ipy tests\clrtests.py
 pause

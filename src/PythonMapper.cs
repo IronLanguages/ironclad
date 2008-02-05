@@ -22,6 +22,12 @@ namespace JumPy
         {
             return IntPtr.Zero;
         }
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate IntPtr PyString_FromStringAndSize_Delegate(IntPtr stringPtr, int size);
+        public virtual IntPtr PyString_FromStringAndSize(IntPtr stringPtr, int size)
+        {
+            return IntPtr.Zero;
+        }
         
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int PyModule_AddObject_Delegate(IntPtr module, string name, IntPtr item);
@@ -51,6 +57,9 @@ namespace JumPy
                     break;
                 case "PyString_FromString":
                     this.map[name] = new PyString_FromString_Delegate(this.PyString_FromString);
+                    break;
+                case "PyString_FromStringAndSize":
+                    this.map[name] = new PyString_FromStringAndSize_Delegate(this.PyString_FromStringAndSize);
                     break;
                 case "PyModule_AddObject":
                     this.map[name] = new PyModule_AddObject_Delegate(this.PyModule_AddObject);
