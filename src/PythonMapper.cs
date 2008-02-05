@@ -31,10 +31,10 @@ namespace JumPy
         }
         
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate bool PyArg_ParseTupleAndKeywords_Delegate(IntPtr args, IntPtr kwargs, string format, IntPtr kwlist, IntPtr argPtr);
-        public virtual bool PyArg_ParseTupleAndKeywords(IntPtr args, IntPtr kwargs, string format, IntPtr kwlist, IntPtr argPtr)
+        public delegate int PyArg_ParseTupleAndKeywords_Delegate(IntPtr args, IntPtr kwargs, string format, IntPtr kwlist, IntPtr argPtr);
+        public virtual int PyArg_ParseTupleAndKeywords(IntPtr args, IntPtr kwargs, string format, IntPtr kwlist, IntPtr argPtr)
         {
-            return false;
+            return 0;
         }
         
         public IntPtr GetAddress(string name)

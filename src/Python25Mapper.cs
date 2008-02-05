@@ -266,7 +266,8 @@ namespace JumPy
                 else
                 {
                     throw new NotImplementedException(String.Format(
-                        "Unrecognised characters in format string, starting at: {0}", trimmedFormat));
+                        "Unrecognised characters in format string, starting at: {0}", 
+                        trimmedFormat));
                 }
                 nextStartPointer = result[argIndex].NextWriterStartIndex;
                 argIndex++;
@@ -287,7 +288,7 @@ namespace JumPy
         }
 
 
-        public override bool 
+        public override int 
         PyArg_ParseTupleAndKeywords(IntPtr args, 
                                     IntPtr kwargs, 
                                     string format, 
@@ -297,7 +298,7 @@ namespace JumPy
             Dictionary<int, object> argsToWrite = this.GetArgValues(args, kwargs, kwlist);
             Dictionary<int, ArgWriter> argWriters = this.GetArgWriters(format);
             this.SetArgValues(argsToWrite, argWriters, outPtr);
-            return true;
+            return 1;
         }
     }
 

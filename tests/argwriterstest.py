@@ -1,6 +1,7 @@
 
 import unittest
 from tests.utils.allocators import GetAllocatingTestAllocator
+from tests.utils.memory import intSize, ptrSize, OffsetPtr
 
 from System import Int32, IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -9,11 +10,6 @@ from IronPython.Hosting import PythonEngine
 
 from JumPy import IntArgWriter, Python25Mapper, SizedStringArgWriter
 
-ptrSize = Marshal.SizeOf(IntPtr)
-intSize = Marshal.SizeOf(Int32)
-
-def OffsetPtr(ptr, offset):
-    return IntPtr(ptr.ToInt32() + offset)
 
 def GetSetter(item, attr, value):
     def Setter():
