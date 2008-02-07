@@ -4,7 +4,10 @@ import unittest
 from textwrap import dedent
 
 from System import IntPtr
-from JumPy import AddressGetterDelegate, PydImporter, Python25Mapper, PythonMapper, StubReference
+from JumPy import (
+    AddressGetterDelegate, DataSetterDelegate, PydImporter,
+    Python25Mapper, PythonMapper, StubReference
+)
 from IronPython.Hosting import PythonEngine
 
 bz2_doc = """The python bz2 module provides a comprehensive interface for
@@ -40,7 +43,8 @@ class FunctionalityTest(unittest.TestCase):
                 return IntPtr.Zero
 
         sr = StubReference(os.path.join("build", "python25.dll"))
-        sr.Init(AddressGetterDelegate(MyPM().GetAddress))
+        pm = MyPM()
+        sr.Init(AddressGetterDelegate(pm.GetAddress), DataSetterDelegate(pm.SetData))
         PydImporter().load("C:\\Python25\\Dlls\\bz2.pyd")
 
         name, methods, doc, _self, apiver = params[0]
@@ -56,7 +60,7 @@ class FunctionalityTest(unittest.TestCase):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
         sr = StubReference(os.path.join("build", "python25.dll"))
-        sr.Init(AddressGetterDelegate(mapper.GetAddress))
+        sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
         PydImporter().load("C:\\Python25\\Dlls\\bz2.pyd")
 
         testCode = dedent("""
@@ -78,7 +82,7 @@ class FunctionalityTest(unittest.TestCase):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
         sr = StubReference(os.path.join("build", "python25.dll"))
-        sr.Init(AddressGetterDelegate(mapper.GetAddress))
+        sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
         PydImporter().load("C:\\Python25\\Dlls\\bz2.pyd")
 
         testCode = dedent("""

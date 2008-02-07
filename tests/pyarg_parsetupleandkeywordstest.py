@@ -6,7 +6,7 @@ from tests.utils.memory import ptrSize, OffsetPtr
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from JumPy import AddressGetterDelegate, PythonMapper, StubReference
+from JumPy import AddressGetterDelegate, DataSetterDelegate, PythonMapper, StubReference
 
 from JumPyTestUtils import PythonStubHarness
 
@@ -22,11 +22,13 @@ class PyArg_ParseTupleAndKeywordsTest(unittest.TestCase):
                 return 1
 
         self.sr = StubReference(os.path.join("build", "python25.dll"))
-        self.sr.Init(AddressGetterDelegate(MyPM().GetAddress))
+        self.pm = MyPM()
+        self.sr.Init(AddressGetterDelegate(self.pm.GetAddress), DataSetterDelegate(self.pm.SetData))
 
 
     def tearDown(self):
         self.sr.Dispose()
+        del self.pm
 
 
     def assertMatchesVargargs(self, params):

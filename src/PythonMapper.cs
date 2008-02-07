@@ -74,6 +74,23 @@ namespace JumPy
             }
             return Marshal.GetFunctionPointerForDelegate(this.map[name]);
         }
+        
+        
+        public virtual void Fill_PyString_Type(IntPtr address)
+        {
+            ;
+        }
+        
+        
+        public void SetData(string name, IntPtr address)
+        {
+            switch (name)
+            {
+                case "PyString_Type":
+                    this.Fill_PyString_Type(address);
+                    break;
+            }
+        }
     }
 
 

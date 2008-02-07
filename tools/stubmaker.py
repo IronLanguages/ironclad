@@ -48,33 +48,45 @@ class StubMaker(object):
         if not os.path.exists(overrideDir):
             return
 
-        for function in self.functions:
-            path = os.path.join(overrideDir, function)
+        def add_override(name):
+            path = os.path.join(overrideDir, "%s.c" % name)
             if os.path.exists(path):
                 f = open(path, 'r')
                 try:
-                    self.overrides[function] = f.read().replace('\r\n', '\n')
+                    self.overrides[name] = f.read().replace('\r\n', '\n')
                 finally:
                     f.close()
+
+        for function in self.functions:
+            add_override(function)
+        for data in self.data:
+            add_override(data)
+
 
 
     def generate_c(self):
         _includes = '#include <stdio.h>\n#include <stdarg.h>\n#include <stdlib.h>\n\n'
         _declare_data = 'void *%s;\n'
-        _boilerplate = '\nvoid *jumptable[%d];\n\nvoid init(void*(*address_getter)(char*)) {\n'
-        _init_data = '    %s = address_getter("%s");\n'
+        _boilerplate = '\nvoid *jumptable[%d];\n\nvoid init(void*(*address_getter)(char*), void(*data_setter)(char*, void*)) {\n'
+        _init_ptr_data = '    %s = address_getter("%s");\n'
+        _init_custom_data = '    data_setter("%s", &%s);\n'
         _init_function = '    jumptable[%s] = address_getter("%s");\n'
 
+        ptr_data = [s for s in self.data if s not in self.overrides]
+        custom_data = [s for s in self.data if s in self.overrides]
+
         result = [_includes]
-        result.extend([_declare_data % name for name in self.data])
+        result.extend([_declare_data % s for s in ptr_data])
+        result.extend([self.overrides[k] for k in custom_data])
         result.append(_boilerplate % len(self.functions))
-        result.extend([_init_data % (s, s) for s in self.data])
+        result.extend([_init_ptr_data % (s, s) for s in ptr_data])
+        result.extend([_init_custom_data % (s, s) for s in custom_data])
         for i, name in enumerate(self.functions):
             result.append(_init_function % (i, name))
             if self.overrides.has_key(name):
                 self.overrides[name] = self.overrides[name] % i
         result.append('}\n\n')
-        result.extend(self.overrides.values())
+        result.extend([self.overrides[s] for s in self.functions if s in self.overrides])
         return ''.join(result)
 
 

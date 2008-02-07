@@ -1,0 +1,2 @@
+
+char AnotherExportedSymbol[616];
