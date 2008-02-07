@@ -7,15 +7,15 @@ from System import Console, IntPtr
 from System.IO import StringWriter
 from System.Runtime.InteropServices import Marshal
 
-from JumPy import PydImporter
+from JumPy import PydImporter, Kernel32
 
 
 class PydImporterTest(unittest.TestCase):
 
     def testCallsAppropriatelyNamedInitFunctionAndUnloadsWhenDone(self):
-        l = PydImporter.LoadLibrary("tests\\data\\setvalue.pyd")
+        l = Kernel32.LoadLibrary("tests\\data\\setvalue.pyd")
         try:
-            pValue = PydImporter.GetProcAddress(l, "value")
+            pValue = Kernel32.GetProcAddress(l, "value")
             value = Marshal.ReadInt32(pValue)
             self.assertEquals(value, 1, "bad setup")
 
@@ -24,13 +24,13 @@ class PydImporterTest(unittest.TestCase):
         finally:
             # lose test reference to setvalue.pyd
             # only the PydImporter should still have a reference to it
-            PydImporter.FreeLibrary(l)
+            Kernel32.FreeLibrary(l)
 
         value = Marshal.ReadInt32(pValue)
         self.assertEquals(value, 2, "PydImporter didn't call correct function")
 
         pi.Dispose()
-        self.assertEquals(PydImporter.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
+        self.assertEquals(Kernel32.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                           "failed to unload on dispose")
 
 

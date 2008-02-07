@@ -13,15 +13,6 @@ namespace JumPy
 
     public class PydImporter
     {
-        [DllImport("kernel32.dll")]
-        public static extern IntPtr LoadLibrary(string s);
-        [DllImport("kernel32.dll")]
-        public static extern bool FreeLibrary(IntPtr l);
-        [DllImport("kernel32.dll")]
-        public static extern IntPtr GetProcAddress(IntPtr l, string s);
-        [DllImport("kernel32.dll")]
-        public static extern IntPtr GetModuleHandle(string s);
-        
         private List<IntPtr> handles;
         
         public PydImporter()
@@ -31,10 +22,10 @@ namespace JumPy
         
         public void Load(string path)
         {
-            IntPtr l = LoadLibrary(path);
+            IntPtr l = Kernel32.LoadLibrary(path);
             this.handles.Add(l);
             string funcName = "init" + Path.GetFileNameWithoutExtension(path);
-            IntPtr funcPtr = GetProcAddress(l, funcName);
+            IntPtr funcPtr = Kernel32.GetProcAddress(l, funcName);
             PydInit_Delegate d = (PydInit_Delegate)Marshal.GetDelegateForFunctionPointer(funcPtr, typeof(PydInit_Delegate));
             d();
         }
@@ -43,7 +34,7 @@ namespace JumPy
         {
             foreach (IntPtr l in this.handles)
             {
-                FreeLibrary(l);
+                Kernel32.FreeLibrary(l);
             }
         }
     }

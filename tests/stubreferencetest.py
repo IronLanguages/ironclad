@@ -2,7 +2,7 @@
 import os
 import unittest
 
-from JumPy import AddressGetterDelegate, DataSetterDelegate, StubReference
+from JumPy import AddressGetterDelegate, DataSetterDelegate, Kernel32, StubReference
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
@@ -10,11 +10,11 @@ from System.Runtime.InteropServices import Marshal
 class StubReferenceTest(unittest.TestCase):
 
     def testMapInitUnmapLibrary(self):
-        self.assertEquals(StubReference.GetModuleHandle("python25.dll"), IntPtr.Zero,
+        self.assertEquals(Kernel32.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library already mapped")
 
         sr = StubReference(os.path.join("build", "python25.dll"))
-        self.assertNotEquals(StubReference.GetModuleHandle("python25.dll"), IntPtr.Zero,
+        self.assertNotEquals(Kernel32.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library not mapped by construction")
 
         calls = []
@@ -29,7 +29,7 @@ class StubReferenceTest(unittest.TestCase):
         self.assertEquals(len(calls), 904, "did not call init function once per symbol")
 
         sr.Dispose()
-        self.assertEquals(StubReference.GetModuleHandle("python25.dll"), IntPtr.Zero,
+        self.assertEquals(Kernel32.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library not unmapped on dispose")
 
 

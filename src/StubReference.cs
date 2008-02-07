@@ -15,26 +15,16 @@ namespace JumPy
 
     public class StubReference
     {
-        [DllImport("kernel32.dll")]
-        public static extern IntPtr GetModuleHandle(string s);
-        
         private IntPtr library;
-        
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr LoadLibrary(string s);
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr GetProcAddress(IntPtr l, string s);
-        [DllImport("kernel32.dll")]
-        private static extern bool FreeLibrary(IntPtr l);
     
         public StubReference(string dllPath)
         {
-            this.library = LoadLibrary(dllPath);
+            this.library = Kernel32.LoadLibrary(dllPath);
         }
     
         public void Init(AddressGetterDelegate addressGetter, DataSetterDelegate dataSetter)
         {
-            IntPtr initFP = GetProcAddress(this.library, "init");
+            IntPtr initFP = Kernel32.GetProcAddress(this.library, "init");
             InitDelegate initDgt = (InitDelegate)Marshal.GetDelegateForFunctionPointer(initFP, typeof(InitDelegate));
             
             IntPtr addressGetterFP = Marshal.GetFunctionPointerForDelegate(addressGetter);
@@ -44,7 +34,7 @@ namespace JumPy
         
         public void Dispose()
         {
-            FreeLibrary(this.library);
+            Kernel32.FreeLibrary(this.library);
             this.library = IntPtr.Zero;
         }
     }
