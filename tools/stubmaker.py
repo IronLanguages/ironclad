@@ -1,6 +1,15 @@
 
 import os
-import sys
+
+from System.Diagnostics import Process, ProcessStartInfo
+
+def popen(executable, arguments):
+    processStartInfo = ProcessStartInfo(executable, arguments)
+    processStartInfo.UseShellExecute = False
+    processStartInfo.CreateNoWindow = True
+    processStartInfo.RedirectStandardOutput = True
+    process = Process.Start(processStartInfo)
+    return file(process.StandardOutput.BaseStream, "r")
 
 
 class StubMaker(object):
@@ -10,10 +19,6 @@ class StubMaker(object):
         self.functions = []
         self.overrides = {}
 
-        self.platform = 'win32'
-        if sys.platform.startswith('linux'):
-            self.platform = 'linux'
-
         if sourceLibrary is not None:
             self._read_symbol_table(sourceLibrary)
 
@@ -22,13 +27,11 @@ class StubMaker(object):
 
 
     def _read_symbol_table(self, source):
-        if self.platform == 'win32':
-            self._read_symbol_table_pexports(source)
-        else:
-            raise NotImplementedError()
+        self._read_symbol_table_pexports(source)
+
 
     def _read_symbol_table_pexports(self, source):
-        f = os.popen("pexports %s" % source)
+        f = popen("pexports", source)
         try:
             for line in f:
                 if line.strip() == 'EXPORTS':
@@ -59,9 +62,9 @@ class StubMaker(object):
 
         for function in self.functions:
             add_override(function)
+
         for data in self.data:
             add_override(data)
-
 
 
     def generate_c(self):

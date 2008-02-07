@@ -42,61 +42,78 @@ class FunctionalityTest(unittest.TestCase):
                 params.append((name, methods, doc, _self, apiver))
                 return IntPtr.Zero
 
-        sr = StubReference(os.path.join("build", "python25.dll"))
         pm = MyPM()
-        sr.Init(AddressGetterDelegate(pm.GetAddress), DataSetterDelegate(pm.SetData))
-        PydImporter().load("C:\\Python25\\Dlls\\bz2.pyd")
-
-        name, methods, doc, _self, apiver = params[0]
-        self.assertEquals(name, "bz2", "wrong name")
-        self.assertNotEquals(methods, IntPtr.Zero, "expected some actual methods here")
-        self.assertTrue(doc.startswith("The python bz2 module provides a comprehensive interface for\n"),
-                        "wrong docstring")
-        self.assertEquals(_self, IntPtr.Zero, "expected null pointer")
-        self.assertEquals(apiver, 1013, "meh, thought this would be different")
-
+        sr = StubReference(os.path.join("build", "python25.dll"))
+        try:
+            sr.Init(AddressGetterDelegate(pm.GetAddress), DataSetterDelegate(pm.SetData))
+            pi = PydImporter()
+            pi.Load("C:\\Python25\\Dlls\\bz2.pyd")
+            try:
+                name, methods, doc, _self, apiver = params[0]
+                self.assertEquals(name, "bz2", "wrong name")
+                self.assertNotEquals(methods, IntPtr.Zero, "expected some actual methods here")
+                self.assertTrue(doc.startswith("The python bz2 module provides a comprehensive interface for\n"),
+                                "wrong docstring")
+                self.assertEquals(_self, IntPtr.Zero, "expected null pointer")
+                self.assertEquals(apiver, 1013, "meh, thought this would be different")
+            finally:
+                pi.Dispose()
+        finally:
+            sr.Dispose()
 
     def testCanCreateIronPythonModuleWithMethodsAndDocstrings(self):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
         sr = StubReference(os.path.join("build", "python25.dll"))
-        sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
-        PydImporter().load("C:\\Python25\\Dlls\\bz2.pyd")
+        try:
+            sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
+            pi = PydImporter()
+            pi.Load("C:\\Python25\\Dlls\\bz2.pyd")
+            try:
+                testCode = dedent("""
+                    import bz2
+                    assert bz2.__doc__ == '''%s'''
+                    """) % bz2_doc
+                engine.Execute(testCode)
 
-        testCode = dedent("""
-            import bz2
-            assert bz2.__doc__ == '''%s'''
-            """) % bz2_doc
-        engine.Execute(testCode)
-
-        testCode = dedent("""
-            assert callable(bz2.compress)
-            assert bz2.compress.__doc__ == '''%s'''
-            assert callable(bz2.decompress)
-            assert bz2.decompress.__doc__ == '''%s'''
-            """) % (bz2_compress_doc, bz2_decompress_doc)
-        engine.Execute(testCode)
+                testCode = dedent("""
+                    assert callable(bz2.compress)
+                    assert bz2.compress.__doc__ == '''%s'''
+                    assert callable(bz2.decompress)
+                    assert bz2.decompress.__doc__ == '''%s'''
+                    """) % (bz2_compress_doc, bz2_decompress_doc)
+                engine.Execute(testCode)
+            finally:
+                pi.Dispose()
+        finally:
+            sr.Dispose()
 
 
     def testCanUseMethodsInCreatedModule(self):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
         sr = StubReference(os.path.join("build", "python25.dll"))
-        sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
-        PydImporter().load("C:\\Python25\\Dlls\\bz2.pyd")
+        try:
+            sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
+            pi = PydImporter()
+            pi.Load("C:\\Python25\\Dlls\\bz2.pyd")
+            try:
+                testCode = dedent("""
+                    import bz2
+                    assert bz2.compress(%r) == %r
+                    print "compress works"
+                    """) % (bz2_test_compress, bz2_test_decompress)
+                engine.Execute(testCode)
 
-        testCode = dedent("""
-            import bz2
-            assert bz2.compress(%r) == %r
-            print "compress works"
-            """) % (bz2_test_compress, bz2_test_decompress)
-        engine.Execute(testCode)
-
-        testCode = dedent("""
-            assert bz2.decompress(%r) == %r
-            print "omg, decompress works too"
-            """) % (bz2_test_decompress, bz2_test_compress)
-        engine.Execute(testCode)
+                testCode = dedent("""
+                    assert bz2.decompress(%r) == %r
+                    print "omg, decompress works too"
+                    """) % (bz2_test_decompress, bz2_test_compress)
+                engine.Execute(testCode)
+            finally:
+                pi.Dispose()
+        finally:
+            sr.Dispose()
 
 
 suite = unittest.TestSuite()
