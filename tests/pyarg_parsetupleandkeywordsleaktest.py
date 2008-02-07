@@ -5,7 +5,7 @@ import unittest
 from System import GC, IntPtr
 from System.Diagnostics import Process
 
-from JumPy import AddressGetterDelegate, PythonMapper, StubReference
+from JumPy import AddressGetterDelegate, DataSetterDelegate, PythonMapper, StubReference
 
 from JumPyTestUtils import PythonStubHarness
 
@@ -20,7 +20,7 @@ class PyArg_ParseTupleAndKeywordsLeakTest(unittest.TestCase):
 
         self.sr = StubReference(os.path.join("build", "python25.dll"))
         self.pm = MyPM()
-        self.sr.Init(AddressGetterDelegate(self.pm.GetAddress))
+        self.sr.Init(AddressGetterDelegate(self.pm.GetAddress), DataSetterDelegate(self.pm.SetData))
 
 
     def tearDown(self):

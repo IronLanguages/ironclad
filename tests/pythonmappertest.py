@@ -1,12 +1,50 @@
 
 import unittest
+from tests.utils.memory import intSize, OffsetPtr
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from JumPy import PythonMapper, StubReference
 
 
+def Write16Bytes(address):
+    for a in range(4):
+        ptr = OffsetPtr(address, a * intSize)
+        Marshal.WriteInt32(ptr, 1359)
+
+
+def TestWrote16Bytes(address):
+    for a in range(4):
+        ptr = OffsetPtr(address, a * intSize)
+        data = Marshal.ReadInt32(ptr)
+        if data != 1359:
+            raise AssertionError("write failed")
+
+
+
 class PythonMapperTest(unittest.TestCase):
+
+    def testDataSetterDoesNotWriteForUnrecognisedSymbols(self):
+        pm = PythonMapper()
+        pm.SetData("This_symbol_is_not_exported_either_I_sincerely_hope", IntPtr.Zero)
+
+
+    def assertDataSetterSets(self, mapperSubclass, dataSymbol, allocSize, memoryTest):
+        dataPtr = Marshal.AllocHGlobal(allocSize)
+        try:
+            mapperSubclass().SetData(dataSymbol, dataPtr)
+            memoryTest(dataPtr)
+        finally:
+            Marshal.FreeHGlobal(dataPtr)
+
+
+    def testPythonMapperFinds_PyString_Type(self):
+        class MyPM(PythonMapper):
+            def Fill_PyString_Type(self, address):
+                Write16Bytes(address)
+
+        self.assertDataSetterSets(MyPM, "PyString_Type", 16, TestWrote16Bytes)
+
 
     def testAddressGetterFailsCleanly(self):
         pm = PythonMapper()

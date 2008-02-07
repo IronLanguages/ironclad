@@ -2,14 +2,14 @@
 import os
 import unittest
 
-from JumPy import AddressGetterDelegate, StubReference
+from JumPy import AddressGetterDelegate, DataSetterDelegate, StubReference
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
 
 class StubReferenceTest(unittest.TestCase):
 
-    def testMapUnmapLibrary(self):
+    def testMapInitUnmapLibrary(self):
         self.assertEquals(StubReference.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library already mapped")
 
@@ -22,8 +22,11 @@ class StubReferenceTest(unittest.TestCase):
             calls.append(name)
             return IntPtr.Zero
 
-        sr.Init(AddressGetterDelegate(AddressGetter))
-        self.assertEquals(len(calls), 904, "did not call once per symbol")
+        def DataSetter(name, _):
+            calls.append(name)
+
+        sr.Init(AddressGetterDelegate(AddressGetter), DataSetterDelegate(DataSetter))
+        self.assertEquals(len(calls), 904, "did not call init function once per symbol")
 
         sr.Dispose()
         self.assertEquals(StubReference.GetModuleHandle("python25.dll"), IntPtr.Zero,

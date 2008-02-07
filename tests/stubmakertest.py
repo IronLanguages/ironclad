@@ -38,8 +38,14 @@ class StubMakerInitTest(unittest.TestCase):
         sm = StubMaker('tests/data/exportsymbols.dll', 'tests/data/overrides')
         self.assertEquals(sm.functions, ['Func', 'Funk', 'Jazz'],
                           'found unexpected code symbols')
-        self.assertEquals(sm.overrides, {'Jazz': '\nvoid Jazz() {\n    int I_can_has_jmp_to_elemants[%d];\n}\n'},
-                          'overrode unexpected code symbols')
+        self.assertEquals(sm.data, ['Alphabetised', 'AnotherExportedSymbol', 'ExportedSymbol'],
+                          'found unexpected data symbols')
+        self.assertEquals(sm.overrides,
+                          {'AnotherExportedSymbol':
+                           '\nchar AnotherExportedSymbol[616];\n',
+                           'Jazz':
+                           '\nvoid Jazz() {\n    int I_can_has_jmp_to_elemants[%d];\n}\n'},
+                          'overrode unexpected data symbols')
 
 
 
@@ -47,10 +53,12 @@ class StubMakerGenerateCTest(unittest.TestCase):
 
     def testGenerateCWritesBareMinimum(self):
         sm = StubMaker()
-        sm.data = ['DATA']
+        sm.data = ['DATA', 'MOREDATA']
         sm.functions = ['FUNC', 'OVERRIDE']
         sm.overrides = {'OVERRIDE':
-                        'void OVERRIDE() {\n    do something with jumptable[%d];\n}\n'}
+                        'void OVERRIDE() {\n    do something with jumptable[%d];\n}\n',
+                        'MOREDATA':
+                        'byte MOREDATA[48];\n'}
 
         expected = dedent("""\
         #include <stdio.h>
@@ -58,11 +66,13 @@ class StubMakerGenerateCTest(unittest.TestCase):
         #include <stdlib.h>
 
         void *DATA;
+        byte MOREDATA[48];
 
         void *jumptable[2];
 
-        void init(void*(*address_getter)(char*)) {
+        void init(void*(*address_getter)(char*), void(*data_setter)(char*, void*)) {
             DATA = address_getter("DATA");
+            data_setter("MOREDATA", &MOREDATA);
             jumptable[0] = address_getter("FUNC");
             jumptable[1] = address_getter("OVERRIDE");
         }
@@ -71,8 +81,8 @@ class StubMakerGenerateCTest(unittest.TestCase):
             do something with jumptable[1];
         }
         """)
-        self.assertEquals(sm.generate_c(), expected,
-                          'wrong output')
+        result = sm.generate_c()
+        self.assertEquals(result, expected, 'wrong output')
 
 
     def testGenerateCWritesVoidPointerData(self):
@@ -82,6 +92,35 @@ class StubMakerGenerateCTest(unittest.TestCase):
         expected = "void *Awesome;\nvoid *Awesome_to_the_max;\n"
         self.assertNotEquals(sm.generate_c().find(expected), -1,
                              'could not find expected output')
+
+
+    def testGenerateCWritesOverrideData(self):
+        sm = StubMaker()
+        sm.data = ['Reason', 'Ultima_ratio_regum']
+        sm.overrides = {'Reason':
+                        'char Reason[32];\n',
+                        'Ultima_ratio_regum':
+                        'char Ultima_ratio_regum[192];\n'}
+
+        result = sm.generate_c()
+
+        expectedSnippets = (
+            'char Reason[32];\n',
+            'char Ultima_ratio_regum[192];\n',
+            '    data_setter("Reason", &Reason);\n',
+            '    data_setter("Ultima_ratio_regum", &Ultima_ratio_regum);\n',
+        )
+        for s in expectedSnippets:
+            self.assertNotEquals(result.find(s), -1, 'could not find expected code')
+
+        unexpectedSnippets = (
+            'void *Reason;\n',
+            'void *Ultima_ratio_regum;\n',
+            '    Reason = address_getter("Reason");\n',
+            '    Ultima_ratio_regum = address_getter("Ultima_ratio_regum");\n',
+        )
+        for s in unexpectedSnippets:
+            self.assertEquals(result.find(s), -1, 'found unexpected code')
 
 
     def testGenerateCWritesJumpTableSize(self):
@@ -100,7 +139,7 @@ class StubMakerGenerateCTest(unittest.TestCase):
         sm.overrides = {'b': '%d', 'e': '%d'}
 
         expected = dedent("""\
-        void init(void*(*address_getter)(char*)) {
+        void init(void*(*address_getter)(char*), void(*data_setter)(char*, void*)) {
             jumptable[0] = address_getter("a");
             jumptable[1] = address_getter("b");
             jumptable[2] = address_getter("c");
