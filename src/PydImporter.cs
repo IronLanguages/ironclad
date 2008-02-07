@@ -1,6 +1,7 @@
 
 using System;
 using System.IO;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace JumPy
@@ -14,19 +15,37 @@ namespace JumPy
     {
         [DllImport("kernel32.dll")]
         public static extern IntPtr LoadLibrary(string s);
-        
+        [DllImport("kernel32.dll")]
+        public static extern bool FreeLibrary(IntPtr l);
         [DllImport("kernel32.dll")]
         public static extern IntPtr GetProcAddress(IntPtr l, string s);
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetModuleHandle(string s);
         
-        public void load(string path)
+        private List<IntPtr> handles;
+        
+        public PydImporter()
+        {
+            this.handles = new List<IntPtr>();
+        }
+        
+        public void Load(string path)
         {
             IntPtr l = LoadLibrary(path);
+            this.handles.Add(l);
             string funcName = "init" + Path.GetFileNameWithoutExtension(path);
             IntPtr funcPtr = GetProcAddress(l, funcName);
             PydInit_Delegate d = (PydInit_Delegate)Marshal.GetDelegateForFunctionPointer(funcPtr, typeof(PydInit_Delegate));
             d();
         }
-    
+        
+        public void Dispose()
+        {
+            foreach (IntPtr l in this.handles)
+            {
+                FreeLibrary(l);
+            }
+        }
     }
 
 

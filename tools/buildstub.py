@@ -1,6 +1,5 @@
 
 import os
-import subprocess
 import sys
 
 from tools.stubmaker import StubMaker
@@ -35,7 +34,7 @@ def main():
     generateOutput("%s.c" % (filename, ), sm.generate_c())
     generateOutput("%s.asm" % (filename, ), sm.generate_asm())
     generateOutput("Makefile", sm.generate_makefile(filename))
-    subprocess.call(["make"])
+    os.spawnl(os.P_WAIT, "make", "make")
 
 
 if __name__ == "__main__":

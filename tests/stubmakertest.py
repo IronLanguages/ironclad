@@ -9,29 +9,20 @@ from tools.stubmaker import StubMaker
 
 class StubMakerInitTest(unittest.TestCase):
 
-    def testInitDetectsEnvironment(self):
+    def testInitEmpty(self):
         sm = StubMaker()
-        if sys.platform.startswith('linux'):
-            self.assertEquals(sm.platform, 'linux', 'wrong platform')
-        elif sys.platform == 'win32':
-            self.assertEquals(sm.platform, 'win32', 'wrong platform')
-        else:
-            self.fail('unknown environment')
         self.assertEquals(sm.data, [], 'bad init')
         self.assertEquals(sm.functions, [], 'bad init')
         self.assertEquals(sm.overrides, {}, 'bad init')
 
-    def testInitCollectsData(self):
+
+    def testInitCollects(self):
         sm = StubMaker('tests/data/exportsymbols.dll')
         self.assertEquals(sm.data, ['Alphabetised', 'AnotherExportedSymbol', 'ExportedSymbol'],
                           'found unexpected data symbols')
-
-
-    def testInitCollectsFunctions(self):
-        sm = StubMaker('tests/data/exportsymbols.dll')
         self.assertEquals(sm.functions, ['Func', 'Funk', 'Jazz'],
                           'found unexpected code symbols')
-        self.assertEquals(sm.overrides, {}, 'overrode unexpected code symbols')
+        self.assertEquals(sm.overrides, {}, 'overrode unexpected symbols')
 
 
     def testInitCollectsOverrides(self):
@@ -46,7 +37,6 @@ class StubMakerInitTest(unittest.TestCase):
                            'Jazz':
                            '\nvoid Jazz() {\n    int I_can_has_jmp_to_elemants[%d];\n}\n'},
                           'overrode unexpected data symbols')
-
 
 
 class StubMakerGenerateCTest(unittest.TestCase):
