@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from tests.utils.runtest import makesuite, run
 
 
 def GetPexportsLines(path):
@@ -71,10 +72,7 @@ class Python25StubTest(unittest.TestCase):
                           "build product wrong")
 
 
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
-suite.addTest(loader.loadTestsFromTestCase(BuildStubTest))
-suite.addTest(loader.loadTestsFromTestCase(Python25StubTest))
+suite = makesuite(BuildStubTest, Python25StubTest)
 
 if __name__ == '__main__':
-    unittest.TextTestRunner().run(suite)
+    run(suite)

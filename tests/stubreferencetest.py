@@ -1,6 +1,7 @@
 
 import os
 import unittest
+from tests.utils.runtest import makesuite, run
 
 from JumPy import AddressGetterDelegate, DataSetterDelegate, Kernel32, StubReference
 from System import IntPtr
@@ -34,10 +35,7 @@ class StubReferenceTest(unittest.TestCase):
 
 
 
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
-suite.addTest(loader.loadTestsFromTestCase(StubReferenceTest))
-
+suite = makesuite(StubReferenceTest)
 if __name__ == '__main__':
-    unittest.TextTestRunner().run(suite)
+    run(suite)
 

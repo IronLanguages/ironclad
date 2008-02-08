@@ -1,6 +1,7 @@
 
 import unittest
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
+from tests.utils.runtest import makesuite, run
 
 from System import Array, Int32, IntPtr
 from System.Collections.Generic import Dictionary
@@ -423,11 +424,11 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
 
 
 
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
-suite.addTest(loader.loadTestsFromTestCase(Python25MapperTest))
-suite.addTest(loader.loadTestsFromTestCase(Python25Mapper_Py_InitModule4_Test))
-suite.addTest(loader.loadTestsFromTestCase(Python25Mapper_PyArg_ParseTupleAndKeywords_Test))
+suite = makesuite(
+    Python25MapperTest,
+    Python25Mapper_Py_InitModule4_Test,
+    Python25Mapper_PyArg_ParseTupleAndKeywords_Test
+)
 
 if __name__ == '__main__':
-    unittest.TextTestRunner().run(suite)
+    run(suite)

@@ -2,6 +2,7 @@
 import os
 import sys
 import unittest
+from tests.utils.runtest import makesuite, run
 
 from System import Console, IntPtr
 from System.IO import StringWriter
@@ -34,9 +35,7 @@ class PydImporterTest(unittest.TestCase):
                           "failed to unload on dispose")
 
 
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
-suite.addTest(loader.loadTestsFromTestCase(PydImporterTest))
+suite = makesuite(PydImporterTest)
 
 if __name__ == '__main__':
-    unittest.TextTestRunner().run(suite)
+    run(suite)

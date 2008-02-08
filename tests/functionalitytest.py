@@ -2,6 +2,7 @@
 import os
 import unittest
 from textwrap import dedent
+from tests.utils.runtest import makesuite, run
 
 from System import IntPtr
 from JumPy import (
@@ -116,11 +117,9 @@ class FunctionalityTest(unittest.TestCase):
             sr.Dispose()
 
 
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
-suite.addTest(loader.loadTestsFromTestCase(FunctionalityTest))
+suite = makesuite(FunctionalityTest)
 
 if __name__ == '__main__':
-    unittest.TextTestRunner().run(suite)
+    run(suite)
 
 

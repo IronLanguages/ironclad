@@ -2,6 +2,7 @@
 import unittest
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.memory import intSize, ptrSize, OffsetPtr
+from tests.utils.runtest import makesuite, run
 
 from System import Int32, IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -101,13 +102,11 @@ class SizedStringArgWriterTest(ArgWriterWriteTest):
         self.assertSizedStringArgWriterWrite(s, l)
 
 
-
-
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
-suite.addTest(loader.loadTestsFromTestCase(ArgWriterSizeTest))
-suite.addTest(loader.loadTestsFromTestCase(IntArgWriterTest))
-suite.addTest(loader.loadTestsFromTestCase(SizedStringArgWriterTest))
+suite = makesuite(
+    ArgWriterSizeTest,
+    IntArgWriterTest,
+    SizedStringArgWriterTest
+)
 
 if __name__ == '__main__':
-    unittest.TextTestRunner().run(suite)
+    run(suite)

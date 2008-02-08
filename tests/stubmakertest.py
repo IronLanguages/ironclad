@@ -1,6 +1,7 @@
 
-import unittest
 import sys
+import unittest
+from tests.utils.runtest import makesuite, run
 
 from textwrap import dedent
 
@@ -197,12 +198,12 @@ class StubMakerGenerateMakefileTest(unittest.TestCase):
                           "wrong output")
 
 
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
-suite.addTest(loader.loadTestsFromTestCase(StubMakerInitTest))
-suite.addTest(loader.loadTestsFromTestCase(StubMakerGenerateCTest))
-suite.addTest(loader.loadTestsFromTestCase(StubMakerGenerateAsmTest))
-suite.addTest(loader.loadTestsFromTestCase(StubMakerGenerateMakefileTest))
+suite = makesuite(
+    StubMakerInitTest,
+    StubMakerGenerateCTest,
+    StubMakerGenerateAsmTest,
+    StubMakerGenerateMakefileTest
+)
 
 if __name__ == '__main__':
-    unittest.TextTestRunner().run(suite)
+    run(suite)

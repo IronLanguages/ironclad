@@ -1,7 +1,10 @@
 
+import tests.leaktests.loadassemblies
+
 import os
 import unittest
 from tests.utils.memory import ptrSize, OffsetPtr
+from tests.utils.runtest import makesuite, run
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -63,9 +66,7 @@ class PyArg_ParseTupleAndKeywordsTest(unittest.TestCase):
 
 
 
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
-suite.addTest(loader.loadTestsFromTestCase(PyArg_ParseTupleAndKeywordsTest))
+suite = makesuite(PyArg_ParseTupleAndKeywordsTest)
 
 if __name__ == '__main__':
-    unittest.TextTestRunner().run(suite)
+    run(suite)

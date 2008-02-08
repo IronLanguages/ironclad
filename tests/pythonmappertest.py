@@ -1,6 +1,7 @@
 
 import unittest
 from tests.utils.memory import intSize, OffsetPtr
+from tests.utils.runtest import makesuite, run
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -137,9 +138,7 @@ class PythonMapperTest(unittest.TestCase):
 
 
 
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
-suite.addTest(loader.loadTestsFromTestCase(PythonMapperTest))
+suite = makesuite(PythonMapperTest)
 
 if __name__ == '__main__':
-    unittest.TextTestRunner().run(suite)
+    run(suite)
