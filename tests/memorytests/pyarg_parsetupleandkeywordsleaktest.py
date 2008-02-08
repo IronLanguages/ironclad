@@ -1,5 +1,5 @@
 
-from tests.leaktests.leaktestcase import LeakTestCase, RunLeakTest
+from tests.memorytests.leaktestcase import LeakTestCase, RunLeakTest
 
 from JumPy import PythonMapper
 from JumPyTestUtils import PythonStubHarness

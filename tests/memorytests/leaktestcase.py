@@ -1,5 +1,5 @@
 
-import tests.leaktests.loadassemblies
+import tests.memorytests.loadassemblies
 
 import os
 import sys
