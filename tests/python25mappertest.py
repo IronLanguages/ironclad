@@ -8,7 +8,7 @@ from System.Collections.Generic import Dictionary
 from System.Reflection import BindingFlags
 from System.Runtime.InteropServices import Marshal
 from JumPy import (
-    ArgWriter, CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate,
+    ArgWriter, CPyMarshal, CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate,
     IntArgWriter, METH, PyMethodDef, Python25Mapper, SizedStringArgWriter, StubReference
 )
 from IronPython.Hosting import PythonEngine
@@ -123,7 +123,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         try:
             Marshal.StructureToPtr(method, methods, False)
             terminator = IntPtr(methods.ToInt32() + size)
-            Marshal.WriteInt64(terminator, 0)
+            CPyMarshal.WriteInt(terminator, 0)
 
             modulePtr = mapper.Py_InitModule4(
                 "test_module",
@@ -290,9 +290,9 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
         current = kwlistPtr
         for s in kwlist:
             addressWritten = Marshal.StringToHGlobalAnsi(s)
-            Marshal.WriteIntPtr(current, addressWritten)
+            CPyMarshal.WritePtr(current, addressWritten)
             current = IntPtr(current.ToInt32() + ptrsize)
-        Marshal.WriteIntPtr(current, IntPtr.Zero)
+        CPyMarshal.WritePtr(current, IntPtr.Zero)
 
         try:
             # actual test

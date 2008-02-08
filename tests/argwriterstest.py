@@ -1,7 +1,7 @@
 
 import unittest
 from tests.utils.allocators import GetAllocatingTestAllocator
-from tests.utils.memory import intSize, ptrSize, OffsetPtr
+from tests.utils.memory import OffsetPtr
 from tests.utils.runtest import makesuite, run
 
 from System import Int32, IntPtr
@@ -9,7 +9,7 @@ from System.Runtime.InteropServices import Marshal
 
 from IronPython.Hosting import PythonEngine
 
-from JumPy import IntArgWriter, Python25Mapper, SizedStringArgWriter
+from JumPy import CPyMarshal, IntArgWriter, Python25Mapper, SizedStringArgWriter
 
 
 def GetSetter(item, attr, value):
@@ -38,26 +38,26 @@ class ArgWriterWriteTest(unittest.TestCase):
 
     def assertWritesIntToAddress(self, writer, writeValue, expectedValue, ptrsAddress, dstAddress):
         writer.Write(ptrsAddress, writeValue)
-        self.assertEquals(Marshal.ReadInt32(dstAddress), expectedValue,
+        self.assertEquals(CPyMarshal.ReadInt(dstAddress), expectedValue,
                           "int write incorrect")
 
     def assertWritesStringToAddress(self, writer, string, ptrsAddress, dstAddress):
         writer.Write(ptrsAddress, string)
         expectedBytes = string.encode("utf-8")
-        ptr = Marshal.ReadIntPtr(dstAddress)
+        ptr = CPyMarshal.ReadPtr(dstAddress)
 
         for b in expectedBytes:
-            self.assertEquals(Marshal.ReadByte(ptr), ord(b), "mismatched character")
+            self.assertEquals(CPyMarshal.ReadByte(ptr), ord(b), "mismatched character")
             ptr = OffsetPtr(ptr, 1)
-        self.assertEquals(Marshal.ReadByte(ptr), 0, "missing terminator")
+        self.assertEquals(CPyMarshal.ReadByte(ptr), 0, "missing terminator")
 
 
 class IntArgWriterTest(ArgWriterWriteTest):
 
     def testIntArgWriterWrite(self):
-        destPtrs = Marshal.AllocHGlobal(ptrSize * 4)
-        dest = Marshal.AllocHGlobal(intSize)
-        Marshal.WriteIntPtr(OffsetPtr(destPtrs, (2 * ptrSize)), dest)
+        destPtrs = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 4)
+        dest = Marshal.AllocHGlobal(CPyMarshal.IntSize)
+        CPyMarshal.WritePtr(OffsetPtr(destPtrs, (2 * CPyMarshal.PtrSize)), dest)
         try:
             self.assertWritesIntToAddress(
                 IntArgWriter(2), 12345, 12345, destPtrs, dest)
@@ -69,11 +69,11 @@ class IntArgWriterTest(ArgWriterWriteTest):
 class SizedStringArgWriterTest(ArgWriterWriteTest):
 
     def assertSizedStringArgWriterWrite(self, string, length):
-        destPtrs = Marshal.AllocHGlobal(ptrSize * 4)
-        destStr = Marshal.AllocHGlobal(ptrSize)
-        Marshal.WriteIntPtr(OffsetPtr(destPtrs, (2 * ptrSize)), destStr)
-        destInt = Marshal.AllocHGlobal(intSize)
-        Marshal.WriteIntPtr(OffsetPtr(destPtrs, (3 * ptrSize)), destInt)
+        destPtrs = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 4)
+        destStr = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
+        CPyMarshal.WritePtr(OffsetPtr(destPtrs, (2 * CPyMarshal.PtrSize)), destStr)
+        destInt = Marshal.AllocHGlobal(CPyMarshal.IntSize)
+        CPyMarshal.WritePtr(OffsetPtr(destPtrs, (3 * CPyMarshal.PtrSize)), destInt)
         frees = []
         tempStrings = []
         mapper = Python25Mapper(PythonEngine(), GetAllocatingTestAllocator([], frees))

@@ -52,7 +52,7 @@ namespace JumPy
         Store(object obj)
         {
             IntPtr ptr = this.allocator.Allocate(Marshal.SizeOf(typeof(IntPtr)));
-            Marshal.WriteInt32(ptr, 1);
+            CPyMarshal.WriteInt(ptr, 1);
             this.ptrmap[ptr] = obj;
             return ptr;
         }
@@ -68,7 +68,7 @@ namespace JumPy
         {
             if (this.ptrmap.ContainsKey(ptr))
             {
-                return Marshal.ReadInt32(ptr);
+                return CPyMarshal.ReadInt(ptr);
             }
             else
             {
@@ -81,8 +81,8 @@ namespace JumPy
         {
             if (this.ptrmap.ContainsKey(ptr))
             {
-                int count = Marshal.ReadInt32(ptr);
-                Marshal.WriteInt32(ptr, count + 1);
+                int count = CPyMarshal.ReadInt(ptr);
+                CPyMarshal.WriteInt(ptr, count + 1);
             }
             else
             {
@@ -95,14 +95,14 @@ namespace JumPy
         {
             if (this.ptrmap.ContainsKey(ptr))
             {
-                int count = Marshal.ReadInt32(ptr);
+                int count = CPyMarshal.ReadInt(ptr);
                 if (count == 1)
                 {
                     this.Delete(ptr);
                 }
                 else
                 {
-                    Marshal.WriteInt32(ptr, count - 1);
+                    CPyMarshal.WriteInt(ptr, count - 1);
                 }
             }
             else
@@ -225,7 +225,7 @@ namespace JumPy
             IntPtr currentKw = kwlist;
             while (Marshal.ReadIntPtr(currentKw) != IntPtr.Zero)
             {
-                IntPtr addressToRead = Marshal.ReadIntPtr(currentKw);
+                IntPtr addressToRead = CPyMarshal.ReadPtr(currentKw);
                 string thisKey = Marshal.PtrToStringAnsi(addressToRead);
                 if (actualKwargs.ContainsKey(thisKey))
                 {

@@ -3,13 +3,13 @@ import tests.memorytests.loadassemblies
 
 import os
 import unittest
-from tests.utils.memory import ptrSize, OffsetPtr
+from tests.utils.memory import OffsetPtr
 from tests.utils.runtest import makesuite, run
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from JumPy import AddressGetterDelegate, DataSetterDelegate, PythonMapper, StubReference
+from JumPy import AddressGetterDelegate, CPyMarshal, DataSetterDelegate, PythonMapper, StubReference
 
 from JumPyTestUtils import PythonStubHarness
 
@@ -40,8 +40,8 @@ class PyArg_ParseTupleAndKeywordsTest(unittest.TestCase):
 
         argPtr = params[4]
         for i, ptr in enumerate(self.varargs):
-            thisArgAddressPtr = OffsetPtr(argPtr, ptrSize * i)
-            thisArgAddress = Marshal.ReadIntPtr(thisArgAddressPtr)
+            thisArgAddressPtr = OffsetPtr(argPtr, CPyMarshal.PtrSize * i)
+            thisArgAddress = CPyMarshal.ReadPtr(thisArgAddressPtr)
             self.assertEquals(thisArgAddress, ptr, "error marshalling varargs")
 
 

@@ -1,14 +1,16 @@
 
 import os
 import shutil
-import subprocess
 import tempfile
 import unittest
+
+from tests.utils.process import spawn
 from tests.utils.runtest import makesuite, run
 
+from tools.stubmaker import popen
 
 def GetPexportsLines(path):
-    stream = os.popen("pexports %s" % path.replace('/cygdrive/c', 'c:'))
+    stream = popen("pexports", path.replace('/cygdrive/c', 'c:'))
     try:
         return set(map(lambda s: s.strip(), stream.readlines()))
     finally:
@@ -18,14 +20,11 @@ def GetPexportsLines(path):
 class BuildStubTest(unittest.TestCase):
 
     def testBuildStubWithBadParams(self):
-        retVal = subprocess.call([
-            "python", "tools/buildstub.py"])
+        retVal = spawn("ipy", "tools/buildstub.py")
         self.assertEquals(retVal, 1, "buildstub didn't bail for 0 param")
-        retVal = subprocess.call([
-            "python", "tools/buildstub.py", "one"])
+        retVal = spawn("ipy", "tools/buildstub.py", "one")
         self.assertEquals(retVal, 1, "buildstub didn't bail for 1 param")
-        retVal = subprocess.call([
-            "python", "tools/buildstub.py", "one", "two", "three", "four"])
+        retVal = spawn("ipy", "tools/buildstub.py", "one", "two", "three", "four")
         self.assertEquals(retVal, 1, "buildstub didn't bail for 4 param")
 
 
@@ -35,13 +34,11 @@ class BuildStubTest(unittest.TestCase):
         tempDir = tempfile.gettempdir()
         ourTempDir = os.path.join(tempDir, 'buildstubtest')
 
-        def testGenerates(extraArgs):
+        def testGenerates(*extraArgs):
             if os.path.exists(ourTempDir):
                 shutil.rmtree(ourTempDir)
 
-            args = ["python", "tools/buildstub.py"]
-            args.extend(extraArgs)
-            retVal = subprocess.call(args)
+            retVal = spawn("ipy", "tools/buildstub.py", *extraArgs)
             self.assertEquals(retVal, 0, "process ended badly")
             outputPath = os.path.join(ourTempDir, "exportsymbols.dll")
             self.assertTrue(os.path.exists(outputPath))
@@ -52,8 +49,8 @@ class BuildStubTest(unittest.TestCase):
             inputLines |= set(["init", "jumptable DATA"])
             self.assertEquals(outputLines, inputLines, "bad output symbols")
 
-        testGenerates([inputPath, ourTempDir])
-        testGenerates([inputPath, ourTempDir, overridePath])
+        testGenerates(inputPath, ourTempDir)
+        testGenerates(inputPath, ourTempDir, overridePath)
 
 
 class Python25StubTest(unittest.TestCase):

@@ -8,7 +8,7 @@ from System import Console, IntPtr
 from System.IO import StringWriter
 from System.Runtime.InteropServices import Marshal
 
-from JumPy import PydImporter, Kernel32
+from JumPy import CPyMarshal, PydImporter, Kernel32
 
 
 class PydImporterTest(unittest.TestCase):
@@ -17,7 +17,7 @@ class PydImporterTest(unittest.TestCase):
         l = Kernel32.LoadLibrary("tests\\data\\setvalue.pyd")
         try:
             pValue = Kernel32.GetProcAddress(l, "value")
-            value = Marshal.ReadInt32(pValue)
+            value = CPyMarshal.ReadInt(pValue)
             self.assertEquals(value, 1, "bad setup")
 
             pi = PydImporter()
@@ -27,7 +27,7 @@ class PydImporterTest(unittest.TestCase):
             # only the PydImporter should still have a reference to it
             Kernel32.FreeLibrary(l)
 
-        value = Marshal.ReadInt32(pValue)
+        value = CPyMarshal.ReadInt(pValue)
         self.assertEquals(value, 2, "PydImporter didn't call correct function")
 
         pi.Dispose()

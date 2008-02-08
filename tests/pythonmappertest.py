@@ -1,22 +1,22 @@
 
 import unittest
-from tests.utils.memory import intSize, OffsetPtr
+from tests.utils.memory import OffsetPtr
 from tests.utils.runtest import makesuite, run
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from JumPy import PythonMapper, StubReference
+from JumPy import CPyMarshal, PythonMapper, StubReference
 
 
 def Write16Bytes(address):
     for a in range(4):
-        ptr = OffsetPtr(address, a * intSize)
+        ptr = OffsetPtr(address, a * CPyMarshal.IntSize)
         Marshal.WriteInt32(ptr, 1359)
 
 
 def TestWrote16Bytes(address):
     for a in range(4):
-        ptr = OffsetPtr(address, a * intSize)
+        ptr = OffsetPtr(address, a * CPyMarshal.IntSize)
         data = Marshal.ReadInt32(ptr)
         if data != 1359:
             raise AssertionError("write failed")
