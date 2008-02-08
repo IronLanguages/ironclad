@@ -7,12 +7,12 @@ class LeakTest(unittest.TestCase):
     def testLeaks(self):
         print "\nRunning separate-process tests:"
         failures = []
-        path = os.path.join("tests", "leaktests")
+        path = os.path.join("tests", "memorytests")
         for f in os.listdir(path):
             if f.endswith("test.py"):
                 if os.spawnl(os.P_WAIT, "ipy", "ipy", os.path.join(path, f)):
                     failures.append(f)
-        self.assertEquals(failures, [], "leak tests failed:\n%s" % '\n'.join(failures))
+        self.assertEquals(failures, [], "separate-process tests failed:\n%s" % '\n'.join(failures))
 
 
 suite = makesuite(LeakTest)
