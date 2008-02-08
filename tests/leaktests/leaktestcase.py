@@ -1,13 +1,10 @@
 
-import clr
-clr.AddReferenceToFile("build/jumpy.dll")
-clr.AddReferenceToFile("tests/data/jumpytestutils.dll")
-clr.AddReference("IronPython.dll")
-clr.AddReference("IronMath.dll")
+import tests.leaktests.loadassemblies
 
 import os
 import sys
 import unittest
+from tests.utils.runtest import makesuite, run
 
 from System import GC, IntPtr
 from System.Diagnostics import Process
@@ -48,8 +45,5 @@ class LeakTestCase(unittest.TestCase):
 
 
 def RunLeakTest(testCase):
-    suite = unittest.TestSuite()
-    loader = unittest.TestLoader()
-    suite.addTest(loader.loadTestsFromTestCase(testCase))
-    if not unittest.TextTestRunner().run(suite).wasSuccessful():
+    if not run(makesuite(testCase)).wasSuccessful():
         sys.exit(-1)

@@ -1,5 +1,6 @@
 
 import unittest
+from tests.utils.runtest import makesuite, run
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -21,9 +22,7 @@ class Python25StructsTest(unittest.TestCase):
         self.assertEquals(pmd.ml_doc, "jennifer's docs", "field not remembered")
 
 
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
-suite.addTest(loader.loadTestsFromTestCase(Python25StructsTest))
+suite = makesuite(Python25StructsTest)
 
 if __name__ == '__main__':
-    unittest.TextTestRunner().run(suite)
+    run(suite)
