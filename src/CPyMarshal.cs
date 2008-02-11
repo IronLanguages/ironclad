@@ -7,6 +7,16 @@ namespace JumPy
 	{
 		public const int PtrSize = 4;
 		public const int IntSize = 4;
+
+        public static IntPtr Offset(IntPtr start, Int32 offset)
+        {
+            return (IntPtr)(start.ToInt32() + offset);
+        }
+
+        public static IntPtr Offset(IntPtr start, IntPtr offset)
+        {
+            return (IntPtr)(start.ToInt32() + offset.ToInt32());
+        }
 		
 		public static void WritePtr(IntPtr address, IntPtr value)
 		{

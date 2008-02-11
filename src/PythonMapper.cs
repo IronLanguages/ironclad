@@ -22,11 +22,19 @@ namespace JumPy
         {
             return IntPtr.Zero;
         }
+        
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate IntPtr PyString_FromStringAndSize_Delegate(IntPtr stringPtr, int size);
         public virtual IntPtr PyString_FromStringAndSize(IntPtr stringPtr, int size)
         {
             return IntPtr.Zero;
+        }
+        
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int _PyString_Resize_Delegate(IntPtr stringPtrPtr, int size);
+        public virtual int _PyString_Resize(IntPtr stringPtrPtr, int size)
+        {
+            return -1;
         }
         
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -42,6 +50,25 @@ namespace JumPy
         {
             return 0;
         }
+        
+        
+		        
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public delegate IntPtr PyEval_SaveThread_Delegate();
+		public virtual IntPtr PyEval_SaveThread()
+		{
+			return IntPtr.Zero;
+        }
+        
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void PyEval_RestoreThread_Delegate(IntPtr _);
+        public virtual void PyEval_RestoreThread(IntPtr _)
+        {
+            ;
+        }
+        
+        
+        
         
         public IntPtr GetAddress(string name)
         {
@@ -61,6 +88,9 @@ namespace JumPy
                 case "PyString_FromStringAndSize":
                     this.map[name] = new PyString_FromStringAndSize_Delegate(this.PyString_FromStringAndSize);
                     break;
+                case "_PyString_Resize":
+                    this.map[name] = new _PyString_Resize_Delegate(this._PyString_Resize);
+                    break;
                 case "PyModule_AddObject":
                     this.map[name] = new PyModule_AddObject_Delegate(this.PyModule_AddObject);
                     break;
@@ -68,6 +98,12 @@ namespace JumPy
                     this.map[name] = new PyArg_ParseTupleAndKeywords_Delegate(this.PyArg_ParseTupleAndKeywords);
                     break;
             
+            	case "PyEval_SaveThread":
+                    this.map[name] = new PyEval_SaveThread_Delegate(this.PyEval_SaveThread);
+                    break;
+            	case "PyEval_RestoreThread":
+                    this.map[name] = new PyEval_RestoreThread_Delegate(this.PyEval_RestoreThread);
+                    break;
             
                 default:
                     return IntPtr.Zero;

@@ -7,6 +7,8 @@ using System.Text;
 using IronPython.Hosting;
 using IronPython.Runtime;
 
+using JumPy.Structs;
+
 namespace JumPy
 {
     public interface IAllocator
@@ -300,6 +302,31 @@ namespace JumPy
             this.SetArgValues(argsToWrite, argWriters, outPtr);
             return 1;
         }
+        
+        public override IntPtr
+        PyString_FromStringAndSize(IntPtr stringData, int length)
+        {
+        	if (stringData != IntPtr.Zero)
+        	{
+        		throw new NotImplementedException("PyString_FromStringAndSize ignores initial string value");
+        	}
+        	
+        	int size = Marshal.SizeOf(typeof(PyStringObject)) + length;
+        	IntPtr data = this.allocator.Allocate(size);
+        	
+        	PyStringObject s = new PyStringObject();
+        	s.ob_refcnt = 1;
+        	s.ob_type = IntPtr.Zero;
+        	s.ob_size = (uint)length;
+        	s.ob_shash = -1;
+        	s.ob_sstate = 0;
+        	Marshal.StructureToPtr(s, data, false);
+        	
+        	IntPtr terminator = CPyMarshal.Offset(data, size - 1);
+        	CPyMarshal.WriteByte(terminator, 0);
+        	return data;
+        }
+        
     }
 
 }

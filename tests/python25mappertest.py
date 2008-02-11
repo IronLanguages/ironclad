@@ -1,6 +1,7 @@
 
 import unittest
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
+from tests.utils.memory import OffsetPtr
 from tests.utils.runtest import makesuite, run
 
 from System import Array, Int32, IntPtr
@@ -9,8 +10,9 @@ from System.Reflection import BindingFlags
 from System.Runtime.InteropServices import Marshal
 from JumPy import (
     ArgWriter, CPyMarshal, CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate,
-    IntArgWriter, METH, PyMethodDef, Python25Mapper, SizedStringArgWriter, StubReference
+    IntArgWriter, Python25Mapper, SizedStringArgWriter, StubReference
 )
+from JumPy.Structs import METH, PyMethodDef, PyStringObject
 from IronPython.Hosting import PythonEngine
 
 
@@ -43,13 +45,13 @@ class Python25MapperTest(unittest.TestCase):
         frees = []
         allocs = []
         engine = PythonEngine()
-        allocator = GetAllocatingTestAllocator(allocs, frees)
-        mapper = Python25Mapper(engine, allocator)
+        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, frees))
 
         obj1 = object()
         self.assertEquals(allocs, [], "unexpected allocations")
         ptr = mapper.Store(obj1)
-        self.assertEquals(allocs, [ptr], "unexpected allocations")
+        self.assertEquals(len(allocs), 1, "unexpected number of allocations")
+        self.assertEquals(allocs[0][0], ptr, "unexpected result")
         self.assertNotEquals(ptr, IntPtr.Zero, "did not store reference")
         self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
 
@@ -420,14 +422,36 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
                 self.assertFalse(writer.called, "wrote inappropriately")
 
 
+class Python25Mapper_PyString_FromStringAndSize_Test(unittest.TestCase):
 
+    def testCreateEmptyString(self):
+        allocs = []
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+
+        data = mapper.PyString_FromStringAndSize(IntPtr.Zero, 365)
+        try:
+            baseSize = Marshal.SizeOf(PyStringObject)
+            self.assertEquals(allocs, [(data, 365 + baseSize)])
+            stringObject = Marshal.PtrToStructure(data, PyStringObject)
+            self.assertEquals(stringObject.ob_refcnt, 1, "unexpected refcount")
+            self.assertEquals(stringObject.ob_type, IntPtr.Zero, "unexpected type")
+            self.assertEquals(stringObject.ob_size, 365, "unexpected ob_size")
+            self.assertEquals(stringObject.ob_shash, -1, "unexpected useless-field")
+            self.assertEquals(stringObject.ob_sstate, 0, "unexpected useless-field")
+            strDataPtr = OffsetPtr(data, Marshal.OffsetOf(PyStringObject, "ob_sval"))
+            terminatorPtr = OffsetPtr(strDataPtr, 365)
+            self.assertEquals(Marshal.ReadByte(terminatorPtr), 0, "string not terminated")
+        finally:
+            Marshal.FreeHGlobal(data)
 
 
 
 suite = makesuite(
     Python25MapperTest,
     Python25Mapper_Py_InitModule4_Test,
-    Python25Mapper_PyArg_ParseTupleAndKeywords_Test
+    Python25Mapper_PyArg_ParseTupleAndKeywords_Test,
+    Python25Mapper_PyString_FromStringAndSize_Test,
 )
 
 if __name__ == '__main__':

@@ -15,6 +15,16 @@ class CPyMarshalTest_32(unittest.TestCase):
         self.assertEquals(CPyMarshal.PtrSize, 4, "wrong")
 
 
+    def testOffset(self):
+        self.assertEquals(CPyMarshal.Offset(IntPtr(354), 123), IntPtr(477), "wrong")
+        self.assertEquals(CPyMarshal.Offset(IntPtr(354), 0), IntPtr(354), "wrong")
+        self.assertEquals(CPyMarshal.Offset(IntPtr(354), -123), IntPtr(231), "wrong")
+
+        self.assertEquals(CPyMarshal.Offset(IntPtr(354), IntPtr(123)), IntPtr(477), "wrong")
+        self.assertEquals(CPyMarshal.Offset(IntPtr(354), IntPtr(0)), IntPtr(354), "wrong")
+
+
+
     def testWritePtr(self):
         data = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
         try:
