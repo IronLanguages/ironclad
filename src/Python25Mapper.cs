@@ -13,16 +13,22 @@ namespace JumPy
 {
     public interface IAllocator
     {
-        IntPtr Allocate(int bytes);
+        IntPtr Alloc(int bytes);
+        IntPtr Realloc(IntPtr old, int bytes);
         void Free(IntPtr address);
     }
     
     public class HGlobalAllocator : IAllocator
     {
         public IntPtr 
-        Allocate(int bytes)
+        Alloc(int bytes)
         {
             return Marshal.AllocHGlobal(bytes);
+        }
+        public IntPtr
+        Realloc(IntPtr old, int bytes)
+        {
+        	return Marshal.ReAllocHGlobal(old, (IntPtr)bytes);
         }
         public void 
         Free(IntPtr address)
@@ -31,12 +37,19 @@ namespace JumPy
         }
     }
 
+	public enum UnmanagedDataMarker
+	{
+		PyStringObject,
+	}
+
+
     public class Python25Mapper : PythonMapper
     {
         private PythonEngine engine;
         private Dictionary<IntPtr, object> ptrmap;
         private List<IntPtr> tempptrs;
         private IAllocator allocator;
+        private Exception _lastException;
         
         public Python25Mapper(PythonEngine eng): this(eng, new HGlobalAllocator())
         {            
@@ -48,20 +61,42 @@ namespace JumPy
             this.allocator = alloc;
             this.ptrmap = new Dictionary<IntPtr, object>();
             this.tempptrs = new List<IntPtr>();
+            this._lastException = null;
         }
         
         public IntPtr 
         Store(object obj)
         {
-            IntPtr ptr = this.allocator.Allocate(Marshal.SizeOf(typeof(IntPtr)));
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(IntPtr)));
             CPyMarshal.WriteInt(ptr, 1);
             this.ptrmap[ptr] = obj;
             return ptr;
         }
         
+        private void
+        StoreUnmanagedData(IntPtr ptr, UnmanagedDataMarker marker)
+        {
+        	this.ptrmap[ptr] = marker;
+        }
+        
         public object 
         Retrieve(IntPtr ptr)
         {
+        	object possibleMarker = this.ptrmap[ptr];
+        	if (possibleMarker.GetType() == typeof(UnmanagedDataMarker))
+        	{
+        		UnmanagedDataMarker marker = (UnmanagedDataMarker)possibleMarker;
+        		switch (marker)
+        		{
+        			case UnmanagedDataMarker.PyStringObject:
+        				IntPtr buffer = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+        				this.ptrmap[ptr] = Marshal.PtrToStringAnsi(buffer);
+        				break;
+        			
+        			default:
+        				throw new Exception("Found impossible data in pointer map");
+        		}
+        	}
             return this.ptrmap[ptr];
         }
         
@@ -139,6 +174,18 @@ namespace JumPy
                 this.allocator.Free(ptr);
             }
             this.tempptrs.Clear();
+        }
+        
+        public Exception LastException
+        {
+        	get
+        	{
+        		return this._lastException;
+        	}
+        	set
+        	{
+        		this._lastException = value;
+        	}
         }
         
         public override IntPtr 
@@ -312,7 +359,7 @@ namespace JumPy
         	}
         	
         	int size = Marshal.SizeOf(typeof(PyStringObject)) + length;
-        	IntPtr data = this.allocator.Allocate(size);
+        	IntPtr data = this.allocator.Alloc(size);
         	
         	PyStringObject s = new PyStringObject();
         	s.ob_refcnt = 1;
@@ -324,8 +371,61 @@ namespace JumPy
         	
         	IntPtr terminator = CPyMarshal.Offset(data, size - 1);
         	CPyMarshal.WriteByte(terminator, 0);
+        	
+        	this.StoreUnmanagedData(data, UnmanagedDataMarker.PyStringObject);
         	return data;
         }
+        
+        private int
+        _PyString_Resize_Grow(IntPtr strPtrPtr, int newSize)
+        {
+        	IntPtr oldStr = CPyMarshal.ReadPtr(strPtrPtr);
+			IntPtr newStr = IntPtr.Zero;
+        	try
+        	{
+        		newStr = this.allocator.Realloc(
+					oldStr, Marshal.SizeOf(typeof(PyStringObject)) + newSize);
+        	}
+        	catch (OutOfMemoryException e)
+        	{
+        		this._lastException = e;
+        		this.Delete(oldStr);
+        		return -1;
+        	}
+        	CPyMarshal.WritePtr(strPtrPtr, newStr);
+        	return this._PyString_Resize_Shrink(newStr, newSize);
+        }
+        
+        private int
+        _PyString_Resize_Shrink(IntPtr strPtr, int newSize)
+        {
+        	IntPtr ob_sizePtr = CPyMarshal.Offset(
+        		strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
+        	CPyMarshal.WriteInt(ob_sizePtr, newSize);
+        	IntPtr bufPtr = CPyMarshal.Offset(
+        		strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+        	IntPtr terminatorPtr = CPyMarshal.Offset(
+        		bufPtr, newSize);
+        	CPyMarshal.WriteByte(terminatorPtr, 0);
+        	return 0;
+        }
+        
+        public override int
+        _PyString_Resize(IntPtr strPtrPtr, int newSize)
+        {
+        	IntPtr strPtr = CPyMarshal.ReadPtr(strPtrPtr);
+        	PyStringObject str = (PyStringObject)Marshal.PtrToStructure(strPtr, typeof(PyStringObject));
+        	if (str.ob_size < newSize)
+        	{
+        		return this._PyString_Resize_Grow(strPtrPtr, newSize);
+        	}
+        	else
+        	{
+        		return this._PyString_Resize_Shrink(strPtr, newSize);
+        	}
+        }
+        
+        
         
     }
 
