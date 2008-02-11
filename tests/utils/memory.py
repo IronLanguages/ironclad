@@ -1,6 +1,8 @@
 
-from System import IntPtr, Int32
+from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
 def OffsetPtr(ptr, offset):
-    return IntPtr(ptr.ToInt64() + offset)
+    if type(offset) == IntPtr:
+        offset = offset.ToInt32()
+    return IntPtr(ptr.ToInt32() + offset)

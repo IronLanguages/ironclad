@@ -6,7 +6,7 @@ def GetAllocatingTestAllocator(allocsList, freesList):
     class TestAllocator(IAllocator):
         def Allocate(self, bytes):
             ptr = Marshal.AllocHGlobal(bytes)
-            allocsList.append(ptr)
+            allocsList.append((ptr, bytes))
             return ptr
         def Free(self, ptr):
             freesList.append(ptr)

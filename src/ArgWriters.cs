@@ -13,11 +13,6 @@ namespace JumPy
             this.startIndex = startIndex;
         }
 
-        public static IntPtr Offset(IntPtr start, Int32 offset)
-        {
-            return (IntPtr)(start.ToInt32() + offset);
-        }
-
         public virtual int PointersConsumed
         {
             get
@@ -51,7 +46,7 @@ namespace JumPy
         public override void Write(IntPtr ptrTable, object intValue)
         {
             int value = (int)intValue;
-            IntPtr addressToRead = ArgWriter.Offset(ptrTable, this.startIndex * CPyMarshal.PtrSize);
+            IntPtr addressToRead = CPyMarshal.Offset(ptrTable, this.startIndex * CPyMarshal.PtrSize);
             IntPtr addressToWrite = CPyMarshal.ReadPtr(addressToRead);
             CPyMarshal.WriteInt(addressToWrite, value);
         }
@@ -79,7 +74,7 @@ namespace JumPy
         public override void Write(IntPtr ptrTable, object strValue)
         {
             string value = (string)strValue;
-            IntPtr addressToRead = ArgWriter.Offset(ptrTable, this.startIndex * CPyMarshal.PtrSize);
+            IntPtr addressToRead = CPyMarshal.Offset(ptrTable, this.startIndex * CPyMarshal.PtrSize);
             IntPtr addressToWrite = CPyMarshal.ReadPtr(addressToRead);
             
             byte[] bytes = Encoding.UTF8.GetBytes(value);
@@ -91,11 +86,11 @@ namespace JumPy
             foreach (byte b in bytes)
             {
                 CPyMarshal.WriteByte(storage, b);
-                storage = ArgWriter.Offset(storage, 1);
+                storage = CPyMarshal.Offset(storage, 1);
             }
             CPyMarshal.WriteByte(storage, 0);
 
-            addressToRead = ArgWriter.Offset(addressToRead, CPyMarshal.PtrSize);
+            addressToRead = CPyMarshal.Offset(addressToRead, CPyMarshal.PtrSize);
             addressToWrite = CPyMarshal.ReadPtr(addressToRead);
             CPyMarshal.WriteInt(addressToWrite, byteCount);
         }

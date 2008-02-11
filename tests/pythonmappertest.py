@@ -137,6 +137,28 @@ class PythonMapperTest(unittest.TestCase):
             IntPtr(12345), paramsStore)
 
 
+    def testPythonMapperFinds__PyString_Resize(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def _PyString_Resize(self, stringPtrPtr, size):
+                paramsStore.append((stringPtrPtr, size))
+                return 0
+
+        self.assertDispatches(
+            MyPM, "_PyString_Resize",
+            (IntPtr(98765), 33),
+            0, paramsStore)
+
+
+    def testPythonMapperImplementationOf_PyEval_SaveThread(self):
+        self.assertEquals(PythonMapper().PyEval_SaveThread(), IntPtr.Zero,
+                          "unexpectedly wrong implementation")
+
+
+    def testPythonMapperImplementationOf_PyEval_RestoreThread(self):
+        PythonMapper().PyEval_RestoreThread(IntPtr.Zero)
+        # would have raised before getting here
+
 
 suite = makesuite(PythonMapperTest)
 
