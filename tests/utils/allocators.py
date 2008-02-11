@@ -4,10 +4,15 @@ from JumPy import IAllocator
 
 def GetAllocatingTestAllocator(allocsList, freesList):
     class TestAllocator(IAllocator):
-        def Allocate(self, bytes):
+        def Alloc(self, bytes):
             ptr = Marshal.AllocHGlobal(bytes)
             allocsList.append((ptr, bytes))
             return ptr
+        def Realloc(self, ptr, bytes):
+            new = Marshal.ReAllocHGlobal(ptr, IntPtr(bytes))
+            freesList.append(ptr)
+            allocsList.append((new, bytes))
+            return new
         def Free(self, ptr):
             freesList.append(ptr)
             Marshal.FreeHGlobal(ptr)
@@ -15,7 +20,7 @@ def GetAllocatingTestAllocator(allocsList, freesList):
 
 def GetDoNothingTestAllocator(freesList):
     class TestAllocator(IAllocator):
-        def Allocate(self, _):
+        def Alloc(self, _):
             return IntPtr.Zero
         def Free(self, ptr):
             freesList.append(ptr)
