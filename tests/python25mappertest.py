@@ -247,6 +247,69 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 
 
+class Python25Mapper_PyArg_ParseTuple_Test(unittest.TestCase):
+
+    def testPyArg_ParseTupleUsesGetArgValuesAndGetArgWritersAndSetArgValues(self):
+        test = self
+        argsPtr = IntPtr(123)
+        outPtr = IntPtr(159)
+        format = "pfhormat"
+        argDict = Dictionary[int, object]()
+        formatDict = Dictionary[int, ArgWriter]()
+
+        calls = []
+        class MyP25M(Python25Mapper):
+            def GetArgValues(self, argsPtrIn):
+                calls.append("GetArgValues")
+                test.assertEquals((argsPtrIn),
+                                  (argsPtr),
+                                  "wrong params to GetArgValues")
+                return argDict
+
+            def GetArgWriters(self, formatIn):
+                calls.append("GetArgWriters")
+                test.assertEquals(formatIn,
+                                  format,
+                                  "wrong params to GetArgWriters")
+                return formatDict
+
+            def SetArgValues(self, argDictIn, formatDictIn, outPtrIn):
+                calls.append("SetArgValues")
+                test.assertEquals((argDictIn, formatDictIn, outPtrIn),
+                                  (argDict, formatDict, outPtr),
+                                  "wrong params to SetArgValues")
+
+        mapper = MyP25M(PythonEngine())
+        result = mapper.PyArg_ParseTuple(argsPtr, format, outPtr)
+        self.assertEquals(result, 1, "should return 'true' on 'success'")
+        self.assertEquals(calls, ["GetArgValues", "GetArgWriters", "SetArgValues"])
+
+
+    def assertGetArgValuesWorks(self, args, expectedResults):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+
+        # alloc
+        argsPtr = mapper.Store(args)
+        try:
+            # actual test
+            results = dict(mapper.GetArgValues(argsPtr))
+            self.assertEquals(results, expectedResults, "something, somewhere, broke")
+        finally:
+            # dealloc
+            mapper.DecRef(argsPtr)
+
+
+    def testGetArgValuesEmpty(self):
+        self.assertGetArgValuesWorks(tuple(), {})
+
+
+    def testGetArgValuesNotEmpty(self):
+        args = (1, 2, "buckle my shoe")
+        self.assertGetArgValuesWorks(args, dict(enumerate(args)))
+
+
+
 class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
 
     def testPyArg_ParseTupleAndKeywordsUsesGetArgValuesAndGetArgWritersAndSetArgValues(self):
@@ -283,7 +346,7 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
 
         mapper = MyP25M(PythonEngine())
         result = mapper.PyArg_ParseTupleAndKeywords(argsPtr, kwargsPtr, format, kwlistPtr, outPtr)
-        self.assertEquals(result, True, "should return true on 'success'")
+        self.assertEquals(result, 1, "should return 'true' on 'success'")
         self.assertEquals(calls, ["GetArgValues", "GetArgWriters", "SetArgValues"])
 
 
@@ -291,19 +354,15 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
 
-        ptrsize = Marshal.SizeOf(IntPtr)
-        intsize = Marshal.SizeOf(Int32)
-
         # alloc
         argsPtr = mapper.Store(args)
         kwargsPtr = mapper.Store(kwargs)
-        kwlistPtr = Marshal.AllocHGlobal(ptrsize * (len(kwlist) + 1))
+        kwlistPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize * (len(kwlist) + 1))
         current = kwlistPtr
         for s in kwlist:
             addressWritten = Marshal.StringToHGlobalAnsi(s)
             CPyMarshal.WritePtr(current, addressWritten)
-            current = IntPtr(current.ToInt32() + ptrsize)
-        CPyMarshal.WritePtr(current, IntPtr.Zero)
+            current = IntPtr(current.ToInt32() + CPyMarshal.PtrSize)
 
         try:
             # actual test
@@ -314,7 +373,7 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
             mapper.DecRef(argsPtr)
             mapper.DecRef(kwargsPtr)
             for i in range(len(kwlist)):
-                Marshal.FreeHGlobal(Marshal.ReadIntPtr(IntPtr(kwlistPtr.ToInt32() + (i * ptrsize))))
+                Marshal.FreeHGlobal(Marshal.ReadIntPtr(IntPtr(kwlistPtr.ToInt32() + (i * CPyMarshal.PtrSize))))
             Marshal.FreeHGlobal(kwlistPtr)
 
 
@@ -564,6 +623,7 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
 suite = makesuite(
     Python25MapperTest,
     Python25Mapper_Py_InitModule4_Test,
+    Python25Mapper_PyArg_ParseTuple_Test,
     Python25Mapper_PyArg_ParseTupleAndKeywords_Test,
     Python25Mapper_PyString_FromStringAndSize_Test,
     Python25Mapper__PyString_Resize_Test,

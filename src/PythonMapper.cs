@@ -50,8 +50,14 @@ namespace JumPy
         {
             return 0;
         }
-        
-        
+
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public delegate int PyArg_ParseTuple_Delegate(IntPtr args, string format, IntPtr argPtr);
+		public virtual int PyArg_ParseTuple(IntPtr args, string format, IntPtr argPtr)
+		{
+			return 0;
+		}
+       
 		        
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate IntPtr PyEval_SaveThread_Delegate();
@@ -96,6 +102,9 @@ namespace JumPy
                     break;
                 case "PyArg_ParseTupleAndKeywords":
                     this.map[name] = new PyArg_ParseTupleAndKeywords_Delegate(this.PyArg_ParseTupleAndKeywords);
+                    break;
+                case "PyArg_ParseTuple":
+                    this.map[name] = new PyArg_ParseTuple_Delegate(this.PyArg_ParseTuple);
                     break;
             
             	case "PyEval_SaveThread":
