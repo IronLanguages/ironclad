@@ -163,6 +163,18 @@ class PythonMapperTest(unittest.TestCase):
             0, paramsStore)
 
 
+    def testPythonMapperFinds_PyErr_SetString(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyErr_SetString(self, error, message):
+                paramsStore.append((error, message))
+
+        self.assertDispatches(
+            MyPM, "PyErr_SetString",
+            (IntPtr(98765), "and in the darkness bind them"),
+            None, paramsStore)
+
+
     def testPythonMapperImplementationOf_PyEval_SaveThread(self):
         self.assertEquals(PythonMapper().PyEval_SaveThread(), IntPtr.Zero,
                           "unexpectedly wrong implementation")

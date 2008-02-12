@@ -43,11 +43,10 @@ class ArgWriterWriteTest(unittest.TestCase):
 
     def assertWritesStringToAddress(self, writer, string, ptrsAddress, dstAddress):
         writer.Write(ptrsAddress, string)
-        expectedBytes = string.encode("utf-8")
         ptr = CPyMarshal.ReadPtr(dstAddress)
 
-        for b in expectedBytes:
-            self.assertEquals(CPyMarshal.ReadByte(ptr), ord(b), "mismatched character")
+        for c in string:
+            self.assertEquals(CPyMarshal.ReadByte(ptr), ord(c), "mismatched character")
             ptr = OffsetPtr(ptr, 1)
         self.assertEquals(CPyMarshal.ReadByte(ptr), 0, "missing terminator")
 
@@ -97,9 +96,8 @@ class SizedStringArgWriterTest(ArgWriterWriteTest):
         self.assertSizedStringArgWriterWrite(s, len(s))
 
     def testWriteTrickyString(self):
-        s = u'Dur-kalk trafi\u011fi, t\u0131kan\u0131kl\u0131k tehlikesi\n'
-        l = 43
-        self.assertSizedStringArgWriterWrite(s, l)
+        s = ''.join(chr(c) for c in range(256))
+        self.assertSizedStringArgWriterWrite(s, len(s))
 
 
 suite = makesuite(

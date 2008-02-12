@@ -578,25 +578,35 @@ class Python25Mapper__PyString_Resize_Test(unittest.TestCase):
         engine = PythonEngine()
         mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, frees))
 
-        data = mapper.PyString_FromStringAndSize(IntPtr.Zero, 365)
+        originalLength = 20
+        testString = "beset on all sides" + "".join(chr(c) for c in range(256))
+        testLength = len(testString)
+
+        data = mapper.PyString_FromStringAndSize(IntPtr.Zero, originalLength)
         ptrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
         Marshal.WriteIntPtr(ptrPtr, data)
         newData = IntPtr.Zero
         try:
             baseSize = Marshal.SizeOf(PyStringObject)
-            self.assertEquals(allocs, [(data, 365 + baseSize)], "allocated wrong")
-            self.assertEquals(mapper._PyString_Resize(ptrPtr, 2000), 0, "bad return on success")
+            self.assertEquals(allocs, [(data, originalLength + baseSize)], "allocated wrong")
+            self.assertEquals(mapper._PyString_Resize(ptrPtr, testLength), 0, "bad return on success")
             newData = Marshal.ReadIntPtr(ptrPtr)
-            expectedAllocs = [(data, 365 + baseSize), (newData, 2000 + baseSize)]
+            expectedAllocs = [(data, originalLength + baseSize), (newData, testLength + baseSize)]
             self.assertEquals(allocs, expectedAllocs,
                               "allocated wrong")
             self.assertEquals(frees, [data], "did not free unused memory")
 
             stringObject = Marshal.PtrToStructure(newData, PyStringObject)
-            self.assertEquals(stringObject.ob_size, 2000, "unexpected ob_size")
+            self.assertEquals(stringObject.ob_size, testLength, "unexpected ob_size")
             strDataPtr = OffsetPtr(newData, Marshal.OffsetOf(PyStringObject, "ob_sval"))
-            terminatorPtr = OffsetPtr(strDataPtr, 2000)
+            terminatorPtr = OffsetPtr(strDataPtr, testLength)
             self.assertEquals(Marshal.ReadByte(terminatorPtr), 0, "string not terminated")
+
+            chars = testString.ToCharArray()
+            bytes = Array.ConvertAll[Char, Byte](chars, lambda c: ord(c))
+            Marshal.Copy(bytes, 0, strDataPtr, testLength)
+
+            self.assertEquals(mapper.Retrieve(newData), testString, "failed to read string data")
         finally:
             if data not in frees:
                 Marshal.FreeHGlobal(data)
