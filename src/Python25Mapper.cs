@@ -440,7 +440,9 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
         		this.Delete(oldStr);
         		return -1;
         	}
+            this.ptrmap.Remove(oldStr);
         	CPyMarshal.WritePtr(strPtrPtr, newStr);
+        	this.StoreUnmanagedData(newStr, UnmanagedDataMarker.PyStringObject);
         	return this._PyString_Resize_NoGrow(newStr, newSize);
         }
         

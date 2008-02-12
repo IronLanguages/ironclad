@@ -77,15 +77,14 @@ namespace JumPy
             IntPtr addressToRead = CPyMarshal.Offset(ptrTable, this.startIndex * CPyMarshal.PtrSize);
             IntPtr addressToWrite = CPyMarshal.ReadPtr(addressToRead);
             
-            byte[] bytes = Encoding.UTF8.GetBytes(value);
-            int byteCount = Encoding.UTF8.GetByteCount(value);
+            int byteCount = value.Length;
             IntPtr storage = Marshal.AllocHGlobal(byteCount + 1);
             CPyMarshal.WritePtr(addressToWrite, storage);
             this.mapper.RememberTempPtr(storage);
             
-            foreach (byte b in bytes)
+            foreach (char c in value)
             {
-                CPyMarshal.WriteByte(storage, b);
+                CPyMarshal.WriteByte(storage, (byte)c);
                 storage = CPyMarshal.Offset(storage, 1);
             }
             CPyMarshal.WriteByte(storage, 0);

@@ -57,7 +57,15 @@ namespace JumPy
 		{
 			return 0;
 		}
-       
+
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public delegate void PyErr_SetString_Delegate(IntPtr error, string message);
+		public virtual void PyErr_SetString(IntPtr error, string message)
+		{
+			;
+		}
+        
+        
 		        
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate IntPtr PyEval_SaveThread_Delegate();
@@ -105,6 +113,9 @@ namespace JumPy
                     break;
                 case "PyArg_ParseTuple":
                     this.map[name] = new PyArg_ParseTuple_Delegate(this.PyArg_ParseTuple);
+                    break;
+                case "PyErr_SetString":
+                    this.map[name] = new PyErr_SetString_Delegate(this.PyErr_SetString);
                     break;
             
             	case "PyEval_SaveThread":

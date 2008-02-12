@@ -102,13 +102,11 @@ class FunctionalityTest(unittest.TestCase):
                 testCode = dedent("""
                     import bz2
                     assert bz2.compress(%r) == %r
-                    print "compress works"
                     """) % (bz2_test_compress, bz2_test_decompress)
                 engine.Execute(testCode)
 
                 testCode = dedent("""
                     assert bz2.decompress(%r) == %r
-                    print "omg, decompress works too"
                     """) % (bz2_test_decompress, bz2_test_compress)
                 engine.Execute(testCode)
             finally:
