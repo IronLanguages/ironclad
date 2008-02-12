@@ -45,6 +45,30 @@ namespace JumPy
 
     public class Python25Mapper : PythonMapper
     {
+    	private const string MODULE_CODE = @"
+from System import IntPtr
+
+def _jumpy_dispatch(name, args):
+  argPtr = _jumpy_mapper.Store(args)
+  resultPtr = _jumpy_dispatch_table[name](IntPtr.Zero, argPtr)
+  result = _jumpy_mapper.Retrieve(resultPtr)
+  _jumpy_mapper.FreeTempPtrs()
+  _jumpy_mapper.DecRef(argPtr)
+  _jumpy_mapper.DecRef(resultPtr)
+  return result
+
+def _jumpy_dispatch_kwargs(name, args, kwargs):
+  argPtr = _jumpy_mapper.Store(args)
+  kwargPtr = _jumpy_mapper.Store(kwargs)
+  resultPtr = _jumpy_dispatch_table[name](IntPtr.Zero, argPtr, kwargPtr)
+  result = _jumpy_mapper.Retrieve(resultPtr)
+  _jumpy_mapper.FreeTempPtrs()
+  _jumpy_mapper.DecRef(argPtr)
+  _jumpy_mapper.DecRef(kwargPtr)
+  _jumpy_mapper.DecRef(resultPtr)
+  return result
+";
+    
         private PythonEngine engine;
         private Dictionary<IntPtr, object> ptrmap;
         private List<IntPtr> tempptrs;
@@ -79,6 +103,12 @@ namespace JumPy
         	this.ptrmap[ptr] = marker;
         }
         
+        private static char
+        CharFromByte(byte b)
+        {
+        	return (char)b;
+        }
+        
         public object 
         Retrieve(IntPtr ptr)
         {
@@ -90,7 +120,14 @@ namespace JumPy
         		{
         			case UnmanagedDataMarker.PyStringObject:
         				IntPtr buffer = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
-        				this.ptrmap[ptr] = Marshal.PtrToStringAnsi(buffer);
+        				IntPtr lengthPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
+        				int length = CPyMarshal.ReadInt(lengthPtr);
+        				
+        				byte[] bytes = new byte[length];
+        				Marshal.Copy(buffer, bytes, 0, length);
+        				char[] chars = Array.ConvertAll<byte, char>(
+        					bytes, new Converter<byte, char>(CharFromByte));
+        				this.ptrmap[ptr] = new string(chars);
         				break;
         			
         			default:
@@ -199,21 +236,7 @@ namespace JumPy
             globals["_jumpy_dispatch_table"] = methodTable;
             
             StringBuilder moduleCode = new StringBuilder();
-            moduleCode.Append("from System import IntPtr\n");
-            
-            moduleCode.Append("def _jumpy_dispatch(name, args):\n");
-            moduleCode.Append("  argPtr = _jumpy_mapper.Store(args)\n");
-            moduleCode.Append("  _jumpy_dispatch_table[name](IntPtr.Zero, argPtr)\n");
-            moduleCode.Append("  _jumpy_mapper.FreeTempPtrs()\n");
-            moduleCode.Append("  _jumpy_mapper.DecRef(argPtr)\n");
-            
-            moduleCode.Append("def _jumpy_dispatch_kwargs(name, args, kwargs):\n");
-            moduleCode.Append("  argPtr = _jumpy_mapper.Store(args)\n");
-            moduleCode.Append("  kwargPtr = _jumpy_mapper.Store(kwargs)\n");
-            moduleCode.Append("  _jumpy_dispatch_table[name](IntPtr.Zero, argPtr, kwargPtr)\n");
-            moduleCode.Append("  _jumpy_mapper.FreeTempPtrs()\n");
-            moduleCode.Append("  _jumpy_mapper.DecRef(argPtr)\n");
-            moduleCode.Append("  _jumpy_mapper.DecRef(kwargPtr)\n");
+            moduleCode.Append(MODULE_CODE);
             
             IntPtr methodPtr = methods;
             while (Marshal.ReadInt32(methodPtr) != 0)
@@ -224,7 +247,7 @@ namespace JumPy
                 {
                     case METH.VARARGS:
                         moduleCode.Append(String.Format(
-                            "\ndef {0}(*args):\n  '''{1}'''\n  _jumpy_dispatch('{0}', args)\n",
+                            "\ndef {0}(*args):\n  '''{1}'''\n  return _jumpy_dispatch('{0}', args)\n",
                             thisMethod.ml_name, thisMethod.ml_doc));
                         methodTable[thisMethod.ml_name] = 
                             (CPythonVarargsFunction_Delegate)
@@ -235,7 +258,7 @@ namespace JumPy
                 
                     case METH.VARARGS | METH.KEYWORDS:
                         moduleCode.Append(String.Format(
-                            "\ndef {0}(*args, **kwargs):\n  '''{1}'''\n  _jumpy_dispatch_kwargs('{0}', args, kwargs)\n",
+                            "\ndef {0}(*args, **kwargs):\n  '''{1}'''\n  return _jumpy_dispatch_kwargs('{0}', args, kwargs)\n",
                             thisMethod.ml_name, thisMethod.ml_doc));
                         methodTable[thisMethod.ml_name] = 
                             (CPythonVarargsKwargsFunction_Delegate)
