@@ -171,11 +171,12 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
     def test_Py_InitModule4_DispatchesToOriginalVarargsFunction(self):
         engine = PythonEngine()
         mapper = TempPtrCheckingPython25Mapper(engine)
+        retval = mapper.Store("jedi")
         calls = []
         def CModuleFunction(_selfPtr, argPtr):
             calls.append((_selfPtr, argPtr))
             mapper.IncRef(argPtr)
-            return IntPtr.Zero
+            return retval
         cModuleDelegate = CPythonVarargsFunction_Delegate(CModuleFunction)
 
         method = PyMethodDef(
@@ -186,17 +187,20 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         )
 
         def testModule(test_module, mapper):
-            test_module.harold(1, 2, 3)
-            self.assertTrue(mapper.tempPtrsFreed, "failed to clean up after call")
-            _selfPtr, argPtr = calls[0]
-            self.assertEquals(_selfPtr, IntPtr.Zero, "no self on module functions")
+            try:
+                self.assertEquals(test_module.harold(1, 2, 3), "jedi", "bad result")
+                self.assertRaises(KeyError, lambda: mapper.Retrieve(retval))
+                self.assertTrue(mapper.tempPtrsFreed, "failed to clean up after call")
+                _selfPtr, argPtr = calls[0]
+                self.assertEquals(_selfPtr, IntPtr.Zero, "no self on module functions")
 
-            # CModuleFunction retained a reference, so we could test the aftermath
-            self.assertEquals(mapper.Retrieve(argPtr), (1, 2, 3),
-                              "did not pass pointer mapping to correct tuple")
+                # CModuleFunction retained a reference, so we could test the aftermath
+                self.assertEquals(mapper.Retrieve(argPtr), (1, 2, 3),
+                                  "did not pass pointer mapping to correct tuple")
 
-            self.assertEquals(mapper.RefCount(argPtr), 1, "bad reference counting")
-            mapper.DecRef(argPtr)
+                self.assertEquals(mapper.RefCount(argPtr), 1, "bad reference counting")
+            finally:
+                mapper.DecRef(argPtr)
 
         self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 
@@ -204,12 +208,13 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
     def test_Py_InitModule4_DispatchesToOriginalVarargsKwargsFunction(self):
         engine = PythonEngine()
         mapper = TempPtrCheckingPython25Mapper(engine)
+        retval = mapper.Store("sith")
         calls = []
         def CModuleFunction(_selfPtr, argPtr, kwargPtr):
             calls.append((_selfPtr, argPtr, kwargPtr))
             mapper.IncRef(argPtr)
             mapper.IncRef(kwargPtr)
-            return IntPtr.Zero
+            return retval
         cModuleDelegate = CPythonVarargsKwargsFunction_Delegate(CModuleFunction)
 
         method = PyMethodDef(
@@ -220,21 +225,24 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         )
 
         def testModule(test_module, mapper):
-            test_module.harold(1, 2, 3, four=4, five=5)
-            self.assertTrue(mapper.tempPtrsFreed, "failed to clean up after call")
-            _selfPtr, argPtr, kwargPtr = calls[0]
-            self.assertEquals(_selfPtr, IntPtr.Zero, "no self on module functions")
+            try:
+                self.assertEquals(test_module.harold(1, 2, 3, four=4, five=5), "sith", "bad result")
+                self.assertRaises(KeyError, lambda: mapper.Retrieve(retval))
+                self.assertTrue(mapper.tempPtrsFreed, "failed to clean up after call")
+                _selfPtr, argPtr, kwargPtr = calls[0]
+                self.assertEquals(_selfPtr, IntPtr.Zero, "no self on module functions")
 
-            # CModuleFunction retained references, so we could test the aftermath
-            self.assertEquals(mapper.Retrieve(argPtr), (1, 2, 3),
-                              "did not pass pointer mapping to correct tuple")
-            self.assertEquals(mapper.Retrieve(kwargPtr), {"four": 4, "five": 5},
-                              "did not pass pointer mapping to correct dict")
+                # CModuleFunction retained references, so we could test the aftermath
+                self.assertEquals(mapper.Retrieve(argPtr), (1, 2, 3),
+                                  "did not pass pointer mapping to correct tuple")
+                self.assertEquals(mapper.Retrieve(kwargPtr), {"four": 4, "five": 5},
+                                  "did not pass pointer mapping to correct dict")
 
-            self.assertEquals(mapper.RefCount(kwargPtr), 1, "bad reference counting")
-            self.assertEquals(mapper.RefCount(argPtr), 1, "bad reference counting")
-            mapper.DecRef(kwargPtr)
-            mapper.DecRef(argPtr)
+                self.assertEquals(mapper.RefCount(kwargPtr), 1, "bad reference counting")
+                self.assertEquals(mapper.RefCount(argPtr), 1, "bad reference counting")
+            finally:
+                mapper.DecRef(kwargPtr)
+                mapper.DecRef(argPtr)
 
         self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 
@@ -430,7 +438,7 @@ class Python25Mapper_PyString_FromStringAndSize_Test(unittest.TestCase):
         engine = PythonEngine()
         mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
 
-        testString = "beset on all sides"
+        testString = "beset on all sides" + "".join(chr(c) for c in range(256))
         testLength = len(testString)
 
         data = mapper.PyString_FromStringAndSize(IntPtr.Zero, testLength)
