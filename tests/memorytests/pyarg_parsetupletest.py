@@ -14,14 +14,14 @@ from JumPy import AddressGetterDelegate, CPyMarshal, DataSetterDelegate, PythonM
 from JumPyTestUtils import PythonStubHarness
 
 
-class PyArg_ParseTupleAndKeywordsTest(unittest.TestCase):
+class PyArg_ParseTupleTest(unittest.TestCase):
 
     def setUp(self):
         unittest.TestCase.setUp(self)
         test = self
         class MyPM(PythonMapper):
-            def PyArg_ParseTupleAndKeywords(self, args, kwargs, format, kwlist, argptr):
-                test.assertMatchesVargargs((args, kwargs, format, kwlist, argptr))
+            def PyArg_ParseTuple(self, args, format, argptr):
+                test.assertMatchesVargargs((args, format, argptr))
                 return 1
 
         self.sr = StubReference(os.path.join("build", "python25.dll"))
@@ -35,10 +35,10 @@ class PyArg_ParseTupleAndKeywordsTest(unittest.TestCase):
 
 
     def assertMatchesVargargs(self, params):
-        self.assertEquals(params[:4], (IntPtr(1), IntPtr(2), "i" * len(self.varargs), IntPtr(3)),
+        self.assertEquals(params[:2], (IntPtr(1), "i" * len(self.varargs)),
                           "error marshalling easy args")
 
-        argPtr = params[4]
+        argPtr = params[2]
         for i, ptr in enumerate(self.varargs):
             thisArgAddressPtr = OffsetPtr(argPtr, CPyMarshal.PtrSize * i)
             thisArgAddress = CPyMarshal.ReadPtr(thisArgAddressPtr)
@@ -46,10 +46,10 @@ class PyArg_ParseTupleAndKeywordsTest(unittest.TestCase):
 
 
     def assertMarshalsVarargs(self, varargs):
-        testFuncName = "Test_PA_PTAK__%darg" % len(varargs)
+        testFuncName = "Test_PA_PT__%darg" % len(varargs)
         testFunc = getattr(PythonStubHarness, testFuncName)
         self.varargs = varargs
-        result = testFunc(IntPtr(1), IntPtr(2), "i" * len(varargs), IntPtr(3), *varargs)
+        result = testFunc(IntPtr(1), "i" * len(varargs), *varargs)
         self.assertEquals(result, 1, "bad return value")
 
 
@@ -65,5 +65,6 @@ class PyArg_ParseTupleAndKeywordsTest(unittest.TestCase):
         self.assertMarshalsVarargs((IntPtr(100), IntPtr(200), IntPtr(300)))
 
 
+
 if __name__ == '__main__':
-    RunSeparateProcessTest(PyArg_ParseTupleAndKeywordsTest)
+    RunSeparateProcessTest(PyArg_ParseTupleTest)

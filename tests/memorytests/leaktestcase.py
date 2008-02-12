@@ -44,6 +44,7 @@ class LeakTestCase(unittest.TestCase):
         self.assertEquals(after - before, 0, "probably leaked; see comment")
 
 
-def RunLeakTest(testCase):
-    if not run(makesuite(testCase)).wasSuccessful():
+def RunSeparateProcessTest(testCase):
+    result = run(makesuite(testCase))
+    if not result.wasSuccessful():
         sys.exit(-1)

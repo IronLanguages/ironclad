@@ -310,6 +310,19 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
             return result;
         }
 
+
+        protected virtual Dictionary<int, object> 
+        GetArgValues(IntPtr args)
+        {
+            Tuple actualArgs = (Tuple)this.Retrieve(args);
+            Dictionary<int, object> result =  new Dictionary<int, object>();
+            for (int i = 0; i < actualArgs.GetLength(); i++)
+            {
+                result[i] = actualArgs[i];
+            }
+            return result;
+        }
+
         protected virtual Dictionary<int, ArgWriter> 
         GetArgWriters(string format)
         {
@@ -372,6 +385,18 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
             this.SetArgValues(argsToWrite, argWriters, outPtr);
             return 1;
         }
+
+
+        public override int 
+        PyArg_ParseTuple(IntPtr args, 
+					 	 string format, 
+					 	 IntPtr outPtr)
+        {
+            Dictionary<int, object> argsToWrite = this.GetArgValues(args);
+            Dictionary<int, ArgWriter> argWriters = this.GetArgWriters(format);
+            this.SetArgValues(argsToWrite, argWriters, outPtr);
+            return 1;
+        }
         
         public override IntPtr
         PyString_FromStringAndSize(IntPtr stringData, int length)
@@ -416,11 +441,11 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
         		return -1;
         	}
         	CPyMarshal.WritePtr(strPtrPtr, newStr);
-        	return this._PyString_Resize_Shrink(newStr, newSize);
+        	return this._PyString_Resize_NoGrow(newStr, newSize);
         }
         
         private int
-        _PyString_Resize_Shrink(IntPtr strPtr, int newSize)
+        _PyString_Resize_NoGrow(IntPtr strPtr, int newSize)
         {
         	IntPtr ob_sizePtr = CPyMarshal.Offset(
         		strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
@@ -444,7 +469,7 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
         	}
         	else
         	{
-        		return this._PyString_Resize_Shrink(strPtr, newSize);
+        		return this._PyString_Resize_NoGrow(strPtr, newSize);
         	}
         }
         

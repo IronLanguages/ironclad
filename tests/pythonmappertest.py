@@ -124,6 +124,19 @@ class PythonMapperTest(unittest.TestCase):
             True, paramsStore)
 
 
+    def testPythonMapperFinds_PyArg_ParseTuple(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyArg_ParseTuple(self, args, format, argsPtr):
+                paramsStore.append((args, format, argsPtr))
+                return True
+
+        self.assertDispatches(
+            MyPM, "PyArg_ParseTuple",
+            (IntPtr(33), "format", IntPtr(1234)),
+            True, paramsStore)
+
+
     def testPythonMapperFinds_PyString_FromStringAndSize(self):
         paramsStore = []
         class MyPM(PythonMapper):
