@@ -99,6 +99,11 @@ class SizedStringArgWriterTest(ArgWriterWriteTest):
         s = ''.join(chr(c) for c in range(256))
         self.assertSizedStringArgWriterWrite(s, len(s))
 
+    def testWriteInvalidString(self):
+        s = u'ph34r my pron\u0639nciation'
+        self.assertRaises(UnicodeError,
+            lambda: self.assertSizedStringArgWriterWrite(s, len(s)))
+
 
 suite = makesuite(
     ArgWriterSizeTest,

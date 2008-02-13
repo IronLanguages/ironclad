@@ -2,6 +2,8 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
+using IronPython.Runtime.Exceptions;
+
 namespace JumPy
 {
     public class ArgWriter
@@ -84,6 +86,10 @@ namespace JumPy
             
             foreach (char c in value)
             {
+            	if ((char)(byte)c != c)
+            	{
+            		throw new PythonUnicodeErrorException("Failed to convert string");
+            	}
                 CPyMarshal.WriteByte(storage, (byte)c);
                 storage = CPyMarshal.Offset(storage, 1);
             }
