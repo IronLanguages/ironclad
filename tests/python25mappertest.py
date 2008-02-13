@@ -205,6 +205,38 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 
 
+    def test_Py_InitModule4_VarargsFunctionRaisesAppropriateExceptions(self):
+        engine = PythonEngine()
+        mapper = TempPtrCheckingPython25Mapper(engine)
+        calls = []
+        class BorkedException(System.Exception):
+            pass
+        def CModuleFunction(_selfPtr, argPtr):
+            calls.append(argPtr)
+            mapper.IncRef(argPtr)
+            mapper.LastException = BorkedException()
+            return IntPtr.Zero
+        cModuleDelegate = CPythonVarargsFunction_Delegate(CModuleFunction)
+
+        method = PyMethodDef(
+            "harold",
+            Marshal.GetFunctionPointerForDelegate(cModuleDelegate),
+            METH.VARARGS,
+            "harold's documentation",
+        )
+
+        def testModule(test_module, mapper):
+            try:
+                self.assertRaises(BorkedException, test_module.harold, (1, 2, 3))
+                self.assertEquals(mapper.RefCount(calls[0]), 1, "failed to DecRef argPtr on error")
+                self.assertTrue(mapper.tempPtrsFreed, "failed to clean up temp ptrs on error")
+                self.assertEquals(mapper.LastException, None, "exception not cleared when raised")
+            finally:
+                mapper.DecRef(calls[0])
+
+        self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
+
+
     def test_Py_InitModule4_DispatchesToOriginalVarargsKwargsFunction(self):
         engine = PythonEngine()
         mapper = TempPtrCheckingPython25Mapper(engine)
@@ -243,6 +275,42 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             finally:
                 mapper.DecRef(kwargPtr)
                 mapper.DecRef(argPtr)
+
+        self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
+
+
+    def test_Py_InitModule4_VarargsKwargsFunctionRaisesAppropriateExceptions(self):
+        engine = PythonEngine()
+        mapper = TempPtrCheckingPython25Mapper(engine)
+        calls = []
+        class BorkedException(System.Exception):
+            pass
+        def CModuleFunction(_selfPtr, argPtr, kwargPtr):
+            calls.append(argPtr)
+            mapper.IncRef(argPtr)
+            calls.append(kwargPtr)
+            mapper.IncRef(kwargPtr)
+            mapper.LastException = BorkedException()
+            return IntPtr.Zero
+        cModuleDelegate = CPythonVarargsKwargsFunction_Delegate(CModuleFunction)
+
+        method = PyMethodDef(
+            "harold",
+            Marshal.GetFunctionPointerForDelegate(cModuleDelegate),
+            METH.VARARGS | METH.KEYWORDS,
+            "harold's documentation",
+        )
+
+        def testModule(test_module, mapper):
+            try:
+                self.assertRaises(BorkedException, lambda: test_module.harold(1, 2, 3, four=5))
+                self.assertEquals(mapper.RefCount(calls[0]), 1, "failed to DecRef argPtr on error")
+                self.assertEquals(mapper.RefCount(calls[1]), 1, "failed to DecRef kwargPtr on error")
+                self.assertTrue(mapper.tempPtrsFreed, "failed to clean up temp ptrs on error")
+                self.assertEquals(mapper.LastException, None, "exception not cleared when raised")
+            finally:
+                mapper.DecRef(calls[0])
+                mapper.DecRef(calls[1])
 
         self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 
