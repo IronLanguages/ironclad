@@ -361,15 +361,24 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
         }
 
 
-        protected virtual void 
+        protected virtual int 
         SetArgValues(Dictionary<int, object> argsToWrite, 
                      Dictionary<int, ArgWriter> argWriters, 
                      IntPtr outPtr)
         {
-            foreach (KeyValuePair<int,object> p in argsToWrite)
-            {
-                argWriters[p.Key].Write(outPtr, p.Value);
+        	try
+        	{
+				foreach (KeyValuePair<int,object> p in argsToWrite)
+				{
+					argWriters[p.Key].Write(outPtr, p.Value);
+				}
             }
+            catch (Exception e)
+            {
+            	this._lastException = e;
+            	return 0;
+            }
+            return 1;
         }
 
 
@@ -382,8 +391,7 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
         {
             Dictionary<int, object> argsToWrite = this.GetArgValues(args, kwargs, kwlist);
             Dictionary<int, ArgWriter> argWriters = this.GetArgWriters(format);
-            this.SetArgValues(argsToWrite, argWriters, outPtr);
-            return 1;
+            return this.SetArgValues(argsToWrite, argWriters, outPtr);
         }
 
 
@@ -394,8 +402,7 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
         {
             Dictionary<int, object> argsToWrite = this.GetArgValues(args);
             Dictionary<int, ArgWriter> argWriters = this.GetArgWriters(format);
-            this.SetArgValues(argsToWrite, argWriters, outPtr);
-            return 1;
+            return this.SetArgValues(argsToWrite, argWriters, outPtr);
         }
         
         public override IntPtr

@@ -278,10 +278,11 @@ class Python25Mapper_PyArg_ParseTuple_Test(unittest.TestCase):
                 test.assertEquals((argDictIn, formatDictIn, outPtrIn),
                                   (argDict, formatDict, outPtr),
                                   "wrong params to SetArgValues")
+                return 1
 
         mapper = MyP25M(PythonEngine())
         result = mapper.PyArg_ParseTuple(argsPtr, format, outPtr)
-        self.assertEquals(result, 1, "should return 'true' on 'success'")
+        self.assertEquals(result, 1, "should return SetArgValues result")
         self.assertEquals(calls, ["GetArgValues", "GetArgWriters", "SetArgValues"])
 
 
@@ -343,11 +344,39 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
                 test.assertEquals((argDictIn, formatDictIn, outPtrIn),
                                   (argDict, formatDict, outPtr),
                                   "wrong params to SetArgValues")
+                return 1
 
         mapper = MyP25M(PythonEngine())
         result = mapper.PyArg_ParseTupleAndKeywords(argsPtr, kwargsPtr, format, kwlistPtr, outPtr)
-        self.assertEquals(result, 1, "should return 'true' on 'success'")
+        self.assertEquals(result, 1, "should return SetArgValues result")
         self.assertEquals(calls, ["GetArgValues", "GetArgWriters", "SetArgValues"])
+
+
+    def testSetArgValuesStoresArgWriterExceptionAndReturnsZero(self):
+        class MockArgWriter(ArgWriter):
+            def Write(self, _, __):
+                raise System.Exception("gingerly")
+        writers = Dictionary[int, ArgWriter]({0: MockArgWriter(0)})
+        args = Dictionary[int, object]({0: 0})
+
+        mapper = Python25Mapper(PythonEngine())
+        result = mapper.SetArgValues(args, writers, IntPtr.Zero)
+        self.assertEquals(result, 0, "wrong failure return")
+        exception = mapper.LastException
+        self.assertEquals(type(exception), System.Exception, "failed to store")
+        self.assertEquals(exception.Message, "gingerly", "failed to store")
+
+
+    def testSetArgValuesReturnsOneIfNoError(self):
+        class MockArgWriter(ArgWriter):
+            def Write(self, _, __):
+                pass
+        writers = Dictionary[int, ArgWriter]({0: MockArgWriter(0)})
+        args = Dictionary[int, object]({0: 0})
+
+        mapper = Python25Mapper(PythonEngine())
+        result = mapper.SetArgValues(args, writers, IntPtr.Zero)
+        self.assertEquals(result, 1, "wrong success return")
 
 
     def assertGetArgValuesWorks(self, args, kwargs, kwlist, expectedResults):
