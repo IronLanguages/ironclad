@@ -17,8 +17,15 @@ namespace JumPy
         }
         
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate IntPtr PyString_FromString_Delegate(string text);
-        public virtual IntPtr PyString_FromString(string text)
+        public delegate int PyModule_AddObject_Delegate(IntPtr module, string name, IntPtr item);
+        public virtual int PyModule_AddObject(IntPtr module, string name, IntPtr item)
+        {
+            return 0;
+        }
+        
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate IntPtr PyString_FromString_Delegate(IntPtr data);
+        public virtual IntPtr PyString_FromString(IntPtr data)
         {
             return IntPtr.Zero;
         }
@@ -35,13 +42,6 @@ namespace JumPy
         public virtual int _PyString_Resize(IntPtr stringPtrPtr, int size)
         {
             return -1;
-        }
-        
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int PyModule_AddObject_Delegate(IntPtr module, string name, IntPtr item);
-        public virtual int PyModule_AddObject(IntPtr module, string name, IntPtr item)
-        {
-            return 0;
         }
         
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

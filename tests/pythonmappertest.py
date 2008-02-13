@@ -85,19 +85,6 @@ class PythonMapperTest(unittest.TestCase):
             IntPtr.Zero, paramsStore)
 
 
-    def testPythonMapperFinds_PyString_FromString(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyString_FromString(self, text):
-                paramsStore.append((text, ))
-                return IntPtr.Zero
-
-        self.assertDispatches(
-            MyPM, "PyString_FromString",
-            ("name", ),
-            IntPtr.Zero, paramsStore)
-
-
     def testPythonMapperFinds_PyModule_AddObject(self):
         paramsStore = []
         class MyPM(PythonMapper):
@@ -109,6 +96,19 @@ class PythonMapperTest(unittest.TestCase):
             MyPM, "PyModule_AddObject",
             (IntPtr(33), "henry", IntPtr(943)),
             33, paramsStore)
+
+
+    def testPythonMapperFinds_PyArg_ParseTuple(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyArg_ParseTuple(self, args, format, argsPtr):
+                paramsStore.append((args, format, argsPtr))
+                return True
+
+        self.assertDispatches(
+            MyPM, "PyArg_ParseTuple",
+            (IntPtr(33), "format", IntPtr(1234)),
+            True, paramsStore)
 
 
     def testPythonMapperFinds_PyArg_ParseTupleAndKeywords(self):
@@ -124,17 +124,17 @@ class PythonMapperTest(unittest.TestCase):
             True, paramsStore)
 
 
-    def testPythonMapperFinds_PyArg_ParseTuple(self):
+    def testPythonMapperFinds_PyString_FromString(self):
         paramsStore = []
         class MyPM(PythonMapper):
-            def PyArg_ParseTuple(self, args, format, argsPtr):
-                paramsStore.append((args, format, argsPtr))
-                return True
+            def PyString_FromString(self, data):
+                paramsStore.append((data, ))
+                return IntPtr.Zero
 
         self.assertDispatches(
-            MyPM, "PyArg_ParseTuple",
-            (IntPtr(33), "format", IntPtr(1234)),
-            True, paramsStore)
+            MyPM, "PyString_FromString",
+            (IntPtr(333), ),
+            IntPtr.Zero, paramsStore)
 
 
     def testPythonMapperFinds_PyString_FromStringAndSize(self):

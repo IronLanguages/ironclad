@@ -66,7 +66,7 @@ class Python25MapperTest(unittest.TestCase):
         self.assertRaises(KeyError, lambda: mapper.Delete(ptr))
 
 
-    def testIncRefDecRef(self):
+    def testRefCountIncRefDecRef(self):
         frees = []
         engine = PythonEngine()
         allocator = GetAllocatingTestAllocator([], frees)
@@ -86,6 +86,8 @@ class Python25MapperTest(unittest.TestCase):
         self.assertRaises(KeyError, lambda: mapper.Retrieve(ptr))
         self.assertRaises(KeyError, lambda: mapper.Delete(ptr))
 
+        self.assertEquals(mapper.RefCount(IntPtr(1)), 0, "unknown objects' should be 0")
+
 
     def testNullPointers(self):
         engine = PythonEngine()
@@ -94,9 +96,10 @@ class Python25MapperTest(unittest.TestCase):
 
         self.assertRaises(KeyError, lambda: mapper.IncRef(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.DecRef(IntPtr.Zero))
-        self.assertRaises(KeyError, lambda: mapper.RefCount(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.Retrieve(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.Delete(IntPtr.Zero))
+
+        self.assertEquals(mapper.RefCount(IntPtr.Zero), 0, "wrong")
 
 
     def testRememberAndFreeTempPtrs(self):
@@ -313,6 +316,37 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
                 mapper.DecRef(calls[1])
 
         self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
+
+
+class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
+
+    def testAddObjectWithExistingReferenceAddsMappedObjectAndDecRefsPointer(self):
+        engine = PythonEngine()
+        module = engine.CreateModule()
+        mapper = Python25Mapper(engine)
+        testObject = object()
+        testPtr = mapper.Store(testObject)
+        modulePtr = mapper.Store(module)
+
+        result = mapper.PyModule_AddObject(modulePtr, "testObject", testPtr)
+        try:
+            self.assertEquals(result, 0, "bad value for success")
+            self.assertEquals(mapper.RefCount(testPtr), 0, "did not decref")
+            self.assertEquals(module.Globals["testObject"], testObject, "did not store real object")
+        finally:
+            mapper.DecRef(modulePtr)
+            if mapper.RefCount(testPtr):
+                mapper.DecRef(testPtr)
+
+
+    def testAddObjectToUnknownModuleFails(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+
+        self.assertEquals(mapper.PyModule_AddObject(IntPtr.Zero, "zorro", IntPtr.Zero), -1,
+                          "bad return on failure")
+
+
 
 
 class Python25Mapper_PyArg_ParseTuple_Test(unittest.TestCase):
@@ -587,6 +621,47 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
                 self.assertFalse(writer.called, "wrote inappropriately")
 
 
+class Python25Mapper_PyString_FromString_Test(unittest.TestCase):
+
+    def testCreatesString(self):
+        allocs = []
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+
+        testString = "beset on all sides" + "".join(chr(c) for c in range(1, 256))
+        testLength = len(testString)
+        testData = Marshal.AllocHGlobal(testLength + 1)
+        chars = testString.ToCharArray()
+        bytes = Array.ConvertAll[Char, Byte](chars, lambda c: ord(c))
+        Marshal.Copy(bytes, 0, testData, testLength)
+        Marshal.WriteByte(OffsetPtr(testData, testLength), 0)
+
+        data = mapper.PyString_FromString(testData)
+        try:
+            baseSize = Marshal.SizeOf(PyStringObject)
+            self.assertEquals(allocs, [(data, testLength + baseSize)], "allocated wrong")
+            stringObject = Marshal.PtrToStructure(data, PyStringObject)
+            self.assertEquals(stringObject.ob_refcnt, 1, "unexpected refcount")
+            self.assertEquals(stringObject.ob_type, IntPtr.Zero, "unexpected type")
+            self.assertEquals(stringObject.ob_size, testLength, "unexpected ob_size")
+            self.assertEquals(stringObject.ob_shash, -1, "unexpected useless-field")
+            self.assertEquals(stringObject.ob_sstate, 0, "unexpected useless-field")
+            strDataPtr = OffsetPtr(data, Marshal.OffsetOf(PyStringObject, "ob_sval"))
+            terminatorPtr = OffsetPtr(strDataPtr, testLength)
+            self.assertEquals(Marshal.ReadByte(terminatorPtr), 0, "string not terminated")
+
+            writtenBytes = Array.CreateInstance(Byte, testLength)
+            Marshal.Copy(strDataPtr, writtenBytes, 0, testLength)
+            self.assertEquals(len(writtenBytes), len(bytes), "copied wrong")
+            for (actual, expected) in zip(writtenBytes, bytes):
+                self.assertEquals(actual, expected, "failed to copy string data correctly")
+            self.assertEquals(mapper.Retrieve(data), testString, "failed to map pointer correctly")
+
+        finally:
+            Marshal.FreeHGlobal(testData)
+            Marshal.FreeHGlobal(data)
+
+
 class Python25Mapper_PyString_FromStringAndSize_Test(unittest.TestCase):
 
     def testCreateEmptyString(self):
@@ -721,17 +796,19 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
 
         mapper.LastException = System.Exception("doozy")
         self.assertEquals(type(mapper.LastException), System.Exception,
-                          "get should retrieve last set exception type")
+                          "get should retrieve last set exception")
         self.assertEquals(mapper.LastException.Message, "doozy",
-                          "get should retrieve last set exception msg")
+                          "get should retrieve last set exception")
 
 
 
 suite = makesuite(
     Python25MapperTest,
     Python25Mapper_Py_InitModule4_Test,
+    Python25Mapper_PyModule_AddObject_Test,
     Python25Mapper_PyArg_ParseTuple_Test,
     Python25Mapper_PyArg_ParseTupleAndKeywords_Test,
+    Python25Mapper_PyString_FromString_Test,
     Python25Mapper_PyString_FromStringAndSize_Test,
     Python25Mapper__PyString_Resize_Test,
     Python25Mapper_Exception_Test,

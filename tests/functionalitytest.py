@@ -30,6 +30,11 @@ Decompress data in one shot. If you want to decompress data sequentially,
 use an instance of BZ2Decompressor instead.
 """
 
+bz2___author__ = """The bz2 python module was written by:
+
+    Gustavo Niemeyer <niemeyer@conectiva.com>
+"""
+
 bz2_test_compress = "I wonder why. I wonder why. I wonder why I wonder why. " * 1000
 bz2_test_decompress = 'BZh91AY&SYM\xf6FM\x00!\xd9\x95\x80@\x01\x00 \x06A\x90\xa0 \x00\x90 \x1ai\xa0)T4\x1bS\x81R\xa6\tU\xb0J\xad\x02Ur*T\xd0%W\xc0\x95^\x02U`%V\x02Up\tU\xb0J\xae\xc0\x95X\tU\xf8\xbb\x92)\xc2\x84\x82o\xb22h'
 
@@ -56,13 +61,13 @@ class FunctionalityTest(unittest.TestCase):
                 self.assertTrue(doc.startswith("The python bz2 module provides a comprehensive interface for\n"),
                                 "wrong docstring")
                 self.assertEquals(_self, IntPtr.Zero, "expected null pointer")
-                self.assertEquals(apiver, 1013, "meh, thought this would be different")
+                self.assertEquals(apiver, 1013, "yep, python25")
             finally:
                 pi.Dispose()
         finally:
             sr.Dispose()
 
-    def testCanCreateIronPythonModuleWithMethodsAndDocstrings(self):
+    def testCanCreateIronPythonBZ2ModuleWithMethodsAndDocstrings(self):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
         sr = StubReference(os.path.join("build", "python25.dll"))
@@ -90,7 +95,7 @@ class FunctionalityTest(unittest.TestCase):
             sr.Dispose()
 
 
-    def testCanUseMethodsInCreatedModule(self):
+    def testCanUseMethodsInCreatedBZ2Module(self):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
         sr = StubReference(os.path.join("build", "python25.dll"))
@@ -108,6 +113,26 @@ class FunctionalityTest(unittest.TestCase):
                 testCode = dedent("""
                     assert bz2.decompress(%r) == %r
                     """) % (bz2_test_decompress, bz2_test_compress)
+                engine.Execute(testCode)
+            finally:
+                pi.Dispose()
+        finally:
+            sr.Dispose()
+
+
+    def testCreatedBZ2ModuleAuthorString(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        sr = StubReference(os.path.join("build", "python25.dll"))
+        try:
+            sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
+            pi = PydImporter()
+            pi.Load("C:\\Python25\\Dlls\\bz2.pyd")
+            try:
+                testCode = dedent("""
+                    import bz2
+                    assert bz2.__author__ == %r
+                    """) % (bz2___author__)
                 engine.Execute(testCode)
             finally:
                 pi.Dispose()
