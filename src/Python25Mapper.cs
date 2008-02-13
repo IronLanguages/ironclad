@@ -48,25 +48,37 @@ namespace JumPy
     	private const string MODULE_CODE = @"
 from System import IntPtr
 
+def _cleanup(*args):
+  _jumpy_mapper.FreeTempPtrs()
+  for arg in args:
+  	if arg != IntPtr.Zero:
+  	  _jumpy_mapper.DecRef(arg)
+
+def _raiseExceptionIfRequired():
+  error = _jumpy_mapper.LastException
+  if error:
+    _jumpy_mapper.LastException = None
+    raise error
+  
 def _jumpy_dispatch(name, args):
   argPtr = _jumpy_mapper.Store(args)
   resultPtr = _jumpy_dispatch_table[name](IntPtr.Zero, argPtr)
-  result = _jumpy_mapper.Retrieve(resultPtr)
-  _jumpy_mapper.FreeTempPtrs()
-  _jumpy_mapper.DecRef(argPtr)
-  _jumpy_mapper.DecRef(resultPtr)
-  return result
+  try:
+    _raiseExceptionIfRequired()
+    return _jumpy_mapper.Retrieve(resultPtr)
+  finally:
+    _cleanup(argPtr, resultPtr)
 
 def _jumpy_dispatch_kwargs(name, args, kwargs):
   argPtr = _jumpy_mapper.Store(args)
   kwargPtr = _jumpy_mapper.Store(kwargs)
   resultPtr = _jumpy_dispatch_table[name](IntPtr.Zero, argPtr, kwargPtr)
-  result = _jumpy_mapper.Retrieve(resultPtr)
-  _jumpy_mapper.FreeTempPtrs()
-  _jumpy_mapper.DecRef(argPtr)
-  _jumpy_mapper.DecRef(kwargPtr)
-  _jumpy_mapper.DecRef(resultPtr)
-  return result
+  try:
+    _raiseExceptionIfRequired()
+    return _jumpy_mapper.Retrieve(resultPtr)
+  finally:
+    _cleanup(argPtr, kwargPtr, resultPtr)
+  
 ";
     
         private PythonEngine engine;
