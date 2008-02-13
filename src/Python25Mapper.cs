@@ -158,7 +158,7 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
             }
             else
             {
-                throw new KeyNotFoundException("Missing key in pointer map");
+                return 0;
             }
         }
         
@@ -290,6 +290,21 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
             this.engine.Execute(moduleCode.ToString(), module);
             return this.Store(module);
         }
+        
+        public override int PyModule_AddObject(IntPtr modulePtr, string name, IntPtr itemPtr)
+        {
+        	if (this.RefCount(modulePtr) == 0)
+        	{
+        		return -1;
+        	}
+            EngineModule module = (EngineModule)this.Retrieve(modulePtr);
+            if (this.RefCount(itemPtr) > 0)
+            {
+            	module.Globals[name] = this.Retrieve(itemPtr);
+            	this.DecRef(itemPtr);
+            }
+            return 0;
+        }
 
 
         protected virtual Dictionary<int, object> 
@@ -417,14 +432,10 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
             return this.SetArgValues(argsToWrite, argWriters, outPtr);
         }
         
-        public override IntPtr
-        PyString_FromStringAndSize(IntPtr stringData, int length)
+        
+        private IntPtr 
+        AllocPyString(int length)
         {
-        	if (stringData != IntPtr.Zero)
-        	{
-        		throw new NotImplementedException("PyString_FromStringAndSize ignores initial string value");
-        	}
-        	
         	int size = Marshal.SizeOf(typeof(PyStringObject)) + length;
         	IntPtr data = this.allocator.Alloc(size);
         	
@@ -438,7 +449,43 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
         	
         	IntPtr terminator = CPyMarshal.Offset(data, size - 1);
         	CPyMarshal.WriteByte(terminator, 0);
+        
+        	return data;
+        }
+        
+        
+        public override IntPtr PyString_FromString(IntPtr stringData)
+        {
+        	// maybe I should just DllImport memcpy... :/
+        	IntPtr current = stringData;
+        	List<byte> bytesList = new List<byte>();
+        	while (CPyMarshal.ReadByte(current) != 0)
+        	{
+        		bytesList.Add(CPyMarshal.ReadByte(current));
+        		current = CPyMarshal.Offset(current, 1);
+        	}
+        	byte[] bytes = new byte[bytesList.Count];
+        	bytesList.CopyTo(bytes);
+        	IntPtr strPtr = this.AllocPyString(bytes.Length);
+        	IntPtr bufPtr = CPyMarshal.Offset(
+        		strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+        	Marshal.Copy(bytes, 0, bufPtr, bytes.Length);
         	
+			char[] chars = Array.ConvertAll<byte, char>(
+				bytes, new Converter<byte, char>(CharFromByte));
+			this.ptrmap[strPtr] = new string(chars);
+        	return strPtr;
+        }
+        
+        public override IntPtr
+        PyString_FromStringAndSize(IntPtr stringData, int length)
+        {
+        	if (stringData != IntPtr.Zero)
+        	{
+        		throw new NotImplementedException("PyString_FromStringAndSize ignores initial string value");
+        	}
+        	
+        	IntPtr data = this.AllocPyString(length);
         	this.StoreUnmanagedData(data, UnmanagedDataMarker.PyStringObject);
         	return data;
         }
