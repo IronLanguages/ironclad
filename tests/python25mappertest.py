@@ -320,6 +320,14 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
 
 class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
 
+    def testAddObjectToUnknownModuleFails(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+
+        self.assertEquals(mapper.PyModule_AddObject(IntPtr.Zero, "zorro", IntPtr.Zero), -1,
+                          "bad return on failure")
+
+
     def testAddObjectWithExistingReferenceAddsMappedObjectAndDecRefsPointer(self):
         engine = PythonEngine()
         module = engine.CreateModule()
@@ -339,12 +347,7 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
                 mapper.DecRef(testPtr)
 
 
-    def testAddObjectToUnknownModuleFails(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
 
-        self.assertEquals(mapper.PyModule_AddObject(IntPtr.Zero, "zorro", IntPtr.Zero), -1,
-                          "bad return on failure")
 
 
 

@@ -1,0 +1,3 @@
+int
+IntPtr args, IntPtr kwargs, string format, IntPtr kwlist, IntPtr argPtr
+return 0
