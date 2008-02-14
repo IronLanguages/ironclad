@@ -7,20 +7,20 @@ from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from JumPy import CPyMarshal, PythonMapper, StubReference
 
+testNumber = 1359
 
 def Write16Bytes(address):
     for a in range(4):
         ptr = OffsetPtr(address, a * CPyMarshal.IntSize)
-        Marshal.WriteInt32(ptr, 1359)
+        Marshal.WriteInt32(ptr, testNumber)
 
 
 def TestWrote16Bytes(address):
     for a in range(4):
         ptr = OffsetPtr(address, a * CPyMarshal.IntSize)
         data = Marshal.ReadInt32(ptr)
-        if data != 1359:
+        if data != testNumber:
             raise AssertionError("write failed")
-
 
 
 class PythonMapperTest(unittest.TestCase):
@@ -28,13 +28,16 @@ class PythonMapperTest(unittest.TestCase):
     def testDataSetterDoesNotWriteForUnrecognisedSymbols(self):
         pm = PythonMapper()
         pm.SetData("This_symbol_is_not_exported_either_I_sincerely_hope", IntPtr.Zero)
+        # had we written to IntPtr.Zero, we would have crashed
 
 
-    def assertDataSetterSets(self, mapperSubclass, dataSymbol, allocSize, memoryTest):
+    def assertDataSetterSetsAndRemembers(self, mapperSubclass, dataSymbol, allocSize, memoryTest):
         dataPtr = Marshal.AllocHGlobal(allocSize)
         try:
-            mapperSubclass().SetData(dataSymbol, dataPtr)
+            mapper = mapperSubclass()
+            mapper.SetData(dataSymbol, dataPtr)
             memoryTest(dataPtr)
+            self.assertEquals(getattr(mapper, dataSymbol), dataPtr, "failed to remember pointer")
         finally:
             Marshal.FreeHGlobal(dataPtr)
 
@@ -43,8 +46,14 @@ class PythonMapperTest(unittest.TestCase):
         class MyPM(PythonMapper):
             def Fill_PyString_Type(self, address):
                 Write16Bytes(address)
+        self.assertDataSetterSetsAndRemembers(MyPM, "PyString_Type", 16, TestWrote16Bytes)
 
-        self.assertDataSetterSets(MyPM, "PyString_Type", 16, TestWrote16Bytes)
+
+    def testPythonMapperFinds_PyType_Type(self):
+        class MyPM(PythonMapper):
+            def Fill_PyType_Type(self, address):
+                Write16Bytes(address)
+        self.assertDataSetterSetsAndRemembers(MyPM, "PyType_Type", 16, TestWrote16Bytes)
 
 
     def testAddressGetterFailsCleanly(self):
