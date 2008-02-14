@@ -303,6 +303,21 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
             	module.Globals[name] = this.Retrieve(itemPtr);
             	this.DecRef(itemPtr);
             }
+            else
+            {
+            	IntPtr typePtr = CPyMarshal.Offset(
+            		itemPtr, Marshal.OffsetOf(typeof(PyTypeObject), "ob_type"));
+            	
+            	if (CPyMarshal.ReadPtr(typePtr) == this.PyType_Type)
+            	{
+            		StringBuilder classCode = new StringBuilder();
+            		classCode.Append(String.Format(
+            			"class {0}(object):\n  pass", name));
+            		this.engine.Execute(classCode.ToString(), module);
+            		object klass = module.Globals[name];
+            		this.ptrmap[itemPtr] = klass;
+            	}
+            }
             return 0;
         }
 

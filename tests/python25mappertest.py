@@ -1,6 +1,7 @@
 
 import unittest
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
+from tests.utils.memory import OffsetPtr
 from tests.utils.runtest import makesuite, run
 
 import System
@@ -13,7 +14,7 @@ from JumPy import (
     CPythonVarargsKwargsFunction_Delegate,
     IntArgWriter, Python25Mapper, SizedStringArgWriter
 )
-from JumPy.Structs import METH, PyMethodDef
+from JumPy.Structs import METH, PyMethodDef, PyTypeObject
 from IronPython.Hosting import PythonEngine
 
 
@@ -347,8 +348,32 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
                 mapper.DecRef(testPtr)
 
 
+    def testAddUnknownTypeObjectAddsTypeToModule(self):
+        engine = PythonEngine()
+        module = engine.CreateModule()
+        mapper = Python25Mapper(engine)
+        mapper.SetData("PyType_Type", IntPtr(123))
+        modulePtr = mapper.Store(module)
 
+        typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        namePtr = Marshal.StringToHGlobalAnsi("some.module.Klass")
+        try:
+            CPyMarshal.WriteInt(typePtr, 1)
+            ob_typeOffset = Marshal.OffsetOf(PyTypeObject, "ob_type")
+            CPyMarshal.WritePtr(OffsetPtr(typePtr, ob_typeOffset), mapper.PyType_Type)
+            tp_nameOffset = Marshal.OffsetOf(PyTypeObject, "tp_name")
+            CPyMarshal.WritePtr(OffsetPtr(typePtr, tp_nameOffset), namePtr)
 
+            result = mapper.PyModule_AddObject(modulePtr, "KlassName", typePtr)
+
+            self.assertEquals(result, 0, "reported failure")
+            mappedClass = mapper.Retrieve(typePtr)
+            generatedClass = module.Globals["KlassName"]
+            self.assertEquals(mappedClass, generatedClass,
+                              "failed to add new type to module")
+        finally:
+            Marshal.FreeHGlobal(typePtr)
+            Marshal.FreeHGlobal(namePtr)
 
 
 
