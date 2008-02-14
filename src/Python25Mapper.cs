@@ -454,6 +454,21 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
         }
         
         
+        private IntPtr
+        CreatePyStringWithBytes(byte[] bytes)
+        {
+        	IntPtr strPtr = this.AllocPyString(bytes.Length);
+        	IntPtr bufPtr = CPyMarshal.Offset(
+        		strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+        	Marshal.Copy(bytes, 0, bufPtr, bytes.Length);
+        	
+			char[] chars = Array.ConvertAll<byte, char>(
+				bytes, new Converter<byte, char>(CharFromByte));
+			this.ptrmap[strPtr] = new string(chars);
+        	return strPtr;
+        }
+        
+        
         public override IntPtr PyString_FromString(IntPtr stringData)
         {
         	// maybe I should just DllImport memcpy... :/
@@ -466,28 +481,24 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
         	}
         	byte[] bytes = new byte[bytesList.Count];
         	bytesList.CopyTo(bytes);
-        	IntPtr strPtr = this.AllocPyString(bytes.Length);
-        	IntPtr bufPtr = CPyMarshal.Offset(
-        		strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
-        	Marshal.Copy(bytes, 0, bufPtr, bytes.Length);
-        	
-			char[] chars = Array.ConvertAll<byte, char>(
-				bytes, new Converter<byte, char>(CharFromByte));
-			this.ptrmap[strPtr] = new string(chars);
-        	return strPtr;
+        	return this.CreatePyStringWithBytes(bytes);
         }
         
         public override IntPtr
         PyString_FromStringAndSize(IntPtr stringData, int length)
         {
-        	if (stringData != IntPtr.Zero)
+        	if (stringData == IntPtr.Zero)
         	{
-        		throw new NotImplementedException("PyString_FromStringAndSize ignores initial string value");
+        		IntPtr data = this.AllocPyString(length);
+        		this.StoreUnmanagedData(data, UnmanagedDataMarker.PyStringObject);
+        		return data;
         	}
-        	
-        	IntPtr data = this.AllocPyString(length);
-        	this.StoreUnmanagedData(data, UnmanagedDataMarker.PyStringObject);
-        	return data;
+        	else
+        	{
+        		byte[] bytes = new byte[length];
+        		Marshal.Copy(stringData, bytes, 0, length);
+        		return this.CreatePyStringWithBytes(bytes);
+        	}
         }
         
         private int
