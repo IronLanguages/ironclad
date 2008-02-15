@@ -368,11 +368,12 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
             result = mapper.PyModule_AddObject(modulePtr, itemName, typePtr)
 
             self.assertEquals(result, 0, "reported failure")
+
             mappedClass = mapper.Retrieve(typePtr)
             generatedClass = module.Globals[itemName]
             self.assertEquals(mappedClass, generatedClass,
                               "failed to add new type to module")
-            print ">>>", mappedClass.__name__, mappedClass.__module__
+
             self.assertEquals(mappedClass.__name__, class__name__, "unexpected __name__")
             self.assertEquals(mappedClass.__module__, class__module__, "unexpected __module__")
         finally:
