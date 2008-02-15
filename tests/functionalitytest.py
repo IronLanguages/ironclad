@@ -99,7 +99,7 @@ class FunctionalityTest(unittest.TestCase):
                     bz2_decompress_doc)
         )
 
-    def testCanUseMethodsInCreatedBZ2Module(self):
+    def testCanUseFunctionsInCreatedBZ2Module(self):
         self.assertWorksWithBZ2(dedent("""
             assert bz2.compress(%(uncompressed)r) == %(compressed)r
             assert bz2.decompress(%(compressed)r) == %(uncompressed)r
@@ -118,6 +118,26 @@ class FunctionalityTest(unittest.TestCase):
             assert bz2.BZ2Decompressor.__module__ == 'bz2'
             """)
         )
+
+    def testBZ2Compressor(self):
+        self.assertWorksWithBZ2(dedent("""
+            # adapted from test_bz2.py
+            compressor = bz2.BZ2Compressor()
+            text = %r
+            chunkSize = 50
+            n = 0
+            data = ''
+            while 1:
+                chunk = text[n*chunkSize:(n+1)*chunkSize]
+                if not chunk:
+                    break
+                data += compressor.compress(str)
+                n += 1
+            data += compressor.flush()
+            assert data == %r
+            """) % (bz2_test_compress, bz2_test_decompress)
+        )
+
 
 
 suite = makesuite(FunctionalityTest)
