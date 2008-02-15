@@ -80,7 +80,15 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
     _cleanup(argPtr, kwargPtr, resultPtr)
   
 ";
-    
+  
+  		private const string CLASS_CODE = @"
+class {0}(object):
+  __module__ = '{1}'
+
+{0}.__name__ = '{2}'
+";
+  
+  
         private PythonEngine engine;
         private Dictionary<IntPtr, object> ptrmap;
         private List<IntPtr> tempptrs;
@@ -291,7 +299,34 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
             return this.Store(module);
         }
         
-        public override int PyModule_AddObject(IntPtr modulePtr, string name, IntPtr itemPtr)
+        
+        private void
+        GenerateClass(EngineModule module, string name, IntPtr typePtr)
+        {
+			StringBuilder classCode = new StringBuilder();
+			
+			IntPtr tp_namePtr = CPyMarshal.Offset(
+				typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_name"));
+			string tp_name = Marshal.PtrToStringAnsi(CPyMarshal.ReadPtr(tp_namePtr));
+			
+			string __name__ = tp_name;
+			string __module__ = "";
+			int lastDot = tp_name.LastIndexOf('.');
+			if (lastDot != -1)
+			{
+				__name__ = tp_name.Substring(lastDot + 1);	
+				__module__ = tp_name.Substring(0, lastDot);
+			}
+			
+			classCode.Append(String.Format(CLASS_CODE, name, __module__, __name__));
+			this.engine.Execute(classCode.ToString(), module);
+			object klass = module.Globals[name];
+			this.ptrmap[typePtr] = klass;
+        }
+        
+        
+        public override int 
+        PyModule_AddObject(IntPtr modulePtr, string name, IntPtr itemPtr)
         {
         	if (this.RefCount(modulePtr) == 0)
         	{
@@ -307,15 +342,9 @@ def _jumpy_dispatch_kwargs(name, args, kwargs):
             {
             	IntPtr typePtr = CPyMarshal.Offset(
             		itemPtr, Marshal.OffsetOf(typeof(PyTypeObject), "ob_type"));
-            	
             	if (CPyMarshal.ReadPtr(typePtr) == this.PyType_Type)
             	{
-            		StringBuilder classCode = new StringBuilder();
-            		classCode.Append(String.Format(
-            			"class {0}(object):\n  pass", name));
-            		this.engine.Execute(classCode.ToString(), module);
-            		object klass = module.Globals[name];
-            		this.ptrmap[itemPtr] = klass;
+            		this.GenerateClass(module, name, itemPtr);
             	}
             }
             return 0;

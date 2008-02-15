@@ -1,8 +1,9 @@
 
 import unittest
+from tests.utils.runtest import makesuite, run
+
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
 from tests.utils.memory import OffsetPtr
-from tests.utils.runtest import makesuite, run
 
 import System
 from System import Array, IntPtr
@@ -348,7 +349,7 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
                 mapper.DecRef(testPtr)
 
 
-    def testAddUnknownTypeObjectAddsTypeToModule(self):
+    def assertModuleAddsTypeWithStrings(self, tp_name, itemName, class__module__, class__name__):
         engine = PythonEngine()
         module = engine.CreateModule()
         mapper = Python25Mapper(engine)
@@ -356,7 +357,7 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
         modulePtr = mapper.Store(module)
 
         typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        namePtr = Marshal.StringToHGlobalAnsi("some.module.Klass")
+        namePtr = Marshal.StringToHGlobalAnsi(tp_name)
         try:
             CPyMarshal.WriteInt(typePtr, 1)
             ob_typeOffset = Marshal.OffsetOf(PyTypeObject, "ob_type")
@@ -364,17 +365,34 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
             tp_nameOffset = Marshal.OffsetOf(PyTypeObject, "tp_name")
             CPyMarshal.WritePtr(OffsetPtr(typePtr, tp_nameOffset), namePtr)
 
-            result = mapper.PyModule_AddObject(modulePtr, "KlassName", typePtr)
+            result = mapper.PyModule_AddObject(modulePtr, itemName, typePtr)
 
             self.assertEquals(result, 0, "reported failure")
             mappedClass = mapper.Retrieve(typePtr)
-            generatedClass = module.Globals["KlassName"]
+            generatedClass = module.Globals[itemName]
             self.assertEquals(mappedClass, generatedClass,
                               "failed to add new type to module")
+            print ">>>", mappedClass.__name__, mappedClass.__module__
+            self.assertEquals(mappedClass.__name__, class__name__, "unexpected __name__")
+            self.assertEquals(mappedClass.__module__, class__module__, "unexpected __module__")
         finally:
             Marshal.FreeHGlobal(typePtr)
             Marshal.FreeHGlobal(namePtr)
 
+
+    def testAddTypeObjectWithStrings(self):
+        self.assertModuleAddsTypeWithStrings(
+            "some.module.Klass",
+            "KlassName",
+            "some.module",
+            "Klass",
+        )
+        self.assertModuleAddsTypeWithStrings(
+            "Klass",
+            "KlassName",
+            "",
+            "Klass",
+        )
 
 
 class Python25Mapper_PyArg_ParseTuple_Test(unittest.TestCase):

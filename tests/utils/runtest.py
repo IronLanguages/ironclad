@@ -1,5 +1,6 @@
 
 import unittest
+import tests.utils.loadassemblies
 
 def makesuite(*tests):
     suite = unittest.TestSuite()
