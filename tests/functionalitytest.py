@@ -140,6 +140,31 @@ class FunctionalityTest(unittest.TestCase):
             sr.Dispose()
 
 
+    def testCreatedBZ2ModuleTypesExist(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        sr = StubReference(os.path.join("build", "python25.dll"))
+        try:
+            sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
+            pi = PydImporter()
+            pi.Load("C:\\Python25\\Dlls\\bz2.pyd")
+            try:
+                testCode = dedent("""
+                    import bz2
+                    assert bz2.BZ2File.__name__ == 'BZ2File'
+                    assert bz2.BZ2File.__module__ == 'bz2'
+                    assert bz2.BZ2Compressor.__name__ == 'BZ2Compressor'
+                    assert bz2.BZ2Compressor.__module__ == 'bz2'
+                    assert bz2.BZ2Decompressor.__name__ == 'BZ2Decompressor'
+                    assert bz2.BZ2Decompressor.__module__ == 'bz2'
+                    """)
+                engine.Execute(testCode)
+            finally:
+                pi.Dispose()
+        finally:
+            sr.Dispose()
+
+
 suite = makesuite(FunctionalityTest)
 
 if __name__ == '__main__':

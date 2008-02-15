@@ -1,5 +1,5 @@
 
-import tests.memorytests.loadassemblies
+import tests.utils.loadassemblies
 
 import os
 import unittest
