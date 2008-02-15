@@ -67,7 +67,8 @@ class FunctionalityTest(unittest.TestCase):
         finally:
             sr.Dispose()
 
-    def testCanCreateIronPythonBZ2ModuleWithMethodsAndDocstrings(self):
+
+    def assertWorksWithBZ2(self, testCode):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
         sr = StubReference(os.path.join("build", "python25.dll"))
@@ -76,93 +77,47 @@ class FunctionalityTest(unittest.TestCase):
             pi = PydImporter()
             pi.Load("C:\\Python25\\Dlls\\bz2.pyd")
             try:
-                testCode = dedent("""
-                    import bz2
-                    assert bz2.__doc__ == '''%s'''
-                    """) % bz2_doc
-                engine.Execute(testCode)
-
-                testCode = dedent("""
-                    assert callable(bz2.compress)
-                    assert bz2.compress.__doc__ == '''%s'''
-                    assert callable(bz2.decompress)
-                    assert bz2.decompress.__doc__ == '''%s'''
-                    """) % (bz2_compress_doc, bz2_decompress_doc)
+                engine.Execute("import bz2")
                 engine.Execute(testCode)
             finally:
                 pi.Dispose()
         finally:
             sr.Dispose()
 
+
+    def testCanCreateIronPythonBZ2ModuleWithMethodsAndDocstrings(self):
+        self.assertWorksWithBZ2(dedent("""
+            assert bz2.__doc__ == %r
+            assert bz2.__author__ == %r
+            assert callable(bz2.compress)
+            assert bz2.compress.__doc__ == %r
+            assert callable(bz2.decompress)
+            assert bz2.decompress.__doc__ == %r
+            """) % (bz2_doc,
+                    bz2___author__,
+                    bz2_compress_doc,
+                    bz2_decompress_doc)
+        )
 
     def testCanUseMethodsInCreatedBZ2Module(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
-        sr = StubReference(os.path.join("build", "python25.dll"))
-        try:
-            sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
-            pi = PydImporter()
-            pi.Load("C:\\Python25\\Dlls\\bz2.pyd")
-            try:
-                testCode = dedent("""
-                    import bz2
-                    assert bz2.compress(%r) == %r
-                    """) % (bz2_test_compress, bz2_test_decompress)
-                engine.Execute(testCode)
-
-                testCode = dedent("""
-                    assert bz2.decompress(%r) == %r
-                    """) % (bz2_test_decompress, bz2_test_compress)
-                engine.Execute(testCode)
-            finally:
-                pi.Dispose()
-        finally:
-            sr.Dispose()
-
-
-    def testCreatedBZ2ModuleAuthorString(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
-        sr = StubReference(os.path.join("build", "python25.dll"))
-        try:
-            sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
-            pi = PydImporter()
-            pi.Load("C:\\Python25\\Dlls\\bz2.pyd")
-            try:
-                testCode = dedent("""
-                    import bz2
-                    assert bz2.__author__ == %r
-                    """) % (bz2___author__)
-                engine.Execute(testCode)
-            finally:
-                pi.Dispose()
-        finally:
-            sr.Dispose()
+        self.assertWorksWithBZ2(dedent("""
+            assert bz2.compress(%(uncompressed)r) == %(compressed)r
+            assert bz2.decompress(%(compressed)r) == %(uncompressed)r
+            """) % {"compressed": bz2_test_decompress,
+                    "uncompressed": bz2_test_compress}
+        )
 
 
     def testCreatedBZ2ModuleTypesExist(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
-        sr = StubReference(os.path.join("build", "python25.dll"))
-        try:
-            sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
-            pi = PydImporter()
-            pi.Load("C:\\Python25\\Dlls\\bz2.pyd")
-            try:
-                testCode = dedent("""
-                    import bz2
-                    assert bz2.BZ2File.__name__ == 'BZ2File'
-                    assert bz2.BZ2File.__module__ == 'bz2'
-                    assert bz2.BZ2Compressor.__name__ == 'BZ2Compressor'
-                    assert bz2.BZ2Compressor.__module__ == 'bz2'
-                    assert bz2.BZ2Decompressor.__name__ == 'BZ2Decompressor'
-                    assert bz2.BZ2Decompressor.__module__ == 'bz2'
-                    """)
-                engine.Execute(testCode)
-            finally:
-                pi.Dispose()
-        finally:
-            sr.Dispose()
+        self.assertWorksWithBZ2(dedent("""
+            assert bz2.BZ2File.__name__ == 'BZ2File'
+            assert bz2.BZ2File.__module__ == 'bz2'
+            assert bz2.BZ2Compressor.__name__ == 'BZ2Compressor'
+            assert bz2.BZ2Compressor.__module__ == 'bz2'
+            assert bz2.BZ2Decompressor.__name__ == 'BZ2Decompressor'
+            assert bz2.BZ2Decompressor.__module__ == 'bz2'
+            """)
+        )
 
 
 suite = makesuite(FunctionalityTest)
