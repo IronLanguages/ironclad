@@ -131,7 +131,7 @@ class FunctionalityTest(unittest.TestCase):
                 chunk = text[n*chunkSize:(n+1)*chunkSize]
                 if not chunk:
                     break
-                data += compressor.compress(str)
+                data += compressor.compress(chunk)
                 n += 1
             data += compressor.flush()
             assert data == %r

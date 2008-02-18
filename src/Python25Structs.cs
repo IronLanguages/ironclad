@@ -9,6 +9,8 @@ namespace JumPy
 
     public delegate IntPtr CPythonVarargsKwargsFunction_Delegate(IntPtr self, IntPtr args, IntPtr kwargs);
 
+    public delegate int CPython_initproc_Delegate(IntPtr self, IntPtr args, IntPtr kwargs);
+
     namespace Structs
     {
         [Flags]
