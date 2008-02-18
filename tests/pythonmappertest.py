@@ -184,6 +184,33 @@ class PythonMapperTest(unittest.TestCase):
             None, paramsStore)
 
 
+    def testPythonMapperFinds_PyType_GenericNew(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyType_GenericNew(self, typePtr, args, kwargs):
+                paramsStore.append((typePtr, args, kwargs))
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyType_GenericNew",
+            (IntPtr(111), IntPtr(222), IntPtr(333)),
+            IntPtr(999), paramsStore)
+
+
+    def testPythonMapperFinds_PyType_GenericAlloc(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyType_GenericAlloc(self, typePtr, nItems):
+                paramsStore.append((typePtr, nItems))
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyType_GenericAlloc",
+            (IntPtr(111), 22),
+            IntPtr(999), paramsStore)
+
+
+
     def testPythonMapperImplementationOf_PyEval_SaveThread(self):
         self.assertEquals(PythonMapper().PyEval_SaveThread(), IntPtr.Zero,
                           "unexpectedly wrong implementation")
