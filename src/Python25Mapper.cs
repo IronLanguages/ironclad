@@ -74,6 +74,14 @@ def _jumpy_dispatch(name, instancePtr, args):
     return _jumpy_mapper.Retrieve(resultPtr)
   finally:
     _cleanup(argPtr, resultPtr)
+  
+def _jumpy_dispatch_noargs(name, instancePtr):
+  resultPtr = _jumpy_dispatch_table[name](instancePtr, IntPtr.Zero)
+  try:
+    _raiseExceptionIfRequired()
+    return _jumpy_mapper.Retrieve(resultPtr)
+  finally:
+    _cleanup(resultPtr)
 
 def _jumpy_dispatch_kwargs(name, instancePtr, args, kwargs):
   argPtr = _jumpy_mapper.Store(args)
@@ -85,6 +93,12 @@ def _jumpy_dispatch_kwargs(name, instancePtr, args, kwargs):
   finally:
     _cleanup(argPtr, kwargPtr, resultPtr)
   
+";
+
+        private const string NOARGS_FUNCTION_CODE = @"
+def {0}():
+  '''{1}'''
+  return _jumpy_dispatch_noargs('{2}{0}', IntPtr.Zero)
 ";
 
         private const string VARARGS_FUNCTION_CODE = @"
@@ -115,6 +129,16 @@ class {0}(object):
   
   def __init__(self, *args, **kwargs):
     object.__init__(self)
+    argPtr = _jumpy_mapper.Store(args)
+    kwargPtr = _jumpy_mapper.Store(kwargs)
+    self.__class__._tp_initDgt(self._instancePtr, argPtr, kwargPtr)
+    _cleanup(argPtr, kwargPtr)
+";
+
+        private const string NOARGS_METHOD_CODE = @"
+  def {0}(self):
+    '''{1}'''
+    return _jumpy_dispatch_noargs('{2}{0}', self._instancePtr)
 ";
 
         private const string VARARGS_METHOD_CODE = @"
@@ -295,6 +319,7 @@ class {0}(object):
                         IntPtr methods, 
                         DispatchTable methodTable,
                         string tablePrefix, 
+                        string noargsTemplate,
                         string varargsTemplate, 
                         string varargsKwargsTemplate)
         {
@@ -314,6 +339,14 @@ class {0}(object):
                 bool unsupportedFlags = false;
                 switch (thisMethod.ml_flags)
                 {
+                    case METH.NOARGS:
+                        template = noargsTemplate;
+                        dgt = (CPythonVarargsFunction_Delegate)
+                            Marshal.GetDelegateForFunctionPointer(
+                                thisMethod.ml_meth, 
+                                typeof(CPythonVarargsFunction_Delegate));
+                        break;
+                        
                     case METH.VARARGS:
                         template = varargsTemplate;
                         dgt = (CPythonVarargsFunction_Delegate)
@@ -369,6 +402,7 @@ class {0}(object):
                 methods, 
                 methodTable, 
                 "", 
+                NOARGS_FUNCTION_CODE, 
                 VARARGS_FUNCTION_CODE, 
                 VARARGS_KWARGS_FUNCTION_CODE
             );
@@ -408,6 +442,7 @@ class {0}(object):
                     methods, 
                     (DispatchTable)module.Globals["_jumpy_dispatch_table"],
                     name + ".", 
+                    NOARGS_METHOD_CODE, 
                     VARARGS_METHOD_CODE, 
                     VARARGS_KWARGS_METHOD_CODE
                 );
@@ -424,8 +459,15 @@ class {0}(object):
             PyType_GenericNew_Delegate tp_newDgt = (PyType_GenericNew_Delegate)
                 Marshal.GetDelegateForFunctionPointer(
                     tp_newFP, typeof(PyType_GenericNew_Delegate));
-
             DynamicType.SetAttrMethod(klass, "_tp_newDgt", tp_newDgt);
+            
+            IntPtr tp_initOffset = Marshal.OffsetOf(typeof(PyTypeObject), "tp_init");
+            IntPtr tp_initFP = CPyMarshal.ReadPtr(CPyMarshal.Offset(typePtr, tp_initOffset));
+            CPython_initproc_Delegate tp_initDgt = (CPython_initproc_Delegate)
+                Marshal.GetDelegateForFunctionPointer(
+                    tp_initFP, typeof(CPython_initproc_Delegate));
+            DynamicType.SetAttrMethod(klass, "_tp_initDgt", tp_initDgt);
+            
             this.ptrmap[typePtr] = klass;
         }
         

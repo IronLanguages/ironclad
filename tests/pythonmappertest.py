@@ -210,6 +210,56 @@ class PythonMapperTest(unittest.TestCase):
             IntPtr(999), paramsStore)
 
 
+    def testPythonMapperFinds_PyThread_allocate_lock(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyThread_allocate_lock(self):
+                paramsStore.append(tuple())
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyThread_allocate_lock",
+            tuple(),
+            IntPtr(999), paramsStore)
+
+
+    def testPythonMapperFinds_PyThread_free_lock(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyThread_free_lock(self, ptr):
+                paramsStore.append((ptr,))
+
+        self.assertDispatches(
+            MyPM, "PyThread_free_lock",
+            (IntPtr(123),),
+            None, paramsStore)
+
+
+    def testPythonMapperFinds_PyThread_acquire_lock(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyThread_acquire_lock(self, ptr, flags):
+                paramsStore.append((ptr, flags))
+                return 1
+
+        self.assertDispatches(
+            MyPM, "PyThread_acquire_lock",
+            (IntPtr(123), 1),
+            1, paramsStore)
+
+
+    def testPythonMapperFinds_PyThread_release_lock(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyThread_release_lock(self, ptr):
+                paramsStore.append((ptr,))
+
+        self.assertDispatches(
+            MyPM, "PyThread_release_lock",
+            (IntPtr(123),),
+            None, paramsStore)
+
+
 
     def testPythonMapperImplementationOf_PyEval_SaveThread(self):
         self.assertEquals(PythonMapper().PyEval_SaveThread(), IntPtr.Zero,

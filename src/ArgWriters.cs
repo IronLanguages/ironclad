@@ -86,10 +86,10 @@ namespace JumPy
             
             foreach (char c in value)
             {
-            	if ((char)(byte)c != c)
-            	{
-            		throw new PythonUnicodeErrorException("Failed to convert string");
-            	}
+                if ((char)(byte)c != c)
+                {
+                    throw new PythonUnicodeErrorException("Failed to convert string");
+                }
                 CPyMarshal.WriteByte(storage, (byte)c);
                 storage = CPyMarshal.Offset(storage, 1);
             }

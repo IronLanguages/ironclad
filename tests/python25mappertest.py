@@ -11,13 +11,17 @@ from System.Collections.Generic import Dictionary
 from System.Reflection import BindingFlags
 from System.Runtime.InteropServices import Marshal
 from JumPy import (
-    ArgWriter, CPyMarshal, CPythonVarargsFunction_Delegate,
+    ArgWriter, CPyMarshal, CPython_initproc_Delegate, CPythonVarargsFunction_Delegate,
     CPythonVarargsKwargsFunction_Delegate, IntArgWriter, PythonMapper, Python25Mapper,
     SizedStringArgWriter
 )
 from JumPy.Structs import METH, PyMethodDef, PyObject, PyTypeObject
 from IronPython.Hosting import PythonEngine
 
+
+Null_tp_init_Func = lambda _, __, ___: 0
+Null_tp_init_Delegate = CPython_initproc_Delegate(Null_tp_init_Func)
+Null_tp_init_FP = Marshal.GetFunctionPointerForDelegate(Null_tp_init_Delegate)
 
 def PythonModuleFromEngineModule(engineModule):
     engineModuleType = engineModule.GetType()
@@ -36,7 +40,7 @@ class TempPtrCheckingPython25Mapper(Python25Mapper):
 
 
 def MakeMethodDef(name, implementation, flags, doc="doc"):
-    if flags == METH.VARARGS:
+    if flags in (METH.VARARGS, METH.NOARGS):
         funcPtr = CPythonVarargsFunction_Delegate(implementation)
     elif flags == METH.VARARGS | METH.KEYWORDS:
         funcPtr = CPythonVarargsKwargsFunction_Delegate(implementation)
@@ -45,7 +49,8 @@ def MakeMethodDef(name, implementation, flags, doc="doc"):
 
 def MakeTypePtr(tp_name, typeTypePtr,
                 basicSize=8, itemSize=4, methodDef=None,
-                tp_allocPtr=IntPtr.Zero, tp_newPtr=IntPtr.Zero):
+                tp_allocPtr=IntPtr.Zero, tp_newPtr=IntPtr.Zero,
+                tp_initPtr=Null_tp_init_FP):
     typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
     namePtr = Marshal.StringToHGlobalAnsi(tp_name)
     methodsPtr, deallocMethods = MakeSingleMethodTablePtr(methodDef)
@@ -65,6 +70,7 @@ def MakeTypePtr(tp_name, typeTypePtr,
     WriteField("tp_methods", "WritePtr", methodsPtr)
     WriteField("tp_alloc", "WritePtr", tp_allocPtr)
     WriteField("tp_new", "WritePtr", tp_newPtr)
+    WriteField("tp_init", "WritePtr", tp_initPtr)
 
     def dealloc():
         Marshal.FreeHGlobal(typePtr)
@@ -192,9 +198,6 @@ class Python25MapperTest(unittest.TestCase):
                           "memory not freed")
 
 
-
-
-
 class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
 
     def assert_Py_InitModule4_withSingleMethod(self, engine, mapper, methodDef, moduleTest):
@@ -234,6 +237,27 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
                             'function not remembered')
             self.assertEquals(test_module.harold.__doc__, "harold's documentation",
                               'function docstring not remembered')
+
+        self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
+
+
+    def test_Py_InitModule4_DispatchesToOriginalNoargsFunction(self):
+        engine = PythonEngine()
+        mapper = TempPtrCheckingPython25Mapper(engine)
+        retval = mapper.Store("ewok")
+        calls = []
+        def CModuleFunction(_selfPtr, argPtr):
+            calls.append((_selfPtr, argPtr))
+            return retval
+        method = MakeMethodDef("func", CModuleFunction, METH.NOARGS)
+
+        def testModule(test_module, mapper):
+            self.assertEquals(test_module.func(), "ewok", "bad result")
+            self.assertEquals(mapper.RefCount(retval), 0, "did not clean up return value")
+            self.assertTrue(mapper.tempPtrsFreed, "failed to clean up after call")
+            _selfPtr, argPtr = calls[0]
+            self.assertEquals(_selfPtr, IntPtr.Zero, "no self on module functions")
+            self.assertEquals(argPtr, IntPtr.Zero, "no args on noargs functions (oddly enough)")
 
         self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 
@@ -395,12 +419,19 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
 
         calls = []
         def new(_, __, ___):
-            calls.append("called")
+            calls.append("__new__")
             return IntPtr.Zero
         newDgt = PythonMapper.PyType_GenericNew_Delegate(new)
         newFP = Marshal.GetFunctionPointerForDelegate(newDgt)
 
-        typePtr, deallocType = MakeTypePtr(tp_name, mapper.PyType_Type, tp_newPtr=newFP)
+        def init(_, __, ___):
+            calls.append("__init__")
+            return 0
+        initDgt = CPython_initproc_Delegate(init)
+        initFP = Marshal.GetFunctionPointerForDelegate(initDgt)
+
+        typePtr, deallocType = MakeTypePtr(
+            tp_name, mapper.PyType_Type, tp_newPtr=newFP, tp_initPtr=initFP)
         try:
             result = mapper.PyModule_AddObject(modulePtr, itemName, typePtr)
 
@@ -416,7 +447,9 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
             self.assertEquals(mappedClass.__module__, class__module__, "unexpected __module__")
 
             mappedClass._tp_newDgt(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)
-            self.assertEquals(calls, ["called"], "tp_new not hooked up correctly")
+            mappedClass._tp_initDgt(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)
+            self.assertEquals(calls, ["__new__", "__init__"],
+                              "tp_new and tp_init not hooked up correctly")
         finally:
             deallocType()
             mapper.DecRef(modulePtr)
@@ -449,14 +482,22 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
         def new(typePtr, argPtr, kwargPtr):
             mapper.IncRef(argPtr)
             mapper.IncRef(kwargPtr)
-            calls.append((typePtr, argPtr, kwargPtr))
+            calls.append(("__new__", typePtr, argPtr, kwargPtr))
             return IntPtr(999)
         newDgt = PythonMapper.PyType_GenericNew_Delegate(new)
         newFP = Marshal.GetFunctionPointerForDelegate(newDgt)
 
+        def init(selfPtr, argPtr, kwargPtr):
+            mapper.IncRef(argPtr)
+            mapper.IncRef(kwargPtr)
+            calls.append(("__init__", selfPtr, argPtr, kwargPtr))
+            return 0
+        initDgt = CPython_initproc_Delegate(init)
+        initFP = Marshal.GetFunctionPointerForDelegate(initDgt)
+
         typePtr, deallocType = MakeTypePtr(
             "thing", mapper.PyType_Type,
-            tp_newPtr=newFP)
+            tp_newPtr=newFP, tp_initPtr = initFP)
 
         try:
             result = mapper.PyModule_AddObject(modulePtr, "thing", typePtr)
@@ -469,26 +510,58 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
             self.assertEquals(instancePtr, IntPtr(999),
                               "instance not associated with correct ptr")
 
-            _, argPtr, kwargPtr = calls[0]
-            self.assertEquals(mapper.RefCount(argPtr), 1, "bad reference count")
-            self.assertEquals(mapper.RefCount(kwargPtr), 1, "bad reference count")
-            self.assertEquals(mapper.Retrieve(argPtr), (1, 2), "args not stored")
-            self.assertEquals(mapper.Retrieve(kwargPtr), {'three': 4}, "kwargs not stored")
+            methodName, newClsPtr, newArgPtr, newKwargPtr = calls[0]
+            self.assertEquals(methodName, "__new__", "called wrong method")
+            self.assertEquals(newClsPtr, typePtr, "instantiated wrong class")
+            self.assertEquals(mapper.RefCount(newArgPtr), 1, "bad reference count")
+            self.assertEquals(mapper.RefCount(newKwargPtr), 1, "bad reference count")
+            self.assertEquals(mapper.Retrieve(newArgPtr), (1, 2), "args not stored")
+            self.assertEquals(mapper.Retrieve(newKwargPtr), {'three': 4}, "kwargs not stored")
+            self.assertEquals(mapper.tempPtrsFreed, True, "failed to clean up")
+
+            # note: for now, I'm comfortable passing 2 copies of the
+            # args and kwargs to the 2 methods; this may change in future
+            methodName, initSelfPtr, initArgPtr, initKwargPtr = calls[1]
+            self.assertEquals(methodName, "__init__", "called wrong method")
+            self.assertEquals(initSelfPtr, instancePtr, "initialised wrong object")
+            self.assertEquals(mapper.RefCount(initArgPtr), 1, "bad reference count")
+            self.assertEquals(mapper.RefCount(initKwargPtr), 1, "bad reference count")
+            self.assertEquals(mapper.Retrieve(initArgPtr), (1, 2), "args not stored")
+            self.assertEquals(mapper.Retrieve(initKwargPtr), {'three': 4}, "kwargs not stored")
             self.assertEquals(mapper.tempPtrsFreed, True, "failed to clean up")
 
         finally:
             mapper.DecRef(modulePtr)
-            mapper.DecRef(kwargPtr)
-            mapper.DecRef(argPtr)
+            mapper.DecRef(newKwargPtr)
+            mapper.DecRef(newArgPtr)
+            mapper.DecRef(initKwargPtr)
+            mapper.DecRef(initArgPtr)
+            deallocType()
+
+
+    def assertDispatchesToTypeMethod(self, mapper, method, flags, testFunc):
+        mapper.SetData("PyType_Type", IntPtr(123))
+        modulePtr = MakeAndAddEmptyModule(mapper)
+        module = mapper.Retrieve(modulePtr)
+
+        method = MakeMethodDef("meth", method, flags)
+        typePtr, deallocType = MakeTypePtr(
+            "thing", mapper.PyType_Type, methodDef=method,
+            tp_allocPtr=mapper.GetAddress("PyType_GenericAlloc"),
+            tp_newPtr=mapper.GetAddress("PyType_GenericNew"))
+
+        try:
+            result = mapper.PyModule_AddObject(modulePtr, "thing", typePtr)
+            self.assertEquals(result, 0, "reported failure")
+            testFunc(module)
+        finally:
+            mapper.DecRef(modulePtr)
             deallocType()
 
 
     def testAddTypeObjectWithVarargsMethod(self):
         engine = PythonEngine()
         mapper = TempPtrCheckingPython25Mapper(engine)
-        mapper.SetData("PyType_Type", IntPtr(123))
-        modulePtr = MakeAndAddEmptyModule(mapper)
-        module = mapper.Retrieve(modulePtr)
 
         retval = mapper.Store("bathroom")
         calls = []
@@ -498,42 +571,65 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
             mapper.IncRef(argPtr)
             return retval
 
-        method = MakeMethodDef("meth", CMethod, METH.VARARGS)
-        typePtr, deallocType = MakeTypePtr(
-            "thing", mapper.PyType_Type, methodDef=method,
-            tp_allocPtr=mapper.GetAddress("PyType_GenericAlloc"),
-            tp_newPtr=mapper.GetAddress("PyType_GenericNew"))
+        def testFunc(module):
+            try:
+                engine.Execute("t = thing()", module)
+                engine.Execute("result = t.meth(1, 2, 3)", module)
+                self.assertEquals(mapper.tempPtrsFreed, True, "did not clean up temp ptrs")
+                self.assertEquals(mapper.RefCount(retval), 0, "did not clean up return value")
+                self.assertEquals(module.Globals['result'], "bathroom",
+                                  "failed to translate returned ptr")
 
-        try:
-            result = mapper.PyModule_AddObject(modulePtr, "thing", typePtr)
-            self.assertEquals(result, 0, "reported failure")
-            engine.Execute("t = thing()", module)
-            engine.Execute("result = t.meth(1, 2, 3)", module)
-            self.assertEquals(mapper.tempPtrsFreed, True, "did not clean up temp ptrs")
-            self.assertEquals(mapper.RefCount(retval), 0, "did not clean up return value")
-            self.assertEquals(module.Globals['result'], "bathroom",
-                              "failed to translate returned ptr")
+                self.assertEquals(len(calls), 1, "wrong call count")
+                selfPtr, argPtr = calls[0]
 
-            self.assertEquals(len(calls), 1, "wrong call count")
-            selfPtr, argPtr = calls[0]
+                self.assertEquals(mapper.Retrieve(selfPtr), module.Globals['t'],
+                                  "called with wrong instance")
+                self.assertEquals(mapper.Retrieve(argPtr), (1, 2, 3),
+                                  "called with wrong args")
+            finally:
+                mapper.DecRef(selfPtr)
+                mapper.DecRef(argPtr)
 
-            self.assertEquals(mapper.Retrieve(selfPtr), module.Globals['t'],
-                              "called with wrong instance")
-            self.assertEquals(mapper.Retrieve(argPtr), (1, 2, 3),
-                              "called with wrong args")
-        finally:
-            mapper.DecRef(modulePtr)
-            mapper.DecRef(selfPtr)
-            mapper.DecRef(argPtr)
-            deallocType()
+        self.assertDispatchesToTypeMethod(mapper, CMethod, METH.VARARGS, testFunc)
+
+
+    def testAddTypeObjectWithNoargsMethod(self):
+        engine = PythonEngine()
+        mapper = TempPtrCheckingPython25Mapper(engine)
+
+        retval = mapper.Store("cellar")
+        calls = []
+        def CMethod(selfPtr, argPtr):
+            calls.append((selfPtr, argPtr))
+            mapper.IncRef(selfPtr)
+            return retval
+
+        def testFunc(module):
+            try:
+                engine.Execute("t = thing()", module)
+                engine.Execute("result = t.meth()", module)
+                self.assertEquals(mapper.tempPtrsFreed, True, "did not clean up temp ptrs")
+                self.assertEquals(mapper.RefCount(retval), 0, "did not clean up return value")
+                self.assertEquals(module.Globals['result'], "cellar",
+                                  "failed to translate returned ptr")
+
+                self.assertEquals(len(calls), 1, "wrong call count")
+                selfPtr, argPtr = calls[0]
+
+                self.assertEquals(mapper.Retrieve(selfPtr), module.Globals['t'],
+                                  "called with wrong instance")
+                self.assertEquals(argPtr, IntPtr.Zero,
+                                  "called with wrong args")
+            finally:
+                mapper.DecRef(selfPtr)
+
+        self.assertDispatchesToTypeMethod(mapper, CMethod, METH.NOARGS, testFunc)
 
 
     def testAddTypeObjectWithVarargsKwargsMethod(self):
         engine = PythonEngine()
         mapper = TempPtrCheckingPython25Mapper(engine)
-        mapper.SetData("PyType_Type", IntPtr(123))
-        modulePtr = MakeAndAddEmptyModule(mapper)
-        module = mapper.Retrieve(modulePtr)
 
         retval = mapper.Store("kitchen")
         calls = []
@@ -544,37 +640,30 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
             mapper.IncRef(kwargPtr)
             return retval
 
-        method = MakeMethodDef("meth", CMethod, METH.VARARGS | METH.KEYWORDS)
-        typePtr, deallocType = MakeTypePtr(
-            "thing", mapper.PyType_Type, methodDef=method,
-            tp_allocPtr=mapper.GetAddress("PyType_GenericAlloc"),
-            tp_newPtr=mapper.GetAddress("PyType_GenericNew"))
+        def testFunc(module):
+            try:
+                engine.Execute("t = thing()", module)
+                engine.Execute("result = t.meth(1, 2, 3, four=5)", module)
+                self.assertEquals(mapper.tempPtrsFreed, True, "did not clean up temp ptrs")
+                self.assertEquals(mapper.RefCount(retval), 0, "did not clean up return value")
+                self.assertEquals(module.Globals['result'], "kitchen",
+                                  "failed to translate returned ptr")
 
-        try:
-            result = mapper.PyModule_AddObject(modulePtr, "thing", typePtr)
-            self.assertEquals(result, 0, "reported failure")
-            engine.Execute("t = thing()", module)
-            engine.Execute("result = t.meth(1, 2, 3, four=5)", module)
-            self.assertEquals(mapper.tempPtrsFreed, True, "did not clean up temp ptrs")
-            self.assertEquals(mapper.RefCount(retval), 0, "did not clean up return value")
-            self.assertEquals(module.Globals['result'], "kitchen",
-                              "failed to translate returned ptr")
+                self.assertEquals(len(calls), 1, "wrong call count")
+                selfPtr, argPtr, kwargPtr = calls[0]
 
-            self.assertEquals(len(calls), 1, "wrong call count")
-            selfPtr, argPtr, kwargPtr = calls[0]
+                self.assertEquals(mapper.Retrieve(selfPtr), module.Globals['t'],
+                                  "called with wrong instance")
+                self.assertEquals(mapper.Retrieve(argPtr), (1, 2, 3),
+                                  "called with wrong args")
+                self.assertEquals(mapper.Retrieve(kwargPtr), {'four': 5},
+                                  "called with wrong kwargs")
+            finally:
+                mapper.DecRef(selfPtr)
+                mapper.DecRef(argPtr)
+                mapper.DecRef(kwargPtr)
 
-            self.assertEquals(mapper.Retrieve(selfPtr), module.Globals['t'],
-                              "called with wrong instance")
-            self.assertEquals(mapper.Retrieve(argPtr), (1, 2, 3),
-                              "called with wrong args")
-            self.assertEquals(mapper.Retrieve(kwargPtr), {'four': 5},
-                              "called with wrong kwargs")
-        finally:
-            mapper.DecRef(modulePtr)
-            mapper.DecRef(selfPtr)
-            mapper.DecRef(argPtr)
-            mapper.DecRef(kwargPtr)
-            deallocType()
+        self.assertDispatchesToTypeMethod(mapper, CMethod, METH.VARARGS | METH.KEYWORDS, testFunc)
 
 
 class Python25Mapper_PyType_GenericNew_Test(unittest.TestCase):
@@ -936,6 +1025,7 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
                           "get should retrieve last set exception")
         self.assertEquals(mapper.LastException.Message, "doozy",
                           "get should retrieve last set exception")
+
 
 
 
