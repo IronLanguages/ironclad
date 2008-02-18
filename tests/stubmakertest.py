@@ -49,7 +49,7 @@ class StubMakerGenerateCTest(unittest.TestCase):
         sm.overrides = {'OVERRIDE':
                         'void OVERRIDE() {\n    do something with jumptable[%d];\n}\n',
                         'MOREDATA':
-                        'byte MOREDATA[48];\n'}
+                        'char MOREDATA[48];\n'}
 
         expected = dedent("""\
         #include <stdio.h>
@@ -57,7 +57,7 @@ class StubMakerGenerateCTest(unittest.TestCase):
         #include <stdlib.h>
 
         void *DATA;
-        byte MOREDATA[48];
+        char MOREDATA[48];
 
         void *jumptable[2];
 

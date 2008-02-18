@@ -31,7 +31,7 @@ namespace JumPy
         public IntPtr
         Realloc(IntPtr old, int bytes)
         {
-        	return Marshal.ReAllocHGlobal(old, (IntPtr)bytes);
+            return Marshal.ReAllocHGlobal(old, (IntPtr)bytes);
         }
         public void 
         Free(IntPtr address)
@@ -40,24 +40,25 @@ namespace JumPy
         }
     }
 
-	public enum UnmanagedDataMarker
-	{
-		PyStringObject,
-	}
+    public enum UnmanagedDataMarker
+    {
+        PyStringObject,
+        
+    }
 
 
     public class Python25Mapper : PythonMapper
     {
-    	
-    	
-    	private const string MODULE_CODE = @"
+        
+        
+        private const string MODULE_CODE = @"
 from System import IntPtr
 
 def _cleanup(*args):
   _jumpy_mapper.FreeTempPtrs()
   for arg in args:
-  	if arg != IntPtr.Zero:
-  	  _jumpy_mapper.DecRef(arg)
+    if arg != IntPtr.Zero:
+      _jumpy_mapper.DecRef(arg)
 
 def _raiseExceptionIfRequired():
   error = _jumpy_mapper.LastException
@@ -86,40 +87,50 @@ def _jumpy_dispatch_kwargs(name, instancePtr, args, kwargs):
   
 ";
 
-		private const string VARARGS_FUNCTION_CODE = @"
+        private const string VARARGS_FUNCTION_CODE = @"
 def {0}(*args):
   '''{1}'''
   return _jumpy_dispatch('{2}{0}', IntPtr.Zero, args)
 ";
 
-		private const string VARARGS_KWARGS_FUNCTION_CODE = @"
+        private const string VARARGS_KWARGS_FUNCTION_CODE = @"
 def {0}(*args, **kwargs):
   '''{1}'''
   return _jumpy_dispatch_kwargs('{2}{0}', IntPtr.Zero, args, kwargs)
 ";
 
-  		private const string CLASS_CODE = @"
+        private const string CLASS_CODE = @"
 class {0}(object):
   __module__ = '{1}'
   def __new__(cls, *args, **kwargs):
     instance = object.__new__(cls)
+    argPtr = _jumpy_mapper.Store(args)
+    kwargPtr = _jumpy_mapper.Store(kwargs)
+    instancePtr = cls._tp_newDgt(cls._typePtr, argPtr, kwargPtr)
+    _cleanup(argPtr, kwargPtr)
+    
+    _jumpy_mapper.StoreUnmanagedData(instancePtr, instance)
+    instance._instancePtr = instancePtr
     return instance
+  
+  def __init__(self, *args, **kwargs):
+    object.__init__(self)
 ";
 
-		private const string VARARGS_METHOD_CODE = @"
+        private const string VARARGS_METHOD_CODE = @"
   def {0}(self, *args):
     '''{1}'''
     return _jumpy_dispatch('{2}{0}', self._instancePtr, args)
 ";
 
-		private const string VARARGS_KWARGS_METHOD_CODE = @"
+        private const string VARARGS_KWARGS_METHOD_CODE = @"
   def {0}(self, *args, **kwargs):
     '''{1}'''
     return _jumpy_dispatch_kwargs('{2}{0}', self._instancePtr, args, kwargs)
 ";
 
 
-		private const string CLASS_FIXUP_CODE = @"
+        private const string CLASS_FIXUP_CODE = @"
 {0}.__name__ = '{1}'
 ";
 
@@ -151,43 +162,43 @@ class {0}(object):
             return ptr;
         }
         
-        private void
-        StoreUnmanagedData(IntPtr ptr, UnmanagedDataMarker marker)
+        public void
+        StoreUnmanagedData(IntPtr ptr, object obj)
         {
-        	this.ptrmap[ptr] = marker;
+            this.ptrmap[ptr] = obj;
         }
         
         private static char
         CharFromByte(byte b)
         {
-        	return (char)b;
+            return (char)b;
         }
         
         public object 
         Retrieve(IntPtr ptr)
         {
-        	object possibleMarker = this.ptrmap[ptr];
-        	if (possibleMarker.GetType() == typeof(UnmanagedDataMarker))
-        	{
-        		UnmanagedDataMarker marker = (UnmanagedDataMarker)possibleMarker;
-        		switch (marker)
-        		{
-        			case UnmanagedDataMarker.PyStringObject:
-        				IntPtr buffer = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
-        				IntPtr lengthPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
-        				int length = CPyMarshal.ReadInt(lengthPtr);
-        				
-        				byte[] bytes = new byte[length];
-        				Marshal.Copy(buffer, bytes, 0, length);
-        				char[] chars = Array.ConvertAll<byte, char>(
-        					bytes, new Converter<byte, char>(CharFromByte));
-        				this.ptrmap[ptr] = new string(chars);
-        				break;
-        			
-        			default:
-        				throw new Exception("Found impossible data in pointer map");
-        		}
-        	}
+            object possibleMarker = this.ptrmap[ptr];
+            if (possibleMarker.GetType() == typeof(UnmanagedDataMarker))
+            {
+                UnmanagedDataMarker marker = (UnmanagedDataMarker)possibleMarker;
+                switch (marker)
+                {
+                    case UnmanagedDataMarker.PyStringObject:
+                        IntPtr buffer = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+                        IntPtr lengthPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
+                        int length = CPyMarshal.ReadInt(lengthPtr);
+                        
+                        byte[] bytes = new byte[length];
+                        Marshal.Copy(buffer, bytes, 0, length);
+                        char[] chars = Array.ConvertAll<byte, char>(
+                            bytes, new Converter<byte, char>(CharFromByte));
+                        this.ptrmap[ptr] = new string(chars);
+                        break;
+                    
+                    default:
+                        throw new Exception("Found impossible data in pointer map");
+                }
+            }
             return this.ptrmap[ptr];
         }
         
@@ -269,39 +280,43 @@ class {0}(object):
         
         public Exception LastException
         {
-        	get
-        	{
-        		return this._lastException;
-        	}
-        	set
-        	{
-        		this._lastException = value;
-        	}
+            get
+            {
+                return this._lastException;
+            }
+            set
+            {
+                this._lastException = value;
+            }
         }
         
         private void
         GenerateMethods(StringBuilder code, 
-        				IntPtr methods, 
-        				DispatchTable methodTable,
-        				string tablePrefix, 
-        				string varargsTemplate, 
-        				string varargsKwargsTemplate)
+                        IntPtr methods, 
+                        DispatchTable methodTable,
+                        string tablePrefix, 
+                        string varargsTemplate, 
+                        string varargsKwargsTemplate)
         {
             IntPtr methodPtr = methods;
+            if (methodPtr == IntPtr.Zero)
+            {
+                return;
+            }
             while (CPyMarshal.ReadInt(methodPtr) != 0)
             {
                 PyMethodDef thisMethod = (PyMethodDef)Marshal.PtrToStructure(
-                	methodPtr, typeof(PyMethodDef));
-				
-				string template = null;
-				Delegate dgt = null;
-				
-				bool unsupportedFlags = false;
+                    methodPtr, typeof(PyMethodDef));
+                
+                string template = null;
+                Delegate dgt = null;
+                
+                bool unsupportedFlags = false;
                 switch (thisMethod.ml_flags)
                 {
                     case METH.VARARGS:
-                    	template = varargsTemplate;
-                    	dgt = (CPythonVarargsFunction_Delegate)
+                        template = varargsTemplate;
+                        dgt = (CPythonVarargsFunction_Delegate)
                             Marshal.GetDelegateForFunctionPointer(
                                 thisMethod.ml_meth, 
                                 typeof(CPythonVarargsFunction_Delegate));
@@ -309,27 +324,27 @@ class {0}(object):
                         
                     case METH.VARARGS | METH.KEYWORDS:
                         template = varargsKwargsTemplate;
-                    	dgt = (CPythonVarargsKwargsFunction_Delegate)
+                        dgt = (CPythonVarargsKwargsFunction_Delegate)
                             Marshal.GetDelegateForFunctionPointer(
                                 thisMethod.ml_meth, 
                                 typeof(CPythonVarargsKwargsFunction_Delegate));
                         break;
                         
                     default:
-                    	unsupportedFlags = true;
-                    	break;
+                        unsupportedFlags = true;
+                        break;
                 }
                 
                 if (!unsupportedFlags)
                 {
-					code.Append(String.Format(template,
-						thisMethod.ml_name, thisMethod.ml_doc, tablePrefix));
-					methodTable[tablePrefix + thisMethod.ml_name] = dgt;
+                    code.Append(String.Format(template,
+                        thisMethod.ml_name, thisMethod.ml_doc, tablePrefix));
+                    methodTable[tablePrefix + thisMethod.ml_name] = dgt;
                 }
                 else
                 {
-                	Console.WriteLine("Detected unsupported method flags for {0}{1}; ignoring.",
-                		tablePrefix, thisMethod.ml_name);
+                    Console.WriteLine("Detected unsupported method flags for {0}{1}; ignoring.",
+                        tablePrefix, thisMethod.ml_name);
                 }
                 
                 methodPtr = (IntPtr)(methodPtr.ToInt32() + Marshal.SizeOf(typeof(PyMethodDef)));
@@ -350,12 +365,12 @@ class {0}(object):
             moduleCode.Append(MODULE_CODE);
             
             this.GenerateMethods(
-            	moduleCode, 
-            	methods, 
-            	methodTable, 
-            	"", 
-            	VARARGS_FUNCTION_CODE, 
-            	VARARGS_KWARGS_FUNCTION_CODE
+                moduleCode, 
+                methods, 
+                methodTable, 
+                "", 
+                VARARGS_FUNCTION_CODE, 
+                VARARGS_KWARGS_FUNCTION_CODE
             );
             
             EngineModule module = this.engine.CreateModule(name, globals, true);
@@ -367,68 +382,117 @@ class {0}(object):
         private void
         GenerateClass(EngineModule module, string name, IntPtr typePtr)
         {
-			StringBuilder classCode = new StringBuilder();
-			
-			IntPtr tp_namePtr = CPyMarshal.Offset(
-				typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_name"));
-			string tp_name = Marshal.PtrToStringAnsi(CPyMarshal.ReadPtr(tp_namePtr));
-			
-			string __name__ = tp_name;
-			string __module__ = "";
-			int lastDot = tp_name.LastIndexOf('.');
-			if (lastDot != -1)
-			{
-				__name__ = tp_name.Substring(lastDot + 1);	
-				__module__ = tp_name.Substring(0, lastDot);
-			}
-			classCode.Append(String.Format(CLASS_CODE, name, __module__));
-			
-			IntPtr tp_methodsPtr = CPyMarshal.Offset(
-				typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_methods"));
-			IntPtr methods = CPyMarshal.ReadPtr(tp_methodsPtr);
-			if (methods != IntPtr.Zero)
-			{
-				this.GenerateMethods(
-					classCode, 
-					methods, 
-					(DispatchTable)module.Globals["_jumpy_dispatch_table"],
-					name + ".", 
-					VARARGS_METHOD_CODE, 
-					VARARGS_KWARGS_METHOD_CODE
-				);
-			}
-			classCode.Append(String.Format(CLASS_FIXUP_CODE, name, __name__));
-			
-			this.engine.Execute(classCode.ToString(), module);
-			object klass = module.Globals[name];
-			DynamicType.SetAttrMethod(klass, "_typePtr", typePtr);
-			this.ptrmap[typePtr] = klass;
+            StringBuilder classCode = new StringBuilder();
+            
+            IntPtr tp_namePtr = CPyMarshal.Offset(
+                typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_name"));
+            string tp_name = Marshal.PtrToStringAnsi(CPyMarshal.ReadPtr(tp_namePtr));
+            
+            string __name__ = tp_name;
+            string __module__ = "";
+            int lastDot = tp_name.LastIndexOf('.');
+            if (lastDot != -1)
+            {
+                __name__ = tp_name.Substring(lastDot + 1);  
+                __module__ = tp_name.Substring(0, lastDot);
+            }
+            classCode.Append(String.Format(CLASS_CODE, name, __module__));
+            
+            IntPtr tp_methodsPtr = CPyMarshal.Offset(
+                typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_methods"));
+            IntPtr methods = CPyMarshal.ReadPtr(tp_methodsPtr);
+            if (methods != IntPtr.Zero)
+            {
+                this.GenerateMethods(
+                    classCode, 
+                    methods, 
+                    (DispatchTable)module.Globals["_jumpy_dispatch_table"],
+                    name + ".", 
+                    VARARGS_METHOD_CODE, 
+                    VARARGS_KWARGS_METHOD_CODE
+                );
+            }
+            classCode.Append(String.Format(CLASS_FIXUP_CODE, name, __name__));
+            
+            this.engine.Execute(classCode.ToString(), module);
+            object klass = module.Globals[name];
+            
+            DynamicType.SetAttrMethod(klass, "_typePtr", typePtr);
+            
+            IntPtr tp_newOffset = Marshal.OffsetOf(typeof(PyTypeObject), "tp_new");
+            IntPtr tp_newFP = CPyMarshal.ReadPtr(CPyMarshal.Offset(typePtr, tp_newOffset));
+            PyType_GenericNew_Delegate tp_newDgt = (PyType_GenericNew_Delegate)
+                Marshal.GetDelegateForFunctionPointer(
+                    tp_newFP, typeof(PyType_GenericNew_Delegate));
+
+            DynamicType.SetAttrMethod(klass, "_tp_newDgt", tp_newDgt);
+            this.ptrmap[typePtr] = klass;
         }
         
         
         public override int 
         PyModule_AddObject(IntPtr modulePtr, string name, IntPtr itemPtr)
         {
-        	if (this.RefCount(modulePtr) == 0)
-        	{
-        		return -1;
-        	}
+            if (this.RefCount(modulePtr) == 0)
+            {
+                return -1;
+            }
             EngineModule module = (EngineModule)this.Retrieve(modulePtr);
             if (this.RefCount(itemPtr) > 0)
             {
-            	module.Globals[name] = this.Retrieve(itemPtr);
-            	this.DecRef(itemPtr);
+                module.Globals[name] = this.Retrieve(itemPtr);
+                this.DecRef(itemPtr);
             }
             else
             {
-            	IntPtr typePtr = CPyMarshal.Offset(
-            		itemPtr, Marshal.OffsetOf(typeof(PyTypeObject), "ob_type"));
-            	if (CPyMarshal.ReadPtr(typePtr) == this.PyType_Type)
-            	{
-            		this.GenerateClass(module, name, itemPtr);
-            	}
+                IntPtr typePtr = CPyMarshal.Offset(
+                    itemPtr, Marshal.OffsetOf(typeof(PyTypeObject), "ob_type"));
+                if (CPyMarshal.ReadPtr(typePtr) == this.PyType_Type)
+                {
+                    this.GenerateClass(module, name, itemPtr);
+                }
             }
             return 0;
+        }
+        
+        
+        public override IntPtr 
+        PyType_GenericNew(IntPtr typePtr, IntPtr args, IntPtr kwargs)
+        {
+            IntPtr tp_allocPtr = CPyMarshal.Offset(
+                typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_alloc"));
+            
+            PyType_GenericAlloc_Delegate dgt = (PyType_GenericAlloc_Delegate)
+                Marshal.GetDelegateForFunctionPointer(
+                    CPyMarshal.ReadPtr(tp_allocPtr), typeof(PyType_GenericAlloc_Delegate));
+            
+            return dgt(typePtr, 0);
+        }
+        
+        
+        public override IntPtr 
+        PyType_GenericAlloc(IntPtr typePtr, int nItems)
+        {
+            IntPtr tp_basicsizePtr = CPyMarshal.Offset(
+                typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_basicsize"));
+            int size = CPyMarshal.ReadInt(tp_basicsizePtr);
+            
+            if (nItems > 0)
+            {
+                IntPtr tp_itemsizePtr = CPyMarshal.Offset(
+                    typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_itemsize"));
+                int itemsize = CPyMarshal.ReadInt(tp_itemsizePtr);
+                size += (nItems * itemsize);
+            }
+            
+            IntPtr newInstance = this.allocator.Alloc(size);
+            IntPtr iRefcountPtr = CPyMarshal.Offset(
+                newInstance, Marshal.OffsetOf(typeof(PyObject), "ob_refcnt"));
+            CPyMarshal.WriteInt(iRefcountPtr, 1);
+            IntPtr iTypePtr = CPyMarshal.Offset(
+                newInstance, Marshal.OffsetOf(typeof(PyObject), "ob_type"));
+            CPyMarshal.WritePtr(iTypePtr, typePtr);
+            return newInstance;
         }
 
 
@@ -518,17 +582,17 @@ class {0}(object):
                      Dictionary<int, ArgWriter> argWriters, 
                      IntPtr outPtr)
         {
-        	try
-        	{
-				foreach (KeyValuePair<int,object> p in argsToWrite)
-				{
-					argWriters[p.Key].Write(outPtr, p.Value);
-				}
+            try
+            {
+                foreach (KeyValuePair<int,object> p in argsToWrite)
+                {
+                    argWriters[p.Key].Write(outPtr, p.Value);
+                }
             }
             catch (Exception e)
             {
-            	this._lastException = e;
-            	return 0;
+                this._lastException = e;
+                return 0;
             }
             return 1;
         }
@@ -549,8 +613,8 @@ class {0}(object):
 
         public override int 
         PyArg_ParseTuple(IntPtr args, 
-					 	 string format, 
-					 	 IntPtr outPtr)
+                         string format, 
+                         IntPtr outPtr)
         {
             Dictionary<int, object> argsToWrite = this.GetArgValues(args);
             Dictionary<int, ArgWriter> argWriters = this.GetArgWriters(format);
@@ -561,120 +625,120 @@ class {0}(object):
         private IntPtr 
         AllocPyString(int length)
         {
-        	int size = Marshal.SizeOf(typeof(PyStringObject)) + length;
-        	IntPtr data = this.allocator.Alloc(size);
-        	
-        	PyStringObject s = new PyStringObject();
-        	s.ob_refcnt = 1;
-        	s.ob_type = IntPtr.Zero;
-        	s.ob_size = (uint)length;
-        	s.ob_shash = -1;
-        	s.ob_sstate = 0;
-        	Marshal.StructureToPtr(s, data, false);
-        	
-        	IntPtr terminator = CPyMarshal.Offset(data, size - 1);
-        	CPyMarshal.WriteByte(terminator, 0);
+            int size = Marshal.SizeOf(typeof(PyStringObject)) + length;
+            IntPtr data = this.allocator.Alloc(size);
+            
+            PyStringObject s = new PyStringObject();
+            s.ob_refcnt = 1;
+            s.ob_type = IntPtr.Zero;
+            s.ob_size = (uint)length;
+            s.ob_shash = -1;
+            s.ob_sstate = 0;
+            Marshal.StructureToPtr(s, data, false);
+            
+            IntPtr terminator = CPyMarshal.Offset(data, size - 1);
+            CPyMarshal.WriteByte(terminator, 0);
         
-        	return data;
+            return data;
         }
         
         
         private IntPtr
         CreatePyStringWithBytes(byte[] bytes)
         {
-        	IntPtr strPtr = this.AllocPyString(bytes.Length);
-        	IntPtr bufPtr = CPyMarshal.Offset(
-        		strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
-        	Marshal.Copy(bytes, 0, bufPtr, bytes.Length);
-        	
-			char[] chars = Array.ConvertAll<byte, char>(
-				bytes, new Converter<byte, char>(CharFromByte));
-			this.ptrmap[strPtr] = new string(chars);
-        	return strPtr;
+            IntPtr strPtr = this.AllocPyString(bytes.Length);
+            IntPtr bufPtr = CPyMarshal.Offset(
+                strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+            Marshal.Copy(bytes, 0, bufPtr, bytes.Length);
+            
+            char[] chars = Array.ConvertAll<byte, char>(
+                bytes, new Converter<byte, char>(CharFromByte));
+            this.ptrmap[strPtr] = new string(chars);
+            return strPtr;
         }
         
         
         public override IntPtr PyString_FromString(IntPtr stringData)
         {
-        	// maybe I should just DllImport memcpy... :/
-        	IntPtr current = stringData;
-        	List<byte> bytesList = new List<byte>();
-        	while (CPyMarshal.ReadByte(current) != 0)
-        	{
-        		bytesList.Add(CPyMarshal.ReadByte(current));
-        		current = CPyMarshal.Offset(current, 1);
-        	}
-        	byte[] bytes = new byte[bytesList.Count];
-        	bytesList.CopyTo(bytes);
-        	return this.CreatePyStringWithBytes(bytes);
+            // maybe I should just DllImport memcpy... :/
+            IntPtr current = stringData;
+            List<byte> bytesList = new List<byte>();
+            while (CPyMarshal.ReadByte(current) != 0)
+            {
+                bytesList.Add(CPyMarshal.ReadByte(current));
+                current = CPyMarshal.Offset(current, 1);
+            }
+            byte[] bytes = new byte[bytesList.Count];
+            bytesList.CopyTo(bytes);
+            return this.CreatePyStringWithBytes(bytes);
         }
         
         public override IntPtr
         PyString_FromStringAndSize(IntPtr stringData, int length)
         {
-        	if (stringData == IntPtr.Zero)
-        	{
-        		IntPtr data = this.AllocPyString(length);
-        		this.StoreUnmanagedData(data, UnmanagedDataMarker.PyStringObject);
-        		return data;
-        	}
-        	else
-        	{
-        		byte[] bytes = new byte[length];
-        		Marshal.Copy(stringData, bytes, 0, length);
-        		return this.CreatePyStringWithBytes(bytes);
-        	}
+            if (stringData == IntPtr.Zero)
+            {
+                IntPtr data = this.AllocPyString(length);
+                this.StoreUnmanagedData(data, UnmanagedDataMarker.PyStringObject);
+                return data;
+            }
+            else
+            {
+                byte[] bytes = new byte[length];
+                Marshal.Copy(stringData, bytes, 0, length);
+                return this.CreatePyStringWithBytes(bytes);
+            }
         }
         
         private int
         _PyString_Resize_Grow(IntPtr strPtrPtr, int newSize)
         {
-        	IntPtr oldStr = CPyMarshal.ReadPtr(strPtrPtr);
-			IntPtr newStr = IntPtr.Zero;
-        	try
-        	{
-        		newStr = this.allocator.Realloc(
-					oldStr, Marshal.SizeOf(typeof(PyStringObject)) + newSize);
-        	}
-        	catch (OutOfMemoryException e)
-        	{
-        		this._lastException = e;
-        		this.Delete(oldStr);
-        		return -1;
-        	}
+            IntPtr oldStr = CPyMarshal.ReadPtr(strPtrPtr);
+            IntPtr newStr = IntPtr.Zero;
+            try
+            {
+                newStr = this.allocator.Realloc(
+                    oldStr, Marshal.SizeOf(typeof(PyStringObject)) + newSize);
+            }
+            catch (OutOfMemoryException e)
+            {
+                this._lastException = e;
+                this.Delete(oldStr);
+                return -1;
+            }
             this.ptrmap.Remove(oldStr);
-        	CPyMarshal.WritePtr(strPtrPtr, newStr);
-        	this.StoreUnmanagedData(newStr, UnmanagedDataMarker.PyStringObject);
-        	return this._PyString_Resize_NoGrow(newStr, newSize);
+            CPyMarshal.WritePtr(strPtrPtr, newStr);
+            this.StoreUnmanagedData(newStr, UnmanagedDataMarker.PyStringObject);
+            return this._PyString_Resize_NoGrow(newStr, newSize);
         }
         
         private int
         _PyString_Resize_NoGrow(IntPtr strPtr, int newSize)
         {
-        	IntPtr ob_sizePtr = CPyMarshal.Offset(
-        		strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
-        	CPyMarshal.WriteInt(ob_sizePtr, newSize);
-        	IntPtr bufPtr = CPyMarshal.Offset(
-        		strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
-        	IntPtr terminatorPtr = CPyMarshal.Offset(
-        		bufPtr, newSize);
-        	CPyMarshal.WriteByte(terminatorPtr, 0);
-        	return 0;
+            IntPtr ob_sizePtr = CPyMarshal.Offset(
+                strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
+            CPyMarshal.WriteInt(ob_sizePtr, newSize);
+            IntPtr bufPtr = CPyMarshal.Offset(
+                strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+            IntPtr terminatorPtr = CPyMarshal.Offset(
+                bufPtr, newSize);
+            CPyMarshal.WriteByte(terminatorPtr, 0);
+            return 0;
         }
         
         public override int
         _PyString_Resize(IntPtr strPtrPtr, int newSize)
         {
-        	IntPtr strPtr = CPyMarshal.ReadPtr(strPtrPtr);
-        	PyStringObject str = (PyStringObject)Marshal.PtrToStructure(strPtr, typeof(PyStringObject));
-        	if (str.ob_size < newSize)
-        	{
-        		return this._PyString_Resize_Grow(strPtrPtr, newSize);
-        	}
-        	else
-        	{
-        		return this._PyString_Resize_NoGrow(strPtr, newSize);
-        	}
+            IntPtr strPtr = CPyMarshal.ReadPtr(strPtrPtr);
+            PyStringObject str = (PyStringObject)Marshal.PtrToStructure(strPtr, typeof(PyStringObject));
+            if (str.ob_size < newSize)
+            {
+                return this._PyString_Resize_Grow(strPtrPtr, newSize);
+            }
+            else
+            {
+                return this._PyString_Resize_NoGrow(strPtr, newSize);
+            }
         }
         
         
