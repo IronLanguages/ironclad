@@ -4,13 +4,11 @@ from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
 from tests.utils.cpython import MakeTypePtr
-from tests.utils.memory import OffsetPtr
 
 import System
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from JumPy import CPyMarshal, PythonMapper, Python25Mapper
-from JumPy.Structs import PyObject
+from JumPy import PythonMapper, Python25Mapper
 from IronPython.Hosting import PythonEngine
 
 
@@ -106,78 +104,6 @@ class Python25MapperTest(unittest.TestCase):
                           "memory not freed")
 
 
-class Python25Mapper_PyType_GenericNew_Test(unittest.TestCase):
-
-    def testCallsTypeAllocFunction(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
-        mapper.SetData("PyType_Type", IntPtr(123))
-
-        calls = []
-        def AllocInstance(typePtr, nItems):
-            calls.append((typePtr, nItems))
-            return IntPtr(999)
-        tp_allocDgt = PythonMapper.PyType_GenericAlloc_Delegate(AllocInstance)
-        tp_allocFP = Marshal.GetFunctionPointerForDelegate(tp_allocDgt)
-
-        typePtr, deallocType = MakeTypePtr(
-            "sometype", mapper.PyType_Type, tp_allocPtr=tp_allocFP)
-        try:
-            result = mapper.PyType_GenericNew(typePtr, IntPtr(222), IntPtr(333))
-            self.assertEquals(result, IntPtr(999), "did not use type's tp_alloc function")
-            self.assertEquals(calls, [(typePtr, 0)], "passed wrong args")
-        finally:
-            deallocType()
-
-
-class Python25Mapper_PyType_GenericAlloc_Test(unittest.TestCase):
-
-    def testNoItems(self):
-        allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
-        mapper.SetData("PyType_Type", IntPtr(123))
-
-        typePtr, deallocType = MakeTypePtr("sometype", mapper.PyType_Type,
-                                           basicSize=32, itemSize=64)
-        try:
-            result = mapper.PyType_GenericAlloc(typePtr, 0)
-            self.assertEquals(allocs, [(result, 32)], "allocated wrong")
-
-            refcount = CPyMarshal.ReadInt(result)
-            self.assertEquals(refcount, 1, "bad initialisation")
-
-            instanceType = CPyMarshal.ReadPtr(OffsetPtr(result, Marshal.OffsetOf(PyObject, "ob_type")))
-            self.assertEquals(instanceType, typePtr, "bad type ptr")
-
-        finally:
-            Marshal.FreeHGlobal(allocs[0][0])
-            deallocType()
-
-
-    def testSomeItems(self):
-        allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
-        mapper.SetData("PyType_Type", IntPtr(123))
-
-        typePtr, deallocType = MakeTypePtr("sometype", mapper.PyType_Type,
-                                           basicSize=32, itemSize=64)
-        try:
-            result = mapper.PyType_GenericAlloc(typePtr, 3)
-            self.assertEquals(allocs, [(result, 224)], "allocated wrong")
-
-            refcount = CPyMarshal.ReadInt(result)
-            self.assertEquals(refcount, 1, "bad initialisation")
-
-            instanceType = CPyMarshal.ReadPtr(OffsetPtr(result, Marshal.OffsetOf(PyObject, "ob_type")))
-            self.assertEquals(instanceType, typePtr, "bad type ptr")
-
-        finally:
-            Marshal.FreeHGlobal(allocs[0][0])
-            deallocType()
-
-
 class Python25Mapper_Exception_Test(unittest.TestCase):
 
     def testException(self):
@@ -196,8 +122,6 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
 
 suite = makesuite(
     Python25MapperTest,
-    Python25Mapper_PyType_GenericNew_Test,
-    Python25Mapper_PyType_GenericAlloc_Test,
     Python25Mapper_Exception_Test,
 )
 
