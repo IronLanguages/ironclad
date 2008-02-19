@@ -12,7 +12,7 @@ from tests.utils.memory import OffsetPtr
 
 gc_fooler = []
 def MakeMethodDef(name, implementation, flags, doc="doc"):
-    if flags in (METH.VARARGS, METH.NOARGS):
+    if flags in (METH.VARARGS, METH.NOARGS, METH.O):
         dgt = CPythonVarargsFunction_Delegate(implementation)
     elif flags == METH.VARARGS | METH.KEYWORDS:
         dgt = CPythonVarargsKwargsFunction_Delegate(implementation)

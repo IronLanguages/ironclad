@@ -92,6 +92,12 @@ class {0}(object):
         return _jumpy_dispatch_noargs('{2}{0}', self._instancePtr)
 ";
 
+        private const string OBJARG_METHOD_CODE = @"
+    def {0}(self, arg):
+        '''{1}'''
+        return _jumpy_dispatch('{2}{0}', self._instancePtr, arg)
+";
+
         private const string VARARGS_METHOD_CODE = @"
     def {0}(self, *args):
         '''{1}'''
