@@ -70,7 +70,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 
 
-    def test_Py_InitModule4_DispatchesToOriginalNoargsFunction(self):
+    def test_Py_InitModule4_DispatchesToOriginalNoArgsFunction(self):
         engine = PythonEngine()
         mapper = TempPtrCheckingPython25Mapper(engine)
         retval = mapper.Store("ewok")
@@ -82,11 +82,45 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
 
         def testModule(test_module, mapper):
             self.assertEquals(test_module.func(), "ewok", "bad result")
+            self.assertEquals(len(calls), 1, "wrong call count")
+            _selfPtr, argPtr = calls[0]
+
             self.assertEquals(mapper.RefCount(retval), 0, "did not clean up return value")
             self.assertTrue(mapper.tempPtrsFreed, "failed to clean up after call")
-            _selfPtr, argPtr = calls[0]
             self.assertEquals(_selfPtr, IntPtr.Zero, "no self on module functions")
             self.assertEquals(argPtr, IntPtr.Zero, "no args on noargs functions (oddly enough)")
+
+        self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
+
+
+    def test_Py_InitModule4_DispatchesToOriginalSingleArgFunction(self):
+        engine = PythonEngine()
+        mapper = TempPtrCheckingPython25Mapper(engine)
+        retval = mapper.Store("ewok")
+        calls = []
+        def CModuleFunction(_selfPtr, argPtr):
+            calls.append((_selfPtr, argPtr))
+            mapper.IncRef(argPtr)
+            return retval
+        method = MakeMethodDef("func", CModuleFunction, METH.O)
+
+        def testModule(test_module, mapper):
+            try:
+                self.assertEquals(test_module.func(37), "ewok", "bad result")
+                self.assertEquals(len(calls), 1, "wrong call count")
+                _selfPtr, argPtr = calls[0]
+
+                self.assertEquals(mapper.RefCount(retval), 0, "did not clean up return value")
+                self.assertTrue(mapper.tempPtrsFreed, "failed to clean up after call")
+                self.assertEquals(_selfPtr, IntPtr.Zero, "no self on module functions")
+
+                # CModuleFunction retained a reference, so we could test the aftermath
+                self.assertEquals(mapper.Retrieve(argPtr), 37,
+                                  "did not pass pointer mapping to actual arg")
+
+                self.assertEquals(mapper.RefCount(argPtr), 1, "bad reference counting")
+            finally:
+                mapper.DecRef(argPtr)
 
         self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 
@@ -105,9 +139,11 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         def testModule(test_module, mapper):
             try:
                 self.assertEquals(test_module.func(1, 2, 3), "jedi", "bad result")
+                self.assertEquals(len(calls), 1, "wrong call count")
+                _selfPtr, argPtr = calls[0]
+
                 self.assertEquals(mapper.RefCount(retval), 0, "did not clean up return value")
                 self.assertTrue(mapper.tempPtrsFreed, "failed to clean up after call")
-                _selfPtr, argPtr = calls[0]
                 self.assertEquals(_selfPtr, IntPtr.Zero, "no self on module functions")
 
                 # CModuleFunction retained a reference, so we could test the aftermath
@@ -136,9 +172,11 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         def testModule(test_module, mapper):
             try:
                 self.assertEquals(test_module.func(1, 2, 3, four=4, five=5), "sith", "bad result")
+                self.assertEquals(len(calls), 1, "wrong call count")
+                _selfPtr, argPtr, kwargPtr = calls[0]
+
                 self.assertEquals(mapper.RefCount(retval), 0, "did not clean up return value")
                 self.assertTrue(mapper.tempPtrsFreed, "failed to clean up after call")
-                _selfPtr, argPtr, kwargPtr = calls[0]
                 self.assertEquals(_selfPtr, IntPtr.Zero, "no self on module functions")
 
                 # CModuleFunction retained references, so we could test the aftermath
@@ -161,14 +199,42 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         mapper = TempPtrCheckingPython25Mapper(engine)
         calls = []
         def CModuleFunction(_selfPtr, argPtr):
-            calls.append(argPtr)
+            calls.append((_selfPtr, argPtr))
             mapper.LastException = BorkedException()
             return IntPtr.Zero
         method = MakeMethodDef("func", CModuleFunction, METH.NOARGS)
 
         def testModule(test_module, mapper):
             self.assertRaises(BorkedException, test_module.func)
-            self.assertEquals(calls[0], IntPtr.Zero, "should pass null to noargs function")
+            self.assertEquals(len(calls), 1, "wrong call count")
+            _selfPtr, argPtr = calls[0]
+
+            self.assertEquals(_selfPtr, IntPtr.Zero, "should pass null instance to function")
+            self.assertEquals(argPtr, IntPtr.Zero, "should pass null to noargs function")
+            self.assertTrue(mapper.tempPtrsFreed, "failed to clean up temp ptrs on error")
+            self.assertEquals(mapper.LastException, None, "exception not cleared when raised")
+
+        self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
+
+
+    def test_Py_InitModule4_SingleArgFunctionRaisesAppropriateException(self):
+        engine = PythonEngine()
+        mapper = TempPtrCheckingPython25Mapper(engine)
+        calls = []
+        def CModuleFunction(_selfPtr, argPtr):
+            calls.append((_selfPtr, argPtr))
+            mapper.IncRef(argPtr)
+            mapper.LastException = BorkedException()
+            return IntPtr.Zero
+        method = MakeMethodDef("func", CModuleFunction, METH.O)
+
+        def testModule(test_module, mapper):
+            self.assertRaises(BorkedException, lambda: test_module.func(37))
+            self.assertEquals(len(calls), 1, "wrong call count")
+            _selfPtr, argPtr = calls[0]
+
+            self.assertEquals(_selfPtr, IntPtr.Zero, "should pass null instance to function")
+            self.assertEquals(mapper.RefCount(argPtr), 1, "did not clean up")
             self.assertTrue(mapper.tempPtrsFreed, "failed to clean up temp ptrs on error")
             self.assertEquals(mapper.LastException, None, "exception not cleared when raised")
 
@@ -180,7 +246,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         mapper = TempPtrCheckingPython25Mapper(engine)
         calls = []
         def CModuleFunction(_selfPtr, argPtr):
-            calls.append(argPtr)
+            calls.append((_selfPtr, argPtr))
             mapper.IncRef(argPtr)
             mapper.LastException = BorkedException()
             return IntPtr.Zero
@@ -189,11 +255,15 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         def testModule(test_module, mapper):
             try:
                 self.assertRaises(BorkedException, test_module.func, (1, 2, 3))
-                self.assertEquals(mapper.RefCount(calls[0]), 1, "failed to DecRef argPtr on error")
+                self.assertEquals(len(calls), 1, "wrong call count")
+                _selfPtr, argPtr = calls[0]
+
+                self.assertEquals(_selfPtr, IntPtr.Zero, "should pass null instance to function")
+                self.assertEquals(mapper.RefCount(argPtr), 1, "failed to DecRef argPtr on error")
                 self.assertTrue(mapper.tempPtrsFreed, "failed to clean up temp ptrs on error")
                 self.assertEquals(mapper.LastException, None, "exception not cleared when raised")
             finally:
-                mapper.DecRef(calls[0])
+                mapper.DecRef(argPtr)
 
         self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 
@@ -203,9 +273,8 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         mapper = TempPtrCheckingPython25Mapper(engine)
         calls = []
         def CModuleFunction(_selfPtr, argPtr, kwargPtr):
-            calls.append(argPtr)
+            calls.append((_selfPtr, argPtr, kwargPtr))
             mapper.IncRef(argPtr)
-            calls.append(kwargPtr)
             mapper.IncRef(kwargPtr)
             mapper.LastException = BorkedException()
             return IntPtr.Zero
@@ -214,13 +283,17 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
         def testModule(test_module, mapper):
             try:
                 self.assertRaises(BorkedException, lambda: test_module.func(1, 2, 3, four=5))
-                self.assertEquals(mapper.RefCount(calls[0]), 1, "failed to DecRef argPtr on error")
-                self.assertEquals(mapper.RefCount(calls[1]), 1, "failed to DecRef kwargPtr on error")
+                self.assertEquals(len(calls), 1, "wrong call count")
+                _selfPtr, argPtr, kwargPtr = calls[0]
+
+                self.assertEquals(_selfPtr, IntPtr.Zero, "should pass null instance to function")
+                self.assertEquals(mapper.RefCount(argPtr), 1, "failed to DecRef argPtr on error")
+                self.assertEquals(mapper.RefCount(kwargPtr), 1, "failed to DecRef kwargPtr on error")
                 self.assertTrue(mapper.tempPtrsFreed, "failed to clean up temp ptrs on error")
                 self.assertEquals(mapper.LastException, None, "exception not cleared when raised")
             finally:
-                mapper.DecRef(calls[0])
-                mapper.DecRef(calls[1])
+                mapper.DecRef(argPtr)
+                mapper.DecRef(kwargPtr)
 
         self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
 

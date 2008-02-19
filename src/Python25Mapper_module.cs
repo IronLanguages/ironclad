@@ -112,7 +112,7 @@ namespace JumPy
                 methodTable, 
                 "", 
                 NOARGS_FUNCTION_CODE, 
-                "",
+                OBJARG_FUNCTION_CODE,
                 VARARGS_FUNCTION_CODE, 
                 VARARGS_KWARGS_FUNCTION_CODE
             );
