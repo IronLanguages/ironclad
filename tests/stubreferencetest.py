@@ -5,7 +5,6 @@ from tests.utils.runtest import makesuite, run
 
 from JumPy import AddressGetterDelegate, DataSetterDelegate, Kernel32, StubReference
 from System import IntPtr
-from System.Runtime.InteropServices import Marshal
 
 
 class StubReferenceTest(unittest.TestCase):

@@ -1,10 +1,10 @@
 
 import unittest
-from tests.utils.allocators import GetAllocatingTestAllocator
-from tests.utils.memory import OffsetPtr
 from tests.utils.runtest import makesuite, run
 
-from System import Int32, IntPtr
+from tests.utils.allocators import GetAllocatingTestAllocator
+from tests.utils.memory import OffsetPtr
+
 from System.Runtime.InteropServices import Marshal
 
 from IronPython.Hosting import PythonEngine

@@ -1,9 +1,8 @@
 
-import sys
 import unittest
 from tests.utils.runtest import makesuite, run
 
-from System import IntPtr, UInt32, UInt64, UIntPtr
+from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
 from JumPy import CPyMarshal

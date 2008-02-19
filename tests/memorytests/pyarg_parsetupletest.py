@@ -7,7 +7,6 @@ from tests.memorytests.leaktestcase import RunSeparateProcessTest
 from tests.utils.memory import OffsetPtr
 
 from System import IntPtr
-from System.Runtime.InteropServices import Marshal
 
 from JumPy import AddressGetterDelegate, CPyMarshal, DataSetterDelegate, PythonMapper, StubReference
 

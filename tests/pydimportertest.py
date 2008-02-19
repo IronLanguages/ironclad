@@ -1,12 +1,8 @@
 
-import os
-import sys
 import unittest
 from tests.utils.runtest import makesuite, run
 
-from System import Console, IntPtr
-from System.IO import StringWriter
-from System.Runtime.InteropServices import Marshal
+from System import IntPtr
 
 from JumPy import CPyMarshal, PydImporter, Kernel32
 
