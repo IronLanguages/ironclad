@@ -64,7 +64,7 @@ namespace JumPy
         public IntPtr 
         Store(object obj)
         {
-            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(IntPtr)));
+            IntPtr ptr = this.allocator.Alloc(CPyMarshal.IntSize);
             CPyMarshal.WriteInt(ptr, 1);
             this.ptrmap[ptr] = obj;
             return ptr;
