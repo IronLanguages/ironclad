@@ -3,9 +3,9 @@ import unittest
 from tests.utils.runtest import makesuite, run
 
 from System import IntPtr
-from JumPy import Python25Mapper, StubReference
+
 from JumPy.Structs import METH, PyMethodDef
-from IronPython.Hosting import PythonEngine
+
 
 class Python25StructsTest(unittest.TestCase):
 

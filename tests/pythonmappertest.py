@@ -5,7 +5,7 @@ from tests.utils.runtest import makesuite, run
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from JumPy import CPyMarshal, PythonMapper, StubReference
+from JumPy import CPyMarshal, PythonMapper
 
 testNumber = 1359
 

@@ -1,5 +1,4 @@
 
-import sys
 import unittest
 from tests.utils.runtest import makesuite, run
 

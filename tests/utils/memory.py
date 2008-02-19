@@ -1,6 +1,5 @@
 
 from System import IntPtr
-from System.Runtime.InteropServices import Marshal
 
 def OffsetPtr(ptr, offset):
     if type(offset) == IntPtr:
