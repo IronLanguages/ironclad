@@ -20,6 +20,7 @@ namespace JumPy
                         DispatchTable methodTable,
                         string tablePrefix, 
                         string noargsTemplate,
+                        string objargTemplate, 
                         string varargsTemplate, 
                         string varargsKwargsTemplate)
         {
@@ -41,6 +42,14 @@ namespace JumPy
                 {
                     case METH.NOARGS:
                         template = noargsTemplate;
+                        dgt = (CPythonVarargsFunction_Delegate)
+                            Marshal.GetDelegateForFunctionPointer(
+                                thisMethod.ml_meth, 
+                                typeof(CPythonVarargsFunction_Delegate));
+                        break;
+                        
+                    case METH.O:
+                        template = objargTemplate;
                         dgt = (CPythonVarargsFunction_Delegate)
                             Marshal.GetDelegateForFunctionPointer(
                                 thisMethod.ml_meth, 
@@ -103,6 +112,7 @@ namespace JumPy
                 methodTable, 
                 "", 
                 NOARGS_FUNCTION_CODE, 
+                "",
                 VARARGS_FUNCTION_CODE, 
                 VARARGS_KWARGS_FUNCTION_CODE
             );
@@ -143,6 +153,7 @@ namespace JumPy
                     (DispatchTable)module.Globals["_jumpy_dispatch_table"],
                     name + ".", 
                     NOARGS_METHOD_CODE, 
+                    OBJARG_METHOD_CODE,
                     VARARGS_METHOD_CODE, 
                     VARARGS_KWARGS_METHOD_CODE
                 );
