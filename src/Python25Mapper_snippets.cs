@@ -52,6 +52,12 @@ def {0}():
     return _jumpy_dispatch_noargs('{2}{0}', IntPtr.Zero)
 ";
 
+        private const string OBJARG_FUNCTION_CODE = @"
+def {0}(arg):
+    '''{1}'''
+    return _jumpy_dispatch('{2}{0}', IntPtr.Zero, arg)
+";
+
         private const string VARARGS_FUNCTION_CODE = @"
 def {0}(*args):
     '''{1}'''
