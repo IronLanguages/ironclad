@@ -35,8 +35,8 @@ bz2___author__ = """The bz2 python module was written by:
     Gustavo Niemeyer <niemeyer@conectiva.com>
 """
 
-bz2_test_compress = "I wonder why. I wonder why. I wonder why I wonder why. " * 1000
-bz2_test_decompress = 'BZh91AY&SYM\xf6FM\x00!\xd9\x95\x80@\x01\x00 \x06A\x90\xa0 \x00\x90 \x1ai\xa0)T4\x1bS\x81R\xa6\tU\xb0J\xad\x02Ur*T\xd0%W\xc0\x95^\x02U`%V\x02Up\tU\xb0J\xae\xc0\x95X\tU\xf8\xbb\x92)\xc2\x84\x82o\xb22h'
+bz2_test_text = "I wonder why. I wonder why. I wonder why I wonder why. " * 1000
+bz2_test_data = 'BZh91AY&SYM\xf6FM\x00!\xd9\x95\x80@\x01\x00 \x06A\x90\xa0 \x00\x90 \x1ai\xa0)T4\x1bS\x81R\xa6\tU\xb0J\xad\x02Ur*T\xd0%W\xc0\x95^\x02U`%V\x02Up\tU\xb0J\xae\xc0\x95X\tU\xf8\xbb\x92)\xc2\x84\x82o\xb22h'
 
 
 class FunctionalityTest(unittest.TestCase):
@@ -103,8 +103,8 @@ class FunctionalityTest(unittest.TestCase):
         self.assertWorksWithBZ2(dedent("""
             assert bz2.compress(%(uncompressed)r) == %(compressed)r
             assert bz2.decompress(%(compressed)r) == %(uncompressed)r
-            """) % {"compressed": bz2_test_decompress,
-                    "uncompressed": bz2_test_compress}
+            """) % {"compressed": bz2_test_data,
+                    "uncompressed": bz2_test_text}
         )
 
 
@@ -135,7 +135,25 @@ class FunctionalityTest(unittest.TestCase):
                 n += 1
             data += compressor.flush()
             assert data == %r
-            """) % (bz2_test_compress, bz2_test_decompress)
+            """) % (bz2_test_text, bz2_test_data)
+        )
+
+    def testBZ2Decompressor(self):
+        self.assertWorksWithBZ2(dedent("""
+            # adapted from test_bz2.py
+            decompressor = bz2.BZ2Decompressor()
+            data = %r
+            chunkSize = 5
+            n = 0
+            text = ''
+            while 1:
+                chunk = data[n*chunkSize:(n+1)*chunkSize]
+                if not chunk:
+                    break
+                text += decompressor.decompress(chunk)
+                n += 1
+            assert text == %r
+            """) % (bz2_test_data, bz2_test_text)
         )
 
 
