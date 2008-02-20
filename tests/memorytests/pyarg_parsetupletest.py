@@ -34,7 +34,7 @@ class PyArg_ParseTupleTest(unittest.TestCase):
 
 
     def assertMatchesVargargs(self, params):
-        self.assertEquals(params[:2], (IntPtr(1), "i" * len(self.varargs)),
+        self.assertEquals(params[:2], (IntPtr(1), self.formatString),
                           "error marshalling easy args")
 
         argPtr = params[2]
@@ -44,24 +44,25 @@ class PyArg_ParseTupleTest(unittest.TestCase):
             self.assertEquals(thisArgAddress, ptr, "error marshalling varargs")
 
 
-    def assertMarshalsVarargs(self, varargs):
+    def assertMarshalsVarargs(self, prefix, varargs, suffix):
         testFuncName = "Test_PA_PT__%darg" % len(varargs)
         testFunc = getattr(PythonStubHarness, testFuncName)
         self.varargs = varargs
-        result = testFunc(IntPtr(1), "i" * len(varargs), *varargs)
+        self.formatString = prefix + "i" * len(varargs) + suffix
+        result = testFunc(IntPtr(1), self.formatString, *varargs)
         self.assertEquals(result, 1, "bad return value")
 
 
     def test1Arg(self):
-        self.assertMarshalsVarargs((IntPtr(100),))
+        self.assertMarshalsVarargs("|", (IntPtr(100),), "")
 
 
     def test2Args(self):
-        self.assertMarshalsVarargs((IntPtr(100), IntPtr(200)))
+        self.assertMarshalsVarargs("", (IntPtr(100), IntPtr(200)), ":bar")
 
 
     def test3Args(self):
-        self.assertMarshalsVarargs((IntPtr(100), IntPtr(200), IntPtr(300)))
+        self.assertMarshalsVarargs("|", (IntPtr(100), IntPtr(200), IntPtr(300)), ";error message")
 
 
 

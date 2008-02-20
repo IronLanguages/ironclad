@@ -8,7 +8,7 @@ int PyArg_ParseTupleAndKeywords(void *args, void *kwargs, char *format, void *kw
     int in = 0;
     int out = 0;
 
-    while (format[in] != ':' && format[in] != 0)
+    while (format[in] != ':' && format[in] != ';' && format[in] != 0)
     {
         if (format[in] == '|')
         {
@@ -19,10 +19,10 @@ int PyArg_ParseTupleAndKeywords(void *args, void *kwargs, char *format, void *kw
         ++out;
     }
     va_end(ap);
-    
-    int (*mgd_PyArg_ParseTupleAndKeywords)(void*, void*, char*, void*, void**) = 
+
+    int (*mgd_PyArg_ParseTupleAndKeywords)(void*, void*, char*, void*, void**) =
         (int(*)(void*, void*, char*, void*, void**))(jumptable[%d]);
-        
+
     int result = mgd_PyArg_ParseTupleAndKeywords(args, kwargs, format, kwlist, varargs);
     free(varargs);
     return result;

@@ -1,2 +1,3 @@
-PyType_Type
+PyFile_Type
 PyString_Type
+PyType_Type
