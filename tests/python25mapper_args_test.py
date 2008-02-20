@@ -7,7 +7,8 @@ from System import IntPtr
 from System.Collections.Generic import Dictionary
 from System.Runtime.InteropServices import Marshal
 from JumPy import (
-    ArgWriter, CPyMarshal, IntArgWriter, Python25Mapper, SizedStringArgWriter
+    ArgWriter, CPyMarshal, CStringArgWriter, IntArgWriter,
+    ObjectArgWriter, Python25Mapper, SizedStringArgWriter
 )
 from IronPython.Hosting import PythonEngine
 
@@ -237,6 +238,7 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
     def testGetArgWritersWorks(self):
         self.assertGetArgWritersProduces("i", [(0, IntArgWriter, 1)])
         self.assertGetArgWritersProduces("i:someName", [(0, IntArgWriter, 1)])
+        self.assertGetArgWritersProduces("i;an error message", [(0, IntArgWriter, 1)])
         self.assertGetArgWritersProduces("iii", [(0, IntArgWriter, 1),
                                                  (1, IntArgWriter, 2),
                                                  (2, IntArgWriter, 3),])
@@ -245,10 +247,18 @@ class Python25Mapper_PyArg_ParseTupleAndKeywords_Test(unittest.TestCase):
                                                   (2, IntArgWriter, 3),])
 
         self.assertGetArgWritersProduces("s#", [(0, SizedStringArgWriter, 2)])
+        self.assertGetArgWritersProduces("s#s", [(0, SizedStringArgWriter, 2),
+                                                 (1, CStringArgWriter, 3)])
+        self.assertGetArgWritersProduces("ss#", [(0, CStringArgWriter, 1),
+                                                 (1, SizedStringArgWriter, 3)])
         self.assertGetArgWritersProduces("s#i", [(0, SizedStringArgWriter, 2),
                                                  (1, IntArgWriter, 3)])
         self.assertGetArgWritersProduces("|s#i", [(0, SizedStringArgWriter, 2),
                                                   (1, IntArgWriter, 3)])
+
+        self.assertGetArgWritersProduces("iOs#", [(0, IntArgWriter, 1),
+                                                  (1, ObjectArgWriter, 2),
+                                                  (2, SizedStringArgWriter, 4)])
 
     def testUnrecognisedFormatString(self):
         engine = PythonEngine()

@@ -6,7 +6,7 @@ namespace JumPy
 from System import IntPtr
 
 def _cleanup(*args):
-    _jumpy_mapper.FreeTempPtrs()
+    _jumpy_mapper.FreeTemps()
     for arg in args:
         if arg != IntPtr.Zero:
             _jumpy_mapper.DecRef(arg)
