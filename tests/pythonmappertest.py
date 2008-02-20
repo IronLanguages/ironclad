@@ -56,6 +56,13 @@ class PythonMapperTest(unittest.TestCase):
         self.assertDataSetterSetsAndRemembers(MyPM, "PyType_Type", 16, TestWrote16Bytes)
 
 
+    def testPythonMapperFinds_PyFile_Type(self):
+        class MyPM(PythonMapper):
+            def Fill_PyFile_Type(self, address):
+                Write16Bytes(address)
+        self.assertDataSetterSetsAndRemembers(MyPM, "PyFile_Type", 16, TestWrote16Bytes)
+
+
     def testAddressGetterFailsCleanly(self):
         pm = PythonMapper()
         addressGetter = pm.GetAddress

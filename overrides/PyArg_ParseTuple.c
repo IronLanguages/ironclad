@@ -8,7 +8,7 @@ int PyArg_ParseTuple(void *args, char *format, ...)
     int in = 0;
     int out = 0;
 
-    while (format[in] != ':' && format[in] != 0)
+    while (format[in] != ':' && format[in] != ';' && format[in] != 0)
     {
         if (format[in] == '|')
         {
