@@ -9,7 +9,10 @@ from System.Runtime.InteropServices import Marshal
 
 from IronPython.Hosting import PythonEngine
 
-from JumPy import CPyMarshal, IntArgWriter, Python25Mapper, SizedStringArgWriter
+from JumPy import (
+    CPyMarshal, CStringArgWriter, IntArgWriter, ObjectArgWriter,
+    Python25Mapper, SizedStringArgWriter
+)
 
 
 def GetSetter(item, attr, value):
@@ -21,6 +24,20 @@ class ArgWriterSizeTest(unittest.TestCase):
 
     def testIntArgWriter(self):
         writer = IntArgWriter(3)
+        self.assertEquals(writer.PointersConsumed, 1, "bad writer size")
+        self.assertEquals(writer.NextWriterStartIndex, 3 + 1, "bad next writer start")
+        self.assertRaises(Exception, GetSetter(writer, "PointersConsumed", 6))
+        self.assertRaises(Exception, GetSetter(writer, "NextWriterStartIndex", 6))
+
+    def testObjectArgWriter(self):
+        writer = ObjectArgWriter(3, Python25Mapper(PythonEngine()))
+        self.assertEquals(writer.PointersConsumed, 1, "bad writer size")
+        self.assertEquals(writer.NextWriterStartIndex, 3 + 1, "bad next writer start")
+        self.assertRaises(Exception, GetSetter(writer, "PointersConsumed", 6))
+        self.assertRaises(Exception, GetSetter(writer, "NextWriterStartIndex", 6))
+
+    def testCStringArgWriter(self):
+        writer = CStringArgWriter(3, Python25Mapper(PythonEngine()))
         self.assertEquals(writer.PointersConsumed, 1, "bad writer size")
         self.assertEquals(writer.NextWriterStartIndex, 3 + 1, "bad next writer start")
         self.assertRaises(Exception, GetSetter(writer, "PointersConsumed", 6))
@@ -40,6 +57,7 @@ class ArgWriterWriteTest(unittest.TestCase):
         writer.Write(ptrsAddress, writeValue)
         self.assertEquals(CPyMarshal.ReadInt(dstAddress), expectedValue,
                           "int write incorrect")
+
 
     def assertWritesStringToAddress(self, writer, string, ptrsAddress, dstAddress):
         writer.Write(ptrsAddress, string)
@@ -65,6 +83,68 @@ class IntArgWriterTest(ArgWriterWriteTest):
             Marshal.FreeHGlobal(destPtrs)
 
 
+class ObjectArgWriterTest(ArgWriterWriteTest):
+
+    def testWritesObjectPtr(self):
+        destPtrs = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 4)
+        dest = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
+        CPyMarshal.WritePtr(OffsetPtr(destPtrs, (2 * CPyMarshal.PtrSize)), dest)
+        mapper = Python25Mapper(PythonEngine())
+        obj = object()
+
+        try:
+            ObjectArgWriter(2, mapper).Write(destPtrs, obj)
+            objPtr = CPyMarshal.ReadPtr(dest)
+            self.assertEquals(mapper.RefCount(objPtr), 1, "did not store object ptr")
+            self.assertEquals(mapper.Retrieve(objPtr), obj, "stored wrong object")
+
+            mapper.FreeTemps()
+            self.assertEquals(mapper.RefCount(objPtr), 0, "did not clean up temporary object ptr")
+        finally:
+            Marshal.FreeHGlobal(dest)
+            Marshal.FreeHGlobal(destPtrs)
+            mapper.FreeTemps()
+
+
+class CStringArgWriterTest(ArgWriterWriteTest):
+
+    def assertCStringArgWriterWrite(self, string):
+        destPtrs = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 4)
+        destStr = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
+        CPyMarshal.WritePtr(OffsetPtr(destPtrs, (2 * CPyMarshal.PtrSize)), destStr)
+        frees = []
+        tempStrings = []
+        mapper = Python25Mapper(PythonEngine(), GetAllocatingTestAllocator([], frees))
+        try:
+            self.assertWritesStringToAddress(
+                CStringArgWriter(2, mapper), string, destPtrs, destStr)
+            tempStrings.append(Marshal.ReadIntPtr(destStr))
+        finally:
+            Marshal.FreeHGlobal(destStr)
+            Marshal.FreeHGlobal(destPtrs)
+            mapper.FreeTemps()
+        self.assertEquals(set(frees), set(tempStrings),
+                          "failed to deallocate temporary buffers when instructed")
+
+    def testWriteEasyString(self):
+        s = "Lock the cellar door"
+        self.assertCStringArgWriterWrite(s)
+
+    def testWriteTrickyString(self):
+        s = ''.join(chr(c) for c in range(1, 256))
+        self.assertCStringArgWriterWrite(s)
+
+    def testWriteInvalidString_EmbeddedNull(self):
+        s = u'I contain an embedded \0. Hahaha!'
+        self.assertRaises(TypeError,
+            lambda: self.assertCStringArgWriterWrite(s))
+
+    def testWriteInvalidString_Unicode(self):
+        s = u'ph34r my pron\u0639nciation'
+        self.assertRaises(UnicodeError,
+            lambda: self.assertCStringArgWriterWrite(s))
+
+
 class SizedStringArgWriterTest(ArgWriterWriteTest):
 
     def assertSizedStringArgWriterWrite(self, string, length):
@@ -87,7 +167,7 @@ class SizedStringArgWriterTest(ArgWriterWriteTest):
             Marshal.FreeHGlobal(destStr)
             Marshal.FreeHGlobal(destInt)
             Marshal.FreeHGlobal(destPtrs)
-            mapper.FreeTempPtrs()
+            mapper.FreeTemps()
         self.assertEquals(set(frees), set(tempStrings),
                           "failed to deallocate temporary buffers when instructed")
 
@@ -108,6 +188,8 @@ class SizedStringArgWriterTest(ArgWriterWriteTest):
 suite = makesuite(
     ArgWriterSizeTest,
     IntArgWriterTest,
+    ObjectArgWriterTest,
+    CStringArgWriterTest,
     SizedStringArgWriterTest
 )
 

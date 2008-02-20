@@ -44,7 +44,8 @@ namespace JumPy
     {
         private PythonEngine engine;
         private Dictionary<IntPtr, object> ptrmap;
-        private List<IntPtr> tempptrs;
+        private List<IntPtr> tempPtrs;
+        private List<IntPtr> tempObjects;
         private IAllocator allocator;
         private Exception _lastException;
         
@@ -57,7 +58,8 @@ namespace JumPy
             this.engine = eng;
             this.allocator = alloc;
             this.ptrmap = new Dictionary<IntPtr, object>();
-            this.tempptrs = new List<IntPtr>();
+            this.tempPtrs = new List<IntPtr>();
+            this.tempObjects = new List<IntPtr>();
             this._lastException = null;
         }
         
@@ -174,16 +176,26 @@ namespace JumPy
 
         public void RememberTempPtr(IntPtr ptr)
         {
-            this.tempptrs.Add(ptr);
+            this.tempPtrs.Add(ptr);
         }
 
-        public void FreeTempPtrs()
+        public void RememberTempObject(IntPtr ptr)
         {
-            foreach (IntPtr ptr in this.tempptrs)
+            this.tempObjects.Add(ptr);
+        }
+
+        public void FreeTemps()
+        {
+            foreach (IntPtr ptr in this.tempPtrs)
             {
                 this.allocator.Free(ptr);
             }
-            this.tempptrs.Clear();
+            foreach (IntPtr ptr in this.tempObjects)
+            {
+                this.DecRef(ptr);
+            }
+            this.tempObjects.Clear();
+            this.tempPtrs.Clear();
         }
         
         public Exception LastException

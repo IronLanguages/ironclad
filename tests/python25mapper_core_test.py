@@ -99,9 +99,48 @@ class Python25MapperTest(unittest.TestCase):
         mapper.RememberTempPtr(IntPtr(56789))
         self.assertEquals(frees, [], "freed memory prematurely")
 
-        mapper.FreeTempPtrs()
+        mapper.FreeTemps()
         self.assertEquals(set(frees), set([IntPtr(12345), IntPtr(13579), IntPtr(56789)]),
                           "memory not freed")
+
+
+    def testRememberAndFreeTempObjects(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+
+        tempObject1 = mapper.Store(1)
+        tempObject2 = mapper.Store(2)
+
+        mapper.RememberTempObject(tempObject1)
+        mapper.RememberTempObject(tempObject2)
+
+        self.assertEquals(mapper.RefCount(tempObject1), 1,
+                          "RememberTempObject should not incref")
+        self.assertEquals(mapper.RefCount(tempObject2), 1,
+                          "RememberTempObject should not incref")
+
+        mapper.IncRef(tempObject1)
+        mapper.IncRef(tempObject2)
+
+        mapper.FreeTemps()
+
+        try:
+            self.assertEquals(mapper.RefCount(tempObject1), 1,
+                              "FreeTemps should decref objects rather than freeing them")
+            self.assertEquals(mapper.RefCount(tempObject2), 1,
+                              "FreeTemps should decref objects rather than freeing them")
+
+            mapper.FreeTemps()
+            self.assertEquals(mapper.RefCount(tempObject1), 1,
+                              "FreeTemps should clear list once called")
+            self.assertEquals(mapper.RefCount(tempObject2), 1,
+                              "FreeTemps should clear list once called")
+        finally:
+            mapper.DecRef(tempObject1)
+            mapper.DecRef(tempObject2)
+
+
+
 
 
 class Python25Mapper_Exception_Test(unittest.TestCase):

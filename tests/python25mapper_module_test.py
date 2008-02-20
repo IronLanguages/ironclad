@@ -49,7 +49,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             moduleTest(test_module, mapper)
         finally:
             deallocMethods()
-            mapper.FreeTempPtrs()
+            mapper.FreeTemps()
 
 
     def test_Py_InitModule4_CreatesPopulatedModuleInSys(self):

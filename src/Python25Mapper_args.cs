@@ -59,7 +59,9 @@ namespace JumPy
             string trimmedFormat = format;
             int argIndex = 0;
             int nextStartPointer = 0;
-            while (trimmedFormat.Length > 0 && !trimmedFormat.StartsWith(":"))
+            while (trimmedFormat.Length > 0 && 
+                   !trimmedFormat.StartsWith(":") &&
+                   !trimmedFormat.StartsWith(";"))
             {
                 if (trimmedFormat.StartsWith("|"))
                 {
@@ -72,10 +74,20 @@ namespace JumPy
                     trimmedFormat = trimmedFormat.Substring(1);
                     result[argIndex] = new IntArgWriter(nextStartPointer);
                 }
+                else if (trimmedFormat.StartsWith("O"))
+                {
+                    trimmedFormat = trimmedFormat.Substring(1);
+                    result[argIndex] = new ObjectArgWriter(nextStartPointer, this);
+                }
                 else if (trimmedFormat.StartsWith("s#"))
                 {
                     trimmedFormat = trimmedFormat.Substring(2);
                     result[argIndex] = new SizedStringArgWriter(nextStartPointer, this);
+                }
+                else if (trimmedFormat.StartsWith("s"))
+                {
+                    trimmedFormat = trimmedFormat.Substring(1);
+                    result[argIndex] = new CStringArgWriter(nextStartPointer, this);
                 }
                 else
                 {
