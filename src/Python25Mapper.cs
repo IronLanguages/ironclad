@@ -210,6 +210,11 @@ namespace JumPy
             }
         }
         
+        public override void
+        PyErr_SetString(IntPtr excType, string message)
+        {
+            this._lastException = new Exception(message);
+        }
     }
 
 }

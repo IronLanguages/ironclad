@@ -157,6 +157,24 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
                           "get should retrieve last set exception")
 
 
+    def testPyErr_SetString(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+
+        msg = "You froze your tears and made a dagger"
+        # at the moment, we ignore the actual exception type
+        mapper.PyErr_SetString(IntPtr(123), msg)
+
+        self.assertEquals(type(mapper.LastException), System.Exception,
+                          "failed to set exception")
+        self.assertEquals(mapper.LastException.Message, msg,
+                          "set wrong exception message")
+
+
+
+
+
+
 
 
 suite = makesuite(
