@@ -7,7 +7,7 @@ clr.AddReferenceToFile("build/jumpy.dll")
 clr.AddReference("IronPython.dll")
 clr.AddReference("IronMath.dll")
 
-def GetFailedImportTestSuite(e):
+def GetFailedImportTestSuite(name, e):
     class FailedImportTest(unittest.TestCase):
         def testFailedImport(self):
             raise Exception("could not import %s:\n%s" % (name, e))
@@ -21,7 +21,7 @@ for f in os.listdir("tests"):
             m = __import__("tests.%s" % name)
             suite.addTest(getattr(m, name).suite)
         except Exception, e:
-            suite.addTest(GetFailedImportTestSuite(e))
+            suite.addTest(GetFailedImportTestSuite(name, e))
 
 if __name__ == '__main__':
     run(suite)
