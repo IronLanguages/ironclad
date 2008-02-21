@@ -11,11 +11,11 @@ PROJECTNAME's purpose is to allow IronPython to transparently import and use com
 
 Status
 
-* Once the .pyd has been loaded, it is possible to import the Python 2.5 bz2 module; all its functions, types, and strings are accessible from IronPython.
+* Once bz2.pyd has been loaded, it is possible to import the Python 2.5 bz2 module; all its functions, types, and strings are accessible from IronPython. See 'functionalitytest.py' for an example.
 
 * The 'compress' and 'decompress' functions, and the 'BZ2Compressor' and 'BZ2Decompressor' types, appear to work correctly.
 
-* It is not currently possible to instantiate the 'BZ2File' type.
+* It is not currently possible to instantiate the 'BZ2File' type; this is the reason that functionalitytest.testBZ2File fails. All other tests should pass.
 
 * In general, nothing not explicitly mentioned above will work.
 
@@ -23,12 +23,14 @@ Status
 
 * If you're exceptionally lucky, it may be possible to actually use parts of other CPython extensions.
 
+* Is is not possible to use more than one StubReference in a given process, and we see no way around this limitation; since modules can be shared between PythonEngine instances, this should not present insurmountable problems, but should be borne in mind.
+
 
 Immediate next steps
 
-* Implement 'Py_VaBuildValue' (and related functions) using code from 'modsupport.c' in the CPython source. This is desirable because:
-** marshalling varargs to managed code is no fun at all, and;
-** these functions appear to be implemented in terms of other CPython API functions which will be useful elsewhere (PyString_FromStringAndSize, PyInt_FromLong, etc).
+* Implement 'Py_VaBuildValue' (and related functions) using code from 'modsupport.c' in the CPython source.
+** This is desirable because these functions appear to be implemented in terms of other CPython API functions which will be useful elsewhere (PyString_FromStringAndSize, PyInt_FromLong, etc). Also, marshalling varargs is not fun, and this lets us dodge the issue.
+** Doing this correctly will involve a new build stage: basically, we need to configure the CPython source for the current machine, and preprocess the borrowed code, so that we can drop it into the stub library as an override. This will be useful for borrowing more code from CPython as work progresses, and autogenerating C# files to make them reusable across different architectures.
 
 * Implement 'PyObject_CallFunction' using code from 'abstract.c' in the CPython source (this uses Py_VaBuildValue).
 ** This step will allow us to get slightly further with instantiation of 'BZ2File' objects.
