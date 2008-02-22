@@ -9,7 +9,7 @@ from System.Runtime.InteropServices import Marshal
 
 from IronPython.Hosting import PythonEngine
 
-from JumPy import (
+from Ironclad import (
     CPyMarshal, CStringArgWriter, IntArgWriter, ObjectArgWriter,
     Python25Mapper, SizedStringArgWriter
 )

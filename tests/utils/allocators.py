@@ -1,6 +1,6 @@
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from JumPy import IAllocator
+from Ironclad import IAllocator
 
 def GetAllocatingTestAllocator(allocsList, freesList):
     class TestAllocator(IAllocator):

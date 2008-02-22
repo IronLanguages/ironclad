@@ -4,7 +4,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace JumPy
+namespace Ironclad
 {
     
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

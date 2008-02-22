@@ -1,11 +1,11 @@
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from JumPy import (
+from Ironclad import (
     CPyMarshal, CPython_initproc_Delegate, CPythonVarargsFunction_Delegate,
     CPythonVarargsKwargsFunction_Delegate
 )
-from JumPy.Structs import METH, PyMethodDef, PyTypeObject
+from Ironclad.Structs import METH, PyMethodDef, PyTypeObject
 
 from tests.utils.memory import OffsetPtr
 

@@ -3,7 +3,7 @@ using System;
 using System.Runtime.InteropServices;
 
 
-namespace JumPy
+namespace Ironclad
 {
     public delegate IntPtr CPythonVarargsFunction_Delegate(IntPtr self, IntPtr args);
 

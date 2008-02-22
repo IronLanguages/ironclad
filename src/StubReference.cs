@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 
 
-namespace JumPy
+namespace Ironclad
 {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate IntPtr AddressGetterDelegate(string name);

@@ -8,9 +8,9 @@ from tests.utils.memory import OffsetPtr
 
 from System import IntPtr
 
-from JumPy import AddressGetterDelegate, CPyMarshal, DataSetterDelegate, PythonMapper, StubReference
+from Ironclad import AddressGetterDelegate, CPyMarshal, DataSetterDelegate, PythonMapper, StubReference
 
-from JumPyTestUtils import PythonStubHarness
+from IroncladTestUtils import PythonStubHarness
 
 
 class PyArg_ParseTupleTest(unittest.TestCase):

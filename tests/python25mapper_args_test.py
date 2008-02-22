@@ -6,7 +6,7 @@ import System
 from System import IntPtr
 from System.Collections.Generic import Dictionary
 from System.Runtime.InteropServices import Marshal
-from JumPy import (
+from Ironclad import (
     ArgWriter, CPyMarshal, CStringArgWriter, IntArgWriter,
     ObjectArgWriter, Python25Mapper, SizedStringArgWriter
 )

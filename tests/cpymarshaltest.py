@@ -5,7 +5,7 @@ from tests.utils.runtest import makesuite, run
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from JumPy import CPyMarshal
+from Ironclad import CPyMarshal
 
 class CPyMarshalTest_32(unittest.TestCase):
 

@@ -4,7 +4,7 @@ from tests.utils.runtest import makesuite, run
 
 from System import IntPtr
 
-from JumPy import CPyMarshal, PydImporter, Kernel32
+from Ironclad import CPyMarshal, PydImporter, Kernel32
 
 
 class PydImporterTest(unittest.TestCase):

@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
 
-namespace JumPy
+namespace Ironclad
 {
     public partial class Python25Mapper : PythonMapper
     {

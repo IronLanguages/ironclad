@@ -6,8 +6,8 @@ from tests.utils.runtest import makesuite, run
 
 from System import Array, Byte, Char, IntPtr, OutOfMemoryException
 from System.Runtime.InteropServices import Marshal
-from JumPy import Python25Mapper
-from JumPy.Structs import PyStringObject
+from Ironclad import Python25Mapper
+from Ironclad.Structs import PyStringObject
 from IronPython.Hosting import PythonEngine
 
 
