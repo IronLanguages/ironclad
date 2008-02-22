@@ -1,0 +1,17 @@
+
+
+Ironclad's build process deserves a brief discussion. At the moment, it only works on 32-bit Windows, and requires:
+
+* ipy from IronPython 1.1.1
+* mingw (including gcc and make)
+* pexports
+* nasm
+
+Running make in the top-level directory should do the following:
+
+* Run 'tools/generatepythonmapper.py' to create 'src/PythonMapper.cs' from the contents of 'src/pythonmappercomponents/'
+* Compile the contents of 'src/' to create 'build/ironclad.dll'
+* Run 'tools/buildstub.py' to (eventually) create the stub library 'build/python25.dll' from an existing (real) python25.dll and the contents of 'overrides/'
+
+At this point, the project is built and may even be usable. However, make will also build some test data, and run several tests; we expect a single failing test, which reminds us that we can't successfully instantiate a BZ2File yet.
+
