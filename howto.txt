@@ -75,7 +75,7 @@ The first parameter is always the pointer we allocated previously; the Python25M
 
 Finally, 'PyModule_AddObject' extracts references to the newly defined types, and sets various attributes on them, which are used by the generated code: specifically, these attributes are (1) a pointer to the PyTypeObject ('_typePtr') and (2) delegates pointing to the C functions which create ('_tp_newDgt') and initialise ('_tp_initDgt') instances of the type.
 
-At this point, we can start doing interesting things with the module; to understand these, it will be useful to see (a representative sample of) the code that has been executed in the new module up to this point:
+At this point, we can start doing interesting things with the module; to understand these, it will be useful to see (a representative sample of) the code that has been executed in the new module:
 
 ------------------------------------------------------------------------------------------------
 
@@ -93,22 +93,7 @@ def _raiseExceptionIfRequired():
         _ironclad_mapper.LastException = None
         raise error
 
-def _ironclad_dispatch(name, instancePtr, args):
-    argPtr = _ironclad_mapper.Store(args)
-    resultPtr = _ironclad_dispatch_table[name](instancePtr, argPtr)
-    try:
-        _raiseExceptionIfRequired()
-        return _ironclad_mapper.Retrieve(resultPtr)
-    finally:
-        _cleanup(argPtr, resultPtr)
-
-def _ironclad_dispatch_noargs(name, instancePtr):
-    resultPtr = _ironclad_dispatch_table[name](instancePtr, IntPtr.Zero)
-    try:
-        _raiseExceptionIfRequired()
-        return _ironclad_mapper.Retrieve(resultPtr)
-    finally:
-        _cleanup(resultPtr)
+...
 
 def _ironclad_dispatch_kwargs(name, instancePtr, args, kwargs):
     argPtr = _ironclad_mapper.Store(args)
@@ -119,8 +104,13 @@ def _ironclad_dispatch_kwargs(name, instancePtr, args, kwargs):
         return _ironclad_mapper.Retrieve(resultPtr)
     finally:
         _cleanup(argPtr, kwargPtr, resultPtr)
+------------------------------------------------------------------------------------------------
 
+The code just above is always included, and does most of the critical work. The '_ironclad_mapper' is the Python25Mapper that created the module, and the '_ironclad_dispatch_table' is a dictionary mapping function names to their C implementations (or rather, to delegates which point to the C implementations).
 
+The only dispatch function shown here ('_ironclad_dispatch_kwargs') is the most complex of the three currently implemented; the other two ('_ironclad_dispatch' and '_ironclad_dispatch_noargs') are fundamentally similar. We'll describe how it actually works when we finally call 'bz2.compress' -- soon, I promise.
+
+------------------------------------------------------------------------------------------------
 def compress(*args, **kwargs):
     '''compress(data [, compresslevel=9]) -> string
 
@@ -129,16 +119,27 @@ use an instance of BZ2Compressor instead. The compresslevel parameter, if
 given, must be a number between 1 and 9.
 '''
     return _ironclad_dispatch_kwargs('compress', IntPtr.Zero, args, kwargs)
+------------------------------------------------------------------------------------------------
 
-def decompress(*args):
-    '''decompress(data) -> decompressed data
+The definition of the 'compress' function, above, was generated from the name and docstring in the PyMethodDef structure passed into 'Py_InitModule4'. So, what happens when we actually call it?
 
-Decompress data in one shot. If you want to decompress data sequentially,
-use an instance of BZ2Decompressor instead.
-'''
-    return _ironclad_dispatch('decompress', IntPtr.Zero, args)
+First of all, '_ironclad_dispatch_kwargs' gets pointers to the args and kwargs by passing them into the Python25Mapper's 'Store' method. As discussed previously, this method allocates a tiny bit of memory and maps it to the real object so we can retrieve the real object again when we need it. It should be noted that, at present, 'Store' creates opaque pointers which don't hold any real data apart from a refcount; this approach will not be viable in the long term, but it's good enough for now (and in many cases, all we'll ever need to store will be a refcount and a type pointer).
 
+Then, it looks up the C function's delegate in the '_ironclad_dispatch_table' dictionary, and passes the newly-created pointers to the delegate; this then calls the 'bz2_compress' C function. The C function immediately calls back into managed code, passing argPtr and kwargPtr, plus a series of pointers to local data, up to 'Python25Mapper.PyArg_ParseTupleAndKeywords'.
 
+Note: 'PyArg_ParseTupleAndKeywords' is a little bit magical, and works slightly differently from other calls into managed code. However, the current approach is rather stupid and wasteful of developer time, so we're planning to replace it as soon as possible. Therefore, I feel justified in eliding the details: basically, it retrieves the original 'args' and 'kwargs' parameters and writes appropriate values into the extra pointers passed up by 'bz2_compress'.
+
+Once 'PyArg_ParseTupleAndKeywords' returns, 'bz2_compress' has access to all its arguments in a format it can do real work with. I don't know what it's really doing under the hood; from our perspective, the only really important thing is that it creates a PyStringObject by calling 'PyString_FromStringAndSize', and eventually returns a pointer to that PyStringObject.
+
+This PyString object, unlike everything else we've seen so far, makes a semi-serious attempt at impersonating a real PyStringObject: we actually lay the memory out correctly and put the character data in the right place. This is necessary because the function uses the PyString_AS_STRING macro, which returns a pointer to that character data, into which 'bz2compress' writes the compressed bytes.
+
+Also, since the managed code doesn't know the string contents until 'bz2compress' has finished writing it, it doesn't create a managed string yet: rather, it maps the string pointer to an 'UnmanagedDataMarker.PyStringObject'. Once 'bz2compress' finally returns, '_ironclad_dispatch_kwargs' receives a pointer to the PyStringObject; when we 'Retrieve' the managed object from the Python25Mapper, it reads in the character data and replaces the marker in the pointer map before returning the actual managed string -- which is at last returned to the IronPython code which made the call to 'compress' in the first place.
+
+Had anything gone wrong in the above process, a call to 'PyErr_SetString' would have set an exception on the Python25Mapper object; if the mapper's LastException property is non-None, we raise the exception and clear the property. We also ensure that we decref argPtr, kwargPtr, and resultPtr before we return, to avoid leaking memory.
+
+Phew. Now, let's look at what happens when we instantiate a 'BZ2Compressor' object. Here's the code generated by the 'PyModule_AddObject' call which set up the type:
+
+------------------------------------------------------------------------------------------------
 class BZ2Compressor(object):
     __module__ = 'bz2'
     def __new__(cls, *args, **kwargs):
