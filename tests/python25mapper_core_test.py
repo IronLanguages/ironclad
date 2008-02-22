@@ -8,7 +8,7 @@ from tests.utils.cpython import MakeTypePtr
 import System
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from JumPy import PythonMapper, Python25Mapper
+from Ironclad import PythonMapper, Python25Mapper
 from IronPython.Hosting import PythonEngine
 
 

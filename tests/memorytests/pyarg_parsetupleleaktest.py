@@ -1,8 +1,8 @@
 
 from tests.memorytests.leaktestcase import LeakTestCase, RunSeparateProcessTest
 
-from JumPy import PythonMapper
-from JumPyTestUtils import PythonStubHarness
+from Ironclad import PythonMapper
+from IroncladTestUtils import PythonStubHarness
 
 from System import IntPtr
 

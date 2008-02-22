@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-using JumPy.Structs;
+using Ironclad.Structs;
 
-namespace JumPy
+namespace Ironclad
 {
     public partial class Python25Mapper : PythonMapper
     {

@@ -9,7 +9,7 @@ from tests.utils.runtest import makesuite, run
 from System import GC
 from System.Diagnostics import Process
 
-from JumPy import AddressGetterDelegate, DataSetterDelegate, StubReference
+from Ironclad import AddressGetterDelegate, DataSetterDelegate, StubReference
 
 
 class LeakTestCase(unittest.TestCase):

@@ -4,7 +4,7 @@ using System.Text;
 
 using IronPython.Runtime.Exceptions;
 
-namespace JumPy
+namespace Ironclad
 {
 
     public class ArgWriter

@@ -3,7 +3,7 @@ import os
 import unittest
 from tests.utils.runtest import makesuite, run
 
-from JumPy import AddressGetterDelegate, DataSetterDelegate, Kernel32, StubReference
+from Ironclad import AddressGetterDelegate, DataSetterDelegate, Kernel32, StubReference
 from System import IntPtr
 
 

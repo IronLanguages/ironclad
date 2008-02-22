@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace JumPy
+namespace Ironclad
 {
     public partial class Python25Mapper : PythonMapper
     {

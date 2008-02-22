@@ -5,7 +5,7 @@ from textwrap import dedent
 from tests.utils.runtest import makesuite, run
 
 from System import IntPtr
-from JumPy import (
+from Ironclad import (
     AddressGetterDelegate, DataSetterDelegate, PydImporter,
     Python25Mapper, PythonMapper, StubReference
 )

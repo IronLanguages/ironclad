@@ -6,7 +6,7 @@ from IronPython.Hosting import PythonEngine
 
 from System.Threading import Thread, ThreadStart
 
-from JumPy import Python25Mapper
+from Ironclad import Python25Mapper
 
 
 class Python25Mapper_PyThread_functions_Test(unittest.TestCase):

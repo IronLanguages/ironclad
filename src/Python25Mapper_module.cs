@@ -6,11 +6,11 @@ using System.Text;
 using IronPython.Hosting;
 using IronPython.Runtime.Types;
 
-using JumPy.Structs;
+using Ironclad.Structs;
 
 using DispatchTable = System.Collections.Generic.Dictionary<string, System.Delegate>;
 
-namespace JumPy
+namespace Ironclad
 {
     public partial class Python25Mapper : PythonMapper
     {
@@ -97,11 +97,11 @@ namespace JumPy
         Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
         {
             Dictionary<string, object> globals = new Dictionary<string, object>();
-            globals["_jumpy_mapper"] = this;
+            globals["_ironclad_mapper"] = this;
             globals["__doc__"] = doc;
             
             DispatchTable methodTable = new DispatchTable();
-            globals["_jumpy_dispatch_table"] = methodTable;
+            globals["_ironclad_dispatch_table"] = methodTable;
             
             StringBuilder moduleCode = new StringBuilder();
             moduleCode.Append(MODULE_CODE);
@@ -150,7 +150,7 @@ namespace JumPy
                 this.GenerateMethods(
                     classCode, 
                     methods, 
-                    (DispatchTable)module.Globals["_jumpy_dispatch_table"],
+                    (DispatchTable)module.Globals["_ironclad_dispatch_table"],
                     name + ".", 
                     NOARGS_METHOD_CODE, 
                     OBJARG_METHOD_CODE,

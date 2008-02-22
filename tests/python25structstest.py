@@ -4,7 +4,7 @@ from tests.utils.runtest import makesuite, run
 
 from System import IntPtr
 
-from JumPy.Structs import METH, PyMethodDef
+from Ironclad.Structs import METH, PyMethodDef
 
 
 class Python25StructsTest(unittest.TestCase):

@@ -1,8 +1,8 @@
 
-all : jumpy stub testdata
+all : ironclad stub testdata
 	ipy runtests.py
 
-jumpy :
+ironclad :
 	cd src && $(MAKE)
 
 stub : 

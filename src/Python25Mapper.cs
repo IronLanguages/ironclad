@@ -4,9 +4,9 @@ using System.Runtime.InteropServices;
 
 using IronPython.Hosting;
 
-using JumPy.Structs;
+using Ironclad.Structs;
 
-namespace JumPy
+namespace Ironclad
 {
     public interface IAllocator
     {

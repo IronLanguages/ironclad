@@ -11,8 +11,8 @@ import System
 from System import Array, IntPtr
 from System.Reflection import BindingFlags
 from System.Runtime.InteropServices import Marshal
-from JumPy import CPyMarshal, CPython_initproc_Delegate, PythonMapper, Python25Mapper
-from JumPy.Structs import METH, PyMethodDef, PyObject
+from Ironclad import CPyMarshal, CPython_initproc_Delegate, PythonMapper, Python25Mapper
+from Ironclad.Structs import METH, PyMethodDef, PyObject
 from IronPython.Hosting import PythonEngine
 
 
