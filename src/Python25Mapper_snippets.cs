@@ -77,8 +77,11 @@ class {0}(object):
         instance = object.__new__(cls)
         argPtr = _ironclad_mapper.Store(args)
         kwargPtr = _ironclad_mapper.Store(kwargs)
-        instancePtr = cls._tp_newDgt(cls._typePtr, argPtr, kwargPtr)
-        _cleanup(argPtr, kwargPtr)
+        try:
+            instancePtr = cls._tp_newDgt(cls._typePtr, argPtr, kwargPtr)
+            _raiseExceptionIfRequired()
+        finally:
+            _cleanup(argPtr, kwargPtr)
         
         _ironclad_mapper.StoreUnmanagedData(instancePtr, instance)
         instance._instancePtr = instancePtr
@@ -88,8 +91,13 @@ class {0}(object):
         object.__init__(self)
         argPtr = _ironclad_mapper.Store(args)
         kwargPtr = _ironclad_mapper.Store(kwargs)
-        self.__class__._tp_initDgt(self._instancePtr, argPtr, kwargPtr)
-        _cleanup(argPtr, kwargPtr)
+        try:
+            result = self.__class__._tp_initDgt(self._instancePtr, argPtr, kwargPtr)
+            if result == -1:
+                _ironclad_mapper.DecRef(self._instancePtr)
+            _raiseExceptionIfRequired()
+        finally:
+            _cleanup(argPtr, kwargPtr)
 ";
 
         private const string NOARGS_METHOD_CODE = @"
