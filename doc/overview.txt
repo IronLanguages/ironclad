@@ -39,6 +39,10 @@ Immediate next steps
 
 * Implement whatever else we need to allow us to run 'testbz2.py' and have it all pass.
 
+* Add __del__ methods to CPython types.
+
+* Move these notes into something resembling a real issue tracking system.
+
 
 Useful imminent steps
 
@@ -48,6 +52,7 @@ Useful imminent steps
 
 * Change 'generatepythonmapper.py' to store exception type pointers as properties on PythonMapper objects, and somehow map them to appropriate CLR exceptions; once this is done, it will be possible to usefully implement the PyErr_Set functions.
 
+* Change Python25Mapper.Store to automatically create real CPython objects when string, tuples, and lists are passed in (and any other types which might have fields directly accessed by macros), and to create a pointer to the appropriate PyTypeObject for other arg types.
 
 For the future
 
