@@ -6,6 +6,8 @@ Ironclad's build process deserves a brief discussion. At the moment, it only wor
 * mingw (including gcc and make)
 * pexports
 * nasm
+* .NET 2.0 (csc, specifically)
+* Python 2.5
 
 Running make in the top-level directory should do the following:
 
