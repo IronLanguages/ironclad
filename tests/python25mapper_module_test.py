@@ -387,20 +387,24 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
         )
 
 
-    def testAddTypeObjectAndInstantiate(self):
-        allocs = []
+    def assertAddTypeObjectAndInstantiateWorks(self, newFails=False, initFails=False):
+        # if it falls to you to debug this test... I apologise :(
         engine = PythonEngine()
         mapper = TempPtrCheckingPython25Mapper(engine)
         mapper.SetData("PyType_Type", IntPtr(123))
         modulePtr = MakeAndAddEmptyModule(mapper)
         module = mapper.Retrieve(modulePtr)
+        newPtr = mapper.Store(object())
 
         calls = []
         def new(typePtr, argPtr, kwargPtr):
             mapper.IncRef(argPtr)
             mapper.IncRef(kwargPtr)
             calls.append(("__new__", typePtr, argPtr, kwargPtr))
-            return IntPtr(999)
+            if newFails:
+                mapper.LastException = BorkedException()
+                return IntPtr.Zero
+            return newPtr
         newDgt = PythonMapper.PyType_GenericNew_Delegate(new)
         newFP = Marshal.GetFunctionPointerForDelegate(newDgt)
 
@@ -408,52 +412,77 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
             mapper.IncRef(argPtr)
             mapper.IncRef(kwargPtr)
             calls.append(("__init__", selfPtr, argPtr, kwargPtr))
+            if initFails:
+                mapper.LastException = BorkedException()
+                mapper.IncRef(selfPtr)
+                return -1
             return 0
         initDgt = CPython_initproc_Delegate(init)
         initFP = Marshal.GetFunctionPointerForDelegate(initDgt)
 
         typePtr, deallocType = MakeTypePtr(
             "thing", mapper.PyType_Type,
-            tp_newPtr=newFP, tp_initPtr = initFP)
+            tp_newPtr=newFP, tp_initPtr=initFP)
 
         try:
             result = mapper.PyModule_AddObject(modulePtr, "thing", typePtr)
             self.assertEquals(result, 0, "reported failure")
 
-            engine.Execute("t = thing(1, 2, three=4)", module)
-            instance = module.Globals['t']
+            def Instantiate():
+                engine.Execute("t = thing(1, 2, three=4)", module)
 
-            instancePtr = instance._instancePtr
-            self.assertEquals(instancePtr, IntPtr(999),
-                              "instance not associated with correct ptr")
+            if newFails or initFails:
+                self.assertRaises(BorkedException, Instantiate)
+            else:
+                Instantiate()
+
+            def TestArgPtrs(argPtr, kwargPtr):
+                self.assertEquals(mapper.RefCount(argPtr), 1, "bad reference count")
+                self.assertEquals(mapper.RefCount(kwargPtr), 1, "bad reference count")
+                self.assertEquals(mapper.Retrieve(argPtr), (1, 2), "args not stored")
+                self.assertEquals(mapper.Retrieve(kwargPtr), {'three': 4}, "kwargs not stored")
+                self.assertEquals(mapper.tempPtrsFreed, True, "failed to clean up")
 
             methodName, newClsPtr, newArgPtr, newKwargPtr = calls[0]
-            self.assertEquals(methodName, "__new__", "called wrong method")
-            self.assertEquals(newClsPtr, typePtr, "instantiated wrong class")
-            self.assertEquals(mapper.RefCount(newArgPtr), 1, "bad reference count")
-            self.assertEquals(mapper.RefCount(newKwargPtr), 1, "bad reference count")
-            self.assertEquals(mapper.Retrieve(newArgPtr), (1, 2), "args not stored")
-            self.assertEquals(mapper.Retrieve(newKwargPtr), {'three': 4}, "kwargs not stored")
-            self.assertEquals(mapper.tempPtrsFreed, True, "failed to clean up")
+            try:
+                if not newFails:
+                    self.assertEquals(methodName, "__new__", "called wrong method")
+                    self.assertEquals(newClsPtr, typePtr, "instantiated wrong class")
+                    TestArgPtrs(newArgPtr, newKwargPtr)
 
-            # note: for now, I'm comfortable passing 2 copies of the
-            # args and kwargs to the 2 methods; this may change in future
-            methodName, initSelfPtr, initArgPtr, initKwargPtr = calls[1]
-            self.assertEquals(methodName, "__init__", "called wrong method")
-            self.assertEquals(initSelfPtr, instancePtr, "initialised wrong object")
-            self.assertEquals(mapper.RefCount(initArgPtr), 1, "bad reference count")
-            self.assertEquals(mapper.RefCount(initKwargPtr), 1, "bad reference count")
-            self.assertEquals(mapper.Retrieve(initArgPtr), (1, 2), "args not stored")
-            self.assertEquals(mapper.Retrieve(initKwargPtr), {'three': 4}, "kwargs not stored")
-            self.assertEquals(mapper.tempPtrsFreed, True, "failed to clean up")
-
+                    # note: for now, I'm comfortable passing 2 copies of the
+                    # args and kwargs to the 2 methods; this may change in future
+                    methodName, initSelfPtr, initArgPtr, initKwargPtr = calls[1]
+                    try:
+                        if not initFails:
+                            self.assertEquals(methodName, "__init__", "called wrong method")
+                            instancePtr = module.Globals['t']._instancePtr
+                            self.assertEquals(instancePtr, newPtr,
+                                              "instance not associated with return value from _tp_new")
+                            self.assertEquals(initSelfPtr, instancePtr, "initialised wrong object")
+                            TestArgPtrs(initArgPtr, initKwargPtr)
+                        else:
+                            # if an __init__ fails immediately after a __new__, I believe this is correct.
+                            # HOWEVER, if a subsequent __init__ fails, just about anything you might do
+                            # with the object could well crash horribly.
+                            self.assertEquals(mapper.RefCount(initSelfPtr), 1,
+                                              "failed to decref instance pointer on failed __init__")
+                    finally:
+                        mapper.DecRef(initArgPtr)
+                        mapper.DecRef(initKwargPtr)
+            finally:
+                mapper.DecRef(newArgPtr)
+                mapper.DecRef(newKwargPtr)
         finally:
-            mapper.DecRef(modulePtr)
-            mapper.DecRef(newKwargPtr)
-            mapper.DecRef(newArgPtr)
-            mapper.DecRef(initKwargPtr)
-            mapper.DecRef(initArgPtr)
             deallocType()
+            mapper.DecRef(modulePtr)
+            mapper.DecRef(newPtr)
+
+
+    def testAddTypeObjectAndInstantiate(self):
+        self.assertAddTypeObjectAndInstantiateWorks()
+        self.assertAddTypeObjectAndInstantiateWorks(newFails=True)
+        self.assertAddTypeObjectAndInstantiateWorks(initFails=True)
 
 
     def assertDispatchesToTypeMethod(self, engine, mapper, method, flags,
