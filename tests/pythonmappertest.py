@@ -267,6 +267,17 @@ class PythonMapperTest(unittest.TestCase):
             None, paramsStore)
 
 
+    def testPythonMapperFinds_PyObject_Call(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyObject_Call(self, kallable, args):
+                paramsStore.append((kallable, args))
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyObject_Call",
+            (IntPtr(123), IntPtr(456)),
+            IntPtr(999), paramsStore)
 
     def testPythonMapperImplementationOf_PyEval_SaveThread(self):
         self.assertEquals(PythonMapper().PyEval_SaveThread(), IntPtr.Zero,

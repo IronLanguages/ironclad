@@ -1,0 +1,3 @@
+IntPtr
+IntPtr obj, IntPtr args
+return IntPtr.Zero

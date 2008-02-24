@@ -5,10 +5,14 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
 from tests.utils.cpython import MakeTypePtr
 
+import os
+from textwrap import dedent
+
 import System
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from Ironclad import PythonMapper, Python25Mapper
+from Ironclad.Structs import PyTypeObject
 from IronPython.Hosting import PythonEngine
 
 
@@ -173,13 +177,54 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
 
 
 
+class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
 
+    def initPyFile_Type(self, mapper):
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        mapper.SetData("PyFile_Type", typeBlock)
+        return typeBlock
+
+    def testPyFile_Type(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        
+        typeBlock = self.initPyFile_Type(mapper)
+        try:
+            mapper.SetData("PyFile_Type", typeBlock)
+            self.assertEquals(mapper.PyFile_Type, typeBlock, "type address not stored")
+            self.assertEquals(mapper.Retrieve(typeBlock), file, "type not mapped")
+        finally:
+            Marshal.FreeHGlobal(typeBlock)
+    
+    def testCallPyFile_Type(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        
+        args = (os.path.join('tests', 'data', 'text.txt'), 'r')
+        testText = dedent("""\
+text text text
+more text
+""")
+        argsPtr = mapper.Store(args)
+        typeBlock = self.initPyFile_Type(mapper)
+        try:
+            filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr)
+            try:
+                f = mapper.Retrieve(filePtr)
+                self.assertEquals(f.read(), testText, "didn't get a real file object")
+            finally:
+                mapper.DecRef(filePtr)
+                f.close()
+        finally:
+            mapper.DecRef(argsPtr)
+            Marshal.FreeHGlobal(typeBlock)
 
 
 
 suite = makesuite(
     Python25MapperTest,
     Python25Mapper_Exception_Test,
+    Python25Mapper_PyFile_Type_Test,
 )
 
 if __name__ == '__main__':

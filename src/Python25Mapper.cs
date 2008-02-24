@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 using IronPython.Hosting;
+using IronPython.Runtime;
+using IronPython.Runtime.Calls;
+using IronPython.Runtime.Operations;
 
 using Ironclad.Structs;
 
@@ -50,7 +54,7 @@ namespace Ironclad
         private Exception _lastException;
         
         public Python25Mapper(PythonEngine eng): this(eng, new HGlobalAllocator())
-        {            
+        {
         }
         
         public Python25Mapper(PythonEngine eng, IAllocator alloc)
@@ -214,6 +218,27 @@ namespace Ironclad
         PyErr_SetString(IntPtr excType, string message)
         {
             this._lastException = new Exception(message);
+        }
+        
+        private PythonModule GetPythonModule(EngineModule eModule)
+        {
+    		PropertyInfo info = (PropertyInfo)(eModule.GetType().GetMember(
+    			"Module", BindingFlags.NonPublic | BindingFlags.Instance)[0]);
+    		return (PythonModule)info.GetValue(eModule, null);
+        }
+        
+        public override IntPtr
+        PyObject_Call(IntPtr objPtr, IntPtr argsPtr)
+        {
+            ICallerContext context = this.GetPythonModule(
+            	this.engine.DefaultModule);
+            object obj = this.Retrieve(objPtr);
+            Tuple args = (Tuple)this.Retrieve(argsPtr);
+            object[] argsArray = new object[args.Count];
+            args.CopyTo(argsArray, 0);
+            
+			return this.Store(Ops.CallWithContext(
+				context, obj, argsArray));
         }
     }
 
