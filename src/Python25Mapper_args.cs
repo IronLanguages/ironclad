@@ -20,7 +20,6 @@ namespace Ironclad
                 result[i] = actualArgs[i];
             }
             
-            int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
             int index = 0;
             IntPtr currentKw = kwlist;
             while (Marshal.ReadIntPtr(currentKw) != IntPtr.Zero)
@@ -31,7 +30,7 @@ namespace Ironclad
                 {
                     result[index] = actualKwargs[thisKey];
                 }
-                currentKw = (IntPtr)(currentKw.ToInt32() + intPtrSize);
+                currentKw = (IntPtr)(currentKw.ToInt32() + CPyMarshal.PtrSize);
                 index++;
             }
         
