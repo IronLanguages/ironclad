@@ -32,6 +32,7 @@ class GeneratePythonMapperTest(unittest.TestCase):
         os.chdir(testSrcDir)
         try:
             write("pythonMapperDataItems", DATA_ITEMS)
+            write("pythonMapperDataPtrItems", DATA_PTR_ITEMS)
             write("Py_InitModule4.pythonMapperDelegateItem", PY_INITMODULE4)
             write("PyModule_AddObject.pythonMapperDelegateItem", PYMODULE_ADDOBJECT)
 
@@ -41,7 +42,8 @@ class GeneratePythonMapperTest(unittest.TestCase):
             os.chdir(testBuildDir)
             f = open("PythonMapper.cs", 'r')
             try:
-                self.assertEquals(f.read(), EXPECTED_OUTPUT, "generated wrong")
+                result = f.read()
+                self.assertEquals(result, EXPECTED_OUTPUT, "generated wrong")
             finally:
                 f.close()
 
@@ -62,6 +64,11 @@ return 0
 DATA_ITEMS = """
 PyString_Type
 PyType_Type
+"""
+
+DATA_PTR_ITEMS = """
+PyExc_SystemError
+PyExc_TypeError
 """
 
 
@@ -92,6 +99,24 @@ namespace Ironclad
             return IntPtr.Zero;
         }
 
+        public virtual IntPtr Make_PyExc_SystemError() { return IntPtr.Zero; }
+        public IntPtr PyExc_SystemError
+        {
+            get
+            {
+                return this.dataMap["PyExc_SystemError"];
+            }
+        }
+
+        public virtual IntPtr Make_PyExc_TypeError() { return IntPtr.Zero; }
+        public IntPtr PyExc_TypeError
+        {
+            get
+            {
+                return this.dataMap["PyExc_TypeError"];
+            }
+        }
+
         public IntPtr GetAddress(string name)
         {
             if (this.dgtMap.ContainsKey(name))
@@ -107,6 +132,14 @@ namespace Ironclad
                 case "Py_InitModule4":
                     this.dgtMap[name] = new Py_InitModule4_Delegate(this.Py_InitModule4);
                     break;
+                case "PyExc_SystemError":
+                    IntPtr address = this.Make_PyExc_SystemError();
+                    this.dataMap[name] = address;
+                    return address;
+                case "PyExc_TypeError":
+                    IntPtr address = this.Make_PyExc_TypeError();
+                    this.dataMap[name] = address;
+                    return address;
 
                 default:
                     return IntPtr.Zero;

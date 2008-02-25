@@ -63,6 +63,28 @@ class PythonMapperTest(unittest.TestCase):
         self.assertDataSetterSetsAndRemembers(MyPM, "PyFile_Type", 16, TestWrote16Bytes)
 
 
+    def testPythonMapperFinds_PyTuple_Type(self):
+        class MyPM(PythonMapper):
+            def Fill_PyTuple_Type(self, address):
+                Write16Bytes(address)
+        self.assertDataSetterSetsAndRemembers(MyPM, "PyTuple_Type", 16, TestWrote16Bytes)
+
+
+    def assertAddressGetterRemembers(self, mapperSubclass, name, expectedAddress):
+        pm = mapperSubclass()
+
+        ptr = pm.GetAddress(name)
+        self.assertEquals(ptr, expectedAddress, "unexpected result")
+        self.assertEquals(getattr(pm, name), ptr, "did not remember")
+
+
+    def testPythonMapperFinds_PyExc_SystemError(self):
+        class MyPM(PythonMapper):
+            def Make_PyExc_SystemError(self):
+                return IntPtr(999)
+        self.assertAddressGetterRemembers(MyPM, "PyExc_SystemError", IntPtr(999))
+
+
     def testAddressGetterFailsCleanly(self):
         pm = PythonMapper()
         addressGetter = pm.GetAddress
@@ -270,13 +292,13 @@ class PythonMapperTest(unittest.TestCase):
     def testPythonMapperFinds_PyObject_Call(self):
         paramsStore = []
         class MyPM(PythonMapper):
-            def PyObject_Call(self, kallable, args):
-                paramsStore.append((kallable, args))
+            def PyObject_Call(self, kallable, args, kwargs):
+                paramsStore.append((kallable, args, kwargs))
                 return IntPtr(999)
 
         self.assertDispatches(
             MyPM, "PyObject_Call",
-            (IntPtr(123), IntPtr(456)),
+            (IntPtr(123), IntPtr(456), IntPtr(789)),
             IntPtr(999), paramsStore)
 
     def testPythonMapperImplementationOf_PyEval_SaveThread(self):

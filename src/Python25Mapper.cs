@@ -51,7 +51,7 @@ namespace Ironclad
         private List<IntPtr> tempPtrs;
         private List<IntPtr> tempObjects;
         private IAllocator allocator;
-        private Exception _lastException;
+        private object _lastException;
         
         public Python25Mapper(PythonEngine eng): this(eng, new HGlobalAllocator())
         {
@@ -202,7 +202,7 @@ namespace Ironclad
             this.tempPtrs.Clear();
         }
         
-        public Exception LastException
+        public object LastException
         {
             get
             {
@@ -215,30 +215,39 @@ namespace Ironclad
         }
         
         public override void
-        PyErr_SetString(IntPtr excType, string message)
+        PyErr_SetString(IntPtr excTypePtr, string message)
         {
-            this._lastException = new Exception(message);
+            if (excTypePtr == IntPtr.Zero)
+            {
+                this._lastException = new Exception(message);
+            }
+            else
+            {
+                object excType = this.Retrieve(excTypePtr);
+                this._lastException = Ops.Call(excType, new object[1]{ message });
+            }
         }
         
         private PythonModule GetPythonModule(EngineModule eModule)
         {
-    		PropertyInfo info = (PropertyInfo)(eModule.GetType().GetMember(
-    			"Module", BindingFlags.NonPublic | BindingFlags.Instance)[0]);
-    		return (PythonModule)info.GetValue(eModule, null);
+            PropertyInfo info = (PropertyInfo)(eModule.GetType().GetMember(
+                "Module", BindingFlags.NonPublic | BindingFlags.Instance)[0]);
+            return (PythonModule)info.GetValue(eModule, null);
         }
         
         public override IntPtr
-        PyObject_Call(IntPtr objPtr, IntPtr argsPtr)
+        PyObject_Call(IntPtr objPtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
+            // ignore kwargsPtr for now
             ICallerContext context = this.GetPythonModule(
-            	this.engine.DefaultModule);
+                this.engine.DefaultModule);
             object obj = this.Retrieve(objPtr);
             Tuple args = (Tuple)this.Retrieve(argsPtr);
             object[] argsArray = new object[args.Count];
             args.CopyTo(argsArray, 0);
             
-			return this.Store(Ops.CallWithContext(
-				context, obj, argsArray));
+            return this.Store(Ops.CallWithContext(
+                context, obj, argsArray));
         }
     }
 

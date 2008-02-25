@@ -24,16 +24,23 @@ def run():
     methods_code = "\n\n".join([METHOD_TEMPLATE % x for x in methods])
     methods_switch = "\n".join([METHOD_CASE % x for x in methods])
 
-    properties = [dict([("symbol", p)]) for p in read_interesting_lines("pythonMapperDataItems")]
+    ptr_data_items = [dict([("symbol", p)]) for p in read_interesting_lines("pythonMapperDataPtrItems")]
 
-    properties_code = "\n\n".join([PROPERTY_TEMPLATE % x for x in properties])
-    properties_switch = "\n".join([PROPERTY_CASE % x for x in properties])
+    ptr_data_items_code = "\n\n".join([PTR_DATA_ITEM_TEMPLATE % x for x in ptr_data_items])
+    ptr_data_items_switch = "\n".join([PTR_DATA_ITEM_CASE % x for x in ptr_data_items])
+
+    data_items = [dict([("symbol", p)]) for p in read_interesting_lines("pythonMapperDataItems")]
+
+    data_items_code = "\n\n".join([DATA_ITEM_TEMPLATE % x for x in data_items])
+    data_items_switch = "\n".join([DATA_ITEM_CASE % x for x in data_items])
 
     output = FILE_TEMPLATE % (
         methods_code,
+        ptr_data_items_code,
         methods_switch,
-        properties_code,
-        properties_switch
+        ptr_data_items_switch,
+        data_items_code,
+        data_items_switch
     )
 
     f = open(OUTFILE, "w")
@@ -61,6 +68,8 @@ namespace Ironclad
 
 %s
 
+%s
+
         public IntPtr GetAddress(string name)
         {
             if (this.dgtMap.ContainsKey(name))
@@ -70,6 +79,7 @@ namespace Ironclad
 
             switch (name)
             {
+%s
 %s
 
                 default:
@@ -105,7 +115,23 @@ METHOD_CASE = """\
                     this.dgtMap[name] = new %(symbol)s_Delegate(this.%(symbol)s);
                     break;"""
 
-PROPERTY_TEMPLATE = """\
+PTR_DATA_ITEM_TEMPLATE = """\
+        public virtual IntPtr Make_%(symbol)s() { return IntPtr.Zero; }
+        public IntPtr %(symbol)s
+        {
+            get
+            {
+                return this.dataMap["%(symbol)s"];
+            }
+        }"""
+
+PTR_DATA_ITEM_CASE = """\
+                case "%(symbol)s":
+                    IntPtr address = this.Make_%(symbol)s();
+                    this.dataMap[name] = address;
+                    return address;"""
+
+DATA_ITEM_TEMPLATE = """\
         public virtual void Fill_%(symbol)s(IntPtr address) { ; }
         public IntPtr %(symbol)s
         {
@@ -115,7 +141,7 @@ PROPERTY_TEMPLATE = """\
             }
         }"""
 
-PROPERTY_CASE = """\
+DATA_ITEM_CASE = """\
                 case "%(symbol)s":
                     this.Fill_%(symbol)s(address);
                     this.dataMap["%(symbol)s"] = address;

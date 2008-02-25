@@ -161,19 +161,32 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
                           "get should retrieve last set exception")
 
 
-    def testPyErr_SetString(self):
+    def testPyErr_SetString_WithNull(self):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
 
         msg = "You froze your tears and made a dagger"
-        # at the moment, we ignore the actual exception type
-        mapper.PyErr_SetString(IntPtr(123), msg)
+        mapper.PyErr_SetString(IntPtr.Zero, msg)
 
         self.assertEquals(type(mapper.LastException), System.Exception,
                           "failed to set exception")
         self.assertEquals(mapper.LastException.Message, msg,
                           "set wrong exception message")
 
+
+    def testSets_PyExc_SystemError(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        systemErrorPtr = mapper.GetAddress("PyExc_SystemError")
+
+        msg = "I can has meme?"
+        mapper.PyErr_SetString(systemErrorPtr, msg)
+        try:
+            raise mapper.LastException
+        except SystemError, e:
+            self.assertEquals(str(e), msg, "wrong message")
+        else:
+            self.fail("got no exception")
 
 
 
@@ -206,9 +219,10 @@ text text text
 more text
 """)
         argsPtr = mapper.Store(args)
+        kwargsPtr = IntPtr.Zero
         typeBlock = self.initPyFile_Type(mapper)
         try:
-            filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr)
+            filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
             try:
                 f = mapper.Retrieve(filePtr)
                 self.assertEquals(f.read(), testText, "didn't get a real file object")
