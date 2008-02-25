@@ -1,3 +1,4 @@
 PyFile_Type
 PyString_Type
 PyType_Type
+PyTuple_Type
