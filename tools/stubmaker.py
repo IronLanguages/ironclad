@@ -18,6 +18,7 @@ class StubMaker(object):
         self.data = []
         self.functions = []
         self.overrides = {}
+        self.postamble = ''
 
         if sourceLibrary is not None:
             self._read_symbol_table(sourceLibrary)
@@ -51,6 +52,16 @@ class StubMaker(object):
         if not os.path.exists(overrideDir):
             return
 
+        ignores = set()
+        ignoreFile = os.path.join(overrideDir, "_ignores")
+        if os.path.exists(ignoreFile):
+            f = open(ignoreFile, 'r')
+            try:
+                ignores = set([l.rstrip() for l in f.readlines() if l.rstrip()])
+            finally:
+                f.close()
+        self.functions = [f for f in self.functions if f not in ignores]
+
         def add_override(name):
             path = os.path.join(overrideDir, "%s.c" % name)
             if os.path.exists(path):
@@ -66,7 +77,15 @@ class StubMaker(object):
         for data in self.data:
             add_override(data)
 
-
+        postambleFile = os.path.join(overrideDir, "_postamble.c")
+        if os.path.exists(postambleFile):
+            f = open(postambleFile, 'r')
+            try:
+                self.postamble = f.read()
+            finally:
+                f.close()
+                
+                
     def generate_c(self):
         _includes = '#include <stdio.h>\n#include <stdarg.h>\n#include <stdlib.h>\n\n'
         _declare_data = 'void *%s;\n'
@@ -90,6 +109,7 @@ class StubMaker(object):
                 self.overrides[name] = self.overrides[name] % i
         result.append('}\n\n')
         result.extend([self.overrides[s] for s in self.functions if s in self.overrides])
+        result.append(self.postamble)
         return ''.join(result)
 
 

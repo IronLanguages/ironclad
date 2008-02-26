@@ -14,6 +14,7 @@ class StubMakerInitTest(unittest.TestCase):
         self.assertEquals(sm.data, [], 'bad init')
         self.assertEquals(sm.functions, [], 'bad init')
         self.assertEquals(sm.overrides, {}, 'bad init')
+        self.assertEquals(sm.postamble, '', 'bad init')
 
 
     def testInitCollects(self):
@@ -23,11 +24,12 @@ class StubMakerInitTest(unittest.TestCase):
         self.assertEquals(sm.functions, ['Func', 'Funk', 'Jazz'],
                           'found unexpected code symbols')
         self.assertEquals(sm.overrides, {}, 'overrode unexpected symbols')
+        self.assertEquals(sm.postamble, '', 'bad init')
 
 
-    def testInitCollectsOverrides(self):
+    def testInitCollectsOverridesAndIgnoresIgnores(self):
         sm = StubMaker('tests/data/exportsymbols.dll', 'tests/data/overrides')
-        self.assertEquals(sm.functions, ['Func', 'Funk', 'Jazz'],
+        self.assertEquals(sm.functions, ['Func', 'Jazz'],
                           'found unexpected code symbols')
         self.assertEquals(sm.data, ['Alphabetised', 'AnotherExportedSymbol', 'ExportedSymbol'],
                           'found unexpected data symbols')
@@ -37,6 +39,7 @@ class StubMakerInitTest(unittest.TestCase):
                            'Jazz':
                            '\nvoid Jazz() {\n    int I_can_has_jmp_to_elemants[%d];\n}\n'},
                           'overrode unexpected data symbols')
+        self.assertEquals(sm.postamble, "\nvoid Funk(void) {\n    // arbitrary code\n}\n")
 
 
 class StubMakerGenerateCTest(unittest.TestCase):
@@ -49,6 +52,7 @@ class StubMakerGenerateCTest(unittest.TestCase):
                         'void OVERRIDE() {\n    do something with jumptable[%d];\n}\n',
                         'MOREDATA':
                         'char MOREDATA[48];\n'}
+        sm.postamble = '\nand some more code...\n'
 
         expected = dedent("""\
         #include <stdio.h>
@@ -70,6 +74,8 @@ class StubMakerGenerateCTest(unittest.TestCase):
         void OVERRIDE() {
             do something with jumptable[1];
         }
+        
+        and some more code...
         """)
         result = sm.generate_c()
         self.assertEquals(result, expected, 'wrong output')
@@ -115,26 +121,25 @@ class StubMakerGenerateCTest(unittest.TestCase):
 
     def testGenerateCWritesJumpTableSize(self):
         sm = StubMaker()
-        sm.functions = ['a', 'b', 'c', 'd', 'e']
+        sm.functions = ['a', 'b', 'd', 'e']
         sm.overrides = {'b': '%d', 'e': '%d'}
 
-        expected = "void *jumptable[5];\n"
+        expected = "void *jumptable[4];\n"
         self.assertNotEquals(sm.generate_c().find(expected), -1,
                      'could not find expected output')
 
 
     def testGenerateCFillsJumpTable(self):
         sm = StubMaker()
-        sm.functions = ['a', 'b', 'c', 'd', 'e']
+        sm.functions = ['a', 'b', 'd', 'e']
         sm.overrides = {'b': '%d', 'e': '%d'}
 
         expected = dedent("""\
         void init(void*(*address_getter)(char*), void(*data_setter)(char*, void*)) {
             jumptable[0] = address_getter("a");
             jumptable[1] = address_getter("b");
-            jumptable[2] = address_getter("c");
-            jumptable[3] = address_getter("d");
-            jumptable[4] = address_getter("e");
+            jumptable[2] = address_getter("d");
+            jumptable[3] = address_getter("e");
         }""")
         self.assertNotEquals(sm.generate_c().find(expected), -1,
                      'could not find expected output')
@@ -142,12 +147,12 @@ class StubMakerGenerateCTest(unittest.TestCase):
 
     def testGenerateCCreatesOverrideFunctions(self):
         sm = StubMaker()
-        sm.functions = ['a', 'b', 'c', 'd', 'e']
+        sm.functions = ['a', 'b', 'd', 'e']
         sm.overrides = {'b': 'void b() { %d }\n', 'e': 'void e() { %d }\n'}
 
         expected = dedent("""\
         void b() { 1 }
-        void e() { 4 }""")
+        void e() { 3 }""")
         self.assertNotEquals(sm.generate_c().find(expected), -1,
                      'could not find expected output')
 
@@ -158,7 +163,7 @@ class StubMakerGenerateAsmTest(unittest.TestCase):
     def testGenerateAsmCreatesLabelsForNonOverriddenFunctions(self):
         sm = StubMaker()
         sm.data = ['not relevant']
-        sm.functions = ['a', 'b', 'c', 'd']
+        sm.functions = ['a', 'b', 'c', 'e']
         sm.overrides = {'b': 'whatever'}
 
         expected = dedent("""\
@@ -168,13 +173,13 @@ class StubMakerGenerateAsmTest(unittest.TestCase):
 
         global _a
         global _c
-        global _d
+        global _e
 
         _a:
             jmp [_jumptable+0]
         _c:
             jmp [_jumptable+8]
-        _d:
+        _e:
             jmp [_jumptable+12]""")
         self.assertNotEquals(sm.generate_asm().find(expected), -1,
                      'could not find expected output')
