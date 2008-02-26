@@ -127,9 +127,8 @@ PTR_DATA_ITEM_TEMPLATE = """\
 
 PTR_DATA_ITEM_CASE = """\
                 case "%(symbol)s":
-                    IntPtr address = this.Make_%(symbol)s();
-                    this.dataMap[name] = address;
-                    return address;"""
+                    this.dataMap[name] = this.Make_%(symbol)s();
+                    return this.dataMap[name];"""
 
 DATA_ITEM_TEMPLATE = """\
         public virtual void Fill_%(symbol)s(IntPtr address) { ; }

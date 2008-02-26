@@ -2,3 +2,5 @@ PyFile_Type
 PyString_Type
 PyType_Type
 PyTuple_Type
+PyList_Type
+PyDict_Type

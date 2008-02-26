@@ -17,5 +17,10 @@ namespace Ironclad
         {
             return this.Store(ExceptionConverter.GetPythonException("SystemError"));
         }
+
+        public override IntPtr Make_PyExc_OverflowError()
+        {
+            return this.Store(ExceptionConverter.GetPythonException("OverflowError"));
+        }
     }
 }

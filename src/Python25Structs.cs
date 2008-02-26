@@ -49,6 +49,15 @@ namespace Ironclad
             public uint ob_refcnt;
             public IntPtr ob_type;
         }
+        
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct PyTupleObject
+        {
+            public uint ob_refcnt;
+            public IntPtr ob_type;
+            public uint ob_size;
+            public IntPtr ob_item;
+        }
 
         [StructLayout(LayoutKind.Sequential, Pack=1)]
         public struct PyStringObject

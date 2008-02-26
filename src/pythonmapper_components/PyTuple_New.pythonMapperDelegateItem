@@ -1,0 +1,3 @@
+IntPtr
+int length
+return IntPtr.Zero
