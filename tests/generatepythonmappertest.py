@@ -133,13 +133,11 @@ namespace Ironclad
                     this.dgtMap[name] = new Py_InitModule4_Delegate(this.Py_InitModule4);
                     break;
                 case "PyExc_SystemError":
-                    IntPtr address = this.Make_PyExc_SystemError();
-                    this.dataMap[name] = address;
-                    return address;
+                    this.dataMap[name] = this.Make_PyExc_SystemError();
+                    return this.dataMap[name];
                 case "PyExc_TypeError":
-                    IntPtr address = this.Make_PyExc_TypeError();
-                    this.dataMap[name] = address;
-                    return address;
+                    this.dataMap[name] = this.Make_PyExc_TypeError();
+                    return this.dataMap[name];
 
                 default:
                     return IntPtr.Zero;

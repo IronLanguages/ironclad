@@ -3,15 +3,13 @@ import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
-from tests.utils.cpython import MakeTypePtr
 
 import os
 from textwrap import dedent
 
-import System
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from Ironclad import PythonMapper, Python25Mapper
+from Ironclad import Python25Mapper
 from Ironclad.Structs import PyTypeObject
 from IronPython.Hosting import PythonEngine
 
@@ -145,49 +143,41 @@ class Python25MapperTest(unittest.TestCase):
 
 
 
-
-
-class Python25Mapper_Exception_Test(unittest.TestCase):
-
-    def testException(self):
+class Python25Mapper_PyInt_FromLong_Test(unittest.TestCase):
+    
+    def testPyInt_FromLong(self):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
-        self.assertEquals(mapper.LastException, None, "exception should default to nothing")
-
-        mapper.LastException = System.Exception("doozy")
-        self.assertEquals(type(mapper.LastException), System.Exception,
-                          "get should retrieve last set exception")
-        self.assertEquals(mapper.LastException.Message, "doozy",
-                          "get should retrieve last set exception")
+        
+        for value in (0, 2147483647, -2147483648):
+            ptr = mapper.PyInt_FromLong(value)
+            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            mapper.DecRef(ptr)
 
 
-    def testPyErr_SetString_WithNull(self):
+class Python25Mapper_PyInt_FromSsize_t_Test(unittest.TestCase):
+    
+    def testPyInt_FromSsize_t(self):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
-
-        msg = "You froze your tears and made a dagger"
-        mapper.PyErr_SetString(IntPtr.Zero, msg)
-
-        self.assertEquals(type(mapper.LastException), System.Exception,
-                          "failed to set exception")
-        self.assertEquals(mapper.LastException.Message, msg,
-                          "set wrong exception message")
+        
+        for value in (0, 2147483647, -2147483648):
+            ptr = mapper.PyInt_FromSsize_t(value)
+            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            mapper.DecRef(ptr)
 
 
-    def testSets_PyExc_SystemError(self):
+
+class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):
+    
+    def testPyFloat_FromDouble(self):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
-        systemErrorPtr = mapper.GetAddress("PyExc_SystemError")
-
-        msg = "I can has meme?"
-        mapper.PyErr_SetString(systemErrorPtr, msg)
-        try:
-            raise mapper.LastException
-        except SystemError, e:
-            self.assertEquals(str(e), msg, "wrong message")
-        else:
-            self.fail("got no exception")
-
+        
+        for value in (0.0, 3.3e33, -3.3e-33):
+            ptr = mapper.PyFloat_FromDouble(value)
+            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            mapper.DecRef(ptr)
 
 
 class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
@@ -237,7 +227,9 @@ more text
 
 suite = makesuite(
     Python25MapperTest,
-    Python25Mapper_Exception_Test,
+    Python25Mapper_PyInt_FromLong_Test,
+    Python25Mapper_PyInt_FromSsize_t_Test,
+    Python25Mapper_PyFloat_FromDouble_Test,
     Python25Mapper_PyFile_Type_Test,
 )
 

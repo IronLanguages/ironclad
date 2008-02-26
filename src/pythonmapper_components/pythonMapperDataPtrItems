@@ -1,1 +1,2 @@
 PyExc_SystemError
+PyExc_OverflowError

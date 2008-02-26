@@ -41,6 +41,7 @@ namespace Ironclad
     public enum UnmanagedDataMarker
     {
         PyStringObject,
+        PyTupleObject,
     }
 
 
@@ -107,6 +108,21 @@ namespace Ironclad
                         char[] chars = Array.ConvertAll<byte, char>(
                             bytes, new Converter<byte, char>(CharFromByte));
                         this.ptrmap[ptr] = new string(chars);
+                        break;
+                    
+                    case UnmanagedDataMarker.PyTupleObject:
+                        IntPtr itemCountPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_size"));
+                        int itemCount = CPyMarshal.ReadInt(itemCountPtr);
+                        IntPtr itemAddressPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
+                        
+                        object[] items = new object[itemCount];
+                        for (int i = 0; i < itemCount; i++)
+                        {
+                            IntPtr itemPtr = CPyMarshal.ReadPtr(itemAddressPtr);
+                            items[i] = this.Retrieve(itemPtr);
+                            itemAddressPtr = CPyMarshal.Offset(itemAddressPtr, CPyMarshal.PtrSize);
+                        }
+                        this.ptrmap[ptr] = Tuple.MakeTuple(items);
                         break;
                     
                     default:
@@ -249,6 +265,28 @@ namespace Ironclad
             return this.Store(Ops.CallWithContext(
                 context, obj, argsArray));
         }
+        
+        
+        public override IntPtr
+        PyInt_FromLong(int value)
+        {
+            return this.Store(value);
+        }
+        
+        
+        public override IntPtr
+        PyInt_FromSsize_t(int value)
+        {
+            return this.Store(value);
+        }
+        
+        
+        public override IntPtr
+        PyFloat_FromDouble(double value)
+        {
+            return this.Store(value);
+        }
+        
     }
 
 }

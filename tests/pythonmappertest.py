@@ -70,6 +70,20 @@ class PythonMapperTest(unittest.TestCase):
         self.assertDataSetterSetsAndRemembers(MyPM, "PyTuple_Type", 16, TestWrote16Bytes)
 
 
+    def testPythonMapperFinds_PyList_Type(self):
+        class MyPM(PythonMapper):
+            def Fill_PyList_Type(self, address):
+                Write16Bytes(address)
+        self.assertDataSetterSetsAndRemembers(MyPM, "PyList_Type", 16, TestWrote16Bytes)
+
+
+    def testPythonMapperFinds_PyDict_Type(self):
+        class MyPM(PythonMapper):
+            def Fill_PyDict_Type(self, address):
+                Write16Bytes(address)
+        self.assertDataSetterSetsAndRemembers(MyPM, "PyDict_Type", 16, TestWrote16Bytes)
+
+
     def assertAddressGetterRemembers(self, mapperSubclass, name, expectedAddress):
         pm = mapperSubclass()
 
@@ -83,6 +97,13 @@ class PythonMapperTest(unittest.TestCase):
             def Make_PyExc_SystemError(self):
                 return IntPtr(999)
         self.assertAddressGetterRemembers(MyPM, "PyExc_SystemError", IntPtr(999))
+
+
+    def testPythonMapperFinds_PyExc_OverflowError(self):
+        class MyPM(PythonMapper):
+            def Make_PyExc_OverflowError(self):
+                return IntPtr(999)
+        self.assertAddressGetterRemembers(MyPM, "PyExc_OverflowError", IntPtr(999))
 
 
     def testAddressGetterFailsCleanly(self):
@@ -300,6 +321,100 @@ class PythonMapperTest(unittest.TestCase):
             MyPM, "PyObject_Call",
             (IntPtr(123), IntPtr(456), IntPtr(789)),
             IntPtr(999), paramsStore)
+
+
+    def testPythonMapperFinds_PyDict_New(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyDict_New(self):
+                paramsStore.append(tuple())
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyDict_New",
+            tuple(),
+            IntPtr(999), paramsStore)
+
+
+    def testPythonMapperFinds_PyDict_New(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyDict_New(self):
+                paramsStore.append(tuple())
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyDict_New",
+            tuple(),
+            IntPtr(999), paramsStore)
+
+
+    def testPythonMapperFinds_PyList_New(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyList_New(self, size):
+                paramsStore.append((size,))
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyList_New",
+            (33,),
+            IntPtr(999), paramsStore)
+
+
+    def testPythonMapperFinds_PyTuple_New(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyTuple_New(self, size):
+                paramsStore.append((size,))
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyTuple_New",
+            (33,),
+            IntPtr(999), paramsStore)
+
+
+    def testPythonMapperFinds_PyInt_FromLong(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyInt_FromLong(self, value):
+                paramsStore.append((value,))
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyInt_FromLong",
+            (33,),
+            IntPtr(999), paramsStore)
+
+
+    def testPythonMapperFinds_PyInt_FromSsize_t(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyInt_FromSsize_t(self, value):
+                paramsStore.append((value,))
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyInt_FromSsize_t",
+            (33,),
+            IntPtr(999), paramsStore)
+
+
+    def testPythonMapperFinds_PyFloat_FromDouble(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyFloat_FromDouble(self, value):
+                paramsStore.append((value,))
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyFloat_FromDouble",
+            (33.3,),
+            IntPtr(999), paramsStore)
+
+
+
 
     def testPythonMapperImplementationOf_PyEval_SaveThread(self):
         self.assertEquals(PythonMapper().PyEval_SaveThread(), IntPtr.Zero,

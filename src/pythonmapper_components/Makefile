@@ -1,2 +1,2 @@
-../PythonMapper.cs : *.pythonMapperDelegateItem pythonMapperDataItems ../../tools/generatepythonmapper.py
+../PythonMapper.cs : *.pythonMapperDelegateItem pythonMapperDataItems pythonMapperDataPtrItems ../../tools/generatepythonmapper.py
 	ipy ../../tools/generatepythonmapper.py
