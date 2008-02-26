@@ -1,18 +1,19 @@
 
 from tests.memorytests.leaktestcase import LeakTestCase, RunSeparateProcessTest
 
-from Ironclad import PythonMapper
+from Ironclad import Python25Mapper
 from IroncladTestUtils import PythonStubHarness
 
+from IronPython.Hosting import PythonEngine
 from System import IntPtr
 
 class PyArg_ParseTupleLeakTest(LeakTestCase):
 
     def getPythonMapper(self):
-        class MyPM(PythonMapper):
+        class MyPM(Python25Mapper):
             def PyArg_ParseTuple(self, args, format, argptr):
                 return 1
-        return MyPM()
+        return MyPM(PythonEngine())
 
 
     def testPyArg_ParseTuple(self):
