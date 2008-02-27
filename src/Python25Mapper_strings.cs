@@ -91,7 +91,7 @@ namespace Ironclad
             catch (OutOfMemoryException e)
             {
                 this._lastException = e;
-                this.Delete(oldStr);
+                this.Free(oldStr);
                 return -1;
             }
             this.ptrmap.Remove(oldStr);

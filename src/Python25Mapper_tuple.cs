@@ -9,6 +9,19 @@ namespace Ironclad
 {
     public partial class Python25Mapper : PythonMapper
     {
+        public override void
+        Fill_PyTuple_Type(IntPtr address)
+        {
+            this.dgtMap["PyTuple_Dealloc"] = new CPython_destructor_Delegate(this.PyTuple_Dealloc);
+            IntPtr tp_deallocPtr = CPyMarshal.Offset(
+                address, Marshal.OffsetOf(typeof(PyTypeObject), "tp_dealloc"));
+            CPyMarshal.WritePtr(tp_deallocPtr, Marshal.GetFunctionPointerForDelegate(this.dgtMap["PyTuple_Dealloc"]));
+
+            this.dgtMap["Free"] = new CPython_destructor_Delegate(this.Free);
+            IntPtr tp_freePtr = CPyMarshal.Offset(
+                address, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
+            CPyMarshal.WritePtr(tp_freePtr, Marshal.GetFunctionPointerForDelegate(this.dgtMap["Free"]));
+        }
         
         public override IntPtr
         PyTuple_New(int size)
@@ -24,6 +37,29 @@ namespace Ironclad
             Marshal.StructureToPtr(tuple, ptr, false);
             this.StoreUnmanagedData(ptr, UnmanagedDataMarker.PyTupleObject);
             return ptr;
+        }
+        
+        
+        public virtual void PyTuple_Dealloc(IntPtr tuplePtr)
+        {
+            IntPtr lengthPtr = CPyMarshal.Offset(
+                tuplePtr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_size"));
+            int length = CPyMarshal.ReadInt(lengthPtr);
+            IntPtr itemsPtr = CPyMarshal.Offset(
+                tuplePtr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
+            for (int i = 0; i < length; i++)
+            {
+                IntPtr itemPtr = CPyMarshal.ReadPtr(
+                    CPyMarshal.Offset(
+                        itemsPtr, i * CPyMarshal.PtrSize));
+                this.DecRef(itemPtr);
+            }
+            IntPtr freeFPPtr = CPyMarshal.Offset(
+                this.PyTuple_Type, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
+            IntPtr freeFP = CPyMarshal.ReadPtr(freeFPPtr);
+            CPython_destructor_Delegate freeDgt = (CPython_destructor_Delegate)Marshal.GetDelegateForFunctionPointer(
+                freeFP, typeof(CPython_destructor_Delegate));
+            freeDgt(tuplePtr);
         }
     }
 }

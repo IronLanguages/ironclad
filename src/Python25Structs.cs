@@ -11,6 +11,8 @@ namespace Ironclad
 
     public delegate int CPython_initproc_Delegate(IntPtr self, IntPtr args, IntPtr kwargs);
 
+    public delegate void CPython_destructor_Delegate(IntPtr self);
+
     namespace Structs
     {
         [Flags]

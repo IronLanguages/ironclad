@@ -4,7 +4,10 @@ from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
 
-from Ironclad import CPyMarshal, Python25Mapper
+from System.Runtime.InteropServices import Marshal
+
+from Ironclad import Python25Mapper
+from Ironclad.Structs import PyObject
 from IronPython.Hosting import PythonEngine
 
 
@@ -20,7 +23,7 @@ class Python25MapperDictTest(unittest.TestCase):
         
         dictPtr = mapper.PyDict_New()
         self.assertEquals(mapper.RefCount(dictPtr), 1, "bad refcount")
-        self.assertEquals(allocs, [(dictPtr, CPyMarshal.PtrSize)], "did not allocate as expected")
+        self.assertEquals(allocs, [(dictPtr, Marshal.SizeOf(PyObject))], "did not allocate as expected")
         
         dictObj = mapper.Retrieve(dictPtr)
         self.assertEquals(dictObj, {}, "retrieved unexpected value")
