@@ -9,8 +9,8 @@ from textwrap import dedent
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from Ironclad import Python25Mapper
-from Ironclad.Structs import PyTypeObject
+from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Mapper
+from Ironclad.Structs import PyObject, PyTypeObject
 from IronPython.Hosting import PythonEngine
 
 
@@ -18,7 +18,7 @@ from IronPython.Hosting import PythonEngine
 
 class Python25MapperTest(unittest.TestCase):
 
-    def testBasicStoreRetrieveDelete(self):
+    def testBasicStoreRetrieveFree(self):
         frees = []
         allocs = []
         engine = PythonEngine()
@@ -28,19 +28,49 @@ class Python25MapperTest(unittest.TestCase):
         self.assertEquals(allocs, [], "unexpected allocations")
         ptr = mapper.Store(obj1)
         self.assertEquals(len(allocs), 1, "unexpected number of allocations")
-        self.assertEquals(allocs[0][0], ptr, "unexpected result")
+        self.assertEquals(allocs[0], (ptr, Marshal.SizeOf(PyObject)), "unexpected result")
         self.assertNotEquals(ptr, IntPtr.Zero, "did not store reference")
         self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
+        typePtr = CPyMarshal.ReadPtr(
+            CPyMarshal.Offset(ptr, Marshal.OffsetOf(PyObject, "ob_type")))
+        self.assertEquals(typePtr, IntPtr.Zero, "opaque pointers should have null type")
 
         obj2 = mapper.Retrieve(ptr)
         self.assertTrue(obj1 is obj2, "retrieved wrong object")
 
         self.assertEquals(frees, [], "unexpected deallocations")
-        mapper.Delete(ptr)
+        mapper.Free(ptr)
         self.assertEquals(frees, [ptr], "unexpected deallocations")
         self.assertRaises(KeyError, lambda: mapper.Retrieve(ptr))
-        self.assertRaises(KeyError, lambda: mapper.Delete(ptr))
+        self.assertRaises(KeyError, lambda: mapper.Free(ptr))
 
+
+    def testFinalDecRefOfObjectWithTypeCalls_tp_dealloc(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        
+        calls = []
+        def TypeDealloc(ptr):
+            calls.append(ptr)
+        deallocDgt = CPython_destructor_Delegate(TypeDealloc)
+        deallocFP = Marshal.GetFunctionPointerForDelegate(deallocDgt)
+        
+        typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        deallocPtr = CPyMarshal.Offset(typePtr, Marshal.OffsetOf(PyTypeObject, "tp_dealloc"))
+        CPyMarshal.WritePtr(deallocPtr, deallocFP)
+        
+        obj = object()
+        objPtr = mapper.Store(obj)
+        
+        objTypePtr = CPyMarshal.Offset(objPtr, Marshal.OffsetOf(PyObject, "ob_type"))
+        CPyMarshal.WritePtr(objTypePtr, typePtr)
+        
+        mapper.IncRef(objPtr)
+        mapper.DecRef(objPtr)
+        self.assertEquals(calls, [], "called prematurely")
+        mapper.DecRef(objPtr)
+        self.assertEquals(calls, [objPtr], "not called when refcount hit 0")
+        
 
     def testStoreUnmanagedData(self):
         engine = PythonEngine()
@@ -70,7 +100,7 @@ class Python25MapperTest(unittest.TestCase):
         mapper.DecRef(ptr)
         self.assertEquals(frees, [ptr], "unexpected deallocations")
         self.assertRaises(KeyError, lambda: mapper.Retrieve(ptr))
-        self.assertRaises(KeyError, lambda: mapper.Delete(ptr))
+        self.assertRaises(KeyError, lambda: mapper.Free(ptr))
 
         self.assertEquals(mapper.RefCount(IntPtr(1)), 0, "unknown objects' should be 0")
 
@@ -83,7 +113,7 @@ class Python25MapperTest(unittest.TestCase):
         self.assertRaises(KeyError, lambda: mapper.IncRef(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.DecRef(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.Retrieve(IntPtr.Zero))
-        self.assertRaises(KeyError, lambda: mapper.Delete(IntPtr.Zero))
+        self.assertRaises(KeyError, lambda: mapper.Free(IntPtr.Zero))
 
         self.assertEquals(mapper.RefCount(IntPtr.Zero), 0, "wrong")
 

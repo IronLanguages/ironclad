@@ -71,8 +71,10 @@ namespace Ironclad
         public IntPtr 
         Store(object obj)
         {
-            IntPtr ptr = this.allocator.Alloc(CPyMarshal.IntSize);
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
             CPyMarshal.WriteInt(ptr, 1);
+            IntPtr typePtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyObject), "ob_type"));
+            CPyMarshal.WritePtr(typePtr, IntPtr.Zero);
             this.ptrmap[ptr] = obj;
             return ptr;
         }
@@ -167,7 +169,20 @@ namespace Ironclad
                 int count = CPyMarshal.ReadInt(ptr);
                 if (count == 1)
                 {
-                    this.Delete(ptr);
+                    IntPtr typePtrPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyObject), "ob_type"));
+                    IntPtr typePtr = CPyMarshal.ReadPtr(typePtrPtr);
+                    if (typePtr != IntPtr.Zero)
+                    {
+                        IntPtr deallocFPPtr = CPyMarshal.Offset(typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_dealloc"));
+                        IntPtr deallocFP = CPyMarshal.ReadPtr(deallocFPPtr);
+                        CPython_destructor_Delegate deallocDgt = (CPython_destructor_Delegate)Marshal.GetDelegateForFunctionPointer(
+                            deallocFP, typeof(CPython_destructor_Delegate));
+                        deallocDgt(ptr);
+                    }
+                    else
+                    {
+                        this.Free(ptr);
+                    }
                 }
                 else
                 {
@@ -180,8 +195,8 @@ namespace Ironclad
             }
         }
         
-        public void 
-        Delete(IntPtr ptr)
+        public virtual void 
+        Free(IntPtr ptr)
         {
             if (this.ptrmap.ContainsKey(ptr))
             {

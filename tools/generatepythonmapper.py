@@ -63,7 +63,7 @@ namespace Ironclad
 
     public class PythonMapper
     {
-        private Dictionary<string, Delegate> dgtMap = new Dictionary<string, Delegate>();
+        protected Dictionary<string, Delegate> dgtMap = new Dictionary<string, Delegate>();
         private Dictionary<string, IntPtr> dataMap = new Dictionary<string, IntPtr>();
 
 %s
