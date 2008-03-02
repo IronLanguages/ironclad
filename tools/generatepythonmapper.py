@@ -53,7 +53,7 @@ def run():
         f.close()
 
 
-DELEGATE_EXT = ".pythonMapperDelegateItem"
+DELEGATE_EXT = ".pmdi"
 OUTFILE = "../PythonMapper.cs"
 
 FILE_TEMPLATE = """

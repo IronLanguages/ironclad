@@ -31,8 +31,8 @@ class GeneratePythonMapperTest(unittest.TestCase):
         try:
             write("pythonMapperDataItems", DATA_ITEMS)
             write("pythonMapperDataPtrItems", DATA_PTR_ITEMS)
-            write("Py_InitModule4.pythonMapperDelegateItem", PY_INITMODULE4)
-            write("PyModule_AddObject.pythonMapperDelegateItem", PYMODULE_ADDOBJECT)
+            write("Py_InitModule4.pmdi", PY_INITMODULE4)
+            write("PyModule_AddObject.pmdi", PYMODULE_ADDOBJECT)
 
             retVal = spawn("ipy", toolPath)
             self.assertEquals(retVal, 0, "process ended badly")
