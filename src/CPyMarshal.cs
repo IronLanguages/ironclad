@@ -8,6 +8,15 @@ namespace Ironclad
         public const int PtrSize = 4;
         public const int IntSize = 4;
 
+        public static void Zero(IntPtr start, Int32 bytes)
+        {
+            for (int i = 0; i < bytes/CPyMarshal.IntSize; i++)
+            {
+                CPyMarshal.WriteInt(start, 0);
+                start = CPyMarshal.Offset(start, CPyMarshal.IntSize);
+            }
+        }
+
         public static IntPtr Offset(IntPtr start, Int32 offset)
         {
             return (IntPtr)(start.ToInt32() + offset);

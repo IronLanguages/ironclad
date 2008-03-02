@@ -1,12 +1,12 @@
 
-all : ironclad stub testdata
+all : ironclad stubdll testdata
 	ipy runtests.py
 
 ironclad :
 	cd src && $(MAKE)
 
-stub : 
-	ipy tools/buildstub.py C:/WINDOWS/system32/python25.dll build overrides
+stubdll : 
+	cd stub && $(MAKE)
 
 testdata : 
 	cd tests/data/src && $(MAKE)

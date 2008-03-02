@@ -16,7 +16,7 @@ namespace Ironclad
             
             PyStringObject s = new PyStringObject();
             s.ob_refcnt = 1;
-            s.ob_type = IntPtr.Zero;
+            s.ob_type = this.PyString_Type;
             s.ob_size = (uint)length;
             s.ob_shash = -1;
             s.ob_sstate = 0;
@@ -27,7 +27,6 @@ namespace Ironclad
         
             return data;
         }
-        
         
         private IntPtr
         CreatePyStringWithBytes(byte[] bytes)
@@ -41,6 +40,15 @@ namespace Ironclad
                 bytes, new Converter<byte, char>(CharFromByte));
             this.ptrmap[strPtr] = new string(chars);
             return strPtr;
+        }
+        
+        public IntPtr
+        Store(string s)
+        {
+            char[] chars = s.ToCharArray();
+            byte[] bytes = Array.ConvertAll<char, byte>(
+                chars, new Converter<char, byte>(ByteFromChar));
+            return this.CreatePyStringWithBytes(bytes);
         }
         
         

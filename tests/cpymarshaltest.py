@@ -2,6 +2,8 @@
 import unittest
 from tests.utils.runtest import makesuite, run
 
+from tests.utils.memory import OffsetPtr
+
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
@@ -22,6 +24,25 @@ class CPyMarshalTest_32(unittest.TestCase):
         self.assertEquals(CPyMarshal.Offset(IntPtr(354), IntPtr(123)), IntPtr(477), "wrong")
         self.assertEquals(CPyMarshal.Offset(IntPtr(354), IntPtr(0)), IntPtr(354), "wrong")
 
+
+    def testZero(self):
+        bytes = 200
+        data = Marshal.AllocHGlobal(bytes)
+        try:
+            this = data
+            for _ in xrange(bytes):
+                CPyMarshal.WriteByte(this, 255)
+                this = OffsetPtr(this, 1)
+            
+            CPyMarshal.Zero(data, bytes)
+            
+            this = data
+            for _ in xrange(bytes):
+                self.assertEquals(CPyMarshal.ReadByte(this), 0, "failed to zero")
+                this = OffsetPtr(this, 1)
+        finally:
+            Marshal.FreeHGlobal(data)
+        
 
 
     def testWritePtr(self):

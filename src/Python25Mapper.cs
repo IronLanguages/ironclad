@@ -68,8 +68,8 @@ namespace Ironclad
             this._lastException = null;
         }
         
-        public IntPtr 
-        Store(object obj)
+        private IntPtr 
+        StoreObject(object obj)
         {
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
             CPyMarshal.WriteInt(ptr, 1);
@@ -89,6 +89,12 @@ namespace Ironclad
         CharFromByte(byte b)
         {
             return (char)b;
+        }
+        
+        private static byte
+        ByteFromChar(char c)
+        {
+            return (byte)c;
         }
         
         public object 
@@ -175,14 +181,15 @@ namespace Ironclad
                     {
                         IntPtr deallocFPPtr = CPyMarshal.Offset(typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_dealloc"));
                         IntPtr deallocFP = CPyMarshal.ReadPtr(deallocFPPtr);
-                        CPython_destructor_Delegate deallocDgt = (CPython_destructor_Delegate)Marshal.GetDelegateForFunctionPointer(
-                            deallocFP, typeof(CPython_destructor_Delegate));
-                        deallocDgt(ptr);
+                        if (deallocFP != IntPtr.Zero)
+                        {
+                            CPython_destructor_Delegate deallocDgt = (CPython_destructor_Delegate)Marshal.GetDelegateForFunctionPointer(
+                                deallocFP, typeof(CPython_destructor_Delegate));
+                            deallocDgt(ptr);
+                            return;
+                        }
                     }
-                    else
-                    {
-                        this.Free(ptr);
-                    }
+                    this.Free(ptr);
                 }
                 else
                 {

@@ -13,8 +13,6 @@ def write(name, text):
     finally:
         f.close()
 
-
-
 class GeneratePythonMapperTest(unittest.TestCase):
 
     def testCreatesPythonMapper_cs(self):
@@ -43,6 +41,11 @@ class GeneratePythonMapperTest(unittest.TestCase):
             f = open("PythonMapper.cs", 'r')
             try:
                 result = f.read()
+                for (i, (a, e)) in enumerate(zip(result, EXPECTED_OUTPUT)):
+                    if a != e:
+                        print "first failure at", i, a, e
+                        print ">>>%s<<<\n>>>%s<<<" % (result[i:], EXPECTED_OUTPUT[i:])
+                        self.fail()
                 self.assertEquals(result, EXPECTED_OUTPUT, "generated wrong")
             finally:
                 f.close()
@@ -62,8 +65,9 @@ return 0
 """
 
 DATA_ITEMS = """
-PyString_Type
-PyType_Type
+PyString_Type PyTypeObject
+PyType_Type PyTypeObject
+Py_Something int
 """
 
 DATA_PTR_ITEMS = """
@@ -76,6 +80,8 @@ EXPECTED_OUTPUT = """
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+
+using Ironclad.Structs;
 
 namespace Ironclad
 {
@@ -164,17 +170,33 @@ namespace Ironclad
             }
         }
 
+        public virtual void Fill_Py_Something(IntPtr address) { ; }
+        public IntPtr Py_Something
+        {
+            get
+            {
+                return this.dataMap["Py_Something"];
+            }
+        }
+
         public void SetData(string name, IntPtr address)
         {
             switch (name)
             {
                 case "PyString_Type":
+                    CPyMarshal.Zero(address, Marshal.SizeOf(typeof(PyTypeObject)));
                     this.Fill_PyString_Type(address);
                     this.dataMap["PyString_Type"] = address;
                     break;
                 case "PyType_Type":
+                    CPyMarshal.Zero(address, Marshal.SizeOf(typeof(PyTypeObject)));
                     this.Fill_PyType_Type(address);
                     this.dataMap["PyType_Type"] = address;
+                    break;
+                case "Py_Something":
+                    CPyMarshal.Zero(address, Marshal.SizeOf(typeof(int)));
+                    this.Fill_Py_Something(address);
+                    this.dataMap["Py_Something"] = address;
                     break;
             }
         }

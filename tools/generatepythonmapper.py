@@ -29,7 +29,10 @@ def run():
     ptr_data_items_code = "\n\n".join([PTR_DATA_ITEM_TEMPLATE % x for x in ptr_data_items])
     ptr_data_items_switch = "\n".join([PTR_DATA_ITEM_CASE % x for x in ptr_data_items])
 
-    data_items = [dict([("symbol", p)]) for p in read_interesting_lines("pythonMapperDataItems")]
+    data_items = []
+    for p in read_interesting_lines("pythonMapperDataItems"):
+        symbol, _type = p.split(" ")
+        data_items.append({"symbol": symbol, "type": _type})
 
     data_items_code = "\n\n".join([DATA_ITEM_TEMPLATE % x for x in data_items])
     data_items_switch = "\n".join([DATA_ITEM_CASE % x for x in data_items])
@@ -57,6 +60,8 @@ FILE_TEMPLATE = """
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+
+using Ironclad.Structs;
 
 namespace Ironclad
 {
@@ -142,6 +147,7 @@ DATA_ITEM_TEMPLATE = """\
 
 DATA_ITEM_CASE = """\
                 case "%(symbol)s":
+                    CPyMarshal.Zero(address, Marshal.SizeOf(typeof(%(type)s)));
                     this.Fill_%(symbol)s(address);
                     this.dataMap["%(symbol)s"] = address;
                     break;"""
