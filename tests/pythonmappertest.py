@@ -6,17 +6,18 @@ from tests.utils.runtest import makesuite, run
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, PythonMapper
+from Ironclad.Structs import PyTypeObject
 
 testNumber = 1359
+intCount = Marshal.SizeOf(PyTypeObject) / CPyMarshal.IntSize
 
-def Write16Bytes(address):
-    for a in range(4):
+def WritePyTypeObject(address):
+    for a in range(intCount):
         ptr = OffsetPtr(address, a * CPyMarshal.IntSize)
         Marshal.WriteInt32(ptr, testNumber)
 
-
-def TestWrote16Bytes(address):
-    for a in range(4):
+def TestWrotePyTypeObject(address):
+    for a in range(intCount):
         ptr = OffsetPtr(address, a * CPyMarshal.IntSize)
         data = Marshal.ReadInt32(ptr)
         if data != testNumber:
@@ -42,46 +43,63 @@ class PythonMapperTest(unittest.TestCase):
             Marshal.FreeHGlobal(dataPtr)
 
 
-    def testPythonMapperFinds_PyString_Type(self):
+    def assertFindsType(self, name):
         class MyPM(PythonMapper):
-            def Fill_PyString_Type(self, address):
-                Write16Bytes(address)
-        self.assertDataSetterSetsAndRemembers(MyPM, "PyString_Type", 16, TestWrote16Bytes)
+            def fillmethod(self, address):
+                WritePyTypeObject(address)
+        setattr(MyPM, "Fill_" + name, getattr(MyPM, "fillmethod"))
+        self.assertDataSetterSetsAndRemembers(MyPM, name, Marshal.SizeOf(PyTypeObject), TestWrotePyTypeObject)
 
-
-    def testPythonMapperFinds_PyType_Type(self):
-        class MyPM(PythonMapper):
-            def Fill_PyType_Type(self, address):
-                Write16Bytes(address)
-        self.assertDataSetterSetsAndRemembers(MyPM, "PyType_Type", 16, TestWrote16Bytes)
-
-
-    def testPythonMapperFinds_PyFile_Type(self):
-        class MyPM(PythonMapper):
-            def Fill_PyFile_Type(self, address):
-                Write16Bytes(address)
-        self.assertDataSetterSetsAndRemembers(MyPM, "PyFile_Type", 16, TestWrote16Bytes)
-
-
-    def testPythonMapperFinds_PyTuple_Type(self):
-        class MyPM(PythonMapper):
-            def Fill_PyTuple_Type(self, address):
-                Write16Bytes(address)
-        self.assertDataSetterSetsAndRemembers(MyPM, "PyTuple_Type", 16, TestWrote16Bytes)
-
-
-    def testPythonMapperFinds_PyList_Type(self):
-        class MyPM(PythonMapper):
-            def Fill_PyList_Type(self, address):
-                Write16Bytes(address)
-        self.assertDataSetterSetsAndRemembers(MyPM, "PyList_Type", 16, TestWrote16Bytes)
-
-
-    def testPythonMapperFinds_PyDict_Type(self):
-        class MyPM(PythonMapper):
-            def Fill_PyDict_Type(self, address):
-                Write16Bytes(address)
-        self.assertDataSetterSetsAndRemembers(MyPM, "PyDict_Type", 16, TestWrote16Bytes)
+    def testFindsTypes(self):
+        _types = (
+            "PyBool_Type",
+            "PyBuffer_Type",
+            "PyCell_Type",
+            "PyClass_Type",
+            "PyInstance_Type",
+            "PyMethod_Type",
+            "PyCObject_Type",
+            "PyCode_Type",
+            "PyComplex_Type",
+            "PyWrapperDescr_Type",
+            "PyProperty_Type",
+            "PyDict_Type",
+            "PyEnum_Type",
+            "PyReversed_Type",
+            "PyFile_Type",
+            "PyFloat_Type",
+            "PyFrame_Type",
+            "PyFunction_Type",
+            "PyClassMethod_Type",
+            "PyStaticMethod_Type",
+            "PyGen_Type",
+            "PyInt_Type",
+            "PySeqIter_Type",
+            "PyCallIter_Type",
+            "PyList_Type",
+            "PyLong_Type",
+            "PyCFunction_Type",
+            "PyModule_Type",
+            "PyType_Type",
+            "PyBaseObject_Type",
+            "PySuper_Type",
+            "PyRange_Type",
+            "PySet_Type",
+            "PyFrozenSet_Type",
+            "PySlice_Type",
+            "PyBaseString_Type",
+            "PySTEntry_Type",
+            "PyString_Type",
+            "PySymtableEntry_Type",
+            "PyTraceBack_Type",
+            "PyTuple_Type",
+            "PyUnicode_Type",
+            "_PyWeakref_RefType",
+            "_PyWeakref_ProxyType",
+            "_PyWeakref_CallableProxyType",
+        )
+        for _type in _types:
+            self.assertFindsType(_type)
 
 
     def assertAddressGetterRemembers(self, mapperSubclass, name, expectedAddress):
@@ -336,16 +354,29 @@ class PythonMapperTest(unittest.TestCase):
             IntPtr(999), paramsStore)
 
 
-    def testPythonMapperFinds_PyDict_New(self):
+    def testPythonMapperFinds_PyDict_Size(self):
         paramsStore = []
         class MyPM(PythonMapper):
-            def PyDict_New(self):
-                paramsStore.append(tuple())
+            def PyDict_Size(self, _dict):
+                paramsStore.append((_dict,))
+                return 999
+
+        self.assertDispatches(
+            MyPM, "PyDict_Size",
+            (IntPtr(111),),
+            999, paramsStore)
+
+
+    def testPythonMapperFinds_PyDict_GetItemString(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyDict_GetItemString(self, _dict, key):
+                paramsStore.append((_dict, key))
                 return IntPtr(999)
 
         self.assertDispatches(
-            MyPM, "PyDict_New",
-            tuple(),
+            MyPM, "PyDict_GetItemString",
+            (IntPtr(111), "boojum"),
             IntPtr(999), paramsStore)
 
 
@@ -411,6 +442,19 @@ class PythonMapperTest(unittest.TestCase):
         self.assertDispatches(
             MyPM, "PyFloat_FromDouble",
             (33.3,),
+            IntPtr(999), paramsStore)
+
+
+    def testPythonMapperFinds_PyFile_AsFile(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyFile_AsFile(self, _file):
+                paramsStore.append((_file,))
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyFile_AsFile",
+            (IntPtr(111),),
             IntPtr(999), paramsStore)
 
 

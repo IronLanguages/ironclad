@@ -135,6 +135,32 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
             mapper.Free(tuplePtr)
         finally:
             Marshal.FreeHGlobal(typeBlock)
+
+
+    def testStoreTupleCreatesTupleType(self):
+        allocs = []
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        try:
+            mapper.SetData("PyTuple_Type", typeBlock)
+            tuplePtr = mapper.Store((0, 1, 2))
+            try:
+                ob_typePtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_type"))
+                self.assertEquals(CPyMarshal.ReadPtr(ob_typePtr), typeBlock, "wrong type")
+                
+                dataPtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_item"))
+                for i in range(3):
+                    item = mapper.Retrieve(CPyMarshal.ReadPtr(dataPtr))
+                    self.assertEquals(item, i, "did not store data")
+                    dataPtr = OffsetPtr(dataPtr, CPyMarshal.PtrSize)
+                
+            finally:
+                mapper.DecRef(tuplePtr)
+        finally:
+            Marshal.FreeHGlobal(typeBlock)
+        
         
 
 

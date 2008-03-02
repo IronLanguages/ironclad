@@ -1,6 +1,45 @@
-PyFile_Type
-PyString_Type
-PyType_Type
-PyTuple_Type
-PyList_Type
-PyDict_Type
+PyBool_Type PyTypeObject
+PyBuffer_Type PyTypeObject
+PyCell_Type PyTypeObject
+PyClass_Type PyTypeObject
+PyInstance_Type PyTypeObject
+PyMethod_Type PyTypeObject
+PyCObject_Type PyTypeObject
+PyCode_Type PyTypeObject
+PyComplex_Type PyTypeObject
+PyWrapperDescr_Type PyTypeObject
+PyProperty_Type PyTypeObject
+PyDict_Type PyTypeObject
+PyEnum_Type PyTypeObject
+PyReversed_Type PyTypeObject
+PyFile_Type PyTypeObject
+PyFloat_Type PyTypeObject
+PyFrame_Type PyTypeObject
+PyFunction_Type PyTypeObject
+PyClassMethod_Type PyTypeObject
+PyStaticMethod_Type PyTypeObject
+PyGen_Type PyTypeObject
+PyInt_Type PyTypeObject
+PySeqIter_Type PyTypeObject
+PyCallIter_Type PyTypeObject
+PyList_Type PyTypeObject
+PyLong_Type PyTypeObject
+PyCFunction_Type PyTypeObject
+PyModule_Type PyTypeObject
+PyType_Type PyTypeObject
+PyBaseObject_Type PyTypeObject
+PySuper_Type PyTypeObject
+PyRange_Type PyTypeObject
+PySet_Type PyTypeObject
+PyFrozenSet_Type PyTypeObject
+PySlice_Type PyTypeObject
+PyBaseString_Type PyTypeObject
+PySTEntry_Type PyTypeObject
+PyString_Type PyTypeObject
+PySymtableEntry_Type PyTypeObject
+PyTraceBack_Type PyTypeObject
+PyTuple_Type PyTypeObject
+PyUnicode_Type PyTypeObject
+_PyWeakref_RefType PyTypeObject
+_PyWeakref_ProxyType PyTypeObject
+_PyWeakref_CallableProxyType PyTypeObject

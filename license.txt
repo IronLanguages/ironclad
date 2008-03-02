@@ -1,4 +1,4 @@
-Copyright (c) 2008 Resolver Systems Ltd
+Copyright (c) 2008 Resolver Systems Ltd; All Rights Reserved
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
@@ -8,6 +8,14 @@ copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the
 Software is furnished to do so, subject to the following
 conditions:
+
+Portions Copyright (c)
+2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Python Software Foundation; 
+All Rights Reserved
+
+Some of the contents of some C files from the Python 2.5.2 source release are included herein; in all cases, the parts copied are either Python C API functions (and associated helper functions), or declarations and defines necessary to compile the aforementioned functions. The functions' implementations have not been changed, and the intent of all supporting changes is to preserve apparent behaviour while removing currently-irrelevant information.
+
+Portions Copyright (c) Microsoft Corporation. All Rights Reserved.
 
 The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.

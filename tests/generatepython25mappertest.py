@@ -13,11 +13,17 @@ def write(name, text):
     finally:
         f.close()
 
+def read(name):
+    f = open(name)
+    try:
+        return f.read()
+    finally:
+        f.close()
 
 
 class GeneratePython25MapperTest(unittest.TestCase):
 
-    def testCreatesPython25Mapper_Exceptions_cs(self):
+    def testCreatesPython25MapperComponents(self):
         tempDir = tempfile.gettempdir()
         testBuildDir = os.path.join(tempDir, 'generatepython25mappertest')
         if os.path.exists(testBuildDir):
@@ -32,17 +38,16 @@ class GeneratePython25MapperTest(unittest.TestCase):
         os.chdir(testSrcDir)
         try:
             write("exceptions", EXCEPTIONS)
+            write("store", STORE)
 
             retVal = spawn("ipy", toolPath)
             self.assertEquals(retVal, 0, "process ended badly")
 
             os.chdir(testBuildDir)
-            f = open("Python25Mapper_exceptions.cs", 'r')
-            try:
-                result = f.read()
-                self.assertEquals(result, EXPECTED_OUTPUT, "generated wrong")
-            finally:
-                f.close()
+            self.assertEquals(read("Python25Mapper_exceptions.cs"), EXPECTED_EXCEPTIONS, 
+                              "generated wrong")
+            self.assertEquals(read("Python25Mapper_store.cs"), EXPECTED_STORE, 
+                              "generated wrong")
 
         finally:
             os.chdir(origCwd)
@@ -52,10 +57,9 @@ SystemError
 OverflowError
 """
 
-
-EXPECTED_OUTPUT = """
+EXPECTED_EXCEPTIONS = """
 using System;
-
+using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
 
 namespace Ironclad
@@ -75,6 +79,34 @@ namespace Ironclad
 }
 """
 
+STORE = """
+string
+Tuple
+Dict
+"""
+
+EXPECTED_STORE = """
+using System;
+using IronPython.Runtime;
+using IronPython.Runtime.Exceptions;
+
+namespace Ironclad
+{
+    public partial class Python25Mapper : PythonMapper
+    {
+        public IntPtr Store(object obj)
+        {
+            string attempt0 = obj as string;
+            if (attempt0 != null) { return this.Store(attempt0); }
+            Tuple attempt1 = obj as Tuple;
+            if (attempt1 != null) { return this.Store(attempt1); }
+            Dict attempt2 = obj as Dict;
+            if (attempt2 != null) { return this.Store(attempt2); }
+            return this.StoreObject(obj);
+        }
+    }
+}
+"""
 
 suite = makesuite(GeneratePython25MapperTest)
 

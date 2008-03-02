@@ -2,7 +2,7 @@
 import os
 import sys
 
-from tools.stubmaker import StubMaker
+from stubmaker import StubMaker
 
 
 def generateOutput(outputFile, contents):
@@ -31,10 +31,8 @@ def main():
     filename = os.path.splitext(os.path.basename(sourceDll))[0]
 
     os.chdir(outputDir)
-    generateOutput("%s.c" % (filename, ), sm.generate_c())
-    generateOutput("%s.asm" % (filename, ), sm.generate_asm())
-    generateOutput("Makefile", sm.generate_makefile(filename))
-    os.spawnl(os.P_WAIT, "make", "make")
+    generateOutput("generated.c", sm.generate_c())
+    generateOutput("generated.asm", sm.generate_asm())
 
 
 if __name__ == "__main__":

@@ -17,8 +17,8 @@ class StubMaker(object):
     def __init__(self, sourceLibrary=None, overrideDir=None):
         self.data = []
         self.functions = []
-        self.overrides = {}
-        self.postamble = ''
+        self.ptr_data = []
+        self.static_data = []
 
         if sourceLibrary is not None:
             self._read_symbol_table(sourceLibrary)
@@ -43,7 +43,7 @@ class StubMaker(object):
                 if len(parts) == 1:
                     self.functions.append(parts[0])
                 else:
-                    self.data.append(parts[0])
+                    self.ptr_data.append(parts[0])
         finally:
             f.close()
 
@@ -62,54 +62,28 @@ class StubMaker(object):
                 f.close()
         self.functions = [f for f in self.functions if f not in ignores]
 
-        def add_override(name):
-            path = os.path.join(overrideDir, "%s.c" % name)
-            if os.path.exists(path):
-                f = open(path, 'r')
-                try:
-                    self.overrides[name] = f.read().replace('\r\n', '\n')
-                finally:
-                    f.close()
-
-        for function in self.functions:
-            add_override(function)
-
-        for data in self.data:
-            add_override(data)
-
-        postambleFile = os.path.join(overrideDir, "_postamble.c")
-        if os.path.exists(postambleFile):
-            f = open(postambleFile, 'r')
+        staticFile = os.path.join(overrideDir, "_statics")
+        if os.path.exists(staticFile):
+            f = open(staticFile, 'r')
             try:
-                self.postamble = f.read()
+                self.static_data = [l.rstrip() for l in f.readlines() if l.rstrip()]
             finally:
                 f.close()
+        self.ptr_data = [s for s in self.ptr_data if s not in self.static_data and s not in ignores]
                 
                 
     def generate_c(self):
-        _includes = '#include <stdio.h>\n#include <stdarg.h>\n#include <stdlib.h>\n\n'
-        _declare_data = 'void *%s;\n'
-        _boilerplate = '\nvoid *jumptable[%d];\n\nvoid init(void*(*address_getter)(char*), void(*data_setter)(char*, void*)) {\n'
+        _boilerplate = 'void *jumptable[%d];\n\nvoid init(void*(*address_getter)(char*), void(*data_setter)(char*, void*)) {\n'
         _init_ptr_data = '    %s = address_getter("%s");\n'
-        _init_custom_data = '    data_setter("%s", &%s);\n'
+        _init_static_data = '    data_setter("%s", &%s);\n'
         _init_function = '    jumptable[%s] = address_getter("%s");\n'
 
-        ptr_data = [s for s in self.data if s not in self.overrides]
-        custom_data = [s for s in self.data if s in self.overrides]
-
-        result = [_includes]
-        result.extend([_declare_data % s for s in ptr_data])
-        result.extend([self.overrides[k] for k in custom_data])
-        result.append(_boilerplate % len(self.functions))
-        result.extend([_init_ptr_data % (s, s) for s in ptr_data])
-        result.extend([_init_custom_data % (s, s) for s in custom_data])
+        result = [_boilerplate % len(self.functions)]
+        result.extend([_init_ptr_data % (s, s) for s in self.ptr_data])
+        result.extend([_init_static_data % (s, s) for s in self.static_data])
         for i, name in enumerate(self.functions):
             result.append(_init_function % (i, name))
-            if self.overrides.has_key(name):
-                self.overrides[name] = self.overrides[name] % i
-        result.append('}\n\n')
-        result.extend([self.overrides[s] for s in self.functions if s in self.overrides])
-        result.append(self.postamble)
+        result.append('}\n')
         return ''.join(result)
 
 
@@ -121,21 +95,9 @@ class StubMaker(object):
         result = [_header]
         implementations = []
         for i, name in enumerate(self.functions):
-            if name not in self.overrides:
-                result.append(_declare % name)
-                implementations.append(_define % (name, i * 4))
+            result.append(_declare % name)
+            implementations.append(_define % (name, i * 4))
         result.append('\n')
         result.extend(implementations)
         return ''.join(result)
 
-
-    def generate_makefile(self, stubname):
-        _library = "%s.dll: asm.o c.o\n\tgcc -shared -o %s.dll asm.o c.o\n"
-        _c = "c.o: %s.c\n\tgcc -o c.o -c %s.c\n"
-        _asm = "asm.o: %s.asm\n\tnasm -o asm.o -f win32 %s.asm\n"
-
-        return ''.join([
-            _library % (stubname, stubname),
-            _asm % (stubname, stubname),
-            _c % (stubname, stubname),
-        ])

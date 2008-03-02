@@ -36,7 +36,9 @@ def _ironclad_dispatch_noargs(name, instancePtr):
 
 def _ironclad_dispatch_kwargs(name, instancePtr, args, kwargs):
     argPtr = _ironclad_mapper.Store(args)
-    kwargPtr = _ironclad_mapper.Store(kwargs)
+    kwargPtr = IntPtr.Zero
+    if len(kwargs):
+        kwargPtr = _ironclad_mapper.Store(kwargs)
     resultPtr = _ironclad_dispatch_table[name](instancePtr, argPtr, kwargPtr)
     try:
         _raiseExceptionIfRequired()

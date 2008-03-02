@@ -23,8 +23,7 @@ namespace Ironclad
             CPyMarshal.WritePtr(tp_freePtr, Marshal.GetFunctionPointerForDelegate(this.dgtMap["Free"]));
         }
         
-        public override IntPtr
-        PyTuple_New(int size)
+        private IntPtr CreateTuple(int size)
         {
             PyTupleObject tuple = new PyTupleObject();
             tuple.ob_refcnt = 1;
@@ -35,8 +34,32 @@ namespace Ironclad
             int extraSize = CPyMarshal.PtrSize * (size - 1);
             IntPtr ptr = this.allocator.Alloc(baseSize + extraSize);
             Marshal.StructureToPtr(tuple, ptr, false);
-            this.StoreUnmanagedData(ptr, UnmanagedDataMarker.PyTupleObject);
             return ptr;
+        }
+        
+        public override IntPtr
+        PyTuple_New(int size)
+        {
+            IntPtr tuplePtr = this.CreateTuple(size);
+            this.StoreUnmanagedData(tuplePtr, UnmanagedDataMarker.PyTupleObject);
+            return tuplePtr;
+        }
+        
+        
+        public IntPtr
+        Store(Tuple tuple)
+        {
+            int length = tuple.GetLength();
+            IntPtr tuplePtr = this.CreateTuple(length);
+            IntPtr itemPtr = CPyMarshal.Offset(
+                tuplePtr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
+            for (int i = 0; i < length; i++)
+            {
+                CPyMarshal.WritePtr(itemPtr, this.Store(tuple[i]));
+                itemPtr = CPyMarshal.Offset(itemPtr, CPyMarshal.PtrSize);
+            }
+            this.StoreUnmanagedData(tuplePtr, tuple);
+            return tuplePtr;
         }
         
         

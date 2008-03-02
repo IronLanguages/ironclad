@@ -1,13 +1,13 @@
 
 import unittest
 from tests.utils.allocators import GetAllocatingTestAllocator
-from tests.utils.memory import OffsetPtr
+from tests.utils.memory import OffsetPtr, CreateTypes
 from tests.utils.runtest import makesuite, run
 
 from System import Array, Byte, Char, IntPtr, OutOfMemoryException
 from System.Runtime.InteropServices import Marshal
-from Ironclad import Python25Mapper
-from Ironclad.Structs import PyStringObject
+from Ironclad import CPyMarshal, Python25Mapper
+from Ironclad.Structs import PyStringObject, PyTypeObject
 from IronPython.Hosting import PythonEngine
 
 
@@ -39,10 +39,14 @@ class PyString_TestCase(unittest.TestCase):
         return "".join(chr(c) for c in range(start, pastEnd))
 
 
+    def assertHasStringType(self, ptr, mapper):
+        typePtrPtr = OffsetPtr(ptr, Marshal.OffsetOf(PyStringObject, "ob_type"))
+        self.assertEquals(CPyMarshal.ReadPtr(typePtrPtr), mapper.PyString_Type, "bad type")
+
+
     def assertStringObjectHasLength(self, strPtr, length):
         stringObject = Marshal.PtrToStructure(strPtr, PyStringObject)
         self.assertEquals(stringObject.ob_refcnt, 1, "unexpected refcount")
-        self.assertEquals(stringObject.ob_type, IntPtr.Zero, "unexpected type")
         self.assertEquals(stringObject.ob_size, length, "unexpected ob_size")
         self.assertEquals(stringObject.ob_shash, -1, "unexpected useless-field")
         self.assertEquals(stringObject.ob_sstate, 0, "unexpected useless-field")
@@ -69,6 +73,7 @@ class Python25Mapper_PyString_FromString_Test(PyString_TestCase):
         allocs = []
         engine = PythonEngine()
         mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        deallocTypes = CreateTypes(mapper)
 
         testString = "beset on all sides" + self.getStringWithValues(1, 256)
         bytes = self.byteArrayFromString(testString)
@@ -84,6 +89,7 @@ class Python25Mapper_PyString_FromString_Test(PyString_TestCase):
         finally:
             Marshal.FreeHGlobal(testData)
             Marshal.FreeHGlobal(strPtr)
+            deallocTypes()
 
 
 class Python25Mapper_PyString_FromStringAndSize_Test(PyString_TestCase):
@@ -92,6 +98,7 @@ class Python25Mapper_PyString_FromStringAndSize_Test(PyString_TestCase):
         allocs = []
         engine = PythonEngine()
         mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        deallocTypes = CreateTypes(mapper)
 
         testString = "we run the grease racket in this town" + self.getStringWithValues(0, 256)
         testLength = len(testString)
@@ -101,19 +108,21 @@ class Python25Mapper_PyString_FromStringAndSize_Test(PyString_TestCase):
             baseSize = Marshal.SizeOf(PyStringObject)
             self.assertEquals(allocs, [(strPtr, testLength + baseSize)], "allocated wrong")
             self.assertStringObjectHasLength(strPtr, testLength)
-
+            self.assertHasStringType(strPtr, mapper)
             testBytes = self.byteArrayFromString(testString)
             self.fillStringDataWithBytes(strPtr, testBytes)
 
             self.assertEquals(mapper.Retrieve(strPtr), testString, "failed to read string data")
         finally:
             Marshal.FreeHGlobal(strPtr)
+            deallocTypes()
 
 
     def testCreateStringWithData(self):
         allocs = []
         engine = PythonEngine()
         mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        deallocTypes = CreateTypes(mapper)
 
         testString = "we also run the shovel racket" + self.getStringWithValues(0, 256)
         testBytes = self.byteArrayFromString(testString)
@@ -124,11 +133,13 @@ class Python25Mapper_PyString_FromStringAndSize_Test(PyString_TestCase):
         try:
             baseSize = Marshal.SizeOf(PyStringObject)
             self.assertEquals(allocs, [(strPtr, testLength + baseSize)], "allocated wrong")
+            self.assertHasStringType(strPtr, mapper)
             self.assertStringObjectHasLength(strPtr, testLength)
             self.assertStringObjectHasDataBytes(strPtr, testBytes)
             self.assertEquals(mapper.Retrieve(strPtr), testString, "failed to read string data")
         finally:
             Marshal.FreeHGlobal(strPtr)
+            deallocTypes()
 
 
 class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
@@ -138,6 +149,7 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
         frees = []
         engine = PythonEngine()
         mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, frees))
+        deallocTypes = CreateTypes(mapper)
 
         data = mapper.PyString_FromStringAndSize(IntPtr.Zero, 365)
         ptrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
@@ -152,6 +164,7 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
             if data not in frees:
                 Marshal.FreeHGlobal(data)
             Marshal.FreeHGlobal(ptrPtr)
+            deallocTypes()
 
 
     def testShrink(self):
@@ -159,6 +172,7 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
         frees = []
         engine = PythonEngine()
         mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, frees))
+        deallocTypes = CreateTypes(mapper)
 
         oldLength = 365
         newLength = 20
@@ -170,7 +184,8 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
             baseSize = Marshal.SizeOf(PyStringObject)
             self.assertEquals(allocs, [(strPtr, oldLength + baseSize)], "allocated wrong")
             self.assertEquals(mapper._PyString_Resize(ptrPtr, newLength), 0, "bad return on success")
-
+            
+            self.assertHasStringType(strPtr, mapper)
             self.assertStringObjectHasLength(strPtr, newLength)
 
             self.assertEquals(allocs, [(strPtr, oldLength + baseSize)], "unexpected extra alloc")
@@ -178,6 +193,7 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
         finally:
             Marshal.FreeHGlobal(strPtr)
             Marshal.FreeHGlobal(ptrPtr)
+            deallocTypes()
 
 
     def testGrow(self):
@@ -185,6 +201,7 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
         frees = []
         engine = PythonEngine()
         mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, frees))
+        deallocTypes = CreateTypes(mapper)
 
         oldLength = 20
         testString = "slings and arrows" + self.getStringWithValues(0, 256)
@@ -205,6 +222,7 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
                               "allocated wrong")
             self.assertEquals(frees, [oldStrPtr], "did not free unused memory")
 
+            self.assertHasStringType(newStrPtr, mapper)
             self.assertStringObjectHasLength(newStrPtr, newLength)
 
             testBytes = self.byteArrayFromString(testString)
@@ -218,12 +236,43 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
             Marshal.FreeHGlobal(ptrPtr)
             if newStrPtr != IntPtr.Zero and newStrPtr not in frees:
                 Marshal.FreeHGlobal(newStrPtr)
+            deallocTypes()
+
+class PyStringStoreTest(PyString_TestCase):
+    
+    def testStoreStringCreatesStringType(self):
+        allocs = []
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+
+        testString = "fnord" + self.getStringWithValues(1, 256)
+        testBytes = self.byteArrayFromString(testString)
+        testData = self.ptrFromByteArray(testBytes)
+        testLength = len(testString)
+
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        try:
+            mapper.SetData("PyString_Type", typeBlock)
+            strPtr = mapper.Store(testString)
+            try:
+                baseSize = Marshal.SizeOf(PyStringObject)
+                self.assertEquals(allocs, [(strPtr, testLength + baseSize)], "allocated wrong")
+                self.assertHasStringType(strPtr, mapper)
+                self.assertStringObjectHasLength(strPtr, testLength)
+                self.assertStringObjectHasDataBytes(strPtr, testBytes)
+                self.assertEquals(mapper.Retrieve(strPtr), testString, "failed to read string data")
+            finally:
+                mapper.DecRef(strPtr)
+        finally:
+            Marshal.FreeHGlobal(typeBlock)
+            
 
 
 suite = makesuite(
     Python25Mapper_PyString_FromString_Test,
     Python25Mapper_PyString_FromStringAndSize_Test,
     Python25Mapper__PyString_Resize_Test,
+    PyStringStoreTest,
 )
 
 if __name__ == '__main__':

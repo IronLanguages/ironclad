@@ -28,9 +28,9 @@ class BuildStubTest(unittest.TestCase):
         self.assertEquals(retVal, 1, "buildstub didn't bail for 4 param")
 
 
-    def testBuildStubCreatesOutputDll(self):
+    def testBuildStubCreatesOutputFiles(self):
         inputPath = "tests/data/exportsymbols.dll"
-        overridePath = "tests/data/overrides"
+        overridePath = "tests/data/stub"
         tempDir = tempfile.gettempdir()
         ourTempDir = os.path.join(tempDir, 'buildstubtest')
 
@@ -40,14 +40,10 @@ class BuildStubTest(unittest.TestCase):
 
             retVal = spawn("ipy", "tools/buildstub.py", *extraArgs)
             self.assertEquals(retVal, 0, "process ended badly")
-            outputPath = os.path.join(ourTempDir, "exportsymbols.dll")
-            self.assertTrue(os.path.exists(outputPath))
-
-            inputLines = GetPexportsLines(inputPath)
-            outputLines = GetPexportsLines(outputPath)
-
-            inputLines |= set(["init", "jumptable DATA"])
-            self.assertEquals(outputLines, inputLines, "bad output symbols")
+            cPath = os.path.join(ourTempDir, "generated.c")
+            self.assertTrue(os.path.exists(cPath))
+            asmPath = os.path.join(ourTempDir, "generated.asm")
+            self.assertTrue(os.path.exists(asmPath))
 
         testGenerates(inputPath, ourTempDir)
         testGenerates(inputPath, ourTempDir, overridePath)
@@ -65,9 +61,8 @@ class Python25StubTest(unittest.TestCase):
         python25exports |= set(["init", "jumptable DATA"])
         generatedExports = GetPexportsLines("build/python25.dll")
 
-        self.assertEquals(generatedExports, python25exports,
+        self.assertEquals(generatedExports.issuperset(python25exports), True,
                           "build product wrong")
-
 
 suite = makesuite(BuildStubTest, Python25StubTest)
 

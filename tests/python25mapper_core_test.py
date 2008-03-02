@@ -3,6 +3,7 @@ import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
+from tests.utils.memory import CreateTypes
 
 import os
 from textwrap import dedent
@@ -61,7 +62,6 @@ class Python25MapperTest(unittest.TestCase):
         
         obj = object()
         objPtr = mapper.Store(obj)
-        
         objTypePtr = CPyMarshal.Offset(objPtr, Marshal.OffsetOf(PyObject, "ob_type"))
         CPyMarshal.WritePtr(objTypePtr, typePtr)
         
@@ -70,7 +70,28 @@ class Python25MapperTest(unittest.TestCase):
         self.assertEquals(calls, [], "called prematurely")
         mapper.DecRef(objPtr)
         self.assertEquals(calls, [objPtr], "not called when refcount hit 0")
+    
+    
+    def testFinalDecRefDoesNotCallNull_tp_dealloc_ButDoesFreeMemory(self):
+        frees = []
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine, GetAllocatingTestAllocator([], frees))
         
+        typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        deallocPtr = CPyMarshal.Offset(typePtr, Marshal.OffsetOf(PyTypeObject, "tp_dealloc"))
+        CPyMarshal.WritePtr(deallocPtr, IntPtr.Zero)
+        
+        obj = object()
+        objPtr = mapper.Store(obj)
+        objTypePtr = CPyMarshal.Offset(objPtr, Marshal.OffsetOf(PyObject, "ob_type"))
+        CPyMarshal.WritePtr(objTypePtr, typePtr)
+        
+        mapper.IncRef(objPtr)
+        mapper.DecRef(objPtr)
+        self.assertEquals(frees, [], "freed prematurely")
+        mapper.DecRef(objPtr)
+        self.assertEquals(frees, [objPtr], "not freed when refcount hit 0")
+    
 
     def testStoreUnmanagedData(self):
         engine = PythonEngine()
@@ -212,22 +233,17 @@ class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):
 
 class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
 
-    def initPyFile_Type(self, mapper):
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        mapper.SetData("PyFile_Type", typeBlock)
-        return typeBlock
-
     def testPyFile_Type(self):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
-        
-        typeBlock = self.initPyFile_Type(mapper)
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
             mapper.SetData("PyFile_Type", typeBlock)
             self.assertEquals(mapper.PyFile_Type, typeBlock, "type address not stored")
             self.assertEquals(mapper.Retrieve(typeBlock), file, "type not mapped")
         finally:
             Marshal.FreeHGlobal(typeBlock)
+    
     
     def testCallPyFile_Type(self):
         engine = PythonEngine()
@@ -238,20 +254,20 @@ class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
 text text text
 more text
 """)
-        argsPtr = mapper.Store(args)
         kwargsPtr = IntPtr.Zero
-        typeBlock = self.initPyFile_Type(mapper)
+        deallocTypes = CreateTypes(mapper)
         try:
+            argsPtr = mapper.Store(args)
             filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
             try:
                 f = mapper.Retrieve(filePtr)
-                self.assertEquals(f.read(), testText, "didn't get a real file object")
+                self.assertEquals(f.read(), testText, "didn't get a real file")
             finally:
                 mapper.DecRef(filePtr)
                 f.close()
         finally:
             mapper.DecRef(argsPtr)
-            Marshal.FreeHGlobal(typeBlock)
+            deallocTypes()
 
 
 
