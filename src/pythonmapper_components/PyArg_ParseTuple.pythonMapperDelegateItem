@@ -1,3 +1,0 @@
-int
-IntPtr args, string format, IntPtr argPtr
-return 0
