@@ -1,7 +1,4 @@
-all : ../ironcladtestutils.dll ../setvalue.pyd ../exportsymbols.dll
-
-../ironcladtestutils.dll : PythonStubHarness.cs
-	csc /out:../ironcladtestutils.dll /t:library /nologo PythonStubHarness.cs
+all : ../setvalue.pyd ../exportsymbols.dll
 
 ../setvalue.pyd : setvalue.o
 	gcc -shared -o ../setvalue.pyd setvalue.o
