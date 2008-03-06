@@ -3,18 +3,18 @@ import os
 import unittest
 from tests.utils.runtest import makesuite, run
 
-from Ironclad import AddressGetterDelegate, DataSetterDelegate, Kernel32, StubReference
+from Ironclad import AddressGetterDelegate, DataSetterDelegate, Unmanaged, StubReference
 from System import IntPtr
 
 
 class StubReferenceTest(unittest.TestCase):
 
     def testMapInitUnmapLibrary(self):
-        self.assertEquals(Kernel32.GetModuleHandle("python25.dll"), IntPtr.Zero,
+        self.assertEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library already mapped")
 
         sr = StubReference(os.path.join("build", "python25.dll"))
-        self.assertNotEquals(Kernel32.GetModuleHandle("python25.dll"), IntPtr.Zero,
+        self.assertNotEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library not mapped by construction")
 
         addressCalls = []
@@ -31,7 +31,7 @@ class StubReferenceTest(unittest.TestCase):
         self.assertEquals(len(dataCalls) > 0, True, "did not set any data")
 
         sr.Dispose()
-        self.assertEquals(Kernel32.GetModuleHandle("python25.dll"), IntPtr.Zero,
+        self.assertEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library not unmapped on dispose")
 
 

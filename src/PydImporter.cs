@@ -22,10 +22,10 @@ namespace Ironclad
         
         public void Load(string path)
         {
-            IntPtr l = Kernel32.LoadLibrary(path);
+            IntPtr l = Unmanaged.LoadLibrary(path);
             this.handles.Add(l);
             string funcName = "init" + Path.GetFileNameWithoutExtension(path);
-            IntPtr funcPtr = Kernel32.GetProcAddress(l, funcName);
+            IntPtr funcPtr = Unmanaged.GetProcAddress(l, funcName);
             PydInit_Delegate d = (PydInit_Delegate)Marshal.GetDelegateForFunctionPointer(funcPtr, typeof(PydInit_Delegate));
             d();
         }
@@ -34,7 +34,7 @@ namespace Ironclad
         {
             foreach (IntPtr l in this.handles)
             {
-                Kernel32.FreeLibrary(l);
+                Unmanaged.FreeLibrary(l);
             }
         }
     }

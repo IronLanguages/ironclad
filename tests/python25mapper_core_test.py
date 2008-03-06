@@ -3,18 +3,12 @@ import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
-from tests.utils.memory import CreateTypes
-
-import os
-from textwrap import dedent
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Mapper
 from Ironclad.Structs import PyObject, PyTypeObject
 from IronPython.Hosting import PythonEngine
-
-
 
 
 class Python25MapperTest(unittest.TestCase):
@@ -231,52 +225,12 @@ class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):
             mapper.DecRef(ptr)
 
 
-class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
-
-    def testPyFile_Type(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        try:
-            mapper.SetData("PyFile_Type", typeBlock)
-            self.assertEquals(mapper.PyFile_Type, typeBlock, "type address not stored")
-            self.assertEquals(mapper.Retrieve(typeBlock), file, "type not mapped")
-        finally:
-            Marshal.FreeHGlobal(typeBlock)
-    
-    
-    def testCallPyFile_Type(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
-        
-        args = (os.path.join('tests', 'data', 'text.txt'), 'r')
-        testText = dedent("""\
-text text text
-more text
-""")
-        kwargsPtr = IntPtr.Zero
-        deallocTypes = CreateTypes(mapper)
-        try:
-            argsPtr = mapper.Store(args)
-            filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
-            try:
-                f = mapper.Retrieve(filePtr)
-                self.assertEquals(f.read(), testText, "didn't get a real file")
-            finally:
-                mapper.DecRef(filePtr)
-                f.close()
-        finally:
-            mapper.DecRef(argsPtr)
-            deallocTypes()
-
-
 
 suite = makesuite(
     Python25MapperTest,
     Python25Mapper_PyInt_FromLong_Test,
     Python25Mapper_PyInt_FromSsize_t_Test,
     Python25Mapper_PyFloat_FromDouble_Test,
-    Python25Mapper_PyFile_Type_Test,
 )
 
 if __name__ == '__main__':
