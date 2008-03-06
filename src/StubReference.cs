@@ -19,12 +19,12 @@ namespace Ironclad
     
         public StubReference(string dllPath)
         {
-            this.library = Kernel32.LoadLibrary(dllPath);
+            this.library = Unmanaged.LoadLibrary(dllPath);
         }
     
         public void Init(AddressGetterDelegate addressGetter, DataSetterDelegate dataSetter)
         {
-            IntPtr initFP = Kernel32.GetProcAddress(this.library, "init");
+            IntPtr initFP = Unmanaged.GetProcAddress(this.library, "init");
             InitDelegate initDgt = (InitDelegate)Marshal.GetDelegateForFunctionPointer(initFP, typeof(InitDelegate));
             
             IntPtr addressGetterFP = Marshal.GetFunctionPointerForDelegate(addressGetter);
@@ -34,7 +34,7 @@ namespace Ironclad
         
         public void Dispose()
         {
-            Kernel32.FreeLibrary(this.library);
+            Unmanaged.FreeLibrary(this.library);
             this.library = IntPtr.Zero;
         }
     }

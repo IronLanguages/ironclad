@@ -1,4 +1,7 @@
-all : ../setvalue.pyd ../exportsymbols.dll
+all : ../unmanaged.dll ../setvalue.pyd ../exportsymbols.dll
+
+../unmanaged.dll : unmanaged.cs
+	csc /out:../unmanaged.dll /t:library /nologo unmanaged.cs
 
 ../setvalue.pyd : setvalue.o
 	gcc -shared -o ../setvalue.pyd setvalue.o
