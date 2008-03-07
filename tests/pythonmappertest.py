@@ -175,6 +175,19 @@ class PythonMapperTest(unittest.TestCase):
             33, paramsStore)
 
 
+    def testPythonMapperFinds_PyModule_GetDict(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyModule_GetDict(self, modulePtr):
+                paramsStore.append((modulePtr,))
+                return IntPtr(33)
+
+        self.assertDispatches(
+            MyPM, "PyModule_GetDict",
+            (IntPtr(943),),
+            IntPtr(33), paramsStore)
+
+
     def testPythonMapperFinds_PyString_FromString(self):
         paramsStore = []
         class MyPM(PythonMapper):
@@ -224,6 +237,19 @@ class PythonMapperTest(unittest.TestCase):
             MyPM, "PyErr_SetString",
             (IntPtr(98765), "and in the darkness bind them"),
             None, paramsStore)
+
+
+    def testPythonMapperFinds_PyErr_Occurred(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyErr_Occurred(self):
+                paramsStore.append(tuple())
+                return IntPtr(123)
+
+        self.assertDispatches(
+            MyPM, "PyErr_Occurred",
+            tuple(),
+            IntPtr(123), paramsStore)
 
 
     def testPythonMapperFinds_PyType_GenericNew(self):
