@@ -68,21 +68,27 @@ class FunctionalityTest(unittest.TestCase):
             sr.Dispose()
 
 
-    def assertWorksWithBZ2(self, testCode):
+    def assertWorksWithModule(self, path, name, testCode):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
         sr = StubReference(os.path.join("build", "python25.dll"))
         try:
             sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
             pi = PydImporter()
-            pi.Load("C:\\Python25\\Dlls\\bz2.pyd")
+            pi.Load(path)
             try:
-                engine.Execute("import bz2")
+                engine.Execute("import " + name)
                 engine.Execute(testCode)
             finally:
                 pi.Dispose()
         finally:
             sr.Dispose()
+        
+
+
+    def assertWorksWithBZ2(self, testCode):
+        self.assertWorksWithModule("C:\\Python25\\Dlls\\bz2.pyd", "bz2", testCode)
+            
 
 
     def testCanCreateIronPythonBZ2ModuleWithMethodsAndDocstrings(self):
@@ -166,6 +172,17 @@ class FunctionalityTest(unittest.TestCase):
             finally:
                 f.close()
             """) % (testPath, bz2_test_text)
+        )
+
+
+    def assertWorksWithMultiarray(self, testCode):
+        self.assertWorksWithModule("C:\\Python25\\Lib\\site-packages\\numpy\\core\\multiarray.pyd", "multiarray", testCode)
+
+
+    def testCanImportMultiarray(self):
+        self.assertWorksWithMultiarray(dedent("""
+            dir(multiarray)
+            """)
         )
 
 
