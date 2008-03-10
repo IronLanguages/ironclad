@@ -29,6 +29,7 @@ class GeneratePythonMapperTest(unittest.TestCase):
 
         os.chdir(testSrcDir)
         try:
+            write("allFunctions", ALL_FUNCTIONS)
             write("pythonMapperDataItems", DATA_ITEMS)
             write("pythonMapperDataPtrItems", DATA_PTR_ITEMS)
             write("Py_InitModule4.pmdi", PY_INITMODULE4)
@@ -53,6 +54,13 @@ class GeneratePythonMapperTest(unittest.TestCase):
         finally:
             os.chdir(origCwd)
 
+
+ALL_FUNCTIONS = """
+Py_InitModule4
+Some_NotImplemented_Function
+PyModule_AddObject
+SomeOther_NotImplemented_Function
+"""
 
 PY_INITMODULE4 = """
 IntPtr
@@ -90,6 +98,9 @@ namespace Ironclad
     {
         protected Dictionary<string, Delegate> dgtMap = new Dictionary<string, Delegate>();
         private Dictionary<string, IntPtr> dataMap = new Dictionary<string, IntPtr>();
+    
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void CPython_null_Delegate();
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int PyModule_AddObject_Delegate(IntPtr module, string name, IntPtr item);
@@ -103,6 +114,16 @@ namespace Ironclad
         public virtual IntPtr Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
         {
             return IntPtr.Zero;
+        }
+
+        public void Some_NotImplemented_Function()
+        {
+            throw new NotImplementedException("called Some_NotImplemented_Function -- stack is probably corrupt now");
+        }
+
+        public void SomeOther_NotImplemented_Function()
+        {
+            throw new NotImplementedException("called SomeOther_NotImplemented_Function -- stack is probably corrupt now");
         }
 
         public virtual IntPtr Make_PyExc_SystemError() { return IntPtr.Zero; }
@@ -137,6 +158,12 @@ namespace Ironclad
                     break;
                 case "Py_InitModule4":
                     this.dgtMap[name] = new Py_InitModule4_Delegate(this.Py_InitModule4);
+                    break;
+                case "Some_NotImplemented_Function":
+                    this.dgtMap[name] = new CPython_null_Delegate(this.Some_NotImplemented_Function);
+                    break;
+                case "SomeOther_NotImplemented_Function":
+                    this.dgtMap[name] = new CPython_null_Delegate(this.SomeOther_NotImplemented_Function);
                     break;
                 case "PyExc_SystemError":
                     this.dataMap[name] = this.Make_PyExc_SystemError();

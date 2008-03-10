@@ -9,20 +9,30 @@ def read_interesting_lines(name):
         f.close()
 
 def run():
+    not_implemented_methods_set = set(read_interesting_lines("allFunctions"))
     method_files = [f for f in os.listdir(".") if f.endswith(DELEGATE_EXT)]
 
     methods = []
     for f in method_files:
         return_type, arglist, code = read_interesting_lines(f)
+        symbol = f[:-len(DELEGATE_EXT)]
+        not_implemented_methods_set.remove(symbol)
         methods.append({
-            "symbol": f[:-len(DELEGATE_EXT)],
+            "symbol": symbol,
             "return_type": return_type,
             "arglist": arglist,
             "code": code
         })
-
-    methods_code = "\n\n".join([METHOD_TEMPLATE % x for x in methods])
-    methods_switch = "\n".join([METHOD_CASE % x for x in methods])
+        
+    not_implemented_methods = [{"symbol": s} for s in not_implemented_methods_set]
+    
+    methods_code_list = [METHOD_TEMPLATE % x for x in methods]
+    methods_code_list.extend([NOT_IMPL_METHOD_TEMPLATE % x for x in not_implemented_methods])
+    methods_code = "\n\n".join(methods_code_list)
+    
+    methods_switch_list = [METHOD_CASE % x for x in methods]
+    methods_switch_list.extend([NOT_IMPL_METHOD_CASE % x for x in not_implemented_methods])
+    methods_switch = "\n".join(methods_switch_list)
 
     ptr_data_items = [dict([("symbol", p)]) for p in read_interesting_lines("pythonMapperDataPtrItems")]
 
@@ -70,6 +80,9 @@ namespace Ironclad
     {
         protected Dictionary<string, Delegate> dgtMap = new Dictionary<string, Delegate>();
         private Dictionary<string, IntPtr> dataMap = new Dictionary<string, IntPtr>();
+    
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void CPython_null_Delegate();
 
 %s
 
@@ -114,10 +127,21 @@ METHOD_TEMPLATE = """\
         {
             %(code)s;
         }"""
-
+        
+NOT_IMPL_METHOD_TEMPLATE = """\
+        public void %(symbol)s()
+        {
+            throw new NotImplementedException("called %(symbol)s -- stack is probably corrupt now");
+        }"""
+        
 METHOD_CASE = """\
                 case "%(symbol)s":
                     this.dgtMap[name] = new %(symbol)s_Delegate(this.%(symbol)s);
+                    break;"""
+                    
+NOT_IMPL_METHOD_CASE = """\
+                case "%(symbol)s":
+                    this.dgtMap[name] = new CPython_null_Delegate(this.%(symbol)s);
                     break;"""
 
 PTR_DATA_ITEM_TEMPLATE = """\
