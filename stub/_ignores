@@ -18,6 +18,7 @@ PyArg_UnpackTuple
 _PyArg_NoKeywords
 
 PyObject_CallFunction
+PyObject_CallMethod
 
 _PyParser_TokenNames
 _Py_SwappedOp

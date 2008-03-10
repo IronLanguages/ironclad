@@ -3,6 +3,7 @@ import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
+from tests.utils.memory import CreateTypes
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -185,6 +186,92 @@ class Python25MapperTest(unittest.TestCase):
         finally:
             mapper.DecRef(tempObject1)
             mapper.DecRef(tempObject2)
+    
+    
+class Python25Mapper_PyObject_Test(unittest.TestCase):
+    
+    def testPyObject_Call(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        
+        kwargsPtr = IntPtr.Zero
+        deallocTypes = CreateTypes(mapper)
+        try:
+            kallablePtr = mapper.Store(lambda x: x * 2)
+            argsPtr = mapper.Store((4,))
+            resultPtr = mapper.PyObject_Call(kallablePtr, argsPtr, kwargsPtr)
+            try:
+                self.assertEquals(mapper.Retrieve(resultPtr), 8, "didn't call")
+            finally:
+                mapper.DecRef(kallablePtr)
+                mapper.DecRef(argsPtr)
+                mapper.DecRef(resultPtr)
+        finally:
+            deallocTypes()
+
+
+    def testPyCallable_Check(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        callables = map(mapper.Store, [float, len, lambda: None])
+        notCallables = map(mapper.Store, ["hullo", 33, ])
+        
+        try:
+            for x in callables:
+                self.assertEquals(mapper.PyCallable_Check(x), 1, "reported not callable")
+            for x in notCallables:
+                self.assertEquals(mapper.PyCallable_Check(x), 0, "reported callable")
+        finally:
+            deallocTypes()
+
+
+    def testPyObject_GetAttrString(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        class Thingum(object):
+            def __init__(self, bob):
+                self.bob = bob
+        objPtr = mapper.Store(Thingum("Poe"))
+        try:
+            resultPtr = mapper.PyObject_GetAttrString(objPtr, "bob")
+            try:
+                self.assertEquals(mapper.Retrieve(resultPtr), "Poe", "wrong")
+            finally:
+                mapper.DecRef(resultPtr)
+        finally:
+            mapper.DecRef(objPtr)
+            deallocTypes()
+
+
+    def testPyObject_GetAttrStringFailure(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        class Thingum(object):
+            def __init__(self, bob):
+                self.bob = bob
+        objPtr = mapper.Store(Thingum("Poe"))
+        try:
+            resultPtr = mapper.PyObject_GetAttrString(objPtr, "ben")
+            self.assertEquals(resultPtr, IntPtr.Zero, "wrong")
+            self.assertNotEquals(mapper.LastException, None, "failed to set exception")
+            def Raise():
+                raise mapper.LastException
+            try:
+                Raise()
+            except NameError, e:
+                self.assertEquals(e.msg, "ben", "bad message")
+            else:
+                self.fail("wrong exception")
+        finally:
+            mapper.DecRef(objPtr)
+            deallocTypes()
+        
 
 
 
@@ -228,6 +315,7 @@ class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):
 
 suite = makesuite(
     Python25MapperTest,
+    Python25Mapper_PyObject_Test,
     Python25Mapper_PyInt_FromLong_Test,
     Python25Mapper_PyInt_FromSsize_t_Test,
     Python25Mapper_PyFloat_FromDouble_Test,

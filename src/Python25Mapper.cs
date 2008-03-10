@@ -4,8 +4,10 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 
 using IronPython.Hosting;
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Calls;
+using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
 
 using Ironclad.Structs;
@@ -273,6 +275,17 @@ namespace Ironclad
             return (PythonModule)info.GetValue(eModule, null);
         }
         
+        
+        public override int
+        PyCallable_Check(IntPtr objPtr)
+        {
+            if (Builtin.Callable(this.Retrieve(objPtr)))
+            {
+                return 1;
+            }
+            return 0;
+        }
+        
         public override IntPtr
         PyObject_Call(IntPtr objPtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
@@ -284,8 +297,24 @@ namespace Ironclad
             object[] argsArray = new object[args.Count];
             args.CopyTo(argsArray, 0);
             
-            return this.Store(Ops.CallWithContext(
-                context, obj, argsArray));
+            object result = Ops.CallWithContext(
+                context, obj, argsArray);
+            return this.Store(result);
+        }
+        
+        public override IntPtr
+        PyObject_GetAttrString(IntPtr objPtr, string name)
+        {
+            object obj = this.Retrieve(objPtr);
+            object attr = null;
+            ICallerContext context = this.GetPythonModule(
+                this.engine.DefaultModule);
+            if (Ops.TryGetAttr(context, obj, SymbolTable.StringToId(name), out attr))
+            {
+                return this.Store(attr);
+            }
+            this.LastException = new PythonNameErrorException(name);
+            return IntPtr.Zero;
         }
         
         

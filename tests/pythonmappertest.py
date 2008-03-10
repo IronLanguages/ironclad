@@ -458,6 +458,32 @@ class PythonMapperTest(unittest.TestCase):
             IntPtr(999), paramsStore)
 
 
+    def testPythonMapperFinds_PyObject_GetAttrString(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyObject_GetAttrString(self, obj, name):
+                paramsStore.append((obj, name))
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyObject_GetAttrString",
+            (IntPtr(111), "harold"),
+            IntPtr(999), paramsStore)
+
+
+    def testPythonMapperFinds_PyCallable_Check(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyCallable_Check(self, obj):
+                paramsStore.append((obj,))
+                return 0
+
+        self.assertDispatches(
+            MyPM, "PyCallable_Check",
+            (IntPtr(111),),
+            0, paramsStore)
+
+
 
 
     def testPythonMapperImplementationOf_PyEval_SaveThread(self):
