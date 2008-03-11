@@ -94,7 +94,7 @@ namespace Ironclad
 {
     public partial class Python25Mapper : PythonMapper
     {
-        public IntPtr Store(object obj)
+        private IntPtr StoreDispatch(object obj)
         {
             string attempt0 = obj as string;
             if (attempt0 != null) { return this.Store(attempt0); }

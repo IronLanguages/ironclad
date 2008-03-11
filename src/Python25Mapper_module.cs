@@ -179,19 +179,19 @@ namespace Ironclad
                     tp_initFP, typeof(CPython_initproc_Delegate));
             DynamicType.SetAttrMethod(klass, "_tp_initDgt", tp_initDgt);
             
-            this.ptrmap[typePtr] = klass;
+            this.StoreUnmanagedData(typePtr, klass);
         }
         
         
         public override int 
         PyModule_AddObject(IntPtr modulePtr, string name, IntPtr itemPtr)
         {
-            if (this.RefCount(modulePtr) == 0)
+            if (!this.ptrmap.ContainsKey(modulePtr))
             {
                 return -1;
             }
             EngineModule module = (EngineModule)this.Retrieve(modulePtr);
-            if (this.RefCount(itemPtr) > 0)
+            if (this.ptrmap.ContainsKey(itemPtr))
             {
                 module.Globals[name] = this.Retrieve(itemPtr);
                 this.DecRef(itemPtr);

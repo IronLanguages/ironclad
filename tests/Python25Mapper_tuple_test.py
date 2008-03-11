@@ -1,7 +1,7 @@
 
 import unittest
 from tests.utils.allocators import GetAllocatingTestAllocator
-from tests.utils.memory import OffsetPtr
+from tests.utils.memory import CreateTypes, OffsetPtr
 from tests.utils.runtest import makesuite, run
 
 from System import GC, IntPtr
@@ -32,6 +32,7 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
                 dataPtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_item"))
                 itemPtrs = []
                 for i in range(length):
+                    self.assertEquals(CPyMarshal.ReadPtr(dataPtr), IntPtr.Zero, "item memory not zeroed")
                     itemPtr = mapper.Store(i + 100)
                     CPyMarshal.WritePtr(dataPtr, itemPtr)
                     itemPtrs.append(itemPtr)
@@ -39,7 +40,12 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
                     
                 immutableTuple = mapper.Retrieve(tuplePtr)
                 self.assertEquals(immutableTuple, tuple(i + 100 for i in range(length)), "broken")
+                
+                tuplePtr2 = mapper.Store(immutableTuple)
+                self.assertEquals(tuplePtr2, tuplePtr, "didn't realise already had this object stored")
+                self.assertEquals(mapper.RefCount(tuplePtr), 2, "didn't incref")
             finally:
+                mapper.DecRef(tuplePtr)
                 mapper.DecRef(tuplePtr)
         finally:
             Marshal.FreeHGlobal(typeBlock)
@@ -48,6 +54,17 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
     def testPyTuple_New(self):
         self.assertPyTuple_New_Works(1)
         self.assertPyTuple_New_Works(3)
+
+
+    def testCanSafelyFreeUninitialisedTuple(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        try:
+            markedPtr = mapper.PyTuple_New(2)
+            mapper.DecRef(markedPtr)
+        finally:
+            deallocTypes()
 
 
     def testPyTupleTypeField_tp_dealloc(self):
@@ -130,7 +147,7 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
             
             for itemPtr in itemPtrs:
                 self.assertEquals(itemPtr in frees, True, "did not decref item")
-                self.assertEquals(mapper.RefCount(itemPtr), 0, "did not decref item")
+                self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
             self.assertEquals(calls, [tuplePtr], "did not call type's free function")
             mapper.Free(tuplePtr)
         finally:
@@ -145,7 +162,8 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
             mapper.SetData("PyTuple_Type", typeBlock)
-            tuplePtr = mapper.Store((0, 1, 2))
+            theTuple = (0, 1, 2)
+            tuplePtr = mapper.Store(theTuple)
             try:
                 ob_typePtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_type"))
                 self.assertEquals(CPyMarshal.ReadPtr(ob_typePtr), typeBlock, "wrong type")
@@ -156,6 +174,9 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
                     self.assertEquals(item, i, "did not store data")
                     dataPtr = OffsetPtr(dataPtr, CPyMarshal.PtrSize)
                 
+                tuplePtr2 = mapper.Store(theTuple)
+                self.assertEquals(tuplePtr2, tuplePtr, "didn't realise already had this tuple")
+                self.assertEquals(mapper.RefCount(tuplePtr), 2, "didn't incref")
             finally:
                 mapper.DecRef(tuplePtr)
         finally:

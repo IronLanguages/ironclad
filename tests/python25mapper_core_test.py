@@ -3,11 +3,11 @@ import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
-from tests.utils.memory import CreateTypes
+from tests.utils.memory import CreateTypes, OffsetPtr
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Mapper
+from Ironclad import BadRefCountException, CPyMarshal, CPython_destructor_Delegate, Python25Mapper, UnmanagedDataMarker
 from Ironclad.Structs import PyObject, PyTypeObject
 from IronPython.Hosting import PythonEngine
 
@@ -37,8 +37,73 @@ class Python25MapperTest(unittest.TestCase):
         self.assertEquals(frees, [], "unexpected deallocations")
         mapper.Free(ptr)
         self.assertEquals(frees, [ptr], "unexpected deallocations")
+        self.assertRaises(KeyError, lambda: mapper.RefCount(ptr))
         self.assertRaises(KeyError, lambda: mapper.Retrieve(ptr))
         self.assertRaises(KeyError, lambda: mapper.Free(ptr))
+
+
+    def testCanFreeWithRefCount0(self):
+        frees = []
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine, GetAllocatingTestAllocator([], frees))
+        
+        objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        CPyMarshal.WriteInt(OffsetPtr(objPtr, Marshal.OffsetOf(PyObject, "ob_refcnt")), 0)
+        mapper.StoreUnmanagedData(objPtr, object())
+        mapper.Free(objPtr)
+        self.assertEquals(frees, [objPtr], "didn't actually release memory")
+        
+
+    def testStoreSameObjectIncRefsOriginal(self):
+        frees = []
+        allocs = []
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, frees))
+        
+        obj1 = object()
+        result1 = mapper.Store(obj1)
+        result2 = mapper.Store(obj1)
+        
+        self.assertEquals(allocs, [(result1, Marshal.SizeOf(PyObject))], "unexpected result")
+        self.assertEquals(result1, result2, "did not return same ptr")
+        self.assertEquals(mapper.RefCount(result1), 2, "did not incref")
+        
+        mapper.DecRef(result1)
+        mapper.DecRef(result1)
+        
+        self.assertEquals(frees, [result1], "did not free memory")
+        
+        result3 = mapper.Store(obj1)
+        self.assertEquals(allocs, 
+                          [(result1, Marshal.SizeOf(PyObject)), (result3, Marshal.SizeOf(PyObject))], 
+                          "unexpected result -- failed to clear reverse mapping?")
+        mapper.DecRef(result3)
+        
+
+    def testStoreEqualObjectStoresSeparately(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        
+        result1 = mapper.Store([1, 2, 3])
+        result2 = mapper.Store([1, 2, 3])
+        
+        self.assertNotEquals(result1, result2, "confused seoparate objects")
+        self.assertEquals(mapper.RefCount(result1), 1, "wrong")
+        self.assertEquals(mapper.RefCount(result2), 1, "wrong")
+        
+        mapper.DecRef(result1)
+        mapper.DecRef(result2)
+
+
+    def testDecRefObjectWithZeroRefCountFails(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        
+        objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        CPyMarshal.WriteInt(OffsetPtr(objPtr, Marshal.OffsetOf(PyObject, "ob_refcnt")), 0)
+        mapper.StoreUnmanagedData(objPtr, object())
+        self.assertRaises(BadRefCountException, lambda: mapper.DecRef(objPtr))
+        Marshal.FreeHGlobal(objPtr)
 
 
     def testFinalDecRefOfObjectWithTypeCalls_tp_dealloc(self):
@@ -93,9 +158,19 @@ class Python25MapperTest(unittest.TestCase):
         mapper = Python25Mapper(engine)
 
         o = object()
-        mapper.StoreUnmanagedData(IntPtr(123), o)
+        ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        mapper.StoreUnmanagedData(ptr, o)
 
-        self.assertEquals(mapper.Retrieve(IntPtr(123)), o, "object not stored")
+        self.assertEquals(mapper.Retrieve(ptr), o, "object not stored")
+        self.assertEquals(mapper.Store(o), ptr, "object not reverse-mapped")
+
+
+    def testCannotStoreUnmanagedDataMarker(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        
+        self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyStringObject))
+        self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyTupleObject))
 
 
     def testRefCountIncRefDecRef(self):
@@ -117,8 +192,7 @@ class Python25MapperTest(unittest.TestCase):
         self.assertEquals(frees, [ptr], "unexpected deallocations")
         self.assertRaises(KeyError, lambda: mapper.Retrieve(ptr))
         self.assertRaises(KeyError, lambda: mapper.Free(ptr))
-
-        self.assertEquals(mapper.RefCount(IntPtr(1)), 0, "unknown objects' should be 0")
+        self.assertRaises(KeyError, lambda: mapper.RefCount(IntPtr(1)))
 
 
     def testNullPointers(self):
@@ -130,8 +204,7 @@ class Python25MapperTest(unittest.TestCase):
         self.assertRaises(KeyError, lambda: mapper.DecRef(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.Retrieve(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.Free(IntPtr.Zero))
-
-        self.assertEquals(mapper.RefCount(IntPtr.Zero), 0, "wrong")
+        self.assertRaises(KeyError, lambda: mapper.RefCount(IntPtr.Zero))
 
 
     def testRememberAndFreeTempPtrs(self):
@@ -297,7 +370,6 @@ class Python25Mapper_PyInt_FromSsize_t_Test(unittest.TestCase):
             ptr = mapper.PyInt_FromSsize_t(value)
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
             mapper.DecRef(ptr)
-
 
 
 class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):

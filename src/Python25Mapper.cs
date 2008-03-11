@@ -46,11 +46,19 @@ namespace Ironclad
         PyTupleObject,
     }
 
+    public class BadRefCountException : Exception
+    {
+        public BadRefCountException(string message): base(message)
+        {
+        }
+    }
+
 
     public partial class Python25Mapper : PythonMapper
     {
         private PythonEngine engine;
         private Dictionary<IntPtr, object> ptrmap;
+        private Dictionary<object, IntPtr> objmap;
         private List<IntPtr> tempPtrs;
         private List<IntPtr> tempObjects;
         private IAllocator allocator;
@@ -65,19 +73,37 @@ namespace Ironclad
             this.engine = eng;
             this.allocator = alloc;
             this.ptrmap = new Dictionary<IntPtr, object>();
+            this.objmap = new Dictionary<object, IntPtr>();
             this.tempPtrs = new List<IntPtr>();
             this.tempObjects = new List<IntPtr>();
             this._lastException = null;
         }
         
-        private IntPtr 
+        public IntPtr 
+        Store(object obj)
+        {
+            if (obj.GetType() == typeof(UnmanagedDataMarker))
+            {
+                throw Ops.TypeError("UnmanagedDataMarkers should not be stored by clients.");
+            }
+            if (this.objmap.ContainsKey(obj))
+            {
+                IntPtr ptr = this.objmap[obj];
+                this.IncRef(ptr);
+                return ptr;
+            }
+            return this.StoreDispatch(obj);
+        }
+        
+        
+        private IntPtr
         StoreObject(object obj)
         {
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
             CPyMarshal.WriteInt(ptr, 1);
             IntPtr typePtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyObject), "ob_type"));
             CPyMarshal.WritePtr(typePtr, IntPtr.Zero);
-            this.ptrmap[ptr] = obj;
+            this.StoreUnmanagedData(ptr, obj);
             return ptr;
         }
         
@@ -85,6 +111,7 @@ namespace Ironclad
         StoreUnmanagedData(IntPtr ptr, object obj)
         {
             this.ptrmap[ptr] = obj;
+            this.objmap[obj] = ptr;
         }
         
         private static char
@@ -117,7 +144,7 @@ namespace Ironclad
                         Marshal.Copy(buffer, bytes, 0, length);
                         char[] chars = Array.ConvertAll<byte, char>(
                             bytes, new Converter<byte, char>(CharFromByte));
-                        this.ptrmap[ptr] = new string(chars);
+                        this.StoreUnmanagedData(ptr, new string(chars));
                         break;
                     
                     case UnmanagedDataMarker.PyTupleObject:
@@ -132,7 +159,7 @@ namespace Ironclad
                             items[i] = this.Retrieve(itemPtr);
                             itemAddressPtr = CPyMarshal.Offset(itemAddressPtr, CPyMarshal.PtrSize);
                         }
-                        this.ptrmap[ptr] = Tuple.MakeTuple(items);
+                        this.StoreUnmanagedData(ptr, Tuple.MakeTuple(items));
                         break;
                     
                     default:
@@ -147,11 +174,13 @@ namespace Ironclad
         {
             if (this.ptrmap.ContainsKey(ptr))
             {
-                return CPyMarshal.ReadInt(ptr);
+                int result = CPyMarshal.ReadInt(ptr);
+                return result;
             }
             else
             {
-                return 0;
+                throw new KeyNotFoundException(String.Format(
+                    "RefCount: missing key in pointer map: {0}", ptr));
             }
         }
         
@@ -165,7 +194,8 @@ namespace Ironclad
             }
             else
             {
-                throw new KeyNotFoundException("Missing key in pointer map");
+                throw new KeyNotFoundException(String.Format(
+                    "IncRef: missing key in pointer map: {0}", ptr));
             }
         }
         
@@ -174,7 +204,12 @@ namespace Ironclad
         {
             if (this.ptrmap.ContainsKey(ptr))
             {
-                int count = CPyMarshal.ReadInt(ptr);
+                int count = this.RefCount(ptr);
+                if (count == 0)
+                {
+                    throw new BadRefCountException("Trying to DecRef an object with ref count 0");
+                }
+                
                 if (count == 1)
                 {
                     IntPtr typePtrPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyObject), "ob_type"));
@@ -200,22 +235,17 @@ namespace Ironclad
             }
             else
             {
-                throw new KeyNotFoundException("Missing key in pointer map");
+                throw new KeyNotFoundException(String.Format(
+                    "DecRef: missing key in pointer map: {0}", ptr));
             }
         }
         
         public virtual void 
         Free(IntPtr ptr)
         {
-            if (this.ptrmap.ContainsKey(ptr))
-            {
-                this.ptrmap.Remove(ptr);
-                this.allocator.Free(ptr);
-            }
-            else
-            {
-                throw new KeyNotFoundException("Missing key in pointer map");
-            }
+            this.objmap.Remove(this.ptrmap[ptr]);
+            this.ptrmap.Remove(ptr);
+            this.allocator.Free(ptr);
         }
 
         public void RememberTempPtr(IntPtr ptr)
