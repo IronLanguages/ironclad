@@ -34,7 +34,7 @@ class Python25MapperDictTest(unittest.TestCase):
             self.assertEquals(dictObj, {}, "retrieved unexpected value")
             
             mapper.DecRef(dictPtr)
-            self.assertEquals(mapper.RefCount(dictPtr), 0, "did not dump reference")
+            self.assertRaises(KeyError, lambda: mapper.RefCount(dictPtr))
             self.assertEquals(frees, [dictPtr], "did not release memory")
         finally:
             deallocTypes()
@@ -63,7 +63,7 @@ class Python25MapperDictTest(unittest.TestCase):
             self.assertEquals(mapper.Retrieve(itemPtr), 12345, "failed to get item")
             self.assertEquals(mapper.RefCount(itemPtr), 1, "something is wrong")
             mapper.FreeTemps()
-            self.assertEquals(mapper.RefCount(itemPtr), 0, "not stored as temp")
+            self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
         finally:
             mapper.DecRef(dictPtr)
             deallocTypes()

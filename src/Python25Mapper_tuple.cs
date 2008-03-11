@@ -32,9 +32,13 @@ namespace Ironclad
             
             int baseSize = Marshal.SizeOf(typeof(PyTupleObject));
             int extraSize = CPyMarshal.PtrSize * (size - 1);
-            IntPtr ptr = this.allocator.Alloc(baseSize + extraSize);
-            Marshal.StructureToPtr(tuple, ptr, false);
-            return ptr;
+            IntPtr tuplePtr = this.allocator.Alloc(baseSize + extraSize);
+            Marshal.StructureToPtr(tuple, tuplePtr, false);
+            
+            IntPtr itemsPtr = CPyMarshal.Offset(
+                tuplePtr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
+            CPyMarshal.Zero(itemsPtr, CPyMarshal.PtrSize * size);
+            return tuplePtr;
         }
         
         public override IntPtr
@@ -46,7 +50,7 @@ namespace Ironclad
         }
         
         
-        public IntPtr
+        private IntPtr
         Store(Tuple tuple)
         {
             int length = tuple.GetLength();
@@ -75,7 +79,10 @@ namespace Ironclad
                 IntPtr itemPtr = CPyMarshal.ReadPtr(
                     CPyMarshal.Offset(
                         itemsPtr, i * CPyMarshal.PtrSize));
-                this.DecRef(itemPtr);
+                if (itemPtr != IntPtr.Zero)
+                {
+                    this.DecRef(itemPtr);
+                }
             }
             IntPtr freeFPPtr = CPyMarshal.Offset(
                 this.PyTuple_Type, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));

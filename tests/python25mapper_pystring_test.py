@@ -112,7 +112,12 @@ class Python25Mapper_PyString_FromStringAndSize_Test(PyString_TestCase):
             testBytes = self.byteArrayFromString(testString)
             self.fillStringDataWithBytes(strPtr, testBytes)
 
-            self.assertEquals(mapper.Retrieve(strPtr), testString, "failed to read string data")
+            resultStr = mapper.Retrieve(strPtr)
+            self.assertEquals(resultStr, testString, "failed to read string data")
+            
+            strPtr2 = mapper.Store(resultStr)
+            self.assertEquals(strPtr2, strPtr, "did not remember already had this string")
+            self.assertEquals(mapper.RefCount(strPtr), 2, "did not incref on store")
         finally:
             Marshal.FreeHGlobal(strPtr)
             deallocTypes()
@@ -229,7 +234,7 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
             self.fillStringDataWithBytes(newStrPtr, testBytes)
 
             self.assertEquals(mapper.Retrieve(newStrPtr), testString, "failed to read string data")
-            self.assertEquals(mapper.RefCount(oldStrPtr), 0, "failed to unmap old string")
+            self.assertRaises(KeyError, lambda: mapper.RefCount(oldStrPtr))
         finally:
             if oldStrPtr not in frees:
                 Marshal.FreeHGlobal(oldStrPtr)
@@ -237,6 +242,7 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
             if newStrPtr != IntPtr.Zero and newStrPtr not in frees:
                 Marshal.FreeHGlobal(newStrPtr)
             deallocTypes()
+
 
 class PyStringStoreTest(PyString_TestCase):
     
@@ -261,7 +267,12 @@ class PyStringStoreTest(PyString_TestCase):
                 self.assertStringObjectHasLength(strPtr, testLength)
                 self.assertStringObjectHasDataBytes(strPtr, testBytes)
                 self.assertEquals(mapper.Retrieve(strPtr), testString, "failed to read string data")
+                
+                strPtr2 = mapper.Store(testString)
+                self.assertEquals(strPtr2, strPtr, "did not remember already had this string")
+                self.assertEquals(mapper.RefCount(strPtr), 2, "did not incref on store")
             finally:
+                mapper.DecRef(strPtr)
                 mapper.DecRef(strPtr)
         finally:
             Marshal.FreeHGlobal(typeBlock)

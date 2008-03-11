@@ -54,7 +54,7 @@ EXCEPTION_TEMPLATE = """\
         }"""
 
 STORE_METHOD_TEMPLATE = """\
-        public IntPtr Store(object obj)
+        private IntPtr StoreDispatch(object obj)
         {
 %s
             return this.StoreObject(obj);

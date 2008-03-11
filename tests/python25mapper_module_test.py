@@ -462,12 +462,10 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
         result = mapper.PyModule_AddObject(modulePtr, "testObject", testPtr)
         try:
             self.assertEquals(result, 0, "bad value for success")
-            self.assertEquals(mapper.RefCount(testPtr), 0, "did not decref")
+            self.assertRaises(KeyError, lambda: mapper.RefCount(testPtr))
             self.assertEquals(module.Globals["testObject"], testObject, "did not store real object")
         finally:
             mapper.DecRef(modulePtr)
-            if mapper.RefCount(testPtr):
-                mapper.DecRef(testPtr)
 
 
     def assertModuleAddsTypeWithData(self, tp_name, itemName, class__module__, class__name__):
@@ -541,9 +539,9 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
 
         calls = []
         def new(typePtr, argPtr, kwargPtr):
-            mapper.IncRef(argPtr)
-            mapper.IncRef(kwargPtr)
             calls.append(("__new__", typePtr, argPtr, kwargPtr))
+            self.assertEquals(mapper.Retrieve(argPtr), (1, 'two'), "new got wrong args")
+            self.assertEquals(mapper.Retrieve(kwargPtr), {'three': 4}, "new got wrong kwargs")
             if newFails:
                 mapper.LastException = BorkedException()
                 return IntPtr.Zero
@@ -552,9 +550,9 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
         newFP = Marshal.GetFunctionPointerForDelegate(newDgt)
 
         def init(selfPtr, argPtr, kwargPtr):
-            mapper.IncRef(argPtr)
-            mapper.IncRef(kwargPtr)
             calls.append(("__init__", selfPtr, argPtr, kwargPtr))
+            self.assertEquals(mapper.Retrieve(argPtr), (1, 'two'), "init got wrong args")
+            self.assertEquals(mapper.Retrieve(kwargPtr), {'three': 4}, "init got wrong kwargs")
             if initFails:
                 mapper.LastException = BorkedException()
                 mapper.IncRef(selfPtr)
@@ -580,42 +578,32 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
                 Instantiate()
 
             def TestArgPtrs(argPtr, kwargPtr):
-                self.assertEquals(mapper.RefCount(argPtr), 1, "bad reference count")
-                self.assertEquals(mapper.RefCount(kwargPtr), 1, "bad reference count")
-                self.assertEquals(mapper.Retrieve(argPtr), (1, 'two'), "args not stored")
-                self.assertEquals(mapper.Retrieve(kwargPtr), {'three': 4}, "kwargs not stored")
+                self.assertRaises(KeyError, lambda: mapper.RefCount(argPtr))
+                self.assertRaises(KeyError, lambda: mapper.RefCount(kwargPtr))
                 self.assertEquals(mapper.tempPtrsFreed, True, "failed to clean up")
 
             methodName, newClsPtr, newArgPtr, newKwargPtr = calls[0]
-            try:
-                if not newFails:
-                    self.assertEquals(methodName, "__new__", "called wrong method")
-                    self.assertEquals(newClsPtr, typePtr, "instantiated wrong class")
-                    TestArgPtrs(newArgPtr, newKwargPtr)
+            if not newFails:
+                self.assertEquals(methodName, "__new__", "called wrong method")
+                self.assertEquals(newClsPtr, typePtr, "instantiated wrong class")
+                TestArgPtrs(newArgPtr, newKwargPtr)
 
-                    # note: for now, I'm comfortable passing 2 copies of the
-                    # args and kwargs to the 2 methods; this may change in future
-                    methodName, initSelfPtr, initArgPtr, initKwargPtr = calls[1]
-                    try:
-                        if not initFails:
-                            self.assertEquals(methodName, "__init__", "called wrong method")
-                            instancePtr = module.Globals['t']._instancePtr
-                            self.assertEquals(instancePtr, newPtr,
-                                              "instance not associated with return value from _tp_new")
-                            self.assertEquals(initSelfPtr, instancePtr, "initialised wrong object")
-                            TestArgPtrs(initArgPtr, initKwargPtr)
-                        else:
-                            # if an __init__ fails immediately after a __new__, I believe this is correct.
-                            # HOWEVER, if a subsequent __init__ fails, just about anything you might do
-                            # with the object could well crash horribly.
-                            self.assertEquals(mapper.RefCount(initSelfPtr), 1,
-                                              "failed to decref instance pointer on failed __init__")
-                    finally:
-                        mapper.DecRef(initArgPtr)
-                        mapper.DecRef(initKwargPtr)
-            finally:
-                mapper.DecRef(newArgPtr)
-                mapper.DecRef(newKwargPtr)
+                # note: for now, I'm comfortable passing 2 copies of the
+                # args and kwargs to the 2 methods; this may change in future
+                methodName, initSelfPtr, initArgPtr, initKwargPtr = calls[1]
+                if not initFails:
+                    self.assertEquals(methodName, "__init__", "called wrong method")
+                    instancePtr = module.Globals['t']._instancePtr
+                    self.assertEquals(instancePtr, newPtr,
+                                      "instance not associated with return value from _tp_new")
+                    self.assertEquals(initSelfPtr, instancePtr, "initialised wrong object")
+                    TestArgPtrs(initArgPtr, initKwargPtr)
+                else:
+                    # if an __init__ fails immediately after a __new__, I believe this is correct.
+                    # HOWEVER, if a subsequent __init__ fails, just about anything you might do
+                    # with the object could well crash horribly.
+                    self.assertEquals(mapper.RefCount(initSelfPtr), 1,
+                                      "failed to decref instance pointer on failed __init__")
         finally:
             deallocType()
             deallocTypes()

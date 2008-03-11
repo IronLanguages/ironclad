@@ -38,11 +38,11 @@ namespace Ironclad
             
             char[] chars = Array.ConvertAll<byte, char>(
                 bytes, new Converter<byte, char>(CharFromByte));
-            this.ptrmap[strPtr] = new string(chars);
+            this.StoreUnmanagedData(strPtr, new string(chars));
             return strPtr;
         }
         
-        public IntPtr
+        private IntPtr
         Store(string s)
         {
             char[] chars = s.ToCharArray();
