@@ -15,7 +15,7 @@ namespace Ironclad
             return this.Store(new Dict());
         }
         
-        public IntPtr
+        private IntPtr
         Store(Dict dictMgd)
         {
             PyObject dict = new PyObject();

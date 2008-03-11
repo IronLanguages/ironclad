@@ -344,9 +344,40 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
         finally:
             mapper.DecRef(objPtr)
             deallocTypes()
+    
+    
+    
+class Python25Mapper_NoneTest(unittest.TestCase):
+    
+    def testFillNone(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
         
+        nonePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        mapper.Fill__Py_NoneStruct(nonePtr)
+        noneStruct = Marshal.PtrToStructure(nonePtr, PyObject)
+        self.assertEquals(noneStruct.ob_refcnt, 1, "bad refcount")
+        self.assertEquals(noneStruct.ob_type, IntPtr.Zero, "unexpected type")
+        Marshal.FreeHGlobal(nonePtr)
+    
+    
+    def testStoreNone(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        nonePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        mapper.SetData("_Py_NoneStruct", nonePtr)
+        
+        # if the following line fails, we probably have a public Store overload taking something
+        # more specific than 'object', which is therefore called in preference to the 'object'
+        # version of Store. (IronPython None becomes C# null, which is of every type. Sort of.)
+        resultPtr = mapper.Store(None)
+        self.assertEquals(resultPtr, nonePtr, "wrong")
+        self.assertEquals(mapper.RefCount(nonePtr), 2, "did not incref")
+        
+        self.assertEquals(mapper.Retrieve(nonePtr), None, "not mapped properly")
 
-
+        Marshal.FreeHGlobal(nonePtr)
+    
 
 class Python25Mapper_PyInt_FromLong_Test(unittest.TestCase):
     
@@ -388,6 +419,7 @@ class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):
 suite = makesuite(
     Python25MapperTest,
     Python25Mapper_PyObject_Test,
+    Python25Mapper_NoneTest,
     Python25Mapper_PyInt_FromLong_Test,
     Python25Mapper_PyInt_FromSsize_t_Test,
     Python25Mapper_PyFloat_FromDouble_Test,

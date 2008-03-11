@@ -44,6 +44,7 @@ namespace Ironclad
     {
         PyStringObject,
         PyTupleObject,
+        None,
     }
 
     public class BadRefCountException : Exception
@@ -82,9 +83,13 @@ namespace Ironclad
         public IntPtr 
         Store(object obj)
         {
-            if (obj.GetType() == typeof(UnmanagedDataMarker))
+            if (obj != null && obj.GetType() == typeof(UnmanagedDataMarker))
             {
                 throw Ops.TypeError("UnmanagedDataMarkers should not be stored by clients.");
+            }
+            if (obj == null)
+            {
+                obj = UnmanagedDataMarker.None;
             }
             if (this.objmap.ContainsKey(obj))
             {
@@ -135,6 +140,9 @@ namespace Ironclad
                 UnmanagedDataMarker marker = (UnmanagedDataMarker)possibleMarker;
                 switch (marker)
                 {
+                    case UnmanagedDataMarker.None:
+                        return null;
+                    
                     case UnmanagedDataMarker.PyStringObject:
                         IntPtr buffer = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
                         IntPtr lengthPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
@@ -345,6 +353,17 @@ namespace Ironclad
             }
             this.LastException = new PythonNameErrorException(name);
             return IntPtr.Zero;
+        }
+        
+        
+        public override void
+        Fill__Py_NoneStruct(IntPtr address)
+        {
+            PyObject none = new PyObject();
+            none.ob_refcnt = 1;
+            none.ob_type = IntPtr.Zero;
+            Marshal.StructureToPtr(none, address, false);
+            this.StoreUnmanagedData(address, UnmanagedDataMarker.None);
         }
         
         

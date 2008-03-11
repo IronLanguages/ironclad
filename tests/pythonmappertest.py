@@ -6,22 +6,33 @@ from tests.utils.runtest import makesuite, run
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, PythonMapper
-from Ironclad.Structs import PyTypeObject
+from Ironclad.Structs import PyObject, PyTypeObject
 
-testNumber = 1359
-intCount = Marshal.SizeOf(PyTypeObject) / CPyMarshal.IntSize
+TEST_NUMBER = 1359
 
-def WritePyTypeObject(address):
-    for a in range(intCount):
-        ptr = OffsetPtr(address, a * CPyMarshal.IntSize)
-        Marshal.WriteInt32(ptr, testNumber)
+def GetTestWroteBytes(bytes):
+    intCount = bytes / CPyMarshal.IntSize
+    def TestWroteBytes(address):
+        for a in range(intCount):
+            ptr = OffsetPtr(address, a * CPyMarshal.IntSize)
+            data = Marshal.ReadInt32(ptr)
+            if data != TEST_NUMBER:
+                raise AssertionError("write failed")
+    return TestWroteBytes
 
-def TestWrotePyTypeObject(address):
-    for a in range(intCount):
-        ptr = OffsetPtr(address, a * CPyMarshal.IntSize)
-        data = Marshal.ReadInt32(ptr)
-        if data != testNumber:
-            raise AssertionError("write failed")
+def GetWriteBytes(bytes):
+    intCount = bytes / CPyMarshal.IntSize
+    def WriteBytes(address):
+        for a in range(intCount):
+            ptr = OffsetPtr(address, a * CPyMarshal.IntSize)
+            Marshal.WriteInt32(ptr, TEST_NUMBER)
+    return WriteBytes
+
+WritePyTypeObject =  GetWriteBytes(Marshal.SizeOf(PyTypeObject))
+TestWrotePyTypeObject = GetTestWroteBytes(Marshal.SizeOf(PyTypeObject))
+
+WritePyObject = GetWriteBytes(Marshal.SizeOf(PyObject))
+TestWrotePyObject = GetTestWroteBytes(Marshal.SizeOf(PyObject))
 
 
 class PythonMapperTest(unittest.TestCase):
@@ -42,6 +53,13 @@ class PythonMapperTest(unittest.TestCase):
         finally:
             Marshal.FreeHGlobal(dataPtr)
 
+
+    def testFinds_Py_NoneStruct(self):
+        class MyPM(PythonMapper):
+            def Fill__Py_NoneStruct(self, address):
+                WritePyObject(address)
+        self.assertDataSetterSetsAndRemembers(MyPM, "_Py_NoneStruct", Marshal.SizeOf(PyTypeObject), TestWrotePyObject)
+        
 
     def assertFindsType(self, name):
         class MyPM(PythonMapper):
@@ -100,6 +118,7 @@ class PythonMapperTest(unittest.TestCase):
         )
         for _type in _types:
             self.assertFindsType(_type)
+        
 
 
     def assertAddressGetterRemembers(self, mapperSubclass, name, expectedAddress):

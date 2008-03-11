@@ -43,3 +43,23 @@ PyUnicode_Type PyTypeObject
 _PyWeakref_RefType PyTypeObject
 _PyWeakref_ProxyType PyTypeObject
 _PyWeakref_CallableProxyType PyTypeObject
+
+_Py_NoneStruct PyObject
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
