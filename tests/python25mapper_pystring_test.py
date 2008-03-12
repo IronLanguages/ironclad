@@ -67,6 +67,28 @@ class PyString_TestCase(unittest.TestCase):
             self.assertEquals(actual, expected, "failed to copy string data correctly")
 
 
+class PyString_Type_test(unittest.TestCase):
+    
+    def testStringTypeHasDefaultDeallocFreeFunctions(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        freeOffset = Marshal.OffsetOf(PyTypeObject, "tp_free")
+        deallocOffset = Marshal.OffsetOf(PyTypeObject, "tp_dealloc")
+        
+        deallocTypes = CreateTypes(mapper)
+        try:
+            objType = mapper.PyBaseObject_Type
+            strType = mapper.PyString_Type
+            objFree = CPyMarshal.ReadPtr(OffsetPtr(objType, freeOffset))
+            strFree = CPyMarshal.ReadPtr(OffsetPtr(strType, freeOffset))
+            self.assertEquals(objFree, strFree, "wrong tp_free implementation")
+            objDealloc = CPyMarshal.ReadPtr(OffsetPtr(objType, deallocOffset))
+            strDealloc = CPyMarshal.ReadPtr(OffsetPtr(strType, deallocOffset))
+            self.assertEquals(objDealloc, strDealloc, "wrong tp_dealloc implementation")
+        finally:
+            deallocTypes()
+
+
 class Python25Mapper_PyString_FromString_Test(PyString_TestCase):
 
     def testCreatesString(self):
@@ -256,9 +278,8 @@ class PyStringStoreTest(PyString_TestCase):
         testData = self.ptrFromByteArray(testBytes)
         testLength = len(testString)
 
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        deallocTypes = CreateTypes(mapper)
         try:
-            mapper.SetData("PyString_Type", typeBlock)
             strPtr = mapper.Store(testString)
             try:
                 baseSize = Marshal.SizeOf(PyStringObject)
@@ -275,11 +296,12 @@ class PyStringStoreTest(PyString_TestCase):
                 mapper.DecRef(strPtr)
                 mapper.DecRef(strPtr)
         finally:
-            Marshal.FreeHGlobal(typeBlock)
+            deallocTypes()
             
 
 
 suite = makesuite(
+    PyString_Type_test,
     Python25Mapper_PyString_FromString_Test,
     Python25Mapper_PyString_FromStringAndSize_Test,
     Python25Mapper__PyString_Resize_Test,

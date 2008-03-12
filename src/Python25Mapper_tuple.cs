@@ -18,7 +18,7 @@ namespace Ironclad
 
             IntPtr tp_freePtr = CPyMarshal.Offset(
                 address, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
-            CPyMarshal.WritePtr(tp_freePtr, this.GetMethodFP("Free"));
+            CPyMarshal.WritePtr(tp_freePtr, this.GetAddress("PyObject_Free"));
         }
         
         private IntPtr CreateTuple(int size)
@@ -86,8 +86,8 @@ namespace Ironclad
             IntPtr freeFPPtr = CPyMarshal.Offset(
                 this.PyTuple_Type, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
             IntPtr freeFP = CPyMarshal.ReadPtr(freeFPPtr);
-            CPython_destructor_Delegate freeDgt = (CPython_destructor_Delegate)Marshal.GetDelegateForFunctionPointer(
-                freeFP, typeof(CPython_destructor_Delegate));
+            PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)Marshal.GetDelegateForFunctionPointer(
+                freeFP, typeof(PyObject_Free_Delegate));
             freeDgt(tuplePtr);
         }
     }

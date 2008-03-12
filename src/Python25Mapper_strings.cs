@@ -8,6 +8,13 @@ namespace Ironclad
 {
     public partial class Python25Mapper : PythonMapper
     {
+        public override void
+        Fill_PyString_Type(IntPtr address)
+        {
+            this.Fill_PyBaseObject_Type(address);
+        }
+        
+        
         private IntPtr 
         AllocPyString(int length)
         {
@@ -99,7 +106,7 @@ namespace Ironclad
             catch (OutOfMemoryException e)
             {
                 this._lastException = e;
-                this.Free(oldStr);
+                this.PyObject_Free(oldStr);
                 return -1;
             }
             this.ptrmap.Remove(oldStr);

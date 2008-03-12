@@ -496,6 +496,19 @@ class PythonMapperTest(unittest.TestCase):
             IntPtr(999), paramsStore)
 
 
+    def testPythonMapperFinds_PyObject_Free(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyObject_Free(self, obj):
+                paramsStore.append((obj,))
+                
+
+        self.assertDispatches(
+            MyPM, "PyObject_Free",
+            (IntPtr(111),),
+            None, paramsStore)
+
+
     def testPythonMapperFinds_PyCallable_Check(self):
         paramsStore = []
         class MyPM(PythonMapper):

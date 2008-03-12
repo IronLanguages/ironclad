@@ -8,7 +8,7 @@ from System import GC, IntPtr
 from System.Runtime.InteropServices import Marshal
 
 from IronPython.Hosting import PythonEngine
-from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Mapper
+from Ironclad import CPyMarshal, CPython_destructor_Delegate, PythonMapper, Python25Mapper
 from Ironclad.Structs import PyTupleObject, PyTypeObject
 
 class Python25Mapper_Tuple_Test(unittest.TestCase):
@@ -93,7 +93,7 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
     def testPyTupleTypeField_tp_free(self):
         calls = []
         class MyPM(Python25Mapper):
-            def Free(self, tuplePtr):
+            def PyObject_Free(self, tuplePtr):
                 calls.append(tuplePtr)
         
         engine = PythonEngine()
@@ -133,7 +133,7 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
         calls = []
         def CustomFree(ptr):
             calls.append(ptr)
-        freeDgt = CPython_destructor_Delegate(CustomFree)
+        freeDgt = PythonMapper.PyObject_Free_Delegate(CustomFree)
         freeFP = Marshal.GetFunctionPointerForDelegate(freeDgt)
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
@@ -149,7 +149,7 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
                 self.assertEquals(itemPtr in frees, True, "did not decref item")
                 self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
             self.assertEquals(calls, [tuplePtr], "did not call type's free function")
-            mapper.Free(tuplePtr)
+            mapper.PyObject_Free(tuplePtr)
         finally:
             Marshal.FreeHGlobal(typeBlock)
 

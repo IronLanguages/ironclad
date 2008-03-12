@@ -37,11 +37,11 @@ class Python25MapperTest(unittest.TestCase):
             self.assertTrue(obj1 is obj2, "retrieved wrong object")
 
             self.assertEquals(frees, [], "unexpected deallocations")
-            mapper.Free(ptr)
+            mapper.PyObject_Free(ptr)
             self.assertEquals(frees, [ptr], "unexpected deallocations")
             self.assertRaises(KeyError, lambda: mapper.RefCount(ptr))
             self.assertRaises(KeyError, lambda: mapper.Retrieve(ptr))
-            self.assertRaises(KeyError, lambda: mapper.Free(ptr))
+            self.assertRaises(KeyError, lambda: mapper.PyObject_Free(ptr))
         finally:
             deallocTypes()
 
@@ -54,7 +54,7 @@ class Python25MapperTest(unittest.TestCase):
         objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
         CPyMarshal.WriteInt(OffsetPtr(objPtr, Marshal.OffsetOf(PyObject, "ob_refcnt")), 0)
         mapper.StoreUnmanagedData(objPtr, object())
-        mapper.Free(objPtr)
+        mapper.PyObject_Free(objPtr)
         self.assertEquals(frees, [objPtr], "didn't actually release memory")
         
 
@@ -195,7 +195,7 @@ class Python25MapperTest(unittest.TestCase):
         mapper.DecRef(ptr)
         self.assertEquals(frees, [ptr], "unexpected deallocations")
         self.assertRaises(KeyError, lambda: mapper.Retrieve(ptr))
-        self.assertRaises(KeyError, lambda: mapper.Free(ptr))
+        self.assertRaises(KeyError, lambda: mapper.PyObject_Free(ptr))
         self.assertRaises(KeyError, lambda: mapper.RefCount(IntPtr(1)))
 
 
@@ -207,7 +207,7 @@ class Python25MapperTest(unittest.TestCase):
         self.assertRaises(KeyError, lambda: mapper.IncRef(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.DecRef(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.Retrieve(IntPtr.Zero))
-        self.assertRaises(KeyError, lambda: mapper.Free(IntPtr.Zero))
+        self.assertRaises(KeyError, lambda: mapper.PyObject_Free(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.RefCount(IntPtr.Zero))
 
 
@@ -278,7 +278,6 @@ class Python25Mapper_GetMethodFP_Test(unittest.TestCase):
     
     def testMethods(self):
         methods = (
-            "Free",
             "PyBaseObject_Dealloc",
             "PyTuple_Dealloc"
         )
