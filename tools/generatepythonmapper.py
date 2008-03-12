@@ -165,7 +165,12 @@ DATA_ITEM_TEMPLATE = """\
         {
             get
             {
-                return this.dataMap["%(symbol)s"];
+                IntPtr address;
+                if (this.dataMap.TryGetValue("%(symbol)s", out address))
+                {
+                    return address;
+                }
+                return IntPtr.Zero;
             }
         }"""
 
