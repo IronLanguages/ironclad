@@ -234,7 +234,7 @@ namespace Ironclad
                             return;
                         }
                     }
-                    this.Free(ptr);
+                    this.PyObject_Free(ptr);
                 }
                 else
                 {
@@ -248,8 +248,8 @@ namespace Ironclad
             }
         }
         
-        public virtual void 
-        Free(IntPtr ptr)
+        public override void 
+        PyObject_Free(IntPtr ptr)
         {
             this.objmap.Remove(this.ptrmap[ptr]);
             this.ptrmap.Remove(ptr);
@@ -318,9 +318,6 @@ namespace Ironclad
             
             switch (name)
             {
-                case "Free":
-                    this.dgtMap[name] = new CPython_destructor_Delegate(this.Free);
-                    break;
                 case "PyBaseObject_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyBaseObject_Dealloc);
                     break;

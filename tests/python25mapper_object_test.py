@@ -7,8 +7,8 @@ from tests.utils.memory import CreateTypes, OffsetPtr
 from System import GC, IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Mapper
-from Ironclad.Structs import PyTypeObject
+from Ironclad import CPyMarshal, CPython_destructor_Delegate, PythonMapper, Python25Mapper
+from Ironclad.Structs import PyObject, PyTypeObject
 from IronPython.Hosting import PythonEngine
 
     
@@ -99,7 +99,6 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
     
 class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
 
-
     def testPyBaseObject_TypeField_tp_dealloc(self):
         calls = []
         class MyPM(Python25Mapper):
@@ -126,7 +125,7 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
     def testPyBaseObject_TypeField_tp_free(self):
         calls = []
         class MyPM(Python25Mapper):
-            def Free(self, objPtr):
+            def PyObject_Free(self, objPtr):
                 calls.append(objPtr)
         
         engine = PythonEngine()
@@ -146,27 +145,35 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
             Marshal.FreeHGlobal(typeBlock)
             
     
-    def testPyBaseObject_TypeDeallocCallsFree(self):
+    def testPyBaseObject_TypeDeallocCallsObjTypesFreeFunction(self):
         calls = []
-        class MyPM(Python25Mapper):
-            def Free(self, objPtr):
-                calls.append(objPtr)
+        def Some_FreeFunc(objPtr):
+            calls.append(objPtr)
+        freeDgt = PythonMapper.PyObject_Free_Delegate(Some_FreeFunc)
+        freeFP = Marshal.GetFunctionPointerForDelegate(freeDgt)
         
         engine = PythonEngine()
-        mapper = MyPM(engine)
+        mapper = Python25Mapper(engine)
         
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        baseObjTypeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        objTypeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
         try:
-            mapper.SetData("PyBaseObject_Type", typeBlock)
+            mapper.SetData("PyBaseObject_Type", baseObjTypeBlock)
+            mapper.SetData("PyDict_Type", objTypeBlock) # type not actually important
+            freeFPPtr = OffsetPtr(objTypeBlock, Marshal.OffsetOf(PyTypeObject, "tp_free"))
+            CPyMarshal.WritePtr(freeFPPtr, freeFP)
+            objTypePtr = OffsetPtr(objPtr, Marshal.OffsetOf(PyObject, "ob_type"))
+            CPyMarshal.WritePtr(objTypePtr, objTypeBlock)
+            
             GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
 
-            deallocFPPtr = OffsetPtr(typeBlock, Marshal.OffsetOf(PyTypeObject, "tp_dealloc"))
-            deallocFP = CPyMarshal.ReadPtr(deallocFPPtr)
-            deallocDgt = Marshal.GetDelegateForFunctionPointer(deallocFP, CPython_destructor_Delegate)
-            deallocDgt(IntPtr(12345))
-            self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
+            mapper.PyBaseObject_Dealloc(objPtr)
+            self.assertEquals(calls, [objPtr], "wrong calls")
         finally:
-            Marshal.FreeHGlobal(typeBlock)
+            Marshal.FreeHGlobal(baseObjTypeBlock)
+            Marshal.FreeHGlobal(objTypeBlock)
+            Marshal.FreeHGlobal(objPtr)
 
 
 suite = makesuite(

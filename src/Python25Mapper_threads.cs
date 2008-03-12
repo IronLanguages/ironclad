@@ -38,7 +38,7 @@ namespace Ironclad
 
         public override void PyThread_free_lock(IntPtr lockPtr)
         {
-            this.Free(lockPtr);
+            this.PyObject_Free(lockPtr);
         }
     }
 }
