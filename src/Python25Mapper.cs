@@ -107,7 +107,7 @@ namespace Ironclad
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
             CPyMarshal.WriteInt(ptr, 1);
             IntPtr typePtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyObject), "ob_type"));
-            CPyMarshal.WritePtr(typePtr, IntPtr.Zero);
+            CPyMarshal.WritePtr(typePtr, this.PyBaseObject_Type);
             this.StoreUnmanagedData(ptr, obj);
             return ptr;
         }
@@ -306,6 +306,35 @@ namespace Ironclad
             }
         }
         
+        
+        public IntPtr 
+        GetMethodFP(string name)
+        {
+            Delegate result;
+            if (this.dgtMap.TryGetValue(name, out result))
+            {
+                return Marshal.GetFunctionPointerForDelegate(result);
+            }
+            
+            switch (name)
+            {
+                case "Free":
+                    this.dgtMap[name] = new CPython_destructor_Delegate(this.Free);
+                    break;
+                case "PyBaseObject_Dealloc":
+                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyBaseObject_Dealloc);
+                    break;
+                case "PyTuple_Dealloc":
+                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyTuple_Dealloc);
+                    break;
+                
+                default:
+                    break;
+            }
+            return Marshal.GetFunctionPointerForDelegate(this.dgtMap[name]);
+        }
+        
+        
         private PythonModule GetPythonModule(EngineModule eModule)
         {
             PropertyInfo info = (PropertyInfo)(eModule.GetType().GetMember(
@@ -322,37 +351,6 @@ namespace Ironclad
                 return 1;
             }
             return 0;
-        }
-        
-        public override IntPtr
-        PyObject_Call(IntPtr objPtr, IntPtr argsPtr, IntPtr kwargsPtr)
-        {
-            // ignore kwargsPtr for now
-            ICallerContext context = this.GetPythonModule(
-                this.engine.DefaultModule);
-            object obj = this.Retrieve(objPtr);
-            Tuple args = (Tuple)this.Retrieve(argsPtr);
-            object[] argsArray = new object[args.Count];
-            args.CopyTo(argsArray, 0);
-            
-            object result = Ops.CallWithContext(
-                context, obj, argsArray);
-            return this.Store(result);
-        }
-        
-        public override IntPtr
-        PyObject_GetAttrString(IntPtr objPtr, string name)
-        {
-            object obj = this.Retrieve(objPtr);
-            object attr = null;
-            ICallerContext context = this.GetPythonModule(
-                this.engine.DefaultModule);
-            if (Ops.TryGetAttr(context, obj, SymbolTable.StringToId(name), out attr))
-            {
-                return this.Store(attr);
-            }
-            this.LastException = new PythonNameErrorException(name);
-            return IntPtr.Zero;
         }
         
         

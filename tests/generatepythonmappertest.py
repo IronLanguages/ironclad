@@ -184,7 +184,12 @@ namespace Ironclad
         {
             get
             {
-                return this.dataMap["PyString_Type"];
+                IntPtr address;
+                if (this.dataMap.TryGetValue("PyString_Type", out address))
+                {
+                    return address;
+                }
+                return IntPtr.Zero;
             }
         }
 
@@ -193,7 +198,12 @@ namespace Ironclad
         {
             get
             {
-                return this.dataMap["PyType_Type"];
+                IntPtr address;
+                if (this.dataMap.TryGetValue("PyType_Type", out address))
+                {
+                    return address;
+                }
+                return IntPtr.Zero;
             }
         }
 
@@ -202,7 +212,12 @@ namespace Ironclad
         {
             get
             {
-                return this.dataMap["Py_Something"];
+                IntPtr address;
+                if (this.dataMap.TryGetValue("Py_Something", out address))
+                {
+                    return address;
+                }
+                return IntPtr.Zero;
             }
         }
 

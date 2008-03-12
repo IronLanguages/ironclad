@@ -19,27 +19,31 @@ class Python25MapperTest(unittest.TestCase):
         allocs = []
         engine = PythonEngine()
         mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, frees))
+        deallocTypes = CreateTypes(mapper)
+        
+        try:
+            obj1 = object()
+            self.assertEquals(allocs, [], "unexpected allocations")
+            ptr = mapper.Store(obj1)
+            self.assertEquals(len(allocs), 1, "unexpected number of allocations")
+            self.assertEquals(allocs[0], (ptr, Marshal.SizeOf(PyObject)), "unexpected result")
+            self.assertNotEquals(ptr, IntPtr.Zero, "did not store reference")
+            self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
+            typePtr = CPyMarshal.ReadPtr(
+                CPyMarshal.Offset(ptr, Marshal.OffsetOf(PyObject, "ob_type")))
+            self.assertEquals(typePtr, mapper.PyBaseObject_Type, "opaque pointer had wrong type")
 
-        obj1 = object()
-        self.assertEquals(allocs, [], "unexpected allocations")
-        ptr = mapper.Store(obj1)
-        self.assertEquals(len(allocs), 1, "unexpected number of allocations")
-        self.assertEquals(allocs[0], (ptr, Marshal.SizeOf(PyObject)), "unexpected result")
-        self.assertNotEquals(ptr, IntPtr.Zero, "did not store reference")
-        self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
-        typePtr = CPyMarshal.ReadPtr(
-            CPyMarshal.Offset(ptr, Marshal.OffsetOf(PyObject, "ob_type")))
-        self.assertEquals(typePtr, IntPtr.Zero, "opaque pointers should have null type")
+            obj2 = mapper.Retrieve(ptr)
+            self.assertTrue(obj1 is obj2, "retrieved wrong object")
 
-        obj2 = mapper.Retrieve(ptr)
-        self.assertTrue(obj1 is obj2, "retrieved wrong object")
-
-        self.assertEquals(frees, [], "unexpected deallocations")
-        mapper.Free(ptr)
-        self.assertEquals(frees, [ptr], "unexpected deallocations")
-        self.assertRaises(KeyError, lambda: mapper.RefCount(ptr))
-        self.assertRaises(KeyError, lambda: mapper.Retrieve(ptr))
-        self.assertRaises(KeyError, lambda: mapper.Free(ptr))
+            self.assertEquals(frees, [], "unexpected deallocations")
+            mapper.Free(ptr)
+            self.assertEquals(frees, [ptr], "unexpected deallocations")
+            self.assertRaises(KeyError, lambda: mapper.RefCount(ptr))
+            self.assertRaises(KeyError, lambda: mapper.Retrieve(ptr))
+            self.assertRaises(KeyError, lambda: mapper.Free(ptr))
+        finally:
+            deallocTypes()
 
 
     def testCanFreeWithRefCount0(self):
@@ -260,92 +264,27 @@ class Python25MapperTest(unittest.TestCase):
             mapper.DecRef(tempObject1)
             mapper.DecRef(tempObject2)
     
+
+class Python25Mapper_GetMethodFP_Test(unittest.TestCase):
     
-class Python25Mapper_PyObject_Test(unittest.TestCase):
-    
-    def testPyObject_Call(self):
+    def assertGetMethodFPWorks(self, name):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
         
-        kwargsPtr = IntPtr.Zero
-        deallocTypes = CreateTypes(mapper)
-        try:
-            kallablePtr = mapper.Store(lambda x: x * 2)
-            argsPtr = mapper.Store((4,))
-            resultPtr = mapper.PyObject_Call(kallablePtr, argsPtr, kwargsPtr)
-            try:
-                self.assertEquals(mapper.Retrieve(resultPtr), 8, "didn't call")
-            finally:
-                mapper.DecRef(kallablePtr)
-                mapper.DecRef(argsPtr)
-                mapper.DecRef(resultPtr)
-        finally:
-            deallocTypes()
-
-
-    def testPyCallable_Check(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
-        deallocTypes = CreateTypes(mapper)
+        fp1 = mapper.GetMethodFP(name)
+        fp2 = mapper.GetMethodFP(name)
+        self.assertEquals(fp1, fp2, "did not remember func ptrs")
         
-        callables = map(mapper.Store, [float, len, lambda: None])
-        notCallables = map(mapper.Store, ["hullo", 33, ])
-        
-        try:
-            for x in callables:
-                self.assertEquals(mapper.PyCallable_Check(x), 1, "reported not callable")
-            for x in notCallables:
-                self.assertEquals(mapper.PyCallable_Check(x), 0, "reported callable")
-        finally:
-            deallocTypes()
-
-
-    def testPyObject_GetAttrString(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
-        deallocTypes = CreateTypes(mapper)
-        
-        class Thingum(object):
-            def __init__(self, bob):
-                self.bob = bob
-        objPtr = mapper.Store(Thingum("Poe"))
-        try:
-            resultPtr = mapper.PyObject_GetAttrString(objPtr, "bob")
-            try:
-                self.assertEquals(mapper.Retrieve(resultPtr), "Poe", "wrong")
-            finally:
-                mapper.DecRef(resultPtr)
-        finally:
-            mapper.DecRef(objPtr)
-            deallocTypes()
-
-
-    def testPyObject_GetAttrStringFailure(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
-        deallocTypes = CreateTypes(mapper)
-        
-        class Thingum(object):
-            def __init__(self, bob):
-                self.bob = bob
-        objPtr = mapper.Store(Thingum("Poe"))
-        try:
-            resultPtr = mapper.PyObject_GetAttrString(objPtr, "ben")
-            self.assertEquals(resultPtr, IntPtr.Zero, "wrong")
-            self.assertNotEquals(mapper.LastException, None, "failed to set exception")
-            def Raise():
-                raise mapper.LastException
-            try:
-                Raise()
-            except NameError, e:
-                self.assertEquals(e.msg, "ben", "bad message")
-            else:
-                self.fail("wrong exception")
-        finally:
-            mapper.DecRef(objPtr)
-            deallocTypes()
     
-    
+    def testMethods(self):
+        methods = (
+            "Free",
+            "PyBaseObject_Dealloc",
+            "PyTuple_Dealloc"
+        )
+        for method in methods:
+            self.assertGetMethodFPWorks(method)
+
     
 class Python25Mapper_NoneTest(unittest.TestCase):
     
@@ -418,7 +357,7 @@ class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):
 
 suite = makesuite(
     Python25MapperTest,
-    Python25Mapper_PyObject_Test,
+    Python25Mapper_GetMethodFP_Test,
     Python25Mapper_NoneTest,
     Python25Mapper_PyInt_FromLong_Test,
     Python25Mapper_PyInt_FromSsize_t_Test,

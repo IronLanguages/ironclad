@@ -12,15 +12,13 @@ namespace Ironclad
         public override void
         Fill_PyTuple_Type(IntPtr address)
         {
-            this.dgtMap["PyTuple_Dealloc"] = new CPython_destructor_Delegate(this.PyTuple_Dealloc);
             IntPtr tp_deallocPtr = CPyMarshal.Offset(
                 address, Marshal.OffsetOf(typeof(PyTypeObject), "tp_dealloc"));
-            CPyMarshal.WritePtr(tp_deallocPtr, Marshal.GetFunctionPointerForDelegate(this.dgtMap["PyTuple_Dealloc"]));
+            CPyMarshal.WritePtr(tp_deallocPtr, this.GetMethodFP("PyTuple_Dealloc"));
 
-            this.dgtMap["Free"] = new CPython_destructor_Delegate(this.Free);
             IntPtr tp_freePtr = CPyMarshal.Offset(
                 address, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
-            CPyMarshal.WritePtr(tp_freePtr, Marshal.GetFunctionPointerForDelegate(this.dgtMap["Free"]));
+            CPyMarshal.WritePtr(tp_freePtr, this.GetMethodFP("Free"));
         }
         
         private IntPtr CreateTuple(int size)
@@ -67,7 +65,8 @@ namespace Ironclad
         }
         
         
-        public virtual void PyTuple_Dealloc(IntPtr tuplePtr)
+        public virtual void 
+        PyTuple_Dealloc(IntPtr tuplePtr)
         {
             IntPtr lengthPtr = CPyMarshal.Offset(
                 tuplePtr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_size"));
