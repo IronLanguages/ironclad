@@ -5,10 +5,10 @@ namespace Unmanaged
 {
     public class msvcrt
     {
-        [DllImport("msvcrt.dll")]
+        [DllImport("msvcr71.dll")]
         public static extern int fread(IntPtr buf, int size, int count, IntPtr file);
 
-        [DllImport("msvcrt.dll")]
+        [DllImport("msvcr71.dll")]
         public static extern int fclose(IntPtr file);
     }
 }

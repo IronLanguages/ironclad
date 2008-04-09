@@ -17,10 +17,10 @@ namespace Ironclad
         [DllImport("kernel32.dll")]
         public static extern IntPtr GetModuleHandle(string s);
         
-        [DllImport("msvcrt.dll")]
+        [DllImport("msvcr71.dll")]
         public static extern IntPtr _fdopen(int fd, string mode);
         
-        [DllImport("msvcrt.dll")]
+        [DllImport("msvcr71.dll")]
         public static extern int _open_osfhandle(IntPtr f, int flags);
     }
 }
