@@ -60,6 +60,16 @@ namespace Ironclad
             public uint ob_size;
             public IntPtr ob_item;
         }
+        
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct PyListObject
+        {
+            public uint ob_refcnt;
+            public IntPtr ob_type;
+            public uint ob_size;
+            public IntPtr ob_item;
+            public uint allocated;
+        }
 
         [StructLayout(LayoutKind.Sequential, Pack=1)]
         public struct PyStringObject

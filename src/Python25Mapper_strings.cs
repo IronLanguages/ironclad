@@ -61,7 +61,6 @@ namespace Ironclad
         
         public override IntPtr PyString_FromString(IntPtr stringData)
         {
-            // maybe I should just DllImport memcpy... :/
             IntPtr current = stringData;
             List<byte> bytesList = new List<byte>();
             while (CPyMarshal.ReadByte(current) != 0)

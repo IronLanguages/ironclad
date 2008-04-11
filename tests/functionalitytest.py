@@ -162,13 +162,26 @@ class FunctionalityTest(unittest.TestCase):
             """) % (bz2_test_data, bz2_test_text)
         )
 
-    def testBZ2File(self):
+    def testBZ2FileRead(self):
         import os
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
         self.assertWorksWithBZ2(dedent("""
             f = bz2.BZ2File(%r)
             try:
                 assert f.read() == %r
+            finally:
+                f.close()
+            """) % (testPath, bz2_test_text)
+        )
+
+    def testBZ2FileReadLine(self):
+        import os
+        testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
+        self.assertWorksWithBZ2(dedent("""
+            f = bz2.BZ2File(%r)
+            try:
+                assert f.readline() == %r
+                assert f.readline() == ''
             finally:
                 f.close()
             """) % (testPath, bz2_test_text)

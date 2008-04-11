@@ -3,7 +3,7 @@ namespace Ironclad
     public partial class Python25Mapper : PythonMapper
     {
         private const string MODULE_CODE = @"
-from System import IntPtr
+from System import IntPtr, NullReferenceException
 
 def _cleanup(*args):
     _ironclad_mapper.FreeTemps()
@@ -11,17 +11,19 @@ def _cleanup(*args):
         if arg != IntPtr.Zero:
             _ironclad_mapper.DecRef(arg)
 
-def _raiseExceptionIfRequired():
+def _raiseExceptionIfRequired(resultPtr):
     error = _ironclad_mapper.LastException
     if error:
         _ironclad_mapper.LastException = None
         raise error
+    elif resultPtr == IntPtr.Zero:
+        raise NullReferenceException('callable in extension module returned NULL without setting an error')
     
 def _ironclad_dispatch(name, instancePtr, args):
     argPtr = _ironclad_mapper.Store(args)
     resultPtr = _ironclad_dispatch_table[name](instancePtr, argPtr)
     try:
-        _raiseExceptionIfRequired()
+        _raiseExceptionIfRequired(resultPtr)
         return _ironclad_mapper.Retrieve(resultPtr)
     finally:
         _cleanup(argPtr, resultPtr)
@@ -29,7 +31,7 @@ def _ironclad_dispatch(name, instancePtr, args):
 def _ironclad_dispatch_noargs(name, instancePtr):
     resultPtr = _ironclad_dispatch_table[name](instancePtr, IntPtr.Zero)
     try:
-        _raiseExceptionIfRequired()
+        _raiseExceptionIfRequired(resultPtr)
         return _ironclad_mapper.Retrieve(resultPtr)
     finally:
         _cleanup(resultPtr)
@@ -41,7 +43,7 @@ def _ironclad_dispatch_kwargs(name, instancePtr, args, kwargs):
         kwargPtr = _ironclad_mapper.Store(kwargs)
     resultPtr = _ironclad_dispatch_table[name](instancePtr, argPtr, kwargPtr)
     try:
-        _raiseExceptionIfRequired()
+        _raiseExceptionIfRequired(resultPtr)
         return _ironclad_mapper.Retrieve(resultPtr)
     finally:
         _cleanup(argPtr, kwargPtr, resultPtr)
@@ -81,7 +83,7 @@ class {0}(object):
         kwargPtr = _ironclad_mapper.Store(kwargs)
         try:
             instancePtr = cls._tp_newDgt(cls._typePtr, argPtr, kwargPtr)
-            _raiseExceptionIfRequired()
+            _raiseExceptionIfRequired(instancePtr)
         finally:
             _cleanup(argPtr, kwargPtr)
         
@@ -97,7 +99,7 @@ class {0}(object):
             result = self.__class__._tp_initDgt(self._instancePtr, argPtr, kwargPtr)
             if result == -1:
                 _ironclad_mapper.DecRef(self._instancePtr)
-            _raiseExceptionIfRequired()
+            _raiseExceptionIfRequired(self._instancePtr)
         finally:
             _cleanup(argPtr, kwargPtr)
 ";
