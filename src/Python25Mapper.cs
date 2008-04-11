@@ -134,47 +134,55 @@ namespace Ironclad
         public object 
         Retrieve(IntPtr ptr)
         {
-            object possibleMarker = this.ptrmap[ptr];
-            if (possibleMarker.GetType() == typeof(UnmanagedDataMarker))
+            if (this.ptrmap.ContainsKey(ptr))
             {
-                UnmanagedDataMarker marker = (UnmanagedDataMarker)possibleMarker;
-                switch (marker)
+                object possibleMarker = this.ptrmap[ptr];
+                if (possibleMarker.GetType() == typeof(UnmanagedDataMarker))
                 {
-                    case UnmanagedDataMarker.None:
-                        return null;
-                    
-                    case UnmanagedDataMarker.PyStringObject:
-                        IntPtr buffer = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
-                        IntPtr lengthPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
-                        int length = CPyMarshal.ReadInt(lengthPtr);
-                        
-                        byte[] bytes = new byte[length];
-                        Marshal.Copy(buffer, bytes, 0, length);
-                        char[] chars = Array.ConvertAll<byte, char>(
-                            bytes, new Converter<byte, char>(CharFromByte));
-                        this.StoreUnmanagedData(ptr, new string(chars));
-                        break;
-                    
-                    case UnmanagedDataMarker.PyTupleObject:
-                        IntPtr itemCountPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_size"));
-                        int itemCount = CPyMarshal.ReadInt(itemCountPtr);
-                        IntPtr itemAddressPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
-                        
-                        object[] items = new object[itemCount];
-                        for (int i = 0; i < itemCount; i++)
-                        {
-                            IntPtr itemPtr = CPyMarshal.ReadPtr(itemAddressPtr);
-                            items[i] = this.Retrieve(itemPtr);
-                            itemAddressPtr = CPyMarshal.Offset(itemAddressPtr, CPyMarshal.PtrSize);
-                        }
-                        this.StoreUnmanagedData(ptr, Tuple.MakeTuple(items));
-                        break;
-                    
-                    default:
-                        throw new Exception("Found impossible data in pointer map");
+                    UnmanagedDataMarker marker = (UnmanagedDataMarker)possibleMarker;
+                    switch (marker)
+                    {
+                        case UnmanagedDataMarker.None:
+                            return null;
+
+                        case UnmanagedDataMarker.PyStringObject:
+                            IntPtr buffer = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+                            IntPtr lengthPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
+                            int length = CPyMarshal.ReadInt(lengthPtr);
+
+                            byte[] bytes = new byte[length];
+                            Marshal.Copy(buffer, bytes, 0, length);
+                            char[] chars = Array.ConvertAll<byte, char>(
+                                bytes, new Converter<byte, char>(CharFromByte));
+                            this.StoreUnmanagedData(ptr, new string(chars));
+                            break;
+
+                        case UnmanagedDataMarker.PyTupleObject:
+                            IntPtr itemCountPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_size"));
+                            int itemCount = CPyMarshal.ReadInt(itemCountPtr);
+                            IntPtr itemAddressPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
+
+                            object[] items = new object[itemCount];
+                            for (int i = 0; i < itemCount; i++)
+                            {
+                                IntPtr itemPtr = CPyMarshal.ReadPtr(itemAddressPtr);
+                                items[i] = this.Retrieve(itemPtr);
+                                itemAddressPtr = CPyMarshal.Offset(itemAddressPtr, CPyMarshal.PtrSize);
+                            }
+                            this.StoreUnmanagedData(ptr, Tuple.MakeTuple(items));
+                            break;
+
+                        default:
+                            throw new Exception("Found impossible data in pointer map");
+                    }
                 }
+                return this.ptrmap[ptr];
             }
-            return this.ptrmap[ptr];
+            else
+            {
+                throw new KeyNotFoundException(String.Format(
+                    "Retrieve: missing key in pointer map: {0}", ptr));
+            }
         }
         
         public int 
@@ -324,6 +332,9 @@ namespace Ironclad
                 case "PyTuple_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyTuple_Dealloc);
                     break;
+                case "PyList_Dealloc":
+                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyList_Dealloc);
+                    break;
                 
                 default:
                     break;
@@ -332,7 +343,8 @@ namespace Ironclad
         }
         
         
-        private PythonModule GetPythonModule(EngineModule eModule)
+        private PythonModule 
+        GetPythonModule(EngineModule eModule)
         {
             PropertyInfo info = (PropertyInfo)(eModule.GetType().GetMember(
                 "Module", BindingFlags.NonPublic | BindingFlags.Instance)[0]);

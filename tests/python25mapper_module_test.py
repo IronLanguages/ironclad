@@ -8,7 +8,7 @@ from tests.utils.memory import OffsetPtr, CreateTypes
 from tests.utils.python25mapper import TempPtrCheckingPython25Mapper, MakeAndAddEmptyModule
 
 import System
-from System import Array, IntPtr
+from System import Array, IntPtr, NullReferenceException
 from System.Reflection import BindingFlags
 from System.Runtime.InteropServices import Marshal
 from Ironclad import (
@@ -81,10 +81,12 @@ class Python25Mapper_PyInitModule_DispatchUtilsTest(EmptyModuleTestCase):
 
 
     def testRaiseExceptionIfRequired(self):
-        self.module._raiseExceptionIfRequired()
+        self.module._raiseExceptionIfRequired(IntPtr(12345))
+        
+        self.assertRaises(NullReferenceException, self.module._raiseExceptionIfRequired, IntPtr.Zero)
         
         self.mapper.LastException = BorkedException()
-        self.assertRaises(BorkedException, self.module._raiseExceptionIfRequired)
+        self.assertRaises(BorkedException, self.module._raiseExceptionIfRequired, IntPtr(12345))
         self.assertEquals(self.mapper.LastException, None, 'did not reset exception when raised')
 
 
@@ -93,11 +95,11 @@ class Python25Mapper_PyInitModule_DispatchFunctionsTest(EmptyModuleTestCase):
     def patchUtilities(self, shouldRaise):
         calls = []
         self.module._cleanup = lambda *args: calls.append(("_cleanup", args))
-        def _raise():
-            calls.append("_raiseExc")
+        def _raise(resultPtr):
+            calls.append(("_raiseExc", resultPtr))
             raise BorkedException()
-        def _dontRaise():
-            calls.append("_raiseExc")
+        def _dontRaise(resultPtr):
+            calls.append(("_raiseExc", resultPtr))
         if shouldRaise:
             self.module._raiseExceptionIfRequired = _raise
         else:
@@ -132,7 +134,7 @@ class Python25Mapper_PyInitModule_DispatchFunctionsTest(EmptyModuleTestCase):
         actualResult = self.module._ironclad_dispatch("testFuncName", INSTANCE_PTR, actualArgs)
         self.assertEquals(actualResult, expectedResult, "bad result")
         
-        expectedCalls = ["Store", "testFunc", "_raiseExc", "Retrieve", ("_cleanup", (ARGS_PTR, RESULT_PTR))]
+        expectedCalls = ["Store", "testFunc", ("_raiseExc", RESULT_PTR), "Retrieve", ("_cleanup", (ARGS_PTR, RESULT_PTR))]
         self.assertEquals(actualCalls, expectedCalls, "bad call sequence")
         
 
@@ -156,7 +158,7 @@ class Python25Mapper_PyInitModule_DispatchFunctionsTest(EmptyModuleTestCase):
         
         self.assertRaises(BorkedException, 
             lambda: self.module._ironclad_dispatch("testFuncName", INSTANCE_PTR, actualArgs))
-        expectedCalls = ["Store", "testFunc", "_raiseExc", ("_cleanup", (ARGS_PTR, ERROR_RESULT_PTR))]
+        expectedCalls = ["Store", "testFunc", ("_raiseExc", ERROR_RESULT_PTR), ("_cleanup", (ARGS_PTR, ERROR_RESULT_PTR))]
         self.assertEquals(actualCalls, expectedCalls, "bad call sequence")
         
 
@@ -180,7 +182,7 @@ class Python25Mapper_PyInitModule_DispatchFunctionsTest(EmptyModuleTestCase):
         actualResult = self.module._ironclad_dispatch_noargs("testFuncName", INSTANCE_PTR)
         self.assertEquals(actualResult, expectedResult, "bad result")
         
-        expectedCalls = ["testFunc", "_raiseExc", "Retrieve", ("_cleanup", (RESULT_PTR, ))]
+        expectedCalls = ["testFunc", ("_raiseExc", RESULT_PTR), "Retrieve", ("_cleanup", (RESULT_PTR, ))]
         self.assertEquals(actualCalls, expectedCalls, "bad call sequence")
         
 
@@ -197,7 +199,7 @@ class Python25Mapper_PyInitModule_DispatchFunctionsTest(EmptyModuleTestCase):
         
         self.assertRaises(BorkedException, 
             lambda: self.module._ironclad_dispatch_noargs("testFuncName", INSTANCE_PTR))
-        expectedCalls = ["testFunc", "_raiseExc", ("_cleanup", (ERROR_RESULT_PTR, ))]
+        expectedCalls = ["testFunc", ("_raiseExc", ERROR_RESULT_PTR), ("_cleanup", (ERROR_RESULT_PTR, ))]
         self.assertEquals(actualCalls, expectedCalls, "bad call sequence")
         
 
@@ -238,7 +240,9 @@ class Python25Mapper_PyInitModule_DispatchFunctionsTest(EmptyModuleTestCase):
         self.assertEquals(actualResult, expectedResult, "bad result")
         
         expectedCalls = [
-            "Store args", "Store kwargs", "testFunc", "_raiseExc", "Retrieve", 
+            "Store args", "Store kwargs", "testFunc", 
+            ("_raiseExc", RESULT_PTR), 
+            "Retrieve", 
             ("_cleanup", (ARGS_PTR, KWARGS_PTR, RESULT_PTR))
         ]
         self.assertEquals(actualCalls, expectedCalls, "bad call sequence")
@@ -277,7 +281,9 @@ class Python25Mapper_PyInitModule_DispatchFunctionsTest(EmptyModuleTestCase):
         self.assertEquals(actualResult, expectedResult, "bad result")
         
         expectedCalls = [
-            "Store args", "testFunc", "_raiseExc", "Retrieve", 
+            "Store args", "testFunc", 
+            ("_raiseExc", RESULT_PTR), 
+            "Retrieve", 
             ("_cleanup", (ARGS_PTR, EMPTY_KWARGS_PTR, RESULT_PTR))
         ]
         self.assertEquals(actualCalls, expectedCalls, "bad call sequence")
@@ -313,7 +319,8 @@ class Python25Mapper_PyInitModule_DispatchFunctionsTest(EmptyModuleTestCase):
         self.assertRaises(BorkedException, 
             lambda: self.module._ironclad_dispatch_kwargs("testFuncName", INSTANCE_PTR, actualArgs, actualKwargs))
         expectedCalls = [
-            "Store args", "Store kwargs", "testFunc", "_raiseExc", 
+            "Store args", "Store kwargs", "testFunc", 
+            ("_raiseExc", ERROR_RESULT_PTR), 
             ("_cleanup", (ARGS_PTR, KWARGS_PTR, ERROR_RESULT_PTR))
         ]
         self.assertEquals(actualCalls, expectedCalls, "bad call sequence")
