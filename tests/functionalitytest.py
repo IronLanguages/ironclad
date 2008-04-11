@@ -36,8 +36,8 @@ bz2___author__ = """The bz2 python module was written by:
 """
 
 bz2_test_text = "I wonder why. I wonder why. I wonder why I wonder why. " * 1000
+bz2_test_text_lines = "I wonder why. I wonder why. I wonder why I wonder why.\n" * 1000
 bz2_test_data = 'BZh91AY&SYM\xf6FM\x00!\xd9\x95\x80@\x01\x00 \x06A\x90\xa0 \x00\x90 \x1ai\xa0)T4\x1bS\x81R\xa6\tU\xb0J\xad\x02Ur*T\xd0%W\xc0\x95^\x02U`%V\x02Up\tU\xb0J\xae\xc0\x95X\tU\xf8\xbb\x92)\xc2\x84\x82o\xb22h'
-
 
 class FunctionalityTest(unittest.TestCase):
 
@@ -187,6 +187,19 @@ class FunctionalityTest(unittest.TestCase):
             """) % (testPath, bz2_test_text)
         )
 
+    def testBZ2FileReadLines(self):
+        import os
+        testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
+        self.assertWorksWithBZ2(dedent("""
+            f = bz2.BZ2File(%r)
+            try:
+                lines = f.readlines()
+                assert len(lines) == 1000
+                assert ''.join(lines) == %r
+            finally:
+                f.close()
+            """) % (testPath, bz2_test_text_lines)
+        )
 
     def assertWorksWithMultiarray(self, testCode):
         self.assertWorksWithModule("C:\\Python25\\Lib\\site-packages\\numpy\\core\\multiarray.pyd", "multiarray", testCode)
