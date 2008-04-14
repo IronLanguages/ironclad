@@ -48,8 +48,8 @@ class PyString_TestCase(unittest.TestCase):
         stringObject = Marshal.PtrToStructure(strPtr, PyStringObject)
         self.assertEquals(stringObject.ob_refcnt, 1, "unexpected refcount")
         self.assertEquals(stringObject.ob_size, length, "unexpected ob_size")
-        self.assertEquals(stringObject.ob_shash, -1, "unexpected useless-field")
-        self.assertEquals(stringObject.ob_sstate, 0, "unexpected useless-field")
+        self.assertEquals(stringObject.ob_shash, -1, "unexpected currently-useless-field")
+        self.assertEquals(stringObject.ob_sstate, 0, "unexpected currently-useless-field")
 
         strDataPtr = self.dataPtrFromStrPtr(strPtr)
         terminatorPtr = OffsetPtr(strDataPtr, length)
@@ -264,6 +264,22 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
             if newStrPtr != IntPtr.Zero and newStrPtr not in frees:
                 Marshal.FreeHGlobal(newStrPtr)
             deallocTypes()
+            
+
+class Python25Mapper_PyString_Size_Test(PyString_TestCase):
+    
+    def testWorks(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        testString = "Oh, sure, Lisa -- some wonderful, magical animal." + self.getStringWithValues(0, 256)
+        testLength = len(testString)
+        try:
+            strPtr = mapper.Store(testString)
+            self.assertEquals(mapper.PyString_Size(strPtr), testLength)
+        finally:
+            deallocTypes()
 
 
 class PyStringStoreTest(PyString_TestCase):
@@ -297,7 +313,7 @@ class PyStringStoreTest(PyString_TestCase):
                 mapper.DecRef(strPtr)
         finally:
             deallocTypes()
-            
+
 
 
 suite = makesuite(
@@ -305,6 +321,7 @@ suite = makesuite(
     Python25Mapper_PyString_FromString_Test,
     Python25Mapper_PyString_FromStringAndSize_Test,
     Python25Mapper__PyString_Resize_Test,
+    Python25Mapper_PyString_Size_Test,
     PyStringStoreTest,
 )
 
