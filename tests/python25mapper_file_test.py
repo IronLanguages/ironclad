@@ -5,13 +5,15 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.memory import CreateTypes, OffsetPtr
 
 import os
+import tempfile
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from Ironclad import Python25Mapper
-from Ironclad.Structs import PyTypeObject
+from Ironclad.Structs import PyStringObject, PyTypeObject
 from IronPython.Hosting import PythonEngine
-from Unmanaged.msvcrt import fclose, fread
+
+from Unmanaged.msvcrt import fclose, fread, fwrite
 
 
 READ_ARGS = (os.path.join('tests', 'data', 'text.txt'), 'r')
@@ -83,6 +85,43 @@ class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
                 mapper.DecRef(filePtr)
         finally:
             deallocTypes()
+
+
+    def testPyFile_AsFile_Write(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        kwargsPtr = IntPtr.Zero
+        deallocTypes = CreateTypes(mapper)
+        
+        testDir = tempfile.mkdtemp()
+        path = os.path.join(testDir, "test")
+        write_args = (path, 'w')
+        argsPtr = mapper.Store(write_args)
+        
+        try:
+            testStr = "meh, string data"
+            testLength = len(testStr)
+            testStrPtr = mapper.Store(testStr)
+            testDataPtr = OffsetPtr(testStrPtr, Marshal.OffsetOf(PyStringObject, "ob_sval"))
+            
+            filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
+            try:
+                f = mapper.PyFile_AsFile(filePtr)
+                try:
+                    self.assertEquals(fwrite(testDataPtr, 1, testLength, f), testLength, "didn't work")
+                finally:
+                    fclose(f)
+            finally:
+                mapper.DecRef(filePtr)
+        finally:
+            mapper.DecRef(argsPtr)
+            deallocTypes()
+
+        mgdF = open(path)
+        try:
+            self.assertEquals(mgdF.read(), testStr, "failed to write")
+        finally:
+            mgdF.close()
 
 
 suite = makesuite(

@@ -144,5 +144,13 @@ namespace Ironclad
                 return this._PyString_Resize_NoGrow(strPtr, newSize);
             }
         }
+        
+        
+        public override int
+        PyString_Size(IntPtr strPtr)
+        {
+            PyStringObject str = (PyStringObject)Marshal.PtrToStructure(strPtr, typeof(PyStringObject));
+            return (int)str.ob_size;
+        }
     }
 }

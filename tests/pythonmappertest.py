@@ -252,6 +252,19 @@ class PythonMapperTest(unittest.TestCase):
             0, paramsStore)
 
 
+    def testPythonMapperFinds_PyString_Size(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyString_Size(self, stringPtr):
+                paramsStore.append((stringPtr,))
+                return 123
+
+        self.assertDispatches(
+            MyPM, "PyString_Size",
+            (IntPtr(98765),),
+            123, paramsStore)
+
+
     def testPythonMapperFinds_PyErr_SetString(self):
         paramsStore = []
         class MyPM(PythonMapper):
@@ -416,6 +429,19 @@ class PythonMapperTest(unittest.TestCase):
             MyPM, "PyList_New",
             (33,),
             IntPtr(999), paramsStore)
+
+
+    def testPythonMapperFinds_PyList_Append(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyList_Append(self, listPtr, itemPtr):
+                paramsStore.append((listPtr, itemPtr))
+                return 789
+
+        self.assertDispatches(
+            MyPM, "PyList_Append",
+            (IntPtr(123), IntPtr(456)),
+            789, paramsStore)
 
 
     def testPythonMapperFinds_PyTuple_New(self):

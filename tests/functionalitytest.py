@@ -1,5 +1,6 @@
 
 import os
+import tempfile
 import unittest
 from textwrap import dedent
 from tests.utils.runtest import makesuite, run
@@ -163,7 +164,6 @@ class FunctionalityTest(unittest.TestCase):
         )
 
     def testBZ2FileRead(self):
-        import os
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
         self.assertWorksWithBZ2(dedent("""
             f = bz2.BZ2File(%r)
@@ -175,7 +175,6 @@ class FunctionalityTest(unittest.TestCase):
         )
 
     def testBZ2FileReadLine(self):
-        import os
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
         self.assertWorksWithBZ2(dedent("""
             f = bz2.BZ2File(%r)
@@ -187,8 +186,7 @@ class FunctionalityTest(unittest.TestCase):
             """) % (testPath, bz2_test_text)
         )
 
-    def testBZ2FileReadLines(self):
-        import os
+    def testBZ2FileReadLines_Short(self):
         testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
         self.assertWorksWithBZ2(dedent("""
             f = bz2.BZ2File(%r)
@@ -200,6 +198,26 @@ class FunctionalityTest(unittest.TestCase):
                 f.close()
             """) % (testPath, bz2_test_text_lines)
         )
+
+
+    def testBZ2FileWrite(self):
+        # read is tested separately elsewhere, so we assume it works
+        testDir = tempfile.mkdtemp()
+        path = os.path.join(testDir, "test.bz2")
+        self.assertWorksWithBZ2(dedent("""
+            w = bz2.BZ2File(%r, 'w')
+            try:
+                w.write(%r)
+            finally:
+                w.close()
+            r = bz2.BZ2File(%r, 'r')
+            try:
+                assert r.read() == %r
+            finally:
+                r.close()
+            """) % (path, bz2_test_text, path, bz2_test_text)
+        )
+        
 
     def assertWorksWithMultiarray(self, testCode):
         self.assertWorksWithModule("C:\\Python25\\Lib\\site-packages\\numpy\\core\\multiarray.pyd", "multiarray", testCode)

@@ -16,6 +16,11 @@ namespace Ironclad
             FileStream stream = (FileStream)streamField.GetValue(pyFile);
             IntPtr handle = stream.SafeFileHandle.DangerousGetHandle();
             int fd = Unmanaged._open_osfhandle(handle, 0);
+            
+            if (stream.CanWrite)
+            {
+                return Unmanaged._fdopen(fd, "w");
+            }
             return Unmanaged._fdopen(fd, "r");
         }        
     }
