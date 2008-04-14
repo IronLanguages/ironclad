@@ -5,6 +5,7 @@ using IronPython.Runtime;
 using IronPython.Runtime.Calls;
 using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
+using IronPython.Runtime.Types;
 
 using Ironclad.Structs;
 
@@ -23,6 +24,8 @@ namespace Ironclad
             IntPtr tp_freePtr = CPyMarshal.Offset(
                 address, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
             CPyMarshal.WritePtr(tp_freePtr, this.GetAddress("PyObject_Free"));
+            
+            this.StoreUnmanagedData(address, TypeCache.Object);
         }
         
         

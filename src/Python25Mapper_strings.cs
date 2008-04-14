@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 
 using Ironclad.Structs;
 
+using IronPython.Runtime.Types;
+
 namespace Ironclad
 {
     public partial class Python25Mapper : PythonMapper
@@ -12,6 +14,7 @@ namespace Ironclad
         Fill_PyString_Type(IntPtr address)
         {
             this.Fill_PyBaseObject_Type(address);
+            this.StoreUnmanagedData(address, TypeCache.String);
         }
         
         
