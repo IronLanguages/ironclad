@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
+using IronPython.Runtime.Types;
 
 using Ironclad.Structs;
 
@@ -19,6 +20,8 @@ namespace Ironclad
             IntPtr tp_freePtr = CPyMarshal.Offset(
                 address, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
             CPyMarshal.WritePtr(tp_freePtr, this.GetAddress("PyObject_Free"));
+            
+            this.StoreUnmanagedData(address, TypeCache.Tuple);
         }
         
         private IntPtr CreateTuple(int size)

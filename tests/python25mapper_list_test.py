@@ -5,10 +5,10 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.memory import CreateTypes, OffsetPtr
 
-from System import IntPtr
+from System import GC, IntPtr
 from System.Runtime.InteropServices import Marshal
-from Ironclad import CPyMarshal, Python25Mapper
-from Ironclad.Structs import PyListObject, PyTypeObject
+from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Mapper, PythonMapper
+from Ironclad.Structs import PyObject, PyListObject, PyTypeObject
 from IronPython.Hosting import PythonEngine
 from Unmanaged.msvcrt import fclose, fread
 
@@ -139,9 +139,132 @@ class Python25Mapper_PyList_Test(unittest.TestCase):
         self.assertEquals(set(listDeallocs), set(expectedDeallocs), "deallocated wrong stuff")
         
         deallocTypes()
+
+
+    def testPyListTypeField_tp_dealloc(self):
+        calls = []
+        class MyPM(Python25Mapper):
+            def PyList_Dealloc(self, listPtr):
+                calls.append(listPtr)
+        
+        engine = PythonEngine()
+        mapper = MyPM(engine)
+        
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        try:
+            mapper.SetData("PyList_Type", typeBlock)
+            GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
+
+            deallocFPPtr = OffsetPtr(typeBlock, Marshal.OffsetOf(PyTypeObject, "tp_dealloc"))
+            deallocFP = CPyMarshal.ReadPtr(deallocFPPtr)
+            deallocDgt = Marshal.GetDelegateForFunctionPointer(deallocFP, CPython_destructor_Delegate)
+            deallocDgt(IntPtr(12345))
+            self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
+        finally:
+            Marshal.FreeHGlobal(typeBlock)
+
+
+    def testPyListTypeField_tp_free(self):
+        calls = []
+        class MyPM(Python25Mapper):
+            def PyObject_Free(self, listPtr):
+                calls.append(listPtr)
+        
+        engine = PythonEngine()
+        mapper = MyPM(engine)
+        
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        try:
+            mapper.SetData("PyList_Type", typeBlock)
+            GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
+
+            freeFPPtr = OffsetPtr(typeBlock, Marshal.OffsetOf(PyTypeObject, "tp_free"))
+            freeFP = CPyMarshal.ReadPtr(freeFPPtr)
+            freeDgt = Marshal.GetDelegateForFunctionPointer(freeFP, CPython_destructor_Delegate)
+            freeDgt(IntPtr(12345))
+            self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
+        finally:
+            Marshal.FreeHGlobal(typeBlock)
+        
+
+    def testPyList_DeallocDecRefsItemsAndCallsCorrectFreeFunction(self):
+        frees = []
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine, GetAllocatingTestAllocator([], frees))
+        
+        calls = []
+        def CustomFree(ptr):
+            calls.append(ptr)
+        freeDgt = PythonMapper.PyObject_Free_Delegate(CustomFree)
+        freeFP = Marshal.GetFunctionPointerForDelegate(freeDgt)
+        
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        try:
+            mapper.SetData("PyList_Type", typeBlock)
+            freeFPPtr = OffsetPtr(typeBlock, Marshal.OffsetOf(PyTypeObject, "tp_free"))
+            CPyMarshal.WritePtr(freeFPPtr, freeFP)
+            
+            listPtr = mapper.Store([1, 2, 3])
+            itemPtrs = []
+            dataStore = CPyMarshal.ReadPtr(OffsetPtr(listPtr, Marshal.OffsetOf(PyListObject, "ob_item")))
+            for _ in range(3):
+                itemPtrs.append(CPyMarshal.ReadPtr(dataStore))
+                dataStore = OffsetPtr(dataStore, CPyMarshal.PtrSize)
+            
+            mapper.PyList_Dealloc(listPtr)
+            
+            for itemPtr in itemPtrs:
+                self.assertEquals(itemPtr in frees, True, "did not decref item")
+                self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
+            self.assertEquals(calls, [listPtr], "did not call type's free function")
+            mapper.PyObject_Free(listPtr)
+        finally:
+            Marshal.FreeHGlobal(typeBlock)
         
         
-    
+    def testStoreList(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        listPtr = mapper.Store([1, 2, 3])
+        try:
+            typePtr = CPyMarshal.ReadPtr(OffsetPtr(listPtr, Marshal.OffsetOf(PyObject, "ob_type")))
+            self.assertEquals(typePtr, mapper.PyList_Type, "wrong type")
+
+            dataStore = CPyMarshal.ReadPtr(OffsetPtr(listPtr, Marshal.OffsetOf(PyListObject, "ob_item")))
+            for i in range(1, 4):
+                self.assertEquals(mapper.Retrieve(CPyMarshal.ReadPtr(dataStore)), i, "contents not stored")
+                self.assertEquals(mapper.RefCount(CPyMarshal.ReadPtr(dataStore)), 1, "bad refcount for items")
+                dataStore = OffsetPtr(dataStore, CPyMarshal.PtrSize)
+        finally:
+            mapper.DecRef(listPtr)
+            deallocTypes()
+        
+        
+    def testPyList_GetSlice(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        def TestSlice(originalListPtr, start, stop):
+            newListPtr = mapper.PyList_GetSlice(originalListPtr, start, stop)
+            try:
+                self.assertEquals(mapper.Retrieve(newListPtr), mapper.Retrieve(originalListPtr)[start:stop], "bad slice")
+            finally:
+                mapper.DecRef(newListPtr)
+        
+        listPtr = mapper.Store([0, 1, 2, 3, 4, 5, 6, 7])
+        try:
+            slices = (
+                (3, 4), (2, -1), (-5, -4), (5, 200), (999, 1000)
+            )
+            for (start, stop) in slices:
+                TestSlice(listPtr, start, stop)
+        finally:
+            deallocTypes()
+        
+        
 
 suite = makesuite(
     Python25Mapper_PyList_Test,

@@ -25,7 +25,22 @@ namespace Ironclad
             this.StoreUnmanagedData(address, TypeCache.List);
         }
         
-        public override IntPtr PyList_New(int length)
+        
+        private IntPtr
+        Store(List list)
+        {
+            IntPtr listPtr = this.PyList_New(0);
+            for (int i = 0; i < list.GetLength(); i++)
+            {
+                IntPtr itemPtr = this.Store(list[i]);
+                this.PyList_Append(listPtr, itemPtr);
+                this.DecRef(itemPtr);
+            }
+            return listPtr;
+        }
+        
+        public override IntPtr 
+        PyList_New(int length)
         {
             PyListObject list = new PyListObject();
             list.ob_refcnt = 1;
@@ -49,7 +64,8 @@ namespace Ironclad
         }   
         
         
-        private void PyList_Append_Empty(IntPtr listPtr, ref PyListObject listStruct, IntPtr itemPtr)
+        private void 
+        PyList_Append_Empty(IntPtr listPtr, ref PyListObject listStruct, IntPtr itemPtr)
         {
             listStruct.ob_size = 1;
             listStruct.allocated = 1;
@@ -59,7 +75,8 @@ namespace Ironclad
         }
         
         
-        private void PyList_Append_NonEmpty(IntPtr listPtr, ref PyListObject listStruct, IntPtr itemPtr)
+        private void 
+        PyList_Append_NonEmpty(IntPtr listPtr, ref PyListObject listStruct, IntPtr itemPtr)
         {
             uint oldAllocated = listStruct.allocated;
             int oldAllocatedBytes = (int)oldAllocated * CPyMarshal.PtrSize;
@@ -76,7 +93,8 @@ namespace Ironclad
         }
         
         
-        public override int PyList_Append(IntPtr listPtr, IntPtr itemPtr)
+        public override int 
+        PyList_Append(IntPtr listPtr, IntPtr itemPtr)
         {
             PyListObject listStruct = (PyListObject)Marshal.PtrToStructure(listPtr, typeof(PyListObject));
             if (listStruct.ob_item == IntPtr.Zero)
@@ -95,6 +113,16 @@ namespace Ironclad
         }
         
         
+        public override IntPtr
+        PyList_GetSlice(IntPtr listPtr, int start, int stop)
+        {
+            List list = (List)this.Retrieve(listPtr);
+            List sliced = (List)list[new Slice(start, stop)];
+            IntPtr result = this.Store(sliced);
+            return result;
+        }
+        
+        
         public virtual void 
         PyList_Dealloc(IntPtr listPtr)
         {
@@ -109,7 +137,12 @@ namespace Ironclad
                 }
                 this.allocator.Free(listStruct.ob_item);
             }
-            this.allocator.Free(listPtr);
+            IntPtr freeFPPtr = CPyMarshal.Offset(
+                this.PyList_Type, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
+            IntPtr freeFP = CPyMarshal.ReadPtr(freeFPPtr);
+            PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)Marshal.GetDelegateForFunctionPointer(
+                freeFP, typeof(PyObject_Free_Delegate));
+            freeDgt(listPtr);
         }
         
     }

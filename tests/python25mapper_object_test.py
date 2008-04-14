@@ -97,7 +97,21 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
             mapper.DecRef(objPtr)
             deallocTypes()
     
+    
 class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
+
+    def testPyBaseObject_Type(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        try:
+            mapper.SetData("PyBaseObject_Type", typeBlock)
+            self.assertEquals(mapper.PyBaseObject_Type, typeBlock, "failed to remember address")
+            self.assertEquals(mapper.Retrieve(mapper.PyBaseObject_Type), object, "failed to map correctly")
+        finally:
+            Marshal.FreeHGlobal(typeBlock)
+
 
     def testPyBaseObject_TypeField_tp_dealloc(self):
         calls = []

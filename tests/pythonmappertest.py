@@ -316,6 +316,19 @@ class PythonMapperTest(unittest.TestCase):
             IntPtr(999), paramsStore)
 
 
+    def testPythonMapperFinds_PyType_IsSubtype(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyType_IsSubtype(self, subtypePtr, typePtr):
+                paramsStore.append((subtypePtr, typePtr))
+                return 123
+
+        self.assertDispatches(
+            MyPM, "PyType_IsSubtype",
+            (IntPtr(111), IntPtr(222)),
+            123, paramsStore)
+
+
     def testPythonMapperFinds_PyThread_allocate_lock(self):
         paramsStore = []
         class MyPM(PythonMapper):
@@ -442,6 +455,19 @@ class PythonMapperTest(unittest.TestCase):
             MyPM, "PyList_Append",
             (IntPtr(123), IntPtr(456)),
             789, paramsStore)
+
+
+    def testPythonMapperFinds_PyList_GetSlice(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyList_GetSlice(self, listPtr, start, stop):
+                paramsStore.append((listPtr, start, stop))
+                return IntPtr(789)
+
+        self.assertDispatches(
+            MyPM, "PyList_GetSlice",
+            (IntPtr(123), 4, 5),
+            IntPtr(789), paramsStore)
 
 
     def testPythonMapperFinds_PyTuple_New(self):

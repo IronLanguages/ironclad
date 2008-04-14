@@ -36,9 +36,12 @@ bz2___author__ = """The bz2 python module was written by:
     Gustavo Niemeyer <niemeyer@conectiva.com>
 """
 
-bz2_test_text = "I wonder why. I wonder why. I wonder why I wonder why. " * 1000
-bz2_test_text_lines = "I wonder why. I wonder why. I wonder why I wonder why.\n" * 1000
+bz2_test_str = "I wonder why. I wonder why. I wonder why I wonder why. "
+bz2_test_text = bz2_test_str * 1000
 bz2_test_data = 'BZh91AY&SYM\xf6FM\x00!\xd9\x95\x80@\x01\x00 \x06A\x90\xa0 \x00\x90 \x1ai\xa0)T4\x1bS\x81R\xa6\tU\xb0J\xad\x02Ur*T\xd0%W\xc0\x95^\x02U`%V\x02Up\tU\xb0J\xae\xc0\x95X\tU\xf8\xbb\x92)\xc2\x84\x82o\xb22h'
+
+bz2_test_text_lines = "I wonder why. I wonder why. I wonder why I wonder why.\n" * 1000
+
 
 class FunctionalityTest(unittest.TestCase):
 
@@ -217,7 +220,35 @@ class FunctionalityTest(unittest.TestCase):
                 r.close()
             """) % (path, bz2_test_text, path, bz2_test_text)
         )
+
+
+    def assertBZ2FileWriteLines(self, sequence):
+        # read is tested separately elsewhere, so we assume it works
+        testDir = tempfile.mkdtemp()
+        path = os.path.join(testDir, "test.bz2")
+        self.assertWorksWithBZ2(dedent("""
+            w = bz2.BZ2File(%r, 'w')
+            try:
+                w.writelines(%r)
+            finally:
+                w.close()
+            r = bz2.BZ2File(%r, 'r')
+            try:
+                assert r.read() == %r
+            finally:
+                r.close()
+            """) % (path, sequence, path, bz2_test_text)
+        )
         
+
+
+    def testBZ2FileWriteLines_List(self):
+        self.assertBZ2FileWriteLines([bz2_test_str] * 1000)
+        
+
+    def testBZ2FileWriteLines_Tuple(self):
+        self.assertBZ2FileWriteLines(tuple([bz2_test_str] * 1000))
+
 
     def assertWorksWithMultiarray(self, testCode):
         self.assertWorksWithModule("C:\\Python25\\Lib\\site-packages\\numpy\\core\\multiarray.pyd", "multiarray", testCode)
