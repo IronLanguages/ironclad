@@ -129,7 +129,82 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
         finally:
             mapper.DecRef(objPtr)
             deallocTypes()
+    
+    
+    def testPyIter_Next_Success(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
         
+        testList = [0, 1, 2]
+        listPtr = mapper.Store(testList)
+        iterPtr = mapper.PyObject_GetIter(listPtr)
+        try:
+            for i in range(3):
+                itemPtr = mapper.PyIter_Next(iterPtr)
+                self.assertEquals(mapper.Retrieve(itemPtr), i, "got wrong object back")
+                self.assertEquals(mapper.RefCount(itemPtr), 2, "failed to incref")
+                mapper.DecRef(itemPtr)
+            
+            noItemPtr = mapper.PyIter_Next(iterPtr)
+            self.assertEquals(noItemPtr, IntPtr.Zero, "failed to stop iterating")
+            
+        finally:
+            mapper.DecRef(iterPtr)
+            mapper.DecRef(listPtr)
+            deallocTypes()
+    
+    
+    def testPyIter_Next_NotAnIterator(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        notIterPtr = mapper.Store(object())
+        try:
+            self.assertEquals(mapper.PyIter_Next(notIterPtr), IntPtr.Zero, "bad return")
+            self.assertNotEquals(mapper.LastException, None, "failed to set exception")
+            def Raise():
+                raise mapper.LastException
+            try:
+                Raise()
+            except TypeError, e:
+                self.assertEquals(e.msg, "PyIter_Next: object is not an iterator", "bad message")
+            else:
+                self.fail("wrong exception")
+            
+        finally:
+            mapper.DecRef(notIterPtr)
+            deallocTypes()
+    
+    
+    def testPyIter_Next_ExplodingIterator(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        class BorkedException(Exception):
+            pass
+        def GetNext():
+            raise BorkedException("Release the hounds!")
+        explodingIterator = (GetNext() for _ in range(3))
+        
+        iterPtr = mapper.Store(explodingIterator)
+        try:
+            self.assertEquals(mapper.PyIter_Next(iterPtr), IntPtr.Zero, "bad return")
+            self.assertNotEquals(mapper.LastException, None, "failed to set exception")
+            def Raise():
+                raise mapper.LastException
+            try:
+                Raise()
+            except BorkedException, e:
+                self.assertEquals(str(e), "Release the hounds!", "unexpected message")
+            else:
+                self.fail("wrong exception")
+            
+        finally:
+            mapper.DecRef(iterPtr)
+            deallocTypes()
     
     
 class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):

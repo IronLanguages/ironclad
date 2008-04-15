@@ -405,6 +405,19 @@ class PythonMapperTest(unittest.TestCase):
             IntPtr(999), paramsStore)
 
 
+    def testPythonMapperFinds_PyIter_Next(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyIter_Next(self, obj):
+                paramsStore.append((obj,))
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyIter_Next",
+            (IntPtr(123),),
+            IntPtr(999), paramsStore)
+
+
     def testPythonMapperFinds_PyDict_New(self):
         paramsStore = []
         class MyPM(PythonMapper):
