@@ -154,12 +154,37 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
     
     
     def testPyList_New_NonZeroLength(self):
+        allocs = []
         engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
+        
+        SIZE = 27
+        listPtr = mapper.PyList_New(SIZE)
         try:
-            self.assertRaises(NotImplementedError, mapper.PyList_New, 27)
+            listStruct = Marshal.PtrToStructure(listPtr, PyListObject)
+            self.assertEquals(listStruct.ob_refcnt, 1, "bad refcount")
+            self.assertEquals(listStruct.ob_type, mapper.PyList_Type, "bad type")
+            self.assertEquals(listStruct.ob_size, SIZE, "bad ob_size")
+            self.assertEquals(listStruct.allocated, SIZE, "bad allocated")
+            
+            dataPtr = listStruct.ob_item
+            self.assertNotEquals(dataPtr, IntPtr.Zero, "failed to allocate space for data")
+            
+            expectedAllocs = [(dataPtr, (SIZE * CPyMarshal.PtrSize)), (listPtr, Marshal.SizeOf(PyListObject))]
+            self.assertEquals(set(allocs), set(expectedAllocs), "allocated wrong")
+            
+            # as we test that the list is not-yet-filled, we fill it, so we can decref it safely
+            objPtr = mapper.Store(object())
+            for _ in range(SIZE):
+                self.assertEquals(CPyMarshal.ReadPtr(dataPtr), IntPtr.Zero, "failed to zero memory")
+                CPyMarshal.WritePtr(dataPtr, objPtr)
+                mapper.IncRef(objPtr)
+                dataPtr = OffsetPtr(dataPtr, CPyMarshal.PtrSize)
+            mapper.DecRef(objPtr)
+            
         finally:
+            mapper.DecRef(listPtr)
             deallocTypes()
     
     

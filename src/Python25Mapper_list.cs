@@ -54,7 +54,9 @@ namespace Ironclad
             }
             else
             {
-                throw new NotImplementedException("Can't yet create lists with non-zero length");
+                int bytes = length * CPyMarshal.PtrSize;
+                list.ob_item = this.allocator.Alloc(bytes);
+                CPyMarshal.Zero(list.ob_item, bytes);
             }
             
             IntPtr listPtr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyListObject)));

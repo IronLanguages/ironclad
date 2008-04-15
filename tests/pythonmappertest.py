@@ -392,6 +392,19 @@ class PythonMapperTest(unittest.TestCase):
             IntPtr(999), paramsStore)
 
 
+    def testPythonMapperFinds_PyObject_GetIter(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyObject_GetIter(self, obj):
+                paramsStore.append((obj,))
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyObject_GetIter",
+            (IntPtr(123),),
+            IntPtr(999), paramsStore)
+
+
     def testPythonMapperFinds_PyDict_New(self):
         paramsStore = []
         class MyPM(PythonMapper):
