@@ -5,12 +5,16 @@ using System.Runtime.InteropServices;
 
 namespace Ironclad
 {
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate IntPtr CPythonVarargsFunction_Delegate(IntPtr self, IntPtr args);
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate IntPtr CPythonVarargsKwargsFunction_Delegate(IntPtr self, IntPtr args, IntPtr kwargs);
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int CPython_initproc_Delegate(IntPtr self, IntPtr args, IntPtr kwargs);
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void CPython_destructor_Delegate(IntPtr self);
 
     namespace Structs

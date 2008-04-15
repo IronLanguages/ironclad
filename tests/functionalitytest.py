@@ -202,6 +202,18 @@ class FunctionalityTest(unittest.TestCase):
             """) % (testPath, bz2_test_text_lines)
         )
 
+    def testBZ2FileReadLines_Long(self):
+        testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
+        self.assertWorksWithBZ2(dedent("""
+            f = bz2.BZ2File(%r)
+            try:
+                lines = f.readlines()
+                assert lines == [%r]
+            finally:
+                f.close()
+            """) % (testPath, bz2_test_text)
+        )
+
 
     def testBZ2FileWrite(self):
         # read is tested separately elsewhere, so we assume it works
