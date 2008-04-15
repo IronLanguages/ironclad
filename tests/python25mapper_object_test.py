@@ -84,18 +84,52 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
         try:
             resultPtr = mapper.PyObject_GetAttrString(objPtr, "ben")
             self.assertEquals(resultPtr, IntPtr.Zero, "wrong")
+            self.assertEquals(mapper.LastException, None, "no need to set exception, according to spec")
+        finally:
+            mapper.DecRef(objPtr)
+            deallocTypes()
+    
+    
+    def testPyObject_GetIter_Success(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        testList = [1, 2, 3]
+        listPtr = mapper.Store(testList)
+        try:
+            iterPtr = mapper.PyObject_GetIter(listPtr)
+            iter = mapper.Retrieve(iterPtr)
+            self.assertEquals([x for x in iter], testList, "bad iterator")
+            mapper.DecRef(iterPtr)
+        finally:
+            mapper.DecRef(listPtr)
+            deallocTypes()
+    
+    
+    def testPyObject_GetIter_Failure(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        testObj = object()
+        objPtr = mapper.Store(testObj)
+        try:
+            iterPtr = mapper.PyObject_GetIter(objPtr)
+            self.assertEquals(iterPtr, IntPtr.Zero, "returned iterator inappropriately")
             self.assertNotEquals(mapper.LastException, None, "failed to set exception")
             def Raise():
                 raise mapper.LastException
             try:
                 Raise()
-            except NameError, e:
-                self.assertEquals(e.msg, "ben", "bad message")
+            except TypeError, e:
+                self.assertEquals(e.msg, "PyObject_GetIter: object is not iterable", "bad message")
             else:
                 self.fail("wrong exception")
         finally:
             mapper.DecRef(objPtr)
             deallocTypes()
+        
     
     
 class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):

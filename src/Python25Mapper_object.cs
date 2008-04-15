@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
@@ -70,10 +71,20 @@ namespace Ironclad
             {
                 return this.Store(attr);
             }
-            this.LastException = new PythonNameErrorException(name);
             return IntPtr.Zero;
         }
         
         
+        public override IntPtr
+        PyObject_GetIter(IntPtr objPtr)
+        {
+            IEnumerable enumerable = this.Retrieve(objPtr) as IEnumerable;
+            if (enumerable == null)
+            {
+                this.LastException = new ArgumentTypeException("PyObject_GetIter: object is not iterable");
+                return IntPtr.Zero;
+            }
+            return this.Store(enumerable.GetEnumerator());
+        }
     }
 }
