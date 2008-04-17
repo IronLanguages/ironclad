@@ -155,5 +155,33 @@ namespace Ironclad
             PyStringObject str = (PyStringObject)Marshal.PtrToStructure(strPtr, typeof(PyStringObject));
             return (int)str.ob_size;
         }
+        
+        
+        private static char
+        CharFromByte(byte b)
+        {
+            return (char)b;
+        }
+        
+        private static byte
+        ByteFromChar(char c)
+        {
+            return (byte)c;
+        }
+        
+        
+        private void
+        ActualiseString(IntPtr ptr)
+        {
+            IntPtr buffer = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+            IntPtr lengthPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
+            int length = CPyMarshal.ReadInt(lengthPtr);
+
+            byte[] bytes = new byte[length];
+            Marshal.Copy(buffer, bytes, 0, length);
+            char[] chars = Array.ConvertAll<byte, char>(
+                bytes, new Converter<byte, char>(CharFromByte));
+            this.StoreUnmanagedData(ptr, new string(chars));
+        }
     }
 }

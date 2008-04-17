@@ -483,6 +483,19 @@ class PythonMapperTest(unittest.TestCase):
             789, paramsStore)
 
 
+    def testPythonMapperFinds_PyList_SetItem(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyList_SetItem(self, listPtr, index, itemPtr):
+                paramsStore.append((listPtr, index, itemPtr))
+                return 999
+
+        self.assertDispatches(
+            MyPM, "PyList_SetItem",
+            (IntPtr(123), 4, IntPtr(567)),
+            999, paramsStore)
+
+
     def testPythonMapperFinds_PyList_GetSlice(self):
         paramsStore = []
         class MyPM(PythonMapper):

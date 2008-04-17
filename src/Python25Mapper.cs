@@ -44,6 +44,7 @@ namespace Ironclad
     {
         PyStringObject,
         PyTupleObject,
+        PyListObject,
         None,
     }
 
@@ -119,17 +120,6 @@ namespace Ironclad
             this.objmap[obj] = ptr;
         }
         
-        private static char
-        CharFromByte(byte b)
-        {
-            return (char)b;
-        }
-        
-        private static byte
-        ByteFromChar(char c)
-        {
-            return (byte)c;
-        }
         
         public object 
         Retrieve(IntPtr ptr)
@@ -146,32 +136,17 @@ namespace Ironclad
                             return null;
 
                         case UnmanagedDataMarker.PyStringObject:
-                            IntPtr buffer = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
-                            IntPtr lengthPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
-                            int length = CPyMarshal.ReadInt(lengthPtr);
-
-                            byte[] bytes = new byte[length];
-                            Marshal.Copy(buffer, bytes, 0, length);
-                            char[] chars = Array.ConvertAll<byte, char>(
-                                bytes, new Converter<byte, char>(CharFromByte));
-                            this.StoreUnmanagedData(ptr, new string(chars));
+                            this.ActualiseString(ptr);
                             break;
 
                         case UnmanagedDataMarker.PyTupleObject:
-                            IntPtr itemCountPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_size"));
-                            int itemCount = CPyMarshal.ReadInt(itemCountPtr);
-                            IntPtr itemAddressPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
-
-                            object[] items = new object[itemCount];
-                            for (int i = 0; i < itemCount; i++)
-                            {
-                                IntPtr itemPtr = CPyMarshal.ReadPtr(itemAddressPtr);
-                                items[i] = this.Retrieve(itemPtr);
-                                itemAddressPtr = CPyMarshal.Offset(itemAddressPtr, CPyMarshal.PtrSize);
-                            }
-                            this.StoreUnmanagedData(ptr, Tuple.MakeTuple(items));
+                            this.ActualiseTuple(ptr);
                             break;
 
+                        case UnmanagedDataMarker.PyListObject:
+                            ActualiseList(ptr);
+                            break;
+                            
                         default:
                             throw new Exception("Found impossible data in pointer map");
                     }
