@@ -253,7 +253,6 @@ class FunctionalityTest(unittest.TestCase):
         )
         
 
-
     def testBZ2FileWriteLines_List(self):
         self.assertBZ2FileWriteLines([bz2_test_str] * 1000)
         

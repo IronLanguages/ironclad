@@ -93,5 +93,23 @@ namespace Ironclad
                 freeFP, typeof(PyObject_Free_Delegate));
             freeDgt(tuplePtr);
         }
+        
+        
+        private void
+        ActualiseTuple(IntPtr ptr)
+        {
+            IntPtr itemCountPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_size"));
+            int itemCount = CPyMarshal.ReadInt(itemCountPtr);
+            IntPtr itemAddressPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
+
+            object[] items = new object[itemCount];
+            for (int i = 0; i < itemCount; i++)
+            {
+                IntPtr itemPtr = CPyMarshal.ReadPtr(itemAddressPtr);
+                items[i] = this.Retrieve(itemPtr);
+                itemAddressPtr = CPyMarshal.Offset(itemAddressPtr, CPyMarshal.PtrSize);
+            }
+            this.StoreUnmanagedData(ptr, Tuple.MakeTuple(items));
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
@@ -42,6 +43,7 @@ namespace Ironclad
         public override IntPtr 
         PyList_New(int length)
         {
+            object ipylist = UnmanagedDataMarker.PyListObject;
             PyListObject list = new PyListObject();
             list.ob_refcnt = 1;
             list.ob_type = this.PyList_Type;
@@ -51,6 +53,7 @@ namespace Ironclad
             if (length == 0)
             {
                 list.ob_item = IntPtr.Zero;
+                ipylist = new List();
             }
             else
             {
@@ -61,7 +64,7 @@ namespace Ironclad
             
             IntPtr listPtr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyListObject)));
             Marshal.StructureToPtr(list, listPtr, false);
-            this.StoreUnmanagedData(listPtr, new List());
+            this.StoreUnmanagedData(listPtr, ipylist);
             return listPtr;
         }   
         
@@ -115,6 +118,69 @@ namespace Ironclad
         }
         
         
+        public override int
+        PyList_SetItem(IntPtr listPtr, int index, IntPtr itemPtr)
+        {
+            if (listPtr == IntPtr.Zero)
+            {
+                this.DecRef(itemPtr);
+                return -1;
+            }
+            bool listPtrValid = this.ptrmap.ContainsKey(listPtr);
+            if (!listPtrValid)
+            {
+                this.DecRef(itemPtr);
+                return -1;
+            }
+            bool okToContinue = false;
+            object ipylist = this.ptrmap[listPtr];
+            List realIpylist = ipylist as List;
+            if (realIpylist != null)
+            {
+                okToContinue = true;
+            }
+            if (ipylist.GetType() == typeof(UnmanagedDataMarker))
+            {
+                UnmanagedDataMarker marker = (UnmanagedDataMarker)ipylist;
+                if (marker == UnmanagedDataMarker.PyListObject)
+                {
+                    okToContinue = true;
+                }
+            }
+            if (!okToContinue)
+            {
+                this.DecRef(itemPtr);
+                return -1;
+            }
+            
+            IntPtr lengthPtr = CPyMarshal.Offset(listPtr, Marshal.OffsetOf(typeof(PyListObject), "ob_size"));
+            int length = CPyMarshal.ReadInt(lengthPtr);
+            if (index < 0 || index >= length)
+            {
+                this.DecRef(itemPtr);
+                return -1;
+            }
+            
+            IntPtr dataPtrPtr = CPyMarshal.Offset(listPtr, Marshal.OffsetOf(typeof(PyListObject), "ob_item"));
+            IntPtr dataPtr = CPyMarshal.ReadPtr(dataPtrPtr);
+            
+            IntPtr oldItemPtrPtr = CPyMarshal.Offset(dataPtr, index * CPyMarshal.PtrSize);
+            IntPtr oldItemPtr = CPyMarshal.ReadPtr(oldItemPtrPtr);
+            if (oldItemPtr != IntPtr.Zero)
+            {
+                this.DecRef(oldItemPtr);
+            }
+            CPyMarshal.WritePtr(oldItemPtrPtr, itemPtr);
+            
+            if (realIpylist != null)
+            {
+                object item = this.Retrieve(itemPtr);
+                realIpylist[index] = item;
+            }
+                        
+            return 0;
+        }
+        
         public override IntPtr
         PyList_GetSlice(IntPtr listPtr, int start, int stop)
         {
@@ -129,13 +195,18 @@ namespace Ironclad
         PyList_Dealloc(IntPtr listPtr)
         {
             PyListObject listStruct = (PyListObject)Marshal.PtrToStructure(listPtr, typeof(PyListObject));
+            
             if (listStruct.ob_item != IntPtr.Zero)
             {
-                IntPtr itemPtr = listStruct.ob_item;
+                IntPtr itemsPtr = listStruct.ob_item;
                 for (int i = 0; i < listStruct.ob_size; i++)
                 {
-                    this.DecRef(CPyMarshal.ReadPtr(itemPtr));
-                    itemPtr = CPyMarshal.Offset(itemPtr, CPyMarshal.PtrSize);
+                    IntPtr itemPtr = CPyMarshal.ReadPtr(itemsPtr);
+                    if (itemPtr != IntPtr.Zero)
+                    {
+                        this.DecRef(itemPtr);
+                    }
+                    itemsPtr = CPyMarshal.Offset(itemsPtr, CPyMarshal.PtrSize);
                 }
                 this.allocator.Free(listStruct.ob_item);
             }
@@ -147,6 +218,52 @@ namespace Ironclad
             freeDgt(listPtr);
         }
         
+        
+        // this should only be used by the following method, and should follow it in the event of future refactoring
+        private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
+                
+        private void
+        ActualiseList(IntPtr ptr)
+        {
+            if (this.listsBeingActualised.ContainsKey(ptr))
+            {
+                throw new Exception("Fatal logic error -- Python25Mapper.listsBeingActualised is somehow corrupt");
+            }
+            
+            List newList = new List();
+            this.listsBeingActualised[ptr] = newList;
+            
+            IntPtr lengthPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyListObject), "ob_size"));
+            int length = CPyMarshal.ReadInt(lengthPtr);
+            if (length != 0)
+            {
+                IntPtr dataPtrPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyListObject), "ob_item"));
+                IntPtr itemPtrPtr = CPyMarshal.ReadPtr(dataPtrPtr);
+                for (int i = 0; i < length; i++)
+                {
+                    IntPtr itemPtr = CPyMarshal.ReadPtr(itemPtrPtr);
+                    if (itemPtr == IntPtr.Zero)
+                    {
+                        // We have *no* idea what to do here.
+                        throw new ArgumentException("Attempted to Retrieve uninitialised PyListObject -- expect strange bugs");
+                    }
+                    
+                    if (this.listsBeingActualised.ContainsKey(itemPtr))
+                    {
+                        newList.Append(this.listsBeingActualised[itemPtr]);
+                    }
+                    else
+                    {
+                        newList.Append(this.Retrieve(itemPtr));
+                    }
+
+                    itemPtrPtr = CPyMarshal.Offset(itemPtrPtr, CPyMarshal.PtrSize);
+                }
+            }
+            this.listsBeingActualised.Remove(ptr);
+            this.StoreUnmanagedData(ptr, newList);
+            
+        }
     }
 
 }

@@ -174,14 +174,9 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
             expectedAllocs = [(dataPtr, (SIZE * CPyMarshal.PtrSize)), (listPtr, Marshal.SizeOf(PyListObject))]
             self.assertEquals(set(allocs), set(expectedAllocs), "allocated wrong")
             
-            # as we test that the list is not-yet-filled, we fill it, so we can decref it safely
-            objPtr = mapper.Store(object())
             for _ in range(SIZE):
                 self.assertEquals(CPyMarshal.ReadPtr(dataPtr), IntPtr.Zero, "failed to zero memory")
-                CPyMarshal.WritePtr(dataPtr, objPtr)
-                mapper.IncRef(objPtr)
                 dataPtr = OffsetPtr(dataPtr, CPyMarshal.PtrSize)
-            mapper.DecRef(objPtr)
             
         finally:
             mapper.DecRef(listPtr)
@@ -241,6 +236,165 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
             mapper.DecRef(listPtr)
             deallocTypes()
         
+        
+    def testPyList_SetItem_RefCounting(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        listPtr = mapper.PyList_New(4)
+        itemPtr1 = mapper.Store(object())
+        itemPtr2 = mapper.Store(object())
+        try:
+            try:
+                self.assertEquals(mapper.PyList_SetItem(listPtr, 0, itemPtr1), 0, "returned error code")
+            except Exception, e:
+                print e
+                raise
+            self.assertEquals(mapper.RefCount(itemPtr1), 1, "reference count wrong")
+            
+            mapper.IncRef(itemPtr1) # reference was stolen a couple of lines ago
+            self.assertEquals(mapper.PyList_SetItem(listPtr, 0, itemPtr2), 0, "returned error code")
+            self.assertEquals(mapper.RefCount(itemPtr1), 1, "failed to decref replacee")
+            self.assertEquals(mapper.RefCount(itemPtr2), 1, "reference count wrong")
+            
+            mapper.IncRef(itemPtr2) # reference was stolen a couple of lines ago
+            self.assertEquals(mapper.PyList_SetItem(listPtr, 0, IntPtr.Zero), 0, "returned error code")
+            self.assertEquals(mapper.RefCount(itemPtr2), 1, "failed to decref replacee")
+            
+        finally:
+            mapper.DecRef(itemPtr2)
+            mapper.DecRef(itemPtr1)
+            mapper.DecRef(listPtr)
+            deallocTypes()
+        
+        
+    def testPyList_SetItem_CompleteList(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        listPtr = mapper.PyList_New(4)
+        item1 = object()
+        item2 = object()
+        itemPtr1 = mapper.Store(item1)
+        itemPtr2 = mapper.Store(item2)
+        mapper.IncRef(itemPtr1)
+        mapper.IncRef(itemPtr2)
+        try:
+            mapper.PyList_SetItem(listPtr, 0, itemPtr1)
+            mapper.PyList_SetItem(listPtr, 1, itemPtr2)
+            mapper.PyList_SetItem(listPtr, 2, itemPtr1)
+            mapper.PyList_SetItem(listPtr, 3, itemPtr2)
+            
+            self.assertEquals(mapper.Retrieve(listPtr), [item1, item2, item1, item2], "lists not synchronised")
+            
+        finally:
+            mapper.DecRef(listPtr)
+            deallocTypes()
+    
+    
+    def testPyList_SetItem_Failures(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        objPtr = mapper.Store(object())
+        listPtr = mapper.PyList_New(4)
+        try:
+            mapper.IncRef(objPtr) # failing PyList_SetItem will still steal a reference
+            self.assertEquals(mapper.PyList_SetItem(objPtr, 1, objPtr), -1, "did not detect non-list")
+            self.assertEquals(mapper.RefCount(objPtr), 1, "reference not stolen")
+            
+            mapper.IncRef(objPtr)
+            self.assertEquals(mapper.PyList_SetItem(listPtr, 4, objPtr), -1, "did not detect set outside bounds")
+            self.assertEquals(mapper.RefCount(objPtr), 1, "reference not stolen")
+            
+            mapper.IncRef(objPtr)
+            self.assertEquals(mapper.PyList_SetItem(listPtr, -1, objPtr), -1, "did not detect set outside bounds")
+            self.assertEquals(mapper.RefCount(objPtr), 1, "reference not stolen")
+            
+            mapper.IncRef(objPtr)
+            self.assertEquals(mapper.PyList_SetItem(IntPtr.Zero, 1, objPtr), -1, "did not detect null list")
+            self.assertEquals(mapper.RefCount(objPtr), 1, "reference not stolen")
+        
+            # list still contains uninitialised values
+            self.assertRaises(ValueError, mapper.Retrieve, listPtr)
+        
+        finally:
+            mapper.DecRef(listPtr)
+            mapper.DecRef(objPtr)
+            deallocTypes()
+            
+    
+    def testPyList_SetItem_PreexistingIpyList(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        item = object()
+        itemPtr = mapper.Store(item)
+        listPtr = mapper.Store([1, 2, 3])
+        try:
+            self.assertEquals(mapper.PyList_SetItem(listPtr, 1, itemPtr), 0, "did not report success")
+            self.assertEquals(mapper.Retrieve(listPtr), [1, item, 3], "did not replace list content")
+            
+        finally:
+            mapper.DecRef(listPtr)
+            deallocTypes()
+        
+    
+    def testRetrieveListContainingItself(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        listPtr = mapper.PyList_New(1)
+        try:
+            mapper.PyList_SetItem(listPtr, 0, listPtr)
+            self.assertEquals(mapper.RefCount(listPtr), 1, "list should be the only thing owning a reference to it")
+            realList = mapper.Retrieve(listPtr)
+            self.assertEquals(len(realList), 1, "wrong size list")
+            anotherReferenceToRealList = realList[0]
+            self.assertEquals(realList is anotherReferenceToRealList, True, "wrong list contents")
+        finally:
+            deallocTypes()
+        
+        # yes, we do leak listPtr. 
+        # no, that isn't good. 
+        # yes, please do submit a patch :)
+        
+    
+    def testRetrieveListContainingItselfIndirectly(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        listPtr1 = mapper.PyList_New(1)
+        listPtr2 = mapper.PyList_New(1)
+        listPtr3 = mapper.PyList_New(1)
+        try:
+            mapper.PyList_SetItem(listPtr1, 0, listPtr2)
+            mapper.PyList_SetItem(listPtr2, 0, listPtr3)
+            mapper.PyList_SetItem(listPtr3, 0, listPtr1)
+            
+            realList1 = mapper.Retrieve(listPtr1)
+            realList2 = mapper.Retrieve(listPtr2)
+            realList3 = mapper.Retrieve(listPtr3)
+            
+            anotherReferenceToRealList1 = realList3[0]
+            anotherReferenceToRealList2 = realList1[0]
+            anotherReferenceToRealList3 = realList2[0]
+            
+            self.assertEquals(realList1 is anotherReferenceToRealList1, True, "wrong list contents")
+            self.assertEquals(realList2 is anotherReferenceToRealList2, True, "wrong list contents")
+            self.assertEquals(realList3 is anotherReferenceToRealList3, True, "wrong list contents")
+        finally:
+            deallocTypes()
+    
+        # yes, more leaks
+    
+    
         
     def testDeleteList(self):
         deallocs = []

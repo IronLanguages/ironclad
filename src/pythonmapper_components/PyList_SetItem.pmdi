@@ -1,0 +1,3 @@
+int
+IntPtr listPtr, int index, IntPtr itemPtr
+return -1
