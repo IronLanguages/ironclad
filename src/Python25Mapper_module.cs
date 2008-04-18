@@ -93,6 +93,7 @@ namespace Ironclad
             }
         }
         
+        
         public override IntPtr 
         Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
         {
@@ -123,14 +124,14 @@ namespace Ironclad
         }
         
         
+        
         private void
         GenerateClass(EngineModule module, string name, IntPtr typePtr)
         {
             StringBuilder classCode = new StringBuilder();
             
-            IntPtr tp_namePtr = CPyMarshal.Offset(
-                typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_name"));
-            string tp_name = Marshal.PtrToStringAnsi(CPyMarshal.ReadPtr(tp_namePtr));
+            IntPtr tp_namePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_name");
+            string tp_name = Marshal.PtrToStringAnsi(tp_namePtr);
             
             string __name__ = tp_name;
             string __module__ = "";
@@ -140,16 +141,21 @@ namespace Ironclad
                 __name__ = tp_name.Substring(lastDot + 1);  
                 __module__ = tp_name.Substring(0, lastDot);
             }
-            classCode.Append(String.Format(CLASS_CODE, name, __module__));
             
-            IntPtr tp_methodsPtr = CPyMarshal.Offset(
-                typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_methods"));
-            IntPtr methods = CPyMarshal.ReadPtr(tp_methodsPtr);
-            if (methods != IntPtr.Zero)
+            string __doc__ = "";
+            IntPtr tp_docPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_doc");
+            if (tp_docPtr != IntPtr.Zero)
+            {
+                __doc__ = Marshal.PtrToStringAnsi(tp_docPtr).Replace("\\", "\\\\");
+            }
+            classCode.Append(String.Format(CLASS_CODE, name, __module__, __doc__));
+            
+            IntPtr methodsPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_methods");
+            if (methodsPtr != IntPtr.Zero)
             {
                 this.GenerateMethods(
                     classCode, 
-                    methods, 
+                    methodsPtr, 
                     (DispatchTable)module.Globals["_ironclad_dispatch_table"],
                     name + ".", 
                     NOARGS_METHOD_CODE, 
@@ -158,28 +164,54 @@ namespace Ironclad
                     VARARGS_KWARGS_METHOD_CODE
                 );
             }
-            classCode.Append(String.Format(CLASS_FIXUP_CODE, name, __name__));
             
+            Py_TPFLAGS tp_flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
+            if ((tp_flags & Py_TPFLAGS.HAVE_ITER) != 0)
+            {
+                if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iter") != IntPtr.Zero)
+                {
+                    classCode.Append(String.Format(ITER_METHOD_CODE, "__iter__", "tp_iter"));
+                }
+                if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iternext") != IntPtr.Zero)
+                {
+                    classCode.Append(String.Format(ITER_METHOD_CODE, "next", "tp_iternext"));
+                }
+            }
+            
+            classCode.Append(String.Format(CLASS_FIXUP_CODE, name, __name__));
             this.engine.Execute(classCode.ToString(), module);
             object klass = module.Globals[name];
             
             DynamicType.SetAttrMethod(klass, "_typePtr", typePtr);
             
-            IntPtr tp_newOffset = Marshal.OffsetOf(typeof(PyTypeObject), "tp_new");
-            IntPtr tp_newFP = CPyMarshal.ReadPtr(CPyMarshal.Offset(typePtr, tp_newOffset));
-            PyType_GenericNew_Delegate tp_newDgt = (PyType_GenericNew_Delegate)
-                Marshal.GetDelegateForFunctionPointer(
-                    tp_newFP, typeof(PyType_GenericNew_Delegate));
-            DynamicType.SetAttrMethod(klass, "_tp_newDgt", tp_newDgt);
-            
-            IntPtr tp_initOffset = Marshal.OffsetOf(typeof(PyTypeObject), "tp_init");
-            IntPtr tp_initFP = CPyMarshal.ReadPtr(CPyMarshal.Offset(typePtr, tp_initOffset));
-            CPython_initproc_Delegate tp_initDgt = (CPython_initproc_Delegate)
-                Marshal.GetDelegateForFunctionPointer(
-                    tp_initFP, typeof(CPython_initproc_Delegate));
-            DynamicType.SetAttrMethod(klass, "_tp_initDgt", tp_initDgt);
-            
+            this.SetClassDelegateSlot(klass, typePtr, "tp_new", typeof(PyType_GenericNew_Delegate));
+            this.SetClassDelegateSlot(klass, typePtr, "tp_init", typeof(CPython_initproc_Delegate));
+            if ((tp_flags & Py_TPFLAGS.HAVE_ITER) != 0)
+            {
+                if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iter") != IntPtr.Zero)
+                {
+                    this.SetClassDelegateSlot(klass, typePtr, "tp_iter", typeof(PyObject_GetIter_Delegate));
+                }
+                if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iternext") != IntPtr.Zero)
+                {
+                    this.SetClassDelegateSlot(klass, typePtr, "tp_iternext", typeof(PyIter_Next_Delegate));
+                }
+            }
             this.StoreUnmanagedData(typePtr, klass);
+        }
+        
+        
+        public IntPtr ReturnAString(IntPtr ignored)
+        {
+            return this.Store("hello, I am the string you have been looking for");
+        }
+        
+        
+        private void SetClassDelegateSlot(object klass, IntPtr typePtr, string fieldName, Type delegateType)
+        {
+            Delegate dgt = CPyMarshal.ReadFunctionPtrField(typePtr, typeof(PyTypeObject), fieldName, delegateType);
+            string attrName = String.Format("_{0}Dgt", fieldName);
+            DynamicType.SetAttrMethod(klass, attrName, dgt);
         }
         
         
@@ -198,54 +230,13 @@ namespace Ironclad
             }
             else
             {
-                IntPtr typePtr = CPyMarshal.Offset(
-                    itemPtr, Marshal.OffsetOf(typeof(PyTypeObject), "ob_type"));
-                if (CPyMarshal.ReadPtr(typePtr) == this.PyType_Type)
+                IntPtr typePtr = CPyMarshal.ReadPtrField(itemPtr, typeof(PyTypeObject), "ob_type");
+                if (typePtr == this.PyType_Type)
                 {
                     this.GenerateClass(module, name, itemPtr);
                 }
             }
             return 0;
-        }
-        
-        
-        public override IntPtr 
-        PyType_GenericNew(IntPtr typePtr, IntPtr args, IntPtr kwargs)
-        {
-            IntPtr tp_allocPtr = CPyMarshal.Offset(
-                typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_alloc"));
-            
-            PyType_GenericAlloc_Delegate dgt = (PyType_GenericAlloc_Delegate)
-                Marshal.GetDelegateForFunctionPointer(
-                    CPyMarshal.ReadPtr(tp_allocPtr), typeof(PyType_GenericAlloc_Delegate));
-            
-            return dgt(typePtr, 0);
-        }
-        
-        
-        public override IntPtr 
-        PyType_GenericAlloc(IntPtr typePtr, int nItems)
-        {
-            IntPtr tp_basicsizePtr = CPyMarshal.Offset(
-                typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_basicsize"));
-            int size = CPyMarshal.ReadInt(tp_basicsizePtr);
-            
-            if (nItems > 0)
-            {
-                IntPtr tp_itemsizePtr = CPyMarshal.Offset(
-                    typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_itemsize"));
-                int itemsize = CPyMarshal.ReadInt(tp_itemsizePtr);
-                size += (nItems * itemsize);
-            }
-            
-            IntPtr newInstance = this.allocator.Alloc(size);
-            IntPtr iRefcountPtr = CPyMarshal.Offset(
-                newInstance, Marshal.OffsetOf(typeof(PyObject), "ob_refcnt"));
-            CPyMarshal.WriteInt(iRefcountPtr, 1);
-            IntPtr iTypePtr = CPyMarshal.Offset(
-                newInstance, Marshal.OffsetOf(typeof(PyObject), "ob_type"));
-            CPyMarshal.WritePtr(iTypePtr, typePtr);
-            return newInstance;
         }
     }
 }

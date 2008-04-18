@@ -17,6 +17,61 @@ namespace Ironclad
             }
         }
 
+        private static IntPtr GetField(IntPtr addr, Type type, string field)
+        {
+            return CPyMarshal.Offset(addr, Marshal.OffsetOf(type, field));
+        }
+
+        public static void WritePtrField(IntPtr addr, Type type, string field, IntPtr data)
+        {
+            IntPtr writeAddr = CPyMarshal.GetField(addr, type, field);
+            CPyMarshal.WritePtr(writeAddr, data);
+        }
+
+        public static IntPtr ReadPtrField(IntPtr addr, Type type, string field)
+        {
+            IntPtr readAddr = CPyMarshal.GetField(addr, type, field);
+            return CPyMarshal.ReadPtr(readAddr);
+        }
+
+        public static void WriteIntField(IntPtr addr, Type type, string field, int data)
+        {
+            IntPtr writeAddr = CPyMarshal.GetField(addr, type, field);
+            CPyMarshal.WriteInt(writeAddr, data);
+        }
+
+        public static int ReadIntField(IntPtr addr, Type type, string field)
+        {
+            IntPtr readAddr = CPyMarshal.GetField(addr, type, field);
+            return CPyMarshal.ReadInt(readAddr);
+        }
+        
+        public static string ReadCStringField(IntPtr addr, Type type, string field)
+        {
+            IntPtr strPtrAddr = CPyMarshal.GetField(addr, type, field);
+            IntPtr readAddr = CPyMarshal.ReadPtr(strPtrAddr);
+            if (readAddr != IntPtr.Zero)
+            {
+                return Marshal.PtrToStringAnsi(readAddr);
+            }
+            return "";
+        }
+        
+        public static void WriteFunctionPtrField(IntPtr addr, Type type, string field, Delegate dgt)
+        {
+            IntPtr writeAddr = CPyMarshal.GetField(addr, type, field);
+            CPyMarshal.WritePtr(writeAddr, Marshal.GetFunctionPointerForDelegate(dgt));
+        }
+
+
+        public static Delegate ReadFunctionPtrField(IntPtr addr, Type type, string field, Type dgtType)
+        {
+            IntPtr readAddr = CPyMarshal.GetField(addr, type, field);
+            IntPtr funcPtr = CPyMarshal.ReadPtr(readAddr);
+            return Marshal.GetDelegateForFunctionPointer(funcPtr, dgtType);
+        }
+
+
         public static IntPtr Offset(IntPtr start, Int32 offset)
         {
             return (IntPtr)(start.ToInt32() + offset);

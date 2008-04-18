@@ -18,14 +18,8 @@ namespace Ironclad
         public override void
         Fill_PyBaseObject_Type(IntPtr address)
         {
-            IntPtr tp_deallocPtr = CPyMarshal.Offset(
-                address, Marshal.OffsetOf(typeof(PyTypeObject), "tp_dealloc"));
-            CPyMarshal.WritePtr(tp_deallocPtr, this.GetMethodFP("PyBaseObject_Dealloc"));
-
-            IntPtr tp_freePtr = CPyMarshal.Offset(
-                address, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
-            CPyMarshal.WritePtr(tp_freePtr, this.GetAddress("PyObject_Free"));
-            
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetMethodFP("PyBaseObject_Dealloc"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_free", this.GetAddress("PyObject_Free"));
             this.StoreUnmanagedData(address, TypeCache.Object);
         }
         
@@ -33,14 +27,10 @@ namespace Ironclad
         public virtual void 
         PyBaseObject_Dealloc(IntPtr objPtr)
         {
-            IntPtr objTypePtr = CPyMarshal.Offset(
-                objPtr, Marshal.OffsetOf(typeof(PyObject), "ob_type"));
-            IntPtr objType = CPyMarshal.ReadPtr(objTypePtr);
-            IntPtr freeFPPtr = CPyMarshal.Offset(
-                objType, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
-            IntPtr freeFP = CPyMarshal.ReadPtr(freeFPPtr);
-            PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)Marshal.GetDelegateForFunctionPointer(
-                freeFP, typeof(PyObject_Free_Delegate));
+            IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
+            PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)
+                CPyMarshal.ReadFunctionPtrField(
+                    objType, typeof(PyTypeObject), "tp_free", typeof(PyObject_Free_Delegate));
             freeDgt(objPtr);
         }
         

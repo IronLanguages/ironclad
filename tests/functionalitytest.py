@@ -40,7 +40,8 @@ bz2_test_str = "I wonder why. I wonder why. I wonder why I wonder why. "
 bz2_test_text = bz2_test_str * 1000
 bz2_test_data = 'BZh91AY&SYM\xf6FM\x00!\xd9\x95\x80@\x01\x00 \x06A\x90\xa0 \x00\x90 \x1ai\xa0)T4\x1bS\x81R\xa6\tU\xb0J\xad\x02Ur*T\xd0%W\xc0\x95^\x02U`%V\x02Up\tU\xb0J\xae\xc0\x95X\tU\xf8\xbb\x92)\xc2\x84\x82o\xb22h'
 
-bz2_test_text_lines = "I wonder why. I wonder why. I wonder why I wonder why.\n" * 1000
+bz2_test_line = "I wonder why. I wonder why. I wonder why I wonder why.\n"
+bz2_test_text_lines = bz2_test_line * 1000
 
 
 class FunctionalityTest(unittest.TestCase):
@@ -189,6 +190,7 @@ class FunctionalityTest(unittest.TestCase):
             """) % (testPath, bz2_test_text)
         )
 
+
     def testBZ2FileReadLines_Short(self):
         testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
         self.assertWorksWithBZ2(dedent("""
@@ -202,6 +204,7 @@ class FunctionalityTest(unittest.TestCase):
             """) % (testPath, bz2_test_text_lines)
         )
 
+
     def testBZ2FileReadLines_Long(self):
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
         self.assertWorksWithBZ2(dedent("""
@@ -212,6 +215,28 @@ class FunctionalityTest(unittest.TestCase):
             finally:
                 f.close()
             """) % (testPath, bz2_test_text)
+        )
+
+
+    def testIterateBZ2File(self):
+        testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
+        self.assertWorksWithBZ2(dedent("""
+            f = bz2.BZ2File(%r)
+            try:
+                assert f.xreadlines() is f
+                assert f.__iter__() is f
+                for _ in range(1000):
+                    line = f.next() 
+                    print line
+                    assert line == %r
+                try:
+                    f.next()
+                    raise AssertionError("iteration did not stop")
+                except StopIteration:
+                    pass
+            finally:
+                f.close()
+            """) % (testPath, bz2_test_line)
         )
 
 

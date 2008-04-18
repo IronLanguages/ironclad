@@ -2,9 +2,8 @@
 import unittest
 from tests.utils.runtest import makesuite, run
 
-from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.cpython import MakeMethodDef, MakeSingleMethodTablePtr, MakeTypePtr
-from tests.utils.memory import OffsetPtr, CreateTypes
+from tests.utils.memory import CreateTypes
 from tests.utils.python25mapper import TempPtrCheckingPython25Mapper, MakeAndAddEmptyModule
 
 import System
@@ -12,10 +11,10 @@ from System import Array, IntPtr, NullReferenceException
 from System.Reflection import BindingFlags
 from System.Runtime.InteropServices import Marshal
 from Ironclad import (
-    CPyMarshal, CPython_initproc_Delegate, CPythonVarargsFunction_Delegate, 
+    CPython_initproc_Delegate, CPythonVarargsFunction_Delegate, 
     CPythonVarargsKwargsFunction_Delegate, PythonMapper, Python25Mapper
 )
-from Ironclad.Structs import METH, PyMethodDef, PyObject
+from Ironclad.Structs import METH, Py_TPFLAGS, PyMethodDef
 from IronPython.Hosting import PythonEngine
 
 
@@ -475,7 +474,7 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
             mapper.DecRef(modulePtr)
 
 
-    def assertModuleAddsTypeWithData(self, tp_name, itemName, class__module__, class__name__):
+    def assertModuleAddsTypeWithData(self, tp_name, itemName, class__module__, class__name__, class__doc__):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
         modulePtr = MakeAndAddEmptyModule(mapper)
@@ -496,7 +495,7 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
 
         deallocTypes = CreateTypes(mapper)
         typePtr, deallocType = MakeTypePtr(
-            tp_name, mapper.PyType_Type, tp_newPtr=newFP, tp_initPtr=initFP)
+            tp_name, mapper.PyType_Type, tp_doc=class__doc__, tp_newPtr=newFP, tp_initPtr=initFP)
         try:
             result = mapper.PyModule_AddObject(modulePtr, itemName, typePtr)
 
@@ -508,6 +507,7 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
                               "failed to add new type to module")
 
             self.assertEquals(mappedClass._typePtr, typePtr, "not connected to underlying CPython type")
+            self.assertEquals(mappedClass.__doc__, class__doc__, "unexpected docstring")
             self.assertEquals(mappedClass.__name__, class__name__, "unexpected __name__")
             self.assertEquals(mappedClass.__module__, class__module__, "unexpected __module__")
 
@@ -527,12 +527,14 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
             "KlassName",
             "some.module",
             "Klass",
+            "Klass is some sort of class.\n\nYou may find it useful.",
         )
         self.assertModuleAddsTypeWithData(
             "Klass",
             "KlassName",
             "",
             "Klass",
+            "Klass is some sort of class.\n\nBeware, for its docstring contains '\\n's and similar trickery.",
         )
 
     def assertAddTypeObjectAndInstantiateWorks(self, newFails=False, initFails=False):
@@ -729,79 +731,57 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
             DoCall, TestExtraArgs)
 
 
-class Python25Mapper_PyType_GenericAlloc_Test(unittest.TestCase):
 
-    def testNoItems(self):
-        allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
-
-        deallocTypes = CreateTypes(mapper)
-        typePtr, deallocType = MakeTypePtr("sometype", mapper.PyType_Type,
-                                           basicSize=32, itemSize=64)
-        try:
-            result = mapper.PyType_GenericAlloc(typePtr, 0)
-            self.assertEquals(allocs, [(result, 32)], "allocated wrong")
-
-            refcount = CPyMarshal.ReadInt(result)
-            self.assertEquals(refcount, 1, "bad initialisation")
-
-            instanceType = CPyMarshal.ReadPtr(OffsetPtr(result, Marshal.OffsetOf(PyObject, "ob_type")))
-            self.assertEquals(instanceType, typePtr, "bad type ptr")
-
-        finally:
-            Marshal.FreeHGlobal(allocs[0][0])
-            deallocTypes()
-            deallocType()
-
-
-    def testSomeItems(self):
-        allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
-
-        deallocTypes = CreateTypes(mapper)
-        typePtr, deallocType = MakeTypePtr("sometype", mapper.PyType_Type,
-                                           basicSize=32, itemSize=64)
-        try:
-            result = mapper.PyType_GenericAlloc(typePtr, 3)
-            self.assertEquals(allocs, [(result, 224)], "allocated wrong")
-
-            refcount = CPyMarshal.ReadInt(result)
-            self.assertEquals(refcount, 1, "bad initialisation")
-
-            instanceType = CPyMarshal.ReadPtr(OffsetPtr(result, Marshal.OffsetOf(PyObject, "ob_type")))
-            self.assertEquals(instanceType, typePtr, "bad type ptr")
-
-        finally:
-            Marshal.FreeHGlobal(allocs[0][0])
-            deallocTypes()
-            deallocType()
-
-
-class Python25Mapper_PyType_GenericNew_Test(unittest.TestCase):
-
-    def testCallsTypeAllocFunction(self):
+class Python25Mapper_PyModule_AddObject_IteratorTest(unittest.TestCase):
+    
+    def testCreatesAndConnectsIterationFunctions(self):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        modulePtr = MakeAndAddEmptyModule(mapper)
+        engineModule = mapper.Retrieve(modulePtr)
+        module = PythonModuleFromEngineModule(engineModule)
+        
+        mockIterator = object()
+        mockIteratorPtr = mapper.Store(mockIterator)
+        mockItem = object()
+        mockItemPtr = mapper.Store(mockItem)
 
         calls = []
-        def AllocInstance(typePtr, nItems):
-            calls.append((typePtr, nItems))
-            return IntPtr(999)
-        tp_allocDgt = PythonMapper.PyType_GenericAlloc_Delegate(AllocInstance)
-        tp_allocFP = Marshal.GetFunctionPointerForDelegate(tp_allocDgt)
-
-        deallocTypes = CreateTypes(mapper)
+        def GetIterator(objPtr):
+            calls.append(("GetIterator", objPtr))
+            return mockIteratorPtr
+        GetIterator_Delegate = PythonMapper.PyObject_GetIter_Delegate(GetIterator)
+        GetIterator_FP = Marshal.GetFunctionPointerForDelegate(GetIterator_Delegate)
+        
+        def IterNext(objPtr):
+            calls.append(("IterNext", objPtr))
+            return mockItemPtr
+        IterNext_Delegate = PythonMapper.PyObject_GetIter_Delegate(IterNext)
+        IterNext_FP = Marshal.GetFunctionPointerForDelegate(IterNext_Delegate)
+            
         typePtr, deallocType = MakeTypePtr(
-            "sometype", mapper.PyType_Type, tp_allocPtr=tp_allocFP)
+            "thing", mapper.PyType_Type,
+            tp_flags=Py_TPFLAGS.HAVE_ITER,
+            tp_iterPtr=GetIterator_FP,
+            tp_iternextPtr=IterNext_FP)
+        
         try:
-            result = mapper.PyType_GenericNew(typePtr, IntPtr(222), IntPtr(333))
-            self.assertEquals(result, IntPtr(999), "did not use type's tp_alloc function")
-            self.assertEquals(calls, [(typePtr, 0)], "passed wrong args")
+            result = mapper.PyModule_AddObject(modulePtr, "thing", typePtr)
+            self.assertEquals(result, 0, "reported failure")
+
+            thing = module.thing()
+            iterator = thing.__iter__()
+            self.assertEquals(iterator, mockIterator, "bad return")
+            self.assertEquals(calls, [("GetIterator", thing._instancePtr)], "bad calls")
+
+            item = thing.next()
+            self.assertEquals(item, mockItem, "bad return")
+            self.assertEquals(calls, [("GetIterator", thing._instancePtr), ("IterNext", thing._instancePtr)], "bad calls")
         finally:
-            deallocTypes()
+            mapper.DecRef(modulePtr)
             deallocType()
+            deallocTypes()
 
 
 suite = makesuite(
@@ -810,8 +790,7 @@ suite = makesuite(
     Python25Mapper_Py_InitModule4_Test,
     Python25Mapper_PyModule_AddObject_Test,
     Python25Mapper_PyModule_AddObject_DispatchMethodsTest,
-    Python25Mapper_PyType_GenericNew_Test,
-    Python25Mapper_PyType_GenericAlloc_Test,
+    Python25Mapper_PyModule_AddObject_IteratorTest,
 )
 
 if __name__ == '__main__':

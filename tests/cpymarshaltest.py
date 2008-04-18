@@ -7,7 +7,8 @@ from tests.utils.memory import OffsetPtr
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal
+from Ironclad import CPyMarshal, CPython_initproc_Delegate
+from Ironclad.Structs import PyObject, PyTypeObject
 
 class CPyMarshalTest_32(unittest.TestCase):
 
@@ -42,7 +43,108 @@ class CPyMarshalTest_32(unittest.TestCase):
                 this = OffsetPtr(this, 1)
         finally:
             Marshal.FreeHGlobal(data)
+    
+    
+    def testWritePtrField(self):
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
         
+        CPyMarshal.WritePtrField(data, PyTypeObject, "tp_doc", IntPtr(12345))
+        dataStruct = Marshal.PtrToStructure(data, PyTypeObject)
+        self.assertEquals(dataStruct.tp_doc, IntPtr(12345), "failed to write")
+        
+        Marshal.FreeHGlobal(data)
+    
+    
+    def testReadPtrField(self):
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        
+        CPyMarshal.WritePtrField(data, PyTypeObject, "tp_doc", IntPtr(12345))
+        self.assertEquals(CPyMarshal.ReadPtrField(data, PyTypeObject, "tp_doc"), IntPtr(12345), "failed to read")
+        
+        Marshal.FreeHGlobal(data)
+    
+    
+    def testWriteIntField(self):
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyObject))
+        
+        CPyMarshal.WriteIntField(data, PyObject, "ob_refcnt", 123)
+        dataStruct = Marshal.PtrToStructure(data, PyObject)
+        self.assertEquals(dataStruct.ob_refcnt, 123, "failed to write")
+        
+        Marshal.FreeHGlobal(data)
+    
+    
+    def testReadIntField(self):
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyObject))
+        
+        CPyMarshal.WriteIntField(data, PyObject, "ob_refcnt", 123)
+        self.assertEquals(CPyMarshal.ReadIntField(data, PyObject, "ob_refcnt"), 123, "failed to read")
+        
+        Marshal.FreeHGlobal(data)
+    
+    
+    def testReadCStringField(self):
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        string = "Hey, I am a string. I have tricksy \\escapes\\."
+        strPtr = Marshal.StringToHGlobalAnsi(string)
+        CPyMarshal.WritePtrField(data, PyTypeObject, "tp_doc", strPtr)
+        
+        self.assertEquals(CPyMarshal.ReadCStringField(data, PyTypeObject, "tp_doc"), string, "failed to read correctly")
+        
+        Marshal.FreeHGlobal(data)
+        Marshal.FreeHGlobal(strPtr)
+    
+    
+    def testReadCStringFieldEmpty(self):
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        CPyMarshal.WritePtrField(data, PyTypeObject, "tp_doc", IntPtr.Zero)
+        
+        self.assertEquals(CPyMarshal.ReadCStringField(data, PyTypeObject, "tp_doc"), "", "failed to read correctly")
+        
+        Marshal.FreeHGlobal(data)
+    
+    
+    def testWriteFunctionPtrField(self):
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        
+        calls = []
+        def TestFunc(selfPtr, argsPtr, kwargsPtr):
+            calls.append((selfPtr, argsPtr, kwargsPtr))
+            return 123
+        testDgt = CPython_initproc_Delegate(TestFunc)
+        CPyMarshal.WriteFunctionPtrField(data, PyTypeObject, "tp_init", testDgt)
+        
+        writtenFP = CPyMarshal.ReadPtrField(data, PyTypeObject, "tp_init")
+        writtenDgt = Marshal.GetDelegateForFunctionPointer(writtenFP, CPython_initproc_Delegate)
+        
+        args = (IntPtr(111), IntPtr(222), IntPtr(333))
+        self.assertEquals(writtenDgt(*args), 123, "not hooked up")
+        self.assertEquals(calls, [args], "not hooked up")
+        
+    
+    def testReadFunctionPtrField(self):
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        
+        calls = []
+        def TestFunc(selfPtr, argsPtr, kwargsPtr):
+            calls.append((selfPtr, argsPtr, kwargsPtr))
+            return 123
+        testDgt = CPython_initproc_Delegate(TestFunc)
+        CPyMarshal.WriteFunctionPtrField(data, PyTypeObject, "tp_init", testDgt)
+        
+        readDgt = CPyMarshal.ReadFunctionPtrField(data, PyTypeObject, "tp_init", CPython_initproc_Delegate)
+        
+        args = (IntPtr(111), IntPtr(222), IntPtr(333))
+        self.assertEquals(readDgt(*args), 123, "not hooked up")
+        self.assertEquals(calls, [args], "not hooked up")
 
 
     def testWritePtr(self):

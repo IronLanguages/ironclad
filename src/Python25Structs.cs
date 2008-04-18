@@ -32,6 +32,25 @@ namespace Ironclad
             COEXIST = 0x00000040,
         }
         
+        [Flags]
+        public enum Py_TPFLAGS : uint
+        {
+            HAVE_GETCHARBUFFER = 0x00000001,
+            HAVE_SEQUENCE_IN = 0x00000002,
+            HAVE_INPLACEOPS = 0x00000008,
+            CHECKTYPES = 0x00000010,
+            HAVE_RICHCOMPARE = 0x00000020,
+            HAVE_WEAKREFS = 0x00000040,
+            HAVE_ITER = 0x00000080,
+            HAVE_CLASS = 0x00000100,
+            HEAPTYPE = 0x00000200,
+            BASETYPE = 0x00000400,
+            READY = 0x00001000,
+            READYING = 0x00002000,
+            HAVE_GC = 0x00004000,
+            HAVE_INDEX = 0x00020000,
+        }
+        
         [StructLayout(LayoutKind.Sequential, Pack=1)]
         public struct PyMethodDef
         {

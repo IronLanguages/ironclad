@@ -1,11 +1,17 @@
 
 import unittest
-from tests.utils.memory import CreateTypes
 from tests.utils.runtest import makesuite, run
 
-from IronPython.Hosting import PythonEngine
-from Ironclad import Python25Mapper
+from tests.utils.allocators import GetAllocatingTestAllocator
+from tests.utils.cpython import MakeTypePtr
+from tests.utils.memory import OffsetPtr, CreateTypes
 
+from System import IntPtr
+from System.Runtime.InteropServices import Marshal
+from IronPython.Hosting import PythonEngine
+
+from Ironclad import CPyMarshal, PythonMapper, Python25Mapper
+from Ironclad.Structs import PyObject
 
 class Python25Mapper_Types_Test(unittest.TestCase):
     
@@ -47,11 +53,100 @@ class Python25Mapper_Types_Test(unittest.TestCase):
         finally:
             deallocTypes()
         
+                
+        
+class Python25Mapper_PyType_GenericAlloc_Test(unittest.TestCase):
+
+    def testNoItems(self):
+        allocs = []
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+
+        deallocTypes = CreateTypes(mapper)
+        typePtr, deallocType = MakeTypePtr("sometype", mapper.PyType_Type,
+                                           basicSize=32, itemSize=64)
+        try:
+            result = mapper.PyType_GenericAlloc(typePtr, 0)
+            self.assertEquals(allocs, [(result, 32)], "allocated wrong")
+
+            refcount = CPyMarshal.ReadInt(result)
+            self.assertEquals(refcount, 1, "bad initialisation")
+
+            instanceType = CPyMarshal.ReadPtr(OffsetPtr(result, Marshal.OffsetOf(PyObject, "ob_type")))
+            self.assertEquals(instanceType, typePtr, "bad type ptr")
+            
+            headerSize = Marshal.SizeOf(PyObject)
+            zerosPtr = OffsetPtr(result, headerSize)
+            for i in range(32 - headerSize):
+                self.assertEquals(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
+                zerosPtr = OffsetPtr(zerosPtr, 1)
+
+        finally:
+            Marshal.FreeHGlobal(allocs[0][0])
+            deallocTypes()
+            deallocType()
+
+
+    def testSomeItems(self):
+        allocs = []
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+
+        deallocTypes = CreateTypes(mapper)
+        typePtr, deallocType = MakeTypePtr("sometype", mapper.PyType_Type,
+                                           basicSize=32, itemSize=64)
+        try:
+            result = mapper.PyType_GenericAlloc(typePtr, 3)
+            self.assertEquals(allocs, [(result, 224)], "allocated wrong")
+
+            refcount = CPyMarshal.ReadInt(result)
+            self.assertEquals(refcount, 1, "bad initialisation")
+
+            instanceType = CPyMarshal.ReadPtr(OffsetPtr(result, Marshal.OffsetOf(PyObject, "ob_type")))
+            self.assertEquals(instanceType, typePtr, "bad type ptr")
+            
+            headerSize = Marshal.SizeOf(PyObject)
+            zerosPtr = OffsetPtr(result, headerSize)
+            for i in range(224 - headerSize):
+                self.assertEquals(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
+                zerosPtr = OffsetPtr(zerosPtr, 1)
+
+        finally:
+            Marshal.FreeHGlobal(allocs[0][0])
+            deallocTypes()
+            deallocType()
+
+
+class Python25Mapper_PyType_GenericNew_Test(unittest.TestCase):
+
+    def testCallsTypeAllocFunction(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+
+        calls = []
+        def AllocInstance(typePtr, nItems):
+            calls.append((typePtr, nItems))
+            return IntPtr(999)
+        tp_allocDgt = PythonMapper.PyType_GenericAlloc_Delegate(AllocInstance)
+        tp_allocFP = Marshal.GetFunctionPointerForDelegate(tp_allocDgt)
+
+        deallocTypes = CreateTypes(mapper)
+        typePtr, deallocType = MakeTypePtr(
+            "sometype", mapper.PyType_Type, tp_allocPtr=tp_allocFP)
+        try:
+            result = mapper.PyType_GenericNew(typePtr, IntPtr(222), IntPtr(333))
+            self.assertEquals(result, IntPtr(999), "did not use type's tp_alloc function")
+            self.assertEquals(calls, [(typePtr, 0)], "passed wrong args")
+        finally:
+            deallocTypes()
+            deallocType()
         
 
 
 suite = makesuite(
     Python25Mapper_Types_Test,
+    Python25Mapper_PyType_GenericNew_Test,
+    Python25Mapper_PyType_GenericAlloc_Test,
 )
 
 if __name__ == '__main__':

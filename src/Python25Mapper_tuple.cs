@@ -13,14 +13,8 @@ namespace Ironclad
         public override void
         Fill_PyTuple_Type(IntPtr address)
         {
-            IntPtr tp_deallocPtr = CPyMarshal.Offset(
-                address, Marshal.OffsetOf(typeof(PyTypeObject), "tp_dealloc"));
-            CPyMarshal.WritePtr(tp_deallocPtr, this.GetMethodFP("PyTuple_Dealloc"));
-
-            IntPtr tp_freePtr = CPyMarshal.Offset(
-                address, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
-            CPyMarshal.WritePtr(tp_freePtr, this.GetAddress("PyObject_Free"));
-            
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetMethodFP("PyTuple_Dealloc"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_free", this.GetAddress("PyObject_Free"));
             this.StoreUnmanagedData(address, TypeCache.Tuple);
         }
         
@@ -71,9 +65,7 @@ namespace Ironclad
         public virtual void 
         PyTuple_Dealloc(IntPtr tuplePtr)
         {
-            IntPtr lengthPtr = CPyMarshal.Offset(
-                tuplePtr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_size"));
-            int length = CPyMarshal.ReadInt(lengthPtr);
+            int length = CPyMarshal.ReadIntField(tuplePtr, typeof(PyTupleObject), "ob_size");
             IntPtr itemsPtr = CPyMarshal.Offset(
                 tuplePtr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
             for (int i = 0; i < length; i++)
@@ -86,11 +78,9 @@ namespace Ironclad
                     this.DecRef(itemPtr);
                 }
             }
-            IntPtr freeFPPtr = CPyMarshal.Offset(
-                this.PyTuple_Type, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
-            IntPtr freeFP = CPyMarshal.ReadPtr(freeFPPtr);
-            PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)Marshal.GetDelegateForFunctionPointer(
-                freeFP, typeof(PyObject_Free_Delegate));
+            PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)
+                CPyMarshal.ReadFunctionPtrField(
+                    this.PyTuple_Type, typeof(PyTypeObject), "tp_free", typeof(PyObject_Free_Delegate));
             freeDgt(tuplePtr);
         }
         
@@ -98,8 +88,7 @@ namespace Ironclad
         private void
         ActualiseTuple(IntPtr ptr)
         {
-            IntPtr itemCountPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_size"));
-            int itemCount = CPyMarshal.ReadInt(itemCountPtr);
+            int itemCount = CPyMarshal.ReadIntField(ptr, typeof(PyTupleObject), "ob_size");
             IntPtr itemAddressPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
 
             object[] items = new object[itemCount];
