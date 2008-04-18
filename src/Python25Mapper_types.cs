@@ -6,6 +6,8 @@ using System.Runtime.InteropServices;
 using IronPython.Runtime;
 using IronPython.Runtime.Types;
 
+using Ironclad.Structs;
+
 
 namespace Ironclad
 {
@@ -30,6 +32,35 @@ namespace Ironclad
                 return 1;
             }
             return 0;
+        }
+        
+        
+        public override IntPtr 
+        PyType_GenericNew(IntPtr typePtr, IntPtr args, IntPtr kwargs)
+        {
+            PyType_GenericAlloc_Delegate dgt = (PyType_GenericAlloc_Delegate)CPyMarshal.ReadFunctionPtrField(
+                typePtr, typeof(PyTypeObject), "tp_alloc", typeof(PyType_GenericAlloc_Delegate));
+            return dgt(typePtr, 0);
+        }
+        
+        
+        public override IntPtr 
+        PyType_GenericAlloc(IntPtr typePtr, int nItems)
+        {
+            int size = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
+            
+            if (nItems > 0)
+            {
+                int itemsize = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_itemsize");
+                size += (nItems * itemsize);
+            }
+            
+            IntPtr newInstance = this.allocator.Alloc(size);
+            CPyMarshal.Zero(newInstance, size);
+            CPyMarshal.WriteIntField(newInstance, typeof(PyObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(newInstance, typeof(PyObject), "ob_type", typePtr);
+            
+            return newInstance;
         }
     }
 }

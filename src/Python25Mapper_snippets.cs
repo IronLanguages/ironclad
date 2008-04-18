@@ -76,6 +76,7 @@ def {0}(*args, **kwargs):
 
         private const string CLASS_CODE = @"
 class {0}(object):
+    '''{2}'''
     __module__ = '{1}'
     def __new__(cls, *args, **kwargs):
         instance = object.__new__(cls)
@@ -102,6 +103,16 @@ class {0}(object):
             _raiseExceptionIfRequired(self._instancePtr)
         finally:
             _cleanup(argPtr, kwargPtr)
+";
+
+        private const string ITER_METHOD_CODE = @"
+    def {0}(self):
+        resultPtr = self.__class__._{1}Dgt(self._instancePtr)
+        try:
+            _raiseExceptionIfRequired(resultPtr)
+            return _ironclad_mapper.Retrieve(resultPtr)
+        finally:
+            _cleanup(resultPtr)
 ";
 
         private const string NOARGS_METHOD_CODE = @"

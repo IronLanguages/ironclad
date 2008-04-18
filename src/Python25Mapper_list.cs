@@ -15,14 +15,8 @@ namespace Ironclad
         public override void
         Fill_PyList_Type(IntPtr address)
         {
-            IntPtr tp_deallocPtr = CPyMarshal.Offset(
-                address, Marshal.OffsetOf(typeof(PyTypeObject), "tp_dealloc"));
-            CPyMarshal.WritePtr(tp_deallocPtr, this.GetMethodFP("PyList_Dealloc"));
-
-            IntPtr tp_freePtr = CPyMarshal.Offset(
-                address, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
-            CPyMarshal.WritePtr(tp_freePtr, this.GetAddress("PyObject_Free"));
-            
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetMethodFP("PyList_Dealloc"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_free", this.GetAddress("PyObject_Free"));
             this.StoreUnmanagedData(address, TypeCache.List);
         }
         
@@ -153,17 +147,14 @@ namespace Ironclad
                 return -1;
             }
             
-            IntPtr lengthPtr = CPyMarshal.Offset(listPtr, Marshal.OffsetOf(typeof(PyListObject), "ob_size"));
-            int length = CPyMarshal.ReadInt(lengthPtr);
+            int length = CPyMarshal.ReadIntField(listPtr, typeof(PyListObject), "ob_size");
             if (index < 0 || index >= length)
             {
                 this.DecRef(itemPtr);
                 return -1;
             }
             
-            IntPtr dataPtrPtr = CPyMarshal.Offset(listPtr, Marshal.OffsetOf(typeof(PyListObject), "ob_item"));
-            IntPtr dataPtr = CPyMarshal.ReadPtr(dataPtrPtr);
-            
+            IntPtr dataPtr = CPyMarshal.ReadPtrField(listPtr, typeof(PyListObject), "ob_item");
             IntPtr oldItemPtrPtr = CPyMarshal.Offset(dataPtr, index * CPyMarshal.PtrSize);
             IntPtr oldItemPtr = CPyMarshal.ReadPtr(oldItemPtrPtr);
             if (oldItemPtr != IntPtr.Zero)
@@ -176,8 +167,7 @@ namespace Ironclad
             {
                 object item = this.Retrieve(itemPtr);
                 realIpylist[index] = item;
-            }
-                        
+            }      
             return 0;
         }
         
@@ -210,11 +200,9 @@ namespace Ironclad
                 }
                 this.allocator.Free(listStruct.ob_item);
             }
-            IntPtr freeFPPtr = CPyMarshal.Offset(
-                this.PyList_Type, Marshal.OffsetOf(typeof(PyTypeObject), "tp_free"));
-            IntPtr freeFP = CPyMarshal.ReadPtr(freeFPPtr);
-            PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)Marshal.GetDelegateForFunctionPointer(
-                freeFP, typeof(PyObject_Free_Delegate));
+            PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)
+                CPyMarshal.ReadFunctionPtrField(
+                    this.PyList_Type, typeof(PyTypeObject), "tp_free", typeof(PyObject_Free_Delegate));
             freeDgt(listPtr);
         }
         
@@ -233,12 +221,10 @@ namespace Ironclad
             List newList = new List();
             this.listsBeingActualised[ptr] = newList;
             
-            IntPtr lengthPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyListObject), "ob_size"));
-            int length = CPyMarshal.ReadInt(lengthPtr);
+            int length = CPyMarshal.ReadIntField(ptr, typeof(PyListObject), "ob_size");
             if (length != 0)
             {
-                IntPtr dataPtrPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyListObject), "ob_item"));
-                IntPtr itemPtrPtr = CPyMarshal.ReadPtr(dataPtrPtr);
+                IntPtr itemPtrPtr = CPyMarshal.ReadPtrField(ptr, typeof(PyListObject), "ob_item");
                 for (int i = 0; i < length; i++)
                 {
                     IntPtr itemPtr = CPyMarshal.ReadPtr(itemPtrPtr);

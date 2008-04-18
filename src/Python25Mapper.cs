@@ -106,9 +106,9 @@ namespace Ironclad
         StoreObject(object obj)
         {
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
-            CPyMarshal.WriteInt(ptr, 1);
-            IntPtr typePtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyObject), "ob_type"));
-            CPyMarshal.WritePtr(typePtr, this.PyBaseObject_Type);
+            CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyBaseObject_Type);
+            
             this.StoreUnmanagedData(ptr, obj);
             return ptr;
         }
@@ -165,8 +165,7 @@ namespace Ironclad
         {
             if (this.ptrmap.ContainsKey(ptr))
             {
-                int result = CPyMarshal.ReadInt(ptr);
-                return result;
+                return CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
             }
             else
             {
@@ -180,8 +179,9 @@ namespace Ironclad
         {
             if (this.ptrmap.ContainsKey(ptr))
             {
-                int count = CPyMarshal.ReadInt(ptr);
-                CPyMarshal.WriteInt(ptr, count + 1);
+                int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
+                CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count + 1);
+
             }
             else
             {
@@ -195,7 +195,7 @@ namespace Ironclad
         {
             if (this.ptrmap.ContainsKey(ptr))
             {
-                int count = this.RefCount(ptr);
+                int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
                 if (count == 0)
                 {
                     throw new BadRefCountException("Trying to DecRef an object with ref count 0");
@@ -203,12 +203,11 @@ namespace Ironclad
                 
                 if (count == 1)
                 {
-                    IntPtr typePtrPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyObject), "ob_type"));
-                    IntPtr typePtr = CPyMarshal.ReadPtr(typePtrPtr);
+                    IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
+
                     if (typePtr != IntPtr.Zero)
                     {
-                        IntPtr deallocFPPtr = CPyMarshal.Offset(typePtr, Marshal.OffsetOf(typeof(PyTypeObject), "tp_dealloc"));
-                        IntPtr deallocFP = CPyMarshal.ReadPtr(deallocFPPtr);
+                        IntPtr deallocFP = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_dealloc");
                         if (deallocFP != IntPtr.Zero)
                         {
                             CPython_destructor_Delegate deallocDgt = (CPython_destructor_Delegate)Marshal.GetDelegateForFunctionPointer(
@@ -221,7 +220,7 @@ namespace Ironclad
                 }
                 else
                 {
-                    CPyMarshal.WriteInt(ptr, count - 1);
+                    CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count - 1);
                 }
             }
             else
