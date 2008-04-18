@@ -784,6 +784,52 @@ class Python25Mapper_PyModule_AddObject_IteratorTest(unittest.TestCase):
             deallocTypes()
 
 
+    def assertIterNextErrorHandling(self, IterNextGetter, expectedError):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        modulePtr = MakeAndAddEmptyModule(mapper)
+        engineModule = mapper.Retrieve(modulePtr)
+        module = PythonModuleFromEngineModule(engineModule)
+        
+        IterNext = IterNextGetter(mapper)
+        IterNext_Delegate = PythonMapper.PyObject_GetIter_Delegate(IterNext)
+        IterNext_FP = Marshal.GetFunctionPointerForDelegate(IterNext_Delegate)
+            
+        typePtr, deallocType = MakeTypePtr(
+            "thing", mapper.PyType_Type,
+            tp_flags=Py_TPFLAGS.HAVE_ITER,
+            tp_iternextPtr=IterNext_FP)
+
+        try:
+            mapper.PyModule_AddObject(modulePtr, "thing", typePtr)
+            thing = module.thing()
+            self.assertRaises(expectedError, thing.next)
+        finally:
+            mapper.DecRef(modulePtr)
+            deallocType()
+            deallocTypes()
+
+
+    def testIterNextRaisesStopIterationOnNullReturnWithNoOtherError(self):
+        def IterNextGetter(mapper):
+            def IterNext(_):
+                return IntPtr.Zero
+            return IterNext
+            
+        self.assertIterNextErrorHandling(IterNextGetter, StopIteration)
+
+
+    def testIterNextRaisesCorrectExceptionOnNullReturnWithErrorSet(self):
+        def IterNextGetter(mapper):
+            def IterNext(_):
+                mapper.LastException = TypeError("arrgh")
+                return IntPtr.Zero
+            return IterNext
+            
+        self.assertIterNextErrorHandling(IterNextGetter, TypeError)
+
+
 suite = makesuite(
     Python25Mapper_PyInitModule_DispatchUtilsTest,
     Python25Mapper_PyInitModule_DispatchFunctionsTest,

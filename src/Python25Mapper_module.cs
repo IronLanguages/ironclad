@@ -170,11 +170,11 @@ namespace Ironclad
             {
                 if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iter") != IntPtr.Zero)
                 {
-                    classCode.Append(String.Format(ITER_METHOD_CODE, "__iter__", "tp_iter"));
+                    classCode.Append(ITER_METHOD_CODE);
                 }
                 if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iternext") != IntPtr.Zero)
                 {
-                    classCode.Append(String.Format(ITER_METHOD_CODE, "next", "tp_iternext"));
+                    classCode.Append(ITERNEXT_METHOD_CODE);
                 }
             }
             
