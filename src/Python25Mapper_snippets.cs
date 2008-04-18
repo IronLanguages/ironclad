@@ -106,9 +106,21 @@ class {0}(object):
 ";
 
         private const string ITER_METHOD_CODE = @"
-    def {0}(self):
-        resultPtr = self.__class__._{1}Dgt(self._instancePtr)
+    def __iter__(self):
+        resultPtr = self.__class__._tp_iterDgt(self._instancePtr)
         try:
+            _raiseExceptionIfRequired(resultPtr)
+            return _ironclad_mapper.Retrieve(resultPtr)
+        finally:
+            _cleanup(resultPtr)
+";
+
+        private const string ITERNEXT_METHOD_CODE = @"
+    def next(self):
+        resultPtr = self.__class__._tp_iternextDgt(self._instancePtr)
+        try:
+            if resultPtr == IntPtr.Zero and _ironclad_mapper.LastException == None:
+                raise StopIteration()
             _raiseExceptionIfRequired(resultPtr)
             return _ironclad_mapper.Retrieve(resultPtr)
         finally:

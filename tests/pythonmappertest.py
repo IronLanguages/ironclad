@@ -613,6 +613,31 @@ class PythonMapperTest(unittest.TestCase):
             0, paramsStore)
 
 
+    def testPythonMapperFinds_PyMem_Malloc(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyMem_Malloc(self, size):
+                paramsStore.append((size,))
+                return IntPtr(12345)
+
+        self.assertDispatches(
+            MyPM, "PyMem_Malloc",
+            (999,),
+            IntPtr(12345), paramsStore)
+
+
+    def testPythonMapperFinds_PyMem_Free(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyMem_Free(self, ptr):
+                paramsStore.append((ptr,))
+
+        self.assertDispatches(
+            MyPM, "PyMem_Free",
+            (IntPtr(999),),
+            None, paramsStore)
+
+
 
 
     def testPythonMapperImplementationOf_PyEval_SaveThread(self):

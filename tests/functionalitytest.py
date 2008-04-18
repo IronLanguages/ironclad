@@ -227,7 +227,6 @@ class FunctionalityTest(unittest.TestCase):
                 assert f.__iter__() is f
                 for _ in range(1000):
                     line = f.next() 
-                    print line
                     assert line == %r
                 try:
                     f.next()
