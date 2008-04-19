@@ -21,6 +21,13 @@ namespace Ironclad
         {
             this.StoreUnmanagedData(address, TypeCache.PythonFile);
         }
+
+
+        public override void
+        Fill_PyLong_Type(IntPtr address)
+        {
+            this.StoreUnmanagedData(address, TypeCache.Int32);
+        }
         
         public override int
         PyType_IsSubtype(IntPtr subtypePtr, IntPtr typePtr)

@@ -47,7 +47,8 @@ namespace Ironclad
             
             object result = Ops.CallWithContext(
                 context, obj, argsArray);
-            return this.Store(result);
+            IntPtr resultPtr = this.Store(result);
+            return resultPtr;
         }
         
         public override IntPtr

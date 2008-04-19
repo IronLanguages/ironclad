@@ -91,7 +91,7 @@ class Python25MapperTest(unittest.TestCase):
         result1 = mapper.Store([1, 2, 3])
         result2 = mapper.Store([1, 2, 3])
         
-        self.assertNotEquals(result1, result2, "confused seoparate objects")
+        self.assertNotEquals(result1, result2, "confused separate objects")
         self.assertEquals(mapper.RefCount(result1), 1, "wrong")
         self.assertEquals(mapper.RefCount(result2), 1, "wrong")
         
@@ -279,7 +279,8 @@ class Python25Mapper_GetMethodFP_Test(unittest.TestCase):
     def testMethods(self):
         methods = (
             "PyBaseObject_Dealloc",
-            "PyTuple_Dealloc"
+            "PyTuple_Dealloc",
+            "PyList_Dealloc",
         )
         for method in methods:
             self.assertGetMethodFPWorks(method)
@@ -317,28 +318,50 @@ class Python25Mapper_NoneTest(unittest.TestCase):
         Marshal.FreeHGlobal(nonePtr)
     
 
-class Python25Mapper_PyInt_FromLong_Test(unittest.TestCase):
+class Python25Mapper_PyInt_Test(unittest.TestCase):
+
+    def testStoreInt(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
+        
+        try:
+            for value in (0, 2147483647, -2147483648):
+                ptr = mapper.Store(value)
+                self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+                self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
+                mapper.DecRef(ptr)
+        finally:
+            deallocTypes()
+    
     
     def testPyInt_FromLong(self):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
         
-        for value in (0, 2147483647, -2147483648):
-            ptr = mapper.PyInt_FromLong(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            mapper.DecRef(ptr)
-
-
-class Python25Mapper_PyInt_FromSsize_t_Test(unittest.TestCase):
+        try:
+            for value in (0, 2147483647, -2147483648):
+                ptr = mapper.PyInt_FromLong(value)
+                self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+                self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
+                mapper.DecRef(ptr)
+        finally:
+            deallocTypes()
     
     def testPyInt_FromSsize_t(self):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
+        deallocTypes = CreateTypes(mapper)
         
-        for value in (0, 2147483647, -2147483648):
-            ptr = mapper.PyInt_FromSsize_t(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            mapper.DecRef(ptr)
+        try:
+            for value in (0, 2147483647, -2147483648):
+                ptr = mapper.PyInt_FromSsize_t(value)
+                self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+                self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
+                mapper.DecRef(ptr)
+        finally:
+            deallocTypes()
 
 
 class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):
@@ -358,8 +381,7 @@ suite = makesuite(
     Python25MapperTest,
     Python25Mapper_GetMethodFP_Test,
     Python25Mapper_NoneTest,
-    Python25Mapper_PyInt_FromLong_Test,
-    Python25Mapper_PyInt_FromSsize_t_Test,
+    Python25Mapper_PyInt_Test,
     Python25Mapper_PyFloat_FromDouble_Test,
 )
 
