@@ -6,6 +6,9 @@ using System.Runtime.InteropServices;
 namespace Ironclad
 {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate IntPtr CPythonSelfFunction_Delegate(IntPtr self);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate IntPtr CPythonVarargsFunction_Delegate(IntPtr self, IntPtr args);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

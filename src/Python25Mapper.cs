@@ -108,7 +108,6 @@ namespace Ironclad
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyBaseObject_Type);
-            
             this.StoreUnmanagedData(ptr, obj);
             return ptr;
         }
@@ -181,7 +180,6 @@ namespace Ironclad
             {
                 int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
                 CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count + 1);
-
             }
             else
             {
@@ -351,14 +349,26 @@ namespace Ironclad
         public override IntPtr
         PyInt_FromLong(int value)
         {
-            return this.Store(value);
+            IntPtr result = this.Store(value);
+            return result;
         }
         
         
         public override IntPtr
         PyInt_FromSsize_t(int value)
         {
-            return this.Store(value);
+            IntPtr result = this.Store(value);
+            return result;
+        }
+
+        public IntPtr
+        Store(int value)
+        {
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
+            CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyLong_Type);
+            this.StoreUnmanagedData(ptr, value);
+            return ptr;
         }
         
         

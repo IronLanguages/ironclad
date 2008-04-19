@@ -48,6 +48,16 @@ def _ironclad_dispatch_kwargs(name, instancePtr, args, kwargs):
     finally:
         _cleanup(argPtr, kwargPtr, resultPtr)
     
+def _ironclad_dispatch_self(name, instancePtr, errorHandler=None):
+    resultPtr = _ironclad_dispatch_table[name](instancePtr)
+    try:
+        if errorHandler:
+            errorHandler(resultPtr)
+        _raiseExceptionIfRequired(resultPtr)
+        return _ironclad_mapper.Retrieve(resultPtr)
+    finally:
+        _cleanup(resultPtr)
+    
 ";
 
         private const string NOARGS_FUNCTION_CODE = @"
@@ -107,24 +117,15 @@ class {0}(object):
 
         private const string ITER_METHOD_CODE = @"
     def __iter__(self):
-        resultPtr = self.__class__._tp_iterDgt(self._instancePtr)
-        try:
-            _raiseExceptionIfRequired(resultPtr)
-            return _ironclad_mapper.Retrieve(resultPtr)
-        finally:
-            _cleanup(resultPtr)
+        return _ironclad_dispatch_self('{0}tp_iter', self._instancePtr)
 ";
 
         private const string ITERNEXT_METHOD_CODE = @"
     def next(self):
-        resultPtr = self.__class__._tp_iternextDgt(self._instancePtr)
-        try:
+        def RaiseStop(resultPtr):
             if resultPtr == IntPtr.Zero and _ironclad_mapper.LastException == None:
                 raise StopIteration()
-            _raiseExceptionIfRequired(resultPtr)
-            return _ironclad_mapper.Retrieve(resultPtr)
-        finally:
-            _cleanup(resultPtr)
+        return _ironclad_dispatch_self('{0}tp_iternext', self._instancePtr, RaiseStop)
 ";
 
         private const string NOARGS_METHOD_CODE = @"

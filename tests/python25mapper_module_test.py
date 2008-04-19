@@ -11,7 +11,7 @@ from System import Array, IntPtr, NullReferenceException
 from System.Reflection import BindingFlags
 from System.Runtime.InteropServices import Marshal
 from Ironclad import (
-    CPython_initproc_Delegate, CPythonVarargsFunction_Delegate, 
+    CPython_initproc_Delegate, CPythonSelfFunction_Delegate, CPythonVarargsFunction_Delegate, 
     CPythonVarargsKwargsFunction_Delegate, PythonMapper, Python25Mapper
 )
 from Ironclad.Structs import METH, Py_TPFLAGS, PyMethodDef
@@ -159,6 +159,79 @@ class Python25Mapper_PyInitModule_DispatchFunctionsTest(EmptyModuleTestCase):
             lambda: self.module._ironclad_dispatch("testFuncName", INSTANCE_PTR, actualArgs))
         expectedCalls = ["Store", "testFunc", ("_raiseExc", ERROR_RESULT_PTR), ("_cleanup", (ARGS_PTR, ERROR_RESULT_PTR))]
         self.assertEquals(actualCalls, expectedCalls, "bad call sequence")
+        
+        
+    def testDispatchSelf(self):
+        actualCalls = self.patchUtilities(False)
+        
+        def testFunc(selfPtr):
+            actualCalls.append("testFunc")
+            self.assertEquals(selfPtr, INSTANCE_PTR, "failed to pass")
+            return RESULT_PTR
+        self.module._ironclad_dispatch_table["testFuncName"] = CPythonSelfFunction_Delegate(testFunc)
+        
+        expectedResult = object()
+        def checkResult(resultPtr):
+            actualCalls.append("Retrieve")
+            self.assertEquals(resultPtr, RESULT_PTR, "got bad result pointer")
+            return expectedResult
+        self.mapper.Retrieve = checkResult
+        
+        def errorHandler(resultPtr):
+            actualCalls.append("HandleError")
+            self.assertEquals(resultPtr, RESULT_PTR, "got bad result pointer")
+        
+        # test with error handler
+        actualResult = self.module._ironclad_dispatch_self("testFuncName", INSTANCE_PTR, errorHandler)
+        self.assertEquals(actualResult, expectedResult, "bad result")
+        
+        expectedCalls = ["testFunc", "HandleError", ("_raiseExc", RESULT_PTR), "Retrieve", ("_cleanup", (RESULT_PTR, ))]
+        self.assertEquals(actualCalls, expectedCalls, "bad call sequence")
+        
+        # test without
+        del actualCalls[:]
+        actualResult = self.module._ironclad_dispatch_self("testFuncName", INSTANCE_PTR)
+        self.assertEquals(actualResult, expectedResult, "bad result")
+        
+        expectedCalls = ["testFunc", ("_raiseExc", RESULT_PTR), "Retrieve", ("_cleanup", (RESULT_PTR, ))]
+        self.assertEquals(actualCalls, expectedCalls, "bad call sequence")
+        
+        
+    def testDispatchSelfWithError(self):
+        actualCalls = self.patchUtilities(True)
+        
+        def testFunc(selfPtr):
+            actualCalls.append("testFunc")
+            self.assertEquals(selfPtr, INSTANCE_PTR, "failed to pass")
+            return RESULT_PTR
+        self.module._ironclad_dispatch_table["testFuncName"] = CPythonSelfFunction_Delegate(testFunc)
+        
+        expectedResult = object()
+        def checkResult(resultPtr):
+            actualCalls.append("Retrieve")
+            self.assertEquals(resultPtr, RESULT_PTR, "got bad result pointer")
+            return expectedResult
+        self.mapper.Retrieve = checkResult
+        
+        def errorHandler(resultPtr):
+            actualCalls.append("HandleError")
+            self.assertEquals(resultPtr, RESULT_PTR, "got bad result pointer")
+        
+        # test with error handler
+        self.assertRaises(BorkedException, 
+            lambda: self.module._ironclad_dispatch_self("testFuncName", INSTANCE_PTR, errorHandler))
+        
+        expectedCalls = ["testFunc", "HandleError", ("_raiseExc", RESULT_PTR), ("_cleanup", (RESULT_PTR, ))]
+        self.assertEquals(actualCalls, expectedCalls, "bad call sequence")
+        
+        # test without
+        del actualCalls[:]
+        self.assertRaises(BorkedException, 
+            lambda: self.module._ironclad_dispatch_self("testFuncName", INSTANCE_PTR))
+        
+        expectedCalls = ["testFunc", ("_raiseExc", RESULT_PTR), ("_cleanup", (RESULT_PTR, ))]
+        self.assertEquals(actualCalls, expectedCalls, "bad call sequence")
+        
         
 
     def testDispatchNoargs(self):
@@ -731,103 +804,92 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
             DoCall, TestExtraArgs)
 
 
-
-class Python25Mapper_PyModule_AddObject_IteratorTest(unittest.TestCase):
-    
-    def testCreatesAndConnectsIterationFunctions(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+    def assertDispatchesToSelfTypeMethod(self, mapper, extraTypeKwargs, expectedDelegateKeySuffix,
+                                         expectedMethodName, DoCall, TestErrorHandler):
         deallocTypes = CreateTypes(mapper)
         modulePtr = MakeAndAddEmptyModule(mapper)
         engineModule = mapper.Retrieve(modulePtr)
         module = PythonModuleFromEngineModule(engineModule)
         
-        mockIterator = object()
-        mockIteratorPtr = mapper.Store(mockIterator)
-        mockItem = object()
-        mockItemPtr = mapper.Store(mockItem)
-
-        calls = []
-        def GetIterator(objPtr):
-            calls.append(("GetIterator", objPtr))
-            return mockIteratorPtr
-        GetIterator_Delegate = PythonMapper.PyObject_GetIter_Delegate(GetIterator)
-        GetIterator_FP = Marshal.GetFunctionPointerForDelegate(GetIterator_Delegate)
-        
-        def IterNext(objPtr):
-            calls.append(("IterNext", objPtr))
-            return mockItemPtr
-        IterNext_Delegate = PythonMapper.PyObject_GetIter_Delegate(IterNext)
-        IterNext_FP = Marshal.GetFunctionPointerForDelegate(IterNext_Delegate)
-            
+        typeKwargs = {
+            "tp_allocPtr": mapper.GetAddress("PyType_GenericAlloc"),
+            "tp_newPtr": mapper.GetAddress("PyType_GenericNew"),
+        }
+        typeKwargs.update(extraTypeKwargs)
         typePtr, deallocType = MakeTypePtr(
-            "thing", mapper.PyType_Type,
-            tp_flags=Py_TPFLAGS.HAVE_ITER,
-            tp_iterPtr=GetIterator_FP,
-            tp_iternextPtr=IterNext_FP)
-        
+            "thing", mapper.PyType_Type, **typeKwargs)
+
         try:
             result = mapper.PyModule_AddObject(modulePtr, "thing", typePtr)
             self.assertEquals(result, 0, "reported failure")
 
-            thing = module.thing()
-            iterator = thing.__iter__()
-            self.assertEquals(iterator, mockIterator, "bad return")
-            self.assertEquals(calls, [("GetIterator", thing._instancePtr)], "bad calls")
-
-            item = thing.next()
-            self.assertEquals(item, mockItem, "bad return")
-            self.assertEquals(calls, [("GetIterator", thing._instancePtr), ("IterNext", thing._instancePtr)], "bad calls")
+            result = object()
+            def MockDispatchFunc(methodName, selfPtr, errorHandler=None):
+                self.assertEquals(methodName, "thing." + expectedDelegateKeySuffix, "called wrong method")
+                self.assertEquals(selfPtr, t._instancePtr, "called method on wrong instance")
+                TestErrorHandler(errorHandler)
+                return result
+            setattr(module, "_ironclad_dispatch_self", MockDispatchFunc)
+            
+            t = module.thing()
+            x = DoCall(getattr(t, expectedMethodName))
+            self.assertEquals(x, result, "bad return")
         finally:
             mapper.DecRef(modulePtr)
             deallocType()
             deallocTypes()
 
 
-    def assertIterNextErrorHandling(self, IterNextGetter, expectedError):
+    def testAddTypeObjectWith_tp_iter_MethodDispatch(self):
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
-        deallocTypes = CreateTypes(mapper)
-        modulePtr = MakeAndAddEmptyModule(mapper)
-        engineModule = mapper.Retrieve(modulePtr)
-        module = PythonModuleFromEngineModule(engineModule)
         
-        IterNext = IterNextGetter(mapper)
-        IterNext_Delegate = PythonMapper.PyObject_GetIter_Delegate(IterNext)
-        IterNext_FP = Marshal.GetFunctionPointerForDelegate(IterNext_Delegate)
-            
-        typePtr, deallocType = MakeTypePtr(
-            "thing", mapper.PyType_Type,
-            tp_flags=Py_TPFLAGS.HAVE_ITER,
-            tp_iternextPtr=IterNext_FP)
+        def DoCall(kallable):
+            return kallable()
+        
+        def TestErrorHandler(errorHandler): 
+            self.assertEquals(errorHandler, None, "no special error handling required")
 
-        try:
-            mapper.PyModule_AddObject(modulePtr, "thing", typePtr)
-            thing = module.thing()
-            self.assertRaises(expectedError, thing.next)
-        finally:
-            mapper.DecRef(modulePtr)
-            deallocType()
-            deallocTypes()
+        tp_iter = lambda _: IntPtr.Zero
+        tp_iter_dgt = CPythonSelfFunction_Delegate(tp_iter)
+        tp_iter_fp = Marshal.GetFunctionPointerForDelegate(tp_iter_dgt)
 
-
-    def testIterNextRaisesStopIterationOnNullReturnWithNoOtherError(self):
-        def IterNextGetter(mapper):
-            def IterNext(_):
-                return IntPtr.Zero
-            return IterNext
-            
-        self.assertIterNextErrorHandling(IterNextGetter, StopIteration)
+        # tp_iterPtr=IntPtr.Zero, tp_iternextPtr=IntPtr.Zero
+        typeKwargs = {
+            "tp_iterPtr": tp_iter_fp,
+            "tp_flags": Py_TPFLAGS.HAVE_ITER
+        }
+        
+        self.assertDispatchesToSelfTypeMethod(
+            mapper, typeKwargs, "tp_iter", "__iter__",
+            DoCall, TestErrorHandler)
 
 
-    def testIterNextRaisesCorrectExceptionOnNullReturnWithErrorSet(self):
-        def IterNextGetter(mapper):
-            def IterNext(_):
-                mapper.LastException = TypeError("arrgh")
-                return IntPtr.Zero
-            return IterNext
-            
-        self.assertIterNextErrorHandling(IterNextGetter, TypeError)
+    def testAddTypeObjectWith_tp_iternext_MethodDispatch(self):
+        engine = PythonEngine()
+        mapper = Python25Mapper(engine)
+        
+        def DoCall(kallable):
+            return kallable()
+        
+        def TestErrorHandler(errorHandler): 
+            self.assertRaises(StopIteration, errorHandler, IntPtr.Zero)
+            mapper.LastException = ValueError()
+            errorHandler(IntPtr.Zero)
+
+        tp_iternext = lambda _: IntPtr.Zero
+        tp_iternext_dgt = CPythonSelfFunction_Delegate(tp_iternext)
+        tp_iternext_fp = Marshal.GetFunctionPointerForDelegate(tp_iternext_dgt)
+
+        # tp_iterPtr=IntPtr.Zero, tp_iternextPtr=IntPtr.Zero
+        typeKwargs = {
+            "tp_iternextPtr": tp_iternext_fp,
+            "tp_flags": Py_TPFLAGS.HAVE_ITER
+        }
+        
+        self.assertDispatchesToSelfTypeMethod(
+            mapper, typeKwargs, "tp_iternext", "next",
+            DoCall, TestErrorHandler)
 
 
 suite = makesuite(
@@ -836,7 +898,6 @@ suite = makesuite(
     Python25Mapper_Py_InitModule4_Test,
     Python25Mapper_PyModule_AddObject_Test,
     Python25Mapper_PyModule_AddObject_DispatchMethodsTest,
-    Python25Mapper_PyModule_AddObject_IteratorTest,
 )
 
 if __name__ == '__main__':
