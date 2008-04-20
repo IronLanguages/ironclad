@@ -5,7 +5,6 @@ import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
-from tests.utils.cpython import MakeTypePtr
 from tests.utils.memory import OffsetPtr, CreateTypes
 
 from System import IntPtr

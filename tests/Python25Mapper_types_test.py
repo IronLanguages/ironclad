@@ -22,7 +22,9 @@ class Python25Mapper_Types_Test(unittest.TestCase):
             "PyList_Type": list,
             "PyTuple_Type": tuple,
             "PyFile_Type": file,
-            "PyLong_Type": int,
+            "PyLong_Type": long,
+            "PyInt_Type": int,
+            "PyFloat_Type": float,
         }
         
         engine = PythonEngine()

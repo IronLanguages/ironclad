@@ -259,9 +259,7 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
             mapper.SetData("PyBaseObject_Type", typeBlock)
             GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
 
-            freeFPPtr = OffsetPtr(typeBlock, Marshal.OffsetOf(PyTypeObject, "tp_free"))
-            freeFP = CPyMarshal.ReadPtr(freeFPPtr)
-            freeDgt = Marshal.GetDelegateForFunctionPointer(freeFP, CPython_destructor_Delegate)
+            freeDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_free", CPython_destructor_Delegate)
             freeDgt(IntPtr(12345))
             self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
         finally:
@@ -273,7 +271,6 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
         def Some_FreeFunc(objPtr):
             calls.append(objPtr)
         freeDgt = PythonMapper.PyObject_Free_Delegate(Some_FreeFunc)
-        freeFP = Marshal.GetFunctionPointerForDelegate(freeDgt)
         
         engine = PythonEngine()
         mapper = Python25Mapper(engine)
@@ -284,12 +281,10 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
         try:
             mapper.SetData("PyBaseObject_Type", baseObjTypeBlock)
             mapper.SetData("PyDict_Type", objTypeBlock) # type not actually important
-            freeFPPtr = OffsetPtr(objTypeBlock, Marshal.OffsetOf(PyTypeObject, "tp_free"))
-            CPyMarshal.WritePtr(freeFPPtr, freeFP)
-            objTypePtr = OffsetPtr(objPtr, Marshal.OffsetOf(PyObject, "ob_type"))
-            CPyMarshal.WritePtr(objTypePtr, objTypeBlock)
+            CPyMarshal.WriteFunctionPtrField(objTypeBlock, PyTypeObject, "tp_free", freeDgt)
+            CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", objTypeBlock)
             
-            GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
+            GC.Collect() # this should make the function pointers invalid if we forgot to store references to the delegates
 
             mapper.PyBaseObject_Dealloc(objPtr)
             self.assertEquals(calls, [objPtr], "wrong calls")

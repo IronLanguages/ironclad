@@ -548,6 +548,32 @@ class PythonMapperTest(unittest.TestCase):
             IntPtr(999), paramsStore)
 
 
+    def testPythonMapperFinds_PyInt_AsLong(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyInt_AsLong(self, intPtr):
+                paramsStore.append((intPtr,))
+                return 999
+
+        self.assertDispatches(
+            MyPM, "PyInt_AsLong",
+            (IntPtr(123),),
+            999, paramsStore)
+
+
+    def testPythonMapperFinds_PyLong_FromLongLong(self):
+        paramsStore = []
+        class MyPM(PythonMapper):
+            def PyLong_FromLongLong(self, value):
+                paramsStore.append((value,))
+                return IntPtr(999)
+
+        self.assertDispatches(
+            MyPM, "PyLong_FromLongLong",
+            (5555555555,),
+            IntPtr(999), paramsStore)
+
+
     def testPythonMapperFinds_PyFloat_FromDouble(self):
         paramsStore = []
         class MyPM(PythonMapper):

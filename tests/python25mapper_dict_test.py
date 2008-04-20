@@ -28,8 +28,7 @@ class Python25MapperDictTest(unittest.TestCase):
             dictPtr = mapper.PyDict_New()
             self.assertEquals(mapper.RefCount(dictPtr), 1, "bad refcount")
             self.assertEquals(allocs, [(dictPtr, Marshal.SizeOf(PyObject))], "did not allocate as expected")
-            ob_typePtr = OffsetPtr(dictPtr, Marshal.OffsetOf(PyObject, "ob_type"))
-            self.assertEquals(CPyMarshal.ReadPtr(ob_typePtr), mapper.PyDict_Type, "wrong type")
+            self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), mapper.PyDict_Type, "wrong type")
             dictObj = mapper.Retrieve(dictPtr)
             self.assertEquals(dictObj, {}, "retrieved unexpected value")
             
@@ -93,8 +92,7 @@ class Python25MapperDictTest(unittest.TestCase):
             mapper.SetData("PyDict_Type", typeBlock)
             dictPtr = mapper.Store({0: 1, 2: 3})
             try:
-                ob_typePtr = OffsetPtr(dictPtr, Marshal.OffsetOf(PyObject, "ob_type"))
-                self.assertEquals(CPyMarshal.ReadPtr(ob_typePtr), typeBlock, "wrong type")
+                self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), typeBlock, "wrong type")
             finally:
                 mapper.DecRef(dictPtr)
         finally:

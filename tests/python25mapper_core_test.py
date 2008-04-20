@@ -29,9 +29,9 @@ class Python25MapperTest(unittest.TestCase):
             self.assertEquals(allocs[0], (ptr, Marshal.SizeOf(PyObject)), "unexpected result")
             self.assertNotEquals(ptr, IntPtr.Zero, "did not store reference")
             self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
-            typePtr = CPyMarshal.ReadPtr(
-                CPyMarshal.Offset(ptr, Marshal.OffsetOf(PyObject, "ob_type")))
-            self.assertEquals(typePtr, mapper.PyBaseObject_Type, "opaque pointer had wrong type")
+            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), 
+                              mapper.PyBaseObject_Type, 
+                              "nearly-opaque pointer had wrong type")
 
             obj2 = mapper.Retrieve(ptr)
             self.assertTrue(obj1 is obj2, "retrieved wrong object")
@@ -52,7 +52,7 @@ class Python25MapperTest(unittest.TestCase):
         mapper = Python25Mapper(engine, GetAllocatingTestAllocator([], frees))
         
         objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
-        CPyMarshal.WriteInt(OffsetPtr(objPtr, Marshal.OffsetOf(PyObject, "ob_refcnt")), 0)
+        CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 0)
         mapper.StoreUnmanagedData(objPtr, object())
         mapper.PyObject_Free(objPtr)
         self.assertEquals(frees, [objPtr], "didn't actually release memory")
@@ -104,7 +104,7 @@ class Python25MapperTest(unittest.TestCase):
         mapper = Python25Mapper(engine)
         
         objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
-        CPyMarshal.WriteInt(OffsetPtr(objPtr, Marshal.OffsetOf(PyObject, "ob_refcnt")), 0)
+        CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 0)
         mapper.StoreUnmanagedData(objPtr, object())
         self.assertRaises(BadRefCountException, lambda: mapper.DecRef(objPtr))
         Marshal.FreeHGlobal(objPtr)
@@ -126,8 +126,7 @@ class Python25MapperTest(unittest.TestCase):
         
         obj = object()
         objPtr = mapper.Store(obj)
-        objTypePtr = CPyMarshal.Offset(objPtr, Marshal.OffsetOf(PyObject, "ob_type"))
-        CPyMarshal.WritePtr(objTypePtr, typePtr)
+        CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", typePtr)
         
         mapper.IncRef(objPtr)
         mapper.DecRef(objPtr)
@@ -142,13 +141,11 @@ class Python25MapperTest(unittest.TestCase):
         mapper = Python25Mapper(engine, GetAllocatingTestAllocator([], frees))
         
         typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        deallocPtr = CPyMarshal.Offset(typePtr, Marshal.OffsetOf(PyTypeObject, "tp_dealloc"))
-        CPyMarshal.WritePtr(deallocPtr, IntPtr.Zero)
+        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_dealloc", IntPtr.Zero)
         
         obj = object()
         objPtr = mapper.Store(obj)
-        objTypePtr = CPyMarshal.Offset(objPtr, Marshal.OffsetOf(PyObject, "ob_type"))
-        CPyMarshal.WritePtr(objTypePtr, typePtr)
+        CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", typePtr)
         
         mapper.IncRef(objPtr)
         mapper.DecRef(objPtr)
@@ -175,6 +172,8 @@ class Python25MapperTest(unittest.TestCase):
         
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyStringObject))
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyTupleObject))
+        self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyListObject))
+        self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.None))
 
 
     def testRefCountIncRefDecRef(self):
@@ -316,73 +315,12 @@ class Python25Mapper_NoneTest(unittest.TestCase):
         self.assertEquals(mapper.Retrieve(nonePtr), None, "not mapped properly")
 
         Marshal.FreeHGlobal(nonePtr)
-    
-
-class Python25Mapper_PyInt_Test(unittest.TestCase):
-
-    def testStoreInt(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
-        deallocTypes = CreateTypes(mapper)
-        
-        try:
-            for value in (0, 2147483647, -2147483648):
-                ptr = mapper.Store(value)
-                self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-                self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
-                mapper.DecRef(ptr)
-        finally:
-            deallocTypes()
-    
-    
-    def testPyInt_FromLong(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
-        deallocTypes = CreateTypes(mapper)
-        
-        try:
-            for value in (0, 2147483647, -2147483648):
-                ptr = mapper.PyInt_FromLong(value)
-                self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-                self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
-                mapper.DecRef(ptr)
-        finally:
-            deallocTypes()
-    
-    def testPyInt_FromSsize_t(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
-        deallocTypes = CreateTypes(mapper)
-        
-        try:
-            for value in (0, 2147483647, -2147483648):
-                ptr = mapper.PyInt_FromSsize_t(value)
-                self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-                self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
-                mapper.DecRef(ptr)
-        finally:
-            deallocTypes()
-
-
-class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):
-    
-    def testPyFloat_FromDouble(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
-        
-        for value in (0.0, 3.3e33, -3.3e-33):
-            ptr = mapper.PyFloat_FromDouble(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            mapper.DecRef(ptr)
-
 
 
 suite = makesuite(
     Python25MapperTest,
     Python25Mapper_GetMethodFP_Test,
     Python25Mapper_NoneTest,
-    Python25Mapper_PyInt_Test,
-    Python25Mapper_PyFloat_FromDouble_Test,
 )
 
 if __name__ == '__main__':
