@@ -345,39 +345,6 @@ namespace Ironclad
             this.StoreUnmanagedData(address, UnmanagedDataMarker.None);
         }
         
-        
-        public override IntPtr
-        PyInt_FromLong(int value)
-        {
-            IntPtr result = this.Store(value);
-            return result;
-        }
-        
-        
-        public override IntPtr
-        PyInt_FromSsize_t(int value)
-        {
-            IntPtr result = this.Store(value);
-            return result;
-        }
-
-        public IntPtr
-        Store(int value)
-        {
-            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyLong_Type);
-            this.StoreUnmanagedData(ptr, value);
-            return ptr;
-        }
-        
-        
-        public override IntPtr
-        PyFloat_FromDouble(double value)
-        {
-            return this.Store(value);
-        }
-        
     }
 
 }

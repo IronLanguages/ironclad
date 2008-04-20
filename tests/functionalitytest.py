@@ -242,22 +242,25 @@ class FunctionalityTest(unittest.TestCase):
     def testBZ2FileSeekTell(self):
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
         self.assertWorksWithBZ2(dedent("""
-            def assertSeeksTo(x):
-                f.seek(x)
-                assert f.tell() == x
-                assert f.read() == %r[x:]
+            def assertSeeksTo(seekargs, expectedPosition):
+                f.seek(*seekargs)
+                assert f.tell() == expectedPosition
+                assert f.read() == %r[expectedPosition:]
+                f.seek(expectedPosition)
                 
             f = bz2.BZ2File(%r)
             try:
-                assertSeeksTo(12345)
-                assertSeeksTo(55000)
-                assertSeeksTo(0)
+                assertSeeksTo((55000,), 55000)
+                assertSeeksTo((0,), 0)
+                assertSeeksTo((12345, 0), 12345)
+                assertSeeksTo((10000, 1), 22345)
+                assertSeeksTo((-10000, 1), 12345)
+                assertSeeksTo((-55000, 2), 0)
             finally:
                 f.close()
             """) % (bz2_test_text, testPath)
         )
         
-
 
     def testBZ2FileWrite(self):
         # read is tested separately elsewhere, so we assume it works

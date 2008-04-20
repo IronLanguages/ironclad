@@ -79,11 +79,9 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
             mapper.SetData("PyTuple_Type", typeBlock)
-            GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
+            GC.Collect() # this should make the function pointers invalid if we forgot to store references to the delegates
 
-            deallocFPPtr = OffsetPtr(typeBlock, Marshal.OffsetOf(PyTypeObject, "tp_dealloc"))
-            deallocFP = CPyMarshal.ReadPtr(deallocFPPtr)
-            deallocDgt = Marshal.GetDelegateForFunctionPointer(deallocFP, CPython_destructor_Delegate)
+            deallocDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_dealloc", CPython_destructor_Delegate)
             deallocDgt(IntPtr(12345))
             self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
         finally:
@@ -102,11 +100,9 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
             mapper.SetData("PyTuple_Type", typeBlock)
-            GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
+            GC.Collect() # this should make the function pointers invalid if we forgot to store references to the delegates
 
-            freeFPPtr = OffsetPtr(typeBlock, Marshal.OffsetOf(PyTypeObject, "tp_free"))
-            freeFP = CPyMarshal.ReadPtr(freeFPPtr)
-            freeDgt = Marshal.GetDelegateForFunctionPointer(freeFP, CPython_destructor_Delegate)
+            freeDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_free", CPython_destructor_Delegate)
             freeDgt(IntPtr(12345))
             self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
         finally:
@@ -134,13 +130,11 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
         def CustomFree(ptr):
             calls.append(ptr)
         freeDgt = PythonMapper.PyObject_Free_Delegate(CustomFree)
-        freeFP = Marshal.GetFunctionPointerForDelegate(freeDgt)
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
             mapper.SetData("PyTuple_Type", typeBlock)
-            freeFPPtr = OffsetPtr(typeBlock, Marshal.OffsetOf(PyTypeObject, "tp_free"))
-            CPyMarshal.WritePtr(freeFPPtr, freeFP)
+            CPyMarshal.WriteFunctionPtrField(typeBlock, PyTypeObject, "tp_free", freeDgt)
             tuplePtr, itemPtrs = self.makeTuple(mapper, (1, 2, 3))
             
             mapper.PyTuple_Dealloc(tuplePtr)
@@ -165,8 +159,7 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
             theTuple = (0, 1, 2)
             tuplePtr = mapper.Store(theTuple)
             try:
-                ob_typePtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_type"))
-                self.assertEquals(CPyMarshal.ReadPtr(ob_typePtr), typeBlock, "wrong type")
+                self.assertEquals(CPyMarshal.ReadPtrField(tuplePtr, PyTupleObject, "ob_type"), typeBlock, "wrong type")
                 
                 dataPtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_item"))
                 for i in range(3):
@@ -181,9 +174,6 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
                 mapper.DecRef(tuplePtr)
         finally:
             Marshal.FreeHGlobal(typeBlock)
-        
-        
-
 
 
 suite = makesuite(

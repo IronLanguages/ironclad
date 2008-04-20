@@ -40,8 +40,7 @@ class PyString_TestCase(unittest.TestCase):
 
 
     def assertHasStringType(self, ptr, mapper):
-        typePtrPtr = OffsetPtr(ptr, Marshal.OffsetOf(PyStringObject, "ob_type"))
-        self.assertEquals(CPyMarshal.ReadPtr(typePtrPtr), mapper.PyString_Type, "bad type")
+        self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyStringObject, "ob_type"), mapper.PyString_Type, "bad type")
 
 
     def assertStringObjectHasLength(self, strPtr, length):

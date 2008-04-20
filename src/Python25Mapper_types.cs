@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
+using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
 using Ironclad.Structs;
@@ -22,11 +23,22 @@ namespace Ironclad
             this.StoreUnmanagedData(address, TypeCache.PythonFile);
         }
 
+        public override void
+        Fill_PyInt_Type(IntPtr address)
+        {
+            this.StoreUnmanagedData(address, TypeCache.Int32);
+        }
 
         public override void
         Fill_PyLong_Type(IntPtr address)
         {
-            this.StoreUnmanagedData(address, TypeCache.Int32);
+            this.StoreUnmanagedData(address, TypeCache.BigInteger);
+        }
+
+        public override void
+        Fill_PyFloat_Type(IntPtr address)
+        {
+            this.StoreUnmanagedData(address, TypeCache.Double);
         }
         
         public override int
