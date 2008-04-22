@@ -3,12 +3,11 @@ namespace Ironclad
     public partial class Python25Mapper : PythonMapper
     {
         private const string MODULE_CODE = @"
-from System import IntPtr, NullReferenceException
 
 def _cleanup(*args):
     _ironclad_mapper.FreeTemps()
     for arg in args:
-        if arg != IntPtr.Zero:
+        if arg != IntPtr(0):
             _ironclad_mapper.DecRef(arg)
 
 def _raiseExceptionIfRequired(resultPtr):
@@ -16,7 +15,7 @@ def _raiseExceptionIfRequired(resultPtr):
     if error:
         _ironclad_mapper.LastException = None
         raise error
-    elif resultPtr == IntPtr.Zero:
+    elif resultPtr == IntPtr(0):
         raise NullReferenceException('callable in extension module returned NULL without setting an error')
     
 def _ironclad_dispatch(name, instancePtr, args):
@@ -29,7 +28,7 @@ def _ironclad_dispatch(name, instancePtr, args):
         _cleanup(argPtr, resultPtr)
     
 def _ironclad_dispatch_noargs(name, instancePtr):
-    resultPtr = _ironclad_dispatch_table[name](instancePtr, IntPtr.Zero)
+    resultPtr = _ironclad_dispatch_table[name](instancePtr, IntPtr(0))
     try:
         _raiseExceptionIfRequired(resultPtr)
         return _ironclad_mapper.Retrieve(resultPtr)
@@ -38,7 +37,7 @@ def _ironclad_dispatch_noargs(name, instancePtr):
 
 def _ironclad_dispatch_kwargs(name, instancePtr, args, kwargs):
     argPtr = _ironclad_mapper.Store(args)
-    kwargPtr = IntPtr.Zero
+    kwargPtr = IntPtr(0)
     if len(kwargs):
         kwargPtr = _ironclad_mapper.Store(kwargs)
     resultPtr = _ironclad_dispatch_table[name](instancePtr, argPtr, kwargPtr)
@@ -63,25 +62,25 @@ def _ironclad_dispatch_self(name, instancePtr, errorHandler=None):
         private const string NOARGS_FUNCTION_CODE = @"
 def {0}():
     '''{1}'''
-    return _ironclad_dispatch_noargs('{2}{0}', IntPtr.Zero)
+    return _ironclad_dispatch_noargs('{2}{0}', IntPtr(0))
 ";
 
         private const string OBJARG_FUNCTION_CODE = @"
 def {0}(arg):
     '''{1}'''
-    return _ironclad_dispatch('{2}{0}', IntPtr.Zero, arg)
+    return _ironclad_dispatch('{2}{0}', IntPtr(0), arg)
 ";
 
         private const string VARARGS_FUNCTION_CODE = @"
 def {0}(*args):
     '''{1}'''
-    return _ironclad_dispatch('{2}{0}', IntPtr.Zero, args)
+    return _ironclad_dispatch('{2}{0}', IntPtr(0), args)
 ";
 
         private const string VARARGS_KWARGS_FUNCTION_CODE = @"
 def {0}(*args, **kwargs):
     '''{1}'''
-    return _ironclad_dispatch_kwargs('{2}{0}', IntPtr.Zero, args, kwargs)
+    return _ironclad_dispatch_kwargs('{2}{0}', IntPtr(0), args, kwargs)
 ";
 
         private const string CLASS_CODE = @"
@@ -123,7 +122,7 @@ class {0}(object):
         private const string ITERNEXT_METHOD_CODE = @"
     def next(self):
         def RaiseStop(resultPtr):
-            if resultPtr == IntPtr.Zero and _ironclad_mapper.LastException == None:
+            if resultPtr == IntPtr(0) and _ironclad_mapper.LastException == None:
                 raise StopIteration()
         return _ironclad_dispatch_self('{0}tp_iternext', self._instancePtr, RaiseStop)
 ";

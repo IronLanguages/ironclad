@@ -3,13 +3,13 @@ import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
-from tests.utils.memory import CreateTypes, OffsetPtr
+from tests.utils.memory import CreateTypes
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
+
 from Ironclad import BadRefCountException, CPyMarshal, CPython_destructor_Delegate, Python25Mapper, UnmanagedDataMarker
 from Ironclad.Structs import PyObject, PyTypeObject
-from IronPython.Hosting import PythonEngine
 
 
 class Python25MapperTest(unittest.TestCase):
@@ -17,8 +17,7 @@ class Python25MapperTest(unittest.TestCase):
     def testBasicStoreRetrieveFree(self):
         frees = []
         allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, frees))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
         
         try:
@@ -48,8 +47,7 @@ class Python25MapperTest(unittest.TestCase):
 
     def testCanFreeWithRefCount0(self):
         frees = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator([], frees))
+        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
         
         objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
         CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 0)
@@ -61,8 +59,7 @@ class Python25MapperTest(unittest.TestCase):
     def testStoreSameObjectIncRefsOriginal(self):
         frees = []
         allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, frees))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
         
         obj1 = object()
         result1 = mapper.Store(obj1)
@@ -85,8 +82,7 @@ class Python25MapperTest(unittest.TestCase):
         
 
     def testStoreEqualObjectStoresSeparately(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         result1 = mapper.Store([1, 2, 3])
         result2 = mapper.Store([1, 2, 3])
@@ -100,8 +96,7 @@ class Python25MapperTest(unittest.TestCase):
 
 
     def testDecRefObjectWithZeroRefCountFails(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
         CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 0)
@@ -111,8 +106,7 @@ class Python25MapperTest(unittest.TestCase):
 
 
     def testFinalDecRefOfObjectWithTypeCalls_tp_dealloc(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         calls = []
         def TypeDealloc(ptr):
@@ -137,8 +131,7 @@ class Python25MapperTest(unittest.TestCase):
     
     def testFinalDecRefDoesNotCallNull_tp_dealloc_ButDoesFreeMemory(self):
         frees = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator([], frees))
+        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
         
         typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_dealloc", IntPtr.Zero)
@@ -155,8 +148,7 @@ class Python25MapperTest(unittest.TestCase):
     
 
     def testStoreUnmanagedData(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
 
         o = object()
         ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
@@ -167,8 +159,7 @@ class Python25MapperTest(unittest.TestCase):
 
 
     def testCannotStoreUnmanagedDataMarker(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyStringObject))
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyTupleObject))
@@ -178,9 +169,8 @@ class Python25MapperTest(unittest.TestCase):
 
     def testRefCountIncRefDecRef(self):
         frees = []
-        engine = PythonEngine()
         allocator = GetAllocatingTestAllocator([], frees)
-        mapper = Python25Mapper(engine, allocator)
+        mapper = Python25Mapper(allocator)
 
         obj1 = object()
         ptr = mapper.Store(obj1)
@@ -199,9 +189,8 @@ class Python25MapperTest(unittest.TestCase):
 
 
     def testNullPointers(self):
-        engine = PythonEngine()
         allocator = GetDoNothingTestAllocator([])
-        mapper = Python25Mapper(engine, allocator)
+        mapper = Python25Mapper(allocator)
 
         self.assertRaises(KeyError, lambda: mapper.IncRef(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.DecRef(IntPtr.Zero))
@@ -214,9 +203,8 @@ class Python25MapperTest(unittest.TestCase):
         # hopefully, nobody will depend on character data from PyArg_Parse* remaining
         # available beyond the function call in which it was provided. hopefully.
         frees = []
-        engine = PythonEngine()
         allocator = GetDoNothingTestAllocator(frees)
-        mapper = Python25Mapper(engine, allocator)
+        mapper = Python25Mapper(allocator)
 
         mapper.RememberTempPtr(IntPtr(12345))
         mapper.RememberTempPtr(IntPtr(13579))
@@ -229,8 +217,7 @@ class Python25MapperTest(unittest.TestCase):
 
 
     def testRememberAndFreeTempObjects(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
 
         tempObject1 = mapper.Store(1)
         tempObject2 = mapper.Store(2)
@@ -267,8 +254,7 @@ class Python25MapperTest(unittest.TestCase):
 class Python25Mapper_GetMethodFP_Test(unittest.TestCase):
     
     def assertGetMethodFPWorks(self, name):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         fp1 = mapper.GetMethodFP(name)
         fp2 = mapper.GetMethodFP(name)
@@ -288,8 +274,7 @@ class Python25Mapper_GetMethodFP_Test(unittest.TestCase):
 class Python25Mapper_NoneTest(unittest.TestCase):
     
     def testFillNone(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         nonePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
         mapper.Fill__Py_NoneStruct(nonePtr)
@@ -300,8 +285,7 @@ class Python25Mapper_NoneTest(unittest.TestCase):
     
     
     def testStoreNone(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         nonePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
         mapper.SetData("_Py_NoneStruct", nonePtr)
         

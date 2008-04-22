@@ -38,6 +38,7 @@ class GeneratePython25MapperTest(unittest.TestCase):
         os.chdir(testSrcDir)
         try:
             write("exceptions", EXCEPTIONS)
+            write("type_exceptions", TYPE_EXCEPTIONS)
             write("store", STORE)
 
             retVal = spawn("ipy", toolPath)
@@ -45,7 +46,9 @@ class GeneratePython25MapperTest(unittest.TestCase):
 
             os.chdir(testBuildDir)
             self.assertEquals(read("Python25Mapper_exceptions.cs"), EXPECTED_EXCEPTIONS, 
-                              "generated wrong")
+                              "generated exceptions wrong")
+            self.assertEquals(read("Python25Mapper_type_exceptions.cs"), EXPECTED_TYPE_EXCEPTIONS, 
+                              "generated type exceptions wrong")
             self.assertEquals(read("Python25Mapper_store.cs"), EXPECTED_STORE, 
                               "generated wrong")
 
@@ -61,6 +64,7 @@ EXPECTED_EXCEPTIONS = """
 using System;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
+using IronPython.Runtime.Types;
 
 namespace Ironclad
 {
@@ -68,12 +72,34 @@ namespace Ironclad
     {
         public override IntPtr Make_PyExc_SystemError()
         {
-            return this.Store(ExceptionConverter.GetPythonException("SystemError"));
+            return this.Store(PythonExceptions.SystemError);
         }
 
         public override IntPtr Make_PyExc_OverflowError()
         {
-            return this.Store(ExceptionConverter.GetPythonException("OverflowError"));
+            return this.Store(PythonExceptions.OverflowError);
+        }
+    }
+}
+"""
+
+TYPE_EXCEPTIONS = """
+BaseException
+"""
+
+EXPECTED_TYPE_EXCEPTIONS = """
+using System;
+using IronPython.Runtime;
+using IronPython.Runtime.Exceptions;
+using IronPython.Runtime.Types;
+
+namespace Ironclad
+{
+    public partial class Python25Mapper : PythonMapper
+    {
+        public override IntPtr Make_PyExc_BaseException()
+        {
+            return this.Store(TypeCache.BaseException);
         }
     }
 }
@@ -89,6 +115,7 @@ EXPECTED_STORE = """
 using System;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
+using IronPython.Runtime.Types;
 
 namespace Ironclad
 {

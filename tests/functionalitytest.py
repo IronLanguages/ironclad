@@ -6,11 +6,13 @@ from textwrap import dedent
 from tests.utils.runtest import makesuite, run
 
 from System import IntPtr
+
 from Ironclad import (
     AddressGetterDelegate, DataSetterDelegate, PydImporter,
     Python25Mapper, PythonMapper, StubReference
 )
-from IronPython.Hosting import PythonEngine
+
+from TestUtils import ExecUtils
 
 bz2_doc = """The python bz2 module provides a comprehensive interface for
 the bz2 compression library. It implements a complete file
@@ -74,16 +76,14 @@ class FunctionalityTest(unittest.TestCase):
 
 
     def assertWorksWithModule(self, path, name, testCode):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         sr = StubReference(os.path.join("build", "python25.dll"))
         try:
             sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
             pi = PydImporter()
             pi.Load(path)
             try:
-                engine.Execute("import " + name)
-                engine.Execute(testCode)
+                ExecUtils.Exec(mapper.Engine, "import %s\n%s" % (name, testCode))
             finally:
                 pi.Dispose()
         finally:

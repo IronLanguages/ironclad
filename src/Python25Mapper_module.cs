@@ -1,10 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
 using IronPython.Hosting;
+using IronPython.Runtime;
+using IronPython.Runtime.Calls;
+using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
+
+using Microsoft.Scripting;
+using Microsoft.Scripting.Hosting;
+using Microsoft.Scripting.Runtime;
 
 using Ironclad.Structs;
 
@@ -14,6 +22,84 @@ namespace Ironclad
 {
     public partial class Python25Mapper : PythonMapper
     {
+
+        private void
+        ExecInModule(string code, PythonModule module)
+        {
+            ScriptSource script = this.engine.CreateScriptSourceFromString(code, SourceCodeKind.Statements);
+            ScriptScope scope = this.GetModuleScriptScope(module);
+            script.Execute(scope);
+        }
+
+        private ScriptScope
+        GetModuleScriptScope(PythonModule module)
+        {
+            return this.engine.CreateScope(module.Scope.Dict);
+        }
+
+
+        private PythonContext
+        GetPythonContext()
+        {
+            FieldInfo _languageField = (FieldInfo)(this.engine.GetType().GetMember(
+                "_language", BindingFlags.NonPublic | BindingFlags.Instance)[0]);
+            PythonContext ctx = (PythonContext)_languageField.GetValue(this.engine);
+            return ctx;
+        }
+        
+        
+        public override IntPtr 
+        Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
+        {
+            Dictionary<string, object> globals = new Dictionary<string, object>();
+            globals["_ironclad_mapper"] = this;
+            globals["__doc__"] = doc;
+
+            DispatchTable methodTable = new DispatchTable();
+            globals["_ironclad_dispatch_table"] = methodTable;
+
+            // hack to help moduleCode run -- can't import them from System
+            globals["IntPtr"] = typeof(IntPtr);
+            globals["NullReferenceException"] = typeof(NullReferenceException);
+
+            StringBuilder moduleCode = new StringBuilder();
+            moduleCode.Append(MODULE_CODE);
+
+            this.GenerateFunctions(moduleCode, methods, methodTable);
+
+            PythonModule module = this.GetPythonContext().CreateModule(
+                name, name, globals, ModuleOptions.PublishModule);
+            this.ExecInModule(moduleCode.ToString(), module);
+            return this.Store(module);
+        }
+        
+        
+        public override int 
+        PyModule_AddObject(IntPtr modulePtr, string name, IntPtr itemPtr)
+        {
+            if (!this.ptrmap.ContainsKey(modulePtr))
+            {
+                return -1;
+            }
+            PythonModule module = (PythonModule)this.Retrieve(modulePtr);
+            if (this.ptrmap.ContainsKey(itemPtr))
+            {
+                ScriptScope moduleScope = this.GetModuleScriptScope(module);
+                moduleScope.SetVariable(name, this.Retrieve(itemPtr));
+                this.DecRef(itemPtr);
+            }
+            else
+            {
+                IntPtr typePtr = CPyMarshal.ReadPtrField(itemPtr, typeof(PyTypeObject), "ob_type");
+                if (typePtr == this.PyType_Type)
+                {
+                    this.GenerateClass(module, name, itemPtr);
+                }
+            }
+            return 0;
+        }
+        
+        
         private void
         GenerateCallablesFromMethodDefs(StringBuilder code, 
                         IntPtr methods, 
@@ -100,42 +186,6 @@ namespace Ironclad
                 VARARGS_KWARGS_FUNCTION_CODE);
         }
 
-
-        public override IntPtr 
-        Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
-        {
-            Dictionary<string, object> globals = new Dictionary<string, object>();
-            globals["_ironclad_mapper"] = this;
-            globals["__doc__"] = doc;
-            
-            DispatchTable methodTable = new DispatchTable();
-            globals["_ironclad_dispatch_table"] = methodTable;
-            
-            StringBuilder moduleCode = new StringBuilder();
-            moduleCode.Append(MODULE_CODE);
-
-            this.GenerateFunctions(moduleCode, methods, methodTable);
-            
-            EngineModule module = this.engine.CreateModule(name, globals, true);
-            this.engine.Execute(moduleCode.ToString(), module);
-            return this.Store(module);
-        }
-
-        private void
-        ExtractNameModule(string tp_name, ref string __name__, ref string __module__)
-        {
-            string name = tp_name;
-            string module = "";
-            int lastDot = tp_name.LastIndexOf('.');
-            if (lastDot != -1)
-            {
-                name = tp_name.Substring(lastDot + 1);
-                module = tp_name.Substring(0, lastDot);
-            }
-            __name__ = name;
-            __module__ = module;
-        }
-
         private void
         GenerateIterMethods(StringBuilder classCode, IntPtr typePtr, DispatchTable methodTable, string tablePrefix)
         {
@@ -168,9 +218,26 @@ namespace Ironclad
                 VARARGS_METHOD_CODE,
                 VARARGS_KWARGS_METHOD_CODE);
         }
+
+
+        private void
+        ExtractNameModule(string tp_name, ref string __name__, ref string __module__)
+        {
+            string name = tp_name;
+            string module = "";
+            int lastDot = tp_name.LastIndexOf('.');
+            if (lastDot != -1)
+            {
+                name = tp_name.Substring(lastDot + 1);
+                module = tp_name.Substring(0, lastDot);
+            }
+            __name__ = name;
+            __module__ = module;
+        }
+        
         
         private void
-        GenerateClass(EngineModule module, string name, IntPtr typePtr)
+        GenerateClass(PythonModule module, string name, IntPtr typePtr)
         {
             StringBuilder classCode = new StringBuilder();
             string tablePrefix = name + ".";
@@ -182,17 +249,18 @@ namespace Ironclad
             
             string __doc__ = CPyMarshal.ReadCStringField(typePtr, typeof(PyTypeObject), "tp_doc").Replace("\\", "\\\\");
             classCode.Append(String.Format(CLASS_CODE, name, __module__, __doc__));
-            
+
+            ScriptScope moduleScope = this.GetModuleScriptScope(module);
+            DispatchTable methodTable = moduleScope.GetVariable <DispatchTable> ("_ironclad_dispatch_table");
             IntPtr methodsPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_methods");
-            DispatchTable methodTable = (DispatchTable)module.Globals["_ironclad_dispatch_table"];
             this.GenerateMethods(classCode, methodsPtr, methodTable, tablePrefix);
             this.GenerateIterMethods(classCode, typePtr, methodTable, tablePrefix);
-            
+
             classCode.Append(String.Format(CLASS_FIXUP_CODE, name, __name__));
-            this.engine.Execute(classCode.ToString(), module);
-            object klass = module.Globals[name];
-            
-            DynamicType.SetAttrMethod(klass, "_typePtr", typePtr);
+            this.ExecInModule(classCode.ToString(), module);
+            object klass = moduleScope.GetVariable<object>(name);
+
+            PythonOps.SetAttr(DefaultContext.Default, klass, SymbolTable.StringToId("_typePtr"), typePtr);
             
             this.SetClassDelegateSlot(klass, typePtr, "tp_new", typeof(PyType_GenericNew_Delegate));
             this.SetClassDelegateSlot(klass, typePtr, "tp_init", typeof(CPython_initproc_Delegate));
@@ -204,32 +272,7 @@ namespace Ironclad
         {
             Delegate dgt = CPyMarshal.ReadFunctionPtrField(typePtr, typeof(PyTypeObject), fieldName, delegateType);
             string attrName = String.Format("_{0}Dgt", fieldName);
-            DynamicType.SetAttrMethod(klass, attrName, dgt);
-        }
-        
-        
-        public override int 
-        PyModule_AddObject(IntPtr modulePtr, string name, IntPtr itemPtr)
-        {
-            if (!this.ptrmap.ContainsKey(modulePtr))
-            {
-                return -1;
-            }
-            EngineModule module = (EngineModule)this.Retrieve(modulePtr);
-            if (this.ptrmap.ContainsKey(itemPtr))
-            {
-                module.Globals[name] = this.Retrieve(itemPtr);
-                this.DecRef(itemPtr);
-            }
-            else
-            {
-                IntPtr typePtr = CPyMarshal.ReadPtrField(itemPtr, typeof(PyTypeObject), "ob_type");
-                if (typePtr == this.PyType_Type)
-                {
-                    this.GenerateClass(module, name, itemPtr);
-                }
-            }
-            return 0;
+            PythonOps.SetAttr(DefaultContext.Default, klass, SymbolTable.StringToId(attrName), dgt);
         }
     }
 }

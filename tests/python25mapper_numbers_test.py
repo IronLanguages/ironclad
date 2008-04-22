@@ -4,17 +4,16 @@ from tests.utils.runtest import makesuite, run
 
 from tests.utils.memory import CreateTypes
 
-from System import Int64, IntPtr
+from System import Int64
+
 from Ironclad import CPyMarshal, Python25Mapper
 from Ironclad.Structs import PyObject
-from IronPython.Hosting import PythonEngine
 
 
 class Python25Mapper_PyInt_Test(unittest.TestCase):
 
     def testStoreInt(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         try:
@@ -28,8 +27,7 @@ class Python25Mapper_PyInt_Test(unittest.TestCase):
     
     
     def testPyInt_FromLong(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         try:
@@ -42,8 +40,7 @@ class Python25Mapper_PyInt_Test(unittest.TestCase):
             deallocTypes()
     
     def testPyInt_FromSsize_t(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         try:
@@ -57,8 +54,7 @@ class Python25Mapper_PyInt_Test(unittest.TestCase):
 
 
     def testPyInt_AsLong(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         try:
@@ -73,8 +69,7 @@ class Python25Mapper_PyInt_Test(unittest.TestCase):
 class Python25Mapper_PyLong_Test(unittest.TestCase):
 
     def testStoreLong(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         try:
@@ -87,8 +82,7 @@ class Python25Mapper_PyLong_Test(unittest.TestCase):
             deallocTypes()
     
     def testPyLong_FromLongLong(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         try:
@@ -103,8 +97,7 @@ class Python25Mapper_PyLong_Test(unittest.TestCase):
 class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):
 
     def testStoreFloat(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         try:
@@ -117,8 +110,7 @@ class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):
             deallocTypes()
     
     def testPyFloat_FromDouble(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         try:

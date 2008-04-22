@@ -25,7 +25,7 @@ namespace Ironclad
         Store(List list)
         {
             IntPtr listPtr = this.PyList_New(0);
-            for (int i = 0; i < list.GetLength(); i++)
+            for (int i = 0; i < list.__len__(); i++)
             {
                 IntPtr itemPtr = this.Store(list[i]);
                 this.PyList_Append(listPtr, itemPtr);
@@ -106,7 +106,7 @@ namespace Ironclad
             }
             
             List list = (List)this.Retrieve(listPtr);
-            list.Append(this.Retrieve(itemPtr));
+            list.append(this.Retrieve(itemPtr));
             this.IncRef(itemPtr);
             return 0;
         }
@@ -236,11 +236,11 @@ namespace Ironclad
                     
                     if (this.listsBeingActualised.ContainsKey(itemPtr))
                     {
-                        newList.Append(this.listsBeingActualised[itemPtr]);
+                        newList.append(this.listsBeingActualised[itemPtr]);
                     }
                     else
                     {
-                        newList.Append(this.Retrieve(itemPtr));
+                        newList.append(this.Retrieve(itemPtr));
                     }
 
                     itemPtrPtr = CPyMarshal.Offset(itemPtrPtr, CPyMarshal.PtrSize);

@@ -12,7 +12,7 @@ namespace Ironclad
         {
             PythonFile pyFile = (PythonFile)this.Retrieve(pyFilePtr);
             FieldInfo streamField = (FieldInfo)(pyFile.GetType().GetMember(
-                "stream", BindingFlags.NonPublic | BindingFlags.Instance)[0]);
+                "_stream", BindingFlags.NonPublic | BindingFlags.Instance)[0]);
             FileStream stream = (FileStream)streamField.GetValue(pyFile);
             IntPtr handle = stream.SafeFileHandle.DangerousGetHandle();
             int fd = Unmanaged._open_osfhandle(handle, 0);

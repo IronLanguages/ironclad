@@ -1,7 +1,7 @@
-all : ../unmanaged.dll ../setvalue.pyd ../exportsymbols.dll
+all : ../testutils.dll ../setvalue.pyd ../exportsymbols.dll
 
-../unmanaged.dll : unmanaged.cs
-	csc /out:../unmanaged.dll /t:library /nologo unmanaged.cs
+../testutils.dll : unmanaged.cs executils.cs ../../../ironpython/Microsoft.Scripting.dll ../../../ironpython/IronPython.dll
+	csc /out:../testutils.dll /t:library /nologo /r:../../../ironpython/Microsoft.Scripting.dll /r:../../../ironpython/IronPython.dll unmanaged.cs executils.cs
 
 ../setvalue.pyd : setvalue.o
 	gcc -shared -o ../setvalue.pyd setvalue.o

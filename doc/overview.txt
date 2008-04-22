@@ -11,13 +11,7 @@ Ironclad's purpose is to allow IronPython to transparently import and use compil
 
 Status
 
-* Once bz2.pyd has been loaded, it is possible to import the Python 2.5 bz2 module; all its functions, types, and strings are accessible from IronPython. See 'functionalitytest.py' for an example.
-
-* The 'compress' and 'decompress' functions, and the 'BZ2Compressor' and 'BZ2Decompressor' types, appear to work correctly.
-
-* It is not currently possible to instantiate the 'BZ2File' type; this is the reason that functionalitytest.testBZ2File fails. All other tests should pass.
-
-* In general, nothing not explicitly mentioned above will work.
+* Once bz2.pyd has been loaded, it is possible to import the Python 2.5 bz2 module; all its functions, types, and strings are accessible from IronPython. See 'functionalitytest.py' (all of which should pass) for examples.
 
 * It may be possible to import some other CPython extensions without crashing.
 
@@ -28,31 +22,12 @@ Status
 
 Immediate next steps
 
-* Implement 'Py_VaBuildValue' (and related functions) using code from 'modsupport.c' in the CPython source.
-** This is desirable because these functions appear to be implemented in terms of other CPython API functions which will be useful elsewhere (PyString_FromStringAndSize, PyInt_FromLong, etc). Also, marshalling varargs is not fun, and this lets us dodge the issue.
-** Doing this correctly will involve a new build stage: basically, we need to configure the CPython source for the current machine, and preprocess the borrowed code, so that we can drop it into the stub library as an override. This will be useful for borrowing more code from CPython as work progresses, and autogenerating C# files to make them reusable across different architectures.
-
-* Implement 'PyObject_CallFunction' using code from 'abstract.c' in the CPython source (this uses Py_VaBuildValue).
-** This step will allow us to get slightly further with instantiation of 'BZ2File' objects.
-
-* Implement 'PyFile_AsFile', which will allow us to complete instantiation of 'BZ2File' objects.
-
 * Implement whatever else we need to allow us to run 'testbz2.py' and have it all pass.
 
 * Add __del__ methods to CPython types.
 
 * Move these notes into something resembling a real issue tracking system.
 
-
-Useful imminent steps
-
-* Reimplement the PyArg_ family of functions using code from 'getargs.c' in the CPython source.
-
-* Add null implementations of all CPython API functions, which simply log that they have been called and (where appropriate) return an error value, so that we can quickly diagnose problems importing new extensions.
-
-* Change 'generatepythonmapper.py' to store exception type pointers as properties on PythonMapper objects, and somehow map them to appropriate CLR exceptions; once this is done, it will be possible to usefully implement the PyErr_Set functions.
-
-* Change Python25Mapper.Store to automatically create real CPython objects when string, tuples, and lists are passed in (and any other types which might have fields directly accessed by macros), and to create a pointer to the appropriate PyTypeObject for other arg types.
 
 For the future
 

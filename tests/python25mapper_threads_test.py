@@ -2,8 +2,6 @@
 import unittest
 from tests.utils.runtest import makesuite, run
 
-from IronPython.Hosting import PythonEngine
-
 from System.Threading import Thread, ThreadStart
 
 from Ironclad import Python25Mapper
@@ -12,8 +10,7 @@ from Ironclad import Python25Mapper
 class Python25Mapper_PyThread_functions_Test(unittest.TestCase):
 
     def testAllocateAndFreeLocks(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
 
         lockPtr1 = mapper.PyThread_allocate_lock()
         lockPtr2 = mapper.PyThread_allocate_lock()
@@ -33,8 +30,7 @@ class Python25Mapper_PyThread_functions_Test(unittest.TestCase):
 
 
     def testAcquireAndReleaseLocksWithWait(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
 
         lockPtr1 = mapper.PyThread_allocate_lock()
         lockPtr2 = mapper.PyThread_allocate_lock()
@@ -66,8 +62,7 @@ class Python25Mapper_PyThread_functions_Test(unittest.TestCase):
 
 
     def testAcquireAndReleaseLocksWithNoWait(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
 
         lockPtr1 = mapper.PyThread_allocate_lock()
         lockPtr2 = mapper.PyThread_allocate_lock()

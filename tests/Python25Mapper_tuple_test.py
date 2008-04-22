@@ -1,13 +1,13 @@
 
 import unittest
+from tests.utils.runtest import makesuite, run
+
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.memory import CreateTypes, OffsetPtr
-from tests.utils.runtest import makesuite, run
 
 from System import GC, IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from IronPython.Hosting import PythonEngine
 from Ironclad import CPyMarshal, CPython_destructor_Delegate, PythonMapper, Python25Mapper
 from Ironclad.Structs import PyTupleObject, PyTypeObject
 
@@ -15,8 +15,7 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
     
     def assertPyTuple_New_Works(self, length):
         allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
 
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
@@ -57,8 +56,7 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
 
 
     def testCanSafelyFreeUninitialisedTuple(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         try:
             markedPtr = mapper.PyTuple_New(2)
@@ -73,12 +71,11 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
             def PyTuple_Dealloc(self, tuplePtr):
                 calls.append(tuplePtr)
         
-        engine = PythonEngine()
-        mapper = MyPM(engine)
+        self.mapper = MyPM()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
-            mapper.SetData("PyTuple_Type", typeBlock)
+            self.mapper.SetData("PyTuple_Type", typeBlock)
             GC.Collect() # this should make the function pointers invalid if we forgot to store references to the delegates
 
             deallocDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_dealloc", CPython_destructor_Delegate)
@@ -94,12 +91,11 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
             def PyObject_Free(self, tuplePtr):
                 calls.append(tuplePtr)
         
-        engine = PythonEngine()
-        mapper = MyPM(engine)
+        self.mapper = MyPM()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
-            mapper.SetData("PyTuple_Type", typeBlock)
+            self.mapper.SetData("PyTuple_Type", typeBlock)
             GC.Collect() # this should make the function pointers invalid if we forgot to store references to the delegates
 
             freeDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_free", CPython_destructor_Delegate)
@@ -123,8 +119,7 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
 
     def testPyTuple_DeallocDecRefsItemsAndCallsCorrectFreeFunction(self):
         frees = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator([], frees))
+        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
         
         calls = []
         def CustomFree(ptr):
@@ -150,8 +145,7 @@ class Python25Mapper_Tuple_Test(unittest.TestCase):
 
     def testStoreTupleCreatesTupleType(self):
         allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
