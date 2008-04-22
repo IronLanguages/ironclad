@@ -17,13 +17,15 @@ def write(name, text):
     
 
 def run():
-    exceptions = [dict([("symbol", s)]) for s in read_interesting_lines(EXCEPTIONS_INFILE)]
-    exceptions_code = "\n\n".join([EXCEPTION_TEMPLATE % x for x in exceptions])
-    write(EXCEPTIONS_OUTFILE, FILE_TEMPLATE % exceptions_code)
-    
-    type_exceptions = [dict([("symbol", s)]) for s in read_interesting_lines(TYPE_EXCEPTIONS_INFILE)]
-    type_exceptions_code = "\n\n".join([TYPE_EXCEPTION_TEMPLATE % x for x in type_exceptions])
-    write(TYPE_EXCEPTIONS_OUTFILE, FILE_TEMPLATE % type_exceptions_code)
+    exception_kinds = (
+        (EXCEPTIONS_INFILE, EXCEPTION_TEMPLATE, EXCEPTIONS_OUTFILE),
+        (TYPE_EXCEPTIONS_INFILE, TYPE_EXCEPTION_TEMPLATE, TYPE_EXCEPTIONS_OUTFILE),
+        (BUILTIN_EXCEPTIONS_INFILE, BUILTIN_EXCEPTION_TEMPLATE, BUILTIN_EXCEPTIONS_OUTFILE),
+    )
+    for (infile, template, outfile) in exception_kinds:
+        exceptions = [dict([("symbol", s)]) for s in read_interesting_lines(infile)]
+        exceptions_code = "\n\n".join([template % x for x in exceptions])
+        write(outfile, FILE_TEMPLATE % exceptions_code)
     
     store_types = [dict([("type", t), ("var", "attempt%d" % i)]) 
                    for (i, t) in enumerate(read_interesting_lines(STORE_INFILE))]
@@ -36,6 +38,8 @@ EXCEPTIONS_INFILE = "exceptions"
 EXCEPTIONS_OUTFILE = "../Python25Mapper_exceptions.cs"
 TYPE_EXCEPTIONS_INFILE = "type_exceptions"
 TYPE_EXCEPTIONS_OUTFILE = "../Python25Mapper_type_exceptions.cs"
+BUILTIN_EXCEPTIONS_INFILE = "builtin_exceptions"
+BUILTIN_EXCEPTIONS_OUTFILE = "../Python25Mapper_builtin_exceptions.cs"
 STORE_INFILE = "store"
 STORE_OUTFILE = "../Python25Mapper_store.cs"
 
@@ -64,6 +68,12 @@ TYPE_EXCEPTION_TEMPLATE = """\
         public override IntPtr Make_PyExc_%(symbol)s()
         {
             return this.Store(TypeCache.%(symbol)s);
+        }"""
+
+BUILTIN_EXCEPTION_TEMPLATE = """\
+        public override IntPtr Make_PyExc_%(symbol)s()
+        {
+            return this.Store(Builtin.%(symbol)s);
         }"""
 
 STORE_METHOD_TEMPLATE = """\

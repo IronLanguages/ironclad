@@ -1,4 +1,7 @@
+
+Exception
 StopIteration
+GeneratorExit
 StandardError
 ArithmeticError
 LookupError
@@ -26,9 +29,9 @@ UnboundLocalError
 UnicodeError
 ValueError
 ZeroDivisionError
-GeneratorExit
 Warning
 UserWarning
+UnicodeWarning
 DeprecationWarning
 PendingDeprecationWarning
 SyntaxWarning

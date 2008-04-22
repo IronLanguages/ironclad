@@ -1,6 +1,7 @@
 PyExc_BaseException
 PyExc_Exception
 PyExc_StopIteration
+PyExc_GeneratorExit
 PyExc_StandardError
 PyExc_ArithmeticError
 PyExc_LookupError
@@ -28,7 +29,6 @@ PyExc_UnboundLocalError
 PyExc_UnicodeError
 PyExc_ValueError
 PyExc_ZeroDivisionError
-PyExc_GeneratorExit
 PyExc_Warning
 PyExc_UserWarning
 PyExc_DeprecationWarning
@@ -37,3 +37,12 @@ PyExc_SyntaxWarning
 PyExc_RuntimeWarning
 PyExc_FutureWarning
 PyExc_ImportWarning
+PyExc_UnicodeWarning
+
+PyExc_EnvironmentError
+PyExc_SyntaxError
+PyExc_SystemExit
+PyExc_UnicodeEncodeError
+PyExc_UnicodeDecodeError
+PyExc_UnicodeTranslateError
+PyExc_WindowsError

@@ -51,12 +51,15 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
     def testSetsMostErrors(self):
         errors = (
             "BaseException",
+            "Exception",
             "StopIteration",
+            "GeneratorExit",
             "StandardError",
             "ArithmeticError",
             "LookupError",
             "AssertionError",
             "AttributeError",
+            "EnvironmentError",
             "EOFError",
             "FloatingPointError",
             "IOError",
@@ -77,35 +80,33 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
             "TypeError",
             "ValueError",
             "ZeroDivisionError",
-            "GeneratorExit",
             "Warning",
             "UserWarning",
+            "UnicodeWarning",
             "DeprecationWarning",
             "PendingDeprecationWarning",
             "SyntaxWarning",
             "RuntimeWarning",
             "FutureWarning",
             "ImportWarning",
+            
+            "SyntaxError",
+            "SystemExit",
+            "WindowsError",
+            "UnboundLocalError",
+            "UnicodeError",
+            "UnicodeTranslateError",
+
         )
         for error in errors:
             self.assertSetStringSetsCorrectError(error)
-
-        # for reference, the missing errors are as follows:
+        
+        # the following errors are a hassle to construct, and are being ignored for now:
         #
-        #    "Exception",
-        #    "BaseException",
-        #    "EnvironmentError",
-        #    "SyntaxError",
-        #    "SystemExit",
         #    "UnicodeEncodeError",
         #    "UnicodeDecodeError",
-        #    "UnicodeWarning"
-        #    "UnboundLocalError",
-        #    "UnicodeError",
-        #    "UnicodeTranslateError",
-        #    "WindowsError",
         #
-        # ...they will be dealt with when necessary.
+        #
 
 suite = makesuite(
     Python25Mapper_Exception_Test,
