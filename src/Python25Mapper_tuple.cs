@@ -15,7 +15,7 @@ namespace Ironclad
         {
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetMethodFP("PyTuple_Dealloc"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_free", this.GetAddress("PyObject_Free"));
-            this.StoreUnmanagedData(address, TypeCache.Tuple);
+            this.StoreUnmanagedData(address, TypeCache.PythonTuple);
         }
         
         private IntPtr CreateTuple(int size)
@@ -46,9 +46,9 @@ namespace Ironclad
         
         
         private IntPtr
-        Store(Tuple tuple)
+        Store(PythonTuple tuple)
         {
-            int length = tuple.GetLength();
+            int length = tuple.__len__();
             IntPtr tuplePtr = this.CreateTuple(length);
             IntPtr itemPtr = CPyMarshal.Offset(
                 tuplePtr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
@@ -98,7 +98,7 @@ namespace Ironclad
                 items[i] = this.Retrieve(itemPtr);
                 itemAddressPtr = CPyMarshal.Offset(itemAddressPtr, CPyMarshal.PtrSize);
             }
-            this.StoreUnmanagedData(ptr, Tuple.MakeTuple(items));
+            this.StoreUnmanagedData(ptr, new PythonTuple(items));
         }
     }
 }

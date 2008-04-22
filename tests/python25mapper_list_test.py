@@ -7,17 +7,16 @@ from tests.utils.memory import CreateTypes, OffsetPtr
 
 from System import GC, IntPtr
 from System.Runtime.InteropServices import Marshal
+
 from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Mapper, PythonMapper
 from Ironclad.Structs import PyObject, PyListObject, PyTypeObject
-from IronPython.Hosting import PythonEngine
 
 
 
 class Python25Mapper_PyList_Type_Test(unittest.TestCase):
 
     def testPyList_Type(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
@@ -34,12 +33,11 @@ class Python25Mapper_PyList_Type_Test(unittest.TestCase):
             def PyList_Dealloc(self, listPtr):
                 calls.append(listPtr)
         
-        engine = PythonEngine()
-        mapper = MyPM(engine)
+        self.mapper = MyPM()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
-            mapper.SetData("PyList_Type", typeBlock)
+            self.mapper.SetData("PyList_Type", typeBlock)
             GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
 
             deallocDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_dealloc", CPython_destructor_Delegate)
@@ -55,25 +53,25 @@ class Python25Mapper_PyList_Type_Test(unittest.TestCase):
             def PyObject_Free(self, listPtr):
                 calls.append(listPtr)
         
-        engine = PythonEngine()
-        mapper = MyPM(engine)
+        self.mapper = MyPM()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
-            mapper.SetData("PyList_Type", typeBlock)
+            self.mapper.SetData("PyList_Type", typeBlock)
             GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
 
             freeDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_free", CPython_destructor_Delegate)
             freeDgt(IntPtr(12345))
             self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
+            
         finally:
             Marshal.FreeHGlobal(typeBlock)
+            
         
 
     def testPyList_DeallocDecRefsItemsAndCallsCorrectFreeFunction(self):
         frees = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator([], frees))
+        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
         
         calls = []
         def CustomFree(ptr):
@@ -104,10 +102,8 @@ class Python25Mapper_PyList_Type_Test(unittest.TestCase):
         
         
     def testStoreList(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
-        
         listPtr = mapper.Store([1, 2, 3])
         try:
             typePtr = CPyMarshal.ReadPtrField(listPtr, PyObject, "ob_type")
@@ -127,8 +123,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
     
     def testPyList_New_ZeroLength(self):
         allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
         
         listPtr = mapper.PyList_New(0)
@@ -149,8 +144,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
     
     def testPyList_New_NonZeroLength(self):
         allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
         
         SIZE = 27
@@ -180,8 +174,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
     def testPyList_Append(self):
         allocs = []
         deallocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, deallocs))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, deallocs))
         deallocTypes = CreateTypes(mapper)
         
         listPtr = mapper.PyList_New(0)
@@ -228,8 +221,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         
         
     def testPyList_SetItem_RefCounting(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         listPtr = mapper.PyList_New(4)
@@ -260,8 +252,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         
         
     def testPyList_SetItem_CompleteList(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         listPtr = mapper.PyList_New(4)
@@ -285,8 +276,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
     
     
     def testPyList_SetItem_Failures(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         objPtr = mapper.Store(object())
@@ -318,8 +308,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
             
     
     def testPyList_SetItem_PreexistingIpyList(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         item = object()
@@ -335,8 +324,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         
     
     def testRetrieveListContainingItself(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         listPtr = mapper.PyList_New(1)
@@ -356,8 +344,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         
     
     def testRetrieveListContainingItselfIndirectly(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         listPtr1 = mapper.PyList_New(1)
@@ -388,8 +375,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         
     def testDeleteList(self):
         deallocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator([], deallocs))
+        mapper = Python25Mapper(GetAllocatingTestAllocator([], deallocs))
         deallocTypes = CreateTypes(mapper)
         
         item1 = object()
@@ -418,8 +404,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         
         
     def testPyList_GetSlice(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         def TestSlice(originalListPtr, start, stop):

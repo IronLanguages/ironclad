@@ -1,4 +1,3 @@
-Exception
 StopIteration
 StandardError
 ArithmeticError
@@ -7,7 +6,6 @@ AssertionError
 AttributeError
 EOFError
 FloatingPointError
-EnvironmentError
 IOError
 OSError
 ImportError
@@ -19,21 +17,16 @@ NameError
 OverflowError
 RuntimeError
 NotImplementedError
-SyntaxError
 IndentationError
 TabError
 ReferenceError
 SystemError
-SystemExit
 TypeError
 UnboundLocalError
 UnicodeError
-UnicodeEncodeError
-UnicodeDecodeError
-UnicodeTranslateError
 ValueError
 ZeroDivisionError
-WindowsError
+GeneratorExit
 Warning
 UserWarning
 DeprecationWarning

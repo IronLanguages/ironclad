@@ -5,14 +5,12 @@ from tests.utils.runtest import makesuite, run
 import System
 from System import IntPtr
 from Ironclad import Python25Mapper
-from IronPython.Hosting import PythonEngine
 
 
 class Python25Mapper_Exception_Test(unittest.TestCase):
 
     def testException(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         self.assertEquals(mapper.LastException, None, "exception should default to nothing")
 
         mapper.LastException = System.Exception("doozy")
@@ -23,8 +21,7 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
 
 
     def testPyErr_SetString_WithNull(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
 
         msg = "You froze your tears and made a dagger"
         mapper.PyErr_SetString(IntPtr.Zero, msg)
@@ -36,8 +33,7 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
 
 
     def assertSetStringSetsCorrectError(self, name):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         errorPtr = mapper.GetAddress("PyExc_" + name)
         self.assertNotEquals(errorPtr, IntPtr.Zero, "failed to find %s" % name)
 
@@ -45,8 +41,8 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
         mapper.PyErr_SetString(errorPtr, msg)
         try:
             raise mapper.LastException
-        except Exception, e:
-            self.assertEquals(isinstance(e, getattr(__builtins__, name)), True, "error was not a %s" % name)
+        except BaseException, e:
+            self.assertEquals(isinstance(e, eval(name)), True, "error was not a %s" % name)
             self.assertEquals(str(e), msg, "wrong message")
         else:
             self.fail("got no exception")
@@ -54,7 +50,7 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
 
     def testSetsMostErrors(self):
         errors = (
-            "Exception",
+            "BaseException",
             "StopIteration",
             "StandardError",
             "ArithmeticError",
@@ -63,7 +59,6 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
             "AttributeError",
             "EOFError",
             "FloatingPointError",
-            "EnvironmentError",
             "IOError",
             "OSError",
             "ImportError",
@@ -75,19 +70,14 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
             "OverflowError",
             "RuntimeError",
             "NotImplementedError",
-            "SyntaxError",
             "IndentationError",
             "TabError",
             "ReferenceError",
             "SystemError",
-            "SystemExit",
             "TypeError",
-            "UnboundLocalError",
-            "UnicodeError",
-            "UnicodeTranslateError",
             "ValueError",
             "ZeroDivisionError",
-            "WindowsError",
+            "GeneratorExit",
             "Warning",
             "UserWarning",
             "DeprecationWarning",
@@ -102,11 +92,18 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
 
         # for reference, the missing errors are as follows:
         #
+        #    "Exception",
         #    "BaseException",
-        #    "GeneratorExit",
+        #    "EnvironmentError",
+        #    "SyntaxError",
+        #    "SystemExit",
         #    "UnicodeEncodeError",
         #    "UnicodeDecodeError",
         #    "UnicodeWarning"
+        #    "UnboundLocalError",
+        #    "UnicodeError",
+        #    "UnicodeTranslateError",
+        #    "WindowsError",
         #
         # ...they will be dealt with when necessary.
 

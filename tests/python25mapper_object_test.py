@@ -9,15 +9,13 @@ from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, CPython_destructor_Delegate, PythonMapper, Python25Mapper
 from Ironclad.Structs import PyObject, PyTypeObject
-from IronPython.Hosting import PythonEngine
 
     
     
 class Python25Mapper_PyObject_Test(unittest.TestCase):
     
     def testPyObject_Call(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         kwargsPtr = IntPtr.Zero
         deallocTypes = CreateTypes(mapper)
@@ -36,8 +34,7 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
 
 
     def testPyCallable_Check(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         callables = map(mapper.Store, [float, len, lambda: None])
@@ -53,8 +50,7 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
 
 
     def testPyObject_GetAttrString(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         class Thingum(object):
@@ -73,8 +69,7 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
 
 
     def testPyObject_GetAttrStringFailure(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         class Thingum(object):
@@ -91,8 +86,7 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
     
     
     def testPyObject_GetIter_Success(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         testList = [1, 2, 3]
@@ -108,8 +102,7 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
     
     
     def testPyObject_GetIter_Failure(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         testObj = object()
@@ -123,7 +116,7 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
             try:
                 Raise()
             except TypeError, e:
-                self.assertEquals(e.msg, "PyObject_GetIter: object is not iterable", "bad message")
+                self.assertEquals(str(e), "PyObject_GetIter: object is not iterable", "bad message")
             else:
                 self.fail("wrong exception")
         finally:
@@ -132,8 +125,7 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
     
     
     def testPyIter_Next_Success(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         testList = [0, 1, 2]
@@ -156,8 +148,7 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
     
     
     def testPyIter_Next_NotAnIterator(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         notIterPtr = mapper.Store(object())
@@ -169,7 +160,7 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
             try:
                 Raise()
             except TypeError, e:
-                self.assertEquals(e.msg, "PyIter_Next: object is not an iterator", "bad message")
+                self.assertEquals(str(e), "PyIter_Next: object is not an iterator", "bad message")
             else:
                 self.fail("wrong exception")
             
@@ -179,8 +170,7 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
     
     
     def testPyIter_Next_ExplodingIterator(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         class BorkedException(Exception):
@@ -210,8 +200,7 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
 class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
 
     def testPyBaseObject_Type(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
@@ -228,12 +217,11 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
             def PyBaseObject_Dealloc(self, objPtr):
                 calls.append(objPtr)
         
-        engine = PythonEngine()
-        mapper = MyPM(engine)
+        self.mapper = MyPM()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
-            mapper.SetData("PyBaseObject_Type", typeBlock)
+            self.mapper.SetData("PyBaseObject_Type", typeBlock)
             GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
 
             deallocFPPtr = OffsetPtr(typeBlock, Marshal.OffsetOf(PyTypeObject, "tp_dealloc"))
@@ -251,12 +239,11 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
             def PyObject_Free(self, objPtr):
                 calls.append(objPtr)
         
-        engine = PythonEngine()
-        mapper = MyPM(engine)
+        self.mapper = MyPM()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
-            mapper.SetData("PyBaseObject_Type", typeBlock)
+            self.mapper.SetData("PyBaseObject_Type", typeBlock)
             GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
 
             freeDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_free", CPython_destructor_Delegate)
@@ -270,10 +257,9 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
         calls = []
         def Some_FreeFunc(objPtr):
             calls.append(objPtr)
-        freeDgt = PythonMapper.PyObject_Free_Delegate(Some_FreeFunc)
+        self.freeDgt = PythonMapper.PyObject_Free_Delegate(Some_FreeFunc)
         
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         baseObjTypeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         objTypeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
@@ -281,7 +267,7 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
         try:
             mapper.SetData("PyBaseObject_Type", baseObjTypeBlock)
             mapper.SetData("PyDict_Type", objTypeBlock) # type not actually important
-            CPyMarshal.WriteFunctionPtrField(objTypeBlock, PyTypeObject, "tp_free", freeDgt)
+            CPyMarshal.WriteFunctionPtrField(objTypeBlock, PyTypeObject, "tp_free", self.freeDgt)
             CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", objTypeBlock)
             
             GC.Collect() # this should make the function pointers invalid if we forgot to store references to the delegates

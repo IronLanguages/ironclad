@@ -1,14 +1,14 @@
 
 import unittest
+from tests.utils.runtest import makesuite, run
+
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.memory import OffsetPtr, CreateTypes
-from tests.utils.runtest import makesuite, run
 
 from System import Array, Byte, Char, IntPtr, OutOfMemoryException
 from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, Python25Mapper
 from Ironclad.Structs import PyStringObject, PyTypeObject
-from IronPython.Hosting import PythonEngine
 
 
 class PyString_TestCase(unittest.TestCase):
@@ -69,8 +69,7 @@ class PyString_TestCase(unittest.TestCase):
 class PyString_Type_test(unittest.TestCase):
     
     def testStringTypeHasDefaultDeallocFreeFunctions(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         freeOffset = Marshal.OffsetOf(PyTypeObject, "tp_free")
         deallocOffset = Marshal.OffsetOf(PyTypeObject, "tp_dealloc")
         
@@ -92,8 +91,7 @@ class Python25Mapper_PyString_FromString_Test(PyString_TestCase):
 
     def testCreatesString(self):
         allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
 
         testString = "beset on all sides" + self.getStringWithValues(1, 256)
@@ -117,8 +115,7 @@ class Python25Mapper_PyString_FromStringAndSize_Test(PyString_TestCase):
 
     def testCreateEmptyString(self):
         allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
 
         testString = "we run the grease racket in this town" + self.getStringWithValues(0, 256)
@@ -146,8 +143,7 @@ class Python25Mapper_PyString_FromStringAndSize_Test(PyString_TestCase):
 
     def testCreateStringWithData(self):
         allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
 
         testString = "we also run the shovel racket" + self.getStringWithValues(0, 256)
@@ -173,8 +169,7 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
     def testErrorHandling(self):
         allocs = []
         frees = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, frees))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
 
         data = mapper.PyString_FromStringAndSize(IntPtr.Zero, 365)
@@ -196,8 +191,7 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
     def testShrink(self):
         allocs = []
         frees = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, frees))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
 
         oldLength = 365
@@ -225,8 +219,7 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
     def testGrow(self):
         allocs = []
         frees = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, frees))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
 
         oldLength = 20
@@ -268,8 +261,7 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
 class Python25Mapper_PyString_Size_Test(PyString_TestCase):
     
     def testWorks(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         testString = "Oh, sure, Lisa -- some wonderful, magical animal." + self.getStringWithValues(0, 256)
@@ -285,8 +277,7 @@ class PyStringStoreTest(PyString_TestCase):
     
     def testStoreStringCreatesStringType(self):
         allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
 
         testString = "fnord" + self.getStringWithValues(1, 256)
         testBytes = self.byteArrayFromString(testString)

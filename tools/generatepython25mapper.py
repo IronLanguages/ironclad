@@ -21,6 +21,10 @@ def run():
     exceptions_code = "\n\n".join([EXCEPTION_TEMPLATE % x for x in exceptions])
     write(EXCEPTIONS_OUTFILE, FILE_TEMPLATE % exceptions_code)
     
+    type_exceptions = [dict([("symbol", s)]) for s in read_interesting_lines(TYPE_EXCEPTIONS_INFILE)]
+    type_exceptions_code = "\n\n".join([TYPE_EXCEPTION_TEMPLATE % x for x in type_exceptions])
+    write(TYPE_EXCEPTIONS_OUTFILE, FILE_TEMPLATE % type_exceptions_code)
+    
     store_types = [dict([("type", t), ("var", "attempt%d" % i)]) 
                    for (i, t) in enumerate(read_interesting_lines(STORE_INFILE))]
     store_code = STORE_METHOD_TEMPLATE % "\n".join([STORE_TYPE_TEMPLATE % x for x in store_types])
@@ -30,6 +34,8 @@ def run():
 
 EXCEPTIONS_INFILE = "exceptions"
 EXCEPTIONS_OUTFILE = "../Python25Mapper_exceptions.cs"
+TYPE_EXCEPTIONS_INFILE = "type_exceptions"
+TYPE_EXCEPTIONS_OUTFILE = "../Python25Mapper_type_exceptions.cs"
 STORE_INFILE = "store"
 STORE_OUTFILE = "../Python25Mapper_store.cs"
 
@@ -37,6 +43,7 @@ FILE_TEMPLATE = """
 using System;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
+using IronPython.Runtime.Types;
 
 namespace Ironclad
 {
@@ -50,7 +57,13 @@ namespace Ironclad
 EXCEPTION_TEMPLATE = """\
         public override IntPtr Make_PyExc_%(symbol)s()
         {
-            return this.Store(ExceptionConverter.GetPythonException("%(symbol)s"));
+            return this.Store(PythonExceptions.%(symbol)s);
+        }"""
+
+TYPE_EXCEPTION_TEMPLATE = """\
+        public override IntPtr Make_PyExc_%(symbol)s()
+        {
+            return this.Store(TypeCache.%(symbol)s);
         }"""
 
 STORE_METHOD_TEMPLATE = """\

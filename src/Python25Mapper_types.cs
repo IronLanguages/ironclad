@@ -44,8 +44,8 @@ namespace Ironclad
         public override int
         PyType_IsSubtype(IntPtr subtypePtr, IntPtr typePtr)
         {
-            IPythonType subtype = (IPythonType)this.Retrieve(subtypePtr);
-            bool result = subtype.IsSubclassOf(this.Retrieve(typePtr));
+            PythonType subtype = (PythonType)this.Retrieve(subtypePtr);
+            bool result = subtype.IsSubclassOf((PythonType)this.Retrieve(typePtr));
             if (result)
             {
                 return 1;

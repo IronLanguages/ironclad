@@ -3,14 +3,13 @@ import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
-from tests.utils.memory import CreateTypes, OffsetPtr
+from tests.utils.memory import CreateTypes
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, Python25Mapper
 from Ironclad.Structs import PyObject, PyTypeObject
-from IronPython.Hosting import PythonEngine
 
 
 
@@ -20,8 +19,7 @@ class Python25MapperDictTest(unittest.TestCase):
     def testPyDict_New(self):
         allocs = []
         frees = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, frees))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
         
         try:
@@ -40,8 +38,7 @@ class Python25MapperDictTest(unittest.TestCase):
 
 
     def testPyDict_Size(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         dict0 = mapper.Store({})
         dict3 = mapper.Store({1:2, 3:4, 5:6})
@@ -53,8 +50,7 @@ class Python25MapperDictTest(unittest.TestCase):
 
 
     def testPyDict_GetItemStringSuccess(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         dictPtr = mapper.Store({"abcde": 12345})
         try:
@@ -69,8 +65,7 @@ class Python25MapperDictTest(unittest.TestCase):
 
 
     def testPyDict_GetItemStringFailure(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         dictPtr = mapper.Store({"abcde": 12345})
         try:
@@ -84,8 +79,7 @@ class Python25MapperDictTest(unittest.TestCase):
 
     def testStoreDictCreatesDictType(self):
         allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:

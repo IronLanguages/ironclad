@@ -8,7 +8,6 @@ from tests.utils.memory import OffsetPtr, CreateTypes
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from IronPython.Hosting import PythonEngine
 
 from Ironclad import CPyMarshal, PythonMapper, Python25Mapper
 from Ironclad.Structs import PyObject
@@ -27,8 +26,7 @@ class Python25Mapper_Types_Test(unittest.TestCase):
             "PyFloat_Type": float,
         }
         
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         try:
@@ -39,8 +37,7 @@ class Python25Mapper_Types_Test(unittest.TestCase):
     
     
     def testPyType_IsSubtype(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         try:
@@ -62,8 +59,7 @@ class Python25Mapper_PyType_GenericAlloc_Test(unittest.TestCase):
 
     def testNoItems(self):
         allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
 
         deallocTypes = CreateTypes(mapper)
         typePtr, deallocType = MakeTypePtr("sometype", mapper.PyType_Type,
@@ -92,8 +88,7 @@ class Python25Mapper_PyType_GenericAlloc_Test(unittest.TestCase):
 
     def testSomeItems(self):
         allocs = []
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine, GetAllocatingTestAllocator(allocs, []))
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
 
         deallocTypes = CreateTypes(mapper)
         typePtr, deallocType = MakeTypePtr("sometype", mapper.PyType_Type,
@@ -123,8 +118,7 @@ class Python25Mapper_PyType_GenericAlloc_Test(unittest.TestCase):
 class Python25Mapper_PyType_GenericNew_Test(unittest.TestCase):
 
     def testCallsTypeAllocFunction(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
 
         calls = []
         def AllocInstance(typePtr, nItems):

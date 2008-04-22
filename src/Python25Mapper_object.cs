@@ -8,6 +8,10 @@ using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
+using Microsoft.Scripting;
+using Microsoft.Scripting.Hosting;
+using Microsoft.Scripting.Runtime;
+
 using Ironclad.Structs;
 
 namespace Ironclad
@@ -37,16 +41,13 @@ namespace Ironclad
         public override IntPtr
         PyObject_Call(IntPtr objPtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
-            // ignore kwargsPtr for now
-            ICallerContext context = this.GetPythonModule(
-                this.engine.DefaultModule);
+            // TODO ignore kwargsPtr for now
             object obj = this.Retrieve(objPtr);
-            Tuple args = (Tuple)this.Retrieve(argsPtr);
+            ICollection args = (ICollection)this.Retrieve(argsPtr);
             object[] argsArray = new object[args.Count];
             args.CopyTo(argsArray, 0);
             
-            object result = Ops.CallWithContext(
-                context, obj, argsArray);
+            object result = PythonCalls.Call(obj, argsArray);
             IntPtr resultPtr = this.Store(result);
             return resultPtr;
         }
@@ -56,9 +57,7 @@ namespace Ironclad
         {
             object obj = this.Retrieve(objPtr);
             object attr = null;
-            ICallerContext context = this.GetPythonModule(
-                this.engine.DefaultModule);
-            if (Ops.TryGetAttr(context, obj, SymbolTable.StringToId(name), out attr))
+            if (PythonOps.TryGetBoundAttr(DefaultContext.Default, obj, SymbolTable.StringToId(name), out attr))
             {
                 return this.Store(attr);
             }

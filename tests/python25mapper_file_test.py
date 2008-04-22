@@ -11,9 +11,8 @@ from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from Ironclad import Python25Mapper
 from Ironclad.Structs import PyStringObject, PyTypeObject
-from IronPython.Hosting import PythonEngine
 
-from Unmanaged.msvcrt import fclose, fread, fwrite
+from TestUtils.Unmanaged import fclose, fread, fwrite
 
 
 READ_ARGS = (os.path.join('tests', 'data', 'text.txt'), 'r')
@@ -26,8 +25,7 @@ more text
 class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
 
     def testPyFile_Type(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
@@ -39,8 +37,7 @@ class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
     
     
     def testCallPyFile_Type(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         kwargsPtr = IntPtr.Zero
         deallocTypes = CreateTypes(mapper)
@@ -59,8 +56,7 @@ class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
     
     
     def testPyFile_AsFile(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         kwargsPtr = IntPtr.Zero
         deallocTypes = CreateTypes(mapper)
@@ -88,8 +84,7 @@ class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
 
 
     def testPyFile_AsFile_Write(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         kwargsPtr = IntPtr.Zero
         deallocTypes = CreateTypes(mapper)
         

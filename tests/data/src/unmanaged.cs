@@ -1,9 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Unmanaged
+namespace TestUtils
 {
-    public class msvcrt
+    public class Unmanaged
     {
         [DllImport("msvcr71.dll")]
         public static extern int fread(IntPtr buf, int size, int count, IntPtr file);

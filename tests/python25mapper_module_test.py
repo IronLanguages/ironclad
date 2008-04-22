@@ -7,23 +7,16 @@ from tests.utils.memory import CreateTypes
 from tests.utils.python25mapper import TempPtrCheckingPython25Mapper, MakeAndAddEmptyModule
 
 import System
-from System import Array, IntPtr, NullReferenceException
-from System.Reflection import BindingFlags
+from System import IntPtr, NullReferenceException
 from System.Runtime.InteropServices import Marshal
+
 from Ironclad import (
     CPython_initproc_Delegate, CPythonSelfFunction_Delegate, CPythonVarargsFunction_Delegate, 
     CPythonVarargsKwargsFunction_Delegate, PythonMapper, Python25Mapper
 )
 from Ironclad.Structs import METH, Py_TPFLAGS, PyMethodDef
-from IronPython.Hosting import PythonEngine
 
-
-def PythonModuleFromEngineModule(engineModule):
-    engineModuleType = engineModule.GetType()
-    pythonModuleInfo = engineModuleType.GetMember("Module",
-        BindingFlags.NonPublic | BindingFlags.Instance)[0]
-    return pythonModuleInfo.GetValue(engineModule, Array[object]([]))
-
+from TestUtils import ExecUtils
 
 class BorkedException(System.Exception):
     pass
@@ -34,6 +27,18 @@ class ObjectWithLength(object):
         self.length = length
     def __len__(self):
         return self.length
+
+
+class ModuleWrapper(object):
+    def __init__(self, engine, module):
+        self.moduleScope = engine.CreateScope(module.Scope.Dict)
+    def __getattr__(self, name):
+        return self.moduleScope.GetVariable[object](name)
+    def __setattr__(self, name, value):
+        if name == 'moduleScope':
+            self.__dict__['moduleScope'] = value
+            return
+        self.moduleScope.SetVariable(name, value)
 
 
 INSTANCE_PTR = IntPtr(111)
@@ -51,10 +56,9 @@ Null_CPythonVarargsKwargsFunction = lambda _, __, ___: IntPtr.Zero
 class EmptyModuleTestCase(unittest.TestCase):
     
     def setUp(self):
-        engine = PythonEngine()
-        self.mapper = TempPtrCheckingPython25Mapper(engine)
+        self.mapper = TempPtrCheckingPython25Mapper()
         self.modulePtr = MakeAndAddEmptyModule(self.mapper)
-        self.module = engine.Sys.modules['test_module']
+        self.module = ModuleWrapper(self.mapper.Engine, self.mapper.Retrieve(self.modulePtr))
         
         
     def tearDown(self):
@@ -74,15 +78,15 @@ class Python25Mapper_PyInitModule_DispatchUtilsTest(EmptyModuleTestCase):
         
 
     def testCleanup(self):
-        self.assertCleanupWorks((IntPtr.Zero, ), [])
+        self.assertCleanupWorks((IntPtr(0), ), [])
         self.assertCleanupWorks((IntPtr(1), IntPtr(2), IntPtr(3)), [IntPtr(1), IntPtr(2), IntPtr(3)])
-        self.assertCleanupWorks((IntPtr(1), IntPtr.Zero, IntPtr(3)), [IntPtr(1), IntPtr(3)])
+        self.assertCleanupWorks((IntPtr(1), IntPtr(0), IntPtr(3)), [IntPtr(1), IntPtr(3)])
 
 
     def testRaiseExceptionIfRequired(self):
         self.module._raiseExceptionIfRequired(IntPtr(12345))
         
-        self.assertRaises(NullReferenceException, self.module._raiseExceptionIfRequired, IntPtr.Zero)
+        self.assertRaises(NullReferenceException, self.module._raiseExceptionIfRequired, IntPtr(0))
         
         self.mapper.LastException = BorkedException()
         self.assertRaises(BorkedException, self.module._raiseExceptionIfRequired, IntPtr(12345))
@@ -190,7 +194,7 @@ class Python25Mapper_PyInitModule_DispatchFunctionsTest(EmptyModuleTestCase):
         
         # test without
         del actualCalls[:]
-        actualResult = self.module._ironclad_dispatch_self("testFuncName", INSTANCE_PTR)
+        self.module._ironclad_dispatch_self("testFuncName", INSTANCE_PTR)
         self.assertEquals(actualResult, expectedResult, "bad result")
         
         expectedCalls = ["testFunc", ("_raiseExc", RESULT_PTR), "Retrieve", ("_cleanup", (RESULT_PTR, ))]
@@ -401,7 +405,7 @@ class Python25Mapper_PyInitModule_DispatchFunctionsTest(EmptyModuleTestCase):
 
 class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
 
-    def assert_Py_InitModule4_withSingleMethod(self, engine, mapper, methodDef, moduleTest):
+    def assert_Py_InitModule4_withSingleMethod(self, mapper, methodDef, moduleTest):
         size = Marshal.SizeOf(PyMethodDef)
         methods, deallocMethods = MakeSingleMethodTablePtr(methodDef)
         try:
@@ -413,11 +417,13 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
                 12345
             )
 
-            engineModule = mapper.Retrieve(modulePtr)
-            pythonModule = PythonModuleFromEngineModule(engineModule)
-
-            test_module = engine.Sys.modules['test_module']
-            self.assertEquals(pythonModule, test_module, "mapping incorrect")
+            module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
+            test_module = ExecUtils.GetPythonModule(mapper.Engine, 'test_module')
+            
+            for item in dir(test_module):
+                # ModuleWrapper.__doc__ will hide underlying module.__doc__ if we just use plain getattr
+                self.assertEquals(ModuleWrapper.__getattr__(module, item) is getattr(test_module, item),
+                                  True, "%s didn't match" % item)
             moduleTest(test_module, mapper)
         finally:
             deallocMethods()
@@ -426,12 +432,10 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
 
 
     def test_Py_InitModule4_CreatesPopulatedModuleInSys(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         method = MakeMethodDef(
             "harold", lambda _, __: IntPtr.Zero, METH.VARARGS, "harold's documentation",
         )
-
         def testModule(test_module, _):
             self.assertEquals(test_module.__doc__, 'test_docstring',
                               'module docstring not remembered')
@@ -440,12 +444,11 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             self.assertEquals(test_module.harold.__doc__, "harold's documentation",
                               'function docstring not remembered')
 
-        self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
+        self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
 
 
     def test_Py_InitModule4_NoArgsFunctionDispatch(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         method = MakeMethodDef("func", Null_CPythonVarargsFunction, METH.NOARGS)
         
         def testModule(module, mapper):
@@ -457,12 +460,11 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             module._ironclad_dispatch_noargs = dispatch_noargs
             self.assertEquals(module.func(), result, "didn't use _ironclad_dispatch_noargs")
         
-        self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
+        self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
 
 
     def test_Py_InitModule4_SingleArgFunctionDispatch(self):
-        engine = PythonEngine()
-        mapper = TempPtrCheckingPython25Mapper(engine)
+        mapper = TempPtrCheckingPython25Mapper()
         method = MakeMethodDef("func", Null_CPythonVarargsFunction, METH.O)
         
         def testModule(module, mapper):
@@ -476,12 +478,11 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             module._ironclad_dispatch = dispatch
             self.assertEquals(module.func(actualArg), result, "didn't use _ironclad_dispatch")
         
-        self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
+        self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
 
 
     def test_Py_InitModule4_VarargsFunctionDispatch(self):
-        engine = PythonEngine()
-        mapper = TempPtrCheckingPython25Mapper(engine)
+        mapper = TempPtrCheckingPython25Mapper()
         method = MakeMethodDef("func", Null_CPythonVarargsFunction, METH.VARARGS)
         
         def testModule(module, mapper):
@@ -495,12 +496,11 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             module._ironclad_dispatch = dispatch
             self.assertEquals(module.func(*actualArgs), result, "didn't use _ironclad_dispatch")
         
-        self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
+        self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
 
 
     def test_Py_InitModule4_VarargsKwargsFunctionDispatch(self):
-        engine = PythonEngine()
-        mapper = TempPtrCheckingPython25Mapper(engine)
+        mapper = TempPtrCheckingPython25Mapper()
         method = MakeMethodDef("func", Null_CPythonVarargsKwargsFunction, METH.VARARGS | METH.KEYWORDS)
         
         def testModule(module, mapper):
@@ -516,42 +516,39 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             module._ironclad_dispatch_kwargs = dispatch_kwargs
             self.assertEquals(module.func(*actualArgs, **actualKwargs), result, "didn't use _ironclad_dispatch_kwargs")
         
-        self.assert_Py_InitModule4_withSingleMethod(engine, mapper, method, testModule)
+        self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
         
 
 
 class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
 
     def testAddObjectToUnknownModuleFails(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
 
         self.assertEquals(mapper.PyModule_AddObject(IntPtr.Zero, "zorro", IntPtr.Zero), -1,
                           "bad return on failure")
 
 
     def testAddObjectWithExistingReferenceAddsMappedObjectAndDecRefsPointer(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         testObject = object()
         testPtr = mapper.Store(testObject)
         modulePtr = MakeAndAddEmptyModule(mapper)
-        module = mapper.Retrieve(modulePtr)
+        moduleScope = mapper.Engine.CreateScope(mapper.Retrieve(modulePtr).Scope.Dict)
 
         result = mapper.PyModule_AddObject(modulePtr, "testObject", testPtr)
         try:
             self.assertEquals(result, 0, "bad value for success")
             self.assertRaises(KeyError, lambda: mapper.RefCount(testPtr))
-            self.assertEquals(module.Globals["testObject"], testObject, "did not store real object")
+            self.assertEquals(moduleScope.GetVariable[object]("testObject"), testObject, "did not store real object")
         finally:
             mapper.DecRef(modulePtr)
 
 
     def assertModuleAddsTypeWithData(self, tp_name, itemName, class__module__, class__name__, class__doc__):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         modulePtr = MakeAndAddEmptyModule(mapper)
-        module = mapper.Retrieve(modulePtr)
+        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
 
         calls = []
         def new(_, __, ___):
@@ -575,7 +572,7 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
             self.assertEquals(result, 0, "reported failure")
 
             mappedClass = mapper.Retrieve(typePtr)
-            generatedClass = module.Globals[itemName]
+            generatedClass = getattr(module, itemName)
             self.assertEquals(mappedClass, generatedClass,
                               "failed to add new type to module")
 
@@ -612,11 +609,10 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
 
     def assertAddTypeObjectAndInstantiateWorks(self, newFails=False, initFails=False):
         # if it falls to you to debug this test... I apologise :(
-        engine = PythonEngine()
-        mapper = TempPtrCheckingPython25Mapper(engine)
+        mapper = TempPtrCheckingPython25Mapper()
         deallocTypes = CreateTypes(mapper)
         modulePtr = MakeAndAddEmptyModule(mapper)
-        module = mapper.Retrieve(modulePtr)
+        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
         newPtr = mapper.Store(object())
 
         calls = []
@@ -651,8 +647,9 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
             result = mapper.PyModule_AddObject(modulePtr, "thing", typePtr)
             self.assertEquals(result, 0, "reported failure")
 
+            thingholder = []
             def Instantiate():
-                engine.Execute("t = thing(1, 'two', three=4)", module)
+                thingholder.append(module.thing(1, 'two', three=4))
 
             if newFails or initFails:
                 self.assertRaises(BorkedException, Instantiate)
@@ -675,7 +672,7 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
                 methodName, initSelfPtr, initArgPtr, initKwargPtr = calls[1]
                 if not initFails:
                     self.assertEquals(methodName, "__init__", "called wrong method")
-                    instancePtr = module.Globals['t']._instancePtr
+                    instancePtr = thingholder[0]._instancePtr
                     self.assertEquals(instancePtr, newPtr,
                                       "instance not associated with return value from _tp_new")
                     self.assertEquals(initSelfPtr, instancePtr, "initialised wrong object")
@@ -706,8 +703,7 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
                                      expectedDispatchFunc, DoCall, TestExtraArgs):
         deallocTypes = CreateTypes(mapper)
         modulePtr = MakeAndAddEmptyModule(mapper)
-        engineModule = mapper.Retrieve(modulePtr)
-        module = PythonModuleFromEngineModule(engineModule)
+        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
         
         typePtr, deallocType = MakeTypePtr(
             "thing", mapper.PyType_Type,
@@ -737,8 +733,7 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
 
 
     def testAddTypeObjectWithNoArgsMethodDispatch(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         def DoCall(kallable):
             return kallable()
@@ -753,8 +748,7 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
 
 
     def testAddTypeObjectWithObjArgMethodDispatch(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         arg = object()
         def DoCall(kallable):
@@ -770,8 +764,7 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
 
 
     def testAddTypeObjectWithVarargsMethodDispatch(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         args = ("for", "the", "horde")
         def DoCall(kallable):
@@ -787,8 +780,7 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
 
 
     def testAddTypeObjectWithVarargsKwargsMethodDispatch(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         args = ("for", "the", "horde")
         kwargs = {"g1": "LM", "g2": "BS", "g3": "GM"}
@@ -808,8 +800,7 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
                                          expectedMethodName, DoCall, TestErrorHandler):
         deallocTypes = CreateTypes(mapper)
         modulePtr = MakeAndAddEmptyModule(mapper)
-        engineModule = mapper.Retrieve(modulePtr)
-        module = PythonModuleFromEngineModule(engineModule)
+        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
         
         typeKwargs = {
             "tp_allocPtr": mapper.GetAddress("PyType_GenericAlloc"),
@@ -841,8 +832,7 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
 
 
     def testAddTypeObjectWith_tp_iter_MethodDispatch(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         def DoCall(kallable):
             return kallable()
@@ -866,8 +856,7 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
 
 
     def testAddTypeObjectWith_tp_iternext_MethodDispatch(self):
-        engine = PythonEngine()
-        mapper = Python25Mapper(engine)
+        mapper = Python25Mapper()
         
         def DoCall(kallable):
             return kallable()

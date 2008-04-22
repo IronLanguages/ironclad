@@ -10,6 +10,10 @@ using IronPython.Runtime.Calls;
 using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
 
+using Microsoft.Scripting;
+using Microsoft.Scripting.Hosting;
+using Microsoft.Scripting.Runtime;
+
 using Ironclad.Structs;
 
 namespace Ironclad
@@ -58,21 +62,25 @@ namespace Ironclad
 
     public partial class Python25Mapper : PythonMapper
     {
-        private PythonEngine engine;
+        private ScriptEngine engine;
         private Dictionary<IntPtr, object> ptrmap;
         private Dictionary<object, IntPtr> objmap;
         private List<IntPtr> tempPtrs;
         private List<IntPtr> tempObjects;
         private IAllocator allocator;
         private object _lastException;
-        
-        public Python25Mapper(PythonEngine eng): this(eng, new HGlobalAllocator())
+
+        public Python25Mapper() : this(ScriptRuntime.Create().GetEngine("py"), new HGlobalAllocator())
         {
         }
-        
-        public Python25Mapper(PythonEngine eng, IAllocator alloc)
+
+        public Python25Mapper(IAllocator alloc) : this(ScriptRuntime.Create().GetEngine("py"), alloc)
         {
-            this.engine = eng;
+        }
+
+        public Python25Mapper(ScriptEngine inEngine, IAllocator alloc)
+        {
+            this.engine = inEngine;
             this.allocator = alloc;
             this.ptrmap = new Dictionary<IntPtr, object>();
             this.objmap = new Dictionary<object, IntPtr>();
@@ -81,12 +89,21 @@ namespace Ironclad
             this._lastException = null;
         }
         
+        public ScriptEngine
+        Engine
+        {
+            get
+            {
+                return this.engine;
+            }
+        }
+        
         public IntPtr 
         Store(object obj)
         {
             if (obj != null && obj.GetType() == typeof(UnmanagedDataMarker))
             {
-                throw Ops.TypeError("UnmanagedDataMarkers should not be stored by clients.");
+                throw new ArgumentTypeException("UnmanagedDataMarkers should not be stored by clients.");
             }
             if (obj == null)
             {
@@ -282,7 +299,7 @@ namespace Ironclad
             else
             {
                 object excType = this.Retrieve(excTypePtr);
-                this._lastException = Ops.Call(excType, new object[1]{ message });
+                this._lastException = PythonCalls.Call(excType, new object[1]{ message });
             }
         }
         
@@ -295,7 +312,7 @@ namespace Ironclad
             {
                 return Marshal.GetFunctionPointerForDelegate(result);
             }
-            
+
             switch (name)
             {
                 case "PyBaseObject_Dealloc":
@@ -315,19 +332,10 @@ namespace Ironclad
         }
         
         
-        private PythonModule 
-        GetPythonModule(EngineModule eModule)
-        {
-            PropertyInfo info = (PropertyInfo)(eModule.GetType().GetMember(
-                "Module", BindingFlags.NonPublic | BindingFlags.Instance)[0]);
-            return (PythonModule)info.GetValue(eModule, null);
-        }
-        
-        
         public override int
         PyCallable_Check(IntPtr objPtr)
         {
-            if (Builtin.Callable(this.Retrieve(objPtr)))
+            if (Builtin.callable(this.Retrieve(objPtr)))
             {
                 return 1;
             }

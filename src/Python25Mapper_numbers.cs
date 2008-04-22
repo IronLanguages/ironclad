@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-using IronMath;
+using Microsoft.Scripting.Math;
 
 using Ironclad.Structs;
 

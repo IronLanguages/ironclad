@@ -3,9 +3,7 @@ import clr
 import unittest
 from tests.utils.runtest import makesuite, run
 
-clr.AddReferenceToFile("build/ironclad.dll")
-clr.AddReference("IronPython.dll")
-clr.AddReference("IronMath.dll")
+import tests.utils.loadassemblies
 
 def GetFailedImportTestSuite(name, e):
     class FailedImportTest(unittest.TestCase):
