@@ -199,23 +199,6 @@ class Python25MapperTest(unittest.TestCase):
         self.assertRaises(KeyError, lambda: mapper.RefCount(IntPtr.Zero))
 
 
-    def testRememberAndFreeTempPtrs(self):
-        # hopefully, nobody will depend on character data from PyArg_Parse* remaining
-        # available beyond the function call in which it was provided. hopefully.
-        frees = []
-        allocator = GetDoNothingTestAllocator(frees)
-        mapper = Python25Mapper(allocator)
-
-        mapper.RememberTempPtr(IntPtr(12345))
-        mapper.RememberTempPtr(IntPtr(13579))
-        mapper.RememberTempPtr(IntPtr(56789))
-        self.assertEquals(frees, [], "freed memory prematurely")
-
-        mapper.FreeTemps()
-        self.assertEquals(set(frees), set([IntPtr(12345), IntPtr(13579), IntPtr(56789)]),
-                          "memory not freed")
-
-
     def testRememberAndFreeTempObjects(self):
         mapper = Python25Mapper()
 

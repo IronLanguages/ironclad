@@ -65,7 +65,6 @@ namespace Ironclad
         private ScriptEngine engine;
         private Dictionary<IntPtr, object> ptrmap;
         private Dictionary<object, IntPtr> objmap;
-        private List<IntPtr> tempPtrs;
         private List<IntPtr> tempObjects;
         private IAllocator allocator;
         private object _lastException;
@@ -84,7 +83,6 @@ namespace Ironclad
             this.allocator = alloc;
             this.ptrmap = new Dictionary<IntPtr, object>();
             this.objmap = new Dictionary<object, IntPtr>();
-            this.tempPtrs = new List<IntPtr>();
             this.tempObjects = new List<IntPtr>();
             this._lastException = null;
         }
@@ -253,11 +251,6 @@ namespace Ironclad
             this.allocator.Free(ptr);
         }
 
-        public void RememberTempPtr(IntPtr ptr)
-        {
-            this.tempPtrs.Add(ptr);
-        }
-
         public void RememberTempObject(IntPtr ptr)
         {
             this.tempObjects.Add(ptr);
@@ -265,16 +258,11 @@ namespace Ironclad
 
         public void FreeTemps()
         {
-            foreach (IntPtr ptr in this.tempPtrs)
-            {
-                this.allocator.Free(ptr);
-            }
             foreach (IntPtr ptr in this.tempObjects)
             {
                 this.DecRef(ptr);
             }
             this.tempObjects.Clear();
-            this.tempPtrs.Clear();
         }
         
         public object LastException
