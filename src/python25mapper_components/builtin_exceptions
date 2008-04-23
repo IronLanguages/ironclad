@@ -1,3 +1,4 @@
+BaseException
 EnvironmentError
 SyntaxError
 WindowsError
