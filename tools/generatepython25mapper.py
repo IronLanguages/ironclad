@@ -19,7 +19,6 @@ def write(name, text):
 def run():
     exception_kinds = (
         (EXCEPTIONS_INFILE, EXCEPTION_TEMPLATE, EXCEPTIONS_OUTFILE),
-        (TYPE_EXCEPTIONS_INFILE, TYPE_EXCEPTION_TEMPLATE, TYPE_EXCEPTIONS_OUTFILE),
         (BUILTIN_EXCEPTIONS_INFILE, BUILTIN_EXCEPTION_TEMPLATE, BUILTIN_EXCEPTIONS_OUTFILE),
     )
     for (infile, template, outfile) in exception_kinds:
@@ -36,8 +35,6 @@ def run():
 
 EXCEPTIONS_INFILE = "exceptions"
 EXCEPTIONS_OUTFILE = "../Python25Mapper_exceptions.cs"
-TYPE_EXCEPTIONS_INFILE = "type_exceptions"
-TYPE_EXCEPTIONS_OUTFILE = "../Python25Mapper_type_exceptions.cs"
 BUILTIN_EXCEPTIONS_INFILE = "builtin_exceptions"
 BUILTIN_EXCEPTIONS_OUTFILE = "../Python25Mapper_builtin_exceptions.cs"
 STORE_INFILE = "store"
@@ -62,12 +59,6 @@ EXCEPTION_TEMPLATE = """\
         public override IntPtr Make_PyExc_%(symbol)s()
         {
             return this.Store(PythonExceptions.%(symbol)s);
-        }"""
-
-TYPE_EXCEPTION_TEMPLATE = """\
-        public override IntPtr Make_PyExc_%(symbol)s()
-        {
-            return this.Store(TypeCache.%(symbol)s);
         }"""
 
 BUILTIN_EXCEPTION_TEMPLATE = """\

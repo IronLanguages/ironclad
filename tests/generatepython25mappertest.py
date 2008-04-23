@@ -38,7 +38,6 @@ class GeneratePython25MapperTest(unittest.TestCase):
         os.chdir(testSrcDir)
         try:
             write("exceptions", EXCEPTIONS)
-            write("type_exceptions", TYPE_EXCEPTIONS)
             write("builtin_exceptions", BUILTIN_EXCEPTIONS)
             write("store", STORE)
 
@@ -48,8 +47,6 @@ class GeneratePython25MapperTest(unittest.TestCase):
             os.chdir(testBuildDir)
             self.assertEquals(read("Python25Mapper_exceptions.cs"), EXPECTED_EXCEPTIONS, 
                               "generated exceptions wrong")
-            self.assertEquals(read("Python25Mapper_type_exceptions.cs"), EXPECTED_TYPE_EXCEPTIONS, 
-                              "generated type exceptions wrong")
             self.assertEquals(read("Python25Mapper_builtin_exceptions.cs"), EXPECTED_BUILTIN_EXCEPTIONS, 
                               "generated builtin exceptions wrong")
             self.assertEquals(read("Python25Mapper_store.cs"), EXPECTED_STORE, 
@@ -86,29 +83,8 @@ namespace Ironclad
 }
 """
 
-TYPE_EXCEPTIONS = """
-BaseException
-"""
-
-EXPECTED_TYPE_EXCEPTIONS = """
-using System;
-using IronPython.Runtime;
-using IronPython.Runtime.Exceptions;
-using IronPython.Runtime.Types;
-
-namespace Ironclad
-{
-    public partial class Python25Mapper : PythonMapper
-    {
-        public override IntPtr Make_PyExc_BaseException()
-        {
-            return this.Store(TypeCache.BaseException);
-        }
-    }
-}
-"""
-
 BUILTIN_EXCEPTIONS = """
+BaseException
 WindowsError
 """
 
@@ -122,6 +98,11 @@ namespace Ironclad
 {
     public partial class Python25Mapper : PythonMapper
     {
+        public override IntPtr Make_PyExc_BaseException()
+        {
+            return this.Store(Builtin.BaseException);
+        }
+
         public override IntPtr Make_PyExc_WindowsError()
         {
             return this.Store(Builtin.WindowsError);
