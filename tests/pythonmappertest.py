@@ -92,13 +92,13 @@ class PythonMapperTest(unittest.TestCase):
 
     def assertDataSetterSetsAndRemembers(self, mapperSubclass, dataSymbol, allocSize, memoryTest):
         dataPtr = Marshal.AllocHGlobal(allocSize)
-        try:
-            mapper = mapperSubclass()
-            mapper.SetData(dataSymbol, dataPtr)
-            memoryTest(dataPtr)
-            self.assertEquals(getattr(mapper, dataSymbol), dataPtr, "failed to remember pointer")
-        finally:
-            Marshal.FreeHGlobal(dataPtr)
+        
+        mapper = mapperSubclass()
+        mapper.SetData(dataSymbol, dataPtr)
+        memoryTest(dataPtr)
+        self.assertEquals(getattr(mapper, dataSymbol), dataPtr, "failed to remember pointer")
+        
+        Marshal.FreeHGlobal(dataPtr)
 
 
     def testFinds_Py_NoneStruct(self):

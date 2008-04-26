@@ -20,29 +20,28 @@ class Python25MapperTest(unittest.TestCase):
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
         
-        try:
-            obj1 = object()
-            self.assertEquals(allocs, [], "unexpected allocations")
-            ptr = mapper.Store(obj1)
-            self.assertEquals(len(allocs), 1, "unexpected number of allocations")
-            self.assertEquals(allocs[0], (ptr, Marshal.SizeOf(PyObject)), "unexpected result")
-            self.assertNotEquals(ptr, IntPtr.Zero, "did not store reference")
-            self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), 
-                              mapper.PyBaseObject_Type, 
-                              "nearly-opaque pointer had wrong type")
+        obj1 = object()
+        self.assertEquals(allocs, [], "unexpected allocations")
+        ptr = mapper.Store(obj1)
+        self.assertEquals(len(allocs), 1, "unexpected number of allocations")
+        self.assertEquals(allocs[0], (ptr, Marshal.SizeOf(PyObject)), "unexpected result")
+        self.assertNotEquals(ptr, IntPtr.Zero, "did not store reference")
+        self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
+        self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), 
+                          mapper.PyBaseObject_Type, 
+                          "nearly-opaque pointer had wrong type")
 
-            obj2 = mapper.Retrieve(ptr)
-            self.assertTrue(obj1 is obj2, "retrieved wrong object")
+        obj2 = mapper.Retrieve(ptr)
+        self.assertTrue(obj1 is obj2, "retrieved wrong object")
 
-            self.assertEquals(frees, [], "unexpected deallocations")
-            mapper.PyObject_Free(ptr)
-            self.assertEquals(frees, [ptr], "unexpected deallocations")
-            self.assertRaises(KeyError, lambda: mapper.RefCount(ptr))
-            self.assertRaises(KeyError, lambda: mapper.Retrieve(ptr))
-            self.assertRaises(KeyError, lambda: mapper.PyObject_Free(ptr))
-        finally:
-            deallocTypes()
+        self.assertEquals(frees, [], "unexpected deallocations")
+        mapper.PyObject_Free(ptr)
+        self.assertEquals(frees, [ptr], "unexpected deallocations")
+        self.assertRaises(KeyError, lambda: mapper.RefCount(ptr))
+        self.assertRaises(KeyError, lambda: mapper.Retrieve(ptr))
+        self.assertRaises(KeyError, lambda: mapper.PyObject_Free(ptr))
+        
+        deallocTypes()
 
 
     def testCanFreeWithRefCount0(self):
@@ -218,20 +217,19 @@ class Python25MapperTest(unittest.TestCase):
 
         mapper.FreeTemps()
 
-        try:
-            self.assertEquals(mapper.RefCount(tempObject1), 1,
-                              "FreeTemps should decref objects rather than freeing them")
-            self.assertEquals(mapper.RefCount(tempObject2), 1,
-                              "FreeTemps should decref objects rather than freeing them")
+        self.assertEquals(mapper.RefCount(tempObject1), 1,
+                          "FreeTemps should decref objects rather than freeing them")
+        self.assertEquals(mapper.RefCount(tempObject2), 1,
+                          "FreeTemps should decref objects rather than freeing them")
 
-            mapper.FreeTemps()
-            self.assertEquals(mapper.RefCount(tempObject1), 1,
-                              "FreeTemps should clear list once called")
-            self.assertEquals(mapper.RefCount(tempObject2), 1,
-                              "FreeTemps should clear list once called")
-        finally:
-            mapper.DecRef(tempObject1)
-            mapper.DecRef(tempObject2)
+        mapper.FreeTemps()
+        self.assertEquals(mapper.RefCount(tempObject1), 1,
+                          "FreeTemps should clear list once called")
+        self.assertEquals(mapper.RefCount(tempObject2), 1,
+                          "FreeTemps should clear list once called")
+                          
+        mapper.DecRef(tempObject1)
+        mapper.DecRef(tempObject2)
     
 
 class Python25Mapper_GetMethodFP_Test(unittest.TestCase):

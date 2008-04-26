@@ -28,12 +28,12 @@ class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
         mapper = Python25Mapper()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        try:
-            mapper.SetData("PyFile_Type", typeBlock)
-            self.assertEquals(mapper.PyFile_Type, typeBlock, "type address not stored")
-            self.assertEquals(mapper.Retrieve(typeBlock), file, "type not mapped")
-        finally:
-            Marshal.FreeHGlobal(typeBlock)
+        
+        mapper.SetData("PyFile_Type", typeBlock)
+        self.assertEquals(mapper.PyFile_Type, typeBlock, "type address not stored")
+        self.assertEquals(mapper.Retrieve(typeBlock), file, "type not mapped")
+        
+        Marshal.FreeHGlobal(typeBlock)
     
     
     def testCallPyFile_Type(self):
@@ -60,27 +60,27 @@ class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
         
         kwargsPtr = IntPtr.Zero
         deallocTypes = CreateTypes(mapper)
+        buflen = len(TEST_TEXT) + 10
+        buf = Marshal.AllocHGlobal(buflen)
+        argsPtr = mapper.Store(READ_ARGS)
+        
+        filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
         try:
-            buflen = len(TEST_TEXT) + 10
-            buf = Marshal.AllocHGlobal(buflen)
-            argsPtr = mapper.Store(READ_ARGS)
-            filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
+            f = mapper.PyFile_AsFile(filePtr)
             try:
-                f = mapper.PyFile_AsFile(filePtr)
-                try:
-                    self.assertEquals(fread(buf, 1, buflen, f), len(TEST_TEXT), "didn't get a real FILE")
-                    ptr = buf
-                    for c in TEST_TEXT:
-                        self.assertEquals(Marshal.ReadByte(ptr), ord(c), "got bad data from FILE")
-                        ptr = OffsetPtr(ptr, 1)
-                finally:
-                    fclose(f)
+                self.assertEquals(fread(buf, 1, buflen, f), len(TEST_TEXT), "didn't get a real FILE")
+                ptr = buf
+                for c in TEST_TEXT:
+                    self.assertEquals(Marshal.ReadByte(ptr), ord(c), "got bad data from FILE")
+                    ptr = OffsetPtr(ptr, 1)
             finally:
-                Marshal.FreeHGlobal(buf)
-                mapper.DecRef(argsPtr)
-                mapper.DecRef(filePtr)
+                fclose(f)
         finally:
-            deallocTypes()
+            Marshal.FreeHGlobal(buf)
+            mapper.DecRef(argsPtr)
+            mapper.DecRef(filePtr)
+            
+        deallocTypes()
 
 
     def testPyFile_AsFile_Write(self):
@@ -93,24 +93,23 @@ class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
         write_args = (path, 'w')
         argsPtr = mapper.Store(write_args)
         
+        testStr = "meh, string data"
+        testLength = len(testStr)
+        testStrPtr = mapper.Store(testStr)
+        testDataPtr = OffsetPtr(testStrPtr, Marshal.OffsetOf(PyStringObject, "ob_sval"))
+        
+        filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
         try:
-            testStr = "meh, string data"
-            testLength = len(testStr)
-            testStrPtr = mapper.Store(testStr)
-            testDataPtr = OffsetPtr(testStrPtr, Marshal.OffsetOf(PyStringObject, "ob_sval"))
-            
-            filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
+            f = mapper.PyFile_AsFile(filePtr)
             try:
-                f = mapper.PyFile_AsFile(filePtr)
-                try:
-                    self.assertEquals(fwrite(testDataPtr, 1, testLength, f), testLength, "didn't work")
-                finally:
-                    fclose(f)
+                self.assertEquals(fwrite(testDataPtr, 1, testLength, f), testLength, "didn't work")
             finally:
-                mapper.DecRef(filePtr)
+                fclose(f)
         finally:
-            mapper.DecRef(argsPtr)
-            deallocTypes()
+            mapper.DecRef(filePtr)
+            
+        mapper.DecRef(argsPtr)
+        deallocTypes()
 
         mgdF = open(path)
         try:

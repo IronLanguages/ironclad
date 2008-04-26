@@ -116,7 +116,6 @@ class DispatcherDispatchTestCase(unittest.TestCase):
             def StoreUnmanagedData(self, ptr, item):
                 calls.append(('StoreUnmanagedData', (ptr, item)))
                 
-    
         mockMapper = MockMapper()
         dispatcher = GetDispatcherClass(realMapper)(mockMapper, callables)
         dispatcher._maybe_raise = _maybe_raise
@@ -500,8 +499,6 @@ class DispatcherInitTest(DispatcherDispatchTestCase):
         
         dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
         result = dispatcher.init('dgt', instance, *ARGS, **KWARGS)
-        
-        
         self.assertEquals(calls, [
             ('Store', (ARGS,)),
             ('Store', (KWARGS,)),
