@@ -68,26 +68,25 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
 
     def assert_Py_InitModule4_withSingleMethod(self, mapper, methodDef, TestModule):
         methods, deallocMethods = MakeItemsTablePtr([methodDef])
-        try:
-            modulePtr = mapper.Py_InitModule4(
-                "test_module",
-                methods,
-                "test_docstring",
-                IntPtr.Zero,
-                12345)
+        modulePtr = mapper.Py_InitModule4(
+            "test_module",
+            methods,
+            "test_docstring",
+            IntPtr.Zero,
+            12345)
             
-            module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
-            test_module = ExecUtils.GetPythonModule(mapper.Engine, 'test_module')
-            
-            for item in dir(test_module):
-                # ModuleWrapper.__doc__ will hide underlying module.__doc__ if we just use plain getattr
-                self.assertEquals(ModuleWrapper.__getattr__(module, item) is getattr(test_module, item),
-                                  True, "%s didn't match" % item)
-            TestModule(test_module, mapper)
-        finally:
-            deallocMethods()
-            mapper.FreeTemps()
-            mapper.DecRef(modulePtr)
+        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
+        test_module = ExecUtils.GetPythonModule(mapper.Engine, 'test_module')
+        
+        for item in dir(test_module):
+            # ModuleWrapper.__doc__ will hide underlying module.__doc__ if we just use plain getattr
+            self.assertEquals(ModuleWrapper.__getattr__(module, item) is getattr(test_module, item),
+                              True, "%s didn't match" % item)
+        TestModule(test_module, mapper)
+        
+        deallocMethods()
+        mapper.FreeTemps()
+        mapper.DecRef(modulePtr)
 
 
     def test_Py_InitModule4_CreatesPopulatedModule(self):
@@ -198,12 +197,10 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
         moduleScope = mapper.Engine.CreateScope(mapper.Retrieve(modulePtr).Scope.Dict)
 
         result = mapper.PyModule_AddObject(modulePtr, "testObject", testPtr)
-        try:
-            self.assertEquals(result, 0, "bad value for success")
-            self.assertRaises(KeyError, lambda: mapper.RefCount(testPtr))
-            self.assertEquals(moduleScope.GetVariable[object]("testObject"), testObject, "did not store real object")
-        finally:
-            mapper.DecRef(modulePtr)
+        self.assertEquals(result, 0, "bad value for success")
+        self.assertRaises(KeyError, lambda: mapper.RefCount(testPtr))
+        self.assertEquals(moduleScope.GetVariable[object]("testObject"), testObject, "did not store real object")
+        mapper.DecRef(modulePtr)
 
 
     def assertAddsTypeWithData(self, tp_name, itemName, class__module__, class__name__, class__doc__):
@@ -217,23 +214,22 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
             "tp_doc": class__doc__
         }
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
-        try:
-            result = mapper.PyModule_AddObject(modulePtr, itemName, typePtr)
-            self.assertEquals(result, 0, "reported failure")
+        result = mapper.PyModule_AddObject(modulePtr, itemName, typePtr)
+        self.assertEquals(result, 0, "reported failure")
 
-            mappedClass = mapper.Retrieve(typePtr)
-            generatedClass = getattr(module, itemName)
-            self.assertEquals(mappedClass, generatedClass,
-                              "failed to add new type to module")
+        mappedClass = mapper.Retrieve(typePtr)
+        generatedClass = getattr(module, itemName)
+        self.assertEquals(mappedClass, generatedClass,
+                          "failed to add new type to module")
 
-            self.assertEquals(mappedClass._typePtr, typePtr, "not connected to underlying CPython type")
-            self.assertEquals(mappedClass.__doc__, class__doc__, "unexpected docstring")
-            self.assertEquals(mappedClass.__name__, class__name__, "unexpected __name__")
-            self.assertEquals(mappedClass.__module__, class__module__, "unexpected __module__")
-        finally:
-            deallocType()
-            deallocTypes()
-            mapper.DecRef(modulePtr)
+        self.assertEquals(mappedClass._typePtr, typePtr, "not connected to underlying CPython type")
+        self.assertEquals(mappedClass.__doc__, class__doc__, "unexpected docstring")
+        self.assertEquals(mappedClass.__name__, class__name__, "unexpected __name__")
+        self.assertEquals(mappedClass.__module__, class__module__, "unexpected __module__")
+        
+        deallocType()
+        deallocTypes()
+        mapper.DecRef(modulePtr)
 
 
     def testAddModule(self):
@@ -316,14 +312,14 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
             "tp_methods": [methodDef]
         }
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
-        try:
-            result = mapper.PyModule_AddObject(modulePtr, "klass", typePtr)
-            self.assertEquals(result, 0, "reported failure")
-            TestModule(module)
-        finally:
-            deallocType()
-            mapper.DecRef(modulePtr)
-            deallocTypes()
+        
+        result = mapper.PyModule_AddObject(modulePtr, "klass", typePtr)
+        self.assertEquals(result, 0, "reported failure")
+        TestModule(module)
+        
+        deallocType()
+        mapper.DecRef(modulePtr)
+        deallocTypes()
             
             
     def test_PyAddTypeObject_NoArgsMethod(self):
@@ -415,23 +411,22 @@ class Python25Mapper_PyModule_AddObject_DispatchIterTest(unittest.TestCase):
         
         typeSpec["tp_name"] = "klass"
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
-        try:
-            result = mapper.PyModule_AddObject(modulePtr, "klass", typePtr)
-            self.assertEquals(result, 0, "reported failure")
+        self.assertEquals(mapper.PyModule_AddObject(modulePtr, "klass", typePtr), 
+                          0, "reported failure")
 
-            result = object()
-            instance = module.klass()
-            def MockDispatchFunc(methodName, selfPtr, errorHandler=None):
-                self.assertEquals(methodName, "klass." + expectedKeyName, "called wrong method")
-                self.assertEquals(selfPtr, instance._instancePtr, "called method on wrong instance")
-                TestErrorHandler(errorHandler)
-                return result
-            module._dispatcher.method_selfarg = MockDispatchFunc
-            self.assertEquals(getattr(instance, expectedMethodName)(), result, "bad return")
-        finally:
-            mapper.DecRef(modulePtr)
-            deallocType()
-            deallocTypes()
+        result = object()
+        instance = module.klass()
+        def MockDispatchFunc(methodName, selfPtr, errorHandler=None):
+            self.assertEquals(methodName, "klass." + expectedKeyName, "called wrong method")
+            self.assertEquals(selfPtr, instance._instancePtr, "called method on wrong instance")
+            TestErrorHandler(errorHandler)
+            return result
+        module._dispatcher.method_selfarg = MockDispatchFunc
+        
+        self.assertEquals(getattr(instance, expectedMethodName)(), result, "bad return")
+        mapper.DecRef(modulePtr)
+        deallocType()
+        deallocTypes()
 
 
     def testAddTypeObjectWith_tp_iter_MethodDispatch(self):
