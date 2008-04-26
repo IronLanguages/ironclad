@@ -52,19 +52,16 @@ namespace Ironclad
         Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
         {
             Dictionary<string, object> globals = new Dictionary<string, object>();
-            globals["_ironclad_mapper"] = this;
-            globals["__doc__"] = doc;
-
             DispatchTable methodTable = new DispatchTable();
-            globals["_ironclad_dispatch_table"] = methodTable;
 
-            // hack to help moduleCode run -- can't import them from System
-            globals["IntPtr"] = typeof(IntPtr);
+            globals["__doc__"] = doc;
+            globals["_dispatcher"] = PythonCalls.Call(this.dispatcherClass, new object[] { this, methodTable });
+
+            // hack to help moduleCode run -- can't import from System for some reason
+            globals["nullPtr"] = IntPtr.Zero;
             globals["NullReferenceException"] = typeof(NullReferenceException);
 
             StringBuilder moduleCode = new StringBuilder();
-            moduleCode.Append(MODULE_CODE);
-
             this.GenerateFunctions(moduleCode, methods, methodTable);
 
             PythonModule module = this.GetPythonContext().CreateModule(
@@ -119,7 +116,7 @@ namespace Ironclad
             {
                 PyMethodDef thisMethod = (PyMethodDef)Marshal.PtrToStructure(
                     methodPtr, typeof(PyMethodDef));
-                
+                string name = thisMethod.ml_name;
                 string template = null;
                 Delegate dgt = null;
                 
@@ -162,16 +159,16 @@ namespace Ironclad
                 if (!unsupportedFlags)
                 {
                     code.Append(String.Format(template,
-                        thisMethod.ml_name, thisMethod.ml_doc, tablePrefix));
-                    methodTable[tablePrefix + thisMethod.ml_name] = dgt;
+                        name, thisMethod.ml_doc, tablePrefix));
+                    methodTable[tablePrefix + name] = dgt;
                 }
                 else
                 {
                     Console.WriteLine("Detected unsupported method flags for {0}{1}; ignoring.",
-                        tablePrefix, thisMethod.ml_name);
+                        tablePrefix, name);
                 }
                 
-                methodPtr = (IntPtr)(methodPtr.ToInt32() + Marshal.SizeOf(typeof(PyMethodDef)));
+                methodPtr = CPyMarshal.Offset(methodPtr, Marshal.SizeOf(typeof(PyMethodDef)));
             }
         }
         
@@ -187,28 +184,6 @@ namespace Ironclad
         }
 
         private void
-        GenerateIterMethods(StringBuilder classCode, IntPtr typePtr, DispatchTable methodTable, string tablePrefix)
-        {
-            Py_TPFLAGS tp_flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
-            if ((tp_flags & Py_TPFLAGS.HAVE_ITER) == 0)
-            {
-                return;
-            }
-            if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iter") != IntPtr.Zero)
-            {
-                classCode.Append(String.Format(ITER_METHOD_CODE, tablePrefix));
-                Delegate dgt = CPyMarshal.ReadFunctionPtrField(typePtr, typeof(PyTypeObject), "tp_iter", typeof(CPythonSelfFunction_Delegate));
-                methodTable[tablePrefix + "tp_iter"] = dgt;
-            }
-            if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iternext") != IntPtr.Zero)
-            {
-                classCode.Append(String.Format(ITERNEXT_METHOD_CODE, tablePrefix));
-                Delegate dgt = CPyMarshal.ReadFunctionPtrField(typePtr, typeof(PyTypeObject), "tp_iternext", typeof(CPythonSelfFunction_Delegate));
-                methodTable[tablePrefix + "tp_iternext"] = dgt;
-            }
-        }
-
-        private void
         GenerateMethods(StringBuilder code, IntPtr methods, DispatchTable methodTable, string tablePrefix)
         {
             this.GenerateCallablesFromMethodDefs(
@@ -219,6 +194,25 @@ namespace Ironclad
                 VARARGS_KWARGS_METHOD_CODE);
         }
 
+        private void
+        GenerateIterMethods(StringBuilder classCode, IntPtr typePtr, DispatchTable methodTable, string tablePrefix)
+        {
+            Py_TPFLAGS tp_flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
+            if ((tp_flags & Py_TPFLAGS.HAVE_ITER) == 0)
+            {
+                return;
+            }
+            if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iter") != IntPtr.Zero)
+            {
+                classCode.Append(String.Format(ITER_METHOD_CODE, tablePrefix));
+                this.ConnectTypeField(typePtr, tablePrefix, "tp_iter", methodTable, typeof(CPythonSelfFunction_Delegate));
+            }
+            if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iternext") != IntPtr.Zero)
+            {
+                classCode.Append(String.Format(ITERNEXT_METHOD_CODE, tablePrefix));
+                this.ConnectTypeField(typePtr, tablePrefix, "tp_iternext", methodTable, typeof(CPythonSelfFunction_Delegate));
+            }
+        }
 
         private void
         ExtractNameModule(string tp_name, ref string __name__, ref string __module__)
@@ -235,7 +229,6 @@ namespace Ironclad
             __module__ = module;
         }
         
-        
         private void
         GenerateClass(PythonModule module, string name, IntPtr typePtr)
         {
@@ -251,28 +244,30 @@ namespace Ironclad
             classCode.Append(String.Format(CLASS_CODE, name, __module__, __doc__));
 
             ScriptScope moduleScope = this.GetModuleScriptScope(module);
-            DispatchTable methodTable = moduleScope.GetVariable <DispatchTable> ("_ironclad_dispatch_table");
+            object _dispatcher = moduleScope.GetVariable<object>("_dispatcher");
+            
+            DispatchTable methodTable = (DispatchTable)Builtin.getattr(DefaultContext.Default, _dispatcher, "table");
+            this.ConnectTypeField(typePtr, tablePrefix, "tp_new", methodTable, typeof(PyType_GenericNew_Delegate));
+            this.ConnectTypeField(typePtr, tablePrefix, "tp_init", methodTable, typeof(CPython_initproc_Delegate));
+            
             IntPtr methodsPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_methods");
             this.GenerateMethods(classCode, methodsPtr, methodTable, tablePrefix);
             this.GenerateIterMethods(classCode, typePtr, methodTable, tablePrefix);
 
             classCode.Append(String.Format(CLASS_FIXUP_CODE, name, __name__));
             this.ExecInModule(classCode.ToString(), module);
-            object klass = moduleScope.GetVariable<object>(name);
 
-            PythonOps.SetAttr(DefaultContext.Default, klass, SymbolTable.StringToId("_typePtr"), typePtr);
-            
-            this.SetClassDelegateSlot(klass, typePtr, "tp_new", typeof(PyType_GenericNew_Delegate));
-            this.SetClassDelegateSlot(klass, typePtr, "tp_init", typeof(CPython_initproc_Delegate));
+            object klass = moduleScope.GetVariable<object>(name);
+            Builtin.setattr(DefaultContext.Default, klass, "_typePtr", typePtr);
             this.StoreUnmanagedData(typePtr, klass);
         }
-        
-        
-        private void SetClassDelegateSlot(object klass, IntPtr typePtr, string fieldName, Type delegateType)
+
+        private void 
+        ConnectTypeField(IntPtr typePtr, string tablePrefix, string fieldName, DispatchTable methodTable, Type dgtType)
         {
-            Delegate dgt = CPyMarshal.ReadFunctionPtrField(typePtr, typeof(PyTypeObject), fieldName, delegateType);
-            string attrName = String.Format("_{0}Dgt", fieldName);
-            PythonOps.SetAttr(DefaultContext.Default, klass, SymbolTable.StringToId(attrName), dgt);
+            Delegate dgt = CPyMarshal.ReadFunctionPtrField(
+                typePtr, typeof(PyTypeObject), fieldName, dgtType);
+            methodTable[tablePrefix + fieldName] = dgt;
         }
     }
 }

@@ -63,10 +63,14 @@ namespace Ironclad
     public partial class Python25Mapper : PythonMapper
     {
         private ScriptEngine engine;
+        private IAllocator allocator;
+        
+        private PythonModule dispatcherModule;
+        private object dispatcherClass;
+
         private Dictionary<IntPtr, object> ptrmap;
         private Dictionary<object, IntPtr> objmap;
         private List<IntPtr> tempObjects;
-        private IAllocator allocator;
         private object _lastException;
 
         public Python25Mapper() : this(ScriptRuntime.Create().GetEngine("py"), new HGlobalAllocator())
@@ -85,6 +89,8 @@ namespace Ironclad
             this.objmap = new Dictionary<object, IntPtr>();
             this.tempObjects = new List<IntPtr>();
             this._lastException = null;
+
+            this.CreateDispatcher();
         }
         
         public ScriptEngine

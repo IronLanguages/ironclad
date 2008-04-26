@@ -60,10 +60,12 @@ class Python25Mapper_PyType_GenericAlloc_Test(unittest.TestCase):
     def testNoItems(self):
         allocs = []
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
-
         deallocTypes = CreateTypes(mapper)
-        typePtr, deallocType = MakeTypePtr("sometype", mapper.PyType_Type,
-                                           basicSize=32, itemSize=64)
+        typeSpec = {
+            "tp_basicsize": 32,
+            "tp_itemsize": 64,
+        }
+        typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         try:
             result = mapper.PyType_GenericAlloc(typePtr, 0)
             self.assertEquals(allocs, [(result, 32)], "allocated wrong")
@@ -89,10 +91,12 @@ class Python25Mapper_PyType_GenericAlloc_Test(unittest.TestCase):
     def testSomeItems(self):
         allocs = []
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
-
         deallocTypes = CreateTypes(mapper)
-        typePtr, deallocType = MakeTypePtr("sometype", mapper.PyType_Type,
-                                           basicSize=32, itemSize=64)
+        typeSpec = {
+            "tp_basicsize": 32,
+            "tp_itemsize": 64,
+        }
+        typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         try:
             result = mapper.PyType_GenericAlloc(typePtr, 3)
             self.assertEquals(allocs, [(result, 224)], "allocated wrong")
@@ -119,17 +123,17 @@ class Python25Mapper_PyType_GenericNew_Test(unittest.TestCase):
 
     def testCallsTypeAllocFunction(self):
         mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
 
         calls = []
-        def AllocInstance(typePtr, nItems):
+        def Alloc(typePtr, nItems):
             calls.append((typePtr, nItems))
             return IntPtr(999)
-        tp_allocDgt = PythonMapper.PyType_GenericAlloc_Delegate(AllocInstance)
-        tp_allocFP = Marshal.GetFunctionPointerForDelegate(tp_allocDgt)
 
-        deallocTypes = CreateTypes(mapper)
-        typePtr, deallocType = MakeTypePtr(
-            "sometype", mapper.PyType_Type, tp_allocPtr=tp_allocFP)
+        typeSpec = {
+            "tp_alloc": Alloc,
+        }
+        typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         try:
             result = mapper.PyType_GenericNew(typePtr, IntPtr(222), IntPtr(333))
             self.assertEquals(result, IntPtr(999), "did not use type's tp_alloc function")
