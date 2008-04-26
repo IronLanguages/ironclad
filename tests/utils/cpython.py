@@ -9,79 +9,116 @@ from Ironclad.Structs import METH, Py_TPFLAGS, PyMethodDef, PyTypeObject
 
 from tests.utils.memory import OffsetPtr
 
-
 gc_fooler = []
-def MakeMethodDef(name, implementation, flags, doc="doc"):
-    if flags in (METH.VARARGS, METH.NOARGS, METH.O):
-        dgt = CPythonVarargsFunction_Delegate(implementation)
-    elif flags == METH.VARARGS | METH.KEYWORDS:
-        dgt = CPythonVarargsKwargsFunction_Delegate(implementation)
+def GC_NotYet(dgt):
     gc_fooler.append(dgt)
-    return PyMethodDef(name, Marshal.GetFunctionPointerForDelegate(dgt), flags, doc)
+    def Gc_Soon():
+        gc_fooler.remove(dgt)
+    return Gc_Soon
+
+DELEGATE_TYPES = {
+    METH.O: CPythonVarargsFunction_Delegate,
+    METH.NOARGS: CPythonVarargsFunction_Delegate,
+    METH.VARARGS: CPythonVarargsFunction_Delegate,
+    METH.VARARGS | METH.KEYWORDS: CPythonVarargsKwargsFunction_Delegate
+}
+def MakeMethodDef(name, implementation, flags, doc="doc"):
+    dgt = DELEGATE_TYPES[flags](implementation)
+    return PyMethodDef(name, Marshal.GetFunctionPointerForDelegate(dgt), flags, doc), GC_NotYet(dgt)
 
 
-
-Null_tp_init_Func = lambda _, __, ___: 0
-Null_tp_init_Delegate = CPython_initproc_Delegate(Null_tp_init_Func)
-Null_tp_init_FP = Marshal.GetFunctionPointerForDelegate(Null_tp_init_Delegate)
-
-Null_tp_new_Func = lambda _, __, ___: IntPtr(12345)
-Null_tp_new_Delegate = PythonMapper.PyType_GenericNew_Delegate(Null_tp_new_Func)
-Null_tp_new_FP = Marshal.GetFunctionPointerForDelegate(Null_tp_new_Delegate)
-
-def MakeTypePtr(tp_name, typeTypePtr,
-                basicSize=8, itemSize=4, methodDef=None, tp_flags=Py_TPFLAGS.HAVE_CLASS,
-                tp_doc="",
-                tp_allocPtr=IntPtr.Zero, tp_newPtr=Null_tp_new_FP, tp_initPtr=Null_tp_init_FP, 
-                tp_iterPtr=IntPtr.Zero, tp_iternextPtr=IntPtr.Zero):
-    typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-    namePtr = Marshal.StringToHGlobalAnsi(tp_name)
-    docPtr = Marshal.StringToHGlobalAnsi(tp_doc)
-    methodsPtr, deallocMethods = MakeSingleMethodTablePtr(methodDef)
-
-    def WriteField(fieldName, writerName, value):
-        offset = Marshal.OffsetOf(PyTypeObject, fieldName)
-        address = OffsetPtr(typePtr, offset)
-        getattr(CPyMarshal, writerName)(address, value)
-
-    WriteField("ob_refcnt", "WriteInt", 1)
-    WriteField("ob_type", "WritePtr", typeTypePtr)
-
-    WriteField("tp_basicsize", "WriteInt", basicSize)
-    WriteField("tp_itemsize", "WriteInt", itemSize)
+MAKETYPEPTR_DEFAULTS = {
+    "tp_name": "Nemo",
+    "tp_doc": "Odysseus' reply to the blinded Cyclops",
     
-    WriteField("tp_flags", "WriteInt", int(tp_flags))
+    "ob_refcnt": 1,
+    "tp_basicsize": 8,
+    "tp_itemsize": 4,
+    "tp_flags": Py_TPFLAGS.HAVE_CLASS,
+    
+    "tp_methods": None,
+    "tp_members": None,
+    "tp_getset": None,
+    
+    "tp_init": lambda _, __, ___: 0,
+    "tp_iter": lambda _: IntPtr.Zero,
+    "tp_iternext": lambda _: IntPtr.Zero,
+}
 
-    WriteField("tp_name", "WritePtr", namePtr)
-    WriteField("tp_doc", "WritePtr", docPtr)
-    WriteField("tp_methods", "WritePtr", methodsPtr)
-    WriteField("tp_alloc", "WritePtr", tp_allocPtr)
-    WriteField("tp_new", "WritePtr", tp_newPtr)
-    WriteField("tp_init", "WritePtr", tp_initPtr)
-    WriteField("tp_iter", "WritePtr", tp_iterPtr)
-    WriteField("tp_iternext", "WritePtr", tp_iternextPtr)
+def GetMapperTypePtrDefaults(mapper):
+    return {
+        "ob_type": mapper.PyType_Type,
+        "tp_alloc": mapper.PyType_GenericAlloc,
+        "tp_new": mapper.PyType_GenericNew,
+    }
+
+PTR_ARGS = ("ob_type")
+INT_ARGS = ("ob_refcnt", "tp_basicsize", "tp_itemsize", "tp_flags")
+STRING_ARGS = ("tp_name", "tp_doc")
+TABLE_ARGS = ("tp_methods", "tp_members", "tp_getset")
+FUNC_ARGS = {
+    "tp_alloc": PythonMapper.PyType_GenericAlloc_Delegate,
+    "tp_new": PythonMapper.PyType_GenericNew_Delegate,
+    "tp_init": CPython_initproc_Delegate,
+    "tp_iter": PythonMapper.PyObject_GetIter_Delegate,
+    "tp_iternext": PythonMapper.PyIter_Next_Delegate,
+}
+
+def WriteTypeField(typePtr, name, value):
+    if name in PTR_ARGS:
+        CPyMarshal.WritePtrField(typePtr, PyTypeObject, name, value)
+        return lambda: None
+    if name in INT_ARGS:
+        CPyMarshal.WriteIntField(typePtr, PyTypeObject, name, int(value))
+        return lambda: None
+    if name in STRING_ARGS:
+        ptr = Marshal.StringToHGlobalAnsi(value)
+        CPyMarshal.WritePtrField(typePtr, PyTypeObject, name, ptr)
+        return lambda: Marshal.FreeHGlobal(ptr)
+    if name in TABLE_ARGS:
+        ptr, dealloc = MakeItemsTablePtr(value)
+        CPyMarshal.WritePtrField(typePtr, PyTypeObject, name, ptr)
+        return dealloc
+    if name in FUNC_ARGS:
+        dgt = FUNC_ARGS[name](value)
+        CPyMarshal.WriteFunctionPtrField(typePtr, PyTypeObject, name, dgt)
+        return GC_NotYet(dgt)
+    raise KeyError("WriteTypeField can't handle %s, %s" % (name, value))
+
+def MakeTypePtr(mapper, params):
+    fields = dict(MAKETYPEPTR_DEFAULTS)
+    fields.update(GetMapperTypePtrDefaults(mapper))
+    fields.update(params)
+    
+    typeSize = Marshal.SizeOf(PyTypeObject)
+    typePtr = Marshal.AllocHGlobal(typeSize)
+    CPyMarshal.Zero(typePtr, typeSize)
+    
+    deallocs = [lambda: Marshal.FreeHGlobal(typePtr)]
+    for field, value in fields.items():
+        deallocs.append(WriteTypeField(typePtr, field, value))
 
     def dealloc():
-        Marshal.FreeHGlobal(typePtr)
-        Marshal.FreeHGlobal(namePtr)
-        Marshal.FreeHGlobal(docPtr)
-        deallocMethods()
-
+        for f in deallocs:
+            f()
     return typePtr, dealloc
 
 
-def MakeSingleMethodTablePtr(methodDef):
-    if methodDef is None:
+def MakeItemsTablePtr(items):
+    if not items:
         return IntPtr.Zero, lambda: None
-    size = Marshal.SizeOf(PyMethodDef)
-    methodsPtr = Marshal.AllocHGlobal(size * 2)
-    Marshal.StructureToPtr(methodDef, methodsPtr, False)
-    terminator = OffsetPtr(methodsPtr, size)
-    CPyMarshal.WriteInt(terminator, 0)
+    itemtype = items[0].__class__
+    typesize = Marshal.SizeOf(itemtype)
+    size = typesize * (len(items) + 1)
+    
+    tablePtr = Marshal.AllocHGlobal(size)
+    CPyMarshal.Zero(tablePtr, size)
+    for i, item in enumerate(items):
+        Marshal.StructureToPtr(item, OffsetPtr(tablePtr, typesize * i), False)
 
     def dealloc():
-        Marshal.DestroyStructure(methodsPtr, PyMethodDef)
-        Marshal.FreeHGlobal(methodsPtr)
+        Marshal.DestroyStructure(tablePtr, itemtype)
+        Marshal.FreeHGlobal(tablePtr)
 
-    return methodsPtr, dealloc
+    return tablePtr, dealloc
 
