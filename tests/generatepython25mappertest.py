@@ -65,6 +65,7 @@ using System;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Types;
+using Microsoft.Scripting.Math;
 
 namespace Ironclad
 {
@@ -93,6 +94,7 @@ using System;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Types;
+using Microsoft.Scripting.Math;
 
 namespace Ironclad
 {
@@ -122,6 +124,7 @@ using System;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Types;
+using Microsoft.Scripting.Math;
 
 namespace Ironclad
 {
@@ -129,12 +132,9 @@ namespace Ironclad
     {
         private IntPtr StoreDispatch(object obj)
         {
-            string attempt0 = obj as string;
-            if (attempt0 != null) { return this.Store(attempt0); }
-            Tuple attempt1 = obj as Tuple;
-            if (attempt1 != null) { return this.Store(attempt1); }
-            Dict attempt2 = obj as Dict;
-            if (attempt2 != null) { return this.Store(attempt2); }
+            if (obj.GetType() == typeof(string)) { return this.Store((string)obj); }
+            if (obj.GetType() == typeof(Tuple)) { return this.Store((Tuple)obj); }
+            if (obj.GetType() == typeof(Dict)) { return this.Store((Dict)obj); }
             return this.StoreObject(obj);
         }
     }

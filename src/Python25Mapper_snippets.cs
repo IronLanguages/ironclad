@@ -94,7 +94,7 @@ class Dispatcher(object):
         finally:
             self._cleanup(argsPtr, kwargsPtr)
         
-        self.mapper.StoreUnmanagedData(instancePtr, instance)
+        self.mapper.StoreUnmanagedInstance(instancePtr, instance)
         instance._instancePtr = instancePtr
         return instance
 

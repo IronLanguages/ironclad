@@ -243,7 +243,9 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
         self.fillStringDataWithBytes(newStrPtr, testBytes)
 
         self.assertEquals(mapper.Retrieve(newStrPtr), testString, "failed to read string data")
-        self.assertRaises(KeyError, lambda: mapper.RefCount(oldStrPtr))
+        if oldStrPtr != newStrPtr:
+            # this would otherwise fail (very, very rarely)
+            self.assertRaises(KeyError, lambda: mapper.RefCount(oldStrPtr))
         
         Marshal.FreeHGlobal(ptrPtr)
         Marshal.FreeHGlobal(newStrPtr)

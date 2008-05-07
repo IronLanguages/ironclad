@@ -20,25 +20,25 @@ namespace Ironclad
         public override void 
         Fill_PyFile_Type(IntPtr address)
         {
-            this.StoreUnmanagedData(address, TypeCache.PythonFile);
+            this.map.Associate(address, TypeCache.PythonFile);
         }
 
         public override void
         Fill_PyInt_Type(IntPtr address)
         {
-            this.StoreUnmanagedData(address, TypeCache.Int32);
+            this.map.Associate(address, TypeCache.Int32);
         }
 
         public override void
         Fill_PyLong_Type(IntPtr address)
         {
-            this.StoreUnmanagedData(address, TypeCache.BigInteger);
+            this.map.Associate(address, TypeCache.BigInteger);
         }
 
         public override void
         Fill_PyFloat_Type(IntPtr address)
         {
-            this.StoreUnmanagedData(address, TypeCache.Double);
+            this.map.Associate(address, TypeCache.Double);
         }
         
         public override int

@@ -3,9 +3,10 @@ import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
+from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
 
-from System import IntPtr
+from System import IntPtr, NullReferenceException
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import BadRefCountException, CPyMarshal, CPython_destructor_Delegate, Python25Mapper, UnmanagedDataMarker
@@ -50,7 +51,7 @@ class Python25MapperTest(unittest.TestCase):
         
         objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
         CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 0)
-        mapper.StoreUnmanagedData(objPtr, object())
+        mapper.StoreUnmanagedInstance(objPtr, object())
         mapper.PyObject_Free(objPtr)
         self.assertEquals(frees, [objPtr], "didn't actually release memory")
         
@@ -99,7 +100,7 @@ class Python25MapperTest(unittest.TestCase):
         
         objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
         CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 0)
-        mapper.StoreUnmanagedData(objPtr, object())
+        mapper.StoreUnmanagedInstance(objPtr, object())
         self.assertRaises(BadRefCountException, lambda: mapper.DecRef(objPtr))
         Marshal.FreeHGlobal(objPtr)
 
@@ -146,15 +147,19 @@ class Python25MapperTest(unittest.TestCase):
         self.assertEquals(frees, [objPtr], "not freed when refcount hit 0")
     
 
-    def testStoreUnmanagedData(self):
+    def testStoreUnmanagedInstance(self):
         mapper = Python25Mapper()
 
-        o = object()
+        obj = object()
         ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
-        mapper.StoreUnmanagedData(ptr, o)
+        mapper.StoreUnmanagedInstance(ptr, obj)
 
-        self.assertEquals(mapper.Retrieve(ptr), o, "object not stored")
-        self.assertEquals(mapper.Store(o), ptr, "object not reverse-mapped")
+        self.assertEquals(mapper.Retrieve(ptr), obj, "object not stored")
+        self.assertEquals(mapper.Store(obj), ptr, "object not reverse-mapped")
+        
+        del obj
+        gcwait()
+        self.assertRaises(NullReferenceException, mapper.Retrieve, ptr)
 
 
     def testCannotStoreUnmanagedDataMarker(self):
@@ -270,9 +275,6 @@ class Python25Mapper_NoneTest(unittest.TestCase):
         nonePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
         mapper.SetData("_Py_NoneStruct", nonePtr)
         
-        # if the following line fails, we probably have a public Store overload taking something
-        # more specific than 'object', which is therefore called in preference to the 'object'
-        # version of Store. (IronPython None becomes C# null, which is of every type. Sort of.)
         resultPtr = mapper.Store(None)
         self.assertEquals(resultPtr, nonePtr, "wrong")
         self.assertEquals(mapper.RefCount(nonePtr), 2, "did not incref")

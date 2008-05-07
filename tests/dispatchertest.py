@@ -113,8 +113,8 @@ class DispatcherDispatchTestCase(unittest.TestCase):
                 calls.append(('Retrieve', (ptr,)))
                 return RESULT
     
-            def StoreUnmanagedData(self, ptr, item):
-                calls.append(('StoreUnmanagedData', (ptr, item)))
+            def StoreUnmanagedInstance(self, ptr, item):
+                calls.append(('StoreUnmanagedInstance', (ptr, item)))
                 
         mockMapper = MockMapper()
         dispatcher = GetDispatcherClass(realMapper)(mockMapper, callables)
@@ -452,7 +452,7 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
             ('dgt', (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
-            ('StoreUnmanagedData', (RESULT_PTR, result))
+            ('StoreUnmanagedInstance', (RESULT_PTR, result))
         ])
     
     def testDispatch_construct_error(self):

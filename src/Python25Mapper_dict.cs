@@ -24,7 +24,7 @@ namespace Ironclad
             IntPtr dictPtr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
             Marshal.StructureToPtr(dict, dictPtr, false);
             
-            this.StoreUnmanagedData(dictPtr, dictMgd);
+            this.map.Associate(dictPtr, dictMgd);
             return dictPtr;
         }
         
