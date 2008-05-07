@@ -68,10 +68,10 @@ namespace Ironclad
         private PythonModule dispatcherModule;
         private object dispatcherClass;
 
-        private Dictionary<IntPtr, object> ptrmap;
-        private Dictionary<object, IntPtr> objmap;
-        private List<IntPtr> tempObjects;
-        private object _lastException;
+        private InterestingPtrMap map = new InterestingPtrMap();
+        
+        private List<IntPtr> tempObjects = new List<IntPtr>();
+        private object _lastException = null;
 
         public Python25Mapper() : this(ScriptRuntime.Create().GetEngine("py"), new HGlobalAllocator())
         {
@@ -85,11 +85,6 @@ namespace Ironclad
         {
             this.engine = inEngine;
             this.allocator = alloc;
-            this.ptrmap = new Dictionary<IntPtr, object>();
-            this.objmap = new Dictionary<object, IntPtr>();
-            this.tempObjects = new List<IntPtr>();
-            this._lastException = null;
-
             this.CreateDispatcher();
         }
         
@@ -111,11 +106,12 @@ namespace Ironclad
             }
             if (obj == null)
             {
-                obj = UnmanagedDataMarker.None;
+                this.IncRef(this._Py_NoneStruct);
+                return this._Py_NoneStruct;
             }
-            if (this.objmap.ContainsKey(obj))
+            if (this.map.HasObj(obj))
             {
-                IntPtr ptr = this.objmap[obj];
+                IntPtr ptr = this.map.GetPtr(obj);
                 this.IncRef(ptr);
                 return ptr;
             }
@@ -129,61 +125,53 @@ namespace Ironclad
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyBaseObject_Type);
-            this.StoreUnmanagedData(ptr, obj);
+            this.map.Associate(ptr, obj);
             return ptr;
         }
         
+        
         public void
-        StoreUnmanagedData(IntPtr ptr, object obj)
+        StoreUnmanagedInstance(IntPtr ptr, object obj)
         {
-            this.ptrmap[ptr] = obj;
-            this.objmap[obj] = ptr;
+            this.map.WeakAssociate(ptr, obj);
         }
         
         
         public object 
         Retrieve(IntPtr ptr)
         {
-            if (this.ptrmap.ContainsKey(ptr))
+            object possibleMarker = this.map.GetObj(ptr);
+            if (possibleMarker.GetType() == typeof(UnmanagedDataMarker))
             {
-                object possibleMarker = this.ptrmap[ptr];
-                if (possibleMarker.GetType() == typeof(UnmanagedDataMarker))
+                UnmanagedDataMarker marker = (UnmanagedDataMarker)possibleMarker;
+                switch (marker)
                 {
-                    UnmanagedDataMarker marker = (UnmanagedDataMarker)possibleMarker;
-                    switch (marker)
-                    {
-                        case UnmanagedDataMarker.None:
-                            return null;
+                    case UnmanagedDataMarker.None:
+                        return null;
 
-                        case UnmanagedDataMarker.PyStringObject:
-                            this.ActualiseString(ptr);
-                            break;
+                    case UnmanagedDataMarker.PyStringObject:
+                        this.ActualiseString(ptr);
+                        break;
 
-                        case UnmanagedDataMarker.PyTupleObject:
-                            this.ActualiseTuple(ptr);
-                            break;
+                    case UnmanagedDataMarker.PyTupleObject:
+                        this.ActualiseTuple(ptr);
+                        break;
 
-                        case UnmanagedDataMarker.PyListObject:
-                            ActualiseList(ptr);
-                            break;
-                            
-                        default:
-                            throw new Exception("Found impossible data in pointer map");
-                    }
+                    case UnmanagedDataMarker.PyListObject:
+                        ActualiseList(ptr);
+                        break;
+
+                    default:
+                        throw new Exception("Found impossible data in pointer map");
                 }
-                return this.ptrmap[ptr];
             }
-            else
-            {
-                throw new KeyNotFoundException(String.Format(
-                    "Retrieve: missing key in pointer map: {0}", ptr));
-            }
+            return this.map.GetObj(ptr);
         }
         
         public int 
         RefCount(IntPtr ptr)
         {
-            if (this.ptrmap.ContainsKey(ptr))
+            if (this.map.HasPtr(ptr))
             {
                 return CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
             }
@@ -197,7 +185,7 @@ namespace Ironclad
         public void 
         IncRef(IntPtr ptr)
         {
-            if (this.ptrmap.ContainsKey(ptr))
+            if (this.map.HasPtr(ptr))
             {
                 int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
                 CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count + 1);
@@ -212,7 +200,7 @@ namespace Ironclad
         public void 
         DecRef(IntPtr ptr)
         {
-            if (this.ptrmap.ContainsKey(ptr))
+            if (this.map.HasPtr(ptr))
             {
                 int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
                 if (count == 0)
@@ -252,8 +240,7 @@ namespace Ironclad
         public override void 
         PyObject_Free(IntPtr ptr)
         {
-            this.objmap.Remove(this.ptrmap[ptr]);
-            this.ptrmap.Remove(ptr);
+            this.map.Release(ptr);
             this.allocator.Free(ptr);
         }
 
@@ -344,7 +331,7 @@ namespace Ironclad
             none.ob_refcnt = 1;
             none.ob_type = IntPtr.Zero;
             Marshal.StructureToPtr(none, address, false);
-            this.StoreUnmanagedData(address, UnmanagedDataMarker.None);
+            this.map.Associate(address, UnmanagedDataMarker.None);
         }
         
     }

@@ -14,7 +14,7 @@ namespace Ironclad
         Fill_PyString_Type(IntPtr address)
         {
             this.Fill_PyBaseObject_Type(address);
-            this.StoreUnmanagedData(address, TypeCache.String);
+            this.map.Associate(address, TypeCache.String);
         }
         
         
@@ -48,7 +48,7 @@ namespace Ironclad
             
             char[] chars = Array.ConvertAll<byte, char>(
                 bytes, new Converter<byte, char>(CharFromByte));
-            this.StoreUnmanagedData(strPtr, new string(chars));
+            this.map.Associate(strPtr, new string(chars));
             return strPtr;
         }
         
@@ -83,7 +83,7 @@ namespace Ironclad
             if (stringData == IntPtr.Zero)
             {
                 IntPtr data = this.AllocPyString(length);
-                this.StoreUnmanagedData(data, UnmanagedDataMarker.PyStringObject);
+                this.map.Associate(data, UnmanagedDataMarker.PyStringObject);
                 return data;
             }
             else
@@ -111,9 +111,9 @@ namespace Ironclad
                 this.PyObject_Free(oldStr);
                 return -1;
             }
-            this.ptrmap.Remove(oldStr);
             CPyMarshal.WritePtr(strPtrPtr, newStr);
-            this.StoreUnmanagedData(newStr, UnmanagedDataMarker.PyStringObject);
+            this.map.Release(oldStr);
+            this.map.Associate(newStr, UnmanagedDataMarker.PyStringObject);
             return this._PyString_Resize_NoGrow(newStr, newSize);
         }
         
@@ -181,7 +181,7 @@ namespace Ironclad
             Marshal.Copy(buffer, bytes, 0, length);
             char[] chars = Array.ConvertAll<byte, char>(
                 bytes, new Converter<byte, char>(CharFromByte));
-            this.StoreUnmanagedData(ptr, new string(chars));
+            this.map.Associate(ptr, new string(chars));
         }
     }
 }

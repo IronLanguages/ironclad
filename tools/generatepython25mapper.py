@@ -26,8 +26,7 @@ def run():
         exceptions_code = "\n\n".join([template % x for x in exceptions])
         write(outfile, FILE_TEMPLATE % exceptions_code)
     
-    store_types = [dict([("type", t), ("var", "attempt%d" % i)]) 
-                   for (i, t) in enumerate(read_interesting_lines(STORE_INFILE))]
+    store_types = [dict([("type", t)]) for t in read_interesting_lines(STORE_INFILE)]
     store_code = STORE_METHOD_TEMPLATE % "\n".join([STORE_TYPE_TEMPLATE % x for x in store_types])
     write(STORE_OUTFILE, FILE_TEMPLATE % store_code)
     
@@ -45,6 +44,7 @@ using System;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Types;
+using Microsoft.Scripting.Math;
 
 namespace Ironclad
 {
@@ -75,8 +75,7 @@ STORE_METHOD_TEMPLATE = """\
         }"""
 
 STORE_TYPE_TEMPLATE = """\
-            %(type)s %(var)s = obj as %(type)s;
-            if (%(var)s != null) { return this.Store(%(var)s); }"""
+            if (obj.GetType() == typeof(%(type)s)) { return this.Store((%(type)s)obj); }"""
 
 
 if __name__ == "__main__":

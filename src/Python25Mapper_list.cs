@@ -17,7 +17,7 @@ namespace Ironclad
         {
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetMethodFP("PyList_Dealloc"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_free", this.GetAddress("PyObject_Free"));
-            this.StoreUnmanagedData(address, TypeCache.List);
+            this.map.Associate(address, TypeCache.List);
         }
         
         
@@ -58,7 +58,7 @@ namespace Ironclad
             
             IntPtr listPtr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyListObject)));
             Marshal.StructureToPtr(list, listPtr, false);
-            this.StoreUnmanagedData(listPtr, ipylist);
+            this.map.Associate(listPtr, ipylist);
             return listPtr;
         }   
         
@@ -120,14 +120,14 @@ namespace Ironclad
                 this.DecRef(itemPtr);
                 return -1;
             }
-            bool listPtrValid = this.ptrmap.ContainsKey(listPtr);
+            bool listPtrValid = this.map.HasPtr(listPtr);
             if (!listPtrValid)
             {
                 this.DecRef(itemPtr);
                 return -1;
             }
             bool okToContinue = false;
-            object ipylist = this.ptrmap[listPtr];
+            object ipylist = this.map.GetObj(listPtr);
             List realIpylist = ipylist as List;
             if (realIpylist != null)
             {
@@ -247,7 +247,7 @@ namespace Ironclad
                 }
             }
             this.listsBeingActualised.Remove(ptr);
-            this.StoreUnmanagedData(ptr, newList);
+            this.map.Associate(ptr, newList);
             
         }
     }

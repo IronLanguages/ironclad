@@ -74,12 +74,12 @@ namespace Ironclad
         public override int 
         PyModule_AddObject(IntPtr modulePtr, string name, IntPtr itemPtr)
         {
-            if (!this.ptrmap.ContainsKey(modulePtr))
+            if (!this.map.HasPtr(modulePtr))
             {
                 return -1;
             }
             PythonModule module = (PythonModule)this.Retrieve(modulePtr);
-            if (this.ptrmap.ContainsKey(itemPtr))
+            if (this.map.HasPtr(itemPtr))
             {
                 ScriptScope moduleScope = this.GetModuleScriptScope(module);
                 moduleScope.SetVariable(name, this.Retrieve(itemPtr));
@@ -259,7 +259,7 @@ namespace Ironclad
 
             object klass = moduleScope.GetVariable<object>(name);
             Builtin.setattr(DefaultContext.Default, klass, "_typePtr", typePtr);
-            this.StoreUnmanagedData(typePtr, klass);
+            this.map.Associate(typePtr, klass);
         }
 
         private void 

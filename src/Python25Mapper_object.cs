@@ -24,7 +24,7 @@ namespace Ironclad
         {
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetMethodFP("PyBaseObject_Dealloc"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_free", this.GetAddress("PyObject_Free"));
-            this.StoreUnmanagedData(address, TypeCache.Object);
+            this.map.Associate(address, TypeCache.Object);
         }
         
         
