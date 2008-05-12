@@ -3,6 +3,8 @@ import os
 import unittest
 from tests.utils.runtest import makesuite, run
 
+from tests.utils.gc import gcwait
+
 from Ironclad import AddressGetterDelegate, DataSetterDelegate, Unmanaged, StubReference
 from System import IntPtr
 
@@ -34,6 +36,19 @@ class StubReferenceTest(unittest.TestCase):
         self.assertEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library not unmapped on dispose")
 
+        sr.Dispose()
+        # safe to call Dispose twice
+        
+        
+    def testUnampsAutomagically(self):
+        sr = StubReference(os.path.join("build", "python25.dll"))
+        self.assertNotEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
+                          "library not mapped by construction")
+        del sr
+        gcwait()
+        self.assertEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
+                          "library not unmapped on finalize")
+        
 
 
 suite = makesuite(StubReferenceTest)

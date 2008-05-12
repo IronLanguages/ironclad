@@ -49,9 +49,9 @@ class Python25MapperTest(unittest.TestCase):
         frees = []
         mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
         
-        objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        objPtr = mapper.Store(object())
         CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 0)
-        mapper.StoreUnmanagedInstance(objPtr, object())
+        
         mapper.PyObject_Free(objPtr)
         self.assertEquals(frees, [objPtr], "didn't actually release memory")
         
@@ -256,7 +256,28 @@ class Python25Mapper_GetMethodFP_Test(unittest.TestCase):
         for method in methods:
             self.assertGetMethodFPWorks(method)
 
+
+
+class Python25Mapper_Destruction_Test(unittest.TestCase):
+    # For now, just free all the memory we have allocated - don't feel like
+    # trying to implement a CPython GC-alike to determine a safe order in
+    # which to call destructors.
     
+    def testDestructorFreesEverything(self):
+        frees = []
+        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
+        deallocTypes = CreateTypes(mapper)
+        ptr1 = mapper.Store("hullo")
+        ptr2 = mapper.Store(123)
+        ptr3 = mapper.Store(object())
+        
+        del mapper
+        gcwait()
+        self.assertEquals(set(frees), set([ptr1, ptr2, ptr3]), "wrong frees")
+        deallocTypes()
+
+
+
 class Python25Mapper_NoneTest(unittest.TestCase):
     
     def testFillNone(self):
@@ -287,6 +308,7 @@ class Python25Mapper_NoneTest(unittest.TestCase):
 suite = makesuite(
     Python25MapperTest,
     Python25Mapper_GetMethodFP_Test,
+    Python25Mapper_Destruction_Test,
     Python25Mapper_NoneTest,
 )
 

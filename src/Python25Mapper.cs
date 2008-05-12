@@ -23,24 +23,59 @@ namespace Ironclad
         IntPtr Alloc(int bytes);
         IntPtr Realloc(IntPtr old, int bytes);
         void Free(IntPtr address);
+        void FreeAll();
     }
     
-    public class HGlobalAllocator : IAllocator
+    public class HGlobalAllocator : StupidSet, IAllocator
     {
-        public IntPtr 
+        // in a desperate attempt to work around non-deterministic GC, in
+        // which our members may be finalized before we are, we inherit from
+        // StupidSet instead of just incorporating one.
+        
+        ~HGlobalAllocator()
+        {
+            this.FreeAll();
+        }
+        
+        public virtual IntPtr 
         Alloc(int bytes)
         {
-            return Marshal.AllocHGlobal(bytes);
+            IntPtr ptr = Marshal.AllocHGlobal(bytes);
+            this.Add(ptr);
+            return ptr;
         }
-        public IntPtr
-        Realloc(IntPtr old, int bytes)
+        
+        public virtual IntPtr
+        Realloc(IntPtr oldptr, int bytes)
         {
-            return Marshal.ReAllocHGlobal(old, (IntPtr)bytes);
+            IntPtr newptr = Marshal.ReAllocHGlobal(oldptr, (IntPtr)bytes);    
+            this.SetRemove(oldptr);        
+            this.Add(newptr);
+            return newptr;
         }
-        public void 
-        Free(IntPtr address)
+        
+        public virtual void 
+        Free(IntPtr ptr)
         {
-            Marshal.FreeHGlobal(address);
+            this.SetRemove(ptr);
+            Marshal.FreeHGlobal(ptr);
+        }
+        
+        public virtual void 
+        FreeAll()
+        {
+            object[] elements = this.ElementsArray;
+            foreach (object ptr in elements)
+            {
+                try
+                {
+                    this.Free((IntPtr)ptr);
+                }
+                catch (COMException)
+                {
+                    Console.WriteLine("Couldn't free; ignoring");
+                }
+            }
         }
     }
 

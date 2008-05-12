@@ -21,7 +21,6 @@ class Python25Mapper_PyMem_Malloc_Test(unittest.TestCase):
         
         resultPtr = mapper.PyMem_Malloc(123)
         self.assertEquals(allocs, [(resultPtr, 123)], "bad alloc")
-        Marshal.FreeHGlobal(resultPtr)
     
     
     def testPyMem_Malloc_Zero(self):
@@ -30,7 +29,6 @@ class Python25Mapper_PyMem_Malloc_Test(unittest.TestCase):
         
         resultPtr = mapper.PyMem_Malloc(0)
         self.assertEquals(allocs, [(resultPtr, 1)], "bad alloc")
-        Marshal.FreeHGlobal(resultPtr)
     
     
     def testPyMem_Malloc_Failure(self):

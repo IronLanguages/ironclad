@@ -21,6 +21,11 @@ namespace Ironclad
         {
             this.library = Unmanaged.LoadLibrary(dllPath);
         }
+        
+        ~StubReference()
+        {
+            this.Dispose();
+        }
     
         public void Init(AddressGetterDelegate addressGetter, DataSetterDelegate dataSetter)
         {

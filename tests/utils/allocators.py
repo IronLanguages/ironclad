@@ -1,21 +1,21 @@
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from Ironclad import IAllocator
+from Ironclad import HGlobalAllocator, IAllocator
 
 def GetAllocatingTestAllocator(allocsList, freesList):
-    class TestAllocator(IAllocator):
+    class TestAllocator(HGlobalAllocator):
         def Alloc(self, bytes):
-            ptr = Marshal.AllocHGlobal(bytes)
+            ptr = HGlobalAllocator.Alloc(self, bytes)
             allocsList.append((ptr, bytes))
             return ptr
-        def Realloc(self, ptr, bytes):
-            new = Marshal.ReAllocHGlobal(ptr, IntPtr(bytes))
-            freesList.append(ptr)
-            allocsList.append((new, bytes))
-            return new
+        def Realloc(self, oldptr, bytes):
+            newptr = HGlobalAllocator.Realloc(self, oldptr, bytes)
+            freesList.append(oldptr)
+            allocsList.append((newptr, bytes))
+            return newptr
         def Free(self, ptr):
             freesList.append(ptr)
-            Marshal.FreeHGlobal(ptr)
+            HGlobalAllocator.Free(self, ptr)
     return TestAllocator()
 
 def GetDoNothingTestAllocator(freesList):
@@ -24,4 +24,6 @@ def GetDoNothingTestAllocator(freesList):
             return IntPtr.Zero
         def Free(self, ptr):
             freesList.append(ptr)
+        def FreeAll(self):
+            pass
     return TestAllocator()
