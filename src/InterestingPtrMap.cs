@@ -4,28 +4,33 @@ using System.Collections.Generic;
 namespace Ironclad
 {
     
-    internal class StupidSet
+    public class StupidSet : Dictionary<object, string>
     {
-        private Dictionary<object, string> store = new Dictionary<object, string>();
-        
         public void Add(object obj)
         {
-            this.store[obj] = "stupid";
+            this[obj] = "stupid";
+        }
+        
+        public void SetRemove(object obj)
+        {
+            if (!this.Remove(obj))
+            {
+                throw new KeyNotFoundException();
+            }
         }
         
         public void RemoveIfPresent(object obj)
         {
-            if (this.store.ContainsKey(obj))
-            {
-                this.store.Remove(obj);
-            }
+            this.Remove(obj);
         }
         
-        public int Count
+        public object[] ElementsArray
         {
             get
             {
-                return this.store.Count;
+                object[] result = new object[this.Count];
+                this.Keys.CopyTo(result, 0);
+                return result;
             }
         }
     }

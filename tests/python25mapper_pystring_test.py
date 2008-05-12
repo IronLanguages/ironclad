@@ -106,7 +106,6 @@ class Python25Mapper_PyString_FromString_Test(PyString_TestCase):
         self.assertEquals(mapper.Retrieve(strPtr), testString, "failed to map pointer correctly")
         
         Marshal.FreeHGlobal(testData)
-        Marshal.FreeHGlobal(strPtr)
         deallocTypes()
 
 
@@ -135,7 +134,6 @@ class Python25Mapper_PyString_FromStringAndSize_Test(PyString_TestCase):
         self.assertEquals(strPtr2, strPtr, "did not remember already had this string")
         self.assertEquals(mapper.RefCount(strPtr), 2, "did not incref on store")
         
-        Marshal.FreeHGlobal(strPtr)
         deallocTypes()
 
 
@@ -157,7 +155,6 @@ class Python25Mapper_PyString_FromStringAndSize_Test(PyString_TestCase):
         self.assertStringObjectHasDataBytes(strPtr, testBytes)
         self.assertEquals(mapper.Retrieve(strPtr), testString, "failed to read string data")
         
-        Marshal.FreeHGlobal(strPtr)
         deallocTypes()
 
 
@@ -172,13 +169,11 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
         data = mapper.PyString_FromStringAndSize(IntPtr.Zero, 365)
         ptrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
         Marshal.WriteIntPtr(ptrPtr, data)
-        
         baseSize = Marshal.SizeOf(PyStringObject)
         self.assertEquals(allocs, [(data, 365 + baseSize)], "allocated wrong")
         self.assertEquals(mapper._PyString_Resize(ptrPtr, 2000000000), -1, "bad return on error")
         self.assertEquals(type(mapper.LastException), OutOfMemoryException, "wrong exception type")
         self.assertTrue(data in frees, "did not deallocate")
-        
         Marshal.FreeHGlobal(ptrPtr)
         deallocTypes()
 
@@ -206,7 +201,6 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
         self.assertEquals(allocs, [(strPtr, oldLength + baseSize)], "unexpected extra alloc")
         self.assertEquals(frees, [], "unexpected frees")
         
-        Marshal.FreeHGlobal(strPtr)
         Marshal.FreeHGlobal(ptrPtr)
         deallocTypes()
 
@@ -248,7 +242,6 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
             self.assertRaises(KeyError, lambda: mapper.RefCount(oldStrPtr))
         
         Marshal.FreeHGlobal(ptrPtr)
-        Marshal.FreeHGlobal(newStrPtr)
         deallocTypes()
             
 

@@ -1,7 +1,8 @@
 
 import unittest
-from tests.utils.memory import OffsetPtr
 from tests.utils.runtest import makesuite, run
+
+from tests.utils.memory import OffsetPtr
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal

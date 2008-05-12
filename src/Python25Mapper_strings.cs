@@ -62,7 +62,8 @@ namespace Ironclad
         }
         
         
-        public override IntPtr PyString_FromString(IntPtr stringData)
+        public override IntPtr 
+        PyString_FromString(IntPtr stringData)
         {
             IntPtr current = stringData;
             List<byte> bytesList = new List<byte>();

@@ -3,7 +3,6 @@ import clr
 import unittest
 from tests.utils.runtest import makesuite, run
 
-import tests.utils.loadassemblies
 
 def GetFailedImportTestSuite(name, e):
     class FailedImportTest(unittest.TestCase):

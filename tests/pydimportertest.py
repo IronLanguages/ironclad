@@ -2,6 +2,8 @@
 import unittest
 from tests.utils.runtest import makesuite, run
 
+from tests.utils.gc import gcwait
+
 from System import IntPtr
 
 from Ironclad import CPyMarshal, PydImporter, Unmanaged
@@ -30,6 +32,21 @@ class PydImporterTest(unittest.TestCase):
         self.assertEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                           "failed to unload on dispose")
 
+        pi.Dispose()
+        # safe to call twice
+    
+    
+    def testUnloadsAutomagically(self):
+        pi = PydImporter()
+        pi.Load("tests\\data\\setvalue.pyd")
+        del pi
+        gcwait()
+        self.assertEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
+                          "failed to unload on dispose")
+    
+    
+    
+    
 
 suite = makesuite(PydImporterTest)
 

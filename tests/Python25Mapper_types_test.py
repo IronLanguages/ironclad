@@ -78,7 +78,6 @@ class Python25Mapper_PyType_GenericAlloc_Test(unittest.TestCase):
             self.assertEquals(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
             zerosPtr = OffsetPtr(zerosPtr, 1)
 
-        Marshal.FreeHGlobal(allocs[0][0])
         deallocTypes()
         deallocType()
 
@@ -107,7 +106,6 @@ class Python25Mapper_PyType_GenericAlloc_Test(unittest.TestCase):
             self.assertEquals(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
             zerosPtr = OffsetPtr(zerosPtr, 1)
 
-        Marshal.FreeHGlobal(allocs[0][0])
         deallocTypes()
         deallocType()
 

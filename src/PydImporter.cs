@@ -20,6 +20,11 @@ namespace Ironclad
             this.handles = new List<IntPtr>();
         }
         
+        ~PydImporter()
+        {
+            this.Dispose();
+        }
+        
         public void Load(string path)
         {
             IntPtr l = Unmanaged.LoadLibrary(path);
@@ -36,6 +41,7 @@ namespace Ironclad
             {
                 Unmanaged.FreeLibrary(l);
             }
+            this.handles.Clear();
         }
     }
 
