@@ -1,8 +1,8 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.memory import OffsetPtr
+from tests.utils.testcase import TestCase
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -10,7 +10,7 @@ from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, CPython_initproc_Delegate
 from Ironclad.Structs import PyObject, PyTypeObject
 
-class CPyMarshalTest_32(unittest.TestCase):
+class CPyMarshalTest_32(TestCase):
 
     def testProperties(self):
         self.assertEquals(CPyMarshal.IntSize, 4, "wrong")

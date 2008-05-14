@@ -1,13 +1,13 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
+from tests.utils.testcase import TestCase
 
 from textwrap import dedent
 
 from tools.stubmaker import StubMaker
 
 
-class StubMakerInitTest(unittest.TestCase):
+class StubMakerInitTest(TestCase):
 
     def testInitEmpty(self):
         sm = StubMaker()
@@ -36,7 +36,7 @@ class StubMakerInitTest(unittest.TestCase):
                           'moved data symbols unexpectedly')
 
 
-class StubMakerGenerateCTest(unittest.TestCase):
+class StubMakerGenerateCTest(TestCase):
 
     def testGenerateCWritesBareMinimum(self):
         sm = StubMaker()
@@ -85,7 +85,7 @@ class StubMakerGenerateCTest(unittest.TestCase):
 
 
 
-class StubMakerGenerateAsmTest(unittest.TestCase):
+class StubMakerGenerateAsmTest(TestCase):
 
     def testGenerateAsmCreatesLabelsForNonOverriddenFunctions(self):
         sm = StubMaker()

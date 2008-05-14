@@ -1,8 +1,8 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.memory import CreateTypes
+from tests.utils.testcase import TestCase
 
 from System import Int64
 
@@ -10,7 +10,7 @@ from Ironclad import CPyMarshal, Python25Mapper
 from Ironclad.Structs import PyObject
 
 
-class Python25Mapper_PyInt_Test(unittest.TestCase):
+class Python25Mapper_PyInt_Test(TestCase):
 
     def testStoreInt(self):
         mapper = Python25Mapper()
@@ -22,6 +22,7 @@ class Python25Mapper_PyInt_Test(unittest.TestCase):
             self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyInt_Type, "bad type")
             mapper.DecRef(ptr)
             
+        mapper.Dispose()
         deallocTypes()
     
     
@@ -34,7 +35,8 @@ class Python25Mapper_PyInt_Test(unittest.TestCase):
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
             self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyInt_Type, "bad type")
             mapper.DecRef(ptr)
-            
+                
+        mapper.Dispose()
         deallocTypes()
     
     def testPyInt_FromSsize_t(self):
@@ -46,7 +48,8 @@ class Python25Mapper_PyInt_Test(unittest.TestCase):
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
             self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyInt_Type, "bad type")
             mapper.DecRef(ptr)
-            
+                
+        mapper.Dispose()
         deallocTypes()
 
 
@@ -58,11 +61,12 @@ class Python25Mapper_PyInt_Test(unittest.TestCase):
             ptr = mapper.PyInt_FromLong(value)
             self.assertEquals(mapper.PyInt_AsLong(ptr), value, "failed to map back")
             self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyInt_Type, "bad type")
-            
+                
+        mapper.Dispose()
         deallocTypes()
         
 
-class Python25Mapper_PyLong_Test(unittest.TestCase):
+class Python25Mapper_PyLong_Test(TestCase):
 
     def testStoreLong(self):
         mapper = Python25Mapper()
@@ -73,7 +77,8 @@ class Python25Mapper_PyLong_Test(unittest.TestCase):
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
             self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
             mapper.DecRef(ptr)
-            
+                
+        mapper.Dispose()
         deallocTypes()
     
     def testPyLong_FromLongLong(self):
@@ -84,11 +89,12 @@ class Python25Mapper_PyLong_Test(unittest.TestCase):
             ptr = mapper.PyLong_FromLongLong(value)
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
             self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
-            
+                
+        mapper.Dispose()
         deallocTypes()
 
 
-class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):
+class Python25Mapper_PyFloat_FromDouble_Test(TestCase):
 
     def testStoreFloat(self):
         mapper = Python25Mapper()
@@ -99,7 +105,8 @@ class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
             self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyFloat_Type, "bad type")
             mapper.DecRef(ptr)
-            
+                
+        mapper.Dispose()
         deallocTypes()
     
     
@@ -112,7 +119,8 @@ class Python25Mapper_PyFloat_FromDouble_Test(unittest.TestCase):
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
             self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyFloat_Type, "bad type")
             mapper.DecRef(ptr)
-            
+                
+        mapper.Dispose()
         deallocTypes()
 
 

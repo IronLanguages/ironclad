@@ -1,13 +1,13 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
+from tests.utils.testcase import TestCase
 
 from System.Threading import Thread, ThreadStart
 
 from Ironclad import Python25Mapper
 
 
-class Python25Mapper_PyThread_functions_Test(unittest.TestCase):
+class Python25Mapper_PyThread_functions_Test(TestCase):
 
     def testAllocateAndFreeLocks(self):
         mapper = Python25Mapper()
@@ -26,7 +26,8 @@ class Python25Mapper_PyThread_functions_Test(unittest.TestCase):
         self.assertRaises(KeyError, lambda: mapper.Retrieve(lockPtr1))
 
         mapper.PyThread_free_lock(lockPtr2)
-        self.assertRaises(KeyError, lambda: mapper.Retrieve(lockPtr2))
+        self.assertRaises(KeyError, lambda: mapper.Retrieve(lockPtr2))    
+        mapper.Dispose()
 
 
     def testAcquireAndReleaseLocksWithWait(self):
@@ -58,7 +59,8 @@ class Python25Mapper_PyThread_functions_Test(unittest.TestCase):
 
         mapper.PyThread_release_lock(lockPtr2)
         Thread.Sleep(100)
-        self.assertEquals(acquired, set([lockPtr1, lockPtr2]), "release failed")
+        self.assertEquals(acquired, set([lockPtr1, lockPtr2]), "release failed")    
+        mapper.Dispose()
 
 
     def testAcquireAndReleaseLocksWithNoWait(self):
@@ -98,7 +100,8 @@ class Python25Mapper_PyThread_functions_Test(unittest.TestCase):
         t2.Start()
         Thread.Sleep(100)
 
-        self.assertEquals(acquired, set([lockPtr1, lockPtr2]), "acquires failed")
+        self.assertEquals(acquired, set([lockPtr1, lockPtr2]), "acquires failed")    
+        mapper.Dispose()
 
 
 suite = makesuite(

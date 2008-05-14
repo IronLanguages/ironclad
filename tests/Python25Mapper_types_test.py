@@ -1,10 +1,10 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.cpython import MakeTypePtr
 from tests.utils.memory import OffsetPtr, CreateTypes
+from tests.utils.testcase import TestCase
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -12,7 +12,7 @@ from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, PythonMapper, Python25Mapper
 from Ironclad.Structs import PyObject
 
-class Python25Mapper_Types_Test(unittest.TestCase):
+class Python25Mapper_Types_Test(TestCase):
     
     def testTypeMappings(self):
         types = {
@@ -31,7 +31,8 @@ class Python25Mapper_Types_Test(unittest.TestCase):
         
         for (k, v) in types.items():
             self.assertEquals(mapper.Retrieve(getattr(mapper, k)), v, "failed to map " + k)
-            
+             
+        mapper.Dispose()
         deallocTypes()
     
     
@@ -47,12 +48,13 @@ class Python25Mapper_Types_Test(unittest.TestCase):
         
         self.assertFalse(mapper.PyType_IsSubtype(mapper.PyString_Type, mapper.PyList_Type), "wrong")
         self.assertFalse(mapper.PyType_IsSubtype(mapper.PyList_Type, mapper.PyString_Type), "wrong")
-        
+         
+        mapper.Dispose()
         deallocTypes()
         
                 
         
-class Python25Mapper_PyType_GenericAlloc_Test(unittest.TestCase):
+class Python25Mapper_PyType_GenericAlloc_Test(TestCase):
 
     def testNoItems(self):
         allocs = []
@@ -77,7 +79,8 @@ class Python25Mapper_PyType_GenericAlloc_Test(unittest.TestCase):
         for i in range(32 - headerSize):
             self.assertEquals(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
             zerosPtr = OffsetPtr(zerosPtr, 1)
-
+ 
+        mapper.Dispose()
         deallocTypes()
         deallocType()
 
@@ -105,12 +108,13 @@ class Python25Mapper_PyType_GenericAlloc_Test(unittest.TestCase):
         for i in range(224 - headerSize):
             self.assertEquals(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
             zerosPtr = OffsetPtr(zerosPtr, 1)
-
+ 
+        mapper.Dispose()
         deallocTypes()
         deallocType()
 
 
-class Python25Mapper_PyType_GenericNew_Test(unittest.TestCase):
+class Python25Mapper_PyType_GenericNew_Test(TestCase):
 
     def testCallsTypeAllocFunction(self):
         mapper = Python25Mapper()
@@ -129,7 +133,8 @@ class Python25Mapper_PyType_GenericNew_Test(unittest.TestCase):
         result = mapper.PyType_GenericNew(typePtr, IntPtr(222), IntPtr(333))
         self.assertEquals(result, IntPtr(999), "did not use type's tp_alloc function")
         self.assertEquals(calls, [(typePtr, 0)], "passed wrong args")
-        
+         
+        mapper.Dispose()
         deallocTypes()
         deallocType()
         

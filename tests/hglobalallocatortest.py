@@ -1,13 +1,13 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
+from tests.utils.testcase import TestCase
 
 from Ironclad import CPyMarshal, HGlobalAllocator
 
 
 REASONABLE_SIZE = 8192
 
-class HGlobalAllocatorTest(unittest.TestCase):
+class HGlobalAllocatorTest(TestCase):
     
     def testAllocFree(self):
         allocator = HGlobalAllocator()

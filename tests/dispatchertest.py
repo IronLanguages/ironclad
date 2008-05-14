@@ -1,6 +1,6 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
+from tests.utils.testcase import TestCase
 
 from System import IntPtr, NullReferenceException
 
@@ -12,12 +12,13 @@ def GetDispatcherClass(mapper):
     return moduleScope.GetVariable[object]("Dispatcher")
 
 
-class DispatcherTest(unittest.TestCase):
+class DispatcherTest(TestCase):
     
     def testMapperCreatesModuleContainingDispatcher(self):
         mapper = Python25Mapper()
         Dispatcher = GetDispatcherClass(mapper)
         self.assertNotEquals(Dispatcher, None, "failed to locate Dispatcher")
+        mapper.Dispose()
         
     
     def assertDispatcherUtilityMethod(self, methodname, args, expectedCalls, exceptionSet=None, exceptionAfter=None, expectedExceptionClass=None):
@@ -42,6 +43,7 @@ class DispatcherTest(unittest.TestCase):
             callmethod()
         self.assertEquals(mockMapper.calls, expectedCalls, 'unexpected behaviour')
         self.assertEquals(mockMapper.LastException, exceptionAfter, 'unexpected exception set after call')
+        realMapper.Dispose()
         
     
     def testCleanup(self):
@@ -89,7 +91,7 @@ KWARGS_PTR = IntPtr(333)
 ARG = object()
 ARG_PTR = IntPtr(444)
 
-class DispatcherDispatchTestCase(unittest.TestCase):
+class DispatcherDispatchTestCase(TestCase):
     
     def getPatchedDispatcher(self, realMapper, callables, calls, _maybe_raise):
         test = self
@@ -134,6 +136,7 @@ class DispatcherDispatchTestCase(unittest.TestCase):
         
         method = getattr(dispatcher, methodname)
         self.assertEquals(method('dgt', *args, **kwargs), RESULT, "unexpected result")
+        mapper.Dispose()
         return calls
     
     
@@ -148,6 +151,7 @@ class DispatcherDispatchTestCase(unittest.TestCase):
         
         method = getattr(dispatcher, methodname)
         self.assertRaises(ValueError, lambda: method('dgt', *args, **kwargs))
+        mapper.Dispose()
         return calls
 
 
@@ -315,6 +319,7 @@ class DispatcherSelfargTest(DispatcherDispatchTestCase):
             ('Retrieve', (RESULT_PTR,)),
             ('_cleanup', (RESULT_PTR,))
         ])
+        mapper.Dispose()
         
     def testDispatch_method_selfarg_errorHandlerError(self):
         mapper = Python25Mapper()
@@ -335,6 +340,7 @@ class DispatcherSelfargTest(DispatcherDispatchTestCase):
             ('ErrorHandler', (RESULT_PTR,)),
             ('_cleanup', (RESULT_PTR,))
         ])
+        mapper.Dispose()
     
 
     
@@ -454,6 +460,7 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
             ('StoreUnmanagedInstance', (RESULT_PTR, result))
         ])
+        mapper.Dispose()
     
     def testDispatch_construct_error(self):
         class klass(object):
@@ -479,6 +486,7 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
             ('_maybe_raise', (RESULT_PTR,)),
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
         ])
+        mapper.Dispose()
 
         
 class DispatcherInitTest(DispatcherDispatchTestCase):
@@ -505,6 +513,7 @@ class DispatcherInitTest(DispatcherDispatchTestCase):
             ('dgt', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
         ])
+        mapper.Dispose()
     
     def testDispatch_init_error(self):
         class klass(object):
@@ -526,8 +535,31 @@ class DispatcherInitTest(DispatcherDispatchTestCase):
             ('dgt', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
         ])
+        mapper.Dispose()
     
     
+class DispatcherDeleteTest(DispatcherDispatchTestCase):
+    
+    def testDispatchDelete(self):
+        class klass(object):
+            pass
+        instance = klass()
+        instance._instancePtr = INSTANCE_PTR
+        
+        mapper = Python25Mapper()
+        calls = []
+        callables = {
+            'dgt': FuncReturning(None, calls, 'dgt'),
+        }
+        
+        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
+        dispatcher.delete('dgt', instance)
+        self.assertEquals(calls, [
+            ('dgt', (INSTANCE_PTR, )),
+        ])
+        mapper.Dispose()
+        
+        
 
 
 suite  = makesuite(
@@ -539,6 +571,7 @@ suite  = makesuite(
     DispatcherKwargsTest, 
     DispatcherConstructTest,
     DispatcherInitTest,
+    DispatcherDeleteTest,
 )
 
 if __name__ == '__main__':

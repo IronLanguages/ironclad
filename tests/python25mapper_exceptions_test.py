@@ -1,13 +1,13 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
+from tests.utils.testcase import TestCase
 
 import System
 from System import IntPtr
 from Ironclad import Python25Mapper
 
 
-class Python25Mapper_Exception_Test(unittest.TestCase):
+class Python25Mapper_Exception_Test(TestCase):
 
     def testException(self):
         mapper = Python25Mapper()
@@ -18,6 +18,7 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
                           "get should retrieve last set exception")
         self.assertEquals(mapper.LastException.Message, "doozy",
                           "get should retrieve last set exception")
+        mapper.Dispose()
 
 
     def testPyErr_SetString_WithNull(self):
@@ -30,6 +31,7 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
                           "failed to set exception")
         self.assertEquals(mapper.LastException.Message, msg,
                           "set wrong exception message")
+        mapper.Dispose()
 
 
     def assertSetStringSetsCorrectError(self, name):
@@ -46,6 +48,7 @@ class Python25Mapper_Exception_Test(unittest.TestCase):
             self.assertEquals(str(e), msg, "wrong message")
         else:
             self.fail("got no exception")
+        mapper.Dispose()
         
 
     def testSetsMostErrors(self):

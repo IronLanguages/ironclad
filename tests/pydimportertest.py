@@ -1,6 +1,6 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
+from tests.utils.testcase import TestCase
 
 from tests.utils.gc import gcwait
 
@@ -9,7 +9,7 @@ from System import IntPtr
 from Ironclad import CPyMarshal, PydImporter, Unmanaged
 
 
-class PydImporterTest(unittest.TestCase):
+class PydImporterTest(TestCase):
 
     def testCallsAppropriatelyNamedInitFunctionAndUnloadsWhenDone(self):
         l = Unmanaged.LoadLibrary("tests\\data\\setvalue.pyd")

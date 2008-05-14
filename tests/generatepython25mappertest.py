@@ -2,9 +2,9 @@
 import os
 import shutil
 import tempfile
-import unittest
 from tests.utils.process import spawn
 from tests.utils.runtest import makesuite, run
+from tests.utils.testcase import TestCase
 
 def write(name, text):
     f = open(name, 'w')
@@ -21,7 +21,7 @@ def read(name):
         f.close()
 
 
-class GeneratePython25MapperTest(unittest.TestCase):
+class GeneratePython25MapperTest(TestCase):
 
     def testCreatesPython25MapperComponents(self):
         tempDir = tempfile.gettempdir()

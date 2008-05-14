@@ -23,6 +23,13 @@ namespace Ironclad
     public partial class Python25Mapper : PythonMapper
     {
 
+        public void 
+        LoadModule(string path)
+        {
+            this.importer.Load(path);
+        }
+
+
         private void
         ExecInModule(string code, PythonModule module)
         {
@@ -235,9 +242,9 @@ namespace Ironclad
             StringBuilder classCode = new StringBuilder();
             string tablePrefix = name + ".";
 
-            string tp_name = CPyMarshal.ReadCStringField(typePtr, typeof(PyTypeObject), "tp_name");
             string __name__ = null;
-            string __module__ = null; ;
+            string __module__ = null;
+            string tp_name = CPyMarshal.ReadCStringField(typePtr, typeof(PyTypeObject), "tp_name");
             this.ExtractNameModule(tp_name, ref __name__, ref __module__);
             
             string __doc__ = CPyMarshal.ReadCStringField(typePtr, typeof(PyTypeObject), "tp_doc").Replace("\\", "\\\\");
@@ -245,10 +252,11 @@ namespace Ironclad
 
             ScriptScope moduleScope = this.GetModuleScriptScope(module);
             object _dispatcher = moduleScope.GetVariable<object>("_dispatcher");
-            
             DispatchTable methodTable = (DispatchTable)Builtin.getattr(DefaultContext.Default, _dispatcher, "table");
+            
             this.ConnectTypeField(typePtr, tablePrefix, "tp_new", methodTable, typeof(PyType_GenericNew_Delegate));
             this.ConnectTypeField(typePtr, tablePrefix, "tp_init", methodTable, typeof(CPython_initproc_Delegate));
+            this.ConnectTypeField(typePtr, tablePrefix, "tp_dealloc", methodTable, typeof(CPython_destructor_Delegate));
             
             IntPtr methodsPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_methods");
             this.GenerateMethods(classCode, methodsPtr, methodTable, tablePrefix);

@@ -1,9 +1,9 @@
 
 import os
 import tempfile
-import unittest
 from textwrap import dedent
 from tests.utils.runtest import makesuite, run
+from tests.utils.testcase import TestCase
 
 from System import IntPtr
 
@@ -13,6 +13,7 @@ from Ironclad import (
 )
 
 from TestUtils import ExecUtils
+
 
 bz2_doc = """The python bz2 module provides a comprehensive interface for
 the bz2 compression library. It implements a complete file
@@ -46,54 +47,26 @@ bz2_test_line = "I wonder why. I wonder why. I wonder why I wonder why.\n"
 bz2_test_text_lines = bz2_test_line * 1000
 
 
-class FunctionalityTest(unittest.TestCase):
-
-    def testCanCallbackIntoManagedCode(self):
-        params = []
-        class MyPM(PythonMapper):
-            def Py_InitModule4(self, name, methods, doc, _self, apiver):
-                params.append((name, methods, doc, _self, apiver))
-                return IntPtr.Zero
-
-        pm = MyPM()
-        sr = StubReference(os.path.join("build", "python25.dll"))
-        try:
-            sr.Init(AddressGetterDelegate(pm.GetAddress), DataSetterDelegate(pm.SetData))
-            pi = PydImporter()
-            pi.Load("C:\\Python25\\Dlls\\bz2.pyd")
-            try:
-                name, methods, doc, _self, apiver = params[0]
-                self.assertEquals(name, "bz2", "wrong name")
-                self.assertNotEquals(methods, IntPtr.Zero, "expected some actual methods here")
-                self.assertTrue(doc.startswith("The python bz2 module provides a comprehensive interface for\n"),
-                                "wrong docstring")
-                self.assertEquals(_self, IntPtr.Zero, "expected null pointer")
-                self.assertEquals(apiver, 1013, "yep, python25")
-            finally:
-                pi.Dispose()
-        finally:
-            sr.Dispose()
-
+class FunctionalityTest(TestCase):
 
     def assertWorksWithModule(self, path, name, testCode):
-        mapper = Python25Mapper()
-        sr = StubReference(os.path.join("build", "python25.dll"))
+        mapper = Python25Mapper(os.path.join("build", "python25.dll"))
         try:
-            sr.Init(AddressGetterDelegate(mapper.GetAddress), DataSetterDelegate(mapper.SetData))
-            pi = PydImporter()
-            pi.Load(path)
             try:
+                mapper.LoadModule(path)
                 ExecUtils.Exec(mapper.Engine, "import %s\n%s" % (name, testCode))
-            finally:
-                pi.Dispose()
+            except Exception, e:
+                print "BOOM!"
+                print e
+                print e.clsException.StackTrace
+                raise
         finally:
-            sr.Dispose()
+            mapper.Dispose()
         
 
 
     def assertWorksWithBZ2(self, testCode):
         self.assertWorksWithModule("C:\\Python25\\Dlls\\bz2.pyd", "bz2", testCode)
-            
 
 
     def testCanCreateIronPythonBZ2ModuleWithMethodsAndDocstrings(self):
@@ -166,6 +139,25 @@ class FunctionalityTest(unittest.TestCase):
             assert text == %r
             """) % (bz2_test_data, bz2_test_text)
         )
+
+
+    def testBZ2HeavyUse(self):
+        self.assertWorksWithBZ2(dedent("""
+            COUNT = 150
+            compressors = [bz2.BZ2Compressor() for _ in range(COUNT)]
+            decompressors = [bz2.BZ2Decompressor() for _ in range(COUNT)]
+            
+            current = %r
+            for i in range(COUNT):
+                current = decompressors[-i].decompress(
+                    compressors[i].compress(current[:i * 40]) + 
+                    compressors[i].compress(current[i * 40:]) + 
+                    compressors[i].flush())
+            
+            assert current == %r
+            """) % (bz2_test_text, bz2_test_text)
+        )
+        
 
     def testBZ2FileRead(self):
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")

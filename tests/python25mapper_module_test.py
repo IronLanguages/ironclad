@@ -1,38 +1,27 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
 
-from tests.utils.cpython import DELEGATE_TYPES, MakeItemsTablePtr, MakeMethodDef, MakeTypePtr
+from tests.utils.cpython import MakeItemsTablePtr, MakeMethodDef, MakeTypePtr
+from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
-from tests.utils.python25mapper import TempPtrCheckingPython25Mapper, MakeAndAddEmptyModule
+from tests.utils.python25mapper import TempPtrCheckingPython25Mapper, MakeAndAddEmptyModule, ModuleWrapper
+from tests.utils.testcase import TestCase
 
 import System
-from System import IntPtr, NullReferenceException
+from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import (
-    CPyMarshal, CPython_initproc_Delegate, CPythonSelfFunction_Delegate, CPythonVarargsFunction_Delegate, 
-    CPythonVarargsKwargsFunction_Delegate, PythonMapper, Python25Mapper
+    CPyMarshal, CPython_destructor_Delegate, CPython_initproc_Delegate, HGlobalAllocator,
+    PythonMapper, Python25Mapper
 )
-from Ironclad.Structs import METH, Py_TPFLAGS, PyMethodDef, PyObject, PyTypeObject
+from Ironclad.Structs import METH, Py_TPFLAGS, PyObject
 
 from TestUtils import ExecUtils
 
 
 class BorkedException(System.Exception):
     pass
-
-
-class ModuleWrapper(object):
-    def __init__(self, engine, module):
-        self.moduleScope = engine.CreateScope(module.Scope.Dict)
-    def __getattr__(self, name):
-        return self.moduleScope.GetVariable[object](name)
-    def __setattr__(self, name, value):
-        if name == 'moduleScope':
-            self.__dict__['moduleScope'] = value
-            return
-        self.moduleScope.SetVariable(name, value)
 
 
 INSTANCE_PTR = IntPtr(111)
@@ -48,7 +37,7 @@ Null_CPythonVarargsKwargsFunction = lambda _, __, ___: IntPtr.Zero
 
 
 
-class Python25Mapper_Py_InitModule4_SetupTest(unittest.TestCase):
+class Python25Mapper_Py_InitModule4_SetupTest(TestCase):
         
     def testNewModuleHasDispatcher(self):
         mapper = Python25Mapper()
@@ -61,10 +50,10 @@ class Python25Mapper_Py_InitModule4_SetupTest(unittest.TestCase):
         
         self.assertEquals(isinstance(_dispatcher, Dispatcher), True, "wrong dispatcher class")
         self.assertEquals(_dispatcher.mapper, mapper, "dispatcher had wrong mapper")
-        mapper.DecRef(modulePtr)
+        mapper.Dispose()
         
 
-class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
+class Python25Mapper_Py_InitModule4_Test(TestCase):
 
     def assert_Py_InitModule4_withSingleMethod(self, mapper, methodDef, TestModule):
         methods, deallocMethods = MakeItemsTablePtr([methodDef])
@@ -84,9 +73,8 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
                               True, "%s didn't match" % item)
         TestModule(test_module, mapper)
         
+        mapper.Dispose()
         deallocMethods()
-        mapper.FreeTemps()
-        mapper.DecRef(modulePtr)
 
 
     def test_Py_InitModule4_CreatesPopulatedModule(self):
@@ -105,6 +93,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
                               'function docstring not remembered')
 
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
+        mapper.Dispose()
         deallocMethod()
         
 
@@ -121,6 +110,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             self.assertEquals(module.func(), result, "didn't use correct _dispatcher method")
         
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
+        mapper.Dispose()
         deallocMethod()
 
 
@@ -139,6 +129,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             self.assertEquals(module.func(actualArg), result, "didn't use correct _dispatcher method")
         
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
+        mapper.Dispose()
         deallocMethod()
 
 
@@ -157,6 +148,7 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             self.assertEquals(module.func(*actualArgs), result, "didn't use correct _dispatcher method")
         
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
+        mapper.Dispose()
         deallocMethod()
 
 
@@ -177,16 +169,18 @@ class Python25Mapper_Py_InitModule4_Test(unittest.TestCase):
             self.assertEquals(module.func(*actualArgs, **actualKwargs), result, "didn't use _ironclad_dispatch_kwargs")
         
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
+        mapper.Dispose()
         deallocMethod()
         
 
 
-class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
+class Python25Mapper_PyModule_AddObject_Test(TestCase):
 
     def testAddObjectToUnknownModuleFails(self):
         mapper = Python25Mapper()
         self.assertEquals(mapper.PyModule_AddObject(IntPtr.Zero, "zorro", IntPtr.Zero), -1,
                           "bad return on failure")
+        mapper.Dispose()
 
 
     def testAddObjectWithExistingReferenceAddsMappedObjectAndDecRefsPointer(self):
@@ -200,7 +194,7 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
         self.assertEquals(result, 0, "bad value for success")
         self.assertRaises(KeyError, lambda: mapper.RefCount(testPtr))
         self.assertEquals(moduleScope.GetVariable[object]("testObject"), testObject, "did not store real object")
-        mapper.DecRef(modulePtr)
+        mapper.Dispose()
 
 
     def assertAddsTypeWithData(self, tp_name, itemName, class__module__, class__name__, class__doc__):
@@ -227,9 +221,9 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
         self.assertEquals(mappedClass.__name__, class__name__, "unexpected __name__")
         self.assertEquals(mappedClass.__module__, class__module__, "unexpected __module__")
         
+        mapper.Dispose()
         deallocType()
         deallocTypes()
-        mapper.DecRef(modulePtr)
 
 
     def testAddModule(self):
@@ -249,9 +243,46 @@ class Python25Mapper_PyModule_AddObject_Test(unittest.TestCase):
         )
 
 
-class Python25Mapper_PyModule_AddObject_DispatchTrickyMethodsTest(unittest.TestCase):
+class Python25Mapper_PyModule_AddObject_DispatchTrickyMethodsTest(TestCase):
 
-    def testAddTypeObject_NewInitDispatch(self):
+    def testAddTypeObject_NewInitDelTablePopulation(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        modulePtr = MakeAndAddEmptyModule(mapper)
+        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
+        
+        calls = []
+        def test_tp_new(_, __, ___):
+            calls.append("tp_new")
+            return IntPtr(123)
+        def test_tp_init(_, __, ___):
+            calls.append("tp_init")
+            return 0
+        def test_tp_dealloc(_):
+            calls.append("tp_dealloc")
+            
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_new": test_tp_new,
+            "tp_init": test_tp_init,
+            "tp_dealloc": test_tp_dealloc,
+        }
+        typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
+        mapper.PyModule_AddObject(modulePtr, "klass", typePtr)
+        
+        table = module._dispatcher.table
+        table['klass.tp_new'](IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)
+        table['klass.tp_init'](IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)
+        table['klass.tp_dealloc'](IntPtr.Zero)
+        self.assertEquals(calls, ['tp_new', 'tp_init', 'tp_dealloc'], "not hooked up somewhere")
+        
+        mapper.Dispose()
+        deallocType()
+        deallocTypes()
+        
+
+    def testAddTypeObject_NewInitDelDispatch(self):
+        allocator = HGlobalAllocator()
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         modulePtr = MakeAndAddEmptyModule(mapper)
@@ -263,44 +294,57 @@ class Python25Mapper_PyModule_AddObject_DispatchTrickyMethodsTest(unittest.TestC
         typeSpec = {
             "tp_name": "klass",
             "tp_new": lambda _, __, ___: Raise("new unpatched"),
-            "tp_init": lambda _, __, ___: Raise("init unpatched")
+            "tp_init": lambda _, __, ___: Raise("init unpatched"),
+            "tp_dealloc": lambda _: Raise("dealloc unpatched"),
         }
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         mapper.PyModule_AddObject(modulePtr, "klass", typePtr)
         
         ARGS = (1, "two")
         KWARGS = {"three": 4}
-        instancePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
-        CPyMarshal.WriteIntField(instancePtr, PyTypeObject, 'ob_refcnt', 1)
-        CPyMarshal.WritePtrField(instancePtr, PyTypeObject, 'ob_type', mapper.PyType_Type)
+        instancePtr = allocator.Alloc(Marshal.SizeOf(PyObject))
+        CPyMarshal.WriteIntField(instancePtr, PyObject, 'ob_refcnt', 1)
+        CPyMarshal.WritePtrField(instancePtr, PyObject, 'ob_type', mapper.PyBaseObject_Type)
         
         calls = []
         def test_tp_new(typePtr_new, argsPtr, kwargsPtr):
-            calls.append(('tp_new', (typePtr_new, argsPtr, kwargsPtr)))
+            calls.append("tp_new")
             self.assertEquals(typePtr_new, typePtr, "wrong type")
             self.assertEquals(mapper.Retrieve(argsPtr), ARGS, "wrong args")
             self.assertEquals(mapper.Retrieve(kwargsPtr), KWARGS, "wrong kwargs")
             return instancePtr
         
         def test_tp_init(instancePtr_init, argsPtr, kwargsPtr):
-            calls.append(('tp_init', (instancePtr_init, argsPtr, kwargsPtr)))
-            self.assertEquals(instancePtr_init, instancePtr, "wrong init")
+            calls.append("tp_init")
+            self.assertEquals(instancePtr_init, instancePtr, "wrong instance")
             self.assertEquals(mapper.Retrieve(argsPtr), ARGS, "wrong args")
             self.assertEquals(mapper.Retrieve(kwargsPtr), KWARGS, "wrong kwargs")
             return 0
         
+        def test_tp_dealloc(instancePtr_dealloc):
+            calls.append("tp_dealloc")
+            self.assertEquals(instancePtr_dealloc, instancePtr, "wrong instance")
+            # finish the dealloc to avoid confusing mapper on shutdown
+            mapper.PyObject_Free(instancePtr_dealloc)
+            
         module._dispatcher.table['klass.tp_new'] = PythonMapper.PyType_GenericNew_Delegate(test_tp_new)
         module._dispatcher.table['klass.tp_init'] = CPython_initproc_Delegate(test_tp_init)
+        module._dispatcher.table['klass.tp_dealloc'] = CPython_destructor_Delegate(test_tp_dealloc)
         
         instance = module.klass(*ARGS, **KWARGS)
         self.assertEquals(instance._instancePtr, instancePtr, "wrong instance,")
+        self.assertEquals(calls, ['tp_new', 'tp_init'], 'wrong calls')
         
-        Marshal.FreeHGlobal(instancePtr)
+        del instance
+        gcwait()
+        self.assertEquals(calls, ['tp_new', 'tp_init', 'tp_dealloc'], 'wrong calls')
+        
+        mapper.Dispose()
         deallocType()
         deallocTypes()
         
 
-class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
+class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(TestCase):
 
     def assertAddTypeObject_withSingleMethod(self, mapper, methodDef, TestModule):
         deallocTypes = CreateTypes(mapper)
@@ -318,7 +362,6 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
         TestModule(module)
         
         deallocType()
-        mapper.DecRef(modulePtr)
         deallocTypes()
             
             
@@ -337,6 +380,7 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
             self.assertEquals(instance.method(), result, "didn't use correct _dispatcher method")
         
         self.assertAddTypeObject_withSingleMethod(mapper, method, TestModule)
+        mapper.Dispose()
         deallocMethod()
 
 
@@ -357,6 +401,7 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
             self.assertEquals(instance.method(arg), result, "didn't use correct _dispatcher method")
         
         self.assertAddTypeObject_withSingleMethod(mapper, method, TestModule)
+        mapper.Dispose()
         deallocMethod()
 
 
@@ -377,6 +422,7 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
             self.assertEquals(instance.method(*args), result, "didn't use correct _dispatcher method")
         
         self.assertAddTypeObject_withSingleMethod(mapper, method, TestModule)
+        mapper.Dispose()
         deallocMethod()
         
 
@@ -399,9 +445,11 @@ class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(unittest.TestCase):
             self.assertEquals(instance.method(*args, **kwargs), result, "didn't use correct _dispatcher method")
         
         self.assertAddTypeObject_withSingleMethod(mapper, method, TestModule)
+        mapper.Dispose()
         deallocMethod()
 
-class Python25Mapper_PyModule_AddObject_DispatchIterTest(unittest.TestCase):
+
+class Python25Mapper_PyModule_AddObject_DispatchIterTest(TestCase):
 
     def assertDispatchesToSelfTypeMethod(self, mapper, typeSpec, expectedKeyName,
                                          expectedMethodName, TestErrorHandler):
@@ -424,7 +472,6 @@ class Python25Mapper_PyModule_AddObject_DispatchIterTest(unittest.TestCase):
         module._dispatcher.method_selfarg = MockDispatchFunc
         
         self.assertEquals(getattr(instance, expectedMethodName)(), result, "bad return")
-        mapper.DecRef(modulePtr)
         deallocType()
         deallocTypes()
 
@@ -441,6 +488,7 @@ class Python25Mapper_PyModule_AddObject_DispatchIterTest(unittest.TestCase):
         }
         self.assertDispatchesToSelfTypeMethod(
             mapper, typeSpec, "tp_iter", "__iter__", TestErrorHandler)
+        mapper.Dispose()
 
 
     def testAddTypeObjectWith_tp_iternext_MethodDispatch(self):
@@ -459,6 +507,7 @@ class Python25Mapper_PyModule_AddObject_DispatchIterTest(unittest.TestCase):
         
         self.assertDispatchesToSelfTypeMethod(
             mapper, typeKwargs, "tp_iternext", "next", TestErrorHandler)
+        mapper.Dispose()
 
 
 suite = makesuite(

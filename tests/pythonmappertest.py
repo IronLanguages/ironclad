@@ -1,8 +1,8 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.memory import OffsetPtr
+from tests.utils.testcase import TestCase
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -83,7 +83,7 @@ TYPES = (
     "_PyWeakref_CallableProxyType",
 )
 
-class PythonMapperTest(unittest.TestCase):
+class PythonMapperTest(TestCase):
 
     def testDataSetterDoesNotWriteForUnrecognisedSymbols(self):
         pm = PythonMapper()
