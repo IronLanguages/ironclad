@@ -1,13 +1,13 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
+from tests.utils.testcase import TestCase
 
 from System import IntPtr
 
 from Ironclad.Structs import METH, PyMethodDef
 
 
-class Python25StructsTest(unittest.TestCase):
+class Python25StructsTest(TestCase):
 
     def testConstructPyMethodDef(self):
         pmd = PyMethodDef(

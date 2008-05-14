@@ -1,9 +1,9 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.memory import CreateTypes
+from tests.utils.testcase import TestCase
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -14,7 +14,7 @@ from Ironclad.Structs import PyObject, PyTypeObject
 
 
 
-class Python25MapperDictTest(unittest.TestCase):
+class Python25MapperDictTest(TestCase):
 
     def testPyDict_New(self):
         allocs = []
@@ -32,7 +32,7 @@ class Python25MapperDictTest(unittest.TestCase):
         mapper.DecRef(dictPtr)
         self.assertRaises(KeyError, lambda: mapper.RefCount(dictPtr))
         self.assertEquals(frees, [dictPtr], "did not release memory")
-        
+        mapper.Dispose()
         deallocTypes()
 
 
@@ -45,6 +45,7 @@ class Python25MapperDictTest(unittest.TestCase):
         self.assertEquals(mapper.PyDict_Size(dict0), 0, "wrong")
         self.assertEquals(mapper.PyDict_Size(dict3), 3, "wrong")
         
+        mapper.Dispose()
         deallocTypes()
 
 
@@ -59,7 +60,7 @@ class Python25MapperDictTest(unittest.TestCase):
         mapper.FreeTemps()
         self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
         
-        mapper.DecRef(dictPtr)
+        mapper.Dispose()
         deallocTypes()
 
 
@@ -72,7 +73,7 @@ class Python25MapperDictTest(unittest.TestCase):
         self.assertEquals(itemPtr, IntPtr.Zero, "bad return for missing key")
         self.assertEquals(mapper.LastException, None, "should not set exception")
         
-        mapper.DecRef(dictPtr)
+        mapper.Dispose()
         deallocTypes()
         
 
@@ -84,7 +85,7 @@ class Python25MapperDictTest(unittest.TestCase):
         dictPtr = mapper.Store({0: 1, 2: 3})
         self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), typeBlock, "wrong type")
         
-        mapper.DecRef(dictPtr)
+        mapper.Dispose()
         Marshal.FreeHGlobal(typeBlock)
 
 

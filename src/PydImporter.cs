@@ -13,12 +13,7 @@ namespace Ironclad
 
     public class PydImporter
     {
-        private List<IntPtr> handles;
-        
-        public PydImporter()
-        {
-            this.handles = new List<IntPtr>();
-        }
+        private List<IntPtr> handles = new List<IntPtr>();
         
         ~PydImporter()
         {

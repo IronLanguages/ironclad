@@ -1,15 +1,15 @@
 
 import os
-import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.gc import gcwait
+from tests.utils.testcase import TestCase
 
 from Ironclad import AddressGetterDelegate, DataSetterDelegate, Unmanaged, StubReference
 from System import IntPtr
 
 
-class StubReferenceTest(unittest.TestCase):
+class StubReferenceTest(TestCase):
 
     def testMapInitUnmapLibrary(self):
         self.assertEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,

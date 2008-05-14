@@ -1,8 +1,8 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.memory import CreateTypes, OffsetPtr
+from tests.utils.testcase import TestCase
 
 import os
 import tempfile
@@ -22,7 +22,7 @@ more text
 """
 
 
-class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
+class Python25Mapper_PyFile_Type_Test(TestCase):
 
     def testPyFile_Type(self):
         mapper = Python25Mapper()
@@ -33,6 +33,7 @@ class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
         self.assertEquals(mapper.PyFile_Type, typeBlock, "type address not stored")
         self.assertEquals(mapper.Retrieve(typeBlock), file, "type not mapped")
         
+        mapper.Dispose()
         Marshal.FreeHGlobal(typeBlock)
     
     
@@ -52,6 +53,7 @@ class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
                 mapper.DecRef(filePtr)
                 f.close()
         finally:
+            mapper.Dispose()
             deallocTypes()
     
     
@@ -77,8 +79,7 @@ class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
                 fclose(f)
         finally:
             Marshal.FreeHGlobal(buf)
-            mapper.DecRef(argsPtr)
-            mapper.DecRef(filePtr)
+            mapper.Dispose()
             
         deallocTypes()
 
@@ -113,9 +114,11 @@ class Python25Mapper_PyFile_Type_Test(unittest.TestCase):
 
         mgdF = open(path)
         try:
-            self.assertEquals(mgdF.read(), testStr, "failed to write")
+            result = mgdF.read()
+            self.assertEquals(result, testStr, "failed to write (got >>%s<<)" % result)
         finally:
             mgdF.close()
+        mapper.Dispose()
 
 
 suite = makesuite(

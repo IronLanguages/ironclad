@@ -2,7 +2,7 @@
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from Ironclad import (
-    CPyMarshal, CPython_initproc_Delegate, CPythonVarargsFunction_Delegate,
+    CPyMarshal, CPython_destructor_Delegate, CPython_initproc_Delegate, CPythonVarargsFunction_Delegate,
     CPythonVarargsKwargsFunction_Delegate, PythonMapper
 )
 from Ironclad.Structs import METH, Py_TPFLAGS, PyMethodDef, PyTypeObject
@@ -50,6 +50,8 @@ def GetMapperTypePtrDefaults(mapper):
         "ob_type": mapper.PyType_Type,
         "tp_alloc": mapper.PyType_GenericAlloc,
         "tp_new": mapper.PyType_GenericNew,
+        "tp_dealloc": mapper.PyBaseObject_Dealloc,
+        "tp_free": mapper.PyObject_Free,
     }
 
 PTR_ARGS = ("ob_type")
@@ -60,6 +62,8 @@ FUNC_ARGS = {
     "tp_alloc": PythonMapper.PyType_GenericAlloc_Delegate,
     "tp_new": PythonMapper.PyType_GenericNew_Delegate,
     "tp_init": CPython_initproc_Delegate,
+    "tp_dealloc": CPython_destructor_Delegate,
+    "tp_free": PythonMapper.PyObject_Free_Delegate,
     "tp_iter": PythonMapper.PyObject_GetIter_Delegate,
     "tp_iternext": PythonMapper.PyIter_Next_Delegate,
 }

@@ -1,9 +1,9 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.memory import CreateTypes, OffsetPtr
+from tests.utils.testcase import TestCase
 
 from System import GC, IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -13,7 +13,7 @@ from Ironclad.Structs import PyObject, PyListObject, PyTypeObject
 
 
 
-class Python25Mapper_PyList_Type_Test(unittest.TestCase):
+class Python25Mapper_PyList_Type_Test(TestCase):
 
     def testPyList_Type(self):
         mapper = Python25Mapper()
@@ -23,6 +23,7 @@ class Python25Mapper_PyList_Type_Test(unittest.TestCase):
         self.assertEquals(mapper.PyList_Type, typeBlock, "type address not stored")
         self.assertEquals(mapper.Retrieve(typeBlock), list, "type not mapped")
         
+        mapper.Dispose()
         Marshal.FreeHGlobal(typeBlock)
 
 
@@ -32,16 +33,17 @@ class Python25Mapper_PyList_Type_Test(unittest.TestCase):
             def PyList_Dealloc(self, listPtr):
                 calls.append(listPtr)
         
-        self.mapper = MyPM()
+        mapper = MyPM()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        self.mapper.SetData("PyList_Type", typeBlock)
+        mapper.SetData("PyList_Type", typeBlock)
         GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
 
         deallocDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_dealloc", CPython_destructor_Delegate)
         deallocDgt(IntPtr(12345))
         self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
         
+        mapper.Dispose()
         Marshal.FreeHGlobal(typeBlock)
 
 
@@ -51,16 +53,17 @@ class Python25Mapper_PyList_Type_Test(unittest.TestCase):
             def PyObject_Free(self, listPtr):
                 calls.append(listPtr)
         
-        self.mapper = MyPM()
+        mapper = MyPM()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        self.mapper.SetData("PyList_Type", typeBlock)
+        mapper.SetData("PyList_Type", typeBlock)
         GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
 
         freeDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_free", CPython_destructor_Delegate)
         freeDgt(IntPtr(12345))
         self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
             
+        mapper.Dispose()
         Marshal.FreeHGlobal(typeBlock)
             
         
@@ -93,6 +96,7 @@ class Python25Mapper_PyList_Type_Test(unittest.TestCase):
         self.assertEquals(calls, [listPtr], "did not call type's free function")
         mapper.PyObject_Free(listPtr)
         
+        mapper.Dispose()
         Marshal.FreeHGlobal(typeBlock)
         
         
@@ -110,11 +114,11 @@ class Python25Mapper_PyList_Type_Test(unittest.TestCase):
             self.assertEquals(mapper.RefCount(CPyMarshal.ReadPtr(dataStore)), 1, "bad refcount for items")
             dataStore = OffsetPtr(dataStore, CPyMarshal.PtrSize)
             
-        mapper.DecRef(listPtr)
+        mapper.Dispose()
         deallocTypes()
 
 
-class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
+class Python25Mapper_PyList_Functions_Test(TestCase):
     
     def testPyList_New_ZeroLength(self):
         allocs = []
@@ -132,7 +136,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         self.assertEquals(listStruct.allocated, 0, "bad allocated")
         self.assertEquals(mapper.Retrieve(listPtr), [], "mapped to wrong object")
         
-        mapper.DecRef(listPtr)
+        mapper.Dispose()
         deallocTypes()
     
     
@@ -160,7 +164,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
             self.assertEquals(CPyMarshal.ReadPtr(dataPtr), IntPtr.Zero, "failed to zero memory")
             dataPtr = OffsetPtr(dataPtr, CPyMarshal.PtrSize)
         
-        mapper.DecRef(listPtr)
+        mapper.Dispose()
         deallocTypes()
     
     
@@ -205,8 +209,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         self.assertEquals(mapper.RefCount(itemPtr2), 2, "wrong refcount newly-added item")
         self.assertEquals(mapper.Retrieve(listPtr), [item1, item2], "retrieved wrong list")
         
-        mapper.DecRef(itemPtr2)
-        mapper.DecRef(listPtr)
+        mapper.Dispose()
         deallocTypes()
         
         
@@ -230,9 +233,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         self.assertEquals(mapper.PyList_SetItem(listPtr, 0, IntPtr.Zero), 0, "returned error code")
         self.assertEquals(mapper.RefCount(itemPtr2), 1, "failed to decref replacee")
         
-        mapper.DecRef(itemPtr2)
-        mapper.DecRef(itemPtr1)
-        mapper.DecRef(listPtr)
+        mapper.Dispose()
         deallocTypes()
         
         
@@ -255,7 +256,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         
         self.assertEquals(mapper.Retrieve(listPtr), [item1, item2, item1, item2], "lists not synchronised")
         
-        mapper.DecRef(listPtr)
+        mapper.Dispose()
         deallocTypes()
     
     
@@ -285,8 +286,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         # list still contains uninitialised values
         self.assertRaises(ValueError, mapper.Retrieve, listPtr)
     
-        mapper.DecRef(listPtr)
-        mapper.DecRef(objPtr)
+        mapper.Dispose()
         deallocTypes()
             
     
@@ -301,7 +301,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         self.assertEquals(mapper.PyList_SetItem(listPtr, 1, itemPtr), 0, "did not report success")
         self.assertEquals(mapper.Retrieve(listPtr), [1, item, 3], "did not replace list content")
         
-        mapper.DecRef(listPtr)
+        mapper.Dispose()
         deallocTypes()
         
     
@@ -318,11 +318,8 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         anotherReferenceToRealList = realList[0]
         self.assertEquals(realList is anotherReferenceToRealList, True, "wrong list contents")
         
+        mapper.Dispose()
         deallocTypes()
-        
-        # yes, we do leak listPtr. 
-        # no, that isn't good. 
-        # yes, please do submit a patch :)
         
     
     def testRetrieveListContainingItselfIndirectly(self):
@@ -349,9 +346,8 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         self.assertEquals(realList2 is anotherReferenceToRealList2, True, "wrong list contents")
         self.assertEquals(realList3 is anotherReferenceToRealList3, True, "wrong list contents")
         
+        mapper.Dispose()
         deallocTypes()
-    
-        # yes, more leaks
     
     
     def testDeleteList(self):
@@ -381,6 +377,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         expectedDeallocs = [listPtr, dataStore, itemPtr1, itemPtr2]
         self.assertEquals(set(listDeallocs), set(expectedDeallocs), "deallocated wrong stuff")
         
+        mapper.Dispose()
         deallocTypes()
         
         
@@ -400,6 +397,7 @@ class Python25Mapper_PyList_Functions_Test(unittest.TestCase):
         for (start, stop) in slices:
             TestSlice(listPtr, start, stop)
             
+        mapper.Dispose()
         deallocTypes()
         
         

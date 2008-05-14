@@ -2,10 +2,10 @@
 import os
 import shutil
 import tempfile
-import unittest
 
 from tests.utils.process import spawn
 from tests.utils.runtest import makesuite, run
+from tests.utils.testcase import TestCase
 
 from tools.stubmaker import popen
 
@@ -17,7 +17,7 @@ def GetPexportsLines(path):
         stream.close()
 
 
-class BuildStubTest(unittest.TestCase):
+class BuildStubTest(TestCase):
 
     def testBuildStubWithBadParams(self):
         retVal = spawn("ipy", "tools/buildstub.py")
@@ -49,7 +49,7 @@ class BuildStubTest(unittest.TestCase):
         testGenerates(inputPath, ourTempDir, overridePath)
 
 
-class Python25StubTest(unittest.TestCase):
+class Python25StubTest(TestCase):
 
     def testPython25Stub(self):
         f = open("tests/data/python25-pexports")

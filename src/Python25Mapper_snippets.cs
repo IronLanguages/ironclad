@@ -106,6 +106,9 @@ class Dispatcher(object):
         if result < 0:
             raise Exception('%s failed; object is probably not safe to use' % name)
 
+    def delete(self, name, instance):
+        self.table[name](instance._instancePtr)
+
 ";
 
         private const string NOARGS_FUNCTION_CODE = @"
@@ -141,6 +144,9 @@ class {0}(object):
     
     def __init__(self, *args, **kwargs):
         _dispatcher.init('{0}.tp_init', self, *args, **kwargs)
+    
+    def __del__(self):
+        _dispatcher.delete('{0}.tp_dealloc', self)
 ";
 
         private const string ITER_METHOD_CODE = @"

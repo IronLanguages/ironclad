@@ -32,11 +32,6 @@ namespace Ironclad
         // which our members may be finalized before we are, we inherit from
         // StupidSet instead of just incorporating one.
         
-        ~HGlobalAllocator()
-        {
-            this.FreeAll();
-        }
-        
         public virtual IntPtr 
         Alloc(int bytes)
         {
@@ -98,29 +93,64 @@ namespace Ironclad
     public partial class Python25Mapper : PythonMapper
     {
         private ScriptEngine engine;
+        private StubReference stub;
+        private PydImporter importer;
         private IAllocator allocator;
         
         private PythonModule dispatcherModule;
         private object dispatcherClass;
 
         private InterestingPtrMap map = new InterestingPtrMap();
+        private StupidSet ptrsForCleanup = new StupidSet();
         
         private List<IntPtr> tempObjects = new List<IntPtr>();
         private object _lastException = null;
-
-        public Python25Mapper() : this(ScriptRuntime.Create().GetEngine("py"), new HGlobalAllocator())
+        
+        public Python25Mapper() : this(null, ScriptRuntime.Create().GetEngine("py"), new HGlobalAllocator())
         {
         }
 
-        public Python25Mapper(IAllocator alloc) : this(ScriptRuntime.Create().GetEngine("py"), alloc)
+        public Python25Mapper(string stubPath) : this(stubPath, ScriptRuntime.Create().GetEngine("py"), new HGlobalAllocator())
         {
         }
 
-        public Python25Mapper(ScriptEngine inEngine, IAllocator alloc)
+        public Python25Mapper(IAllocator alloc) : this(null, ScriptRuntime.Create().GetEngine("py"), alloc)
+        {
+        }
+
+        public Python25Mapper(string stubPath, ScriptEngine inEngine, IAllocator alloc)
         {
             this.engine = inEngine;
             this.allocator = alloc;
             this.CreateDispatcher();
+            if (stubPath != null)
+            {
+                this.stub = new StubReference(stubPath);
+                this.stub.Init(new AddressGetterDelegate(this.GetAddress), new DataSetterDelegate(this.SetData));
+                this.importer = new PydImporter();
+            }
+        }
+        
+        public void Dispose()
+        {
+            foreach (object ptr in this.ptrsForCleanup.ElementsArray)
+            {
+                // My understanding is that I really ought to Retrieve each object and
+                // call GC.SuppressFinalize, to prevent their __del__s attempting to re-free
+                // their memory. However, we haven't been able to detect any change in
+                // behaviour when we try to do that, so... er... we don't do it.
+                IntPtr typePtr = CPyMarshal.ReadPtrField((IntPtr)ptr, typeof(PyObject), "ob_type");
+                CPython_destructor_Delegate dgt = (CPython_destructor_Delegate)
+                    CPyMarshal.ReadFunctionPtrField(
+                        typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(CPython_destructor_Delegate));
+                dgt((IntPtr)ptr);
+            }
+            this.allocator.FreeAll();
+            if (this.stub != null)
+            {
+                this.importer.Dispose();
+                this.stub.Dispose();
+            }
         }
         
         public ScriptEngine
@@ -169,6 +199,7 @@ namespace Ironclad
         StoreUnmanagedInstance(IntPtr ptr, object obj)
         {
             this.map.WeakAssociate(ptr, obj);
+            this.ptrsForCleanup.Add(ptr);
         }
         
         
@@ -275,6 +306,7 @@ namespace Ironclad
         public override void 
         PyObject_Free(IntPtr ptr)
         {
+            this.ptrsForCleanup.RemoveIfPresent(ptr);
             this.map.Release(ptr);
             this.allocator.Free(ptr);
         }

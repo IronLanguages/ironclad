@@ -1,8 +1,8 @@
 
-import unittest
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.memory import CreateTypes, OffsetPtr
+from tests.utils.testcase import TestCase
 
 from System import GC, IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -12,7 +12,7 @@ from Ironclad.Structs import PyObject, PyTypeObject
 
     
     
-class Python25Mapper_PyObject_Test(unittest.TestCase):
+class Python25Mapper_PyObject_Test(TestCase):
     
     def testPyObject_Call(self):
         mapper = Python25Mapper()
@@ -23,10 +23,8 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
         argsPtr = mapper.Store((4,))
         resultPtr = mapper.PyObject_Call(kallablePtr, argsPtr, kwargsPtr)
         self.assertEquals(mapper.Retrieve(resultPtr), 8, "didn't call")
-        
-        mapper.DecRef(kallablePtr)
-        mapper.DecRef(argsPtr)
-        mapper.DecRef(resultPtr)
+            
+        mapper.Dispose()
         deallocTypes()
 
 
@@ -41,7 +39,8 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
             self.assertEquals(mapper.PyCallable_Check(x), 1, "reported not callable")
         for x in notCallables:
             self.assertEquals(mapper.PyCallable_Check(x), 0, "reported callable")
-            
+                
+        mapper.Dispose()
         deallocTypes()
 
 
@@ -56,9 +55,8 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
         objPtr = mapper.Store(Thingum("Poe"))
         resultPtr = mapper.PyObject_GetAttrString(objPtr, "bob")
         self.assertEquals(mapper.Retrieve(resultPtr), "Poe", "wrong")
-        
-        mapper.DecRef(resultPtr)
-        mapper.DecRef(objPtr)
+            
+        mapper.Dispose()
         deallocTypes()
 
 
@@ -74,8 +72,8 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
         resultPtr = mapper.PyObject_GetAttrString(objPtr, "ben")
         self.assertEquals(resultPtr, IntPtr.Zero, "wrong")
         self.assertEquals(mapper.LastException, None, "no need to set exception, according to spec")
-        
-        mapper.DecRef(objPtr)
+            
+        mapper.Dispose()
         deallocTypes()
     
     
@@ -88,9 +86,8 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
         iterPtr = mapper.PyObject_GetIter(listPtr)
         iter = mapper.Retrieve(iterPtr)
         self.assertEquals([x for x in iter], testList, "bad iterator")
-        
-        mapper.DecRef(iterPtr)
-        mapper.DecRef(listPtr)
+            
+        mapper.Dispose()
         deallocTypes()
     
     
@@ -112,8 +109,8 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
             self.assertEquals(str(e), "PyObject_GetIter: object is not iterable", "bad message")
         else:
             self.fail("wrong exception")
-            
-        mapper.DecRef(objPtr)
+                
+        mapper.Dispose()
         deallocTypes()
     
     
@@ -133,9 +130,8 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
         
         noItemPtr = mapper.PyIter_Next(iterPtr)
         self.assertEquals(noItemPtr, IntPtr.Zero, "failed to stop iterating")
-        
-        mapper.DecRef(iterPtr)
-        mapper.DecRef(listPtr)
+            
+        mapper.Dispose()
         deallocTypes()
     
     
@@ -155,8 +151,8 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
             self.assertEquals(str(e), "PyIter_Next: object is not an iterator", "bad message")
         else:
             self.fail("wrong exception")
-        
-        mapper.DecRef(notIterPtr)
+            
+        mapper.Dispose()
         deallocTypes()
     
     
@@ -182,12 +178,12 @@ class Python25Mapper_PyObject_Test(unittest.TestCase):
             self.assertEquals(str(e), "Release the hounds!", "unexpected message")
         else:
             self.fail("wrong exception")
-        
-        mapper.DecRef(iterPtr)
+            
+        mapper.Dispose()
         deallocTypes()
     
     
-class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
+class Python25Mapper_PyBaseObject_Type_Test(TestCase):
 
     def testPyBaseObject_Type(self):
         mapper = Python25Mapper()
@@ -196,7 +192,8 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
         mapper.SetData("PyBaseObject_Type", typeBlock)
         self.assertEquals(mapper.PyBaseObject_Type, typeBlock, "failed to remember address")
         self.assertEquals(mapper.Retrieve(mapper.PyBaseObject_Type), object, "failed to map correctly")
-        
+            
+        mapper.Dispose()
         Marshal.FreeHGlobal(typeBlock)
 
 
@@ -206,10 +203,10 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
             def PyBaseObject_Dealloc(self, objPtr):
                 calls.append(objPtr)
         
-        self.mapper = MyPM()
+        mapper = MyPM()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        self.mapper.SetData("PyBaseObject_Type", typeBlock)
+        mapper.SetData("PyBaseObject_Type", typeBlock)
         GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
 
         deallocFPPtr = OffsetPtr(typeBlock, Marshal.OffsetOf(PyTypeObject, "tp_dealloc"))
@@ -217,7 +214,8 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
         deallocDgt = Marshal.GetDelegateForFunctionPointer(deallocFP, CPython_destructor_Delegate)
         deallocDgt(IntPtr(12345))
         self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
-        
+            
+        mapper.Dispose()
         Marshal.FreeHGlobal(typeBlock)
 
 
@@ -227,16 +225,17 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
             def PyObject_Free(self, objPtr):
                 calls.append(objPtr)
         
-        self.mapper = MyPM()
+        mapper = MyPM()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        self.mapper.SetData("PyBaseObject_Type", typeBlock)
+        mapper.SetData("PyBaseObject_Type", typeBlock)
         GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
 
         freeDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_free", CPython_destructor_Delegate)
         freeDgt(IntPtr(12345))
         self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
-        
+            
+        mapper.Dispose()
         Marshal.FreeHGlobal(typeBlock)
             
     
@@ -261,7 +260,8 @@ class Python25Mapper_PyBaseObject_Type_Test(unittest.TestCase):
 
         mapper.PyBaseObject_Dealloc(objPtr)
         self.assertEquals(calls, [objPtr], "wrong calls")
-        
+            
+        mapper.Dispose()
         Marshal.FreeHGlobal(baseObjTypeBlock)
         Marshal.FreeHGlobal(objTypeBlock)
         Marshal.FreeHGlobal(objPtr)
