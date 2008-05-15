@@ -107,6 +107,11 @@ class Dispatcher(object):
             raise Exception('%s failed; object is probably not safe to use' % name)
 
     def delete(self, name, instance):
+        self.mapper.ReapStrongRefs()
+        if self.mapper.RefCount(instance._instancePtr) > 1:
+            self.mapper.Strengthen(instance)
+            GC.ReRegisterForFinalize(instance)
+            return
         self.table[name](instance._instancePtr)
 
 ";

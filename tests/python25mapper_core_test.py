@@ -8,7 +8,7 @@ from tests.utils.memory import CreateTypes
 from tests.utils.python25mapper import MakeAndAddEmptyModule, ModuleWrapper
 from tests.utils.testcase import TestCase
 
-from System import IntPtr, NullReferenceException
+from System import IntPtr, NullReferenceException, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import (
@@ -252,6 +252,71 @@ class Python25Mapper_References_Test(TestCase):
         self.assertRaises(NullReferenceException, mapper.Retrieve, ptr)
         mapper.Dispose()
         deallocTypes()
+    
+
+    def testStrengthenWeakenUnmanagedInstance(self):
+        frees = []
+        allocator = GetAllocatingTestAllocator([], frees)
+        mapper = Python25Mapper(allocator)
+        deallocTypes = CreateTypes(mapper)
+
+        obj = object()
+        objref = WeakReference(obj)
+        # need to use same allocator as mapper, otherwise it gets upset on shutdown
+        ptr = allocator.Alloc(Marshal.SizeOf(PyObject))
+        CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
+        CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
+        mapper.StoreUnmanagedInstance(ptr, obj)
+        mapper.Strengthen(obj)
+        
+        del obj
+        gcwait()
+        
+        self.assertEquals(objref.IsAlive, True, "was not strengthened")
+        
+        sameobj = objref.Target
+        mapper.Weaken(sameobj)
+        del sameobj
+        gcwait()
+        
+        self.assertRaises(NullReferenceException, mapper.Retrieve, ptr)
+        mapper.Dispose()
+        deallocTypes()
+
+
+    def testReapStrongRefs(self):
+        frees = []
+        allocator = GetAllocatingTestAllocator([], frees)
+        mapper = Python25Mapper(allocator)
+        deallocTypes = CreateTypes(mapper)
+
+        obj = object()
+        objref = WeakReference(obj)
+        # need to use same allocator as mapper, otherwise it gets upset on shutdown
+        ptr = allocator.Alloc(Marshal.SizeOf(PyObject))
+        CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 2)
+        CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
+        mapper.StoreUnmanagedInstance(ptr, obj)
+        mapper.Strengthen(obj)
+        # a strong ref with a refcount > 1 should not be reaped
+        mapper.ReapStrongRefs()
+        
+        del obj
+        gcwait()
+        
+        self.assertEquals(objref.IsAlive, True, "was reaped unexpectedly (refcount was 2)")
+        
+        CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
+        # a strong ref with a refcount > 1 should be weakened
+        mapper.ReapStrongRefs()
+        sameobj = objref.Target
+        del sameobj
+        gcwait()
+        
+        self.assertRaises(NullReferenceException, mapper.Retrieve, ptr)
+        mapper.Dispose()
+        deallocTypes()
+        
 
 
     def testCannotStoreUnmanagedDataMarker(self):

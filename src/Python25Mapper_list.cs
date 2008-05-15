@@ -206,9 +206,6 @@ namespace Ironclad
             freeDgt(listPtr);
         }
         
-        
-        // this should only be used by the following method, and should follow it in the event of future refactoring
-        private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
                 
         private void
         ActualiseList(IntPtr ptr)

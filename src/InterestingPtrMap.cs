@@ -4,16 +4,18 @@ using System.Collections.Generic;
 namespace Ironclad
 {
     
-    public class StupidSet : Dictionary<object, string>
+    public class StupidSet
     {
+        private Dictionary<object, string> store = new Dictionary<object, string>();
+        
         public void Add(object obj)
         {
-            this[obj] = "stupid";
+            this.store[obj] = "stupid";
         }
         
         public void SetRemove(object obj)
         {
-            if (!this.Remove(obj))
+            if (!this.store.Remove(obj))
             {
                 throw new KeyNotFoundException();
             }
@@ -21,15 +23,15 @@ namespace Ironclad
         
         public void RemoveIfPresent(object obj)
         {
-            this.Remove(obj);
+            this.store.Remove(obj);
         }
         
         public object[] ElementsArray
         {
             get
             {
-                object[] result = new object[this.Count];
-                this.Keys.CopyTo(result, 0);
+                object[] result = new object[this.store.Count];
+                this.store.Keys.CopyTo(result, 0);
                 return result;
             }
         }
@@ -57,7 +59,7 @@ namespace Ironclad
         
         public void WeakAssociate(IntPtr ptr, object obj)
         {
-            WeakReference wref = new WeakReference(obj);
+            WeakReference wref = new WeakReference(obj, true);
             this.ptr2ref[ptr] = wref;
             this.ref2ptr[wref] = ptr;
         }
@@ -70,6 +72,11 @@ namespace Ironclad
         public void Weaken(object obj)
         {
             this.strongrefs.RemoveIfPresent(obj);
+        }
+        
+        public object[] GetStrongRefs()
+        {
+            return this.strongrefs.ElementsArray;
         }
         
         public bool HasObj(object obj)

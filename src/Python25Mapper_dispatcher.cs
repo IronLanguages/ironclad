@@ -24,6 +24,7 @@ namespace Ironclad
             Dictionary<string, object> globals = new Dictionary<string, object>();
             globals["nullPtr"] = IntPtr.Zero;
             globals["NullReferenceException"] = typeof(NullReferenceException);
+            globals["GC"] = typeof(GC);
 
             this.dispatcherModule = this.GetPythonContext().CreateModule(
                 id, id, globals, ModuleOptions.None);

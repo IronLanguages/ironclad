@@ -24,7 +24,7 @@ def read(name):
 class GeneratePython25MapperTest(TestCase):
 
     def testCreatesPython25MapperComponents(self):
-        tempDir = tempfile.gettempdir()
+        tempDir = tempfile.mkdtemp()
         testBuildDir = os.path.join(tempDir, 'generatepython25mappertest')
         if os.path.exists(testBuildDir):
             shutil.rmtree(testBuildDir)
@@ -54,6 +54,7 @@ class GeneratePython25MapperTest(TestCase):
 
         finally:
             os.chdir(origCwd)
+        shutil.rmtree(tempDir)
 
 EXCEPTIONS = """
 SystemError

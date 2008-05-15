@@ -8,7 +8,7 @@ from tests.utils.python25mapper import TempPtrCheckingPython25Mapper, MakeAndAdd
 from tests.utils.testcase import TestCase
 
 import System
-from System import IntPtr
+from System import IntPtr, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import (
@@ -283,7 +283,7 @@ class Python25Mapper_PyModule_AddObject_DispatchTrickyMethodsTest(TestCase):
 
     def testAddTypeObject_NewInitDelDispatch(self):
         allocator = HGlobalAllocator()
-        mapper = Python25Mapper()
+        mapper = Python25Mapper(allocator)
         deallocTypes = CreateTypes(mapper)
         modulePtr = MakeAndAddEmptyModule(mapper)
         module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
@@ -342,7 +342,55 @@ class Python25Mapper_PyModule_AddObject_DispatchTrickyMethodsTest(TestCase):
         mapper.Dispose()
         deallocType()
         deallocTypes()
+    
+    
+    def testDeleteResurrect(self):
+        # when an object is finalized, it checks for unmanaged references to itself
+        # and resurrects itself (by calling mapper.Strengthen) if there are any. 
+        # from that point, the object will become unkillable until we Weaken it again.
+        # in the absence of any better ideas, we decided to check for undead objects
+        # whenever we delete other potentially-undead objects, and let them live forever
+        # otherwise.
+        #
+        # if this test passes, the previous paragraph is probably correct
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        modulePtr = MakeAndAddEmptyModule(mapper)
+        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
+
+        typePtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass'})
+        mapper.PyModule_AddObject(modulePtr, "klass", typePtr)
         
+        obj1 = module.klass()
+        obj1ref = WeakReference(obj1, True)
+        obj2 = module.klass()
+        
+        # unmanaged code grabs a reference
+        instancePtr = obj1._instancePtr
+        CPyMarshal.WriteIntField(instancePtr, PyObject, 'ob_refcnt', 2)
+        del obj1
+        gcwait()
+        self.assertEquals(obj1ref.IsAlive, True, "object died before its time")
+        self.assertEquals(mapper.Retrieve(instancePtr), obj1ref.Target, "mapping broken")
+        
+        # unmanaged code forgets it
+        CPyMarshal.WriteIntField(instancePtr, PyObject, 'ob_refcnt', 1)
+        gcwait()
+        # nothing has happened that would cause us to reexamine strong refs, 
+        # so the object shouldn't just die on us
+        self.assertEquals(obj1ref.IsAlive, True, "object died unexpectedly")
+        self.assertEquals(mapper.Retrieve(instancePtr), obj1ref.Target, "mapping broken")
+        
+        del obj2
+        gcwait()
+        # the above should have made our reference to obj1 weak again, but
+        # it shouldn't be collected until the next GC
+        gcwait()
+        self.assertEquals(obj1ref.IsAlive, False, "object didn't die")
+        
+        mapper.Dispose()
+        deallocTypes()
+    
 
 class Python25Mapper_PyModule_AddObject_DispatchMethodsTest(TestCase):
 

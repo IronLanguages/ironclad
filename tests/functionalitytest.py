@@ -1,16 +1,12 @@
 
 import os
+import shutil
 import tempfile
 from textwrap import dedent
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
 
-from System import IntPtr
-
-from Ironclad import (
-    AddressGetterDelegate, DataSetterDelegate, PydImporter,
-    Python25Mapper, PythonMapper, StubReference
-)
+from Ironclad import Python25Mapper
 
 from TestUtils import ExecUtils
 
@@ -139,24 +135,6 @@ class FunctionalityTest(TestCase):
             assert text == %r
             """) % (bz2_test_data, bz2_test_text)
         )
-
-
-    def testBZ2HeavyUse(self):
-        self.assertWorksWithBZ2(dedent("""
-            COUNT = 150
-            compressors = [bz2.BZ2Compressor() for _ in range(COUNT)]
-            decompressors = [bz2.BZ2Decompressor() for _ in range(COUNT)]
-            
-            current = %r
-            for i in range(COUNT):
-                current = decompressors[-i].decompress(
-                    compressors[i].compress(current[:i * 40]) + 
-                    compressors[i].compress(current[i * 40:]) + 
-                    compressors[i].flush())
-            
-            assert current == %r
-            """) % (bz2_test_text, bz2_test_text)
-        )
         
 
     def testBZ2FileRead(self):
@@ -271,6 +249,7 @@ class FunctionalityTest(TestCase):
                 r.close()
             """) % (path, bz2_test_text, path, bz2_test_text)
         )
+        shutil.rmtree(testDir)
 
 
     def assertBZ2FileWriteLines(self, sequence):
@@ -289,6 +268,25 @@ class FunctionalityTest(TestCase):
             finally:
                 r.close()
             """) % (path, sequence, path, bz2_test_text)
+        )
+        shutil.rmtree(testDir)
+
+
+    def testBZ2HeavyUse(self):
+        self.assertWorksWithBZ2(dedent("""
+            COUNT = 150
+            compressors = [bz2.BZ2Compressor() for _ in range(COUNT)]
+            decompressors = [bz2.BZ2Decompressor() for _ in range(COUNT)]
+            
+            current = %r
+            for i in range(COUNT):
+                current = decompressors[-i].decompress(
+                    compressors[i].compress(current[:i * 40]) + 
+                    compressors[i].compress(current[i * 40:]) + 
+                    compressors[i].flush())
+            
+            assert current == %r
+            """) % (bz2_test_text, bz2_test_text)
         )
         
 
@@ -316,5 +314,4 @@ suite = makesuite(FunctionalityTest)
 
 if __name__ == '__main__':
     run(suite)
-
 

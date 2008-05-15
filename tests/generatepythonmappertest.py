@@ -16,7 +16,7 @@ def write(name, text):
 class GeneratePythonMapperTest(TestCase):
 
     def testCreatesPythonMapper_cs(self):
-        tempDir = tempfile.gettempdir()
+        tempDir = tempfile.mkdtemp()
         testBuildDir = os.path.join(tempDir, 'generatepythonmappertest')
         if os.path.exists(testBuildDir):
             shutil.rmtree(testBuildDir)
@@ -53,6 +53,7 @@ class GeneratePythonMapperTest(TestCase):
 
         finally:
             os.chdir(origCwd)
+        shutil.rmtree(tempDir)
 
 
 ALL_FUNCTIONS = """

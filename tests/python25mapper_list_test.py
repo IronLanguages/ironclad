@@ -75,11 +75,12 @@ class Python25Mapper_PyList_Type_Test(TestCase):
         calls = []
         def CustomFree(ptr):
             calls.append(ptr)
-        freeDgt = PythonMapper.PyObject_Free_Delegate(CustomFree)
+            mapper.PyObject_Free(listPtr)
+        self.freeDgt = PythonMapper.PyObject_Free_Delegate(CustomFree)
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         mapper.SetData("PyList_Type", typeBlock)
-        CPyMarshal.WriteFunctionPtrField(typeBlock, PyTypeObject, "tp_free", freeDgt)
+        CPyMarshal.WriteFunctionPtrField(typeBlock, PyTypeObject, "tp_free", self.freeDgt)
         
         listPtr = mapper.Store([1, 2, 3])
         itemPtrs = []
@@ -94,7 +95,6 @@ class Python25Mapper_PyList_Type_Test(TestCase):
             self.assertEquals(itemPtr in frees, True, "did not decref item")
             self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
         self.assertEquals(calls, [listPtr], "did not call type's free function")
-        mapper.PyObject_Free(listPtr)
         
         mapper.Dispose()
         Marshal.FreeHGlobal(typeBlock)
