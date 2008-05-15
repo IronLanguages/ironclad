@@ -31,7 +31,7 @@ class BuildStubTest(TestCase):
     def testBuildStubCreatesOutputFiles(self):
         inputPath = "tests/data/exportsymbols.dll"
         overridePath = "tests/data/stub"
-        tempDir = tempfile.gettempdir()
+        tempDir = tempfile.mkdtemp()
         ourTempDir = os.path.join(tempDir, 'buildstubtest')
 
         def testGenerates(*extraArgs):
@@ -47,6 +47,7 @@ class BuildStubTest(TestCase):
 
         testGenerates(inputPath, ourTempDir)
         testGenerates(inputPath, ourTempDir, overridePath)
+        shutil.rmtree(tempDir)
 
 
 class Python25StubTest(TestCase):

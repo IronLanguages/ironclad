@@ -1,5 +1,7 @@
 
 from tests.utils.runtest import makesuite, run
+
+from tests.utils.python25mapper import ModuleWrapper
 from tests.utils.testcase import TestCase
 
 from System import IntPtr, NullReferenceException
@@ -117,6 +119,9 @@ class DispatcherDispatchTestCase(TestCase):
     
             def StoreUnmanagedInstance(self, ptr, item):
                 calls.append(('StoreUnmanagedInstance', (ptr, item)))
+            
+            def RefCount(self, _):
+                return reportedRefCount
                 
         mockMapper = MockMapper()
         dispatcher = GetDispatcherClass(realMapper)(mockMapper, callables)
@@ -536,11 +541,34 @@ class DispatcherInitTest(DispatcherDispatchTestCase):
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
         ])
         mapper.Dispose()
+
+
+class DispatcherDeleteTest(TestCase):
     
-    
-class DispatcherDeleteTest(DispatcherDispatchTestCase):
-    
-    def testDispatchDelete(self):
+    def getPatchedDispatcher(self, realMapper, callables, calls, refcount):
+        class MockGC(object):
+            @staticmethod
+            def ReRegisterForFinalize(obj):
+                calls.append(('ReRegisterForFinalize', obj))
+        
+        dispatcherModule = ModuleWrapper(realMapper.Engine, realMapper.DispatcherModule)
+        dispatcherModule.GC = MockGC
+        
+        test = self
+        class MockMapper(object):
+            def RefCount(self, ptr):
+                calls.append(('RefCount', ptr))
+                return refcount
+            def Strengthen(self, obj):
+                calls.append(('Strengthen', obj))
+            def ReapStrongRefs(self):
+                calls.append(('ReapStrongRefs',))
+                
+        mockMapper = MockMapper()
+        return GetDispatcherClass(realMapper)(mockMapper, callables)
+        
+        
+    def testDispatchDeleteNormalCase(self):
         class klass(object):
             pass
         instance = klass()
@@ -552,10 +580,35 @@ class DispatcherDeleteTest(DispatcherDispatchTestCase):
             'dgt': FuncReturning(None, calls, 'dgt'),
         }
         
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
+        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, 1)
         dispatcher.delete('dgt', instance)
         self.assertEquals(calls, [
+            ('ReapStrongRefs',),
+            ('RefCount', INSTANCE_PTR),
             ('dgt', (INSTANCE_PTR, )),
+        ])
+        mapper.Dispose()
+        
+        
+    def testDispatchDeleteNeedsResurrection(self):
+        class klass(object):
+            pass
+        instance = klass()
+        instance._instancePtr = INSTANCE_PTR
+        
+        mapper = Python25Mapper()
+        calls = []
+        callables = {
+            'dgt': FuncReturning(None, calls, 'dgt'),
+        }
+        
+        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, 2)
+        dispatcher.delete('dgt', instance)
+        self.assertEquals(calls, [
+            ('ReapStrongRefs',),
+            ('RefCount', INSTANCE_PTR),
+            ('Strengthen', instance),
+            ('ReRegisterForFinalize', instance)
         ])
         mapper.Dispose()
         

@@ -26,17 +26,15 @@ namespace Ironclad
         void FreeAll();
     }
     
-    public class HGlobalAllocator : StupidSet, IAllocator
+    public class HGlobalAllocator : IAllocator
     {
-        // in a desperate attempt to work around non-deterministic GC, in
-        // which our members may be finalized before we are, we inherit from
-        // StupidSet instead of just incorporating one.
+        private StupidSet allocated = new StupidSet();
         
         public virtual IntPtr 
         Alloc(int bytes)
         {
             IntPtr ptr = Marshal.AllocHGlobal(bytes);
-            this.Add(ptr);
+            this.allocated.Add(ptr);
             return ptr;
         }
         
@@ -44,32 +42,25 @@ namespace Ironclad
         Realloc(IntPtr oldptr, int bytes)
         {
             IntPtr newptr = Marshal.ReAllocHGlobal(oldptr, (IntPtr)bytes);    
-            this.SetRemove(oldptr);        
-            this.Add(newptr);
+            this.allocated.SetRemove(oldptr);        
+            this.allocated.Add(newptr);
             return newptr;
         }
         
         public virtual void 
         Free(IntPtr ptr)
         {
-            this.SetRemove(ptr);
+            this.allocated.SetRemove(ptr);
             Marshal.FreeHGlobal(ptr);
         }
         
         public virtual void 
         FreeAll()
         {
-            object[] elements = this.ElementsArray;
+            object[] elements = this.allocated.ElementsArray;
             foreach (object ptr in elements)
             {
-                try
-                {
-                    this.Free((IntPtr)ptr);
-                }
-                catch (COMException)
-                {
-                    Console.WriteLine("Couldn't free; ignoring");
-                }
+                this.Free((IntPtr)ptr);
             }
         }
     }
@@ -96,14 +87,16 @@ namespace Ironclad
         private StubReference stub;
         private PydImporter importer;
         private IAllocator allocator;
+        private InterestingPtrMap map = new InterestingPtrMap();
         
         private PythonModule dispatcherModule;
         private object dispatcherClass;
 
-        private InterestingPtrMap map = new InterestingPtrMap();
         private StupidSet ptrsForCleanup = new StupidSet();
         
         private List<IntPtr> tempObjects = new List<IntPtr>();
+        private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
+        private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
         private object _lastException = null;
         
         public Python25Mapper() : this(null, ScriptRuntime.Create().GetEngine("py"), new HGlobalAllocator())
@@ -146,6 +139,10 @@ namespace Ironclad
                 dgt((IntPtr)ptr);
             }
             this.allocator.FreeAll();
+            foreach (IntPtr FILE in this.FILEs.Values)
+            {
+                Unmanaged.fclose(FILE);
+            }
             if (this.stub != null)
             {
                 this.importer.Dispose();
@@ -303,9 +300,40 @@ namespace Ironclad
             }
         }
         
+        public void 
+        Strengthen(object obj)
+        {
+            this.map.Strengthen(obj);
+        }
+        
+        public void 
+        Weaken(object obj)
+        {
+            this.map.Weaken(obj);
+        }
+        
+        public void 
+        ReapStrongRefs()
+        {
+            object[] refs = this.map.GetStrongRefs();
+            foreach (object obj in refs)
+            {
+                IntPtr ptr = this.map.GetPtr(obj);
+                if (this.RefCount(ptr) < 2)
+                {
+                    this.map.Weaken(obj);
+                }
+            }
+        }
+        
         public override void 
         PyObject_Free(IntPtr ptr)
         {
+            if (this.FILEs.ContainsKey(ptr))
+            {
+                Unmanaged.fclose(this.FILEs[ptr]);
+                this.FILEs.Remove(ptr);
+            }
             this.ptrsForCleanup.RemoveIfPresent(ptr);
             this.map.Release(ptr);
             this.allocator.Free(ptr);
