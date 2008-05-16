@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -15,8 +14,6 @@ namespace Ironclad
 
     public partial class Python25Mapper
     {
-
-
         public override void 
         Fill_PyFile_Type(IntPtr address)
         {
@@ -53,7 +50,6 @@ namespace Ironclad
             return 0;
         }
         
-        
         public override IntPtr 
         PyType_GenericNew(IntPtr typePtr, IntPtr args, IntPtr kwargs)
         {
@@ -61,7 +57,6 @@ namespace Ironclad
                 typePtr, typeof(PyTypeObject), "tp_alloc", typeof(PyType_GenericAlloc_Delegate));
             return dgt(typePtr, 0);
         }
-        
         
         public override IntPtr 
         PyType_GenericAlloc(IntPtr typePtr, int nItems)

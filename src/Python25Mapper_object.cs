@@ -1,16 +1,11 @@
 using System;
 using System.Collections;
-using System.Runtime.InteropServices;
 
-using IronPython.Runtime;
 using IronPython.Runtime.Calls;
-using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
 using Microsoft.Scripting;
-using Microsoft.Scripting.Hosting;
-using Microsoft.Scripting.Runtime;
 
 using Ironclad.Structs;
 

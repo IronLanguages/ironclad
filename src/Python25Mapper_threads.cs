@@ -15,7 +15,7 @@ namespace Ironclad
             object lockObject = this.Retrieve(lockPtr);
             if (flags == 1)
             {
-                // this does not precisely match spec: we still return 1 if
+                // TODO: this does not precisely match spec: we still return 1 if
                 // the current thread has already acquired a lock.
                 Monitor.Enter(lockObject);
                 return 1;
