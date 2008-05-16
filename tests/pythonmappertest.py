@@ -167,8 +167,9 @@ class PythonMapperTest(TestCase):
         fp2 = pm.GetAddress(funcName)
         self.assertEquals(fp1, fp2, "2 calls produced different pointers")
 
-        dgt = Marshal.GetDelegateForFunctionPointer(fp1, getattr(PythonMapper, funcName + "_Delegate"))
-        result = dgt(*argTuple)
+        # we need to keep a reference to dgt, in case of inconvenient GCs
+        self.dgt = Marshal.GetDelegateForFunctionPointer(fp1, getattr(PythonMapper, funcName + "_Delegate"))
+        result = self.dgt(*argTuple)
 
         self.assertEquals(result, expectedResult, "unexpected result")
         self.assertEquals(len(paramsStore), 1, "wrong number of calls")

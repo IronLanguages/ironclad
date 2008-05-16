@@ -2,10 +2,11 @@
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
+from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes, OffsetPtr
 from tests.utils.testcase import TestCase
 
-from System import GC, IntPtr
+from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, CPython_destructor_Delegate, PythonMapper, Python25Mapper
@@ -76,7 +77,7 @@ class Python25Mapper_Tuple_Test(TestCase):
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
             mapper.SetData("PyTuple_Type", typeBlock)
-            GC.Collect() # this should make the function pointers invalid if we forgot to store references to the delegates
+            gcwait() # this should make the function pointers invalid if we forgot to store references to the delegates
 
             deallocDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_dealloc", CPython_destructor_Delegate)
             deallocDgt(IntPtr(12345))
@@ -97,7 +98,7 @@ class Python25Mapper_Tuple_Test(TestCase):
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:
             mapper.SetData("PyTuple_Type", typeBlock)
-            GC.Collect() # this should make the function pointers invalid if we forgot to store references to the delegates
+            gcwait() # this should make the function pointers invalid if we forgot to store references to the delegates
 
             freeDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_free", CPython_destructor_Delegate)
             freeDgt(IntPtr(12345))

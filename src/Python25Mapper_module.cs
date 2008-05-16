@@ -4,15 +4,12 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
-using IronPython.Hosting;
 using IronPython.Runtime;
 using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
-using IronPython.Runtime.Types;
 
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
-using Microsoft.Scripting.Runtime;
 
 using Ironclad.Structs;
 

@@ -1,10 +1,11 @@
 
 from tests.utils.runtest import makesuite, run
 
+from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes, OffsetPtr
 from tests.utils.testcase import TestCase
 
-from System import GC, IntPtr
+from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, CPython_destructor_Delegate, PythonMapper, Python25Mapper
@@ -207,7 +208,7 @@ class Python25Mapper_PyBaseObject_Type_Test(TestCase):
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         mapper.SetData("PyBaseObject_Type", typeBlock)
-        GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
+        gcwait() # this will make the function pointers invalid if we forgot to store references to the delegates
 
         deallocFPPtr = OffsetPtr(typeBlock, Marshal.OffsetOf(PyTypeObject, "tp_dealloc"))
         deallocFP = CPyMarshal.ReadPtr(deallocFPPtr)
@@ -229,7 +230,7 @@ class Python25Mapper_PyBaseObject_Type_Test(TestCase):
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         mapper.SetData("PyBaseObject_Type", typeBlock)
-        GC.Collect() # this will make the function pointers invalid if we forgot to store references to the delegates
+        gcwait() # this will make the function pointers invalid if we forgot to store references to the delegates
 
         freeDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_free", CPython_destructor_Delegate)
         freeDgt(IntPtr(12345))
@@ -255,8 +256,7 @@ class Python25Mapper_PyBaseObject_Type_Test(TestCase):
         mapper.SetData("PyDict_Type", objTypeBlock) # type not actually important
         CPyMarshal.WriteFunctionPtrField(objTypeBlock, PyTypeObject, "tp_free", self.freeDgt)
         CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", objTypeBlock)
-        
-        GC.Collect() # this should make the function pointers invalid if we forgot to store references to the delegates
+        gcwait() # this should make the function pointers invalid if we forgot to store references to the delegates
 
         mapper.PyBaseObject_Dealloc(objPtr)
         self.assertEquals(calls, [objPtr], "wrong calls")

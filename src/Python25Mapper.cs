@@ -1,69 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.InteropServices;
 
-using IronPython.Hosting;
-using IronPython.Modules;
 using IronPython.Runtime;
-using IronPython.Runtime.Calls;
-using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
 
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
-using Microsoft.Scripting.Runtime;
 
 using Ironclad.Structs;
 
 namespace Ironclad
 {
-    public interface IAllocator
-    {
-        IntPtr Alloc(int bytes);
-        IntPtr Realloc(IntPtr old, int bytes);
-        void Free(IntPtr address);
-        void FreeAll();
-    }
-    
-    public class HGlobalAllocator : IAllocator
-    {
-        private StupidSet allocated = new StupidSet();
-        
-        public virtual IntPtr 
-        Alloc(int bytes)
-        {
-            IntPtr ptr = Marshal.AllocHGlobal(bytes);
-            this.allocated.Add(ptr);
-            return ptr;
-        }
-        
-        public virtual IntPtr
-        Realloc(IntPtr oldptr, int bytes)
-        {
-            IntPtr newptr = Marshal.ReAllocHGlobal(oldptr, (IntPtr)bytes);    
-            this.allocated.SetRemove(oldptr);        
-            this.allocated.Add(newptr);
-            return newptr;
-        }
-        
-        public virtual void 
-        Free(IntPtr ptr)
-        {
-            this.allocated.SetRemove(ptr);
-            Marshal.FreeHGlobal(ptr);
-        }
-        
-        public virtual void 
-        FreeAll()
-        {
-            object[] elements = this.allocated.ElementsArray;
-            foreach (object ptr in elements)
-            {
-                this.Free((IntPtr)ptr);
-            }
-        }
-    }
 
     public enum UnmanagedDataMarker
     {
@@ -277,15 +225,17 @@ namespace Ironclad
 
                     if (typePtr != IntPtr.Zero)
                     {
-                        IntPtr deallocFP = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_dealloc");
-                        if (deallocFP != IntPtr.Zero)
+                        if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_dealloc") != IntPtr.Zero)
                         {
-                            CPython_destructor_Delegate deallocDgt = (CPython_destructor_Delegate)Marshal.GetDelegateForFunctionPointer(
-                                deallocFP, typeof(CPython_destructor_Delegate));
+                            CPython_destructor_Delegate deallocDgt = (CPython_destructor_Delegate)
+                                CPyMarshal.ReadFunctionPtrField(
+                                    typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(CPython_destructor_Delegate));
                             deallocDgt(ptr);
                             return;
                         }
                     }
+                    // TODO: remove this get-out-of-jail-free, and ensure that 
+                    // all the types I create actually have dealloc functions
                     this.PyObject_Free(ptr);
                 }
                 else

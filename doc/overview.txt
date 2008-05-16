@@ -24,8 +24,6 @@ Immediate next steps
 
 * Implement whatever else we need to allow us to run 'testbz2.py' and have it all pass.
 
-* Add __del__ methods to CPython types.
-
 * Move these notes into something resembling a real issue tracking system.
 
 
@@ -40,10 +38,10 @@ Notable bugs/issues/deficiencies
 
 * Lists use perhaps the stupidest allocation strategy known to mankind.
 
-* Python25Mapper.Store(BigInteger) contains an ugly hack.
-
 * Python25Mapper.PyFile_AsFile uses reflection to access a PythonFile's stream.
 
 * Python25Mapper.GetPythonContext uses reflection to access a ScriptEngine's language context.
 
-* Members and properties on types are not yet handled.
+* Members and properties are not yet handled.
+
+* After ~30 consecutive runs of the test suite, functionalitytest.testBZ2HeavyUse will start failing sporadically due to lack of memory -- clearly *something* is leaking.
