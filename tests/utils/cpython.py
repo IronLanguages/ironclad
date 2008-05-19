@@ -2,19 +2,19 @@
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from Ironclad import (
-    CPyMarshal, CPython_destructor_Delegate, CPython_initproc_Delegate, CPythonVarargsFunction_Delegate,
-    CPythonVarargsKwargsFunction_Delegate, PythonMapper
+    CPyMarshal, CPython_destructor_Delegate, CPython_getter_Delegate, CPython_initproc_Delegate, CPython_setter_Delegate,
+    CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate, PythonMapper
 )
-from Ironclad.Structs import METH, Py_TPFLAGS, PyMethodDef, PyTypeObject
+from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMethodDef, PyTypeObject
 
 from tests.utils.memory import OffsetPtr
 
 gc_fooler = []
 def GC_NotYet(dgt):
     gc_fooler.append(dgt)
-    def Gc_Soon():
+    def GC_Soon():
         gc_fooler.remove(dgt)
-    return Gc_Soon
+    return GC_Soon
 
 DELEGATE_TYPES = {
     METH.O: CPythonVarargsFunction_Delegate,
@@ -26,6 +26,21 @@ def MakeMethodDef(name, implementation, flags, doc="doc"):
     dgt = DELEGATE_TYPES[flags](implementation)
     return PyMethodDef(name, Marshal.GetFunctionPointerForDelegate(dgt), flags, doc), GC_NotYet(dgt)
 
+
+def MakeGetSetDef(name, get, set, doc):
+    deallocs = []
+    _get = IntPtr.Zero
+    if get:
+        getdgt = CPython_getter_Delegate(get)
+        _get = Marshal.GetFunctionPointerForDelegate(getdgt)
+        deallocs.append(GC_NotYet(getdgt))
+    _set = IntPtr.Zero
+    if set:
+        setdgt = CPython_setter_Delegate(set)
+        _set = Marshal.GetFunctionPointerForDelegate(setdgt)
+        deallocs.append(GC_NotYet(setdgt))
+    return PyGetSetDef(name, _get, _set, doc), lambda: map(lambda x: x(), deallocs)
+    
 
 MAKETYPEPTR_DEFAULTS = {
     "tp_name": "Nemo",
@@ -88,6 +103,7 @@ def WriteTypeField(typePtr, name, value):
         CPyMarshal.WriteFunctionPtrField(typePtr, PyTypeObject, name, dgt)
         return GC_NotYet(dgt)
     raise KeyError("WriteTypeField can't handle %s, %s" % (name, value))
+
 
 def MakeTypePtr(mapper, params):
     fields = dict(MAKETYPEPTR_DEFAULTS)

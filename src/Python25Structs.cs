@@ -13,12 +13,21 @@ namespace Ironclad
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate IntPtr CPythonVarargsKwargsFunction_Delegate(IntPtr self, IntPtr args, IntPtr kwargs);
+    
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int CPython_initproc_Delegate(IntPtr self, IntPtr args, IntPtr kwargs);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void CPython_destructor_Delegate(IntPtr self);
+    
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate IntPtr CPython_getter_Delegate(IntPtr self, IntPtr closure);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int CPython_setter_Delegate(IntPtr self, IntPtr value, IntPtr closure);
+
 
     namespace Structs
     {
@@ -68,6 +77,25 @@ namespace Ironclad
                 this.ml_meth = meth;
                 this.ml_flags = flags;
                 this.ml_doc = doc;
+            }
+        }
+        
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct PyGetSetDef
+        {
+            public string name;
+            public IntPtr get;
+            public IntPtr set;
+            public string doc;
+            public IntPtr closure;
+
+            public PyGetSetDef(string name, IntPtr get, IntPtr set, string doc)
+            {
+                this.name = name;
+                this.get = get;
+                this.set = set;
+                this.doc = doc;
+                this.closure = IntPtr.Zero;
             }
         }
         

@@ -67,6 +67,17 @@ class DispatcherTest(TestCase):
         self.assertDispatcherUtilityMethod(
             '_maybe_raise', (IntPtr(1),), [], error, None, ValueError)
     
+    def testSurelyRaise(self):
+        # this should raise the mapper's LastException, if present;
+        # if no LastException, raise the error passed in
+        error1 = ValueError('huh?')
+        error2 = TypeError('meh')
+        self.assertDispatcherUtilityMethod(
+            "_surely_raise", (error1,), [], None, None, ValueError)
+        self.assertDispatcherUtilityMethod(
+            "_surely_raise", (error1,), [], error2, None, TypeError)
+    
+    
 
 def FuncReturning(resultPtr, calls, identifier):
     def RecordCall(*args):
@@ -99,12 +110,7 @@ class DispatcherDispatchTestCase(TestCase):
         test = self
         class MockMapper(object):
             def __init__(self):
-                self._lastException = None
-            
-            def _setLastException(self, exc):
-                calls.append(('SetException', exc))
-                self._lastException = exc
-            LastException = property(lambda s: s._lastException, _setLastException)
+                self.LastException = None
             
             def Store(self, item):
                 calls.append(('Store', (item,)))
@@ -417,7 +423,95 @@ class DispatcherKwargsTest(DispatcherDispatchTestCase):
             ('Retrieve', (RESULT_PTR,)),
             ('_cleanup', (RESULT_PTR, ARGS_PTR, IntPtr.Zero))
         ])
+
+
+class DispatcherGetterTest(DispatcherDispatchTestCase):
     
+    def testDispatch_method_getter(self):
+        calls = self.callDispatcherMethod('method_getter', INSTANCE_PTR)
+        self.assertEquals(calls, [
+            ('dgt', (INSTANCE_PTR, IntPtr.Zero)),
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('Retrieve', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR,))
+        ])
+    
+    def testDispatch_method_getter_error(self):
+        calls = self.callDispatcherErrorMethod('method_getter', INSTANCE_PTR)
+        self.assertEquals(calls, [
+            ('dgt', (INSTANCE_PTR, IntPtr.Zero)),
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR,))
+        ])
+
+
+class DispatcherSetterTest(DispatcherDispatchTestCase):
+
+    def testDispatch_method_setter(self):
+        class klass(object):
+            pass
+        instance = klass()
+        instance._instancePtr = INSTANCE_PTR
+        
+        mapper = Python25Mapper()
+        calls = []
+        callables = {
+            'dgt': FuncReturning(0, calls, 'dgt'),
+        }
+        
+        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
+        dispatcher.method_setter('dgt', INSTANCE_PTR, ARG)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('dgt', (INSTANCE_PTR, ARG_PTR, IntPtr.Zero)), 
+            ('_cleanup', (ARG_PTR,)),
+        ])
+        mapper.Dispose()
+
+    def testDispatch_method_setter_error(self):
+        class klass(object):
+            pass
+        instance = klass()
+        instance._instancePtr = INSTANCE_PTR
+        
+        mapper = Python25Mapper()
+        calls = []
+        callables = {
+            'dgt': FuncReturning(-1, calls, 'dgt'),
+        }
+        
+        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
+        self.assertRaises(Exception, lambda: dispatcher.method_setter('dgt', INSTANCE_PTR, ARG))
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('dgt', (INSTANCE_PTR, ARG_PTR, IntPtr.Zero)), 
+            ('_cleanup', (ARG_PTR,)),
+        ])
+        mapper.Dispose()
+
+    def testDispatch_method_setter_specificError(self):
+        class klass(object):
+            pass
+        instance = klass()
+        instance._instancePtr = INSTANCE_PTR
+        
+        mapper = Python25Mapper()
+        calls = []
+        callables = {
+            'dgt': FuncReturning(-1, calls, 'dgt'),
+        }
+        
+        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
+        dispatcher.mapper.LastException = ValueError("arrgh!")
+        self.assertRaises(ValueError, lambda: dispatcher.method_setter('dgt', INSTANCE_PTR, ARG))
+        self.assertEquals(dispatcher.mapper.LastException, None, "failed to clear error")
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('dgt', (INSTANCE_PTR, ARG_PTR, IntPtr.Zero)), 
+            ('_cleanup', (ARG_PTR,)),
+        ])
+        mapper.Dispose()
+        
 
 TYPE_PTR = IntPtr(555)
 
@@ -511,7 +605,7 @@ class DispatcherInitTest(DispatcherDispatchTestCase):
         }
         
         dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
-        result = dispatcher.init('dgt', instance, *ARGS, **KWARGS)
+        dispatcher.init('dgt', instance, *ARGS, **KWARGS)
         self.assertEquals(calls, [
             ('Store', (ARGS,)),
             ('Store', (KWARGS,)),
@@ -534,6 +628,30 @@ class DispatcherInitTest(DispatcherDispatchTestCase):
         
         dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
         self.assertRaises(Exception, lambda: dispatcher.init('dgt', instance, *ARGS, **KWARGS))
+        self.assertEquals(calls, [
+            ('Store', (ARGS,)),
+            ('Store', (KWARGS,)),
+            ('dgt', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
+            ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
+        ])
+        mapper.Dispose()
+    
+    def testDispatch_init_specificError(self):
+        class klass(object):
+            pass
+        instance = klass()
+        instance._instancePtr = INSTANCE_PTR
+        
+        mapper = Python25Mapper()
+        calls = []
+        callables = {
+            'dgt': FuncReturning(-1, calls, 'dgt'),
+        }
+        
+        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
+        dispatcher.mapper.LastException = ValueError('arrgh!')
+        self.assertRaises(ValueError, lambda: dispatcher.init('dgt', instance, *ARGS, **KWARGS))
+        self.assertEquals(dispatcher.mapper.LastException, None, "failed to clear error")
         self.assertEquals(calls, [
             ('Store', (ARGS,)),
             ('Store', (KWARGS,)),
@@ -622,6 +740,8 @@ suite  = makesuite(
     DispatcherObjargTest,
     DispatcherSelfargTest,
     DispatcherKwargsTest, 
+    DispatcherGetterTest,
+    DispatcherSetterTest,
     DispatcherConstructTest,
     DispatcherInitTest,
     DispatcherDeleteTest,

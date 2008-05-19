@@ -197,6 +197,47 @@ namespace Ironclad
                 VARARGS_METHOD_CODE,
                 VARARGS_KWARGS_METHOD_CODE);
         }
+        
+        private void GenerateProperties(StringBuilder code, IntPtr getsets, DispatchTable methodTable, string tablePrefix)
+        {
+            IntPtr getsetPtr = getsets;
+            if (getsetPtr == IntPtr.Zero)
+            {
+                return;
+            }
+            while (CPyMarshal.ReadInt(getsetPtr) != 0)
+            {
+                PyGetSetDef thisGetset = (PyGetSetDef)Marshal.PtrToStructure(
+                    getsetPtr, typeof(PyGetSetDef));
+                string name = thisGetset.name;
+                string doc = thisGetset.doc;
+                
+                string getname = "None";
+                if (thisGetset.get != IntPtr.Zero)
+                {
+                    getname = String.Format("__get_{0}", name);
+                    CPython_getter_Delegate dgt = (CPython_getter_Delegate)
+                        Marshal.GetDelegateForFunctionPointer(
+                            thisGetset.get, typeof(CPython_getter_Delegate));
+                    code.Append(String.Format(GETTER_METHOD_CODE, getname, tablePrefix));
+                    methodTable[tablePrefix + getname] = dgt;
+                }
+                
+                string setname = "None";
+                if (thisGetset.set != IntPtr.Zero)
+                {
+                    setname = String.Format("__set_{0}", name);
+                    CPython_setter_Delegate dgt = (CPython_setter_Delegate)
+                        Marshal.GetDelegateForFunctionPointer(
+                            thisGetset.set, typeof(CPython_setter_Delegate));
+                    code.Append(String.Format(SETTER_METHOD_CODE, setname, tablePrefix));
+                    methodTable[tablePrefix + setname] = dgt;
+                }
+                
+                code.Append(String.Format(PROPERTY_CODE, name, getname, setname, doc));
+                getsetPtr = CPyMarshal.Offset(getsetPtr, Marshal.SizeOf(typeof(PyGetSetDef)));
+            }
+        }
 
         private void
         GenerateIterMethods(StringBuilder classCode, IntPtr typePtr, DispatchTable methodTable, string tablePrefix)
@@ -254,6 +295,9 @@ namespace Ironclad
             this.ConnectTypeField(typePtr, tablePrefix, "tp_new", methodTable, typeof(PyType_GenericNew_Delegate));
             this.ConnectTypeField(typePtr, tablePrefix, "tp_init", methodTable, typeof(CPython_initproc_Delegate));
             this.ConnectTypeField(typePtr, tablePrefix, "tp_dealloc", methodTable, typeof(CPython_destructor_Delegate));
+            
+            IntPtr getsetPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_getset");
+            this.GenerateProperties(classCode, getsetPtr, methodTable, tablePrefix);
             
             IntPtr methodsPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_methods");
             this.GenerateMethods(classCode, methodsPtr, methodTable, tablePrefix);

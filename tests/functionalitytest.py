@@ -252,6 +252,51 @@ class FunctionalityTest(TestCase):
         shutil.rmtree(testDir)
 
 
+    def testBZ2HeavyUse(self):
+        self.assertWorksWithBZ2(dedent("""
+            COUNT = 150
+            compressors = [bz2.BZ2Compressor() for _ in range(COUNT)]
+            decompressors = [bz2.BZ2Decompressor() for _ in range(COUNT)]
+            
+            current = %r
+            for i in range(COUNT):
+                current = decompressors[-i].decompress(
+                    compressors[i].compress(current[:i * 40]) + 
+                    compressors[i].compress(current[i * 40:]) + 
+                    compressors[i].flush())
+            
+            assert current == %r
+            """) % (bz2_test_text, bz2_test_text)
+        )    
+    
+    
+    def testBZ2FileProperties(self):
+        testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
+        self.assertWorksWithBZ2(dedent("""
+            f = bz2.BZ2File(%r, 'U')
+            try:
+                # assert f.mode == 'r' # IP2 bug -- no file.mode
+                assert f.name == %r
+                assert f.closed == False
+                assert f.newlines == None
+                
+                f.readlines()
+                assert f.newlines == '\\n'
+                
+                for attr in ['mode', 'name', 'closed', 'newlines']:
+                    try:
+                        setattr(f, attr, 123)
+                    except AttributeError:
+                        pass
+                    else:
+                        raise AssertionError('unexpected settable attribute: ' + attr)
+            finally:
+                f.close()
+            assert f.closed == True
+            """) % (testPath, testPath)
+        )
+        
+        
     def assertBZ2FileWriteLines(self, sequence):
         # read is tested separately elsewhere, so we assume it works
         testDir = tempfile.mkdtemp()
@@ -270,24 +315,6 @@ class FunctionalityTest(TestCase):
             """) % (path, sequence, path, bz2_test_text)
         )
         shutil.rmtree(testDir)
-
-
-    def testBZ2HeavyUse(self):
-        self.assertWorksWithBZ2(dedent("""
-            COUNT = 150
-            compressors = [bz2.BZ2Compressor() for _ in range(COUNT)]
-            decompressors = [bz2.BZ2Decompressor() for _ in range(COUNT)]
-            
-            current = %r
-            for i in range(COUNT):
-                current = decompressors[-i].decompress(
-                    compressors[i].compress(current[:i * 40]) + 
-                    compressors[i].compress(current[i * 40:]) + 
-                    compressors[i].flush())
-            
-            assert current == %r
-            """) % (bz2_test_text, bz2_test_text)
-        )
         
 
     def testBZ2FileWriteLines_List(self):
