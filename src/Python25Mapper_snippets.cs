@@ -17,6 +17,13 @@ class Dispatcher(object):
         if resultPtr == nullPtr:
             raise NullReferenceException('CPython callable returned null without setting an exception')
 
+    def _surely_raise(self, fallbackError):
+        error = self.mapper.LastException
+        if error:
+            self.mapper.LastException = None
+            raise error
+        raise fallbackError
+
     def _cleanup(self, *args):
         self.mapper.FreeTemps()
         for arg in args:
@@ -83,6 +90,21 @@ class Dispatcher(object):
         finally:
             self._cleanup(resultPtr)
 
+    def method_getter(self, name, instancePtr):
+        resultPtr = self.table[name](instancePtr, nullPtr)
+        try:
+            self._maybe_raise(resultPtr)
+            return self.mapper.Retrieve(resultPtr)
+        finally:
+            self._cleanup(resultPtr)
+
+    def method_setter(self, name, instancePtr, value):
+        valuePtr = self.mapper.Store(value)
+        result = self.table[name](instancePtr, valuePtr, nullPtr)
+        self._cleanup(valuePtr)
+        if result < 0:
+            self._surely_raise(Exception('%s failed' % name))
+
 
     def construct(self, name, klass, *args, **kwargs):
         instance = object.__new__(klass)
@@ -104,7 +126,7 @@ class Dispatcher(object):
         result = self.table[name](instance._instancePtr, argsPtr, kwargsPtr)
         self._cleanup(argsPtr, kwargsPtr)
         if result < 0:
-            raise Exception('%s failed; object is probably not safe to use' % name)
+            self._surely_raise(Exception('%s failed; object is probably not safe to use' % name))
 
     def delete(self, name, instance):
         self.mapper.ReapStrongRefs()
@@ -152,6 +174,20 @@ class {0}(object):
     
     def __del__(self):
         _dispatcher.delete('{0}.tp_dealloc', self)
+";
+
+        private const string GETTER_METHOD_CODE = @"
+    def {0}(self):
+        return _dispatcher.method_getter('{1}{0}', self._instancePtr)
+";
+
+        private const string SETTER_METHOD_CODE = @"
+    def {0}(self, value):
+        return _dispatcher.method_setter('{1}{0}', self._instancePtr, value)
+";
+
+        private const string PROPERTY_CODE = @"
+    {0} = property({1}, {2}, None, '''{3}''')
 ";
 
         private const string ITER_METHOD_CODE = @"

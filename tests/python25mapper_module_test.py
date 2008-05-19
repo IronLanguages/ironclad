@@ -1,7 +1,7 @@
 
 from tests.utils.runtest import makesuite, run
 
-from tests.utils.cpython import MakeItemsTablePtr, MakeMethodDef, MakeTypePtr
+from tests.utils.cpython import MakeItemsTablePtr, MakeGetSetDef, MakeMethodDef, MakeTypePtr
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
 from tests.utils.python25mapper import TempPtrCheckingPython25Mapper, MakeAndAddEmptyModule, ModuleWrapper
@@ -241,6 +241,79 @@ class Python25Mapper_PyModule_AddObject_Test(TestCase):
             "Klass",
             "Klass is some sort of class.\nBeware, for its docstring contains '\\n's and similar trickery.",
         )
+
+
+class Python25Mapper_PyModule_AddObject_AttributesTest(TestCase):
+    
+    def assertGetSet(self, mapper, attr, get, set, doc, TestType):
+        modulePtr = MakeAndAddEmptyModule(mapper)
+        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
+        
+        getset, deallocGetset = MakeGetSetDef(attr, get, set, doc)
+        
+        typeSpec = {
+            "tp_name": 'klass',
+            "tp_getset": [getset],
+        }
+        typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
+        mapper.PyModule_AddObject(modulePtr, "klass", typePtr)
+        
+        TestType(module.klass)
+        
+        deallocGetset()
+        deallocType()
+    
+    
+    def testGet(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        result = "see my loafers: former gophers"
+        resultPtr = mapper.Store(result)
+        
+        calls = []
+        def get(instancePtr, closurePtr):
+            calls.append(('get', (instancePtr, closurePtr)))
+            return resultPtr
+        
+        def TestType(klass):
+            instance = klass()
+            self.assertEquals(instance.boing, result, "bad result")
+            self.assertEquals(calls, [('get', (instance._instancePtr, IntPtr.Zero))])
+            self.assertEquals(klass.boing.__doc__, "docstring", "bad docstring")
+            
+            def Set():
+                instance.boing = 'splat'
+            self.assertRaises(AttributeError, Set)
+        
+        self.assertGetSet(mapper, "boing", get, None, "docstring", TestType)
+        mapper.Dispose()
+        deallocTypes()
+
+
+    def testSet(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        value = "see my vest, see my vest, made from real gorilla chest"
+        valuePtr = mapper.Store(value)
+        
+        calls = []
+        def set(instancePtr, set_valuePtr, closurePtr):
+            calls.append(('set', (instancePtr, set_valuePtr, closurePtr)))
+            return 0
+        
+        def TestType(klass):
+            instance = klass()
+            self.assertRaises(AttributeError, lambda: instance.boing)
+            instance.boing = value
+            self.assertEquals(calls, [('set', (instance._instancePtr, valuePtr, IntPtr.Zero))])
+            self.assertEquals(klass.boing.__doc__, "docstring", "bad docstring")
+            
+        self.assertGetSet(mapper, "boing", None, set, "docstring", TestType)
+        mapper.Dispose()
+        deallocTypes()
+        
 
 
 class Python25Mapper_PyModule_AddObject_DispatchTrickyMethodsTest(TestCase):
@@ -562,6 +635,7 @@ suite = makesuite(
     Python25Mapper_Py_InitModule4_SetupTest,
     Python25Mapper_Py_InitModule4_Test,
     Python25Mapper_PyModule_AddObject_Test,
+    Python25Mapper_PyModule_AddObject_AttributesTest,
     Python25Mapper_PyModule_AddObject_DispatchTrickyMethodsTest,
     Python25Mapper_PyModule_AddObject_DispatchMethodsTest,
     Python25Mapper_PyModule_AddObject_DispatchIterTest,
