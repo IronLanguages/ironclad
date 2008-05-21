@@ -63,6 +63,27 @@ namespace Ironclad
             HAVE_INDEX = 0x00020000,
         }
         
+        public enum MemberT
+        {
+            SHORT = 0,
+            INT = 1,
+            LONG = 2,
+            FLOAT = 3,
+            DOUBLE = 4,
+            STRING = 5,
+            OBJECT = 6,
+            CHAR = 7,
+            BYTE = 8,
+            UBYTE = 9,
+            USHORT = 10,
+            UINT = 11,
+            ULONG = 12,
+            STRING_INPLACE = 13,
+            OBJECT_EX = 16,
+            LONGLONG = 17,
+            ULONGLONG = 18,
+        }
+        
         [StructLayout(LayoutKind.Sequential, Pack=1)]
         public struct PyMethodDef
         {
@@ -89,13 +110,32 @@ namespace Ironclad
             public string doc;
             public IntPtr closure;
 
-            public PyGetSetDef(string name, IntPtr get, IntPtr set, string doc)
+            public PyGetSetDef(string name, IntPtr get, IntPtr set, string doc, IntPtr closure)
             {
                 this.name = name;
                 this.get = get;
                 this.set = set;
                 this.doc = doc;
-                this.closure = IntPtr.Zero;
+                this.closure = closure;
+            }
+        }
+        
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct PyMemberDef
+        {
+            public string name;
+            public MemberT type;
+            public int offset;
+            public int flags;
+            public string doc;
+
+            public PyMemberDef(string name, MemberT type, int offset, int flags, string doc)
+            {
+                this.name = name;
+                this.type = type;
+                this.offset = offset;
+                this.flags = flags;
+                this.doc = doc;
             }
         }
         

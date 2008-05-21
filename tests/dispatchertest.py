@@ -5,8 +5,9 @@ from tests.utils.python25mapper import ModuleWrapper
 from tests.utils.testcase import TestCase
 
 from System import IntPtr, NullReferenceException
+from System.Runtime.InteropServices import Marshal
 
-from Ironclad import Python25Mapper
+from Ironclad import CPyMarshal, Python25Mapper
 
 def GetDispatcherClass(mapper):
     moduleDict = mapper.DispatcherModule.Scope.Dict
@@ -103,6 +104,7 @@ KWARGS = {"1": 2, "3": 4}
 KWARGS_PTR = IntPtr(333)
 ARG = object()
 ARG_PTR = IntPtr(444)
+CLOSURE = IntPtr(555)
 
 class DispatcherDispatchTestCase(TestCase):
     
@@ -428,18 +430,18 @@ class DispatcherKwargsTest(DispatcherDispatchTestCase):
 class DispatcherGetterTest(DispatcherDispatchTestCase):
     
     def testDispatch_method_getter(self):
-        calls = self.callDispatcherMethod('method_getter', INSTANCE_PTR)
+        calls = self.callDispatcherMethod('method_getter', INSTANCE_PTR, CLOSURE)
         self.assertEquals(calls, [
-            ('dgt', (INSTANCE_PTR, IntPtr.Zero)),
+            ('dgt', (INSTANCE_PTR, CLOSURE)),
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
             ('_cleanup', (RESULT_PTR,))
         ])
     
     def testDispatch_method_getter_error(self):
-        calls = self.callDispatcherErrorMethod('method_getter', INSTANCE_PTR)
+        calls = self.callDispatcherErrorMethod('method_getter', INSTANCE_PTR, CLOSURE)
         self.assertEquals(calls, [
-            ('dgt', (INSTANCE_PTR, IntPtr.Zero)),
+            ('dgt', (INSTANCE_PTR, CLOSURE)),
             ('_maybe_raise', (RESULT_PTR,)),
             ('_cleanup', (RESULT_PTR,))
         ])
@@ -460,10 +462,10 @@ class DispatcherSetterTest(DispatcherDispatchTestCase):
         }
         
         dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
-        dispatcher.method_setter('dgt', INSTANCE_PTR, ARG)
+        dispatcher.method_setter('dgt', INSTANCE_PTR, ARG, CLOSURE)
         self.assertEquals(calls, [
             ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR, IntPtr.Zero)), 
+            ('dgt', (INSTANCE_PTR, ARG_PTR, CLOSURE)), 
             ('_cleanup', (ARG_PTR,)),
         ])
         mapper.Dispose()
@@ -481,10 +483,10 @@ class DispatcherSetterTest(DispatcherDispatchTestCase):
         }
         
         dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
-        self.assertRaises(Exception, lambda: dispatcher.method_setter('dgt', INSTANCE_PTR, ARG))
+        self.assertRaises(Exception, lambda: dispatcher.method_setter('dgt', INSTANCE_PTR, ARG, CLOSURE))
         self.assertEquals(calls, [
             ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR, IntPtr.Zero)), 
+            ('dgt', (INSTANCE_PTR, ARG_PTR, CLOSURE)), 
             ('_cleanup', (ARG_PTR,)),
         ])
         mapper.Dispose()
@@ -503,15 +505,15 @@ class DispatcherSetterTest(DispatcherDispatchTestCase):
         
         dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
         dispatcher.mapper.LastException = ValueError("arrgh!")
-        self.assertRaises(ValueError, lambda: dispatcher.method_setter('dgt', INSTANCE_PTR, ARG))
+        self.assertRaises(ValueError, lambda: dispatcher.method_setter('dgt', INSTANCE_PTR, ARG, CLOSURE))
         self.assertEquals(dispatcher.mapper.LastException, None, "failed to clear error")
         self.assertEquals(calls, [
             ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR, IntPtr.Zero)), 
+            ('dgt', (INSTANCE_PTR, ARG_PTR, CLOSURE)), 
             ('_cleanup', (ARG_PTR,)),
         ])
         mapper.Dispose()
-        
+    
 
 TYPE_PTR = IntPtr(555)
 
@@ -729,6 +731,100 @@ class DispatcherDeleteTest(TestCase):
             ('ReRegisterForFinalize', instance)
         ])
         mapper.Dispose()
+
+
+class DispatcherIntMembersTest(TestCase):
+
+    def testDispatch_set_member_int(self):
+        mapper = Python25Mapper()
+        dispatcher = GetDispatcherClass(mapper)(mapper, {})
+        
+        ptr = Marshal.AllocHGlobal(4)
+        dispatcher.set_member_int(ptr, 12345)
+        self.assertEquals(CPyMarshal.ReadInt(ptr), 12345)
+        Marshal.FreeHGlobal(ptr)
+        
+        mapper.Dispose()
+
+    def testDispatch_get_member_int(self):
+        mapper = Python25Mapper()
+        dispatcher = GetDispatcherClass(mapper)(mapper, {})
+        
+        ptr = Marshal.AllocHGlobal(4)
+        CPyMarshal.WriteInt(ptr, 12345)
+        self.assertEquals(dispatcher.get_member_int(ptr), 12345)
+        Marshal.FreeHGlobal(ptr)
+        
+        mapper.Dispose()
+
+
+class DispatcherObjectMembersTest(TestCase):
+
+    def testDispatch_set_member_object1(self):
+        # was null, set to non-null
+        mapper = Python25Mapper()
+        dispatcher = GetDispatcherClass(mapper)(mapper, {})
+        
+        value = object()
+        valuePtr = mapper.Store(value)
+        
+        ptr = Marshal.AllocHGlobal(4)
+        CPyMarshal.Zero(ptr, 4)
+        dispatcher.set_member_object(ptr, value)
+        self.assertEquals(CPyMarshal.ReadPtr(ptr), valuePtr)
+        self.assertEquals(mapper.RefCount(valuePtr), 2, "failed to incref")
+        Marshal.FreeHGlobal(ptr)
+        
+        mapper.Dispose()
+
+    def testDispatch_set_member_object2(self):
+        # was non-null, set to non-null
+        mapper = Python25Mapper()
+        dispatcher = GetDispatcherClass(mapper)(mapper, {})
+        
+        value1 = object()
+        value1Ptr = mapper.Store(value1)
+        mapper.IncRef(value1Ptr)
+        value2 = object()
+        value2Ptr = mapper.Store(value2)
+        
+        ptr = Marshal.AllocHGlobal(4)
+        CPyMarshal.WritePtr(ptr, value1Ptr)
+        
+        dispatcher.set_member_object(ptr, value2)
+        self.assertEquals(CPyMarshal.ReadPtr(ptr), value2Ptr)
+        self.assertEquals(mapper.RefCount(value1Ptr), 1, "failed to decref old object")
+        self.assertEquals(mapper.RefCount(value2Ptr), 2, "failed to incref new object")
+        Marshal.FreeHGlobal(ptr)
+        
+        mapper.Dispose()
+
+    def testDispatch_get_member_object1(self):
+        # non-null
+        mapper = Python25Mapper()
+        dispatcher = GetDispatcherClass(mapper)(mapper, {})
+        
+        value = object()
+        valuePtr = mapper.Store(value)
+        
+        ptr = Marshal.AllocHGlobal(4)
+        CPyMarshal.WritePtr(ptr, valuePtr)
+        self.assertEquals(dispatcher.get_member_object(ptr), value)
+        Marshal.FreeHGlobal(ptr)
+        
+        mapper.Dispose()
+
+    def testDispatch_get_member_object2(self):
+        # null should become None here
+        mapper = Python25Mapper()
+        dispatcher = GetDispatcherClass(mapper)(mapper, {})
+        
+        ptr = Marshal.AllocHGlobal(4)
+        CPyMarshal.Zero(ptr, 4)
+        self.assertEquals(dispatcher.get_member_object(ptr), None)
+        Marshal.FreeHGlobal(ptr)
+        
+        mapper.Dispose()
         
         
 
@@ -745,6 +841,8 @@ suite  = makesuite(
     DispatcherConstructTest,
     DispatcherInitTest,
     DispatcherDeleteTest,
+    DispatcherIntMembersTest,
+    DispatcherObjectMembersTest,
 )
 
 if __name__ == '__main__':

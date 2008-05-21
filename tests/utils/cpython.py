@@ -27,7 +27,7 @@ def MakeMethodDef(name, implementation, flags, doc="doc"):
     return PyMethodDef(name, Marshal.GetFunctionPointerForDelegate(dgt), flags, doc), GC_NotYet(dgt)
 
 
-def MakeGetSetDef(name, get, set, doc):
+def MakeGetSetDef(name, get, set, doc, closure=IntPtr.Zero):
     deallocs = []
     _get = IntPtr.Zero
     if get:
@@ -39,8 +39,8 @@ def MakeGetSetDef(name, get, set, doc):
         setdgt = CPython_setter_Delegate(set)
         _set = Marshal.GetFunctionPointerForDelegate(setdgt)
         deallocs.append(GC_NotYet(setdgt))
-    return PyGetSetDef(name, _get, _set, doc), lambda: map(lambda x: x(), deallocs)
-    
+    return PyGetSetDef(name, _get, _set, doc, closure), lambda: map(apply, deallocs)
+
 
 MAKETYPEPTR_DEFAULTS = {
     "tp_name": "Nemo",

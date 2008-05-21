@@ -295,6 +295,20 @@ class FunctionalityTest(TestCase):
             assert f.closed == True
             """) % (testPath, testPath)
         )
+
+
+    def testBZ2FileMember(self):
+        testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
+        self.assertWorksWithBZ2(dedent("""
+            f = bz2.BZ2File(%r)
+            try:
+                assert f.softspace == 0
+                f.softspace = 1
+                assert f.softspace == 1
+            finally:
+                f.close()
+            """) % testPath
+        )
         
         
     def assertBZ2FileWriteLines(self, sequence):
