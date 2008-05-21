@@ -62,10 +62,12 @@ namespace Ironclad
             globals["_dispatcher"] = PythonCalls.Call(this.dispatcherClass, new object[] { this, methodTable });
 
             // hack to help moduleCode run -- can't import from System for some reason
-            globals["nullPtr"] = IntPtr.Zero;
+            globals["IntPtr"] = typeof(IntPtr);
+            globals["CPyMarshal"] = typeof(CPyMarshal);
             globals["NullReferenceException"] = typeof(NullReferenceException);
 
             StringBuilder moduleCode = new StringBuilder();
+            moduleCode.Append("CPyMarshal = CPyMarshal()\n"); // eww
             this.GenerateFunctions(moduleCode, methods, methodTable);
 
             PythonModule module = this.GetPythonContext().CreateModule(
@@ -198,7 +200,8 @@ namespace Ironclad
                 VARARGS_KWARGS_METHOD_CODE);
         }
         
-        private void GenerateProperties(StringBuilder code, IntPtr getsets, DispatchTable methodTable, string tablePrefix)
+        private void
+        GenerateProperties(StringBuilder code, IntPtr getsets, DispatchTable methodTable, string tablePrefix)
         {
             IntPtr getsetPtr = getsets;
             if (getsetPtr == IntPtr.Zero)
@@ -211,6 +214,7 @@ namespace Ironclad
                     getsetPtr, typeof(PyGetSetDef));
                 string name = thisGetset.name;
                 string doc = thisGetset.doc;
+                IntPtr closure = thisGetset.closure;
                 
                 string getname = "None";
                 if (thisGetset.get != IntPtr.Zero)
@@ -219,7 +223,7 @@ namespace Ironclad
                     CPython_getter_Delegate dgt = (CPython_getter_Delegate)
                         Marshal.GetDelegateForFunctionPointer(
                             thisGetset.get, typeof(CPython_getter_Delegate));
-                    code.Append(String.Format(GETTER_METHOD_CODE, getname, tablePrefix));
+                    code.Append(String.Format(GETTER_METHOD_CODE, getname, tablePrefix, closure));
                     methodTable[tablePrefix + getname] = dgt;
                 }
                 
@@ -230,12 +234,71 @@ namespace Ironclad
                     CPython_setter_Delegate dgt = (CPython_setter_Delegate)
                         Marshal.GetDelegateForFunctionPointer(
                             thisGetset.set, typeof(CPython_setter_Delegate));
-                    code.Append(String.Format(SETTER_METHOD_CODE, setname, tablePrefix));
+                    code.Append(String.Format(SETTER_METHOD_CODE, setname, tablePrefix, closure));
                     methodTable[tablePrefix + setname] = dgt;
                 }
                 
                 code.Append(String.Format(PROPERTY_CODE, name, getname, setname, doc));
                 getsetPtr = CPyMarshal.Offset(getsetPtr, Marshal.SizeOf(typeof(PyGetSetDef)));
+            }
+        }
+        
+        
+        private bool
+        GetMemberSnippets(MemberT type, ref string getter, ref string setter)
+        {
+            switch (type)
+            {
+                case MemberT.INT:
+                    getter = INT_MEMBER_GETTER_CODE;
+                    setter = INT_MEMBER_SETTER_CODE;
+                    return true;
+                case MemberT.OBJECT:
+                    getter = OBJECT_MEMBER_GETTER_CODE;
+                    setter = OBJECT_MEMBER_SETTER_CODE;
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        
+        private void
+        GenerateMembers(StringBuilder code, IntPtr members, DispatchTable methodTable, string tablePrefix)
+        {
+            IntPtr memberPtr = members;
+            if (memberPtr == IntPtr.Zero)
+            {
+                return;
+            }
+            
+            while (CPyMarshal.ReadInt(memberPtr) != 0)
+            {
+                PyMemberDef thisMember = (PyMemberDef)Marshal.PtrToStructure(
+                    memberPtr, typeof(PyMemberDef));
+                string name = thisMember.name;
+                int offset = thisMember.offset;
+                string doc = thisMember.doc;
+                
+                string getterCode = null;
+                string setterCode = null;
+                if (this.GetMemberSnippets(thisMember.type, ref getterCode, ref setterCode))
+                {
+                    string getname = String.Format("__get_{0}", name);
+                    code.Append(String.Format(getterCode, getname, offset));
+                    
+                    string setname = "None";
+                    if ((thisMember.flags & 1) == 0)
+                    {
+                        setname = String.Format("__set_{0}", name);
+                        code.Append(String.Format(setterCode, setname, offset));
+                    }
+                    code.Append(String.Format(PROPERTY_CODE, name, getname, setname, doc));
+                }
+                else
+                {
+                    Console.WriteLine("detected unsupported member type {0}; ignoring", thisMember.type);
+                }
+                memberPtr = CPyMarshal.Offset(memberPtr, Marshal.SizeOf(typeof(PyMemberDef)));
             }
         }
 
@@ -298,6 +361,9 @@ namespace Ironclad
             
             IntPtr getsetPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_getset");
             this.GenerateProperties(classCode, getsetPtr, methodTable, tablePrefix);
+            
+            IntPtr membersPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_members");
+            this.GenerateMembers(classCode, membersPtr, methodTable, tablePrefix);
             
             IntPtr methodsPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_methods");
             this.GenerateMethods(classCode, methodsPtr, methodTable, tablePrefix);

@@ -2,141 +2,6 @@ namespace Ironclad
 {
     public partial class Python25Mapper : PythonMapper
     {
-        private const string DISPATCHER_MODULE_CODE = @"
-class Dispatcher(object):
-
-    def __init__(self, mapper, table):
-        self.mapper = mapper
-        self.table = table
-
-    def _maybe_raise(self, resultPtr):
-        error = self.mapper.LastException
-        if error:
-            self.mapper.LastException = None
-            raise error
-        if resultPtr == nullPtr:
-            raise NullReferenceException('CPython callable returned null without setting an exception')
-
-    def _surely_raise(self, fallbackError):
-        error = self.mapper.LastException
-        if error:
-            self.mapper.LastException = None
-            raise error
-        raise fallbackError
-
-    def _cleanup(self, *args):
-        self.mapper.FreeTemps()
-        for arg in args:
-            if arg != nullPtr:
-                self.mapper.DecRef(arg)
-
-    def function_noargs(self, name):
-        return self.method_noargs(name, nullPtr)
-
-    def method_noargs(self, name, instancePtr):
-        resultPtr = self.table[name](instancePtr, nullPtr)
-        try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
-        finally:
-            self._cleanup(resultPtr)
-
-    def function_objarg(self, name, arg):
-        return self.method_objarg(name, nullPtr, arg)
-        
-    def method_objarg(self, name, instancePtr, arg):
-        argPtr = self.mapper.Store(arg)
-        resultPtr = self.table[name](instancePtr, argPtr)
-        try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
-        finally:
-            self._cleanup(resultPtr, argPtr)
-
-    def function_varargs(self, name, *args):
-        return self.method_varargs(name, nullPtr, *args)
-
-    def method_varargs(self, name, instancePtr, *args):
-        argsPtr = self.mapper.Store(args)
-        resultPtr = self.table[name](instancePtr, argsPtr)
-        try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
-        finally:
-            self._cleanup(resultPtr, argsPtr)
-
-    def function_kwargs(self, name, *args, **kwargs):
-        return self.method_kwargs(name, nullPtr, *args, **kwargs)
-
-    def method_kwargs(self, name, instancePtr, *args, **kwargs):
-        argsPtr = self.mapper.Store(args)
-        kwargsPtr = nullPtr
-        if kwargs != {}:
-            kwargsPtr = self.mapper.Store(kwargs)
-        resultPtr = self.table[name](instancePtr, argsPtr, kwargsPtr)
-        try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
-        finally:
-            self._cleanup(resultPtr, argsPtr, kwargsPtr)
-    
-    def method_selfarg(self, name, instancePtr, errorHandler=None):
-        resultPtr = self.table[name](instancePtr)
-        try:
-            if errorHandler:
-                errorHandler(resultPtr)
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
-        finally:
-            self._cleanup(resultPtr)
-
-    def method_getter(self, name, instancePtr):
-        resultPtr = self.table[name](instancePtr, nullPtr)
-        try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
-        finally:
-            self._cleanup(resultPtr)
-
-    def method_setter(self, name, instancePtr, value):
-        valuePtr = self.mapper.Store(value)
-        result = self.table[name](instancePtr, valuePtr, nullPtr)
-        self._cleanup(valuePtr)
-        if result < 0:
-            self._surely_raise(Exception('%s failed' % name))
-
-
-    def construct(self, name, klass, *args, **kwargs):
-        instance = object.__new__(klass)
-        argsPtr = self.mapper.Store(args)
-        kwargsPtr = self.mapper.Store(kwargs)
-        instancePtr = self.table[name](klass._typePtr, argsPtr, kwargsPtr)
-        try:
-            self._maybe_raise(instancePtr)
-        finally:
-            self._cleanup(argsPtr, kwargsPtr)
-        
-        self.mapper.StoreUnmanagedInstance(instancePtr, instance)
-        instance._instancePtr = instancePtr
-        return instance
-
-    def init(self, name, instance, *args, **kwargs):
-        argsPtr = self.mapper.Store(args)
-        kwargsPtr = self.mapper.Store(kwargs)
-        result = self.table[name](instance._instancePtr, argsPtr, kwargsPtr)
-        self._cleanup(argsPtr, kwargsPtr)
-        if result < 0:
-            self._surely_raise(Exception('%s failed; object is probably not safe to use' % name))
-
-    def delete(self, name, instance):
-        self.mapper.ReapStrongRefs()
-        if self.mapper.RefCount(instance._instancePtr) > 1:
-            self.mapper.Strengthen(instance)
-            GC.ReRegisterForFinalize(instance)
-            return
-        self.table[name](instance._instancePtr)
-
-";
 
         private const string NOARGS_FUNCTION_CODE = @"
 def {0}():
@@ -176,14 +41,38 @@ class {0}(object):
         _dispatcher.delete('{0}.tp_dealloc', self)
 ";
 
+        private const string INT_MEMBER_GETTER_CODE = @"
+    def {0}(self):
+        fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
+        return _dispatcher.get_member_int(fieldPtr)
+";
+
+        private const string INT_MEMBER_SETTER_CODE = @"
+    def {0}(self, value):
+        fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
+        _dispatcher.set_member_int(fieldPtr, value)
+";
+
+        private const string OBJECT_MEMBER_GETTER_CODE = @"
+    def {0}(self):
+        fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
+        return _dispatcher.get_member_object(fieldPtr)
+";
+
+        private const string OBJECT_MEMBER_SETTER_CODE = @"
+    def {0}(self, value):
+        fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
+        _dispatcher.set_member_object(fieldPtr, value)
+";
+
         private const string GETTER_METHOD_CODE = @"
     def {0}(self):
-        return _dispatcher.method_getter('{1}{0}', self._instancePtr)
+        return _dispatcher.method_getter('{1}{0}', self._instancePtr, IntPtr({2}))
 ";
 
         private const string SETTER_METHOD_CODE = @"
     def {0}(self, value):
-        return _dispatcher.method_setter('{1}{0}', self._instancePtr, value)
+        return _dispatcher.method_setter('{1}{0}', self._instancePtr, value, IntPtr({2}))
 ";
 
         private const string PROPERTY_CODE = @"
@@ -197,7 +86,7 @@ class {0}(object):
 
         private const string ITERNEXT_METHOD_CODE = @"
     def __raise_stop(self, resultPtr):
-        if resultPtr == nullPtr and _dispatcher.mapper.LastException == None:
+        if resultPtr == IntPtr(0) and _dispatcher.mapper.LastException == None:
                 raise StopIteration()
 
     def next(self):
