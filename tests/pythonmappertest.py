@@ -128,6 +128,15 @@ class PythonMapperTest(TestCase):
             self.assertEquals(getattr(pm, _type), IntPtr.Zero, "unexpected")
 
 
+    def testAddressGetterFailsCleanly(self):
+        pm = PythonMapper()
+        addressGetter = pm.GetAddress
+
+        self.assertEquals(addressGetter("This_symbol_is_not_exported_by_any_version_of_Python_so_far_as_I_know"),
+                          IntPtr.Zero,
+                          "bad result for nonsense symbol")
+
+
     def assertAddressGetterRemembers(self, mapperSubclass, name, expectedAddress):
         pm = mapperSubclass()
 
@@ -150,16 +159,28 @@ class PythonMapperTest(TestCase):
         self.assertAddressGetterRemembers(MyPM, "PyExc_OverflowError", IntPtr(999))
 
 
-    def testAddressGetterFailsCleanly(self):
-        pm = PythonMapper()
-        addressGetter = pm.GetAddress
 
-        self.assertEquals(addressGetter("This_symbol_is_not_exported_by_any_version_of_Python_so_far_as_I_know"),
-                          IntPtr.Zero,
-                          "bad result for nonsense symbol")
+FIND_TEST_CODE = """
+class MyPM(PythonMapper):
+    def %(name)s(self, %(argnames)s):
+        self.call = (%(argnames)s,)
+        return %(retval)s
+self.assertDispatches(
+    MyPM, "%(name)s", %(args)s, %(retval)s)
+"""
 
+FIND_TEST_CODE_NOARGS = """
+class MyPM(PythonMapper):
+    def %(name)s(self):
+        self.call = tuple()
+        return %(retval)s
+self.assertDispatches(
+    MyPM, "%(name)s", tuple(), %(retval)s)
+"""
 
-    def assertDispatches(self, mapperSubclass, funcName, argTuple, expectedResult, paramsStore):
+class PythonMapperAPIFuncTest(TestCase):
+
+    def assertDispatches(self, mapperSubclass, funcName, argTuple, expectedResult):
         pm = mapperSubclass()
 
         fp1 = pm.GetAddress(funcName)
@@ -172,500 +193,76 @@ class PythonMapperTest(TestCase):
         result = self.dgt(*argTuple)
 
         self.assertEquals(result, expectedResult, "unexpected result")
-        self.assertEquals(len(paramsStore), 1, "wrong number of calls")
-        self.assertEquals(paramsStore[0], argTuple, "wrong params stored")
-
-
-    def testPythonMapperFinds_Py_InitModule4(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def Py_InitModule4(self, name, methods, doc, _self, apiver):
-                paramsStore.append((name, methods, doc, _self, apiver))
-                return IntPtr.Zero
-
-        self.assertDispatches(
-            MyPM, "Py_InitModule4",
-            ("name", IntPtr.Zero, "doc", IntPtr.Zero, 12345),
-            IntPtr.Zero, paramsStore)
-
-
-    def testPythonMapperFinds_PyModule_AddObject(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyModule_AddObject(self, module, name, item):
-                paramsStore.append((module, name, item))
-                return 33
-
-        self.assertDispatches(
-            MyPM, "PyModule_AddObject",
-            (IntPtr(33), "henry", IntPtr(943)),
-            33, paramsStore)
-
-
-    def testPythonMapperFinds_PyModule_GetDict(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyModule_GetDict(self, modulePtr):
-                paramsStore.append((modulePtr,))
-                return IntPtr(33)
-
-        self.assertDispatches(
-            MyPM, "PyModule_GetDict",
-            (IntPtr(943),),
-            IntPtr(33), paramsStore)
-
-
-    def testPythonMapperFinds_PyString_FromString(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyString_FromString(self, data):
-                paramsStore.append((data, ))
-                return IntPtr.Zero
-
-        self.assertDispatches(
-            MyPM, "PyString_FromString",
-            (IntPtr(333), ),
-            IntPtr.Zero, paramsStore)
-
-
-    def testPythonMapperFinds_PyString_FromStringAndSize(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyString_FromStringAndSize(self, stringPtr, size):
-                paramsStore.append((stringPtr, size))
-                return IntPtr(12345)
-
-        self.assertDispatches(
-            MyPM, "PyString_FromStringAndSize",
-            (IntPtr(98765), 33),
-            IntPtr(12345), paramsStore)
-
-
-    def testPythonMapperFinds__PyString_Resize(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def _PyString_Resize(self, stringPtrPtr, size):
-                paramsStore.append((stringPtrPtr, size))
-                return 0
-
-        self.assertDispatches(
-            MyPM, "_PyString_Resize",
-            (IntPtr(98765), 33),
-            0, paramsStore)
-
-
-    def testPythonMapperFinds_PyString_Size(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyString_Size(self, stringPtr):
-                paramsStore.append((stringPtr,))
-                return 123
-
-        self.assertDispatches(
-            MyPM, "PyString_Size",
-            (IntPtr(98765),),
-            123, paramsStore)
-
-
-    def testPythonMapperFinds_PyErr_SetString(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyErr_SetString(self, error, message):
-                paramsStore.append((error, message))
-
-        self.assertDispatches(
-            MyPM, "PyErr_SetString",
-            (IntPtr(98765), "and in the darkness bind them"),
-            None, paramsStore)
-
-
-    def testPythonMapperFinds_PyErr_Occurred(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyErr_Occurred(self):
-                paramsStore.append(tuple())
-                return IntPtr(123)
-
-        self.assertDispatches(
-            MyPM, "PyErr_Occurred",
-            tuple(),
-            IntPtr(123), paramsStore)
-
-
-    def testPythonMapperFinds_PyType_GenericNew(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyType_GenericNew(self, typePtr, args, kwargs):
-                paramsStore.append((typePtr, args, kwargs))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyType_GenericNew",
-            (IntPtr(111), IntPtr(222), IntPtr(333)),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyType_GenericAlloc(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyType_GenericAlloc(self, typePtr, nItems):
-                paramsStore.append((typePtr, nItems))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyType_GenericAlloc",
-            (IntPtr(111), 22),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyType_IsSubtype(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyType_IsSubtype(self, subtypePtr, typePtr):
-                paramsStore.append((subtypePtr, typePtr))
-                return 123
-
-        self.assertDispatches(
-            MyPM, "PyType_IsSubtype",
-            (IntPtr(111), IntPtr(222)),
-            123, paramsStore)
-
-
-    def testPythonMapperFinds_PyThread_allocate_lock(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyThread_allocate_lock(self):
-                paramsStore.append(tuple())
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyThread_allocate_lock",
-            tuple(),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyThread_free_lock(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyThread_free_lock(self, ptr):
-                paramsStore.append((ptr,))
-
-        self.assertDispatches(
-            MyPM, "PyThread_free_lock",
-            (IntPtr(123),),
-            None, paramsStore)
-
-
-    def testPythonMapperFinds_PyThread_acquire_lock(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyThread_acquire_lock(self, ptr, flags):
-                paramsStore.append((ptr, flags))
-                return 1
-
-        self.assertDispatches(
-            MyPM, "PyThread_acquire_lock",
-            (IntPtr(123), 1),
-            1, paramsStore)
-
-
-    def testPythonMapperFinds_PyThread_release_lock(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyThread_release_lock(self, ptr):
-                paramsStore.append((ptr,))
-
-        self.assertDispatches(
-            MyPM, "PyThread_release_lock",
-            (IntPtr(123),),
-            None, paramsStore)
-
-
-    def testPythonMapperFinds_PyObject_Call(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyObject_Call(self, kallable, args, kwargs):
-                paramsStore.append((kallable, args, kwargs))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyObject_Call",
-            (IntPtr(123), IntPtr(456), IntPtr(789)),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyObject_GetIter(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyObject_GetIter(self, obj):
-                paramsStore.append((obj,))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyObject_GetIter",
-            (IntPtr(123),),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyIter_Next(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyIter_Next(self, obj):
-                paramsStore.append((obj,))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyIter_Next",
-            (IntPtr(123),),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyDict_New(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyDict_New(self):
-                paramsStore.append(tuple())
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyDict_New",
-            tuple(),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyDict_Size(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyDict_Size(self, _dict):
-                paramsStore.append((_dict,))
-                return 999
-
-        self.assertDispatches(
-            MyPM, "PyDict_Size",
-            (IntPtr(111),),
-            999, paramsStore)
-
-
-    def testPythonMapperFinds_PyDict_GetItemString(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyDict_GetItemString(self, _dict, key):
-                paramsStore.append((_dict, key))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyDict_GetItemString",
-            (IntPtr(111), "boojum"),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyList_New(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyList_New(self, size):
-                paramsStore.append((size,))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyList_New",
-            (33,),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyList_Append(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyList_Append(self, listPtr, itemPtr):
-                paramsStore.append((listPtr, itemPtr))
-                return 789
-
-        self.assertDispatches(
-            MyPM, "PyList_Append",
-            (IntPtr(123), IntPtr(456)),
-            789, paramsStore)
-
-
-    def testPythonMapperFinds_PyList_SetItem(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyList_SetItem(self, listPtr, index, itemPtr):
-                paramsStore.append((listPtr, index, itemPtr))
-                return 999
-
-        self.assertDispatches(
-            MyPM, "PyList_SetItem",
-            (IntPtr(123), 4, IntPtr(567)),
-            999, paramsStore)
-
-
-    def testPythonMapperFinds_PyList_GetSlice(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyList_GetSlice(self, listPtr, start, stop):
-                paramsStore.append((listPtr, start, stop))
-                return IntPtr(789)
-
-        self.assertDispatches(
-            MyPM, "PyList_GetSlice",
-            (IntPtr(123), 4, 5),
-            IntPtr(789), paramsStore)
-
-
-    def testPythonMapperFinds_PyTuple_New(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyTuple_New(self, size):
-                paramsStore.append((size,))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyTuple_New",
-            (33,),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyInt_FromLong(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyInt_FromLong(self, value):
-                paramsStore.append((value,))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyInt_FromLong",
-            (33,),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyInt_FromSsize_t(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyInt_FromSsize_t(self, value):
-                paramsStore.append((value,))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyInt_FromSsize_t",
-            (33,),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyInt_AsLong(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyInt_AsLong(self, intPtr):
-                paramsStore.append((intPtr,))
-                return 999
-
-        self.assertDispatches(
-            MyPM, "PyInt_AsLong",
-            (IntPtr(123),),
-            999, paramsStore)
-
-
-    def testPythonMapperFinds_PyLong_FromLongLong(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyLong_FromLongLong(self, value):
-                paramsStore.append((value,))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyLong_FromLongLong",
-            (5555555555,),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyFloat_FromDouble(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyFloat_FromDouble(self, value):
-                paramsStore.append((value,))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyFloat_FromDouble",
-            (33.3,),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyFile_AsFile(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyFile_AsFile(self, _file):
-                paramsStore.append((_file,))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyFile_AsFile",
-            (IntPtr(111),),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyObject_GetAttrString(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyObject_GetAttrString(self, obj, name):
-                paramsStore.append((obj, name))
-                return IntPtr(999)
-
-        self.assertDispatches(
-            MyPM, "PyObject_GetAttrString",
-            (IntPtr(111), "harold"),
-            IntPtr(999), paramsStore)
-
-
-    def testPythonMapperFinds_PyObject_Free(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyObject_Free(self, obj):
-                paramsStore.append((obj,))
-                
-
-        self.assertDispatches(
-            MyPM, "PyObject_Free",
-            (IntPtr(111),),
-            None, paramsStore)
-
-
-    def testPythonMapperFinds_PyCallable_Check(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyCallable_Check(self, obj):
-                paramsStore.append((obj,))
-                return 0
-
-        self.assertDispatches(
-            MyPM, "PyCallable_Check",
-            (IntPtr(111),),
-            0, paramsStore)
-
-
-    def testPythonMapperFinds_PyMem_Malloc(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyMem_Malloc(self, size):
-                paramsStore.append((size,))
-                return IntPtr(12345)
-
-        self.assertDispatches(
-            MyPM, "PyMem_Malloc",
-            (999,),
-            IntPtr(12345), paramsStore)
-
-
-    def testPythonMapperFinds_PyMem_Free(self):
-        paramsStore = []
-        class MyPM(PythonMapper):
-            def PyMem_Free(self, ptr):
-                paramsStore.append((ptr,))
-
-        self.assertDispatches(
-            MyPM, "PyMem_Free",
-            (IntPtr(999),),
-            None, paramsStore)
-
-
+        self.assertEquals(pm.call, argTuple, "wrong params stored")
+
+
+    def assertFinds(self, name, args, retval):
+        info = dict(
+            name = name,
+            args = '(%s,)' % ', '.join(args),
+            retval = retval,
+            argnames = ', '.join([('arg%d' % i) for i in range(len(args))]),
+        )
+        if args:
+            exec(FIND_TEST_CODE % info)
+        else:
+            exec(FIND_TEST_CODE_NOARGS % info)
+
+
+    def testPythonMapperFindsMethods(self):
+        self.assertFinds("Py_InitModule4", ('"name"', 'IntPtr.Zero', '"doc"', 'IntPtr.Zero', '12345'), 'IntPtr.Zero')
+        self.assertFinds("PyModule_AddObject", ('IntPtr(33)', '"henry"', 'IntPtr(943)'), '33')
+        self.assertFinds("PyModule_GetDict", ('IntPtr(943)',), 'IntPtr(33)')
+        
+        self.assertFinds("PyErr_SetString", ('IntPtr(98765)', '"and in the darkness bind them"'), 'None')
+        self.assertFinds("PyErr_Occurred", tuple(), 'IntPtr(123)')
+        
+        self.assertFinds("PyType_GenericNew", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'IntPtr(999)')
+        self.assertFinds("PyType_GenericAlloc", ('IntPtr(111)', '22'), 'IntPtr(999)')
+        self.assertFinds("PyType_IsSubtype", ('IntPtr(111)', 'IntPtr(222)'), '123')
+        
+        self.assertFinds("PyObject_Call", ('IntPtr(123)', 'IntPtr(456)', 'IntPtr(789)'), 'IntPtr(999)')
+        self.assertFinds("PyObject_GetIter", ('IntPtr(123)',), 'IntPtr(999)')
+        self.assertFinds("PyObject_GetAttrString", ('IntPtr(111)', '"harold"'), 'IntPtr(999)')
+        self.assertFinds("PyObject_Free", ('IntPtr(111)',), 'None')
+        
+        self.assertFinds("PyCallable_Check", ('IntPtr(111)',), '0')
+        
+        self.assertFinds("PyIter_Next", ('IntPtr(123)',), 'IntPtr(999)')
+        
+        self.assertFinds("PyDict_New", tuple(), 'IntPtr(999)')
+        self.assertFinds("PyDict_Size", ('IntPtr(111)',), '999')
+        self.assertFinds("PyDict_GetItemString", ('IntPtr(111)', '"boojum"'), 'IntPtr(999)')
+        
+        self.assertFinds("PyList_New", ('33',), 'IntPtr(999)')
+        self.assertFinds("PyList_Append", ('IntPtr(123)', 'IntPtr(456)'), '789')
+        self.assertFinds("PyList_SetItem", ('IntPtr(123)', '4', 'IntPtr(567)'), '999')
+        self.assertFinds("PyList_GetSlice", ('IntPtr(123)', '4', '5'), 'IntPtr(789)')
+        
+        self.assertFinds("PyTuple_New", ('33',), 'IntPtr(999)')
+        
+        self.assertFinds("PyString_FromString", ('IntPtr(333)',), 'IntPtr.Zero')
+        self.assertFinds("PyString_FromStringAndSize", ('IntPtr(98765)', '33'), 'IntPtr(12345)')
+        self.assertFinds("PyString_Size", ('IntPtr(98765)',), '123')
+        self.assertFinds("_PyString_Resize", ('IntPtr(98765)', '33'), '0')
+        
+        self.assertFinds("PyInt_FromLong", ('33',), 'IntPtr(999)')
+        self.assertFinds("PyInt_FromSsize_t", ('33',), 'IntPtr(999)')
+        self.assertFinds("PyInt_AsLong", ('IntPtr(123)',), '999')
+        
+        self.assertFinds("PyLong_FromLongLong", ('5555555555',), 'IntPtr(999)')
+        
+        self.assertFinds("PyFloat_FromDouble", ('33.3',), 'IntPtr(999)')
+        
+        self.assertFinds("PyFile_AsFile", ('IntPtr(111)',), 'IntPtr(999)')
+        
+        self.assertFinds("PyMem_Malloc", ('999',), 'IntPtr(12345)')
+        self.assertFinds("PyMem_Free", ('IntPtr(999)',), 'None')
+        
+        self.assertFinds("PyThread_allocate_lock", tuple(), 'IntPtr(999)')
+        self.assertFinds("PyThread_free_lock", ('IntPtr(123)',), 'None')
+        self.assertFinds("PyThread_acquire_lock", ('IntPtr(123)', '1'), '1')
+        self.assertFinds("PyThread_release_lock", ('IntPtr(123)',), 'None')
 
 
     def testPythonMapperImplementationOf_PyEval_SaveThread(self):
@@ -678,7 +275,10 @@ class PythonMapperTest(TestCase):
         # would have raised before getting here
 
 
-suite = makesuite(PythonMapperTest)
+suite = makesuite(
+    PythonMapperTest,
+    PythonMapperAPIFuncTest
+)
 
 if __name__ == '__main__':
     run(suite)
