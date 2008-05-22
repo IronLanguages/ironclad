@@ -275,7 +275,7 @@ class FunctionalityTest(TestCase):
         self.assertWorksWithBZ2(dedent("""
             f = bz2.BZ2File(%r, 'U')
             try:
-                # assert f.mode == 'r' # IP2 bug -- no file.mode
+                #assert f.mode == 'r' # IP2 bug -- no file.mode
                 assert f.name == %r
                 assert f.closed == False
                 assert f.newlines == None

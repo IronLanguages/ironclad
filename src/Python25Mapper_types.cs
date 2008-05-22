@@ -42,7 +42,7 @@ namespace Ironclad
         PyType_IsSubtype(IntPtr subtypePtr, IntPtr typePtr)
         {
             PythonType subtype = (PythonType)this.Retrieve(subtypePtr);
-            bool result = subtype.IsSubclassOf((PythonType)this.Retrieve(typePtr));
+            bool result = Builtin.issubclass(subtype, this.Retrieve(typePtr));
             if (result)
             {
                 return 1;

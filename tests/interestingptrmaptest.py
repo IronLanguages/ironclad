@@ -21,18 +21,17 @@ class InterestingPtrMapTest(TestCase):
         map.Associate(ptr, obj)
         del obj
         gcwait()
+        
         self.assertEquals(objref.IsAlive, True, "unexpected GC")
         self.assertEquals(map.HasObj(objref.Target), True, "wrong")
         self.assertEquals(map.GetObj(ptr), objref.Target, "not mapped")
         self.assertEquals(map.HasPtr(ptr), True, "wrong")
         self.assertEquals(map.GetPtr(objref.Target), ptr, "not mapped")
         
-        # TODO: find out why map.HasPtr prevents obj from being GCed
-        WorkaroundHasPtr = lambda p: map.HasPtr(p)
         map.Release(ptr)
         gcwait()
+        
         self.assertEquals(objref.IsAlive, False, "failed to GC")
-        self.assertEquals(WorkaroundHasPtr(ptr), False, "wrong")
         self.assertRaises(KeyError, map.GetObj, ptr)
         # can't really try to get the ptr, because we don't have the obj any more
         
@@ -58,11 +57,27 @@ class InterestingPtrMapTest(TestCase):
         map.Release(ptr2)
     
     
+    def testWeakAssociateAssociates(self):
+        map, ptr, obj, objref = self.getVars()
+        map.WeakAssociate(ptr, obj)
+        map.Strengthen(obj)
+        del obj
+        gcwait()
+        
+        self.assertEquals(objref.IsAlive, True, "unexpected GC")
+        self.assertEquals(map.HasObj(objref.Target), True, "wrong")
+        self.assertEquals(map.GetPtr(objref.Target), ptr, "not mapped")
+        self.assertEquals(map.HasPtr(ptr), True, "wrong")
+        self.assertEquals(map.GetObj(ptr), objref.Target, "not mapped")
+        map.Release(ptr)
+    
+    
     def testWeakAssociateIsWeak(self):
         map, ptr, obj, objref = self.getVars()
         map.WeakAssociate(ptr, obj)
         del obj
         gcwait()
+        
         self.assertEquals(objref.IsAlive, False, "failed to GC")
         self.assertRaises(NullReferenceException, map.GetObj, ptr)
         self.assertEquals(map.HasPtr(ptr), True, "wrong")
@@ -72,26 +87,16 @@ class InterestingPtrMapTest(TestCase):
     def testWeakAssociateStrengthenWeaken(self):
         map, ptr, obj, objref = self.getVars()
         map.WeakAssociate(ptr, obj)
-        
         map.Strengthen(obj)
         del obj
         gcwait()
-        self.assertEquals(objref.IsAlive, True, "unexpected GC")
-        self.assertEquals(map.HasObj(objref.Target), True, "wrong")
-        self.assertEquals(map.GetPtr(objref.Target), ptr, "not mapped")
-        self.assertEquals(map.HasPtr(ptr), True, "wrong")
-        self.assertEquals(map.GetObj(ptr), objref.Target, "not mapped")
         
-        # TODO: find out why map.HasPtr prevents obj from being GCed
-        WorkaroundHasPtr = lambda p: map.HasPtr(p)
-        sameobj = objref.Target
-        map.Weaken(sameobj)
-        del sameobj
+        self.assertEquals(objref.IsAlive, True, "unexpected GC")
+        map.Weaken(objref.Target)
         gcwait()
+        
         self.assertEquals(objref.IsAlive, False, "failed to GC")
         self.assertRaises(NullReferenceException, map.GetObj, ptr)
-        self.assertEquals(WorkaroundHasPtr(ptr), True, "wrong")
-        
         map.Release(ptr)
     
 

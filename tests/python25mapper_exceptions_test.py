@@ -98,7 +98,6 @@ class Python25Mapper_Exception_Test(TestCase):
             "WindowsError",
             "UnboundLocalError",
             "UnicodeError",
-            "UnicodeTranslateError",
 
         )
         for error in errors:
@@ -108,7 +107,7 @@ class Python25Mapper_Exception_Test(TestCase):
         #
         #    "UnicodeEncodeError",
         #    "UnicodeDecodeError",
-        #
+        #    "UnicodeTranslateError",
         #
 
 suite = makesuite(
