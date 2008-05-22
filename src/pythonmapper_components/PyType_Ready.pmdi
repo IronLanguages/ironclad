@@ -1,0 +1,3 @@
+int
+IntPtr typePtr
+return -1
