@@ -220,6 +220,7 @@ class PythonMapperAPIFuncTest(TestCase):
         self.assertFinds("PyType_GenericNew", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'IntPtr(999)')
         self.assertFinds("PyType_GenericAlloc", ('IntPtr(111)', '22'), 'IntPtr(999)')
         self.assertFinds("PyType_IsSubtype", ('IntPtr(111)', 'IntPtr(222)'), '123')
+        self.assertFinds("PyType_Ready", ('IntPtr(111)',), '123')
         
         self.assertFinds("PyObject_Call", ('IntPtr(123)', 'IntPtr(456)', 'IntPtr(789)'), 'IntPtr(999)')
         self.assertFinds("PyObject_GetIter", ('IntPtr(123)',), 'IntPtr(999)')

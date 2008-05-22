@@ -172,7 +172,21 @@ class Python25Mapper_Py_InitModule4_Test(TestCase):
         mapper.Dispose()
         deallocMethod()
         
-
+class Python25Mapper_PyModule_GetDict_Test(TestCase):
+    
+    def testGetsDict(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        modulePtr = MakeAndAddEmptyModule(mapper)
+        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
+        
+        moduleDict = mapper.Retrieve(mapper.PyModule_GetDict(modulePtr))
+        moduleDict['random'] = 4
+        
+        self.assertEquals(module.random, 4, 'modified wrong dict')
+        
+        mapper.Dispose()
+        deallocTypes()
 
 class Python25Mapper_PyModule_AddObject_Test(TestCase):
 
@@ -784,6 +798,7 @@ class Python25Mapper_PyModule_AddObject_MembersTest(TestCase):
 suite = makesuite(
     Python25Mapper_Py_InitModule4_SetupTest,
     Python25Mapper_Py_InitModule4_Test,
+    Python25Mapper_PyModule_GetDict_Test,
     Python25Mapper_PyModule_AddObject_Test,
     Python25Mapper_PyModule_AddObject_DispatchMethodsTest,
     Python25Mapper_PyModule_AddObject_DispatchIterTest,

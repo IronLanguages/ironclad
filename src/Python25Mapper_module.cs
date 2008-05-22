@@ -7,6 +7,7 @@ using System.Text;
 using IronPython.Runtime;
 using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
+using IronPython.Runtime.Types;
 
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
@@ -75,7 +76,15 @@ namespace Ironclad
             this.ExecInModule(moduleCode.ToString(), module);
             return this.Store(module);
         }
-        
+
+
+        public override IntPtr
+        PyModule_GetDict(IntPtr modulePtr)
+        {
+            PythonModule module = (PythonModule)this.Retrieve(modulePtr);
+            return this.Store(ScopeOps.Get__dict__(module.Scope));
+        }
+
         
         public override int 
         PyModule_AddObject(IntPtr modulePtr, string name, IntPtr itemPtr)
