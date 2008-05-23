@@ -10,6 +10,8 @@ from Ironclad import Python25Mapper
 
 from TestUtils import ExecUtils
 
+from System.Diagnostics import Process
+
 
 bz2_doc = """The python bz2 module provides a comprehensive interface for
 the bz2 compression library. It implements a complete file
@@ -45,11 +47,46 @@ bz2_test_text_lines = bz2_test_line * 1000
 
 class FunctionalityTest(TestCase):
 
+    def testImportHook(self):
+        testDir = tempfile.mkdtemp()
+        os.listdir(testDir)
+        def copybuilt(name):
+            shutil.copyfile(os.path.join('build', name), os.path.join(testDir, name))
+        copybuilt('ironclad.dll')
+        copybuilt('python25.dll')
+        copybuilt('ironclad.py')
+        
+        testFile = open(os.path.join(testDir, 'test.py'), 'w')
+        testFile.write(dedent("""\
+            import ironclad
+            import bz2
+            assert bz2.compress(%(uncompressed)r) == %(compressed)r
+            assert bz2.decompress(%(compressed)r) == %(uncompressed)r
+            ironclad.shutdown()
+            """) % {
+            "compressed": bz2_test_data,
+            "uncompressed": bz2_test_text}
+        )
+        testFile.close()
+        
+        process = Process()
+        process.StartInfo.FileName = "ipy.exe"
+        process.StartInfo.Arguments = "test.py"
+        process.StartInfo.WorkingDirectory = testDir
+        process.StartInfo.UseShellExecute = False
+        process.Start()
+        process.WaitForExit()
+        self.assertEquals(process.ExitCode, 0, "did not run cleanly")
+        shutil.rmtree(testDir)
+        
+
+
     def assertWorksWithModule(self, path, name, testCode):
         mapper = Python25Mapper(os.path.join("build", "python25.dll"))
         try:
             try:
                 mapper.LoadModule(path)
+                self.assertNotEquals(mapper.GetModule(name), None, "no module loaded")
                 ExecUtils.Exec(mapper.Engine, "import %s\n%s" % (name, testCode))
             except Exception, e:
                 print "BOOM!"
@@ -254,7 +291,7 @@ class FunctionalityTest(TestCase):
 
     def testBZ2HeavyUse(self):
         self.assertWorksWithBZ2(dedent("""
-            COUNT = 150
+            COUNT = 100
             compressors = [bz2.BZ2Compressor() for _ in range(COUNT)]
             decompressors = [bz2.BZ2Decompressor() for _ in range(COUNT)]
             
@@ -337,17 +374,6 @@ class FunctionalityTest(TestCase):
 
     def testBZ2FileWriteLines_Tuple(self):
         self.assertBZ2FileWriteLines(tuple([bz2_test_str] * 1000))
-
-
-    def assertWorksWithMultiarray(self, testCode):
-        self.assertWorksWithModule("C:\\Python25\\Lib\\site-packages\\numpy\\core\\multiarray.pyd", "multiarray", testCode)
-
-
-    def testCanImportMultiarray(self):
-        self.assertWorksWithMultiarray(dedent("""
-            dir(multiarray)
-            """)
-        )
 
 
 
