@@ -27,6 +27,11 @@ namespace Ironclad
             this.importer.Load(path);
         }
 
+        public object 
+        GetModule(string name)
+        {
+            return this.GetPythonContext().SystemStateModules[name];
+        }
 
         private void
         ExecInModule(string code, PythonModule module)

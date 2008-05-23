@@ -118,8 +118,8 @@ class CPyMarshalTest_32(TestCase):
         def TestFunc(selfPtr, argsPtr, kwargsPtr):
             calls.append((selfPtr, argsPtr, kwargsPtr))
             return 123
-        testDgt = CPython_initproc_Delegate(TestFunc)
-        CPyMarshal.WriteFunctionPtrField(data, PyTypeObject, "tp_init", testDgt)
+        self.testDgt = CPython_initproc_Delegate(TestFunc)
+        CPyMarshal.WriteFunctionPtrField(data, PyTypeObject, "tp_init", self.testDgt)
         
         writtenFP = CPyMarshal.ReadPtrField(data, PyTypeObject, "tp_init")
         writtenDgt = Marshal.GetDelegateForFunctionPointer(writtenFP, CPython_initproc_Delegate)
@@ -137,8 +137,8 @@ class CPyMarshalTest_32(TestCase):
         def TestFunc(selfPtr, argsPtr, kwargsPtr):
             calls.append((selfPtr, argsPtr, kwargsPtr))
             return 123
-        testDgt = CPython_initproc_Delegate(TestFunc)
-        CPyMarshal.WriteFunctionPtrField(data, PyTypeObject, "tp_init", testDgt)
+        self.testDgt = CPython_initproc_Delegate(TestFunc)
+        CPyMarshal.WriteFunctionPtrField(data, PyTypeObject, "tp_init", self.testDgt)
         
         readDgt = CPyMarshal.ReadFunctionPtrField(data, PyTypeObject, "tp_init", CPython_initproc_Delegate)
         
