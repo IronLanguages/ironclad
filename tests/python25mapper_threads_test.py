@@ -23,10 +23,7 @@ class Python25Mapper_PyThread_functions_Test(TestCase):
         self.assertNotEquals(lockObject1, lockObject2, "bad, wrong")
 
         mapper.PyThread_free_lock(lockPtr1)
-        self.assertRaises(KeyError, lambda: mapper.Retrieve(lockPtr1))
-
-        mapper.PyThread_free_lock(lockPtr2)
-        self.assertRaises(KeyError, lambda: mapper.Retrieve(lockPtr2))    
+        mapper.PyThread_free_lock(lockPtr2)  
         mapper.Dispose()
 
 
