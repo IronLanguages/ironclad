@@ -36,7 +36,8 @@ namespace Ironclad
         private PydImporter importer;
         private IAllocator allocator;
         private InterestingPtrMap map = new InterestingPtrMap();
-        
+
+        private PythonModule scratchModule;        
         private PythonModule dispatcherModule;
         private object dispatcherClass;
 
@@ -63,7 +64,8 @@ namespace Ironclad
         {
             this.engine = inEngine;
             this.allocator = alloc;
-            this.CreateDispatcher();
+            this.CreateDispatcherModule();
+            this.CreateScratchModule();
             if (stubPath != null)
             {
                 this.stub = new StubReference(stubPath);
@@ -151,29 +153,40 @@ namespace Ironclad
         public object 
         Retrieve(IntPtr ptr)
         {
-            object possibleMarker = this.map.GetObj(ptr);
-            if (possibleMarker.GetType() == typeof(UnmanagedDataMarker))
+            if (this.map.HasPtr(ptr))
             {
-                UnmanagedDataMarker marker = (UnmanagedDataMarker)possibleMarker;
-                switch (marker)
+                object possibleMarker = this.map.GetObj(ptr);
+                if (possibleMarker.GetType() == typeof(UnmanagedDataMarker))
                 {
-                    case UnmanagedDataMarker.None:
-                        return null;
+                    UnmanagedDataMarker marker = (UnmanagedDataMarker)possibleMarker;
+                    switch (marker)
+                    {
+                        case UnmanagedDataMarker.None:
+                            return null;
 
-                    case UnmanagedDataMarker.PyStringObject:
-                        this.ActualiseString(ptr);
-                        break;
+                        case UnmanagedDataMarker.PyStringObject:
+                            this.ActualiseString(ptr);
+                            break;
 
-                    case UnmanagedDataMarker.PyTupleObject:
-                        this.ActualiseTuple(ptr);
-                        break;
+                        case UnmanagedDataMarker.PyTupleObject:
+                            this.ActualiseTuple(ptr);
+                            break;
 
-                    case UnmanagedDataMarker.PyListObject:
-                        ActualiseList(ptr);
-                        break;
+                        case UnmanagedDataMarker.PyListObject:
+                            ActualiseList(ptr);
+                            break;
 
-                    default:
-                        throw new Exception("Found impossible data in pointer map");
+                        default:
+                            throw new Exception("Found impossible data in pointer map");
+                    }
+                }
+            }
+            else if (ptr != IntPtr.Zero)
+            {
+                IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyTypeObject), "ob_type");
+                if (typePtr == this.PyType_Type)
+                {
+                    this.GenerateClass(ptr);
                 }
             }
             return this.map.GetObj(ptr);

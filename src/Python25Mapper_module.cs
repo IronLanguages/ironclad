@@ -58,6 +58,19 @@ namespace Ironclad
         }
         
         
+        private void
+        CreateScratchModule()
+        {
+            string id = "_ironclad_scratch";
+            Dictionary<string, object> globals = new Dictionary<string, object>();
+            globals["IntPtr"] = typeof(IntPtr);
+            globals["CPyMarshal"] = typeof(CPyMarshal);
+            this.scratchModule = this.GetPythonContext().CreateModule(
+                id, id, globals, ModuleOptions.None);
+            this.ExecInModule(FIX_RuntimeType_CODE, this.scratchModule);
+        }
+        
+        
         public override IntPtr 
         Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
         {
@@ -99,20 +112,9 @@ namespace Ironclad
                 return -1;
             }
             PythonModule module = (PythonModule)this.Retrieve(modulePtr);
-            if (this.map.HasPtr(itemPtr))
-            {
-                ScriptScope moduleScope = this.GetModuleScriptScope(module);
-                moduleScope.SetVariable(name, this.Retrieve(itemPtr));
-                this.DecRef(itemPtr);
-            }
-            else
-            {
-                IntPtr typePtr = CPyMarshal.ReadPtrField(itemPtr, typeof(PyTypeObject), "ob_type");
-                if (typePtr == this.PyType_Type)
-                {
-                    this.GenerateClass(module, name, itemPtr);
-                }
-            }
+            ScriptScope moduleScope = this.GetModuleScriptScope(module);
+            moduleScope.SetVariable(name, this.Retrieve(itemPtr));
+            this.DecRef(itemPtr);
             return 0;
         }
         
@@ -352,10 +354,9 @@ namespace Ironclad
         }
         
         private void
-        GenerateClass(PythonModule module, string name, IntPtr typePtr)
+        GenerateClass(IntPtr typePtr)
         {
             StringBuilder classCode = new StringBuilder();
-            string tablePrefix = name + ".";
 
             string __name__ = null;
             string __module__ = null;
@@ -363,12 +364,10 @@ namespace Ironclad
             this.ExtractNameModule(tp_name, ref __name__, ref __module__);
             
             string __doc__ = CPyMarshal.ReadCStringField(typePtr, typeof(PyTypeObject), "tp_doc").Replace("\\", "\\\\");
-            classCode.Append(String.Format(CLASS_CODE, name, __module__, __doc__));
+            classCode.Append(String.Format(CLASS_CODE, __name__, __module__, __doc__));
 
-            ScriptScope moduleScope = this.GetModuleScriptScope(module);
-            object _dispatcher = moduleScope.GetVariable<object>("_dispatcher");
-            DispatchTable methodTable = (DispatchTable)Builtin.getattr(DefaultContext.Default, _dispatcher, "table");
-            
+            string tablePrefix = __name__ + ".";
+            DispatchTable methodTable = new DispatchTable();
             this.ConnectTypeField(typePtr, tablePrefix, "tp_new", methodTable, typeof(PyType_GenericNew_Delegate));
             this.ConnectTypeField(typePtr, tablePrefix, "tp_init", methodTable, typeof(CPython_initproc_Delegate));
             this.ConnectTypeField(typePtr, tablePrefix, "tp_dealloc", methodTable, typeof(CPython_destructor_Delegate));
@@ -383,12 +382,15 @@ namespace Ironclad
             this.GenerateMethods(classCode, methodsPtr, methodTable, tablePrefix);
             this.GenerateIterMethods(classCode, typePtr, methodTable, tablePrefix);
 
-            classCode.Append(String.Format(CLASS_FIXUP_CODE, name, __name__));
-            this.ExecInModule(classCode.ToString(), module);
+            this.ExecInModule(classCode.ToString(), this.scratchModule);
 
-            object klass = moduleScope.GetVariable<object>(name);
+            ScriptScope moduleScope = this.GetModuleScriptScope(this.scratchModule);
+            object klass = moduleScope.GetVariable<object>(__name__);
             Builtin.setattr(DefaultContext.Default, klass, "_typePtr", typePtr);
+            object _dispatcher = PythonCalls.Call(this.dispatcherClass, new object[] { this, methodTable });
+            Builtin.setattr(DefaultContext.Default, klass, "_dispatcher", _dispatcher);
             this.map.Associate(typePtr, klass);
+            this.IncRef(typePtr);
         }
 
         private void 

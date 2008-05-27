@@ -2,6 +2,9 @@ namespace Ironclad
 {
     public partial class Python25Mapper : PythonMapper
     {
+        private const string FIX_RuntimeType_CODE = @"
+CPyMarshal = CPyMarshal() # eww
+";
 
         private const string NOARGS_FUNCTION_CODE = @"
 def {0}():
@@ -32,47 +35,47 @@ class {0}(object):
     '''{2}'''
     __module__ = '{1}'
     def __new__(cls, *args, **kwargs):
-        return _dispatcher.construct('{0}.tp_new', cls, *args, **kwargs)
+        return cls._dispatcher.construct('{0}.tp_new', cls, *args, **kwargs)
     
     def __init__(self, *args, **kwargs):
-        _dispatcher.init('{0}.tp_init', self, *args, **kwargs)
+        self._dispatcher.init('{0}.tp_init', self, *args, **kwargs)
     
     def __del__(self):
-        _dispatcher.delete('{0}.tp_dealloc', self)
+        self._dispatcher.delete('{0}.tp_dealloc', self)
 ";
 
         private const string INT_MEMBER_GETTER_CODE = @"
     def {0}(self):
         fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
-        return _dispatcher.get_member_int(fieldPtr)
+        return self._dispatcher.get_member_int(fieldPtr)
 ";
 
         private const string INT_MEMBER_SETTER_CODE = @"
     def {0}(self, value):
         fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
-        _dispatcher.set_member_int(fieldPtr, value)
+        self._dispatcher.set_member_int(fieldPtr, value)
 ";
 
         private const string OBJECT_MEMBER_GETTER_CODE = @"
     def {0}(self):
         fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
-        return _dispatcher.get_member_object(fieldPtr)
+        return self._dispatcher.get_member_object(fieldPtr)
 ";
 
         private const string OBJECT_MEMBER_SETTER_CODE = @"
     def {0}(self, value):
         fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
-        _dispatcher.set_member_object(fieldPtr, value)
+        self._dispatcher.set_member_object(fieldPtr, value)
 ";
 
         private const string GETTER_METHOD_CODE = @"
     def {0}(self):
-        return _dispatcher.method_getter('{1}{0}', self._instancePtr, IntPtr({2}))
+        return self._dispatcher.method_getter('{1}{0}', self._instancePtr, IntPtr({2}))
 ";
 
         private const string SETTER_METHOD_CODE = @"
     def {0}(self, value):
-        return _dispatcher.method_setter('{1}{0}', self._instancePtr, value, IntPtr({2}))
+        return self._dispatcher.method_setter('{1}{0}', self._instancePtr, value, IntPtr({2}))
 ";
 
         private const string PROPERTY_CODE = @"
@@ -81,44 +84,40 @@ class {0}(object):
 
         private const string ITER_METHOD_CODE = @"
     def __iter__(self):
-        return _dispatcher.method_selfarg('{0}tp_iter', self._instancePtr)
+        return self._dispatcher.method_selfarg('{0}tp_iter', self._instancePtr)
 ";
 
         private const string ITERNEXT_METHOD_CODE = @"
     def __raise_stop(self, resultPtr):
-        if resultPtr == IntPtr(0) and _dispatcher.mapper.LastException == None:
+        if resultPtr == IntPtr(0) and self._dispatcher.mapper.LastException == None:
                 raise StopIteration()
 
     def next(self):
-        return _dispatcher.method_selfarg('{0}tp_iternext', self._instancePtr, self.__raise_stop)
+        return self._dispatcher.method_selfarg('{0}tp_iternext', self._instancePtr, self.__raise_stop)
 ";
 
         private const string NOARGS_METHOD_CODE = @"
     def {0}(self):
         '''{1}'''
-        return _dispatcher.method_noargs('{2}{0}', self._instancePtr)
+        return self._dispatcher.method_noargs('{2}{0}', self._instancePtr)
 ";
 
         private const string OBJARG_METHOD_CODE = @"
     def {0}(self, arg):
         '''{1}'''
-        return _dispatcher.method_objarg('{2}{0}', self._instancePtr, arg)
+        return self._dispatcher.method_objarg('{2}{0}', self._instancePtr, arg)
 ";
 
         private const string VARARGS_METHOD_CODE = @"
     def {0}(self, *args):
         '''{1}'''
-        return _dispatcher.method_varargs('{2}{0}', self._instancePtr, *args)
+        return self._dispatcher.method_varargs('{2}{0}', self._instancePtr, *args)
 ";
 
         private const string VARARGS_KWARGS_METHOD_CODE = @"
     def {0}(self, *args, **kwargs):
         '''{1}'''
-        return _dispatcher.method_kwargs('{2}{0}', self._instancePtr, *args, **kwargs)
-";
-
-        private const string CLASS_FIXUP_CODE = @"
-{0}.__name__ = '{1}'
+        return self._dispatcher.method_kwargs('{2}{0}', self._instancePtr, *args, **kwargs)
 ";
         
     }

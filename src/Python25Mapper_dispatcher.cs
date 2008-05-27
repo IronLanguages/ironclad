@@ -17,7 +17,7 @@ namespace Ironclad
             }
         }
 
-        private void CreateDispatcher()
+        private void CreateDispatcherModule()
         {
             string id = "_ironclad_dispatcher";
 
@@ -29,6 +29,7 @@ namespace Ironclad
 
             this.dispatcherModule = this.GetPythonContext().CreateModule(
                 id, id, globals, ModuleOptions.None);
+            this.ExecInModule(FIX_RuntimeType_CODE, this.dispatcherModule);
             this.ExecInModule(DISPATCHER_MODULE_CODE, this.dispatcherModule);
             
             ScriptScope scope = this.GetModuleScriptScope(this.dispatcherModule);
@@ -36,8 +37,6 @@ namespace Ironclad
         }
         
         private const string DISPATCHER_MODULE_CODE = @"
-CPyMarshal = CPyMarshal() # eww
-
 class Dispatcher(object):
 
     def __init__(self, mapper, table):
