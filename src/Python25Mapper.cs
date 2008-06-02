@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
@@ -40,6 +41,7 @@ namespace Ironclad
         private PythonModule scratchModule;        
         private PythonModule dispatcherModule;
         private object dispatcherClass;
+        private string importContext = "";
 
         private StupidSet ptrsForCleanup = new StupidSet();
         
@@ -71,6 +73,18 @@ namespace Ironclad
                 this.stub = new StubReference(stubPath);
                 this.stub.Init(new AddressGetterDelegate(this.GetAddress), new DataSetterDelegate(this.SetData));
                 this.importer = new PydImporter();
+                
+                string path = Environment.GetEnvironmentVariable("IRONPYTHONPATH");
+                if (path != null && path.Length > 0)
+                {
+                    string[] paths = path.Split(Path.PathSeparator);
+                    foreach (string p in paths) 
+                    {
+                        this.AddToPath(p);
+                    }
+                }
+                // TODO: work out why this line causes leakage
+                this.ExecInModule(INSTALL_IMPORT_HOOK_CODE, this.scratchModule);
             }
         }
         

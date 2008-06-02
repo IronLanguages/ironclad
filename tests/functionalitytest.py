@@ -45,9 +45,9 @@ bz2_test_line = "I wonder why. I wonder why. I wonder why I wonder why.\n"
 bz2_test_text_lines = bz2_test_line * 1000
 
 
-class FunctionalityTest(TestCase):
+class ExternalFunctionalityTest(TestCase):
 
-    def testImportHook(self):
+    def getTestDir(self):
         testDir = tempfile.mkdtemp()
         os.listdir(testDir)
         def copybuilt(name):
@@ -55,9 +55,29 @@ class FunctionalityTest(TestCase):
         copybuilt('ironclad.dll')
         copybuilt('python25.dll')
         copybuilt('ironclad.py')
-        
-        testFile = open(os.path.join(testDir, 'test.py'), 'w')
-        testFile.write(dedent("""\
+        return testDir
+
+
+    def runInDir(self, testDir, name):
+        process = Process()
+        process.StartInfo.FileName = "ipy.exe"
+        process.StartInfo.Arguments = name
+        process.StartInfo.WorkingDirectory = testDir
+        process.StartInfo.UseShellExecute = False
+        process.Start()
+        process.WaitForExit()
+        return process.ExitCode
+
+
+    def write(self, name, code):
+        testFile = open(name, 'w')
+        testFile.write(code)
+        testFile.close()
+
+
+    def testImportHookSimple(self):
+        testDir = self.getTestDir()
+        self.write(os.path.join(testDir, 'test.py'), dedent("""\
             import ironclad
             import bz2
             assert bz2.compress(%(uncompressed)r) == %(compressed)r
@@ -65,45 +85,43 @@ class FunctionalityTest(TestCase):
             ironclad.shutdown()
             """) % {
             "compressed": bz2_test_data,
-            "uncompressed": bz2_test_text}
-        )
-        testFile.close()
+            "uncompressed": bz2_test_text})
         
-        process = Process()
-        process.StartInfo.FileName = "ipy.exe"
-        process.StartInfo.Arguments = "test.py"
-        process.StartInfo.WorkingDirectory = testDir
-        process.StartInfo.UseShellExecute = False
-        process.Start()
-        process.WaitForExit()
-        self.assertEquals(process.ExitCode, 0, "did not run cleanly")
+        self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
         shutil.rmtree(testDir)
         
 
+    def testImportHookPackage(self):
+        testDir = self.getTestDir()
+        testPkgDir = os.path.join(testDir, 'nastypackage')
+        shutil.copytree(os.path.join('tests', 'data', 'nastypackage'), testPkgDir)
+        self.write(os.path.join(testDir, 'test.py'), dedent("""\
+            import ironclad
+            
+            import nastypackage.bz2 as testbz2i
+            import nastypackage.another.bz2 as testbz2ii
+            assert testbz2i != testbz2ii
+            
+            ironclad.shutdown()
+            """))
+        
+        self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
+        shutil.rmtree(testDir)
 
-    def assertWorksWithModule(self, path, name, testCode):
+
+class FunctionalityTest(TestCase):
+
+    def assertRuns(self, testCode):
         mapper = Python25Mapper(os.path.join("build", "python25.dll"))
         try:
-            try:
-                mapper.LoadModule(path)
-                self.assertNotEquals(mapper.GetModule(name), None, "no module loaded")
-                ExecUtils.Exec(mapper.Engine, "import %s\n%s" % (name, testCode))
-            except Exception, e:
-                print "BOOM!"
-                print e
-                print e.clsException.StackTrace
-                raise
+            ExecUtils.Exec(mapper.Engine, testCode)
         finally:
             mapper.Dispose()
-        
-
-
-    def assertWorksWithBZ2(self, testCode):
-        self.assertWorksWithModule("C:\\Python25\\Dlls\\bz2.pyd", "bz2", testCode)
 
 
     def testCanCreateIronPythonBZ2ModuleWithMethodsAndDocstrings(self):
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             assert bz2.__doc__ == %r
             assert bz2.__author__ == %r
             assert callable(bz2.compress)
@@ -117,7 +135,8 @@ class FunctionalityTest(TestCase):
         )
 
     def testCanUseFunctionsInCreatedBZ2Module(self):
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             assert bz2.compress(%(uncompressed)r) == %(compressed)r
             assert bz2.decompress(%(compressed)r) == %(uncompressed)r
             """) % {"compressed": bz2_test_data,
@@ -126,7 +145,8 @@ class FunctionalityTest(TestCase):
 
 
     def testCreatedBZ2ModuleTypesExist(self):
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             assert bz2.BZ2File.__name__ == 'BZ2File'
             assert bz2.BZ2File.__module__ == 'bz2'
             assert bz2.BZ2Compressor.__name__ == 'BZ2Compressor'
@@ -137,7 +157,8 @@ class FunctionalityTest(TestCase):
         )
 
     def testBZ2Compressor(self):
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             # adapted from test_bz2.py
             compressor = bz2.BZ2Compressor()
             text = %r
@@ -156,7 +177,8 @@ class FunctionalityTest(TestCase):
         )
 
     def testBZ2Decompressor(self):
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             # adapted from test_bz2.py
             decompressor = bz2.BZ2Decompressor()
             data = %r
@@ -176,7 +198,8 @@ class FunctionalityTest(TestCase):
 
     def testBZ2FileRead(self):
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             f = bz2.BZ2File(%r)
             try:
                 assert f.read() == %r
@@ -187,7 +210,8 @@ class FunctionalityTest(TestCase):
 
     def testBZ2FileReadLine(self):
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             f = bz2.BZ2File(%r)
             try:
                 assert f.readline() == %r
@@ -200,7 +224,8 @@ class FunctionalityTest(TestCase):
 
     def testBZ2FileReadLines_Short(self):
         testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             f = bz2.BZ2File(%r)
             try:
                 lines = f.readlines()
@@ -214,7 +239,8 @@ class FunctionalityTest(TestCase):
 
     def testBZ2FileReadLines_Long(self):
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             f = bz2.BZ2File(%r)
             try:
                 lines = f.readlines()
@@ -227,7 +253,8 @@ class FunctionalityTest(TestCase):
 
     def testIterateBZ2File(self):
         testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             f = bz2.BZ2File(%r)
             try:
                 assert f.xreadlines() is f
@@ -248,7 +275,8 @@ class FunctionalityTest(TestCase):
     
     def testBZ2FileSeekTell(self):
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             def assertSeeksTo(seekargs, expectedPosition):
                 f.seek(*seekargs)
                 assert f.tell() == expectedPosition
@@ -273,7 +301,8 @@ class FunctionalityTest(TestCase):
         # read is tested separately elsewhere, so we assume it works
         testDir = tempfile.mkdtemp()
         path = os.path.join(testDir, "test.bz2")
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             w = bz2.BZ2File(%r, 'w')
             try:
                 w.write(%r)
@@ -290,7 +319,8 @@ class FunctionalityTest(TestCase):
 
 
     def testBZ2HeavyUse(self):
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             COUNT = 100
             compressors = [bz2.BZ2Compressor() for _ in range(COUNT)]
             decompressors = [bz2.BZ2Decompressor() for _ in range(COUNT)]
@@ -309,7 +339,8 @@ class FunctionalityTest(TestCase):
     
     def testBZ2FileProperties(self):
         testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             f = bz2.BZ2File(%r, 'U')
             try:
                 #assert f.mode == 'r' # IP2 bug -- no file.mode
@@ -336,7 +367,8 @@ class FunctionalityTest(TestCase):
 
     def testBZ2FileMember(self):
         testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             f = bz2.BZ2File(%r)
             try:
                 assert f.softspace == 0
@@ -352,7 +384,8 @@ class FunctionalityTest(TestCase):
         # read is tested separately elsewhere, so we assume it works
         testDir = tempfile.mkdtemp()
         path = os.path.join(testDir, "test.bz2")
-        self.assertWorksWithBZ2(dedent("""
+        self.assertRuns(dedent("""
+            import bz2
             w = bz2.BZ2File(%r, 'w')
             try:
                 w.writelines(%r)
@@ -377,7 +410,10 @@ class FunctionalityTest(TestCase):
 
 
 
-suite = makesuite(FunctionalityTest)
+suite = makesuite(
+    FunctionalityTest,
+    ExternalFunctionalityTest
+)
 
 if __name__ == '__main__':
     run(suite)
