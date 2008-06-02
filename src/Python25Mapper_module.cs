@@ -20,7 +20,6 @@ namespace Ironclad
 {
     public partial class Python25Mapper : PythonMapper
     {
-
         public void 
         LoadModule(string path)
         {
@@ -31,6 +30,25 @@ namespace Ironclad
         GetModule(string name)
         {
             return this.GetPythonContext().SystemStateModules[name];
+        }
+        
+        public object
+        Import(string name)
+        {
+            // TODO must be a better way to do all this...
+            string importCode = String.Format("import {0}", name);
+            
+            this.importContext = name;
+            this.ExecInModule(importCode, this.scratchModule);
+            this.importContext = "";
+            
+            return this.GetModule(name);
+        }
+        
+        public void 
+        AddToPath(string path)
+        {
+            this.GetPythonContext().AddToPath(path);
         }
 
         private void
@@ -65,6 +83,7 @@ namespace Ironclad
             Dictionary<string, object> globals = new Dictionary<string, object>();
             globals["IntPtr"] = typeof(IntPtr);
             globals["CPyMarshal"] = typeof(CPyMarshal);
+            globals["_mapper"] = this;
             this.scratchModule = this.GetPythonContext().CreateModule(
                 id, id, globals, ModuleOptions.None);
             this.ExecInModule(FIX_RuntimeType_CODE, this.scratchModule);
@@ -86,9 +105,14 @@ namespace Ironclad
             globals["NullReferenceException"] = typeof(NullReferenceException);
 
             StringBuilder moduleCode = new StringBuilder();
-            moduleCode.Append("CPyMarshal = CPyMarshal()\n"); // eww
+            moduleCode.Append(FIX_RuntimeType_CODE); // eww
             this.GenerateFunctions(moduleCode, methods, methodTable);
 
+            if (this.importContext != "")
+            {
+                name = this.importContext;
+            }
+            
             PythonModule module = this.GetPythonContext().CreateModule(
                 name, name, globals, ModuleOptions.PublishModule);
             this.ExecInModule(moduleCode.ToString(), module);
