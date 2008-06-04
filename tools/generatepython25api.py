@@ -9,7 +9,7 @@ def read_interesting_lines(name):
         f.close()
 
 def run():
-    not_implemented_methods_set = set(read_interesting_lines("allFunctions"))
+    not_implemented_methods_set = set(read_interesting_lines(FUNCTIONS_FILE))
     method_files = [f for f in os.listdir(".") if f.endswith(DELEGATE_EXT)]
 
     methods = []
@@ -34,13 +34,13 @@ def run():
     methods_switch_list.extend([NOT_IMPL_METHOD_CASE % x for x in not_implemented_methods])
     methods_switch = "\n".join(methods_switch_list)
 
-    ptr_data_items = [dict([("symbol", p)]) for p in read_interesting_lines("pythonMapperDataPtrItems")]
+    ptr_data_items = [dict([("symbol", p)]) for p in read_interesting_lines(DATA_PTR_ITEMS_FILE)]
 
     ptr_data_items_code = "\n\n".join([PTR_DATA_ITEM_TEMPLATE % x for x in ptr_data_items])
     ptr_data_items_switch = "\n".join([PTR_DATA_ITEM_CASE % x for x in ptr_data_items])
 
     data_items = []
-    for p in read_interesting_lines("pythonMapperDataItems"):
+    for p in read_interesting_lines(DATA_ITEMS_FILE):
         symbol, _type = p.split(" ")
         data_items.append({"symbol": symbol, "type": _type})
 
@@ -62,6 +62,9 @@ def run():
     finally:
         f.close()
 
+FUNCTIONS_FILE = "python25ApiFunctions"
+DATA_ITEMS_FILE = "python25ApiDataItems"
+DATA_PTR_ITEMS_FILE = "python25ApiDataPtrItems"
 
 DELEGATE_EXT = ".pmdi"
 OUTFILE = "../Python25Api.cs"

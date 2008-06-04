@@ -29,9 +29,9 @@ class GeneratePython25ApiTest(TestCase):
 
         os.chdir(testSrcDir)
         try:
-            write("allFunctions", ALL_FUNCTIONS)
-            write("pythonMapperDataItems", DATA_ITEMS)
-            write("pythonMapperDataPtrItems", DATA_PTR_ITEMS)
+            write("python25ApiFunctions", FUNCTIONS)
+            write("python25ApiDataItems", DATA_ITEMS)
+            write("python25ApiDataPtrItems", DATA_PTR_ITEMS)
             write("Py_InitModule4.pmdi", PY_INITMODULE4)
             write("PyModule_AddObject.pmdi", PYMODULE_ADDOBJECT)
 
@@ -56,7 +56,7 @@ class GeneratePython25ApiTest(TestCase):
         shutil.rmtree(tempDir)
 
 
-ALL_FUNCTIONS = """
+FUNCTIONS = """
 Py_InitModule4
 Some_NotImplemented_Function
 PyModule_AddObject
