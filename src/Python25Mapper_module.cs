@@ -21,9 +21,11 @@ namespace Ironclad
     public partial class Python25Mapper : Python25Api
     {
         public void 
-        LoadModule(string path)
+        LoadModule(string path, string context)
         {
+            this.importContext = context;
             this.importer.Load(path);
+            this.importContext = "";
         }
 
         public object 
@@ -35,7 +37,6 @@ namespace Ironclad
         public object
         Import(string name)
         {
-            // TODO must be a better way to do all this...
             string importCode = String.Format("import {0}", name);
             
             this.importContext = name;
