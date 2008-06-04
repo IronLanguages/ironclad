@@ -18,7 +18,7 @@ using DispatchTable = System.Collections.Generic.Dictionary<string, System.Deleg
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : PythonMapper
+    public partial class Python25Mapper : Python25Api
     {
         public void 
         LoadModule(string path)

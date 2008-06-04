@@ -64,7 +64,7 @@ def run():
 
 
 DELEGATE_EXT = ".pmdi"
-OUTFILE = "../PythonMapper.cs"
+OUTFILE = "../Python25Api.cs"
 
 FILE_TEMPLATE = """
 using System;
@@ -76,7 +76,7 @@ using Ironclad.Structs;
 namespace Ironclad
 {
 
-    public class PythonMapper
+    public class Python25Api
     {
         protected Dictionary<string, Delegate> dgtMap = new Dictionary<string, Delegate>();
         private Dictionary<string, IntPtr> dataMap = new Dictionary<string, IntPtr>();

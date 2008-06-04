@@ -30,7 +30,7 @@ namespace Ironclad
     }
 
 
-    public partial class Python25Mapper : PythonMapper
+    public partial class Python25Mapper : Python25Api
     {
         private ScriptEngine engine;
         private StubReference stub;

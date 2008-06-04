@@ -6,7 +6,7 @@ from tests.utils.testcase import TestCase
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from Ironclad import CPyMarshal, PythonMapper
+from Ironclad import CPyMarshal, Python25Api
 from Ironclad.Structs import PyObject, PyTypeObject
 
 TEST_NUMBER = 1359
@@ -83,10 +83,10 @@ TYPES = (
     "_PyWeakref_CallableProxyType",
 )
 
-class PythonMapperTest(TestCase):
+class Python25ApiTest(TestCase):
 
     def testDataSetterDoesNotWriteForUnrecognisedSymbols(self):
-        pm = PythonMapper()
+        pm = Python25Api()
         pm.SetData("This_symbol_is_not_exported_either_I_sincerely_hope", IntPtr.Zero)
         # had we written to IntPtr.Zero, we would have crashed
 
@@ -103,14 +103,14 @@ class PythonMapperTest(TestCase):
 
 
     def testFinds_Py_NoneStruct(self):
-        class MyPM(PythonMapper):
+        class MyPM(Python25Api):
             def Fill__Py_NoneStruct(self, address):
                 WritePyObject(address)
         self.assertDataSetterSetsAndRemembers(MyPM, "_Py_NoneStruct", Marshal.SizeOf(PyTypeObject), TestWrotePyObject)
         
 
     def assertFindsType(self, name):
-        class MyPM(PythonMapper):
+        class MyPM(Python25Api):
             def fillmethod(self, address):
                 WritePyTypeObject(address)
         setattr(MyPM, "Fill_" + name, getattr(MyPM, "fillmethod"))
@@ -123,13 +123,13 @@ class PythonMapperTest(TestCase):
         
 
     def testUninitialisedTypesAreNull(self):
-        pm = PythonMapper()
+        pm = Python25Api()
         for _type in TYPES:
             self.assertEquals(getattr(pm, _type), IntPtr.Zero, "unexpected")
 
 
     def testAddressGetterFailsCleanly(self):
-        pm = PythonMapper()
+        pm = Python25Api()
         addressGetter = pm.GetAddress
 
         self.assertEquals(addressGetter("This_symbol_is_not_exported_by_any_version_of_Python_so_far_as_I_know"),
@@ -145,15 +145,15 @@ class PythonMapperTest(TestCase):
         self.assertEquals(getattr(pm, name), ptr, "did not remember")
 
 
-    def testPythonMapperFinds_PyExc_SystemError(self):
-        class MyPM(PythonMapper):
+    def testPython25ApiFinds_PyExc_SystemError(self):
+        class MyPM(Python25Api):
             def Make_PyExc_SystemError(self):
                 return IntPtr(999)
         self.assertAddressGetterRemembers(MyPM, "PyExc_SystemError", IntPtr(999))
 
 
-    def testPythonMapperFinds_PyExc_OverflowError(self):
-        class MyPM(PythonMapper):
+    def testPython25ApiFinds_PyExc_OverflowError(self):
+        class MyPM(Python25Api):
             def Make_PyExc_OverflowError(self):
                 return IntPtr(999)
         self.assertAddressGetterRemembers(MyPM, "PyExc_OverflowError", IntPtr(999))
@@ -161,7 +161,7 @@ class PythonMapperTest(TestCase):
 
 
 FIND_TEST_CODE = """
-class MyPM(PythonMapper):
+class MyPM(Python25Api):
     def %(name)s(self, %(argnames)s):
         self.call = (%(argnames)s,)
         return %(retval)s
@@ -170,7 +170,7 @@ self.assertDispatches(
 """
 
 FIND_TEST_CODE_NOARGS = """
-class MyPM(PythonMapper):
+class MyPM(Python25Api):
     def %(name)s(self):
         self.call = tuple()
         return %(retval)s
@@ -178,7 +178,7 @@ self.assertDispatches(
     MyPM, "%(name)s", tuple(), %(retval)s)
 """
 
-class PythonMapperAPIFuncTest(TestCase):
+class Python25ApiFunctionsTest(TestCase):
 
     def assertDispatches(self, mapperSubclass, funcName, argTuple, expectedResult):
         pm = mapperSubclass()
@@ -189,7 +189,7 @@ class PythonMapperAPIFuncTest(TestCase):
         self.assertEquals(fp1, fp2, "2 calls produced different pointers")
 
         # we need to keep a reference to dgt, in case of inconvenient GCs
-        self.dgt = Marshal.GetDelegateForFunctionPointer(fp1, getattr(PythonMapper, funcName + "_Delegate"))
+        self.dgt = Marshal.GetDelegateForFunctionPointer(fp1, getattr(Python25Api, funcName + "_Delegate"))
         result = self.dgt(*argTuple)
 
         self.assertEquals(result, expectedResult, "unexpected result")
@@ -209,7 +209,7 @@ class PythonMapperAPIFuncTest(TestCase):
             exec(FIND_TEST_CODE_NOARGS % info)
 
 
-    def testPythonMapperFindsMethods(self):
+    def testPython25ApiFindsMethods(self):
         self.assertFinds("Py_InitModule4", ('"name"', 'IntPtr.Zero', '"doc"', 'IntPtr.Zero', '12345'), 'IntPtr.Zero')
         self.assertFinds("PyModule_AddObject", ('IntPtr(33)', '"henry"', 'IntPtr(943)'), '33')
         self.assertFinds("PyModule_GetDict", ('IntPtr(943)',), 'IntPtr(33)')
@@ -266,19 +266,19 @@ class PythonMapperAPIFuncTest(TestCase):
         self.assertFinds("PyThread_release_lock", ('IntPtr(123)',), 'None')
 
 
-    def testPythonMapperImplementationOf_PyEval_SaveThread(self):
-        self.assertEquals(PythonMapper().PyEval_SaveThread(), IntPtr.Zero,
+    def testPython25ApiImplementationOf_PyEval_SaveThread(self):
+        self.assertEquals(Python25Api().PyEval_SaveThread(), IntPtr.Zero,
                           "unexpectedly wrong implementation")
 
 
-    def testPythonMapperImplementationOf_PyEval_RestoreThread(self):
-        PythonMapper().PyEval_RestoreThread(IntPtr.Zero)
+    def testPython25ApiImplementationOf_PyEval_RestoreThread(self):
+        Python25Api().PyEval_RestoreThread(IntPtr.Zero)
         # would have raised before getting here
 
 
 suite = makesuite(
-    PythonMapperTest,
-    PythonMapperAPIFuncTest
+    Python25ApiTest,
+    Python25ApiFunctionsTest
 )
 
 if __name__ == '__main__':

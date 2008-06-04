@@ -3,7 +3,7 @@ from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from Ironclad import (
     CPyMarshal, CPython_destructor_Delegate, CPython_getter_Delegate, CPython_initproc_Delegate, CPython_setter_Delegate,
-    CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate, PythonMapper
+    CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate, Python25Api
 )
 from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMethodDef, PyTypeObject
 
@@ -74,13 +74,13 @@ INT_ARGS = ("ob_refcnt", "tp_basicsize", "tp_itemsize", "tp_flags")
 STRING_ARGS = ("tp_name", "tp_doc")
 TABLE_ARGS = ("tp_methods", "tp_members", "tp_getset")
 FUNC_ARGS = {
-    "tp_alloc": PythonMapper.PyType_GenericAlloc_Delegate,
-    "tp_new": PythonMapper.PyType_GenericNew_Delegate,
+    "tp_alloc": Python25Api.PyType_GenericAlloc_Delegate,
+    "tp_new": Python25Api.PyType_GenericNew_Delegate,
     "tp_init": CPython_initproc_Delegate,
     "tp_dealloc": CPython_destructor_Delegate,
-    "tp_free": PythonMapper.PyObject_Free_Delegate,
-    "tp_iter": PythonMapper.PyObject_GetIter_Delegate,
-    "tp_iternext": PythonMapper.PyIter_Next_Delegate,
+    "tp_free": Python25Api.PyObject_Free_Delegate,
+    "tp_iter": Python25Api.PyObject_GetIter_Delegate,
+    "tp_iternext": Python25Api.PyIter_Next_Delegate,
 }
 
 def WriteTypeField(typePtr, name, value):

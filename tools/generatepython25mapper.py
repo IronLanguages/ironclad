@@ -48,7 +48,7 @@ using Microsoft.Scripting.Math;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : PythonMapper
+    public partial class Python25Mapper : Python25Api
     {
 %s
     }

@@ -9,7 +9,7 @@ from tests.utils.testcase import TestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Mapper, PythonMapper
+from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Mapper, Python25Api
 from Ironclad.Structs import PyObject, PyListObject, PyTypeObject
 
 
@@ -77,7 +77,7 @@ class Python25Mapper_PyList_Type_Test(TestCase):
         def CustomFree(ptr):
             calls.append(ptr)
             mapper.PyObject_Free(listPtr)
-        self.freeDgt = PythonMapper.PyObject_Free_Delegate(CustomFree)
+        self.freeDgt = Python25Api.PyObject_Free_Delegate(CustomFree)
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         mapper.SetData("PyList_Type", typeBlock)

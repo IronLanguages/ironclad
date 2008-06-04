@@ -9,7 +9,7 @@ from tests.utils.testcase import TestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, PythonMapper, Python25Mapper
+from Ironclad import CPyMarshal, Python25Api, Python25Mapper
 from Ironclad.Structs import PyObject
 
 class Python25Mapper_Types_Test(TestCase):
