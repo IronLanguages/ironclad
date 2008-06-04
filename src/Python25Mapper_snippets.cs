@@ -1,6 +1,6 @@
 namespace Ironclad
 {
-    public partial class Python25Mapper : PythonMapper
+    public partial class Python25Mapper : Python25Api
     {
         private const string FIX_RuntimeType_CODE = @"
 CPyMarshal = CPyMarshal() # eww
@@ -120,8 +120,8 @@ class {0}(object):
         return self._dispatcher.method_kwargs('{2}{0}', self._instancePtr, *args, **kwargs)
 ";
         private const string INSTALL_IMPORT_HOOK_CODE = @"
-import imp
 import ihooks
+import imp
 
 class _IroncladHooks(ihooks.Hooks):
 

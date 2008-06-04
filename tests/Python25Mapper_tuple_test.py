@@ -9,7 +9,7 @@ from tests.utils.testcase import TestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, CPython_destructor_Delegate, PythonMapper, Python25Mapper
+from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Api, Python25Mapper
 from Ironclad.Structs import PyTupleObject, PyTypeObject
 
 class Python25Mapper_Tuple_Test(TestCase):
@@ -127,7 +127,7 @@ class Python25Mapper_Tuple_Test(TestCase):
         calls = []
         def CustomFree(ptr):
             calls.append(ptr)
-        freeDgt = PythonMapper.PyObject_Free_Delegate(CustomFree)
+        freeDgt = Python25Api.PyObject_Free_Delegate(CustomFree)
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         try:

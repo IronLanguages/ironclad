@@ -13,7 +13,7 @@ from System.Runtime.InteropServices import Marshal
 
 from Ironclad import (
     CPyMarshal, CPython_destructor_Delegate, CPython_initproc_Delegate, HGlobalAllocator,
-    PythonMapper, Python25Mapper
+    Python25Api, Python25Mapper
 )
 from Ironclad.Structs import MemberT, METH, Py_TPFLAGS, PyMemberDef, PyObject
 
@@ -274,7 +274,7 @@ class Python25Mapper_DispatchTrickyMethodsTest(TestCase):
             # finish the dealloc to avoid confusing mapper on shutdown
             mapper.PyObject_Free(instancePtr_dealloc)
             
-        _type._dispatcher.table['klass.tp_new'] = PythonMapper.PyType_GenericNew_Delegate(test_tp_new)
+        _type._dispatcher.table['klass.tp_new'] = Python25Api.PyType_GenericNew_Delegate(test_tp_new)
         _type._dispatcher.table['klass.tp_init'] = CPython_initproc_Delegate(test_tp_init)
         _type._dispatcher.table['klass.tp_dealloc'] = CPython_destructor_Delegate(test_tp_dealloc)
         

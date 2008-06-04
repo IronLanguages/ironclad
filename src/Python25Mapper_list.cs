@@ -9,7 +9,7 @@ using Ironclad.Structs;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : PythonMapper
+    public partial class Python25Mapper : Python25Api
     {
         public override void
         Fill_PyList_Type(IntPtr address)

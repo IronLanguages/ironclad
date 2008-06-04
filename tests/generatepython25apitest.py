@@ -13,19 +13,19 @@ def write(name, text):
     finally:
         f.close()
 
-class GeneratePythonMapperTest(TestCase):
+class GeneratePython25ApiTest(TestCase):
 
-    def testCreatesPythonMapper_cs(self):
+    def testCreatesPython25Api_cs(self):
         tempDir = tempfile.mkdtemp()
-        testBuildDir = os.path.join(tempDir, 'generatepythonmappertest')
+        testBuildDir = os.path.join(tempDir, 'generatepython25apitest')
         if os.path.exists(testBuildDir):
             shutil.rmtree(testBuildDir)
         os.mkdir(testBuildDir)
-        testSrcDir = os.path.join(testBuildDir, 'pythonmapper_components')
+        testSrcDir = os.path.join(testBuildDir, 'python25api_components')
         os.mkdir(testSrcDir)
 
         origCwd = os.getcwd()
-        toolPath = os.path.join(origCwd, "tools/generatepythonmapper.py")
+        toolPath = os.path.join(origCwd, "tools/generatepython25api.py")
 
         os.chdir(testSrcDir)
         try:
@@ -39,7 +39,7 @@ class GeneratePythonMapperTest(TestCase):
             self.assertEquals(retVal, 0, "process ended badly")
 
             os.chdir(testBuildDir)
-            f = open("PythonMapper.cs", 'r')
+            f = open("Python25Api.cs", 'r')
             try:
                 result = f.read()
                 for (i, (a, e)) in enumerate(zip(result, EXPECTED_OUTPUT)):
@@ -95,7 +95,7 @@ using Ironclad.Structs;
 namespace Ironclad
 {
 
-    public class PythonMapper
+    public class Python25Api
     {
         protected Dictionary<string, Delegate> dgtMap = new Dictionary<string, Delegate>();
         private Dictionary<string, IntPtr> dataMap = new Dictionary<string, IntPtr>();
@@ -248,7 +248,7 @@ namespace Ironclad
 """
 
 
-suite = makesuite(GeneratePythonMapperTest)
+suite = makesuite(GeneratePython25ApiTest)
 
 if __name__ == '__main__':
     run(suite)

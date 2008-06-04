@@ -70,7 +70,7 @@ using Microsoft.Scripting.Math;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : PythonMapper
+    public partial class Python25Mapper : Python25Api
     {
         public override IntPtr Make_PyExc_SystemError()
         {
@@ -99,7 +99,7 @@ using Microsoft.Scripting.Math;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : PythonMapper
+    public partial class Python25Mapper : Python25Api
     {
         public override IntPtr Make_PyExc_BaseException()
         {
@@ -129,7 +129,7 @@ using Microsoft.Scripting.Math;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : PythonMapper
+    public partial class Python25Mapper : Python25Api
     {
         private IntPtr StoreDispatch(object obj)
         {

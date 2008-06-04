@@ -7,7 +7,7 @@ using IronPython.Runtime;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : PythonMapper
+    public partial class Python25Mapper : Python25Api
     {
         // TODO: implement PyFile_Dealloc to call fclose, instead of dirtying up PyObject_Free
         
