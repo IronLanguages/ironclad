@@ -131,7 +131,7 @@ class _IroncladHooks(ihooks.Hooks):
         return suffixes
 
     def load_dynamic(self, name, filename, file):
-        _mapper.LoadModule(filename)
+        _mapper.LoadModule(filename, name)
         module = _mapper.GetModule(name)
         self.modules_dict()[name] = module
         return module

@@ -41,6 +41,8 @@ namespace Ironclad
         private PythonModule scratchModule;        
         private PythonModule dispatcherModule;
         private object dispatcherClass;
+        
+        // TODO must be a better way to handle imports...
         private string importContext = "";
 
         private StupidSet ptrsForCleanup = new StupidSet();
