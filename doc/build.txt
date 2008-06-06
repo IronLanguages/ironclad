@@ -12,7 +12,7 @@ Ironclad's build process deserves a brief discussion. At the moment, it only wor
 
 Running make in the top-level directory should do the following:
 
-* Run 'tools/generatepythonmapper.py' to create 'src/PythonMapper.cs' from the contents of 'src/pythonmappercomponents/'
+* Run 'tools/generatepython25api.py' to create 'src/Python25Api.cs' from the contents of 'src/python25apicomponents/'
 * Run 'tools/generatepython25mapper.py' to create various files in 'src' from the contents of 'src/python25mappercomponents/'
 * Compile the contents of 'src/' to create 'build/ironclad.dll'
 * Run 'tools/buildstub.py' to (eventually) create the stub library 'build/python25.dll' from an existing (real) python25.dll and the contents of 'stub/'
