@@ -214,6 +214,8 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyModule_AddObject", ('IntPtr(33)', '"henry"', 'IntPtr(943)'), '33')
         self.assertFinds("PyModule_GetDict", ('IntPtr(943)',), 'IntPtr(33)')
         
+        self.assertFinds("PyImport_ImportModule", ('"name"', ), 'IntPtr(123)')
+        
         self.assertFinds("PyErr_SetString", ('IntPtr(98765)', '"and in the darkness bind them"'), 'None')
         self.assertFinds("PyErr_Occurred", tuple(), 'IntPtr(123)')
         

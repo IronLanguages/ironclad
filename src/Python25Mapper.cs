@@ -43,7 +43,8 @@ namespace Ironclad
         private object dispatcherClass;
         
         // TODO must be a better way to handle imports...
-        private string importContext = "";
+        private string importName = "";
+        private string importPath = null;
 
         private StupidSet ptrsForCleanup = new StupidSet();
         

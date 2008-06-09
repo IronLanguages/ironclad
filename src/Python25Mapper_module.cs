@@ -11,6 +11,7 @@ using IronPython.Runtime.Types;
 
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
+using Microsoft.Scripting.Runtime;
 
 using Ironclad.Structs;
 
@@ -20,37 +21,6 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        public void 
-        LoadModule(string path, string context)
-        {
-            this.importContext = context;
-            this.importer.Load(path);
-            this.importContext = "";
-        }
-
-        public object 
-        GetModule(string name)
-        {
-            return this.GetPythonContext().SystemStateModules[name];
-        }
-        
-        public object
-        Import(string name)
-        {
-            string importCode = String.Format("import {0}", name);
-            
-            this.importContext = name;
-            this.ExecInModule(importCode, this.scratchModule);
-            this.importContext = "";
-            
-            return this.GetModule(name);
-        }
-        
-        public void 
-        AddToPath(string path)
-        {
-            this.GetPythonContext().AddToPath(path);
-        }
 
         private void
         ExecInModule(string code, PythonModule module)
@@ -87,7 +57,7 @@ namespace Ironclad
             globals["_mapper"] = this;
             this.scratchModule = this.GetPythonContext().CreateModule(
                 id, id, globals, ModuleOptions.None);
-            this.ExecInModule(FIX_RuntimeType_CODE, this.scratchModule);
+            this.ExecInModule(FIX_CPyMarshal_RuntimeType_CODE, this.scratchModule);
         }
         
         
@@ -106,26 +76,26 @@ namespace Ironclad
             globals["NullReferenceException"] = typeof(NullReferenceException);
 
             StringBuilder moduleCode = new StringBuilder();
-            moduleCode.Append(FIX_RuntimeType_CODE); // eww
+            moduleCode.Append(FIX_CPyMarshal_RuntimeType_CODE); // eww
             this.GenerateFunctions(moduleCode, methods, methodTable);
 
-            if (this.importContext != "")
+            if (this.importName != "")
             {
-                name = this.importContext;
+                name = this.importName;
             }
             
             PythonModule module = this.GetPythonContext().CreateModule(
-                name, name, globals, ModuleOptions.PublishModule);
+                name, this.importPath, globals, ModuleOptions.PublishModule);
             this.ExecInModule(moduleCode.ToString(), module);
-            return this.Store(module);
+            return this.Store(this.GetModuleScope(name));
         }
 
 
         public override IntPtr
         PyModule_GetDict(IntPtr modulePtr)
         {
-            PythonModule module = (PythonModule)this.Retrieve(modulePtr);
-            return this.Store(ScopeOps.Get__dict__(module.Scope));
+            Scope moduleScope = (Scope)this.Retrieve(modulePtr);
+            return this.Store(ScopeOps.Get__dict__(moduleScope));
         }
 
         
@@ -136,9 +106,8 @@ namespace Ironclad
             {
                 return -1;
             }
-            PythonModule module = (PythonModule)this.Retrieve(modulePtr);
-            ScriptScope moduleScope = this.GetModuleScriptScope(module);
-            moduleScope.SetVariable(name, this.Retrieve(itemPtr));
+            Scope moduleScope = (Scope)this.Retrieve(modulePtr);
+            ScopeOps.__setattr__(moduleScope, name, this.Retrieve(itemPtr));
             this.DecRef(itemPtr);
             return 0;
         }
