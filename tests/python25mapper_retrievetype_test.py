@@ -4,7 +4,7 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.cpython import MakeGetSetDef, MakeMethodDef, MakeTypePtr
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
-from tests.utils.python25mapper import MakeAndAddEmptyModule, ModuleWrapper
+from tests.utils.python25mapper import MakeAndAddEmptyModule
 from tests.utils.testcase import TestCase
 
 import System

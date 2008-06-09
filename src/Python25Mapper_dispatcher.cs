@@ -29,7 +29,7 @@ namespace Ironclad
 
             this.dispatcherModule = this.GetPythonContext().CreateModule(
                 id, id, globals, ModuleOptions.None);
-            this.ExecInModule(FIX_RuntimeType_CODE, this.dispatcherModule);
+            this.ExecInModule(FIX_CPyMarshal_RuntimeType_CODE, this.dispatcherModule);
             this.ExecInModule(DISPATCHER_MODULE_CODE, this.dispatcherModule);
             
             ScriptScope scope = this.GetModuleScriptScope(this.dispatcherModule);

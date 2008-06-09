@@ -36,7 +36,7 @@ class Python25Mapper_Py_InitModule4_SetupTest(TestCase):
     def testNewModuleHasDispatcher(self):
         mapper = Python25Mapper()
         modulePtr = MakeAndAddEmptyModule(mapper)
-        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
+        module = mapper.Retrieve(modulePtr)
         dispatcherModule = ModuleWrapper(mapper.Engine, mapper.DispatcherModule)
         
         Dispatcher = dispatcherModule.Dispatcher
@@ -58,12 +58,11 @@ class Python25Mapper_Py_InitModule4_Test(TestCase):
             IntPtr.Zero,
             12345)
             
-        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
+        module = mapper.Retrieve(modulePtr)
         test_module = ExecUtils.GetPythonModule(mapper.Engine, 'test_module')
         
         for item in dir(test_module):
-            # ModuleWrapper.__doc__ will hide underlying module.__doc__ if we just use plain getattr
-            self.assertEquals(ModuleWrapper.__getattr__(module, item) is getattr(test_module, item),
+            self.assertEquals(getattr(module, item) is getattr(test_module, item),
                               True, "%s didn't match" % item)
         TestModule(test_module, mapper)
         
@@ -173,7 +172,7 @@ class Python25Mapper_PyModule_GetDict_Test(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         modulePtr = MakeAndAddEmptyModule(mapper)
-        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
+        module = mapper.Retrieve(modulePtr)
         
         moduleDict = mapper.Retrieve(mapper.PyModule_GetDict(modulePtr))
         moduleDict['random'] = 4
@@ -198,12 +197,12 @@ class Python25Mapper_PyModule_AddObject_Test(TestCase):
         testObject = object()
         testPtr = mapper.Store(testObject)
         modulePtr = MakeAndAddEmptyModule(mapper)
-        moduleScope = mapper.Engine.CreateScope(mapper.Retrieve(modulePtr).Scope.Dict)
+        module = mapper.Retrieve(modulePtr)
 
         result = mapper.PyModule_AddObject(modulePtr, "testObject", testPtr)
         self.assertEquals(result, 0, "bad value for success")
         self.assertRaises(KeyError, lambda: mapper.RefCount(testPtr))
-        self.assertEquals(moduleScope.GetVariable[object]("testObject"), testObject, "did not store real object")
+        self.assertEquals(module.testObject, testObject, "did not store real object")
         mapper.Dispose()
 
 
@@ -211,7 +210,7 @@ class Python25Mapper_PyModule_AddObject_Test(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         modulePtr = MakeAndAddEmptyModule(mapper)
-        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
+        module = mapper.Retrieve(modulePtr)
         
         typeSpec = {
             "tp_name": tp_name,
@@ -253,11 +252,31 @@ class Python25Mapper_PyModule_AddObject_Test(TestCase):
         )
 
 
+class Python25Mapper_ImportTest(TestCase):
+    
+    def testPyImport_ImportModule(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        modulePtr = mapper.Py_InitModule4(
+            "test_module",
+            IntPtr.Zero,
+            "test_docstring",
+            IntPtr.Zero,
+            12345)
+        
+        self.assertEquals(mapper.PyImport_ImportModule("test_module"), modulePtr, "wrong result")
+        self.assertEquals(mapper.RefCount(modulePtr), 2, "did not incref")
+        
+        mapper.Dispose()
+        deallocTypes()
+
+
 suite = makesuite(
     Python25Mapper_Py_InitModule4_SetupTest,
     Python25Mapper_Py_InitModule4_Test,
     Python25Mapper_PyModule_GetDict_Test,
     Python25Mapper_PyModule_AddObject_Test,
+    Python25Mapper_ImportTest,
 )
 
 if __name__ == '__main__':

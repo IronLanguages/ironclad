@@ -5,7 +5,7 @@ from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestA
 from tests.utils.cpython import MakeTypePtr
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
-from tests.utils.python25mapper import MakeAndAddEmptyModule, ModuleWrapper
+from tests.utils.python25mapper import MakeAndAddEmptyModule
 from tests.utils.testcase import TestCase
 
 from System import IntPtr, NullReferenceException, WeakReference
@@ -63,7 +63,7 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
         mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
         deallocTypes = CreateTypes(mapper)
         modulePtr = MakeAndAddEmptyModule(mapper)
-        module = ModuleWrapper(mapper.Engine, mapper.Retrieve(modulePtr))
+        module = mapper.Retrieve(modulePtr)
         
         calls = []
         def Del(instancePtr):
