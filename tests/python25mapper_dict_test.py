@@ -2,6 +2,7 @@
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
+from tests.utils.cpython import MakeTypePtr
 from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase
 
@@ -87,6 +88,40 @@ class Python25MapperDictTest(TestCase):
         
         mapper.Dispose()
         deallocTypes()
+
+
+    def testPyDict_SetItemString_ReallySimple(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        _dict = {}
+        dictPtr = mapper.Store(_dict)
+        itemPtr = mapper.Store(123)
+        self.assertEquals(mapper.PyDict_SetItemString(dictPtr, 'blob', itemPtr), 0, "reported failure")
+        self.assertEquals(mapper.RefCount(itemPtr), 2, "did not incref item")
+        self.assertEquals(_dict, {'blob': 123}, "failed")
+        
+        mapper.Dispose()
+        deallocTypes()
+
+
+    def testPyDict_SetItemString_UnknownType(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        typePtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass'})
+        
+        _dict = {}
+        dictPtr = mapper.Store(_dict)
+        self.assertEquals(mapper.PyDict_SetItemString(dictPtr, 'klass', typePtr), 0, "reported failure")
+        # yes, refcnt should be 3: 1 from MakeTypePtr, 1 from Retrieve (when the type was actualised), 1 from storing in dict
+        self.assertEquals(mapper.RefCount(typePtr), 3, "did not incref item")
+        klass = _dict['klass']
+        self.assertEquals(klass.__name__, 'klass', "failed")
+        
+        mapper.Dispose()
+        deallocType()
+        deallocTypes()
+
 
 
 suite = makesuite(

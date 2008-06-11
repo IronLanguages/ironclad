@@ -53,7 +53,11 @@ namespace Ironclad
         public override int
         PyType_Ready(IntPtr typePtr)
         {
-            // optimism :)
+            IntPtr typeTypePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "ob_type");
+            if (typeTypePtr == IntPtr.Zero)
+            {
+                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.PyType_Type);
+            }
             return 0;
         }
         
