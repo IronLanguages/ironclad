@@ -20,6 +20,32 @@ namespace Ironclad
         }
         
         
+        public virtual void 
+        PyList_Dealloc(IntPtr listPtr)
+        {
+            PyListObject listStruct = (PyListObject)Marshal.PtrToStructure(listPtr, typeof(PyListObject));
+            
+            if (listStruct.ob_item != IntPtr.Zero)
+            {
+                IntPtr itemsPtr = listStruct.ob_item;
+                for (int i = 0; i < listStruct.ob_size; i++)
+                {
+                    IntPtr itemPtr = CPyMarshal.ReadPtr(itemsPtr);
+                    if (itemPtr != IntPtr.Zero)
+                    {
+                        this.DecRef(itemPtr);
+                    }
+                    itemsPtr = CPyMarshal.Offset(itemsPtr, CPyMarshal.PtrSize);
+                }
+                this.allocator.Free(listStruct.ob_item);
+            }
+            PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)
+                CPyMarshal.ReadFunctionPtrField(
+                    this.PyList_Type, typeof(PyTypeObject), "tp_free", typeof(PyObject_Free_Delegate));
+            freeDgt(listPtr);
+        }
+        
+        
         private IntPtr
         Store(List list)
         {
@@ -177,32 +203,6 @@ namespace Ironclad
             List sliced = (List)list[new Slice(start, stop)];
             IntPtr result = this.Store(sliced);
             return result;
-        }
-        
-        
-        public virtual void 
-        PyList_Dealloc(IntPtr listPtr)
-        {
-            PyListObject listStruct = (PyListObject)Marshal.PtrToStructure(listPtr, typeof(PyListObject));
-            
-            if (listStruct.ob_item != IntPtr.Zero)
-            {
-                IntPtr itemsPtr = listStruct.ob_item;
-                for (int i = 0; i < listStruct.ob_size; i++)
-                {
-                    IntPtr itemPtr = CPyMarshal.ReadPtr(itemsPtr);
-                    if (itemPtr != IntPtr.Zero)
-                    {
-                        this.DecRef(itemPtr);
-                    }
-                    itemsPtr = CPyMarshal.Offset(itemsPtr, CPyMarshal.PtrSize);
-                }
-                this.allocator.Free(listStruct.ob_item);
-            }
-            PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)
-                CPyMarshal.ReadFunctionPtrField(
-                    this.PyList_Type, typeof(PyTypeObject), "tp_free", typeof(PyObject_Free_Delegate));
-            freeDgt(listPtr);
         }
         
                 

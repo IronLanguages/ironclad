@@ -50,6 +50,13 @@ namespace Ironclad
             return 0;
         }
         
+        public override int
+        PyType_Ready(IntPtr typePtr)
+        {
+            // optimism :)
+            return 0;
+        }
+        
         public override IntPtr 
         PyType_GenericNew(IntPtr typePtr, IntPtr args, IntPtr kwargs)
         {

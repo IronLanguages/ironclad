@@ -4,6 +4,7 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.memory import OffsetPtr, CreateTypes
 from tests.utils.testcase import TestCase
+from tests.utils.typetestcase import TypeTestCase
 
 from System import Array, Byte, Char, IntPtr, OutOfMemoryException
 from System.Runtime.InteropServices import Marshal
@@ -66,26 +67,13 @@ class PyString_TestCase(TestCase):
             self.assertEquals(actual, expected, "failed to copy string data correctly")
 
 
-class PyString_Type_test(TestCase):
+class PyString_Type_test(TypeTestCase):
     
-    def testStringTypeHasDefaultDeallocFreeFunctions(self):
-        mapper = Python25Mapper()
-        freeOffset = Marshal.OffsetOf(PyTypeObject, "tp_free")
-        deallocOffset = Marshal.OffsetOf(PyTypeObject, "tp_dealloc")
-        
-        deallocTypes = CreateTypes(mapper)
-        
-        objType = mapper.PyBaseObject_Type
-        strType = mapper.PyString_Type
-        objFree = CPyMarshal.ReadPtr(OffsetPtr(objType, freeOffset))
-        strFree = CPyMarshal.ReadPtr(OffsetPtr(strType, freeOffset))
-        self.assertEquals(objFree, strFree, "wrong tp_free implementation")
-        objDealloc = CPyMarshal.ReadPtr(OffsetPtr(objType, deallocOffset))
-        strDealloc = CPyMarshal.ReadPtr(OffsetPtr(strType, deallocOffset))
-        self.assertEquals(objDealloc, strDealloc, "wrong tp_dealloc implementation")
-            
-        mapper.Dispose()
-        deallocTypes()
+    def testString_tp_free(self):
+        self.assertUsual_tp_free("PyString_Type")
+    
+    def testString_tp_dealloc(self):
+        self.assertUsual_tp_dealloc("PyString_Type")
 
 
 class Python25Mapper_PyString_FromString_Test(PyString_TestCase):

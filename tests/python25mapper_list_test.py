@@ -5,6 +5,7 @@ from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes, OffsetPtr
 from tests.utils.testcase import TestCase
+from tests.utils.typetestcase import TypeTestCase
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -14,19 +15,7 @@ from Ironclad.Structs import PyObject, PyListObject, PyTypeObject
 
 
 
-class Python25Mapper_PyList_Type_Test(TestCase):
-
-    def testPyList_Type(self):
-        mapper = Python25Mapper()
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        mapper.SetData("PyList_Type", typeBlock)
-        
-        self.assertEquals(mapper.PyList_Type, typeBlock, "type address not stored")
-        self.assertEquals(mapper.Retrieve(typeBlock), list, "type not mapped")
-        
-        mapper.Dispose()
-        Marshal.FreeHGlobal(typeBlock)
-
+class Python25Mapper_PyList_Type_Test(TypeTestCase):
 
     def testPyListTypeField_tp_dealloc(self):
         calls = []
@@ -49,25 +38,31 @@ class Python25Mapper_PyList_Type_Test(TestCase):
 
 
     def testPyListTypeField_tp_free(self):
-        calls = []
-        class MyPM(Python25Mapper):
-            def PyObject_Free(self, listPtr):
-                calls.append(listPtr)
+        self.assertUsual_tp_free("PyList_Type")
+    
+    
+    def testPyList_Dealloc(self):
+        frees = []
+        def CreateMapper():
+            return Python25Mapper(GetAllocatingTestAllocator([], frees))
         
-        mapper = MyPM()
-        
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        mapper.SetData("PyList_Type", typeBlock)
-        gcwait() # this will make the function pointers invalid if we forgot to store references to the delegates
-
-        freeDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_free", CPython_destructor_Delegate)
-        freeDgt(IntPtr(12345))
-        self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
+        itemPtrs = []
+        def CreateInstance(mapper, calls):
+            listPtr = mapper.Store([1, 2, 3])
+            dataStore = CPyMarshal.ReadPtrField(listPtr, PyListObject, "ob_item")
+            for _ in range(3):
+                itemPtrs.append(CPyMarshal.ReadPtr(dataStore))
+                dataStore = OffsetPtr(dataStore, CPyMarshal.PtrSize)
+            return listPtr
+    
+        def TestConsequences(mapper, listPtr, calls):
+            for itemPtr in itemPtrs:
+                self.assertEquals(itemPtr in frees, True, "did not decref item")
+                self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
+            self.assertEquals(calls, [('tp_free', listPtr)], "did not call tp_free")
             
-        mapper.Dispose()
-        Marshal.FreeHGlobal(typeBlock)
-            
-        
+        self.assertTypeDeallocWorks("PyList_Type", CreateMapper, CreateInstance, TestConsequences)
+    
 
     def testPyList_DeallocDecRefsItemsAndCallsCorrectFreeFunction(self):
         frees = []

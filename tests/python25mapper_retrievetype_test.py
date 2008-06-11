@@ -339,8 +339,6 @@ class Python25Mapper_DispatchTrickyMethodsTest(TestCase):
 
 
 class Python25Mapper_PropertiesTest(TestCase):
-    # TODO: For consistency's sake, it may be worth changing these to test that a
-    # monkey-patched dispatcher has the right methods called.
     
     def assertGetSet(self, mapper, attr, get, set, TestType, closure=IntPtr.Zero):
         doc = "take me to the airport, put me on a plane"
@@ -364,18 +362,21 @@ class Python25Mapper_PropertiesTest(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        result = "see my loafers: former gophers"
-        resultPtr = mapper.Store(result)
+        def get(_, __):
+            self.fail("this should have been patched out in TestType")
         
-        calls = []
-        def get(instancePtr, closurePtr):
-            calls.append(('get', (instancePtr, closurePtr)))
-            return resultPtr
-        
-        def TestType(klass):
-            instance = klass()
+        def TestType(_type):
+            instance = _type()
+            
+            calls = []
+            result = "see my loafers: former gophers"
+            def Getter(name, instancePtr, closurePtr):
+                calls.append(('Getter', (name, instancePtr, closurePtr)))
+                return result
+            _type._dispatcher.method_getter = Getter
+            
             self.assertEquals(instance.boing, result, "bad result")
-            self.assertEquals(calls, [('get', (instance._instancePtr, IntPtr.Zero))])
+            self.assertEquals(calls, [('Getter', ('klass.__get_boing', instance._instancePtr, IntPtr.Zero))])
             
             def Set():
                 instance.boing = 'splat'
@@ -390,19 +391,21 @@ class Python25Mapper_PropertiesTest(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        value = "see my vest, see my vest, made from real gorilla chest"
-        valuePtr = mapper.Store(value)
+        def set(_, __, ___):
+            self.fail("this should have been patched out in TestType")
         
-        calls = []
-        def set(instancePtr, set_valuePtr, closurePtr):
-            calls.append(('set', (instancePtr, set_valuePtr, closurePtr)))
-            return 0
-        
-        def TestType(klass):
-            instance = klass()
+        def TestType(_type):
+            instance = _type()
+            
+            calls = []
+            def Setter(name, instancePtr, value, closurePtr):
+                calls.append(('Setter', (name, instancePtr, value, closurePtr)))
+            _type._dispatcher.method_setter = Setter
+            
             self.assertRaises(AttributeError, lambda: instance.boing)
+            value = "see my vest, see my vest, made from real gorilla chest"
             instance.boing = value
-            self.assertEquals(calls, [('set', (instance._instancePtr, valuePtr, IntPtr.Zero))])
+            self.assertEquals(calls, [('Setter', ('klass.__set_boing', instance._instancePtr, value, IntPtr.Zero))])
             
         self.assertGetSet(mapper, "boing", None, set, TestType)
         mapper.Dispose()
@@ -412,30 +415,33 @@ class Python25Mapper_PropertiesTest(TestCase):
     def testClosure(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
-        
-        value = "They called me a PC thug!"
-        valuePtr = mapper.Store(value)
-        
-        result = "I've been called a greasy thug too, and it never stops hurting."
-        resultPtr = mapper.Store(result)
-        
         closurePtr = IntPtr(12345)
         
-        calls = []
-        def get(instancePtr, get_closurePtr):
-            calls.append(('get', (instancePtr, get_closurePtr)))
-            return resultPtr
-        def set(instancePtr, set_valuePtr, set_closurePtr):
-            calls.append(('set', (instancePtr, set_valuePtr, set_closurePtr)))
-            return 0
+        def get(_, __):
+            self.fail("this should have been patched out in TestType")
+        def set(_, __, ___):
+            self.fail("this should have been patched out in TestType")
         
         def TestType(_type):
             instance = _type()
+            
+            calls = []
+            result = "They called me a PC thug!"
+            def Getter(name, instancePtr, closurePtr):
+                calls.append(('Getter', (name, instancePtr, closurePtr)))
+                return result
+            _type._dispatcher.method_getter = Getter
+            
+            def Setter(name, instancePtr, value, closurePtr):
+                calls.append(('Setter', (name, instancePtr, value, closurePtr)))
+            _type._dispatcher.method_setter = Setter
+            
             self.assertEquals(instance.boing, result, "wrong result")
+            value = "I've been called a greasy thug too, and it never stops hurting."
             instance.boing = value
             self.assertEquals(calls, 
-                [('get', (instance._instancePtr, closurePtr)),
-                 ('set', (instance._instancePtr, valuePtr, closurePtr))],
+                [('Getter', ('klass.__get_boing', instance._instancePtr, closurePtr)),
+                 ('Setter', ('klass.__set_boing', instance._instancePtr, value, closurePtr))],
                 "wrong calls")
             
         self.assertGetSet(mapper, "boing", get, set, TestType, closurePtr)

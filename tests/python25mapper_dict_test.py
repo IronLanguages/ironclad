@@ -34,6 +34,18 @@ class Python25MapperDictTest(TestCase):
         self.assertEquals(frees, [dictPtr], "did not release memory")
         mapper.Dispose()
         deallocTypes()
+        
+
+    def testStoreDictCreatesDictType(self):
+        mapper = Python25Mapper()
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        mapper.SetData("PyDict_Type", typeBlock)
+        
+        dictPtr = mapper.Store({0: 1, 2: 3})
+        self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), typeBlock, "wrong type")
+        
+        mapper.Dispose()
+        Marshal.FreeHGlobal(typeBlock)
 
 
     def testPyDict_Size(self):
@@ -75,18 +87,6 @@ class Python25MapperDictTest(TestCase):
         
         mapper.Dispose()
         deallocTypes()
-        
-
-    def testStoreDictCreatesDictType(self):
-        mapper = Python25Mapper()
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        mapper.SetData("PyDict_Type", typeBlock)
-        
-        dictPtr = mapper.Store({0: 1, 2: 3})
-        self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), typeBlock, "wrong type")
-        
-        mapper.Dispose()
-        Marshal.FreeHGlobal(typeBlock)
 
 
 suite = makesuite(
