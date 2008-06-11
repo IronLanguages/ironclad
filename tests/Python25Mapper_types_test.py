@@ -9,7 +9,7 @@ from tests.utils.testcase import TestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, Python25Api, Python25Mapper
+from Ironclad import CPyMarshal, OpaquePyCObject, Python25Api, Python25Mapper
 from Ironclad.Structs import PyObject
 
 class Python25Mapper_Types_Test(TestCase):
@@ -24,6 +24,7 @@ class Python25Mapper_Types_Test(TestCase):
             "PyLong_Type": long,
             "PyInt_Type": int,
             "PyFloat_Type": float,
+            "PyCObject_Type": OpaquePyCObject,
         }
         
         mapper = Python25Mapper()
@@ -51,6 +52,12 @@ class Python25Mapper_Types_Test(TestCase):
          
         mapper.Dispose()
         deallocTypes()
+    
+    def testPyType_Ready(self):
+        mapper = Python25Mapper()
+        # yes, this implementation leaves a few things to be desired
+        self.assertEquals(mapper.PyType_Ready(IntPtr(12345)), 0, "wrong")
+        mapper.Dispose()
         
                 
         

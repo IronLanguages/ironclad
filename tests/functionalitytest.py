@@ -95,17 +95,20 @@ class ExternalFunctionalityTest(TestCase):
         testDir = self.getTestDir()
         testPkgDir = os.path.join(testDir, 'nastypackage')
         shutil.copytree(os.path.join('tests', 'data', 'nastypackage'), testPkgDir)
-        bz2i__file__ = os.path.join(testPkgDir, 'bz2.pyd')
-        bz2ii__file__ = os.path.join(testPkgDir, 'another', 'bz2.pyd')
+        
+        # we test .endswith, rather than the full path, because, on XP,  the __file__ contains 
+        # annoying stuff like 'docume~1' instead of 'Documents and Settings'.
+        bz2i__file__end = os.path.join('nastypackage', 'bz2.pyd')
+        bz2ii__file__end = os.path.join('nastypackage', 'another', 'bz2.pyd')
         self.write(os.path.join(testDir, 'test.py'), dedent("""\
             import ironclad
             import nastypackage.bz2 as testbz2i
             import nastypackage.another.bz2 as testbz2ii
-            assert testbz2i.__file__ == %r
-            assert testbz2ii.__file__ == %r
+            assert testbz2i.__file__.endswith(%r)
+            assert testbz2ii.__file__.endswith(%r)
             
             ironclad.shutdown()
-            """) % (bz2i__file__, bz2ii__file__)
+            """) % (bz2i__file__end, bz2ii__file__end)
         )
         
         self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")

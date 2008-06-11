@@ -177,6 +177,16 @@ namespace Ironclad
         }
         
         [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct PyCObject
+        {
+            public uint ob_refcnt;
+            public IntPtr ob_type;
+            public IntPtr cobject;
+            public IntPtr desc;
+            public IntPtr destructor;
+        }
+        
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
         public struct PyTypeObject
         {
             public uint ob_refcnt;

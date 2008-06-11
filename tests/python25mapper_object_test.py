@@ -4,6 +4,7 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes, OffsetPtr
 from tests.utils.testcase import TestCase
+from tests.utils.typetestcase import TypeTestCase
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -184,60 +185,14 @@ class Python25Mapper_PyObject_Test(TestCase):
         deallocTypes()
     
     
-class Python25Mapper_PyBaseObject_Type_Test(TestCase):
+class Python25Mapper_PyBaseObject_Type_Test(TypeTestCase):
 
-    def testPyBaseObject_Type(self):
-        mapper = Python25Mapper()
-        
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        mapper.SetData("PyBaseObject_Type", typeBlock)
-        self.assertEquals(mapper.PyBaseObject_Type, typeBlock, "failed to remember address")
-        self.assertEquals(mapper.Retrieve(mapper.PyBaseObject_Type), object, "failed to map correctly")
-            
-        mapper.Dispose()
-        Marshal.FreeHGlobal(typeBlock)
+    def testPyBaseObject_Type_tp_dealloc(self):
+        self.assertUsual_tp_dealloc("PyBaseObject_Type")
 
 
-    def testPyBaseObject_TypeField_tp_dealloc(self):
-        calls = []
-        class MyPM(Python25Mapper):
-            def PyBaseObject_Dealloc(self, objPtr):
-                calls.append(objPtr)
-        
-        mapper = MyPM()
-        
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        mapper.SetData("PyBaseObject_Type", typeBlock)
-        gcwait() # this will make the function pointers invalid if we forgot to store references to the delegates
-
-        deallocFPPtr = OffsetPtr(typeBlock, Marshal.OffsetOf(PyTypeObject, "tp_dealloc"))
-        deallocFP = CPyMarshal.ReadPtr(deallocFPPtr)
-        deallocDgt = Marshal.GetDelegateForFunctionPointer(deallocFP, CPython_destructor_Delegate)
-        deallocDgt(IntPtr(12345))
-        self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
-            
-        mapper.Dispose()
-        Marshal.FreeHGlobal(typeBlock)
-
-
-    def testPyBaseObject_TypeField_tp_free(self):
-        calls = []
-        class MyPM(Python25Mapper):
-            def PyObject_Free(self, objPtr):
-                calls.append(objPtr)
-        
-        mapper = MyPM()
-        
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        mapper.SetData("PyBaseObject_Type", typeBlock)
-        gcwait() # this will make the function pointers invalid if we forgot to store references to the delegates
-
-        freeDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_free", CPython_destructor_Delegate)
-        freeDgt(IntPtr(12345))
-        self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
-            
-        mapper.Dispose()
-        Marshal.FreeHGlobal(typeBlock)
+    def testPyBaseObject_Type_tp_free(self):
+        self.assertUsual_tp_free("PyBaseObject_Type")
             
     
     def testPyBaseObject_TypeDeallocCallsObjTypesFreeFunction(self):
@@ -247,13 +202,12 @@ class Python25Mapper_PyBaseObject_Type_Test(TestCase):
         self.freeDgt = Python25Api.PyObject_Free_Delegate(Some_FreeFunc)
         
         mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
         
-        baseObjTypeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        objTypeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        baseObjTypeBlock = mapper.PyBaseObject_Type
+        objTypeBlock = mapper.PyDict_Type # type not actually important
         objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
         
-        mapper.SetData("PyBaseObject_Type", baseObjTypeBlock)
-        mapper.SetData("PyDict_Type", objTypeBlock) # type not actually important
         CPyMarshal.WriteFunctionPtrField(objTypeBlock, PyTypeObject, "tp_free", self.freeDgt)
         CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", objTypeBlock)
         gcwait() # this should make the function pointers invalid if we forgot to store references to the delegates
@@ -262,8 +216,7 @@ class Python25Mapper_PyBaseObject_Type_Test(TestCase):
         self.assertEquals(calls, [objPtr], "wrong calls")
             
         mapper.Dispose()
-        Marshal.FreeHGlobal(baseObjTypeBlock)
-        Marshal.FreeHGlobal(objTypeBlock)
+        deallocTypes()
         Marshal.FreeHGlobal(objPtr)
 
 
