@@ -10,7 +10,7 @@ from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, OpaquePyCObject, Python25Api, Python25Mapper
-from Ironclad.Structs import PyObject
+from Ironclad.Structs import PyObject, PyTypeObject
 
 class Python25Mapper_Types_Test(TestCase):
     
@@ -55,9 +55,17 @@ class Python25Mapper_Types_Test(TestCase):
     
     def testPyType_Ready(self):
         mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
         # yes, this implementation leaves a few things to be desired
-        self.assertEquals(mapper.PyType_Ready(IntPtr(12345)), 0, "wrong")
+        typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        CPyMarshal.Zero(typePtr, Marshal.SizeOf(PyTypeObject))
+        self.assertEquals(mapper.PyType_Ready(typePtr), 0, "wrong")
+        self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type"), mapper.PyType_Type, "failed to fill in missing ob_type")
+        
         mapper.Dispose()
+        Marshal.FreeHGlobal(typePtr)
+        deallocTypes()
         
                 
         

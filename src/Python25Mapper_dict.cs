@@ -48,5 +48,19 @@ namespace Ironclad
             }
             return IntPtr.Zero;
         }
+        
+        public override int
+        PyDict_SetItemString(IntPtr dictPtr, string key, IntPtr itemPtr)
+        {
+            PythonDictionary dict = (PythonDictionary)this.Retrieve(dictPtr);
+            if (dict.has_key(key))
+            {
+                throw new NotImplementedException("harder than it looks, deal with it later");
+            }
+            object item = this.Retrieve(itemPtr);
+            this.IncRef(itemPtr);
+            dict[key] = item;
+            return 0;
+        }
     }
 }
