@@ -6,6 +6,11 @@ namespace Ironclad
 CPyMarshal = CPyMarshal() # eww
 ";
 
+        private const string TRIVIAL_OBJECT_SUBCLASS_CODE = @"
+class TrivialObjectSubclass(object):
+    pass
+";
+
         private const string NOARGS_FUNCTION_CODE = @"
 def {0}():
     '''{1}'''

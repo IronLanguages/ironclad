@@ -1,12 +1,13 @@
 
 from tests.utils.runtest import makesuite, run
 
+from tests.utils.cpython import MakeTypePtr
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes, OffsetPtr
 from tests.utils.testcase import TestCase
 from tests.utils.typetestcase import TypeTestCase
 
-from System import IntPtr
+from System import IntPtr, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Api, Python25Mapper
@@ -220,9 +221,46 @@ class Python25Mapper_PyBaseObject_Type_Test(TypeTestCase):
         Marshal.FreeHGlobal(objPtr)
 
 
+class Python25Mapper_PyObject_Init_Test(TestCase):
+    
+    def testPyObject_Init(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        typePtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'FooType'})
+        objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        
+        # some C extension has allocated some memory, and wants it to be a FooType
+        self.assertEquals(mapper.PyObject_Init(objPtr, typePtr), objPtr, 'did not return the "new instance"')
+        
+        # check that it is correct from the extension's perspective
+        self.assertEquals(CPyMarshal.ReadIntField(objPtr, PyObject, "ob_refcnt"), 2, "wrong refcount")
+        self.assertEquals(CPyMarshal.ReadPtrField(objPtr, PyObject, "ob_type"), typePtr, "wrong type")
+        
+        _type = mapper.Retrieve(typePtr)
+        obj = mapper.Retrieve(objPtr)
+        self.assertEquals(obj.__class__, _type, "wrong type")
+        
+        # the C extension decides it no longer cares about the object
+        CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 1)
+        
+        # and so does the managed side
+        objref = WeakReference(obj)
+        del obj
+        gcwait()
+        
+        self.assertEquals(objref.IsAlive, False, "failed to GC unwanted object")
+        
+        mapper.Dispose()
+        deallocType()
+        deallocTypes()
+
+
+
 suite = makesuite(
     Python25Mapper_PyObject_Test,
     Python25Mapper_PyBaseObject_Type_Test,
+    Python25Mapper_PyObject_Init_Test,
 )
 
 if __name__ == '__main__':

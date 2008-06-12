@@ -228,6 +228,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyObject_GetIter", ('IntPtr(123)',), 'IntPtr(999)')
         self.assertFinds("PyObject_GetAttrString", ('IntPtr(111)', '"harold"'), 'IntPtr(999)')
         self.assertFinds("PyObject_Free", ('IntPtr(111)',), 'None')
+        self.assertFinds("PyObject_Init", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
         
         self.assertFinds("PyCallable_Check", ('IntPtr(111)',), '0')
         

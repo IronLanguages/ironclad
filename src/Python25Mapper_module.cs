@@ -56,6 +56,10 @@ namespace Ironclad
             this.scratchModule = this.GetPythonContext().CreateModule(
                 id, id, globals, ModuleOptions.None);
             this.ExecInModule(FIX_CPyMarshal_RuntimeType_CODE, this.scratchModule);
+            
+            this.ExecInModule(TRIVIAL_OBJECT_SUBCLASS_CODE, this.scratchModule);
+            ScriptScope moduleScope = this.GetModuleScriptScope(this.scratchModule);
+            this.trivialObjectSubclass = moduleScope.GetVariable<object>("TrivialObjectSubclass");
         }
         
         
