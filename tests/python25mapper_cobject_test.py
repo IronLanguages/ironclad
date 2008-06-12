@@ -13,7 +13,7 @@ from Ironclad.Structs import PyCObject, PyObject, PyTypeObject
 
 class Python25Mapper_PyCObject_Test(TestCase):
     
-    def testPyCObject_FromVoidPtr(self):
+    def testPyCObject(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
@@ -22,6 +22,7 @@ class Python25Mapper_PyCObject_Test(TestCase):
         
         self.assertEquals(CPyMarshal.ReadPtrField(cobjPtr, PyObject, 'ob_type'), mapper.PyCObject_Type, 'wrong type')
         self.assertEquals(mapper.RefCount(cobjPtr), 1, 'wrong refcount')
+        self.assertEquals(mapper.PyCObject_AsVoidPtr(cobjPtr), cobj, 'wrong pointer stored')
         
         self.assertEquals(isinstance(mapper.Retrieve(cobjPtr), OpaquePyCObject), True, "wrong")
         
@@ -30,7 +31,7 @@ class Python25Mapper_PyCObject_Test(TestCase):
 
 
     
-    def testPyCObject_FromVoidPtr_WithDestructor(self):
+    def testPyCObjectWithDestructor(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
@@ -44,8 +45,9 @@ class Python25Mapper_PyCObject_Test(TestCase):
         
         self.assertEquals(CPyMarshal.ReadPtrField(cobjPtr, PyObject, 'ob_type'), mapper.PyCObject_Type, 'wrong type')
         self.assertEquals(mapper.RefCount(cobjPtr), 1, 'wrong refcount')
-        self.assertEquals(calls, [], "destroyed early")
+        self.assertEquals(mapper.PyCObject_AsVoidPtr(cobjPtr), cobj, 'wrong pointer stored')
         
+        self.assertEquals(calls, [], "destroyed early")
         mapper.DecRef(cobjPtr)
         self.assertEquals(calls, [cobj], "failed to destroy")
         
