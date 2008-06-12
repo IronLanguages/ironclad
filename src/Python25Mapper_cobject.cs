@@ -33,6 +33,12 @@ namespace Ironclad
             this.map.Associate(cobjPtr, new OpaquePyCObject());
             return cobjPtr;
         }
+        
+        public override IntPtr
+        PyCObject_AsVoidPtr(IntPtr cobjPtr)
+        {
+            return CPyMarshal.ReadPtrField(cobjPtr, typeof(PyCObject), "cobject");
+        }
     
         public void
         PyCObject_Dealloc(IntPtr cobjPtr)
