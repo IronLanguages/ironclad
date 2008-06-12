@@ -4,7 +4,7 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.memory import OffsetPtr
 from tests.utils.testcase import TestCase
 
-from System import IntPtr
+from System import IntPtr, Int64, UInt32, UInt64
 from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, Python25Api
 from Ironclad.Structs import PyObject, PyTypeObject
@@ -254,7 +254,9 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyInt_FromSsize_t", ('33',), 'IntPtr(999)')
         self.assertFinds("PyInt_AsLong", ('IntPtr(123)',), '999')
         
-        self.assertFinds("PyLong_FromLongLong", ('5555555555',), 'IntPtr(999)')
+        self.assertFinds("PyLong_FromLongLong", ('Int64(5555555555)',), 'IntPtr(999)')
+        self.assertFinds("PyLong_FromUnsignedLong", ('UInt32(4000000000)',), 'IntPtr(999)')
+        self.assertFinds("PyLong_FromUnsignedLongLong", ('UInt64(18000000000000000000)',), 'IntPtr(999)')
         
         self.assertFinds("PyFloat_FromDouble", ('33.3',), 'IntPtr(999)')
         

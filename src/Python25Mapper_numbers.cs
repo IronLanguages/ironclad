@@ -51,6 +51,21 @@ namespace Ironclad
             return result;
         }
 
+        public override IntPtr
+        PyLong_FromUnsignedLong(uint value)
+        {
+            IntPtr result = this.Store((BigInteger)value);
+            return result;
+        }
+
+
+        public override IntPtr
+        PyLong_FromUnsignedLongLong(ulong value)
+        {
+            IntPtr result = this.Store((BigInteger)value);
+            return result;
+        }
+
         private IntPtr
         Store(BigInteger value)
         {
