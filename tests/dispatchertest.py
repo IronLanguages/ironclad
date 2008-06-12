@@ -750,29 +750,30 @@ class DispatcherDeleteTest(TestCase):
         mapper.Dispose()
 
 
-class DispatcherIntMembersTest(TestCase):
-
-    def testDispatch_set_member_int(self):
+class DispatcherSimpleMembersTest(TestCase):
+    
+    def assertGetsAndSets(self, name, value):
         mapper = Python25Mapper()
         dispatcher = GetDispatcherClass(mapper)(mapper, {})
         
-        ptr = Marshal.AllocHGlobal(4)
-        dispatcher.set_member_int(ptr, 12345)
-        self.assertEquals(CPyMarshal.ReadInt(ptr), 12345)
+        ptr = Marshal.AllocHGlobal(16)
+        getattr(dispatcher, 'set_member_' + name)(ptr, value)
+        self.assertEquals(getattr(dispatcher, 'get_member_' + name)(ptr), value)
         Marshal.FreeHGlobal(ptr)
         
         mapper.Dispose()
-
-    def testDispatch_get_member_int(self):
-        mapper = Python25Mapper()
-        dispatcher = GetDispatcherClass(mapper)(mapper, {})
         
-        ptr = Marshal.AllocHGlobal(4)
-        CPyMarshal.WriteInt(ptr, 12345)
-        self.assertEquals(dispatcher.get_member_int(ptr), 12345)
-        Marshal.FreeHGlobal(ptr)
         
-        mapper.Dispose()
+    def testDispatch_member_int(self):
+        self.assertGetsAndSets('int', 30000)
+        
+        
+    def testDispatch_member_char(self):
+        self.assertGetsAndSets('char', 'x')
+        
+        
+    def testDispatch_member_ubyte(self):
+        self.assertGetsAndSets('ubyte', 200)
 
 
 class DispatcherObjectMembersTest(TestCase):
@@ -858,7 +859,7 @@ suite  = makesuite(
     DispatcherConstructTest,
     DispatcherInitTest,
     DispatcherDeleteTest,
-    DispatcherIntMembersTest,
+    DispatcherSimpleMembersTest,
     DispatcherObjectMembersTest,
 )
 

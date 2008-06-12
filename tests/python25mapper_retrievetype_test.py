@@ -451,20 +451,20 @@ class Python25Mapper_PropertiesTest(TestCase):
 
 class Python25Mapper_MembersTest(TestCase):
     
-    def assertMember(self, mapper, attr, _type, offset, flags, TestType, basicsize=32):
+    def assertMember(self, mapper, attr, memberType, offset, flags, TestType, basicsize=32):
         doc = "hurry hurry hurry, before I go insane"
         typeSpec = {
             "tp_name": 'klass',
-            "tp_members": [PyMemberDef(attr, _type, offset, flags, doc)],
+            "tp_members": [PyMemberDef(attr, memberType, offset, flags, doc)],
             "tp_basicsize": basicsize
         }
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         _type = mapper.Retrieve(typePtr)
         
-        self.assertEquals(_type.boing.__doc__, doc, "wrong docstring")
+        self.assertEquals(getattr(_type, attr).__doc__, doc, "wrong docstring")
         TestType(_type)
         deallocType()
-        
+    
         
     def testReadOnlyMember(self):
         mapper = Python25Mapper()
@@ -493,71 +493,58 @@ class Python25Mapper_MembersTest(TestCase):
         self.assertMember(mapper, 'boing', MemberT.INT, offset, 1, TestType)
         mapper.Dispose()
         deallocTypes()
-        
-        
-    def testReadWriteIntMember(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
-        offset = 16
+    
+    
+    def getGetSetTypeTest(self, attr, suffix, offset, value, result):
         def TestType(_type):
             instance = _type()
             fieldPtr = CPyMarshal.Offset(instance._instancePtr, offset)
             
             calls = []
             def Get(address):
-                calls.append(('Get', (address,)))
-                return 12345
-            def Set(address, value):
-                calls.append(('Set', (address, value)))
-            _type._dispatcher.get_member_int = Get
-            _type._dispatcher.set_member_int = Set
                 
-            self.assertEquals(instance.boing, 12345)
-            instance.boing = 54321
-            
-            self.assertEquals(calls, [
-                ('Get', (fieldPtr,)),
-                ('Set', (fieldPtr, 54321)),
-            ])
-            
-        self.assertMember(mapper, 'boing', MemberT.INT, offset, 0, TestType)
-        mapper.Dispose()
-        deallocTypes()
-        
-        
-    def testReadWriteObjectMember(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
-        offset = 16
-        value = object()
-        result = object()
-        
-        def TestType(_type):
-            instance = _type()
-            fieldPtr = CPyMarshal.Offset(instance._instancePtr, offset)
-            
-            calls = []
-            def Get(address):
                 calls.append(('Get', (address,)))
                 return result
             def Set(address, value):
                 calls.append(('Set', (address, value)))
-            _type._dispatcher.get_member_object = Get
-            _type._dispatcher.set_member_object = Set
+            setattr(_type._dispatcher, 'get_member_' + suffix, Get)
+            setattr(_type._dispatcher, 'set_member_' + suffix, Set)
                 
-            self.assertEquals(instance.boing, result)
-            instance.boing = value
+            self.assertEquals(getattr(instance, attr), result)
+            setattr(instance, attr, value)
             
             self.assertEquals(calls, [
                 ('Get', (fieldPtr,)),
                 ('Set', (fieldPtr, value)),
             ])
-            
-        self.assertMember(mapper, 'boing', MemberT.OBJECT, offset, 0, TestType)
+        return TestType
+    
+    
+    def assertTypeMember(self, name, value, result):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        attr = 'boing'
+        offset = 16
+        TestType = self.getGetSetTypeTest(attr, name, offset, value, result)
+        self.assertMember(mapper, attr, getattr(MemberT, name.upper()), offset, 0, TestType)
+    
         mapper.Dispose()
         deallocTypes()
+        
+        
+    def testReadWriteIntMember(self):
+        self.assertTypeMember('int', 12345, 54321)
+        
+    def testReadWriteCharMember(self):
+        self.assertTypeMember('char', 'x', 'y')
+        
+    def testReadWriteUbyteMember(self):
+        self.assertTypeMember('ubyte', 0, 255)
+        
+    def testReadWriteObjectMember(self):
+        self.assertTypeMember('object', object(), object())
+        
 
 
 suite = makesuite(

@@ -253,17 +253,21 @@ namespace Ironclad
         
         
         private bool
-        GetMemberSnippets(MemberT type, ref string getter, ref string setter)
+        GetMemberMethodSuffix(MemberT type, ref string suffix)
         {
             switch (type)
             {
                 case MemberT.INT:
-                    getter = INT_MEMBER_GETTER_CODE;
-                    setter = INT_MEMBER_SETTER_CODE;
+                    suffix = "int";
+                    return true;
+                case MemberT.CHAR:
+                    suffix = "char";
+                    return true;
+                case MemberT.UBYTE:
+                    suffix = "ubyte";
                     return true;
                 case MemberT.OBJECT:
-                    getter = OBJECT_MEMBER_GETTER_CODE;
-                    setter = OBJECT_MEMBER_SETTER_CODE;
+                    suffix = "object";
                     return true;
                 default:
                     return false;
@@ -287,18 +291,17 @@ namespace Ironclad
                 int offset = thisMember.offset;
                 string doc = thisMember.doc;
                 
-                string getterCode = null;
-                string setterCode = null;
-                if (this.GetMemberSnippets(thisMember.type, ref getterCode, ref setterCode))
+                string suffix = null;
+                if (this.GetMemberMethodSuffix(thisMember.type, ref suffix))
                 {
                     string getname = String.Format("__get_{0}", name);
-                    code.Append(String.Format(getterCode, getname, offset));
+                    code.Append(String.Format(MEMBER_GETTER_CODE, getname, offset, suffix));
                     
                     string setname = "None";
                     if ((thisMember.flags & 1) == 0)
                     {
                         setname = String.Format("__set_{0}", name);
-                        code.Append(String.Format(setterCode, setname, offset));
+                        code.Append(String.Format(MEMBER_SETTER_CODE, setname, offset, suffix));
                     }
                     code.Append(String.Format(PROPERTY_CODE, name, getname, setname, doc));
                 }
