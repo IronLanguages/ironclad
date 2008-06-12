@@ -212,6 +212,8 @@ class Python25ApiFunctionsTest(TestCase):
     def testPython25ApiFindsMethods(self):
         self.assertFinds("Py_InitModule4", ('"name"', 'IntPtr.Zero', '"doc"', 'IntPtr.Zero', '12345'), 'IntPtr.Zero')
         self.assertFinds("PyModule_AddObject", ('IntPtr(33)', '"henry"', 'IntPtr(943)'), '33')
+        self.assertFinds("PyModule_AddIntConstant", ('IntPtr(33)', '"henry"', '123'), '33')
+        self.assertFinds("PyModule_AddStringConstant", ('IntPtr(33)', '"henry"', '"clanger"'), '33')
         self.assertFinds("PyModule_GetDict", ('IntPtr(943)',), 'IntPtr(33)')
         
         self.assertFinds("PyImport_ImportModule", ('"name"', ), 'IntPtr(123)')

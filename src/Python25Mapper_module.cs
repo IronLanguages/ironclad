@@ -100,18 +100,39 @@ namespace Ironclad
             return this.Store(ScopeOps.Get__dict__(moduleScope));
         }
 
-        
-        public override int 
-        PyModule_AddObject(IntPtr modulePtr, string name, IntPtr itemPtr)
+        private int PyModule_Add(IntPtr modulePtr, string name, object value)
         {
             if (!this.map.HasPtr(modulePtr))
             {
                 return -1;
             }
             Scope moduleScope = (Scope)this.Retrieve(modulePtr);
-            ScopeOps.__setattr__(moduleScope, name, this.Retrieve(itemPtr));
-            this.DecRef(itemPtr);
+            ScopeOps.__setattr__(moduleScope, name, value);
             return 0;
+        }
+        
+        public override int 
+        PyModule_AddObject(IntPtr modulePtr, string name, IntPtr valuePtr)
+        {
+            if (!this.map.HasPtr(modulePtr))
+            {
+                return -1;
+            }
+            object value = this.Retrieve(valuePtr);
+            this.DecRef(valuePtr);
+            return this.PyModule_Add(modulePtr, name, value);
+        }
+        
+        public override int
+        PyModule_AddIntConstant(IntPtr modulePtr, string name, int value)
+        {
+            return this.PyModule_Add(modulePtr, name, value);
+        }
+        
+        public override int
+        PyModule_AddStringConstant(IntPtr modulePtr, string name, string value)
+        {
+            return this.PyModule_Add(modulePtr, name, value);
         }
         
         
