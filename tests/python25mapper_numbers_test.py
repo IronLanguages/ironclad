@@ -4,7 +4,7 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase
 
-from System import Int64
+from System import Int64, UInt32, UInt64
 
 from Ironclad import CPyMarshal, Python25Mapper
 from Ironclad.Structs import PyObject
@@ -87,6 +87,30 @@ class Python25Mapper_PyLong_Test(TestCase):
         
         for value in map(Int64, (5555555555, -5555555555, 0)):
             ptr = mapper.PyLong_FromLongLong(value)
+            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
+                
+        mapper.Dispose()
+        deallocTypes()
+    
+    def testPyLong_FromUnsignedLong(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        for value in map(UInt32, (4000000000, 0)):
+            ptr = mapper.PyLong_FromUnsignedLong(value)
+            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
+                
+        mapper.Dispose()
+        deallocTypes()
+    
+    def testPyLong_FromUnsignedLongLong(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        for value in map(UInt64, (18000000000000000000, 0)):
+            ptr = mapper.PyLong_FromUnsignedLongLong(value)
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
             self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
                 
