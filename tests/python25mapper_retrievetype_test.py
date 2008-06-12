@@ -228,7 +228,7 @@ class Python25Mapper_DispatchTrickyMethodsTest(TestCase):
         mapper.Dispose()
         deallocType()
         deallocTypes()
-        
+
 
     def testNewInitDelDispatch(self):
         allocator = HGlobalAllocator()
