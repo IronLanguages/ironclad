@@ -183,6 +183,25 @@ class Python25Mapper_PyModule_GetDict_Test(TestCase):
         deallocTypes()
 
 
+class Python25Mapper_PyModule_AddConstants_Test(TestCase):
+    
+    def testAddConstants(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        modulePtr = MakeAndAddEmptyModule(mapper)
+        module = mapper.Retrieve(modulePtr)
+        
+        self.assertEquals(mapper.PyModule_AddIntConstant(modulePtr, "i_am_an_int", -31000), 0, "reported failure")
+        self.assertEquals(module.i_am_an_int, -31000)
+        
+        self.assertEquals(mapper.PyModule_AddStringConstant(modulePtr, "i_am_a_string", "how_long"), 0, "reported failure")
+        self.assertEquals(module.i_am_a_string, "how_long")
+        
+        mapper.Dispose()
+        deallocTypes()
+        
+
+
 class Python25Mapper_PyModule_AddObject_Test(TestCase):
 
     def testAddObjectToUnknownModuleFails(self):
@@ -275,6 +294,7 @@ suite = makesuite(
     Python25Mapper_Py_InitModule4_SetupTest,
     Python25Mapper_Py_InitModule4_Test,
     Python25Mapper_PyModule_GetDict_Test,
+    Python25Mapper_PyModule_AddConstants_Test,
     Python25Mapper_PyModule_AddObject_Test,
     Python25Mapper_ImportTest,
 )
