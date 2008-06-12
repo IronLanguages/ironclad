@@ -146,6 +146,18 @@ class Dispatcher(object):
     def get_member_int(self, address):
         return CPyMarshal.ReadInt(address)
 
+    def set_member_char(self, address, value):
+        CPyMarshal.WriteByte(address, ord(value))
+
+    def get_member_char(self, address):
+        return chr(CPyMarshal.ReadByte(address))
+
+    def set_member_ubyte(self, address, value):
+        CPyMarshal.WriteByte(address, value)
+
+    def get_member_ubyte(self, address):
+        return CPyMarshal.ReadByte(address)
+
     def set_member_object(self, address, value):
         valuePtr = self.mapper.Store(value)
         oldvPtr = CPyMarshal.ReadPtr(address)

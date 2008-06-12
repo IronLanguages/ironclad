@@ -44,28 +44,16 @@ class {0}(object):
         self._dispatcher.delete('{0}.tp_dealloc', self)
 ";
 
-        private const string INT_MEMBER_GETTER_CODE = @"
+        private const string MEMBER_GETTER_CODE = @"
     def {0}(self):
         fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
-        return self._dispatcher.get_member_int(fieldPtr)
+        return self._dispatcher.get_member_{2}(fieldPtr)
 ";
 
-        private const string INT_MEMBER_SETTER_CODE = @"
+        private const string MEMBER_SETTER_CODE = @"
     def {0}(self, value):
         fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
-        self._dispatcher.set_member_int(fieldPtr, value)
-";
-
-        private const string OBJECT_MEMBER_GETTER_CODE = @"
-    def {0}(self):
-        fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
-        return self._dispatcher.get_member_object(fieldPtr)
-";
-
-        private const string OBJECT_MEMBER_SETTER_CODE = @"
-    def {0}(self, value):
-        fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
-        self._dispatcher.set_member_object(fieldPtr, value)
+        self._dispatcher.set_member_{2}(fieldPtr, value)
 ";
 
         private const string GETTER_METHOD_CODE = @"
