@@ -38,9 +38,10 @@ namespace Ironclad
         private IAllocator allocator;
         private InterestingPtrMap map = new InterestingPtrMap();
 
-        private PythonModule scratchModule;        
+        private PythonModule scratchModule;
         private PythonModule dispatcherModule;
         private object dispatcherClass;
+        private object trivialObjectSubclass;
         
         // TODO must be a better way to handle imports...
         private string importName = "";

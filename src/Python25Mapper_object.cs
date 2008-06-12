@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 
+using IronPython.Runtime;
 using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
@@ -45,6 +46,20 @@ namespace Ironclad
             object result = PythonCalls.Call(obj, argsArray);
             IntPtr resultPtr = this.Store(result);
             return resultPtr;
+        }
+        
+        public override IntPtr
+        PyObject_Init(IntPtr objPtr, IntPtr typePtr)
+        {
+            object managedInstance = PythonCalls.Call(this.trivialObjectSubclass);
+            Builtin.setattr(DefaultContext.Default, managedInstance, "_instancePtr", objPtr);
+            Builtin.setattr(DefaultContext.Default, managedInstance, "__class__", this.Retrieve(typePtr));
+            
+            CPyMarshal.WriteIntField(objPtr, typeof(PyObject), "ob_refcnt", 2);
+            CPyMarshal.WritePtrField(objPtr, typeof(PyObject), "ob_type", typePtr);
+            this.map.WeakAssociate(objPtr, managedInstance);
+            
+            return objPtr;
         }
         
         public override IntPtr
