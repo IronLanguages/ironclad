@@ -15,8 +15,6 @@ using Microsoft.Scripting.Runtime;
 
 using Ironclad.Structs;
 
-using DispatchTable = System.Collections.Generic.Dictionary<string, System.Delegate>;
-
 namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
@@ -65,7 +63,7 @@ namespace Ironclad
         Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
         {
             Dictionary<string, object> globals = new Dictionary<string, object>();
-            DispatchTable methodTable = new DispatchTable();
+            PythonDictionary methodTable = new PythonDictionary();
 
             globals["__doc__"] = doc;
             globals["_dispatcher"] = PythonCalls.Call(this.dispatcherClass, new object[] { this, methodTable });
@@ -116,7 +114,7 @@ namespace Ironclad
         private void
         GenerateCallablesFromMethodDefs(StringBuilder code, 
                         IntPtr methods, 
-                        DispatchTable methodTable,
+                        PythonDictionary methodTable,
                         string tablePrefix, 
                         string noargsTemplate,
                         string objargTemplate, 
@@ -189,7 +187,7 @@ namespace Ironclad
         }
         
         private void 
-        GenerateFunctions(StringBuilder code,  IntPtr methods, DispatchTable methodTable)
+        GenerateFunctions(StringBuilder code,  IntPtr methods, PythonDictionary methodTable)
         {
             this.GenerateCallablesFromMethodDefs(
                 code, methods, methodTable, "", 
@@ -200,7 +198,7 @@ namespace Ironclad
         }
 
         private void
-        GenerateMethods(StringBuilder code, IntPtr methods, DispatchTable methodTable, string tablePrefix)
+        GenerateMethods(StringBuilder code, IntPtr methods, PythonDictionary methodTable, string tablePrefix)
         {
             this.GenerateCallablesFromMethodDefs(
                 code, methods, methodTable, tablePrefix,
@@ -211,7 +209,7 @@ namespace Ironclad
         }
         
         private void
-        GenerateProperties(StringBuilder code, IntPtr getsets, DispatchTable methodTable, string tablePrefix)
+        GenerateProperties(StringBuilder code, IntPtr getsets, PythonDictionary methodTable, string tablePrefix)
         {
             IntPtr getsetPtr = getsets;
             if (getsetPtr == IntPtr.Zero)
@@ -273,7 +271,7 @@ namespace Ironclad
         }
         
         private void
-        GenerateMembers(StringBuilder code, IntPtr members, DispatchTable methodTable, string tablePrefix)
+        GenerateMembers(StringBuilder code, IntPtr members, PythonDictionary methodTable, string tablePrefix)
         {
             IntPtr memberPtr = members;
             if (memberPtr == IntPtr.Zero)
@@ -313,7 +311,7 @@ namespace Ironclad
         }
 
         private void
-        GenerateIterMethods(StringBuilder classCode, IntPtr typePtr, DispatchTable methodTable, string tablePrefix)
+        GenerateIterMethods(StringBuilder classCode, IntPtr typePtr, PythonDictionary methodTable, string tablePrefix)
         {
             Py_TPFLAGS tp_flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
             if ((tp_flags & Py_TPFLAGS.HAVE_ITER) == 0)
@@ -323,13 +321,13 @@ namespace Ironclad
             if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iter") != IntPtr.Zero)
             {
                 classCode.Append(String.Format(ITER_METHOD_CODE, tablePrefix));
-                this.ConnectTypeField(typePtr, tablePrefix, "tp_iter", methodTable, typeof(CPythonSelfFunction_Delegate));
             }
             if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iternext") != IntPtr.Zero)
             {
                 classCode.Append(String.Format(ITERNEXT_METHOD_CODE, tablePrefix));
-                this.ConnectTypeField(typePtr, tablePrefix, "tp_iternext", methodTable, typeof(CPythonSelfFunction_Delegate));
             }
+            this.ConnectTypeField(typePtr, tablePrefix, "tp_iter", methodTable, typeof(CPythonSelfFunction_Delegate));
+            this.ConnectTypeField(typePtr, tablePrefix, "tp_iternext", methodTable, typeof(CPythonSelfFunction_Delegate));
         }
 
         private void
@@ -361,7 +359,7 @@ namespace Ironclad
             classCode.Append(String.Format(CLASS_CODE, __name__, __module__, __doc__));
 
             string tablePrefix = __name__ + ".";
-            DispatchTable methodTable = new DispatchTable();
+            PythonDictionary methodTable = new PythonDictionary();
             this.ConnectTypeField(typePtr, tablePrefix, "tp_new", methodTable, typeof(PyType_GenericNew_Delegate));
             this.ConnectTypeField(typePtr, tablePrefix, "tp_init", methodTable, typeof(CPython_initproc_Delegate));
             this.ConnectTypeField(typePtr, tablePrefix, "tp_dealloc", methodTable, typeof(CPython_destructor_Delegate));
@@ -388,11 +386,14 @@ namespace Ironclad
         }
 
         private void 
-        ConnectTypeField(IntPtr typePtr, string tablePrefix, string fieldName, DispatchTable methodTable, Type dgtType)
+        ConnectTypeField(IntPtr typePtr, string tablePrefix, string fieldName, PythonDictionary methodTable, Type dgtType)
         {
-            Delegate dgt = CPyMarshal.ReadFunctionPtrField(
-                typePtr, typeof(PyTypeObject), fieldName, dgtType);
-            methodTable[tablePrefix + fieldName] = dgt;
+            if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), fieldName) != IntPtr.Zero)
+            {
+                Delegate dgt = CPyMarshal.ReadFunctionPtrField(
+                    typePtr, typeof(PyTypeObject), fieldName, dgtType);
+                methodTable[tablePrefix + fieldName] = dgt;
+            }
         }
     }
 }

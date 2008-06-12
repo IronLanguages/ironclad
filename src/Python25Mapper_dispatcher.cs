@@ -174,6 +174,8 @@ class Dispatcher(object):
         return instance
 
     def init(self, name, instance, *args, **kwargs):
+        if not self.table.has_key(name):
+            return
         argsPtr = self.mapper.Store(args)
         kwargsPtr = self.mapper.Store(kwargs)
         result = self.table[name](instance._instancePtr, argsPtr, kwargsPtr)

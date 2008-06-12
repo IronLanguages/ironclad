@@ -55,9 +55,9 @@ MAKETYPEPTR_DEFAULTS = {
     "tp_members": None,
     "tp_getset": None,
     
-    "tp_init": lambda _, __, ___: 0,
-    "tp_iter": lambda _: IntPtr.Zero,
-    "tp_iternext": lambda _: IntPtr.Zero,
+    "tp_init": None,
+    "tp_iter": None,
+    "tp_iternext": None,
 }
 
 def GetMapperTypePtrDefaults(mapper):
@@ -99,9 +99,11 @@ def WriteTypeField(typePtr, name, value):
         CPyMarshal.WritePtrField(typePtr, PyTypeObject, name, ptr)
         return dealloc
     if name in FUNC_ARGS:
-        dgt = FUNC_ARGS[name](value)
-        CPyMarshal.WriteFunctionPtrField(typePtr, PyTypeObject, name, dgt)
-        return GC_NotYet(dgt)
+        if value is not None:
+            dgt = FUNC_ARGS[name](value)
+            CPyMarshal.WriteFunctionPtrField(typePtr, PyTypeObject, name, dgt)
+            return GC_NotYet(dgt)
+        return lambda: None
     raise KeyError("WriteTypeField can't handle %s, %s" % (name, value))
 
 

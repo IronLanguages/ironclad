@@ -593,6 +593,7 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
 class DispatcherInitTest(DispatcherDispatchTestCase):
     # NOTE: we couldn't work out how to test that object.__init__ was called...
     # but we also couldn't work out what would go wrong, so we don't actually call it.
+    # This will probably change at some stage.
     
     def testDispatch_init(self):
         class klass(object):
@@ -615,6 +616,22 @@ class DispatcherInitTest(DispatcherDispatchTestCase):
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
         ])
         mapper.Dispose()
+    
+    def testDispatch_init_null(self):
+        class klass(object):
+            pass
+        instance = klass()
+        instance._instancePtr = INSTANCE_PTR
+        
+        mapper = Python25Mapper()
+        calls = []
+        callables = {}
+        
+        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
+        dispatcher.init('dgt_not_there', instance, *ARGS, **KWARGS)
+        self.assertEquals(calls, [])
+        mapper.Dispose()
+        
     
     def testDispatch_init_error(self):
         class klass(object):
