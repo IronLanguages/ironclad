@@ -36,9 +36,10 @@ def {0}(*args, **kwargs):
 ";
 
         private const string CLASS_CODE = @"
-class {0}(object):
+class {0}(_ironclad_baseclass):
     '''{2}'''
     __module__ = '{1}'
+    __metaclass__ = _ironclad_metaclass
     def __new__(cls, *args, **kwargs):
         return cls._dispatcher.construct('{0}.tp_new', cls, *args, **kwargs)
     

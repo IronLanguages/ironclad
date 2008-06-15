@@ -13,6 +13,7 @@ namespace Ironclad
         public override void
         Fill_PyTuple_Type(IntPtr address)
         {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetMethodFP("PyTuple_Dealloc"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_free", this.GetAddress("PyObject_Free"));
             this.map.Associate(address, TypeCache.PythonTuple);

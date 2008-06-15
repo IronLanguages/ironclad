@@ -14,40 +14,61 @@ namespace Ironclad
 
     public partial class Python25Mapper
     {
+        public override void
+        Fill_PyType_Type(IntPtr address)
+        {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            this.map.Associate(address, TypeCache.PythonType);
+        }
+
         public override void 
         Fill_PyFile_Type(IntPtr address)
         {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.PythonFile);
         }
 
         public override void
         Fill_PyInt_Type(IntPtr address)
         {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.Int32);
         }
 
         public override void
         Fill_PyLong_Type(IntPtr address)
         {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.BigInteger);
         }
 
         public override void
         Fill_PyFloat_Type(IntPtr address)
         {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.Double);
         }
         
         public override int
         PyType_IsSubtype(IntPtr subtypePtr, IntPtr typePtr)
         {
+            PythonType _type = (PythonType)this.Retrieve(typePtr);
             PythonType subtype = (PythonType)this.Retrieve(subtypePtr);
-            bool result = Builtin.issubclass(subtype, this.Retrieve(typePtr));
-            if (result)
+
+            PythonType midtype;
+            while (true)
             {
-                return 1;
+                midtype = (PythonType)PythonCalls.Call(Builtin.type, new object[1] {subtype});
+                if (midtype == _type)
+                {
+                    return 1;
+                }
+                if (subtype == midtype)
+                {
+                    return 0;
+                }
+                subtype = midtype;
             }
-            return 0;
         }
         
         public override int

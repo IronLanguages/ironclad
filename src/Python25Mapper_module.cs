@@ -362,6 +362,13 @@ namespace Ironclad
         ExtractNameModule(string tp_name, ref string __name__, ref string __module__)
         {
             string name = tp_name;
+            if (tp_name == "")
+            {
+                __name__ = "unnamed_type";
+                __module__ = "";
+                return;
+            }
+            
             string module = "";
             int lastDot = tp_name.LastIndexOf('.');
             if (lastDot != -1)
@@ -382,7 +389,7 @@ namespace Ironclad
             string __module__ = null;
             string tp_name = CPyMarshal.ReadCStringField(typePtr, typeof(PyTypeObject), "tp_name");
             this.ExtractNameModule(tp_name, ref __name__, ref __module__);
-            
+
             string __doc__ = CPyMarshal.ReadCStringField(typePtr, typeof(PyTypeObject), "tp_doc").Replace("\\", "\\\\");
             classCode.Append(String.Format(CLASS_CODE, __name__, __module__, __doc__));
 
@@ -402,9 +409,23 @@ namespace Ironclad
             this.GenerateMethods(classCode, methodsPtr, methodTable, tablePrefix);
             this.GenerateIterMethods(classCode, typePtr, methodTable, tablePrefix);
 
-            this.ExecInModule(classCode.ToString(), this.scratchModule);
+            IntPtr tp_basePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
+            if (tp_basePtr == IntPtr.Zero)
+            {
+                tp_basePtr = this.PyBaseObject_Type;
+            }
+            object tp_base = this.Retrieve(tp_basePtr);
+            this.IncRef(tp_basePtr);
+
+            IntPtr ob_typePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "ob_type");
+            object ob_type = this.Retrieve(ob_typePtr);
+            this.IncRef(ob_typePtr);
 
             ScriptScope moduleScope = this.GetModuleScriptScope(this.scratchModule);
+            moduleScope.SetVariable("_ironclad_baseclass", tp_base);
+            moduleScope.SetVariable("_ironclad_metaclass", ob_type);
+            this.ExecInModule(classCode.ToString(), this.scratchModule);
+
             object klass = moduleScope.GetVariable<object>(__name__);
             Builtin.setattr(DefaultContext.Default, klass, "_typePtr", typePtr);
             object _dispatcher = PythonCalls.Call(this.dispatcherClass, new object[] { this, methodTable });

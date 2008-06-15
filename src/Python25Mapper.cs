@@ -202,7 +202,7 @@ namespace Ironclad
             else if (ptr != IntPtr.Zero)
             {
                 IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyTypeObject), "ob_type");
-                if (typePtr == this.PyType_Type)
+                if (this.PyType_IsSubtype(typePtr, this.PyType_Type) == 1)
                 {
                     this.GenerateClass(ptr);
                 }
