@@ -359,6 +359,12 @@ namespace Ironclad
                 this._lastException = PythonCalls.Call(excType, new object[1]{ message });
             }
         }
+
+        public override void
+        PyErr_Clear()
+        {
+            this.LastException = null;
+        }
         
         
         public IntPtr 

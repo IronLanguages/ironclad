@@ -220,6 +220,7 @@ class Python25ApiFunctionsTest(TestCase):
         
         self.assertFinds("PyErr_SetString", ('IntPtr(98765)', '"and in the darkness bind them"'), 'None')
         self.assertFinds("PyErr_Occurred", tuple(), 'IntPtr(123)')
+        self.assertFinds("PyErr_Clear", tuple(), 'None')
         
         self.assertFinds("PyType_GenericNew", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'IntPtr(999)')
         self.assertFinds("PyType_GenericAlloc", ('IntPtr(111)', '22'), 'IntPtr(999)')
