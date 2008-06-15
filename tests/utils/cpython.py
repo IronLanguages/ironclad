@@ -58,6 +58,8 @@ MAKETYPEPTR_DEFAULTS = {
     "tp_init": None,
     "tp_iter": None,
     "tp_iternext": None,
+    
+    "tp_base": IntPtr.Zero
 }
 
 def GetMapperTypePtrDefaults(mapper):
@@ -69,7 +71,7 @@ def GetMapperTypePtrDefaults(mapper):
         "tp_free": mapper.PyObject_Free,
     }
 
-PTR_ARGS = ("ob_type")
+PTR_ARGS = ("ob_type", "tp_base")
 INT_ARGS = ("ob_refcnt", "tp_basicsize", "tp_itemsize", "tp_flags")
 STRING_ARGS = ("tp_name", "tp_doc")
 TABLE_ARGS = ("tp_methods", "tp_members", "tp_getset")

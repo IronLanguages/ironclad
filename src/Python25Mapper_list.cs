@@ -14,6 +14,7 @@ namespace Ironclad
         public override void
         Fill_PyList_Type(IntPtr address)
         {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetMethodFP("PyList_Dealloc"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_free", this.GetAddress("PyObject_Free"));
             this.map.Associate(address, TypeCache.List);

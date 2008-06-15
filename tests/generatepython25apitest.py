@@ -42,11 +42,6 @@ class GeneratePython25ApiTest(TestCase):
             f = open("Python25Api.cs", 'r')
             try:
                 result = f.read()
-                for (i, (a, e)) in enumerate(zip(result, EXPECTED_OUTPUT)):
-                    if a != e:
-                        print "first failure at", i, a, e
-                        print ">>>%s<<<\n>>>%s<<<" % (result[i:], EXPECTED_OUTPUT[i:])
-                        self.fail()
                 self.assertEquals(result, EXPECTED_OUTPUT, "generated wrong")
             finally:
                 f.close()

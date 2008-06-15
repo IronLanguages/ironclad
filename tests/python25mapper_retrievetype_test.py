@@ -546,6 +546,44 @@ class Python25Mapper_MembersTest(TestCase):
         self.assertTypeMember('object', object(), object())
         
 
+class Python25Mapper_InheritanceTest(TestCase):
+    
+    def testBaseClass(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        basePtr, deallocBase = MakeTypePtr(mapper, {'tp_name': 'base', 'ob_type': mapper.PyType_Type})
+        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': basePtr})
+        
+        klass = mapper.Retrieve(klassPtr)
+        self.assertEquals(issubclass(klass, mapper.Retrieve(basePtr)), True, "didn't notice klass's base class")
+        self.assertEquals(mapper.RefCount(mapper.PyType_Type), 3, "types did not keep references to TypeType")
+        self.assertEquals(mapper.RefCount(basePtr), 3, "subtype did not keep reference to base")
+        self.assertEquals(mapper.RefCount(mapper.PyBaseObject_Type), 2, "base type did not keep reference to its base (even if it wasn't set explicitly)")
+        
+        mapper.Dispose()
+        deallocType()
+        deallocBase()
+        deallocTypes()
+        
+    
+    def testMetaclass(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        metaclassPtr, deallocMC = MakeTypePtr(mapper, {'tp_name': 'metaclass'})
+        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': metaclassPtr})
+        
+        klass = mapper.Retrieve(klassPtr)
+        self.assertEquals(type(klass), mapper.Retrieve(metaclassPtr), "didn't notice klass's type")
+        
+        mapper.Dispose()
+        deallocType()
+        deallocMC()
+        deallocTypes()
+        
+
+
 
 suite = makesuite(
     Python25Mapper_DispatchTypeMethodsTest,
@@ -553,6 +591,7 @@ suite = makesuite(
     Python25Mapper_DispatchTrickyMethodsTest,
     Python25Mapper_PropertiesTest,
     Python25Mapper_MembersTest,
+    Python25Mapper_InheritanceTest,
 )
 if __name__ == '__main__':
     run(suite)

@@ -63,6 +63,40 @@ class Dispatcher(object):
         for arg in args:
             if arg != IntPtr(0):
                 self.mapper.DecRef(arg)
+    
+
+    def construct(self, name, klass, *args, **kwargs):
+        instance = object.__new__(klass)
+        argsPtr = self.mapper.Store(args)
+        kwargsPtr = self.mapper.Store(kwargs)
+        instancePtr = self.table[name](klass._typePtr, argsPtr, kwargsPtr)
+        try:
+            self._maybe_raise(instancePtr)
+        finally:
+            self._cleanup(argsPtr, kwargsPtr)
+        
+        self.mapper.StoreUnmanagedInstance(instancePtr, instance)
+        instance._instancePtr = instancePtr
+        return instance
+
+    def init(self, name, instance, *args, **kwargs):
+        if not self.table.has_key(name):
+            return
+        argsPtr = self.mapper.Store(args)
+        kwargsPtr = self.mapper.Store(kwargs)
+        result = self.table[name](instance._instancePtr, argsPtr, kwargsPtr)
+        self._cleanup(argsPtr, kwargsPtr)
+        if result < 0:
+            self._surely_raise(Exception('%s failed; object is probably not safe to use' % name))
+
+    def delete(self, name, instance):
+        self.mapper.ReapStrongRefs()
+        if self.mapper.RefCount(instance._instancePtr) > 1:
+            self.mapper.Strengthen(instance)
+            GC.ReRegisterForFinalize(instance)
+            return
+        self.table[name](instance._instancePtr)
+
 
     def function_noargs(self, name):
         return self.method_noargs(name, IntPtr(0))
@@ -169,39 +203,6 @@ class Dispatcher(object):
         valuePtr = CPyMarshal.ReadPtr(address)
         if valuePtr != IntPtr(0):
             return self.mapper.Retrieve(valuePtr)
-    
-
-    def construct(self, name, klass, *args, **kwargs):
-        instance = object.__new__(klass)
-        argsPtr = self.mapper.Store(args)
-        kwargsPtr = self.mapper.Store(kwargs)
-        instancePtr = self.table[name](klass._typePtr, argsPtr, kwargsPtr)
-        try:
-            self._maybe_raise(instancePtr)
-        finally:
-            self._cleanup(argsPtr, kwargsPtr)
-        
-        self.mapper.StoreUnmanagedInstance(instancePtr, instance)
-        instance._instancePtr = instancePtr
-        return instance
-
-    def init(self, name, instance, *args, **kwargs):
-        if not self.table.has_key(name):
-            return
-        argsPtr = self.mapper.Store(args)
-        kwargsPtr = self.mapper.Store(kwargs)
-        result = self.table[name](instance._instancePtr, argsPtr, kwargsPtr)
-        self._cleanup(argsPtr, kwargsPtr)
-        if result < 0:
-            self._surely_raise(Exception('%s failed; object is probably not safe to use' % name))
-
-    def delete(self, name, instance):
-        self.mapper.ReapStrongRefs()
-        if self.mapper.RefCount(instance._instancePtr) > 1:
-            self.mapper.Strengthen(instance)
-            GC.ReRegisterForFinalize(instance)
-            return
-        self.table[name](instance._instancePtr)
 
 ";
     }
