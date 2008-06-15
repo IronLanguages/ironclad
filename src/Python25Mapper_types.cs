@@ -52,21 +52,16 @@ namespace Ironclad
         public override int
         PyType_IsSubtype(IntPtr subtypePtr, IntPtr typePtr)
         {
-            PythonType _type = (PythonType)this.Retrieve(typePtr);
-            PythonType subtype = (PythonType)this.Retrieve(subtypePtr);
+            PythonType _type = this.Retrieve(typePtr) as PythonType;
+            PythonType subtype = this.Retrieve(subtypePtr) as PythonType;
+            if (subtype == null || _type == null) { return 0; }
 
             PythonType midtype;
             while (true)
             {
-                midtype = (PythonType)PythonCalls.Call(Builtin.type, new object[1] {subtype});
-                if (midtype == _type)
-                {
-                    return 1;
-                }
-                if (subtype == midtype)
-                {
-                    return 0;
-                }
+                midtype = (PythonType)PythonCalls.Call(Builtin.type, new object[1] { subtype });
+                if (midtype == _type) { return 1; }
+                if (subtype == midtype) { return 0; }
                 subtype = midtype;
             }
         }

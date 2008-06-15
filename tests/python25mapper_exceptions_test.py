@@ -34,6 +34,18 @@ class Python25Mapper_Exception_Test(TestCase):
         mapper.Dispose()
 
 
+    def testPyErr_Clear(self):
+        mapper = Python25Mapper()
+        
+        mapper.LastException = Exception("borked")
+        mapper.PyErr_Clear()
+        self.assertEquals(mapper.LastException, None, "failed to clear")
+        mapper.PyErr_Clear()
+        
+        mapper.Dispose()
+        
+
+
     def assertSetStringSetsCorrectError(self, name):
         mapper = Python25Mapper()
         errorPtr = mapper.GetAddress("PyExc_" + name)

@@ -56,7 +56,9 @@ class Python25Mapper_Types_Test(TestCase):
         
         self.assertTrue(mapper.PyType_IsSubtype(mapper.PyString_Type, mapper.PyType_Type), "wrong")
         self.assertFalse(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyString_Type), "wrong")
-         
+        
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.Store("foo"), mapper.PyString_Type), "wrong")
+        
         mapper.Dispose()
         deallocTypes()
     
