@@ -235,6 +235,8 @@ class Python25ApiFunctionsTest(TestCase):
         
         self.assertFinds("PyCallable_Check", ('IntPtr(111)',), '0')
         
+        self.assertFinds("PySequence_Check", ('IntPtr(111)',), '0')
+        
         self.assertFinds("PyIter_Next", ('IntPtr(123)',), 'IntPtr(999)')
         
         self.assertFinds("PyDict_New", tuple(), 'IntPtr(999)')
