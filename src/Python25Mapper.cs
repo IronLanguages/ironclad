@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
+using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
 
 using Microsoft.Scripting;
@@ -402,6 +403,27 @@ namespace Ironclad
         PyCallable_Check(IntPtr objPtr)
         {
             if (Builtin.callable(this.Retrieve(objPtr)))
+            {
+                return 1;
+            }
+            return 0;
+        }
+        
+        
+        public override int
+        PySequence_Check(IntPtr objPtr)
+        {
+            // I don't *think* a type's attributes can meaningfully count...
+            // TODO: regardless, there must be a better way to do this
+            object obj = this.Retrieve(objPtr);
+            if (this.PyType_IsSubtype(objPtr, this.PyType_Type) != 1 &&
+                Builtin.hasattr(DefaultContext.Default, obj, "__len__") &&
+                Builtin.hasattr(DefaultContext.Default, obj, "__getitem__") &&
+                Builtin.hasattr(DefaultContext.Default, obj, "__add__") &&
+                Builtin.hasattr(DefaultContext.Default, obj, "__radd__") &&
+                Builtin.hasattr(DefaultContext.Default, obj, "__mul__") &&
+                Builtin.hasattr(DefaultContext.Default, obj, "__rmul__") &&
+                !Builtin.hasattr(DefaultContext.Default, obj, "__coerce__"))
             {
                 return 1;
             }
