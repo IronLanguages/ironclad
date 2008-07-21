@@ -565,7 +565,25 @@ class Python25Mapper_InheritanceTest(TestCase):
         deallocType()
         deallocBase()
         deallocTypes()
+    
+    
+    def testInheritsMethodTable(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
         
+        basePtr, deallocBase = MakeTypePtr(mapper, {'tp_name': 'base', 'ob_type': mapper.PyType_Type})
+        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': basePtr})
+
+        klass = mapper.Retrieve(klassPtr)
+        base = mapper.Retrieve(basePtr)
+        for k, v in base._dispatcher.table.items():
+            self.assertEquals(klass._dispatcher.table[k], v)
+
+        mapper.Dispose()
+        deallocType()
+        deallocBase()
+        deallocTypes()
+    
     
     def testMetaclass(self):
         mapper = Python25Mapper()

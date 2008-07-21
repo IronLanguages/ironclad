@@ -429,17 +429,16 @@ class Python25Mapper_References_Test(TestCase):
         deallocTypes()
         Marshal.FreeHGlobal(nonePtr)
         
-        
-    
     
 
-class Python25Mapper_GetMethodFP_Test(TestCase):
+class Python25Mapper_GetAddress_NonApi_Test(TestCase):
     
-    def assertGetMethodFPWorks(self, name):
+    def assertGetAddressWorks(self, name):
         mapper = Python25Mapper()
         
-        fp1 = mapper.GetMethodFP(name)
-        fp2 = mapper.GetMethodFP(name)
+        fp1 = mapper.GetAddress(name)
+        fp2 = mapper.GetAddress(name)
+        self.assertNotEquals(fp1, IntPtr.Zero, "did not get address")
         self.assertEquals(fp1, fp2, "did not remember func ptrs")
         mapper.Dispose()
         
@@ -447,11 +446,12 @@ class Python25Mapper_GetMethodFP_Test(TestCase):
     def testMethods(self):
         methods = (
             "PyBaseObject_Dealloc",
+            "PyBaseObject_Init",
             "PyTuple_Dealloc",
             "PyList_Dealloc",
         )
         for method in methods:
-            self.assertGetMethodFPWorks(method)
+            self.assertGetAddressWorks(method)
 
 
 class Python25Mapper_NoneTest(TestCase):
@@ -486,7 +486,7 @@ class Python25Mapper_NoneTest(TestCase):
 suite = makesuite(
     Python25Mapper_CreateDestroy_Test,
     Python25Mapper_References_Test,
-    Python25Mapper_GetMethodFP_Test,
+    Python25Mapper_GetAddress_NonApi_Test,
     Python25Mapper_NoneTest,
 )
 

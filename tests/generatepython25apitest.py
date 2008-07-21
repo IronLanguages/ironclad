@@ -140,7 +140,7 @@ namespace Ironclad
             }
         }
 
-        public IntPtr GetAddress(string name)
+        public virtual IntPtr GetAddress(string name)
         {
             if (this.dgtMap.ContainsKey(name))
             {

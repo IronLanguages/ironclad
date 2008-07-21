@@ -395,6 +395,21 @@ namespace Ironclad
 
             string tablePrefix = __name__ + ".";
             PythonDictionary methodTable = new PythonDictionary();
+
+            IntPtr tp_basePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
+            if (tp_basePtr == IntPtr.Zero)
+            {
+                tp_basePtr = this.PyBaseObject_Type;
+            }
+            object tp_base = this.Retrieve(tp_basePtr);
+            this.IncRef(tp_basePtr);
+            
+            if (Builtin.hasattr(DefaultContext.Default, tp_base, "_dispatcher"))
+            {
+                PythonDictionary baseMethodTable = (PythonDictionary)Builtin.getattr(DefaultContext.Default, Builtin.getattr(DefaultContext.Default, tp_base, "_dispatcher"), "table");
+                methodTable.update(DefaultContext.Default, baseMethodTable);
+            }
+            
             this.ConnectTypeField(typePtr, tablePrefix, "tp_new", methodTable, typeof(PyType_GenericNew_Delegate));
             this.ConnectTypeField(typePtr, tablePrefix, "tp_init", methodTable, typeof(CPython_initproc_Delegate));
             this.ConnectTypeField(typePtr, tablePrefix, "tp_dealloc", methodTable, typeof(CPython_destructor_Delegate));
@@ -408,14 +423,6 @@ namespace Ironclad
             IntPtr methodsPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_methods");
             this.GenerateMethods(classCode, methodsPtr, methodTable, tablePrefix);
             this.GenerateIterMethods(classCode, typePtr, methodTable, tablePrefix);
-
-            IntPtr tp_basePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
-            if (tp_basePtr == IntPtr.Zero)
-            {
-                tp_basePtr = this.PyBaseObject_Type;
-            }
-            object tp_base = this.Retrieve(tp_basePtr);
-            this.IncRef(tp_basePtr);
 
             IntPtr ob_typePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "ob_type");
             object ob_type = this.Retrieve(ob_typePtr);

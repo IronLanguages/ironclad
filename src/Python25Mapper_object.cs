@@ -19,11 +19,17 @@ namespace Ironclad
         Fill_PyBaseObject_Type(IntPtr address)
         {
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetMethodFP("PyBaseObject_Dealloc"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_init", this.GetAddress("PyBaseObject_Init"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyBaseObject_Dealloc"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_free", this.GetAddress("PyObject_Free"));
             this.map.Associate(address, TypeCache.Object);
         }
         
+        
+        public int PyBaseObject_Init(IntPtr self, IntPtr args, IntPtr kwargs)
+        {
+            return 0;
+        }
         
         public virtual void 
         PyBaseObject_Dealloc(IntPtr objPtr)
@@ -67,10 +73,9 @@ namespace Ironclad
         PyObject_GetAttrString(IntPtr objPtr, string name)
         {
             object obj = this.Retrieve(objPtr);
-            object attr = null;
-            if (PythonOps.TryGetBoundAttr(DefaultContext.Default, obj, SymbolTable.StringToId(name), out attr))
+            if (Builtin.hasattr(DefaultContext.Default, obj, name))
             {
-                return this.Store(attr);
+                return this.Store(Builtin.getattr(DefaultContext.Default, obj, name));
             }
             return IntPtr.Zero;
         }
