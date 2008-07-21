@@ -50,6 +50,9 @@ namespace Ironclad
 
         private StupidSet ptrsForCleanup = new StupidSet();
         
+        // one day, perhaps, this 'set' will be empty
+        private StupidSet unknownNames = new StupidSet();
+        
         private List<IntPtr> tempObjects = new List<IntPtr>();
         private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
         private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
@@ -368,19 +371,22 @@ namespace Ironclad
         }
         
         
-        public IntPtr 
-        GetMethodFP(string name)
+        public override IntPtr 
+        GetAddress(string name)
         {
-            Delegate result;
-            if (this.dgtMap.TryGetValue(name, out result))
+            IntPtr result = base.GetAddress(name);
+            if (result != IntPtr.Zero)
             {
-                return Marshal.GetFunctionPointerForDelegate(result);
+                return result;
             }
 
             switch (name)
             {
                 case "PyBaseObject_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyBaseObject_Dealloc);
+                    break;
+                case "PyBaseObject_Init":
+                    this.dgtMap[name] = new CPython_initproc_Delegate(this.PyBaseObject_Init);
                     break;
                 case "PyTuple_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyTuple_Dealloc);
@@ -393,7 +399,8 @@ namespace Ironclad
                     break;
                 
                 default:
-                    break;
+                    this.unknownNames.Add(name);
+                    return IntPtr.Zero;
             }
             return Marshal.GetFunctionPointerForDelegate(this.dgtMap[name]);
         }

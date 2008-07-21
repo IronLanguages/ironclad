@@ -212,6 +212,18 @@ class Python25Mapper_PyObject_Test(TestCase):
     
 class Python25Mapper_PyBaseObject_Type_Test(TypeTestCase):
 
+    def testPyBaseObject_Type_fields(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        tp_initPtr = CPyMarshal.ReadPtrField(mapper.PyBaseObject_Type, PyTypeObject, "tp_init")
+        self.assertNotEquals(tp_initPtr, IntPtr.Zero)
+        self.assertEquals(tp_initPtr, mapper.GetAddress("PyBaseObject_Init"))
+        
+        mapper.Dispose()
+        deallocTypes()
+
+
     def testPyBaseObject_Type_tp_dealloc(self):
         self.assertUsual_tp_dealloc("PyBaseObject_Type")
 
@@ -280,6 +292,17 @@ class Python25Mapper_PyObject_Init_Test(TestCase):
         deallocTypes()
 
 
+    def testPyBaseObject_Init(self):
+        "this function shouldn't do anything..."
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        self.assertEquals(mapper.PyBaseObject_Init(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero), 0)
+        
+        mapper.Dispose()
+        deallocTypes()
+        
+        
 
 suite = makesuite(
     Python25Mapper_PyObject_Test,

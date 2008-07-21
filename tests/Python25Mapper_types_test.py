@@ -62,6 +62,7 @@ class Python25Mapper_Types_Test(TestCase):
         mapper.Dispose()
         deallocTypes()
     
+    
     def testPyType_Ready(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
@@ -75,6 +76,58 @@ class Python25Mapper_Types_Test(TestCase):
         mapper.Dispose()
         Marshal.FreeHGlobal(typePtr)
         deallocTypes()
+        
+
+FIELDS = (
+    "tp_alloc",
+    "tp_init",
+    "tp_dealloc",
+    "tp_free",
+    "tp_print",
+    "tp_repr",
+    "tp_str",
+    "tp_doc",
+    "tp_call",
+    # more to come, no doubt
+)
+BASE_FIELD = IntPtr(11111)
+KEEP_FIELD = IntPtr(22222)
+
+class PyType_Ready_InheritTest(TestCase):
+
+    def setUp(self):
+        TestCase.setUp(self)
+        self.mapper = Python25Mapper()
+        self.deallocTypes = CreateTypes(self.mapper)
+        self.baseType, self.deallocBaseType = MakeTypePtr(self.mapper, {})
+        for field in FIELDS:
+            CPyMarshal.WritePtrField(self.baseType, PyTypeObject, field, BASE_FIELD)
+        
+        
+    def tearDown(self):
+        self.mapper.Dispose()
+        self.deallocBaseType()
+        self.deallocTypes()
+        TestCase.tearDown(self)
+        
+
+    def assertInherits(self, field):
+        noTypePtr, deallocNoType = MakeTypePtr(self.mapper, {"tp_base": self.baseType})
+        CPyMarshal.WritePtrField(noTypePtr, PyTypeObject, field, KEEP_FIELD)
+        self.assertEquals(self.mapper.PyType_Ready(noTypePtr), 0)
+        self.assertEquals(CPyMarshal.ReadPtrField(noTypePtr, PyTypeObject, field), KEEP_FIELD)
+        deallocNoType()
+        
+        yesTypePtr, deallocYesType = MakeTypePtr(self.mapper, {"tp_base": self.baseType})
+        CPyMarshal.WritePtrField(noTypePtr, PyTypeObject, field, IntPtr.Zero)
+        self.assertEquals(self.mapper.PyType_Ready(yesTypePtr), 0)
+        self.assertEquals(CPyMarshal.ReadPtrField(yesTypePtr, PyTypeObject, field), BASE_FIELD)
+        deallocYesType()
+        
+        
+    def testPyType_Ready_InheritsFields(self):
+        for field in FIELDS:
+            self.assertInherits(field)
         
                 
         
@@ -166,6 +219,7 @@ class Python25Mapper_PyType_GenericNew_Test(TestCase):
 
 suite = makesuite(
     Python25Mapper_Types_Test,
+    PyType_Ready_InheritTest,
     Python25Mapper_PyType_GenericNew_Test,
     Python25Mapper_PyType_GenericAlloc_Test,
 )
