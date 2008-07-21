@@ -585,6 +585,50 @@ class Python25Mapper_InheritanceTest(TestCase):
         deallocTypes()
     
     
+    def testMultipleBases(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        base1Ptr, deallocBase1 = MakeTypePtr(mapper, {'tp_name': 'base1', 'ob_type': mapper.PyType_Type})
+        base2Ptr, deallocBase2 = MakeTypePtr(mapper, {'tp_name': 'base2', 'ob_type': mapper.PyType_Type})
+        bases = (mapper.Retrieve(base1Ptr,), mapper.Retrieve(base2Ptr))
+        basesPtr = mapper.Store(bases)
+        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': base1Ptr, 'tp_bases': basesPtr})
+        klass = mapper.Retrieve(klassPtr)
+
+        self.assertEquals(klass.__bases__, bases)
+
+        mapper.Dispose()
+        deallocType()
+        deallocBase1()
+        deallocBase2()
+        deallocTypes()
+    
+    
+    def testInheritMethodTableFromMultipleBases(self):
+        "won't work right with identically-named base classes"
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        base1Ptr, deallocBase1 = MakeTypePtr(mapper, {'tp_name': 'base1', 'ob_type': mapper.PyType_Type})
+        base2Ptr, deallocBase2 = MakeTypePtr(mapper, {'tp_name': 'base2', 'ob_type': mapper.PyType_Type})
+        bases = (mapper.Retrieve(base1Ptr,), mapper.Retrieve(base2Ptr))
+        basesPtr = mapper.Store(bases)
+        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': base1Ptr, 'tp_bases': basesPtr})
+        klass = mapper.Retrieve(klassPtr)
+
+        for base in bases:
+            for k, v in base._dispatcher.table.items():
+                self.assertEquals(klass._dispatcher.table[k], v)
+
+        mapper.Dispose()
+        deallocType()
+        deallocBase1()
+        deallocBase2()
+        deallocTypes()
+        
+    
+    
     def testMetaclass(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)

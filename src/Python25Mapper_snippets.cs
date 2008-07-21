@@ -50,6 +50,10 @@ class {0}(_ironclad_baseclass):
         self._dispatcher.delete('{0}.tp_dealloc', self)
 ";
 
+        private const string CLASS_BASES_CODE = @"
+    __bases__ = _ironclad_bases
+";
+
         private const string MEMBER_GETTER_CODE = @"
     def {0}(self):
         fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})

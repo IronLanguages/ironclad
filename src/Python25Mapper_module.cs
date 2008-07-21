@@ -406,8 +406,28 @@ namespace Ironclad
             
             if (Builtin.hasattr(DefaultContext.Default, tp_base, "_dispatcher"))
             {
-                PythonDictionary baseMethodTable = (PythonDictionary)Builtin.getattr(DefaultContext.Default, Builtin.getattr(DefaultContext.Default, tp_base, "_dispatcher"), "table");
+                PythonDictionary baseMethodTable = (PythonDictionary)Builtin.getattr(
+                    DefaultContext.Default, Builtin.getattr(
+                        DefaultContext.Default, tp_base, "_dispatcher"), "table");
                 methodTable.update(DefaultContext.Default, baseMethodTable);
+            }
+            
+            PythonTuple tp_bases = null;
+            IntPtr tp_basesPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_bases");
+            if (tp_basesPtr != IntPtr.Zero)
+            {
+                tp_bases = (PythonTuple)this.Retrieve(tp_basesPtr);
+                foreach (object _base in tp_bases)
+                {
+                    if (Builtin.hasattr(DefaultContext.Default, tp_base, "_dispatcher"))
+                    {
+                        PythonDictionary baseMethodTable = (PythonDictionary)Builtin.getattr(
+                            DefaultContext.Default, Builtin.getattr(
+                                DefaultContext.Default, _base, "_dispatcher"), "table");
+                        methodTable.update(DefaultContext.Default, baseMethodTable);
+                    }
+                }
+                classCode.Append(CLASS_BASES_CODE);
             }
             
             this.ConnectTypeField(typePtr, tablePrefix, "tp_new", methodTable, typeof(PyType_GenericNew_Delegate));
@@ -431,6 +451,7 @@ namespace Ironclad
             ScriptScope moduleScope = this.GetModuleScriptScope(this.scratchModule);
             moduleScope.SetVariable("_ironclad_baseclass", tp_base);
             moduleScope.SetVariable("_ironclad_metaclass", ob_type);
+            moduleScope.SetVariable("_ironclad_bases", tp_bases);
             this.ExecInModule(classCode.ToString(), this.scratchModule);
 
             object klass = moduleScope.GetVariable<object>(__name__);
@@ -440,6 +461,8 @@ namespace Ironclad
             this.map.Associate(typePtr, klass);
             this.IncRef(typePtr);
         }
+        
+        
 
         private void 
         ConnectTypeField(IntPtr typePtr, string tablePrefix, string fieldName, PythonDictionary methodTable, Type dgtType)
