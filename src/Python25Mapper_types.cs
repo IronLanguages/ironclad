@@ -88,8 +88,14 @@ namespace Ironclad
             {
                 CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.PyType_Type);
             }
+            IntPtr typeBasePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
+            if ((typeBasePtr == IntPtr.Zero) && (typePtr != this.PyBaseObject_Type))
+            {
+                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", this.PyBaseObject_Type);
+            }
             this.InheritPtrField(typePtr, "tp_alloc");
             this.InheritPtrField(typePtr, "tp_init");
+            this.InheritPtrField(typePtr, "tp_new");
             this.InheritPtrField(typePtr, "tp_dealloc");
             this.InheritPtrField(typePtr, "tp_free");
             this.InheritPtrField(typePtr, "tp_print");
