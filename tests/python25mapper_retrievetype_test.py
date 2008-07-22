@@ -594,8 +594,8 @@ class Python25Mapper_InheritanceTest(TestCase):
         bases = (mapper.Retrieve(base1Ptr,), mapper.Retrieve(base2Ptr))
         basesPtr = mapper.Store(bases)
         klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': base1Ptr, 'tp_bases': basesPtr})
+        
         klass = mapper.Retrieve(klassPtr)
-
         self.assertEquals(klass.__bases__, bases)
 
         mapper.Dispose()
@@ -625,6 +625,24 @@ class Python25Mapper_InheritanceTest(TestCase):
         deallocType()
         deallocBase1()
         deallocBase2()
+        deallocTypes()
+        
+    
+    def testMultipleBasesIncludingBuiltin(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        basePtr, deallocBase = MakeTypePtr(mapper, {'tp_name': 'base', 'ob_type': mapper.PyType_Type})
+        bases = (mapper.Retrieve(basePtr), mapper.PyInt_Type)
+        basesPtr = mapper.Store(bases)
+        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': basePtr, 'tp_bases': basesPtr})
+
+        klass = mapper.Retrieve(klassPtr)
+        self.assertEquals(klass.__bases__, bases)
+
+        mapper.Dispose()
+        deallocType()
+        deallocBase()
         deallocTypes()
         
     
