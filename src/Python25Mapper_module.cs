@@ -419,7 +419,7 @@ namespace Ironclad
                 tp_bases = (PythonTuple)this.Retrieve(tp_basesPtr);
                 foreach (object _base in tp_bases)
                 {
-                    if (Builtin.hasattr(DefaultContext.Default, tp_base, "_dispatcher"))
+                    if (Builtin.hasattr(DefaultContext.Default, _base, "_dispatcher"))
                     {
                         PythonDictionary baseMethodTable = (PythonDictionary)Builtin.getattr(
                             DefaultContext.Default, Builtin.getattr(
