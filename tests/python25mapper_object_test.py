@@ -216,9 +216,14 @@ class Python25Mapper_PyBaseObject_Type_Test(TypeTestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        tp_initPtr = CPyMarshal.ReadPtrField(mapper.PyBaseObject_Type, PyTypeObject, "tp_init")
-        self.assertNotEquals(tp_initPtr, IntPtr.Zero)
-        self.assertEquals(tp_initPtr, mapper.GetAddress("PyBaseObject_Init"))
+        def AssertPtrField(name, value):
+            field = CPyMarshal.ReadPtrField(mapper.PyBaseObject_Type, PyTypeObject, name)
+            self.assertNotEquals(field, IntPtr.Zero)
+            self.assertEquals(field, value)
+        
+        AssertPtrField("tp_init", mapper.GetAddress("PyBaseObject_Init"))
+        AssertPtrField("tp_alloc", mapper.GetAddress("PyType_GenericAlloc"))
+        AssertPtrField("tp_new", mapper.GetAddress("PyType_GenericNew"))
         
         mapper.Dispose()
         deallocTypes()

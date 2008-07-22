@@ -380,6 +380,20 @@ namespace Ironclad
             __module__ = module;
         }
         
+        
+        private void
+        UpdateMethodTable(PythonDictionary methodTable, object _base)
+        {
+            if (Builtin.hasattr(DefaultContext.Default, _base, "_dispatcher"))
+            {
+                PythonDictionary baseMethodTable = (PythonDictionary)Builtin.getattr(
+                    DefaultContext.Default, Builtin.getattr(
+                        DefaultContext.Default, _base, "_dispatcher"), "table");
+                methodTable.update(DefaultContext.Default, baseMethodTable);
+            }
+        }
+        
+        
         private void
         GenerateClass(IntPtr typePtr)
         {
@@ -402,15 +416,9 @@ namespace Ironclad
                 tp_basePtr = this.PyBaseObject_Type;
             }
             object tp_base = this.Retrieve(tp_basePtr);
+            this.UpdateMethodTable(methodTable, tp_base);
+            this.PyType_Ready(tp_basePtr);
             this.IncRef(tp_basePtr);
-            
-            if (Builtin.hasattr(DefaultContext.Default, tp_base, "_dispatcher"))
-            {
-                PythonDictionary baseMethodTable = (PythonDictionary)Builtin.getattr(
-                    DefaultContext.Default, Builtin.getattr(
-                        DefaultContext.Default, tp_base, "_dispatcher"), "table");
-                methodTable.update(DefaultContext.Default, baseMethodTable);
-            }
             
             PythonTuple tp_bases = null;
             IntPtr tp_basesPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_bases");
@@ -419,13 +427,9 @@ namespace Ironclad
                 tp_bases = (PythonTuple)this.Retrieve(tp_basesPtr);
                 foreach (object _base in tp_bases)
                 {
-                    if (Builtin.hasattr(DefaultContext.Default, _base, "_dispatcher"))
-                    {
-                        PythonDictionary baseMethodTable = (PythonDictionary)Builtin.getattr(
-                            DefaultContext.Default, Builtin.getattr(
-                                DefaultContext.Default, _base, "_dispatcher"), "table");
-                        methodTable.update(DefaultContext.Default, baseMethodTable);
-                    }
+                    this.UpdateMethodTable(methodTable, _base);
+                    IntPtr _basePtr = this.Store(_base);
+                    this.PyType_Ready(_basePtr);
                 }
                 classCode.Append(CLASS_BASES_CODE);
             }

@@ -31,9 +31,17 @@ class Python25Mapper_Types_Test(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        for (k, v) in types.items():
-            self.assertEquals(mapper.Retrieve(getattr(mapper, k)), v, "failed to map " + k)
-            self.assertEquals(mapper.RefCount(getattr(mapper, k)), 1, "failed to add reference to " + k)
+        for (k, v) in sorted(types.items()):
+            typePtr = getattr(mapper, k)
+            self.assertEquals(mapper.Retrieve(typePtr), v, "failed to map " + k)
+            self.assertEquals(mapper.RefCount(typePtr), 1, "failed to add reference to " + k)
+            
+            mapper.PyType_Ready(typePtr)
+            basePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base")
+            if k == "PyBaseObject_Type":
+                self.assertEquals(basePtr, IntPtr.Zero)
+            else:
+                self.assertEquals(basePtr, mapper.PyBaseObject_Type)
              
         mapper.Dispose()
         deallocTypes()
@@ -81,6 +89,7 @@ class Python25Mapper_Types_Test(TestCase):
 FIELDS = (
     "tp_alloc",
     "tp_init",
+    "tp_new",
     "tp_dealloc",
     "tp_free",
     "tp_print",
@@ -99,9 +108,9 @@ class PyType_Ready_InheritTest(TestCase):
         TestCase.setUp(self)
         self.mapper = Python25Mapper()
         self.deallocTypes = CreateTypes(self.mapper)
-        self.baseType, self.deallocBaseType = MakeTypePtr(self.mapper, {})
+        self.baseTypePtr, self.deallocBaseType = MakeTypePtr(self.mapper, {})
         for field in FIELDS:
-            CPyMarshal.WritePtrField(self.baseType, PyTypeObject, field, BASE_FIELD)
+            CPyMarshal.WritePtrField(self.baseTypePtr, PyTypeObject, field, BASE_FIELD)
         
         
     def tearDown(self):
@@ -112,24 +121,34 @@ class PyType_Ready_InheritTest(TestCase):
         
 
     def assertInherits(self, field):
-        noTypePtr, deallocNoType = MakeTypePtr(self.mapper, {"tp_base": self.baseType})
+        noTypePtr, deallocNoType = MakeTypePtr(self.mapper, {"tp_base": self.baseTypePtr})
         CPyMarshal.WritePtrField(noTypePtr, PyTypeObject, field, KEEP_FIELD)
         self.assertEquals(self.mapper.PyType_Ready(noTypePtr), 0)
         self.assertEquals(CPyMarshal.ReadPtrField(noTypePtr, PyTypeObject, field), KEEP_FIELD)
         deallocNoType()
         
-        yesTypePtr, deallocYesType = MakeTypePtr(self.mapper, {"tp_base": self.baseType})
-        CPyMarshal.WritePtrField(noTypePtr, PyTypeObject, field, IntPtr.Zero)
+        yesTypePtr, deallocYesType = MakeTypePtr(self.mapper, {"tp_base": self.baseTypePtr})
+        CPyMarshal.WritePtrField(yesTypePtr, PyTypeObject, field, IntPtr.Zero)
         self.assertEquals(self.mapper.PyType_Ready(yesTypePtr), 0)
         self.assertEquals(CPyMarshal.ReadPtrField(yesTypePtr, PyTypeObject, field), BASE_FIELD)
         deallocYesType()
         
         
     def testPyType_Ready_InheritsFields(self):
+        # TODO: multiple inheritance ignored here for now
         for field in FIELDS:
             self.assertInherits(field)
         
-                
+    
+    def testPyType_Ready_MissingBaseType(self):
+        self.mapper.PyType_Ready(self.mapper.PyBaseObject_Type)
+        self.assertEquals(CPyMarshal.ReadPtrField(self.mapper.PyBaseObject_Type, PyTypeObject, "tp_base"), IntPtr.Zero)
+        
+        typePtr, deallocType = MakeTypePtr(self.mapper, {})
+        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_base", IntPtr.Zero)
+        self.mapper.PyType_Ready(typePtr)
+        self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), self.mapper.PyBaseObject_Type)
+    
         
 class Python25Mapper_PyType_GenericAlloc_Test(TestCase):
 

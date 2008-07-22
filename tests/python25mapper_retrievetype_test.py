@@ -15,7 +15,7 @@ from Ironclad import (
     CPyMarshal, CPython_destructor_Delegate, CPython_initproc_Delegate, HGlobalAllocator,
     Python25Api, Python25Mapper
 )
-from Ironclad.Structs import MemberT, METH, Py_TPFLAGS, PyMemberDef, PyObject
+from Ironclad.Structs import MemberT, METH, Py_TPFLAGS, PyMemberDef, PyObject, PyTypeObject
 
 
 class BorkedException(System.Exception):
@@ -552,7 +552,7 @@ class Python25Mapper_InheritanceTest(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        basePtr, deallocBase = MakeTypePtr(mapper, {'tp_name': 'base', 'ob_type': mapper.PyType_Type})
+        basePtr, deallocBase = MakeTypePtr(mapper, {'tp_name': 'base', 'ob_type': mapper.PyType_Type, 'tp_base': IntPtr.Zero})
         klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': basePtr})
         
         klass = mapper.Retrieve(klassPtr)
@@ -560,6 +560,7 @@ class Python25Mapper_InheritanceTest(TestCase):
         self.assertEquals(mapper.RefCount(mapper.PyType_Type), 3, "types did not keep references to TypeType")
         self.assertEquals(mapper.RefCount(basePtr), 3, "subtype did not keep reference to base")
         self.assertEquals(mapper.RefCount(mapper.PyBaseObject_Type), 2, "base type did not keep reference to its base (even if it wasn't set explicitly)")
+        self.assertEquals(CPyMarshal.ReadPtrField(basePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type")
         
         mapper.Dispose()
         deallocType()
@@ -589,14 +590,18 @@ class Python25Mapper_InheritanceTest(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        base1Ptr, deallocBase1 = MakeTypePtr(mapper, {'tp_name': 'base1', 'ob_type': mapper.PyType_Type})
-        base2Ptr, deallocBase2 = MakeTypePtr(mapper, {'tp_name': 'base2', 'ob_type': mapper.PyType_Type})
+        base1Ptr, deallocBase1 = MakeTypePtr(mapper, {'tp_name': 'base1', 'ob_type': mapper.PyType_Type, 'tp_base': IntPtr.Zero})
+        base2Ptr, deallocBase2 = MakeTypePtr(mapper, {'tp_name': 'base2', 'ob_type': mapper.PyType_Type, 'tp_base': IntPtr.Zero})
         bases = (mapper.Retrieve(base1Ptr,), mapper.Retrieve(base2Ptr))
         basesPtr = mapper.Store(bases)
         klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': base1Ptr, 'tp_bases': basesPtr})
         
         klass = mapper.Retrieve(klassPtr)
         self.assertEquals(klass.__bases__, bases)
+        self.assertEquals(mapper.RefCount(base1Ptr), 5, "subtype did not keep reference to bases")
+        self.assertEquals(mapper.RefCount(base2Ptr), 4, "subtype did not keep reference to bases")
+        self.assertEquals(CPyMarshal.ReadPtrField(base1Ptr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type 1")
+        self.assertEquals(CPyMarshal.ReadPtrField(base2Ptr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type 2")
 
         mapper.Dispose()
         deallocType()
@@ -606,7 +611,7 @@ class Python25Mapper_InheritanceTest(TestCase):
     
     
     def testInheritMethodTableFromMultipleBases(self):
-        "won't work right with identically-named base classes"
+        "probably won't work quite right with identically-named base classes"
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
