@@ -251,6 +251,8 @@ class Python25ApiFunctionsTest(TestCase):
         
         self.assertFinds("PyTuple_New", ('33',), 'IntPtr(999)')
         
+        self.assertFinds("PyNumber_Long", ('IntPtr(111)',), 'IntPtr(999)')
+        
         self.assertFinds("PyString_FromString", ('IntPtr(333)',), 'IntPtr.Zero')
         self.assertFinds("PyString_FromStringAndSize", ('IntPtr(98765)', '33'), 'IntPtr(12345)')
         self.assertFinds("PyString_Size", ('IntPtr(98765)',), '123')
@@ -260,6 +262,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyInt_FromSsize_t", ('33',), 'IntPtr(999)')
         self.assertFinds("PyInt_AsLong", ('IntPtr(123)',), '999')
         
+        self.assertFinds("PyLong_AsLongLong", ('IntPtr(999)',), 'Int64(5555555555)')
         self.assertFinds("PyLong_FromLongLong", ('Int64(5555555555)',), 'IntPtr(999)')
         self.assertFinds("PyLong_FromUnsignedLong", ('UInt32(4000000000)',), 'IntPtr(999)')
         self.assertFinds("PyLong_FromUnsignedLongLong", ('UInt64(18000000000000000000)',), 'IntPtr(999)')
