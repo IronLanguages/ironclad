@@ -4,7 +4,7 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase
 
-from System import Int64, UInt32, UInt64
+from System import Int64, IntPtr, UInt32, UInt64
 
 from Ironclad import CPyMarshal, Python25Mapper
 from Ironclad.Structs import PyObject
@@ -118,7 +118,27 @@ class Python25Mapper_PyLong_Test(TestCase):
         deallocTypes()
 
 
-class Python25Mapper_PyFloat_FromDouble_Test(TestCase):
+    def testPyLong_AsLongLong(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        for value in (0, 9223372036854775807, -9223372036854775808):
+            ptr = mapper.Store(value)
+            self.assertEquals(mapper.PyLong_AsLongLong(ptr), value)
+        
+        for value in (9223372036854775808, -9223372036854775809):
+            ptr = mapper.Store(value)
+            self.assertEquals(mapper.PyLong_AsLongLong(ptr), 0)
+            
+            def KindaConvertError():
+                raise mapper.LastException
+            self.assertRaises(OverflowError, KindaConvertError)
+                
+        mapper.Dispose()
+        deallocTypes()
+
+
+class Python25Mapper_PyFloat_Test(TestCase):
 
     def testStoreFloat(self):
         mapper = Python25Mapper()
@@ -148,11 +168,38 @@ class Python25Mapper_PyFloat_FromDouble_Test(TestCase):
         deallocTypes()
 
 
+class Python25Mapper_PyNumber_Test(TestCase):
+    
+    def testPyNumber_Long(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        values = [0, 12345, 123456789012345, 123.45]
+        values += map(float, values)
+        for value in values:
+            ptr = mapper.Store(value)
+            _long = mapper.Retrieve(mapper.PyNumber_Long(ptr))
+            self.assertEquals(_long, long(value), "converted wrong")
+            mapper.DecRef(ptr)
+        
+        badvalues = ['foo', object, object()]
+        for value in badvalues:
+            ptr = mapper.Store(value)
+            self.assertEquals(mapper.PyNumber_Long(ptr), IntPtr.Zero)
+            
+            def KindaConvertError():
+                raise mapper.LastException
+            self.assertRaises(TypeError, KindaConvertError)
+        
+        mapper.Dispose()
+        deallocTypes()
+        
 
 suite = makesuite(
     Python25Mapper_PyInt_Test,
     Python25Mapper_PyLong_Test,
-    Python25Mapper_PyFloat_FromDouble_Test,
+    Python25Mapper_PyFloat_Test,
+    Python25Mapper_PyNumber_Test,
 )
 
 if __name__ == '__main__':

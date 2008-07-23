@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 
 using Microsoft.Scripting.Math;
+using IronPython.Runtime;
 
 using Ironclad.Structs;
 
@@ -9,7 +10,22 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        
+        public override IntPtr
+        PyNumber_Long(IntPtr numberPtr)
+        {
+            try
+            {
+                BigInteger result = Converter.ConvertToBigInteger(this.Retrieve(numberPtr));
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
+
         public override IntPtr
         PyInt_FromLong(int value)
         {
@@ -43,6 +59,21 @@ namespace Ironclad
             return ptr;
         }
 
+
+        public override Int64
+        PyLong_AsLongLong(IntPtr valuePtr)
+        {
+            try
+            {
+                BigInteger value = Converter.ConvertToBigInteger(this.Retrieve(valuePtr));
+                return value.ToInt64();
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return 0;
+            }
+        }
 
         public override IntPtr
         PyLong_FromLongLong(long value)
