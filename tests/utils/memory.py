@@ -56,12 +56,15 @@ _types = (
     "_PyWeakref_ProxyType",
     "_PyWeakref_CallableProxyType"
 )
-def CreateTypes(mapper):
+def CreateTypes(mapper, readyTypes=True):
     blocks = []
     for _type in _types:
         block = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         mapper.SetData(_type, block)
         blocks.append(block)
+    
+    if readyTypes:
+        mapper.ReadyBuiltinTypes()
     
     def DestroyTypes():
         for block in blocks:

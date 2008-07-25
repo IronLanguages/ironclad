@@ -28,6 +28,9 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
         self.assertNotEquals(Python25Mapper._Py_NoneStruct, IntPtr.Zero,
                              "mapping not set up")
         
+        # weak side-effect test to hopefully prove that ReadyBuiltinTypes has been called
+        self.assertEquals(CPyMarshal.ReadPtrField(mapper.PyLong_Type, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
+        
         mapper.Dispose()
         self.assertEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library not unmapped by Dispose")

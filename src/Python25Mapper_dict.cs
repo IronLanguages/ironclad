@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
+using IronPython.Runtime.Types;
 
 using Ironclad.Structs;
 

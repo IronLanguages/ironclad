@@ -15,6 +15,18 @@ namespace Ironclad
     public partial class Python25Mapper
     {
         public override void
+        Fill_PyBaseObject_Type(IntPtr address)
+        {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_init", this.GetAddress("PyBaseObject_Init"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_alloc", this.GetAddress("PyType_GenericAlloc"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_new", this.GetAddress("PyType_GenericNew"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyBaseObject_Dealloc"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_free", this.GetAddress("PyObject_Free"));
+            this.map.Associate(address, TypeCache.Object);
+        }
+        
+        public override void
         Fill_PyType_Type(IntPtr address)
         {
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
@@ -49,6 +61,44 @@ namespace Ironclad
             this.map.Associate(address, TypeCache.Double);
         }
         
+        public override void 
+        Fill_PyCObject_Type(IntPtr address)
+        {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyCObject_Dealloc"));
+            this.map.Associate(address, typeof(OpaquePyCObject));
+        }
+        
+        public override void
+        Fill_PyDict_Type(IntPtr address)
+        {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            this.map.Associate(address, TypeCache.Dict);
+        }
+        
+        public override void
+        Fill_PyList_Type(IntPtr address)
+        {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyList_Dealloc"));
+            this.map.Associate(address, TypeCache.List);
+        }
+        
+        public override void
+        Fill_PyString_Type(IntPtr address)
+        {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            this.map.Associate(address, TypeCache.String);
+        }
+        
+        public override void
+        Fill_PyTuple_Type(IntPtr address)
+        {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyTuple_Dealloc"));
+            this.map.Associate(address, TypeCache.PythonTuple);
+        }
+        
         public override int
         PyType_IsSubtype(IntPtr subtypePtr, IntPtr typePtr)
         {
@@ -79,6 +129,24 @@ namespace Ironclad
                 }
             }
         }
+        
+        
+        public void
+        ReadyBuiltinTypes()
+        {
+            this.PyType_Ready(this.PyType_Type);
+            this.PyType_Ready(this.PyBaseObject_Type);
+            this.PyType_Ready(this.PyInt_Type);
+            this.PyType_Ready(this.PyLong_Type);
+            this.PyType_Ready(this.PyFloat_Type);
+            this.PyType_Ready(this.PyString_Type);
+            this.PyType_Ready(this.PyTuple_Type);
+            this.PyType_Ready(this.PyList_Type);
+            this.PyType_Ready(this.PyDict_Type);
+            this.PyType_Ready(this.PyFile_Type);
+            this.PyType_Ready(this.PyCObject_Type);
+        }
+        
         
         public override int
         PyType_Ready(IntPtr typePtr)

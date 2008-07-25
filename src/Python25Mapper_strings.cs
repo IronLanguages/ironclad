@@ -10,13 +10,6 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        public override void
-        Fill_PyString_Type(IntPtr address)
-        {
-            this.Fill_PyBaseObject_Type(address);
-            this.map.Associate(address, TypeCache.String);
-        }
-        
         
         private IntPtr 
         AllocPyString(int length)
