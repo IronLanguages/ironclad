@@ -640,8 +640,8 @@ PySlice_GetIndices
 PySlice_GetIndicesEx
 PyString_FromStringAndSize
 PyString_FromString
-Py_GCC_ATTRIBUTE
-Py_GCC_ATTRIBUTE
+PyString_FromFormat
+PyString_FromFormatV
 PyString_Size
 PyString_AsString
 PyString_Repr

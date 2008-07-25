@@ -4,6 +4,9 @@ Py_VaBuildValue
 _Py_BuildValue_SizeT
 Py_BuildValue
 
+PyString_FromFormat
+PyString_FromFormatV
+
 PyArg_Parse
 _PyArg_Parse_SizeT
 PyArg_ParseTuple

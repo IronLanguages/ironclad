@@ -12,4 +12,5 @@
 #include "getargs.c"
 #include "modsupport.c"
 #include "abstract.c"
+#include "stringobject.c"
 

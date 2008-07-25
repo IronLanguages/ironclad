@@ -644,8 +644,8 @@ PyAPI_FUNC(int) PySlice_GetIndices(PySliceObject *r, Py_ssize_t length, Py_ssize
 PyAPI_FUNC(int) PySlice_GetIndicesEx(PySliceObject *r, Py_ssize_t length, Py_ssize_t *start, Py_ssize_t *stop, Py_ssize_t *step, Py_ssize_t *slicelength);
 PyAPI_FUNC(PyObject *) PyString_FromStringAndSize(const char *, Py_ssize_t);
 PyAPI_FUNC(PyObject *) PyString_FromString(const char *);
-PyAPI_FUNC(PyObject *) PyString_FromFormatV(const char*, va_list) Py_GCC_ATTRIBUTE((format(printf, 1, 0)));
-PyAPI_FUNC(PyObject *) PyString_FromFormat(const char*, ...) Py_GCC_ATTRIBUTE((format(printf, 1, 2)));
+PyAPI_FUNC(PyObject *) PyString_FromFormatV(const char*, va_list);
+PyAPI_FUNC(PyObject *) PyString_FromFormat(const char*, ...);
 PyAPI_FUNC(Py_ssize_t) PyString_Size(PyObject *);
 PyAPI_FUNC(char *) PyString_AsString(PyObject *);
 PyAPI_FUNC(PyObject *) PyString_Repr(PyObject *, int);
