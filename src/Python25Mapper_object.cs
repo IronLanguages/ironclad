@@ -15,18 +15,6 @@ namespace Ironclad
 
     public partial class Python25Mapper: Python25Api
     {
-        public override void
-        Fill_PyBaseObject_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_init", this.GetAddress("PyBaseObject_Init"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_alloc", this.GetAddress("PyType_GenericAlloc"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_new", this.GetAddress("PyType_GenericNew"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyBaseObject_Dealloc"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_free", this.GetAddress("PyObject_Free"));
-            this.map.Associate(address, TypeCache.Object);
-        }
-        
         
         public int PyBaseObject_Init(IntPtr self, IntPtr args, IntPtr kwargs)
         {

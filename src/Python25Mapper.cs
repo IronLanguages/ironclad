@@ -80,6 +80,7 @@ namespace Ironclad
             {
                 this.stub = new StubReference(stubPath);
                 this.stub.Init(new AddressGetterDelegate(this.GetAddress), new DataSetterDelegate(this.SetData));
+                this.ReadyBuiltinTypes();
                 this.importer = new PydImporter();
                 
                 string path = Environment.GetEnvironmentVariable("IRONPYTHONPATH");

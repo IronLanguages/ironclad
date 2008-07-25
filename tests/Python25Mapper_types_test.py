@@ -20,6 +20,7 @@ class Python25Mapper_Types_Test(TestCase):
             "PyBaseObject_Type": object,
             "PyString_Type": str,
             "PyList_Type": list,
+            "PyDict_Type": dict,
             "PyTuple_Type": tuple,
             "PyFile_Type": file,
             "PyLong_Type": long,
@@ -75,14 +76,47 @@ class Python25Mapper_Types_Test(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        # yes, this implementation leaves a few things to be desired
         typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         CPyMarshal.Zero(typePtr, Marshal.SizeOf(PyTypeObject))
         self.assertEquals(mapper.PyType_Ready(typePtr), 0, "wrong")
         self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type"), mapper.PyType_Type, "failed to fill in missing ob_type")
+        self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to fill in missing tp_base")
+
+        typeFlags = CPyMarshal.ReadIntField(typePtr, PyTypeObject, "tp_flags")
+        self.assertEquals(typeFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready type")
+        
+        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "ob_type", IntPtr.Zero)
+        self.assertEquals(mapper.PyType_Ready(typePtr), 0, "wrong")
+        self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type"), IntPtr.Zero, "unexpectedly and unnecessarily rereadied type")        
         
         mapper.Dispose()
         Marshal.FreeHGlobal(typePtr)
+        deallocTypes()
+    
+    
+    def testReadyBuiltinTypes(self):
+        types = (
+            "PyList_Type",
+            "PyTuple_Type",
+            "PyDict_Type", 
+            "PyString_Type", # yes, I'm pretending that unicode and basestring just don't exist
+            "PyFile_Type",
+            "PyInt_Type",
+            "PyLong_Type",
+            "PyFloat_Type",
+            "PyCObject_Type",
+        )
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper, readyTypes=False)
+        mapper.ReadyBuiltinTypes()
+        
+        for _type in types:
+            typePtr = getattr(mapper, _type)
+            basePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base")
+            self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
+            self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type"), mapper.PyType_Type)
+        
+        mapper.Dispose()
         deallocTypes()
         
 
@@ -158,6 +192,7 @@ class PyType_Ready_InheritTest(TestCase):
         CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_base", IntPtr.Zero)
         self.mapper.PyType_Ready(typePtr)
         self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), self.mapper.PyBaseObject_Type)
+        
     
         
 class Python25Mapper_PyType_GenericAlloc_Test(TestCase):
