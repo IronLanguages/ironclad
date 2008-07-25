@@ -638,7 +638,7 @@ class Python25Mapper_InheritanceTest(TestCase):
         deallocTypes = CreateTypes(mapper)
         
         basePtr, deallocBase = MakeTypePtr(mapper, {'tp_name': 'base', 'ob_type': mapper.PyType_Type})
-        bases = (mapper.Retrieve(basePtr), mapper.PyInt_Type)
+        bases = (mapper.Retrieve(basePtr), int)
         basesPtr = mapper.Store(bases)
         klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': basePtr, 'tp_bases': basesPtr})
 

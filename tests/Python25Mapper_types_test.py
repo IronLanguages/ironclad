@@ -6,11 +6,11 @@ from tests.utils.cpython import MakeTypePtr
 from tests.utils.memory import OffsetPtr, CreateTypes
 from tests.utils.testcase import TestCase
 
-from System import IntPtr
+from System import IntPtr, UInt32
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, OpaquePyCObject, Python25Api, Python25Mapper
-from Ironclad.Structs import PyObject, PyTypeObject
+from Ironclad.Structs import PyObject, PyTypeObject, Py_TPFLAGS
 
 class Python25Mapper_Types_Test(TestCase):
     
@@ -121,10 +121,20 @@ class PyType_Ready_InheritTest(TestCase):
         
 
     def assertInherits(self, field):
+        baseFlags = CPyMarshal.ReadIntField(self.baseTypePtr, PyTypeObject, "tp_flags")
+        mask = UInt32(Py_TPFLAGS.READY) ^ UInt32(0xFFFFFFFF)
+        CPyMarshal.WriteIntField(self.baseTypePtr, PyTypeObject, "tp_flags", baseFlags & mask)
+        
         noTypePtr, deallocNoType = MakeTypePtr(self.mapper, {"tp_base": self.baseTypePtr})
         CPyMarshal.WritePtrField(noTypePtr, PyTypeObject, field, KEEP_FIELD)
         self.assertEquals(self.mapper.PyType_Ready(noTypePtr), 0)
         self.assertEquals(CPyMarshal.ReadPtrField(noTypePtr, PyTypeObject, field), KEEP_FIELD)
+        
+        baseFlags = CPyMarshal.ReadIntField(self.baseTypePtr, PyTypeObject, "tp_flags")
+        self.assertEquals(baseFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready base type")
+        
+        typeFlags = CPyMarshal.ReadIntField(noTypePtr, PyTypeObject, "tp_flags")
+        self.assertEquals(typeFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready subtype")
         deallocNoType()
         
         yesTypePtr, deallocYesType = MakeTypePtr(self.mapper, {"tp_base": self.baseTypePtr})
