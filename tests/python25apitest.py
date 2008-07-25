@@ -236,6 +236,8 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyCallable_Check", ('IntPtr(111)',), '0')
         
         self.assertFinds("PySequence_Check", ('IntPtr(111)',), '0')
+        self.assertFinds("PySequence_Size", ('IntPtr(111)',), '123')
+        self.assertFinds("PySequence_GetItem", ('IntPtr(111)', '123'), 'IntPtr(999)')
         
         self.assertFinds("PyIter_Next", ('IntPtr(123)',), 'IntPtr(999)')
         
