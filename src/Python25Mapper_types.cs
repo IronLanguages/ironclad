@@ -83,16 +83,30 @@ namespace Ironclad
         public override int
         PyType_Ready(IntPtr typePtr)
         {
+            if (typePtr == IntPtr.Zero)
+            {
+                return -1;
+            }
+            
+            Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
+            if ((Int32)(flags & Py_TPFLAGS.READY) != 0)
+            {
+                return 0;
+            }
+            
             IntPtr typeTypePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "ob_type");
-            if (typeTypePtr == IntPtr.Zero)
+            if ((typeTypePtr == IntPtr.Zero) && (typePtr != this.PyType_Type))
             {
                 CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.PyType_Type);
             }
             IntPtr typeBasePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
             if ((typeBasePtr == IntPtr.Zero) && (typePtr != this.PyBaseObject_Type))
             {
-                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", this.PyBaseObject_Type);
+                typeBasePtr = this.PyBaseObject_Type;
+                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", typeBasePtr);
             }
+            PyType_Ready(typeBasePtr);
+            
             this.InheritPtrField(typePtr, "tp_alloc");
             this.InheritPtrField(typePtr, "tp_init");
             this.InheritPtrField(typePtr, "tp_new");
@@ -104,6 +118,8 @@ namespace Ironclad
             this.InheritPtrField(typePtr, "tp_doc");
             this.InheritPtrField(typePtr, "tp_call");
             
+            flags |= Py_TPFLAGS.READY;
+            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
             return 0;
         }
         
