@@ -7,6 +7,18 @@ typedef ssize_t Py_ssize_t;
 #define PY_SSIZE_T_MAX ((Py_ssize_t)(((size_t)-1)>>1))
 #define PY_SIZE_MAX ((size_t)-1)
 
+#ifndef PY_FORMAT_SIZE_T
+#   if SIZEOF_SIZE_T == SIZEOF_INT && !defined(__APPLE__)
+#       define PY_FORMAT_SIZE_T ""
+#   elif SIZEOF_SIZE_T == SIZEOF_LONG
+#       define PY_FORMAT_SIZE_T "l"
+#   elif defined(MS_WINDOWS)
+#       define PY_FORMAT_SIZE_T "I"
+#   else
+#       error "This platform's pyconfig.h needs to define PY_FORMAT_SIZE_T"
+#   endif
+#endif
+
 #define PY_LONG_LONG long long
 
 #define Py_GCC_ATTRIBUTE(x) __attribute__(x)
@@ -60,7 +72,7 @@ typedef ssize_t Py_ssize_t;
   ( assert((n) <= PY_SIZE_MAX / sizeof(type)) , \
 	( (p) = (type *) PyMem_REALLOC((p), (n) * sizeof(type)) ) )
 
-
+#define Py_MEMCPY memcpy
 
 
 typedef struct _object {

@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 
 using Ironclad.Structs;
 
+using Microsoft.Scripting;
+
 using IronPython.Runtime.Types;
 
 namespace Ironclad
@@ -88,6 +90,21 @@ namespace Ironclad
             }
         }
         
+        
+        public override IntPtr
+        PyString_AsString(IntPtr strPtr)
+        {
+            try
+            {
+                string s = (string)this.Retrieve(strPtr);
+                return CPyMarshal.Offset(strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
         
         private int
         _PyString_Resize_Grow(IntPtr strPtrPtr, int newSize)

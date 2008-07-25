@@ -257,6 +257,27 @@ class Python25Mapper_PyString_Size_Test(PyString_TestCase):
         deallocTypes()
 
 
+class PyString_AsStringTest(TestCase):
+    
+    def testWorks(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        strPtr = mapper.Store("You're fighting a business hippy. This is a hippy that understands the law of supply and demand.")
+        strData = CPyMarshal.Offset(strPtr, Marshal.OffsetOf(PyStringObject, 'ob_sval'))
+        self.assertEquals(mapper.PyString_AsString(strPtr), strData)
+        
+        notstrPtr = mapper.Store(object())
+        self.assertEquals(mapper.PyString_AsString(notstrPtr), IntPtr.Zero)
+        def KindaConvertError():
+            raise mapper.LastException
+        self.assertRaises(TypeError, KindaConvertError)
+        
+        mapper.Dispose()
+        deallocTypes()
+        
+
+
 class PyStringStoreTest(PyString_TestCase):
     
     def testStoreStringCreatesStringType(self):
@@ -293,6 +314,7 @@ suite = makesuite(
     Python25Mapper_PyString_FromStringAndSize_Test,
     Python25Mapper__PyString_Resize_Test,
     Python25Mapper_PyString_Size_Test,
+    PyString_AsStringTest,
     PyStringStoreTest,
 )
 
