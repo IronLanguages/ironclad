@@ -138,6 +138,26 @@ class Python25Mapper_PyLong_Test(TestCase):
         deallocTypes()
 
 
+    def testPyLong_AsLong(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        for value in (0, 2147483647, -2147483648):
+            ptr = mapper.Store(long(value))
+            self.assertEquals(mapper.PyLong_AsLong(ptr), value)
+        
+        for value in (2147483648, -2147483649):
+            ptr = mapper.Store(long(value))
+            self.assertEquals(mapper.PyLong_AsLong(ptr), 0)
+            
+            def KindaConvertError():
+                raise mapper.LastException
+            self.assertRaises(OverflowError, KindaConvertError)
+                
+        mapper.Dispose()
+        deallocTypes()
+
+
 class Python25Mapper_PyFloat_Test(TestCase):
 
     def testStoreFloat(self):
