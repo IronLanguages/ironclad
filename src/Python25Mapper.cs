@@ -61,7 +61,7 @@ namespace Ironclad
 
         private LocalDataStoreSlot threadDictStore = Thread.AllocateDataSlot();
 
-        // this should probably be thread-local too
+        // TODO: this should probably be thread-local too
         private object _lastException = null;
         
         public Python25Mapper() : this(null, ScriptRuntime.Create().GetEngine("py"), new HGlobalAllocator())
