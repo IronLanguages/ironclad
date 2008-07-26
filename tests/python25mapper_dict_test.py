@@ -90,7 +90,42 @@ class Python25MapperDictTest(TestCase):
         deallocTypes()
 
 
-    def testPyDict_SetItemString_ReallySimple(self):
+    def testPyDict_SetItem(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        _dict = {}
+        dictPtr = mapper.Store(_dict)
+        keyPtr = mapper.Store(123)
+        itemPtr = mapper.Store(456)
+        self.assertEquals(mapper.PyDict_SetItem(dictPtr, keyPtr, itemPtr), 0, "reported failure")
+        self.assertEquals(mapper.RefCount(itemPtr), 1, "does not need to incref item")
+        self.assertEquals(_dict, {123: 456}, "failed")
+        
+        mapper.Dispose()
+        deallocTypes()
+
+
+    def testPyDict_SetItem_Unhashable(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        _dict = {}
+        dictPtr = mapper.Store(_dict)
+        keyPtr = mapper.Store({})
+        itemPtr = mapper.Store(456)
+        self.assertEquals(mapper.PyDict_SetItem(dictPtr, keyPtr, itemPtr), -1, "failed to report failure")
+        self.assertEquals(_dict, {}, 'dictionary changed')
+        
+        def KindaConvertError():
+            raise mapper.LastException
+        self.assertRaises(TypeError, KindaConvertError)
+        
+        mapper.Dispose()
+        deallocTypes()
+        
+
+    def testPyDict_SetItemString(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
@@ -98,7 +133,7 @@ class Python25MapperDictTest(TestCase):
         dictPtr = mapper.Store(_dict)
         itemPtr = mapper.Store(123)
         self.assertEquals(mapper.PyDict_SetItemString(dictPtr, 'blob', itemPtr), 0, "reported failure")
-        self.assertEquals(mapper.RefCount(itemPtr), 2, "did not incref item")
+        self.assertEquals(mapper.RefCount(itemPtr), 1, "does not need to incref item")
         self.assertEquals(_dict, {'blob': 123}, "failed")
         
         mapper.Dispose()
@@ -113,8 +148,6 @@ class Python25MapperDictTest(TestCase):
         _dict = {}
         dictPtr = mapper.Store(_dict)
         self.assertEquals(mapper.PyDict_SetItemString(dictPtr, 'klass', typePtr), 0, "reported failure")
-        # yes, refcnt should be 3: 1 from MakeTypePtr, 1 from Retrieve (when the type was actualised), 1 from storing in dict
-        self.assertEquals(mapper.RefCount(typePtr), 3, "did not incref item")
         klass = _dict['klass']
         self.assertEquals(klass.__name__, 'klass', "failed")
         
