@@ -1,6 +1,7 @@
 
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
+from tests.utils.gc import gcwait
 
 from System.Threading import Thread, ThreadStart
 
@@ -101,8 +102,40 @@ class Python25Mapper_PyThread_functions_Test(TestCase):
         mapper.Dispose()
 
 
+class PyThreadStateDict_Test(TestCase):
+    
+    def testPyThreadState_GetDict(self):
+        mapper = Python25Mapper()
+        
+        store = {}
+        def GrabThreadDict(key):
+            ptr = mapper.PyThreadState_GetDict()
+            mapper.IncRef(ptr)
+            local = mapper.Retrieve(ptr)
+            local['content'] = key
+            store[key] = local
+            store[key + 'ptr'] = ptr
+        
+        GrabThreadDict('main')
+        for name in ('other', 'another', 'and another'):
+            thread = Thread(ThreadStart(lambda: GrabThreadDict(name)))
+            thread.Start()
+            thread.Join()
+        
+        gcwait()
+        self.assertEquals(store['main']['content'], 'main')
+        self.assertEquals(mapper.RefCount(store['mainptr']), 2, 'lost reference to dict while thread still active')
+        
+        for name in ('other', 'another', 'and another'):
+            self.assertEquals(store[name]['content'], name)
+            self.assertEquals(mapper.RefCount(store[name + 'ptr']), 1, 'failed to dispose of thread dicts when threads ended')
+           
+        mapper.Dispose()
+
+
 suite = makesuite(
     Python25Mapper_PyThread_functions_Test,
+    PyThreadStateDict_Test,
 )
 
 if __name__ == '__main__':

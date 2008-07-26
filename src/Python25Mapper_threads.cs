@@ -5,12 +5,14 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        public override IntPtr PyThread_allocate_lock(/* no args */)
+        public override IntPtr 
+        PyThread_allocate_lock(/* no args */)
         {
             return this.Store(new Object());
         }
 
-        public override int PyThread_acquire_lock(IntPtr lockPtr, int flags)
+        public override int 
+        PyThread_acquire_lock(IntPtr lockPtr, int flags)
         {
             object lockObject = this.Retrieve(lockPtr);
             if (flags == 1)
@@ -31,14 +33,28 @@ namespace Ironclad
             }
         }
 
-        public override void PyThread_release_lock(IntPtr lockPtr)
+        public override void 
+        PyThread_release_lock(IntPtr lockPtr)
         {
             Monitor.Exit(this.Retrieve(lockPtr));
         }
 
-        public override void PyThread_free_lock(IntPtr lockPtr)
+        public override void 
+        PyThread_free_lock(IntPtr lockPtr)
         {
             this.PyObject_Free(lockPtr);
+        }
+
+        public override IntPtr
+        PyThreadState_GetDict()
+        {
+            ThreadLocalDict threadDict = (ThreadLocalDict)Thread.GetData(this.threadDictStore);
+            if (threadDict == null)
+            {
+                threadDict = new ThreadLocalDict(this);
+                Thread.SetData(this.threadDictStore, threadDict);
+            }
+            return threadDict.Ptr;
         }
     }
 }
