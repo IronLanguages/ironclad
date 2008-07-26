@@ -4,6 +4,8 @@ from tests.utils.testcase import TestCase
 
 import System
 from System import IntPtr
+from System.IO import MemoryStream, StreamReader
+from System.Text import Encoding
 from Ironclad import Python25Mapper
 
 
@@ -34,6 +36,21 @@ class Python25Mapper_Exception_Test(TestCase):
         mapper.Dispose()
 
 
+    def testPyErr_Occurred(self):
+        mapper = Python25Mapper()
+        
+        mapper.LastException = Exception("borked")
+        errorPtr = mapper.Store(mapper.LastException)
+        self.assertEquals(mapper.PyErr_Occurred(), errorPtr)
+        mapper.FreeTemps()
+        self.assertEquals(mapper.RefCount(errorPtr), 1, 'was not a temp object')
+        
+        mapper.LastException = None
+        self.assertEquals(mapper.PyErr_Occurred(), IntPtr.Zero)
+        
+        mapper.Dispose()
+
+
     def testPyErr_Clear(self):
         mapper = Python25Mapper()
         
@@ -44,6 +61,26 @@ class Python25Mapper_Exception_Test(TestCase):
         
         mapper.Dispose()
         
+
+    def testPyErr_Print(self):
+        mapper = Python25Mapper()
+        
+        mapper.LastException = None
+        self.assertRaises(Exception, mapper.PyErr_Occurred())
+        
+        somethingToWrite = "yes, I know this isn't an exception; no, I don't want to test precise traceback printing."
+        mapper.LastException = somethingToWrite
+        stderr = MemoryStream()
+        mapper.Engine.Runtime.IO.SetErrorOutput(stderr, Encoding.UTF8)
+        mapper.PyErr_Print()
+        
+        stderr.Flush()
+        stderr.Position = 0
+        printed = StreamReader(stderr, True).ReadToEnd()
+        self.assertEquals(printed, somethingToWrite + '\r\n')
+        self.assertEquals(mapper.LastException, None)
+        
+        mapper.Dispose()
 
 
     def assertSetStringSetsCorrectError(self, name):
@@ -115,7 +152,7 @@ class Python25Mapper_Exception_Test(TestCase):
         for error in errors:
             self.assertSetStringSetsCorrectError(error)
         
-        # the following errors are a hassle to construct, and are being ignored for now:
+        # TODO: the following errors are a hassle to construct, and are being ignored for now:
         #
         #    "UnicodeEncodeError",
         #    "UnicodeDecodeError",
