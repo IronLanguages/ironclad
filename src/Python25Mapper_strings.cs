@@ -89,6 +89,40 @@ namespace Ironclad
                 return this.CreatePyStringWithBytes(bytes);
             }
         }
+
+
+        public override IntPtr
+        PyString_InternFromString(IntPtr stringData)
+        {
+            IntPtr newStrPtr = PyString_FromString(stringData);
+            IntPtr newStrPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(IntPtr)));
+            CPyMarshal.WritePtr(newStrPtrPtr, newStrPtr);
+            this.PyString_InternInPlace(newStrPtrPtr);
+            return CPyMarshal.ReadPtr(newStrPtrPtr);
+        }
+
+
+        public override void
+        PyString_InternInPlace(IntPtr strPtrPtr)
+        {
+            IntPtr intStrPtr = IntPtr.Zero;
+            IntPtr strPtr = CPyMarshal.ReadPtr(strPtrPtr);
+            string str = (string)this.Retrieve(strPtr);
+
+            if (this.internedStrings.ContainsKey(str))
+            {
+                intStrPtr = this.internedStrings[str];
+            }
+            else
+            {
+                intStrPtr = strPtr;
+                this.internedStrings[str] = intStrPtr;
+                this.IncRef(intStrPtr);
+            }
+            this.IncRef(intStrPtr);
+            this.DecRef(strPtr);
+            CPyMarshal.WritePtr(strPtrPtr, intStrPtr);
+        }
         
         
         public override IntPtr

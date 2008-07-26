@@ -99,6 +99,39 @@ class Python25Mapper_PyString_FromString_Test(PyString_TestCase):
         deallocTypes()
 
 
+class Python25Mapper_InternTest(PyString_TestCase):
+        
+    def testInternExisting(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+
+        testString = "mars needs women" + self.getStringWithValues(1, 256)
+        bytes = self.byteArrayFromString(testString)
+        testData = self.ptrFromByteArray(bytes)
+        
+        sp1 = mapper.PyString_FromString(testData)
+        sp2 = mapper.PyString_InternFromString(testData)
+        self.assertNotEquals(sp1, sp2)
+        self.assertFalse(mapper.Retrieve(sp1) is mapper.Retrieve(sp2))
+        self.assertEquals(mapper.RefCount(sp1), 1)
+        self.assertEquals(mapper.RefCount(sp2), 2, 'failed to grab extra reference to induce immortality')
+        
+        mapper.IncRef(sp1)
+        sp1p = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        CPyMarshal.WritePtr(sp1p, sp1)
+        mapper.PyString_InternInPlace(sp1p)
+        sp1i = CPyMarshal.ReadPtr(sp1p)
+        self.assertEquals(sp1i, sp2, 'failed to intern')
+        self.assertTrue(mapper.Retrieve(sp1i) is mapper.Retrieve(sp2))
+        self.assertEquals(mapper.RefCount(sp1), 1, 'failed to decref old string')
+        self.assertEquals(mapper.RefCount(sp2), 3, 'failed to incref interned string')
+        
+        mapper.Dispose()
+        Marshal.FreeHGlobal(sp1p)
+        Marshal.FreeHGlobal(testData)
+        deallocTypes()
+
+
 class Python25Mapper_PyString_FromStringAndSize_Test(PyString_TestCase):
 
     def testCreateEmptyString(self):
@@ -311,6 +344,7 @@ class PyStringStoreTest(PyString_TestCase):
 suite = makesuite(
     PyString_Type_test,
     Python25Mapper_PyString_FromString_Test,
+    Python25Mapper_InternTest,
     Python25Mapper_PyString_FromStringAndSize_Test,
     Python25Mapper__PyString_Resize_Test,
     Python25Mapper_PyString_Size_Test,
