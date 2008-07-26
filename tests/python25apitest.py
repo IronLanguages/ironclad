@@ -287,6 +287,8 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyThread_free_lock", ('IntPtr(123)',), 'None')
         self.assertFinds("PyThread_acquire_lock", ('IntPtr(123)', '1'), '1')
         self.assertFinds("PyThread_release_lock", ('IntPtr(123)',), 'None')
+        
+        self.assertFinds("PyThreadState_GetDict", tuple(), 'IntPtr(123)')
 
 
     def testPython25ApiImplementationOf_PyEval_SaveThread(self):

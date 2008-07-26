@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 using IronPython.Runtime;
 using IronPython.Runtime.Calls;
@@ -57,6 +58,10 @@ namespace Ironclad
         private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
         private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
         private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();
+
+        private LocalDataStoreSlot threadDictStore = Thread.AllocateDataSlot();
+
+        // this should probably be thread-local too
         private object _lastException = null;
         
         public Python25Mapper() : this(null, ScriptRuntime.Create().GetEngine("py"), new HGlobalAllocator())
