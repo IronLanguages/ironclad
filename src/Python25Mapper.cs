@@ -56,6 +56,7 @@ namespace Ironclad
         private List<IntPtr> tempObjects = new List<IntPtr>();
         private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
         private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
+        private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();
         private object _lastException = null;
         
         public Python25Mapper() : this(null, ScriptRuntime.Create().GetEngine("py"), new HGlobalAllocator())
