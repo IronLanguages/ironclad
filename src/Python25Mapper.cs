@@ -345,38 +345,6 @@ namespace Ironclad
             this.tempObjects.Clear();
         }
         
-        public object LastException
-        {
-            get
-            {
-                return this._lastException;
-            }
-            set
-            {
-                this._lastException = value;
-            }
-        }
-        
-        public override void
-        PyErr_SetString(IntPtr excTypePtr, string message)
-        {
-            if (excTypePtr == IntPtr.Zero)
-            {
-                this._lastException = new Exception(message);
-            }
-            else
-            {
-                object excType = this.Retrieve(excTypePtr);
-                this._lastException = PythonCalls.Call(excType, new object[1]{ message });
-            }
-        }
-
-        public override void
-        PyErr_Clear()
-        {
-            this.LastException = null;
-        }
-        
         
         public override IntPtr 
         GetAddress(string name)
