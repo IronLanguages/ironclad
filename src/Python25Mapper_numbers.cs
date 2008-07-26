@@ -60,6 +60,22 @@ namespace Ironclad
         }
 
 
+        public override int
+        PyLong_AsLong(IntPtr valuePtr)
+        {
+            try
+            {
+                BigInteger value = Converter.ConvertToBigInteger(this.Retrieve(valuePtr));
+                return value.ToInt32();
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return 0;
+            }
+        }
+
+
         public override Int64
         PyLong_AsLongLong(IntPtr valuePtr)
         {
