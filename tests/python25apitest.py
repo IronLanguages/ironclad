@@ -233,6 +233,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyObject_GetAttrString", ('IntPtr(111)', '"harold"'), 'IntPtr(999)')
         self.assertFinds("PyObject_Free", ('IntPtr(111)',), 'None')
         self.assertFinds("PyObject_Init", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
+        self.assertFinds("PyObject_IsTrue", ('IntPtr(111)',), '123')
         
         self.assertFinds("PyCallable_Check", ('IntPtr(111)',), '0')
         
@@ -244,9 +245,10 @@ class Python25ApiFunctionsTest(TestCase):
         
         self.assertFinds("PyDict_New", tuple(), 'IntPtr(999)')
         self.assertFinds("PyDict_Size", ('IntPtr(111)',), '999')
+        self.assertFinds("PyDict_GetItem", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(333)')
         self.assertFinds("PyDict_GetItemString", ('IntPtr(111)', '"boojum"'), 'IntPtr(999)')
         self.assertFinds("PyDict_SetItem", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), '123')
-        self.assertFinds("PyDict_SetItemString", ('IntPtr(111)', '"boojum"', 'IntPtr(222)'), '123')
+        self.assertFinds("PyDict_SetItemString", ('IntPtr(111)', '"boojum"', 'IntPtr(999)'), '123')
         
         self.assertFinds("PyList_New", ('33',), 'IntPtr(999)')
         self.assertFinds("PyList_Append", ('IntPtr(123)', 'IntPtr(456)'), '789')

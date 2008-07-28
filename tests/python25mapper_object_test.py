@@ -102,7 +102,42 @@ class Python25Mapper_PyObject_Test(TestCase):
             
         mapper.Dispose()
         deallocTypes()
-    
+
+
+    def testPyObject_IsTrue(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        for trueval in ("hullo", 33, -1.5, True, [0], (0,), {1:2}, object()):
+            ptr = mapper.Store(trueval)
+            self.assertEquals(mapper.PyObject_IsTrue(ptr), 1)
+            self.assertEquals(mapper.LastException, None)
+            mapper.DecRef(ptr)
+        
+        for falseval in ('', 0, 0.0, False, [], tuple(), {}):
+            ptr = mapper.Store(falseval)
+            self.assertEquals(mapper.PyObject_IsTrue(ptr), 0)
+            self.assertEquals(mapper.LastException, None)
+            mapper.DecRef(ptr)
+            
+        class MyError(Exception):
+            pass
+        class ErrorBool(object):
+            def __len__(self):
+                raise MyError()
+        def KindaConvertError():
+            raise mapper.LastException
+                
+        ptr = mapper.Store(ErrorBool())
+        self.assertEquals(mapper.PyObject_IsTrue(ptr), -1)
+        self.assertRaises(MyError, KindaConvertError)
+        mapper.DecRef(ptr)
+        
+        mapper.Dispose()
+        deallocTypes()
+
+
+class PyObject_Iter_Test(TestCase):
     
     def testPyObject_GetIter_Success(self):
         mapper = Python25Mapper()
@@ -311,6 +346,7 @@ class Python25Mapper_PyObject_Init_Test(TestCase):
 
 suite = makesuite(
     Python25Mapper_PyObject_Test,
+    PyObject_Iter_Test,
     Python25Mapper_PyBaseObject_Type_Test,
     Python25Mapper_PyObject_Init_Test,
 )

@@ -1,0 +1,3 @@
+IntPtr
+IntPtr dict, IntPtr key
+return IntPtr.Zero
