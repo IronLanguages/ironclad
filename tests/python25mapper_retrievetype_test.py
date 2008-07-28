@@ -60,11 +60,14 @@ class Python25Mapper_DispatchTypeMethodsTest(TestCase):
             result = object()
             def dispatch(name, instancePtr):
                 self.assertEquals(name, "klass.method", "called wrong function")
-                self.assertEquals(instancePtr, instance._instancePtr, "called on wrong instance")
+                self.assertEquals(instancePtr, expectedInstancePtr, "called on wrong instance")
                 return result
             _type._dispatcher.method_noargs = dispatch
             instance = _type()
+            expectedInstancePtr = instance._instancePtr
             self.assertEquals(instance.method(), result, "didn't use correct _dispatcher method")
+            del instance
+            gcwait()
         
         self.assertAddTypeObject_withSingleMethod(mapper, method, TestType)
         mapper.Dispose()
@@ -80,12 +83,15 @@ class Python25Mapper_DispatchTypeMethodsTest(TestCase):
             result = object()
             def dispatch(name, instancePtr, dispatch_arg):
                 self.assertEquals(name, "klass.method", "called wrong function")
-                self.assertEquals(instancePtr, instance._instancePtr, "called on wrong instance")
+                self.assertEquals(instancePtr, expectedInstancePtr, "called on wrong instance")
                 self.assertEquals(dispatch_arg, arg, "called with wrong arg")
                 return result
             _type._dispatcher.method_objarg = dispatch
             instance = _type()
+            expectedInstancePtr = instance._instancePtr
             self.assertEquals(instance.method(arg), result, "didn't use correct _dispatcher method")
+            del instance
+            gcwait()
         
         self.assertAddTypeObject_withSingleMethod(mapper, method, TestType)
         mapper.Dispose()
@@ -101,12 +107,15 @@ class Python25Mapper_DispatchTypeMethodsTest(TestCase):
             result = object()
             def dispatch(name, instancePtr, *dispatch_args):
                 self.assertEquals(name, "klass.method", "called wrong function")
-                self.assertEquals(instancePtr, instance._instancePtr, "called on wrong instance")
+                self.assertEquals(instancePtr, expectedInstancePtr, "called on wrong instance")
                 self.assertEquals(dispatch_args, args, "called with wrong args")
                 return result
             _type._dispatcher.method_varargs = dispatch
             instance = _type()
+            expectedInstancePtr = instance._instancePtr
             self.assertEquals(instance.method(*args), result, "didn't use correct _dispatcher method")
+            del instance
+            gcwait()
         
         self.assertAddTypeObject_withSingleMethod(mapper, method, TestType)
         mapper.Dispose()
@@ -123,13 +132,16 @@ class Python25Mapper_DispatchTypeMethodsTest(TestCase):
             result = object()
             def dispatch(name, instancePtr, *dispatch_args, **dispatch_kwargs):
                 self.assertEquals(name, "klass.method", "called wrong function")
-                self.assertEquals(instancePtr, instance._instancePtr, "called on wrong instance")
+                self.assertEquals(instancePtr, expectedInstancePtr, "called on wrong instance")
                 self.assertEquals(dispatch_args, args, "called with wrong args")
                 self.assertEquals(dispatch_kwargs, kwargs, "called with wrong args")
                 return result
             _type._dispatcher.method_kwargs = dispatch
             instance = _type()
+            expectedInstancePtr = instance._instancePtr
             self.assertEquals(instance.method(*args, **kwargs), result, "didn't use correct _dispatcher method")
+            del instance
+            gcwait()
         
         self.assertAddTypeObject_withSingleMethod(mapper, method, TestType)
         mapper.Dispose()
@@ -145,17 +157,20 @@ class Python25Mapper_DispatchIterTest(TestCase):
         typeSpec["tp_name"] = "klass"
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         _type = mapper.Retrieve(typePtr)
-
         result = object()
         instance = _type()
+        expectedInstancePtr = instance._instancePtr
+
         def MockDispatchFunc(methodName, selfPtr, errorHandler=None):
             self.assertEquals(methodName, "klass." + expectedKeyName, "called wrong method")
-            self.assertEquals(selfPtr, instance._instancePtr, "called method on wrong instance")
+            self.assertEquals(selfPtr, expectedInstancePtr, "called method on wrong instance")
             TestErrorHandler(errorHandler)
             return result
         _type._dispatcher.method_selfarg = MockDispatchFunc
         
         self.assertEquals(getattr(instance, expectedMethodName)(), result, "bad return")
+        del instance
+        gcwait()
         deallocType()
         deallocTypes()
 
@@ -291,47 +306,51 @@ class Python25Mapper_DispatchTrickyMethodsTest(TestCase):
         deallocTypes()
     
     
-    def testDeleteResurrect(self):
-        # when an object is finalized, it checks for unmanaged references to itself
-        # and resurrects itself (by calling mapper.Strengthen) if there are any. 
-        # from that point, the object will become unkillable until we Weaken it again.
-        # in the absence of any better ideas, we decided to check for undead objects
-        # whenever we delete other potentially-undead objects, and let them live forever
-        # otherwise.
-        #
-        # if this test passes, the previous paragraph is probably correct
+    def testDeleteOnlyWhenAppropriate(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
 
         typePtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass'})
         _type = mapper.Retrieve(typePtr)
         
-        obj1 = _type()
-        obj1ref = WeakReference(obj1, True)
-        obj2 = _type()
+        obj = _type()
+        objref = WeakReference(obj, True)
+        objptr = obj._instancePtr
         
-        # unmanaged code grabs a reference
-        instancePtr = obj1._instancePtr
-        CPyMarshal.WriteIntField(instancePtr, PyObject, 'ob_refcnt', 2)
-        del obj1
-        gcwait()
-        self.assertEquals(obj1ref.IsAlive, True, "object died before its time")
-        self.assertEquals(mapper.Retrieve(instancePtr), obj1ref.Target, "mapping broken")
+        # for unmanaged code to mess with ob_refcnt, it must have been passed a reference
+        # from managed code; this shouldn't happen without a Store (which will IncRef)
+        self.assertEquals(mapper.Store(obj), objptr)
+        self.assertEquals(mapper.RefCount(objptr), 2)
         
-        # unmanaged code forgets it
-        CPyMarshal.WriteIntField(instancePtr, PyObject, 'ob_refcnt', 1)
-        gcwait()
-        # nothing has happened that would cause us to reexamine strong refs, 
-        # so the object shouldn't just die on us
-        self.assertEquals(obj1ref.IsAlive, True, "object died unexpectedly")
-        self.assertEquals(mapper.Retrieve(instancePtr), obj1ref.Target, "mapping broken")
+        # unmanaged code grabs a reference to obj
+        CPyMarshal.WriteIntField(objptr, PyObject, 'ob_refcnt', 3)
         
-        del obj2
+        # control passes back to managed code; this should DecRef
+        mapper.DecRef(objptr)
+        self.assertEquals(mapper.RefCount(objptr), 2)
+        
+        # managed code forgets obj for a bit
+        del obj
         gcwait()
-        # the above should have made our reference to obj1 weak again, but
-        # it shouldn't be collected until the next GC
+        self.assertEquals(objref.IsAlive, True, "object died before its time")
+        self.assertEquals(mapper.Retrieve(objptr), objref.Target, "mapping broken")
+        
+        # unmanaged code forgets about obj too
+        CPyMarshal.WriteIntField(objptr, PyObject, 'ob_refcnt', 1)
+        
+        # however, nothing happens to cause us to reexamine bridge ptrs
         gcwait()
-        self.assertEquals(obj1ref.IsAlive, False, "object didn't die")
+        self.assertEquals(objref.IsAlive, True, "object died unexpectedly")
+        self.assertEquals(mapper.Retrieve(objptr), objref.Target, "mapping broken")
+        
+        # now, another bridge object gets destroyed, causing us to reexamine
+        mapper.CheckBridgePtrs()
+        
+        # and, after the next 2 GCs*, objref disappears
+        # 1 to notice it's collectable, 1 to actually collect it
+        gcwait()
+        gcwait()
+        self.assertEquals(objref.IsAlive, False, "object didn't die")
         
         mapper.Dispose()
         deallocType()
@@ -378,9 +397,15 @@ class Python25Mapper_PropertiesTest(TestCase):
             self.assertEquals(instance.boing, result, "bad result")
             self.assertEquals(calls, [('Getter', ('klass.__get_boing', instance._instancePtr, IntPtr.Zero))])
             
-            def Set():
+            try:
+                # not using assertRaises because we can't del instance if it's referenced in nested scope
                 instance.boing = 'splat'
-            self.assertRaises(AttributeError, Set)
+            except AttributeError:
+                pass
+            else:
+                self.fail("Failed to raise AttributeError when setting get-only property")
+            del instance
+            gcwait()
         
         self.assertGetSet(mapper, "boing", get, None, TestType)
         mapper.Dispose()
@@ -402,10 +427,19 @@ class Python25Mapper_PropertiesTest(TestCase):
                 calls.append(('Setter', (name, instancePtr, value, closurePtr)))
             _type._dispatcher.method_setter = Setter
             
-            self.assertRaises(AttributeError, lambda: instance.boing)
+            try:
+                # not using assertRaises because we can't del instance if it's referenced in nested scope
+                instance.boing
+            except AttributeError:
+                pass
+            else:
+                self.fail("Failed to raise AttributeError when getting set-only property")
+                
             value = "see my vest, see my vest, made from real gorilla chest"
             instance.boing = value
             self.assertEquals(calls, [('Setter', ('klass.__set_boing', instance._instancePtr, value, IntPtr.Zero))])
+            del instance
+            gcwait()
             
         self.assertGetSet(mapper, "boing", None, set, TestType)
         mapper.Dispose()
@@ -443,6 +477,8 @@ class Python25Mapper_PropertiesTest(TestCase):
                 [('Getter', ('klass.__get_boing', instance._instancePtr, closurePtr)),
                  ('Setter', ('klass.__set_boing', instance._instancePtr, value, closurePtr))],
                 "wrong calls")
+            del instance
+            gcwait()
             
         self.assertGetSet(mapper, "boing", get, set, TestType, closurePtr)
         mapper.Dispose()
@@ -475,9 +511,12 @@ class Python25Mapper_MembersTest(TestCase):
             instance = _type()
             fieldPtr = CPyMarshal.Offset(instance._instancePtr, offset)
             
-            def Set():
+            try:
                 instance.boing = 54231
-            self.assertRaises(AttributeError, Set)
+            except AttributeError:
+                pass
+            else:
+                self.fail("Failed to raise AttributeError when setting get-only property")
             
             calls = []
             def Get(address):
@@ -489,6 +528,8 @@ class Python25Mapper_MembersTest(TestCase):
             self.assertEquals(calls, [
                 ('Get', (fieldPtr,)),
             ])
+            del instance
+            gcwait()
             
         self.assertMember(mapper, 'boing', MemberT.INT, offset, 1, TestType)
         mapper.Dispose()
@@ -502,7 +543,6 @@ class Python25Mapper_MembersTest(TestCase):
             
             calls = []
             def Get(address):
-                
                 calls.append(('Get', (address,)))
                 return result
             def Set(address, value):
@@ -517,6 +557,8 @@ class Python25Mapper_MembersTest(TestCase):
                 ('Get', (fieldPtr,)),
                 ('Set', (fieldPtr, value)),
             ])
+            del instance
+            gcwait()
         return TestType
     
     
@@ -662,6 +704,28 @@ class Python25Mapper_InheritanceTest(TestCase):
         klass = mapper.Retrieve(klassPtr)
         self.assertEquals(type(klass), mapper.Retrieve(metaclassPtr), "didn't notice klass's type")
         
+        mapper.Dispose()
+        deallocType()
+        deallocMC()
+        deallocTypes()
+    
+    
+    def testInheritMethodTableFromMetaclass(self):
+        "probably won't work quite right with identically-named metaclass"
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        metaclassPtr, deallocMC = MakeTypePtr(mapper, {'tp_name': 'metaclass'})
+        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': metaclassPtr})
+
+        klass = mapper.Retrieve(klassPtr)
+        metaclass = mapper.Retrieve(metaclassPtr)
+        for k, v in metaclass._dispatcher.table.items():
+            self.assertEquals(klass._dispatcher.table[k], v)
+
+        del klass
+        gcwait()
+
         mapper.Dispose()
         deallocType()
         deallocMC()

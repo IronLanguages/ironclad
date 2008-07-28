@@ -125,8 +125,8 @@ class DispatcherDispatchTestCase(TestCase):
                 calls.append(('Retrieve', (ptr,)))
                 return RESULT
     
-            def StoreUnmanagedInstance(self, ptr, item):
-                calls.append(('StoreUnmanagedInstance', (ptr, item)))
+            def StoreBridge(self, ptr, item):
+                calls.append(('StoreBridge', (ptr, item)))
             
             def RefCount(self, _):
                 return reportedRefCount
@@ -559,7 +559,7 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
             ('dgt', (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
-            ('StoreUnmanagedInstance', (RESULT_PTR, result))
+            ('StoreBridge', (RESULT_PTR, result))
         ])
         mapper.Dispose()
     
@@ -681,73 +681,47 @@ class DispatcherInitTest(DispatcherDispatchTestCase):
 
 
 class DispatcherDeleteTest(TestCase):
-    
-    def getPatchedDispatcher(self, realMapper, callables, calls, refcount):
-        class MockGC(object):
-            @staticmethod
-            def ReRegisterForFinalize(obj):
-                calls.append(('ReRegisterForFinalize', obj))
         
-        dispatcherModule = ModuleWrapper(realMapper.Engine, realMapper.DispatcherModule)
-        dispatcherModule.GC = MockGC
+    def assertDispatchDelete(self, mockMapper, calls, expectedCalls):
+        class klass(object):
+            pass
+        instance = klass()
+        instance._instancePtr = INSTANCE_PTR
         
-        test = self
+        mapper = Python25Mapper()
+        callables = {
+            'dgt': FuncReturning(None, calls, 'dgt'),
+        }
+        
         class MockMapper(object):
-            def RefCount(self, ptr):
-                calls.append(('RefCount', ptr))
-                return refcount
-            def Strengthen(self, obj):
-                calls.append(('Strengthen', obj))
-            def ReapStrongRefs(self):
-                calls.append(('ReapStrongRefs',))
+            def CheckBridgePtrs(self):
+                calls.append(('CheckBridgePtrs',))
                 
-        mockMapper = MockMapper()
-        return GetDispatcherClass(realMapper)(mockMapper, callables)
-        
-        
-    def testDispatchDeleteNormalCase(self):
-        class klass(object):
-            pass
-        instance = klass()
-        instance._instancePtr = INSTANCE_PTR
-        
-        mapper = Python25Mapper()
-        calls = []
-        callables = {
-            'dgt': FuncReturning(None, calls, 'dgt'),
-        }
-        
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, 1)
+        dispatcher = GetDispatcherClass(mapper)(mockMapper, callables)
         dispatcher.delete('dgt', instance)
-        self.assertEquals(calls, [
-            ('ReapStrongRefs',),
-            ('RefCount', INSTANCE_PTR),
+        self.assertEquals(calls, expectedCalls)
+        mapper.Dispose()
+
+
+    def testDispatchDeleteNormal(self):
+        calls = []
+        class MockMapper(object):
+            Alive = True
+            def CheckBridgePtrs(self):
+                calls.append(('CheckBridgePtrs',))
+        
+        expectedCalls = [
+            ('CheckBridgePtrs',),
             ('dgt', (INSTANCE_PTR, )),
-        ])
-        mapper.Dispose()
+        ]
+        self.assertDispatchDelete(MockMapper(), calls, expectedCalls)
+    
+    def testDispatchDeleteDeadMapper(self):
+        class MockMapper(object):
+            Alive = False
+        self.assertDispatchDelete(MockMapper(), [], [])
         
-        
-    def testDispatchDeleteNeedsResurrection(self):
-        class klass(object):
-            pass
-        instance = klass()
-        instance._instancePtr = INSTANCE_PTR
-        
-        mapper = Python25Mapper()
-        calls = []
-        callables = {
-            'dgt': FuncReturning(None, calls, 'dgt'),
-        }
-        
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, 2)
-        dispatcher.delete('dgt', instance)
-        self.assertEquals(calls, [
-            ('ReapStrongRefs',),
-            ('RefCount', INSTANCE_PTR),
-            ('Strengthen', instance),
-            ('ReRegisterForFinalize', instance)
-        ])
-        mapper.Dispose()
+
 
 
 class DispatcherSimpleMembersTest(TestCase):

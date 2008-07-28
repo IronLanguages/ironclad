@@ -34,6 +34,7 @@ namespace Ironclad
 
     public partial class Python25Mapper : Python25Api
     {
+        private bool alive = false;
         private ScriptEngine engine;
         private StubReference stub;
         private PydImporter importer;
@@ -44,25 +45,23 @@ namespace Ironclad
         private PythonModule dispatcherModule;
         private object dispatcherClass;
         private object trivialObjectSubclass;
-        
-        // TODO must be a better way to handle imports...
-        private string importName = "";
-        private string importPath = null;
 
-        private StupidSet ptrsForCleanup = new StupidSet();
-        
-        // one day, perhaps, this 'set' will be empty
-        private StupidSet unknownNames = new StupidSet();
-        
+        private StupidSet bridgePtrs = new StupidSet();
         private List<IntPtr> tempObjects = new List<IntPtr>();
         private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
         private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
         private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();
-
         private LocalDataStoreSlot threadDictStore = Thread.AllocateDataSlot();
 
         // TODO: this should probably be thread-local too
         private object _lastException = null;
+
+        // one day, perhaps, this 'set' will be empty
+        private StupidSet unknownNames = new StupidSet();
+
+        // TODO must be a better way to handle imports...
+        private string importName = "";
+        private string importPath = null;
         
         public Python25Mapper() : this(null, ScriptRuntime.Create().GetEngine("py"), new HGlobalAllocator())
         {
@@ -101,22 +100,36 @@ namespace Ironclad
                 // TODO: work out why this line causes leakage
                 this.ExecInModule(INSTALL_IMPORT_HOOK_CODE, this.scratchModule);
             }
+            this.alive = true;
         }
         
         public void Dispose()
         {
-            foreach (object ptr in this.ptrsForCleanup.ElementsArray)
+            this.CheckBridgePtrs();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            /* The preceding dance is intended to ensure that no bridge objects are
+             * sitting around in the freachable queue waiting to be double-freed 
+             * (AFAICT, SuppressFinalize does not affect objects already on the 
+             * freachable queue; hence, the dealloc function will be called once in
+             * the following loop and once at some point in the future.)
+             * 
+             * If the above is nonsense, please complain :).
+             */
+
+            foreach (object ptr in this.bridgePtrs.ElementsArray)
             {
-                // My understanding is that I really ought to Retrieve each object and
-                // call GC.SuppressFinalize, to prevent their __del__s attempting to re-free
-                // their memory. However, we haven't been able to detect any change in
-                // behaviour when we try to do that, so... er... we don't do it.
+                GC.SuppressFinalize(this.Retrieve((IntPtr)ptr));
                 IntPtr typePtr = CPyMarshal.ReadPtrField((IntPtr)ptr, typeof(PyObject), "ob_type");
                 CPython_destructor_Delegate dgt = (CPython_destructor_Delegate)
                     CPyMarshal.ReadFunctionPtrField(
                         typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(CPython_destructor_Delegate));
                 dgt((IntPtr)ptr);
             }
+            this.alive = false;
             this.allocator.FreeAll();
             foreach (IntPtr FILE in this.FILEs.Values)
             {
@@ -128,7 +141,13 @@ namespace Ironclad
                 this.stub.Dispose();
             }
         }
-        
+
+        public bool
+        Alive
+        {
+            get { return this.alive; }
+        }
+
         public ScriptEngine
         Engine
         {
@@ -172,10 +191,10 @@ namespace Ironclad
         
         
         public void
-        StoreUnmanagedInstance(IntPtr ptr, object obj)
+        StoreBridge(IntPtr ptr, object obj)
         {
             this.map.WeakAssociate(ptr, obj);
-            this.ptrsForCleanup.Add(ptr);
+            this.bridgePtrs.Add(ptr);
         }
         
         
@@ -241,6 +260,10 @@ namespace Ironclad
             if (this.map.HasPtr(ptr))
             {
                 int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
+                if (count == 1 && this.bridgePtrs.Contains(ptr))
+                {
+                    this.Strengthen(this.Retrieve(ptr));
+                }
                 CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count + 1);
             }
             else
@@ -282,6 +305,10 @@ namespace Ironclad
                 }
                 else
                 {
+                    if (count == 2 && this.bridgePtrs.Contains(ptr))
+                    {
+                        this.Weaken(this.Retrieve(ptr));
+                    }
                     CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count - 1);
                 }
             }
@@ -303,17 +330,21 @@ namespace Ironclad
         {
             this.map.Weaken(obj);
         }
-        
-        public void 
-        ReapStrongRefs()
+
+        public void
+        CheckBridgePtrs()
         {
-            object[] refs = this.map.GetStrongRefs();
-            foreach (object obj in refs)
+            foreach (object ptro in this.bridgePtrs.ElementsArray)
             {
-                IntPtr ptr = this.map.GetPtr(obj);
-                if (this.RefCount(ptr) < 2)
+                IntPtr ptr = (IntPtr)ptro;
+                int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
+                if (count == 1)
                 {
-                    this.map.Weaken(obj);
+                    this.Weaken(this.Retrieve(ptr));
+                }
+                if (count == 2)
+                {
+                    this.Strengthen(this.Retrieve(ptr));
                 }
             }
         }
@@ -326,7 +357,7 @@ namespace Ironclad
                 Unmanaged.fclose(this.FILEs[ptr]);
                 this.FILEs.Remove(ptr);
             }
-            this.ptrsForCleanup.RemoveIfPresent(ptr);
+            this.bridgePtrs.RemoveIfPresent(ptr);
             this.map.Release(ptr);
             this.allocator.Free(ptr);
         }
