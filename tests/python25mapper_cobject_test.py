@@ -1,6 +1,7 @@
 
 from tests.utils.runtest import makesuite, run
 
+from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase
 from tests.utils.typetestcase import TypeTestCase
@@ -17,15 +18,16 @@ class Python25Mapper_PyCObject_Test(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        cobj = Marshal.AllocHGlobal(32)
-        cobjPtr = mapper.PyCObject_FromVoidPtr(cobj, IntPtr.Zero)
+        cobjData = Marshal.AllocHGlobal(32)
+        cobjPtr = mapper.PyCObject_FromVoidPtr(cobjData, IntPtr.Zero)
         
         self.assertEquals(CPyMarshal.ReadPtrField(cobjPtr, PyObject, 'ob_type'), mapper.PyCObject_Type, 'wrong type')
-        self.assertEquals(mapper.RefCount(cobjPtr), 1, 'wrong refcount')
-        self.assertEquals(mapper.PyCObject_AsVoidPtr(cobjPtr), cobj, 'wrong pointer stored')
+        self.assertEquals(mapper.RefCount(cobjPtr), 2, 'wrong refcount')
+        self.assertEquals(mapper.PyCObject_AsVoidPtr(cobjPtr), cobjData, 'wrong pointer stored')
         
         self.assertEquals(isinstance(mapper.Retrieve(cobjPtr), OpaquePyCObject), True, "wrong")
         
+        Marshal.FreeHGlobal(cobjData)
         mapper.Dispose()
         deallocTypes()
 
@@ -40,18 +42,27 @@ class Python25Mapper_PyCObject_Test(TestCase):
             calls.append(destructee)
         self.destructorDgt = CPython_destructor_Delegate(destructor)
         
-        cobj = Marshal.AllocHGlobal(32)
-        cobjPtr = mapper.PyCObject_FromVoidPtr(cobj, Marshal.GetFunctionPointerForDelegate(self.destructorDgt))
+        cobjData = Marshal.AllocHGlobal(32)
+        cobjPtr = mapper.PyCObject_FromVoidPtr(cobjData, Marshal.GetFunctionPointerForDelegate(self.destructorDgt))
+        cobj = mapper.Retrieve(cobjPtr)
         
         self.assertEquals(CPyMarshal.ReadPtrField(cobjPtr, PyObject, 'ob_type'), mapper.PyCObject_Type, 'wrong type')
-        self.assertEquals(mapper.RefCount(cobjPtr), 1, 'wrong refcount')
-        self.assertEquals(mapper.PyCObject_AsVoidPtr(cobjPtr), cobj, 'wrong pointer stored')
+        self.assertEquals(mapper.RefCount(cobjPtr), 2, 'wrong refcount')
+        self.assertEquals(mapper.PyCObject_AsVoidPtr(cobjPtr), cobjData, 'wrong pointer stored')
         
+        del cobj
+        gcwait()
         self.assertEquals(calls, [], "destroyed early")
-        mapper.DecRef(cobjPtr)
-        self.assertEquals(calls, [cobj], "failed to destroy")
         
-        Marshal.FreeHGlobal(cobj)
+        cobj = mapper.Retrieve(cobjPtr)
+        mapper.DecRef(cobjPtr)
+        self.assertEquals(calls, [], "destroyed early")
+        
+        del cobj
+        gcwait()
+        self.assertEquals(calls, [cobjData], "failed to destroy")
+        
+        Marshal.FreeHGlobal(cobjData)
         mapper.Dispose()
         deallocTypes()
     

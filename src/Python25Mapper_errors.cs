@@ -57,6 +57,14 @@ namespace Ironclad
             this.LastException = null;
         }
 
+        private void
+        PrintToStdErr(object obj)
+        {
+            object stderr = Builtin.getattr(DefaultContext.Default, this.GetPythonContext().SystemStateModules["sys"], "__stderr__");
+            PythonOps.PrintWithDest(DefaultContext.Default, stderr, obj);
+        }
+
+
         public override void
         PyErr_Print()
         {
@@ -64,8 +72,7 @@ namespace Ironclad
             {
                 throw new Exception("Fatal error: called PyErr_Print without an actual error to print.");
             }
-            object stderr = Builtin.getattr(DefaultContext.Default, this.GetPythonContext().SystemStateModules["sys"], "__stderr__");
-            PythonOps.PrintWithDest(DefaultContext.Default, stderr, this.LastException);
+            this.PrintToStdErr(this.LastException);
             this.LastException = null;
         }
     }

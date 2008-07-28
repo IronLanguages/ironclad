@@ -1,6 +1,9 @@
 
-all : ironclad stubdll testdata
+all : bin
 	ipy runtests.py
+
+bin : ironclad stubdll testdata
+	
 
 ironclad :
 	cd src && $(MAKE)
