@@ -90,6 +90,34 @@ class Python25MapperDictTest(TestCase):
         deallocTypes()
 
 
+    def testPyDict_GetItemSuccess(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        dictPtr = mapper.Store({12345: 67890})
+        
+        itemPtr = mapper.PyDict_GetItem(dictPtr, mapper.Store(12345))
+        self.assertEquals(mapper.Retrieve(itemPtr), 67890, "failed to get item")
+        self.assertEquals(mapper.RefCount(itemPtr), 1, "something is wrong")
+        mapper.FreeTemps()
+        self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
+        
+        mapper.Dispose()
+        deallocTypes()
+
+
+    def testPyDict_GetItemFailure(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        dictPtr = mapper.Store({12345: 67890})
+        
+        itemPtr = mapper.PyDict_GetItem(dictPtr, mapper.Store("something"))
+        self.assertEquals(itemPtr, IntPtr.Zero, "bad return for missing key")
+        self.assertEquals(mapper.LastException, None, "should not set exception")
+        
+        mapper.Dispose()
+        deallocTypes()
+
+
     def testPyDict_SetItem(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)

@@ -37,8 +37,9 @@ namespace Ironclad
             return dict.__len__();
         }
         
-        public override IntPtr
-        PyDict_GetItemString(IntPtr dictPtr, string key)
+        
+        private IntPtr
+        PyDict_Get(IntPtr dictPtr, object key)
         {
             PythonDictionary dict = (PythonDictionary)this.Retrieve(dictPtr);
             if (dict.has_key(key))
@@ -48,6 +49,20 @@ namespace Ironclad
                 return result;
             }
             return IntPtr.Zero;
+        }
+        
+        
+        public override IntPtr
+        PyDict_GetItem(IntPtr dictPtr, IntPtr keyPtr)
+        {
+            return PyDict_Get(dictPtr, this.Retrieve(keyPtr));
+        }
+        
+        
+        public override IntPtr
+        PyDict_GetItemString(IntPtr dictPtr, string key)
+        {
+            return PyDict_Get(dictPtr, key);
         }
 
         public override int
