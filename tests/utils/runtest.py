@@ -9,6 +9,6 @@ def makesuite(*tests):
         suite.addTest(loader.loadTestsFromTestCase(test))
     return suite
 
-def run(suite):
-    return unittest.TextTestRunner().run(suite)
+def run(suite, verbosity=1):
+    return unittest.TextTestRunner(verbosity=verbosity).run(suite)
 

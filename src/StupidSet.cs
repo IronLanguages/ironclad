@@ -12,6 +12,11 @@ namespace Ironclad
         {
             this.store[obj] = "stupid";
         }
+
+        public bool Contains(object obj)
+        {
+            return this.store.ContainsKey(obj);
+        }
         
         public void SetRemove(object obj)
         {

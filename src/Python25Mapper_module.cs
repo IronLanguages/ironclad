@@ -410,6 +410,11 @@ namespace Ironclad
             string tablePrefix = __name__ + ".";
             PythonDictionary methodTable = new PythonDictionary();
 
+            IntPtr ob_typePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "ob_type");
+            object ob_type = this.Retrieve(ob_typePtr);
+            this.UpdateMethodTable(methodTable, ob_type);
+            this.IncRef(ob_typePtr);
+
             IntPtr tp_basePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
             if (tp_basePtr == IntPtr.Zero)
             {
@@ -447,10 +452,6 @@ namespace Ironclad
             IntPtr methodsPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_methods");
             this.GenerateMethods(classCode, methodsPtr, methodTable, tablePrefix);
             this.GenerateIterMethods(classCode, typePtr, methodTable, tablePrefix);
-
-            IntPtr ob_typePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "ob_type");
-            object ob_type = this.Retrieve(ob_typePtr);
-            this.IncRef(ob_typePtr);
 
             ScriptScope moduleScope = this.GetModuleScriptScope(this.scratchModule);
             moduleScope.SetVariable("_ironclad_baseclass", tp_base);

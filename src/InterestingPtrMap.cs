@@ -75,7 +75,7 @@ namespace Ironclad
                     return this.ref2ptr[wref];
                 }
             }
-            throw new KeyNotFoundException(String.Format("No mapping for {0}", obj));
+            throw new KeyNotFoundException(String.Format("No obj-to-ptr mapping for {0}", obj));
         }
         
         public bool HasPtr(IntPtr ptr)
@@ -104,9 +104,9 @@ namespace Ironclad
                 {
                     return wref.Target;
                 }
-                throw new NullReferenceException("Weakly mapped object was apparently GCed too soon");
+                throw new NullReferenceException(String.Format("Weakly mapped object for ptr {0} was apparently GCed too soon", ptr));
             }
-            throw new KeyNotFoundException(String.Format("No mapping for IntPtr {0}", ptr));
+            throw new KeyNotFoundException(String.Format("No ptr-to-obj mapping for {0}", ptr));
         }
         
         public void Release(IntPtr ptr)

@@ -25,7 +25,6 @@ namespace Ironclad
             globals["IntPtr"] = typeof(IntPtr);
             globals["CPyMarshal"] = typeof(CPyMarshal);
             globals["NullReferenceException"] = typeof(NullReferenceException);
-            globals["GC"] = typeof(GC);
 
             this.dispatcherModule = this.GetPythonContext().CreateModule(
                 id, id, globals, ModuleOptions.None);
@@ -75,7 +74,7 @@ class Dispatcher(object):
         finally:
             self._cleanup(argsPtr, kwargsPtr)
         
-        self.mapper.StoreUnmanagedInstance(instancePtr, instance)
+        self.mapper.StoreBridge(instancePtr, instance)
         instance._instancePtr = instancePtr
         return instance
 
@@ -90,12 +89,15 @@ class Dispatcher(object):
             self._surely_raise(Exception('%s failed; object is probably not safe to use' % name))
 
     def delete(self, name, instance):
-        self.mapper.ReapStrongRefs()
-        if self.mapper.RefCount(instance._instancePtr) > 1:
-            self.mapper.Strengthen(instance)
-            GC.ReRegisterForFinalize(instance)
+        if not self.mapper.Alive:
             return
-        self.table[name](instance._instancePtr)
+        try:
+            self.mapper.CheckBridgePtrs()
+            self.table[name](instance._instancePtr)
+        except Exception, e:
+            print 'error deleting object', instance, instance._instancePtr, type(instance)
+            print type(e), e
+            print e.clsException.StackTrace
 
 
     def function_noargs(self, name):
