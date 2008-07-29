@@ -60,6 +60,13 @@ namespace Ironclad
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.Double);
         }
+
+        public override void
+        Fill_PyComplex_Type(IntPtr address)
+        {
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            this.map.Associate(address, TypeCache.Complex64);
+        }
         
         public override void 
         Fill_PyCObject_Type(IntPtr address)
@@ -139,6 +146,7 @@ namespace Ironclad
             this.PyType_Ready(this.PyInt_Type);
             this.PyType_Ready(this.PyLong_Type);
             this.PyType_Ready(this.PyFloat_Type);
+            this.PyType_Ready(this.PyComplex_Type);
             this.PyType_Ready(this.PyString_Type);
             this.PyType_Ready(this.PyTuple_Type);
             this.PyType_Ready(this.PyList_Type);

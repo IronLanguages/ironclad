@@ -26,6 +26,7 @@ class Python25Mapper_Types_Test(TestCase):
             "PyLong_Type": long,
             "PyInt_Type": int,
             "PyFloat_Type": float,
+            "PyComplex_Type": complex,
             "PyCObject_Type": OpaquePyCObject,
         }
         
@@ -104,6 +105,7 @@ class Python25Mapper_Types_Test(TestCase):
             "PyInt_Type",
             "PyLong_Type",
             "PyFloat_Type",
+            "PyComplex_Type",
             "PyCObject_Type",
         )
         mapper = Python25Mapper()
