@@ -148,6 +148,40 @@ class Python25Mapper_DispatchTypeMethodsTest(TestCase):
         deallocMethod()
 
 
+class Python25Mapper_DispatchCallTest(TestCase):
+    
+    def testCall(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_call": Null_CPythonVarargsKwargsFunction,
+        }
+        typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
+        _type = mapper.Retrieve(typePtr)
+        instance = _type()
+        
+        args = ("for", "the", "horde")
+        kwargs = {"g1": "LM", "g2": "BS", "g3": "GM"}
+        result = object()
+        def dispatch(name, instancePtr, *dispatch_args, **dispatch_kwargs):
+            self.assertEquals(name, "klass.__call__", "called wrong function")
+            self.assertEquals(instancePtr, expectedInstancePtr, "called on wrong instance")
+            self.assertEquals(dispatch_args, args, "called with wrong args")
+            self.assertEquals(dispatch_kwargs, kwargs, "called with wrong kwargs")
+            return result
+        _type._dispatcher.method_kwargs = dispatch
+        
+        expectedInstancePtr = instance._instancePtr
+        self.assertEquals(instance(*args, **kwargs), result)
+        del instance
+        gcwait()
+
+        mapper.Dispose()
+        deallocType()
+        deallocTypes()
+
 class Python25Mapper_DispatchIterTest(TestCase):
 
     def assertDispatchesToSelfTypeMethod(self, mapper, typeSpec, expectedKeyName,
@@ -736,6 +770,7 @@ class Python25Mapper_InheritanceTest(TestCase):
 
 suite = makesuite(
     Python25Mapper_DispatchTypeMethodsTest,
+    Python25Mapper_DispatchCallTest,
     Python25Mapper_DispatchIterTest,
     Python25Mapper_DispatchTrickyMethodsTest,
     Python25Mapper_PropertiesTest,
