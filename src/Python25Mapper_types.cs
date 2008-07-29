@@ -106,6 +106,25 @@ namespace Ironclad
             this.map.Associate(address, TypeCache.PythonTuple);
         }
         
+        
+        public void
+        ReadyBuiltinTypes()
+        {
+            this.PyType_Ready(this.PyType_Type);
+            this.PyType_Ready(this.PyBaseObject_Type);
+            this.PyType_Ready(this.PyInt_Type);
+            this.PyType_Ready(this.PyLong_Type);
+            this.PyType_Ready(this.PyFloat_Type);
+            this.PyType_Ready(this.PyComplex_Type);
+            this.PyType_Ready(this.PyString_Type);
+            this.PyType_Ready(this.PyTuple_Type);
+            this.PyType_Ready(this.PyList_Type);
+            this.PyType_Ready(this.PyDict_Type);
+            this.PyType_Ready(this.PyFile_Type);
+            this.PyType_Ready(this.PyCObject_Type);
+        }
+        
+        
         public override int
         PyType_IsSubtype(IntPtr subtypePtr, IntPtr typePtr)
         {
@@ -123,6 +142,7 @@ namespace Ironclad
             }
         }
         
+                
         private void InheritPtrField(IntPtr typePtr, string name)
         {
             IntPtr fieldPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), name);
@@ -135,24 +155,6 @@ namespace Ironclad
                         CPyMarshal.ReadPtrField(basePtr, typeof(PyTypeObject), name));
                 }
             }
-        }
-        
-        
-        public void
-        ReadyBuiltinTypes()
-        {
-            this.PyType_Ready(this.PyType_Type);
-            this.PyType_Ready(this.PyBaseObject_Type);
-            this.PyType_Ready(this.PyInt_Type);
-            this.PyType_Ready(this.PyLong_Type);
-            this.PyType_Ready(this.PyFloat_Type);
-            this.PyType_Ready(this.PyComplex_Type);
-            this.PyType_Ready(this.PyString_Type);
-            this.PyType_Ready(this.PyTuple_Type);
-            this.PyType_Ready(this.PyList_Type);
-            this.PyType_Ready(this.PyDict_Type);
-            this.PyType_Ready(this.PyFile_Type);
-            this.PyType_Ready(this.PyCObject_Type);
         }
         
         
@@ -193,6 +195,7 @@ namespace Ironclad
             this.InheritPtrField(typePtr, "tp_str");
             this.InheritPtrField(typePtr, "tp_doc");
             this.InheritPtrField(typePtr, "tp_call");
+            this.InheritPtrField(typePtr, "tp_as_number");
             
             flags |= Py_TPFLAGS.READY;
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);

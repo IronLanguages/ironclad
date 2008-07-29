@@ -133,6 +133,7 @@ FIELDS = (
     "tp_str",
     "tp_doc",
     "tp_call",
+    "tp_as_number",
     # more to come, no doubt
 )
 BASE_FIELD = IntPtr(11111)
