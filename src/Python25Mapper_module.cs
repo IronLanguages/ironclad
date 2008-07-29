@@ -357,6 +357,22 @@ namespace Ironclad
             this.ConnectTypeField(typePtr, tablePrefix, "tp_iter", methodTable, typeof(CPythonSelfFunction_Delegate));
             this.ConnectTypeField(typePtr, tablePrefix, "tp_iternext", methodTable, typeof(CPythonSelfFunction_Delegate));
         }
+        
+        private void
+        GenerateCallMethod(StringBuilder classCode, IntPtr typePtr, PythonDictionary methodTable, string tablePrefix)
+        {
+            IntPtr methodPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_call");
+            if (methodPtr != IntPtr.Zero)
+            {
+                string name = "__call__";
+                classCode.Append(String.Format(VARARGS_KWARGS_METHOD_CODE, name, "", tablePrefix));
+                
+                Delegate dgt = Marshal.GetDelegateForFunctionPointer(
+                    methodPtr, 
+                    typeof(CPythonVarargsKwargsFunction_Delegate));
+                methodTable[tablePrefix + name] = dgt;
+            }
+        }
 
         private void
         ExtractNameModule(string tp_name, ref string __name__, ref string __module__)
@@ -451,6 +467,7 @@ namespace Ironclad
             IntPtr methodsPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_methods");
             this.GenerateMethods(classCode, methodsPtr, methodTable, tablePrefix);
             this.GenerateIterMethods(classCode, typePtr, methodTable, tablePrefix);
+            this.GenerateCallMethod(classCode, typePtr, methodTable, tablePrefix);
 
             ScriptScope moduleScope = this.GetModuleScriptScope(this.scratchModule);
             moduleScope.SetVariable("_ironclad_baseclass", tp_base);

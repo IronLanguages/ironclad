@@ -84,6 +84,7 @@ FUNC_ARGS = {
     "tp_free": Python25Api.PyObject_Free_Delegate,
     "tp_iter": Python25Api.PyObject_GetIter_Delegate,
     "tp_iternext": Python25Api.PyIter_Next_Delegate,
+    "tp_call": CPythonVarargsKwargsFunction_Delegate,
 }
 
 def WriteTypeField(typePtr, name, value):
@@ -146,4 +147,5 @@ def MakeItemsTablePtr(items):
         Marshal.FreeHGlobal(tablePtr)
 
     return tablePtr, dealloc
+
 

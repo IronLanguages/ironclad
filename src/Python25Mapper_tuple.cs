@@ -38,6 +38,13 @@ namespace Ironclad
         }
         
         
+        public override int
+        PyTuple_Size(IntPtr tuplePtr)
+        {
+            return CPyMarshal.ReadIntField(tuplePtr, typeof(PyTupleObject), "ob_size");
+        }
+        
+        
         private IntPtr
         Store(PythonTuple tuple)
         {

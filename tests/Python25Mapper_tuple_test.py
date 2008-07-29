@@ -103,6 +103,7 @@ class Python25Mapper_Tuple_Test(TestCase):
         self.assertEquals(tupleStruct.ob_refcnt, 1, "bad refcount")
         self.assertEquals(tupleStruct.ob_type, mapper.PyTuple_Type, "bad type")
         self.assertEquals(tupleStruct.ob_size, length, "bad size")
+        self.assertEquals(mapper.PyTuple_Size(tuplePtr), length, "should still work with uninitialised tuple imo")
         dataPtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_item"))
         itemPtrs = []
         for i in range(length):
