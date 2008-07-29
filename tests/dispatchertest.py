@@ -689,16 +689,8 @@ class DispatcherDeleteTest(TestCase):
         instance._instancePtr = INSTANCE_PTR
         
         mapper = Python25Mapper()
-        callables = {
-            'dgt': FuncReturning(None, calls, 'dgt'),
-        }
-        
-        class MockMapper(object):
-            def CheckBridgePtrs(self):
-                calls.append(('CheckBridgePtrs',))
-                
-        dispatcher = GetDispatcherClass(mapper)(mockMapper, callables)
-        dispatcher.delete('dgt', instance)
+        dispatcher = GetDispatcherClass(mapper)(mockMapper, {})
+        dispatcher.delete(instance)
         self.assertEquals(calls, expectedCalls)
         mapper.Dispose()
 
@@ -709,10 +701,12 @@ class DispatcherDeleteTest(TestCase):
             Alive = True
             def CheckBridgePtrs(self):
                 calls.append(('CheckBridgePtrs',))
+            def DecRef(self, ptr):
+                calls.append(('DecRef', ptr))
         
         expectedCalls = [
             ('CheckBridgePtrs',),
-            ('dgt', (INSTANCE_PTR, )),
+            ('DecRef', INSTANCE_PTR),
         ]
         self.assertDispatchDelete(MockMapper(), calls, expectedCalls)
     

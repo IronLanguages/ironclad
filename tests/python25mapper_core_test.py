@@ -338,8 +338,8 @@ class Python25Mapper_References_Test(TestCase):
         mapper.CheckBridgePtrs()
         
         # refcount < 2 should have been weakened
-        sameobj = objref.Target
-        del sameobj
+        obj = objref.Target
+        del obj
         gcwait()
         self.assertRaises(NullReferenceException, mapper.Retrieve, ptr)
         

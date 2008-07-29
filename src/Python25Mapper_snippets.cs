@@ -47,7 +47,12 @@ class {0}(_ironclad_baseclass):
         self._dispatcher.init('{0}.tp_init', self, *args, **kwargs)
     
     def __del__(self):
-        self._dispatcher.delete('{0}.tp_dealloc', self)
+        try:
+            self._dispatcher.delete(self)
+        except Exception, e:
+            print 'error deleting object', self, self._instancePtr, type(self)
+            print type(e), e
+            print e.clsException.StackTrace
 ";
 
         private const string CLASS_BASES_CODE = @"

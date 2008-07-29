@@ -79,7 +79,9 @@ class _IroncladModuleImporter(ihooks.ModuleImporter):
             # I think an ipy module dict is some sort of funky 
             # wrapper around a Scope, so the underlying data store
             # actually is the same.
-            assert globals == parent.__dict__
+            assert len(globals) == len(parent.__dict__)
+            for (k, v) in globals.iteritems():
+                assert parent.__dict__[k] is v
             return parent
         if '.' in pname:
             i = pname.rfind('.')

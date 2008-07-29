@@ -22,7 +22,7 @@ namespace Ironclad
         {
             if (!this.store.Remove(obj))
             {
-                throw new KeyNotFoundException();
+                throw new KeyNotFoundException(String.Format("{0} was not present in set, and hence could not be removed.", obj));
             }
         }
         

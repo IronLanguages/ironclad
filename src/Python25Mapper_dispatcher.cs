@@ -76,6 +76,7 @@ class Dispatcher(object):
         
         self.mapper.StoreBridge(instancePtr, instance)
         instance._instancePtr = instancePtr
+        
         return instance
 
     def init(self, name, instance, *args, **kwargs):
@@ -85,19 +86,14 @@ class Dispatcher(object):
         kwargsPtr = self.mapper.Store(kwargs)
         result = self.table[name](instance._instancePtr, argsPtr, kwargsPtr)
         self._cleanup(argsPtr, kwargsPtr)
+            
         if result < 0:
             self._surely_raise(Exception('%s failed; object is probably not safe to use' % name))
 
-    def delete(self, name, instance):
-        if not self.mapper.Alive:
-            return
-        try:
+    def delete(self, instance):
+        if self.mapper.Alive:
             self.mapper.CheckBridgePtrs()
-            self.table[name](instance._instancePtr)
-        except Exception, e:
-            print 'error deleting object', instance, instance._instancePtr, type(instance)
-            print type(e), e
-            print e.clsException.StackTrace
+            self.mapper.DecRef(instance._instancePtr)
 
 
     def function_noargs(self, name):
