@@ -441,7 +441,6 @@ namespace Ironclad
             
             this.ConnectTypeField(typePtr, tablePrefix, "tp_new", methodTable, typeof(PyType_GenericNew_Delegate));
             this.ConnectTypeField(typePtr, tablePrefix, "tp_init", methodTable, typeof(CPython_initproc_Delegate));
-            this.ConnectTypeField(typePtr, tablePrefix, "tp_dealloc", methodTable, typeof(CPython_destructor_Delegate));
             
             IntPtr getsetPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_getset");
             this.GenerateProperties(classCode, getsetPtr, methodTable, tablePrefix);
@@ -463,6 +462,7 @@ namespace Ironclad
             Builtin.setattr(DefaultContext.Default, klass, "_typePtr", typePtr);
             object _dispatcher = PythonCalls.Call(this.dispatcherClass, new object[] { this, methodTable });
             Builtin.setattr(DefaultContext.Default, klass, "_dispatcher", _dispatcher);
+            
             this.map.Associate(typePtr, klass);
             this.IncRef(typePtr);
         }

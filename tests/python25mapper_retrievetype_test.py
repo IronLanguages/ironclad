@@ -169,6 +169,7 @@ class Python25Mapper_DispatchIterTest(TestCase):
         _type._dispatcher.method_selfarg = MockDispatchFunc
         
         self.assertEquals(getattr(instance, expectedMethodName)(), result, "bad return")
+        
         del instance
         gcwait()
         deallocType()
@@ -237,8 +238,10 @@ class Python25Mapper_DispatchTrickyMethodsTest(TestCase):
         table = _type._dispatcher.table
         table['klass.tp_new'](IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)
         table['klass.tp_init'](IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)
-        table['klass.tp_dealloc'](IntPtr.Zero)
-        self.assertEquals(calls, ['tp_new', 'tp_init', 'tp_dealloc'], "not hooked up somewhere")
+        self.assertEquals(calls, ['tp_new', 'tp_init'], "not hooked up somewhere")
+        
+        self.assertFalse(table.has_key('klass.tp_dealloc'), 
+            "tp_dealloc should be called indirectly, by the final decref of an instance")
         
         mapper.Dispose()
         deallocType()
@@ -250,14 +253,20 @@ class Python25Mapper_DispatchTrickyMethodsTest(TestCase):
         mapper = Python25Mapper(allocator)
         deallocTypes = CreateTypes(mapper)
         
-        # all methods should be patched out
+        def tp_dealloc(instancePtr_dealloc):
+            calls.append("tp_dealloc")
+            self.assertEquals(instancePtr_dealloc, instancePtr, "wrong instance")
+            # finish the dealloc to avoid confusing mapper on shutdown
+            mapper.PyObject_Free(instancePtr_dealloc)
+            
+        # creation methods should be patched out
         def Raise(msg):
             raise Exception(msg)
         typeSpec = {
             "tp_name": "klass",
             "tp_new": lambda _, __, ___: Raise("new unpatched"),
             "tp_init": lambda _, __, ___: Raise("init unpatched"),
-            "tp_dealloc": lambda _: Raise("dealloc unpatched"),
+            "tp_dealloc": tp_dealloc,
         }
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         _type = mapper.Retrieve(typePtr)
@@ -266,40 +275,33 @@ class Python25Mapper_DispatchTrickyMethodsTest(TestCase):
         KWARGS = {"three": 4}
         instancePtr = allocator.Alloc(Marshal.SizeOf(PyObject))
         CPyMarshal.WriteIntField(instancePtr, PyObject, 'ob_refcnt', 1)
-        CPyMarshal.WritePtrField(instancePtr, PyObject, 'ob_type', mapper.PyBaseObject_Type)
+        CPyMarshal.WritePtrField(instancePtr, PyObject, 'ob_type', typePtr)
         
         calls = []
         def test_tp_new(typePtr_new, argsPtr, kwargsPtr):
             calls.append("tp_new")
-            self.assertEquals(typePtr_new, typePtr, "wrong type")
-            self.assertEquals(mapper.Retrieve(argsPtr), ARGS, "wrong args")
-            self.assertEquals(mapper.Retrieve(kwargsPtr), KWARGS, "wrong kwargs")
+            self.assertEquals(typePtr_new, typePtr)
+            self.assertEquals(mapper.Retrieve(argsPtr), ARGS)
+            self.assertEquals(mapper.Retrieve(kwargsPtr), KWARGS)
             return instancePtr
         
         def test_tp_init(instancePtr_init, argsPtr, kwargsPtr):
             calls.append("tp_init")
-            self.assertEquals(instancePtr_init, instancePtr, "wrong instance")
-            self.assertEquals(mapper.Retrieve(argsPtr), ARGS, "wrong args")
-            self.assertEquals(mapper.Retrieve(kwargsPtr), KWARGS, "wrong kwargs")
+            self.assertEquals(instancePtr_init, instancePtr)
+            self.assertEquals(mapper.Retrieve(argsPtr), ARGS)
+            self.assertEquals(mapper.Retrieve(kwargsPtr), KWARGS)
             return 0
-        
-        def test_tp_dealloc(instancePtr_dealloc):
-            calls.append("tp_dealloc")
-            self.assertEquals(instancePtr_dealloc, instancePtr, "wrong instance")
-            # finish the dealloc to avoid confusing mapper on shutdown
-            mapper.PyObject_Free(instancePtr_dealloc)
             
         _type._dispatcher.table['klass.tp_new'] = Python25Api.PyType_GenericNew_Delegate(test_tp_new)
         _type._dispatcher.table['klass.tp_init'] = CPython_initproc_Delegate(test_tp_init)
-        _type._dispatcher.table['klass.tp_dealloc'] = CPython_destructor_Delegate(test_tp_dealloc)
         
         instance = _type(*ARGS, **KWARGS)
-        self.assertEquals(instance._instancePtr, instancePtr, "wrong instance,")
-        self.assertEquals(calls, ['tp_new', 'tp_init'], 'wrong calls')
+        self.assertEquals(instance._instancePtr, instancePtr)
+        self.assertEquals(calls, ['tp_new', 'tp_init'])
         
         del instance
         gcwait()
-        self.assertEquals(calls, ['tp_new', 'tp_init', 'tp_dealloc'], 'wrong calls')
+        self.assertEquals(calls, ['tp_new', 'tp_init', 'tp_dealloc'])
         
         mapper.Dispose()
         deallocType()
@@ -346,8 +348,8 @@ class Python25Mapper_DispatchTrickyMethodsTest(TestCase):
         # now, another bridge object gets destroyed, causing us to reexamine
         mapper.CheckBridgePtrs()
         
-        # and, after the next 2 GCs*, objref disappears
-        # 1 to notice it's collectable, 1 to actually collect it
+        # and, after the next 2* GCs, objref disappears
+        # * 1 to notice it's collectable, 1 to actually collect it
         gcwait()
         gcwait()
         self.assertEquals(objref.IsAlive, False, "object didn't die")
@@ -730,8 +732,6 @@ class Python25Mapper_InheritanceTest(TestCase):
         deallocType()
         deallocMC()
         deallocTypes()
-        
-
 
 
 suite = makesuite(
