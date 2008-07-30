@@ -15,7 +15,7 @@ from Ironclad.Structs import PyObject, PyTypeObject
 
 
 
-class Python25MapperDictTest(TestCase):
+class DictTest(TestCase):
 
     def testPyDict_New(self):
         allocs = []
@@ -186,7 +186,7 @@ class Python25MapperDictTest(TestCase):
 
 
 suite = makesuite(
-    Python25MapperDictTest,
+    DictTest,
 )
 
 if __name__ == '__main__':

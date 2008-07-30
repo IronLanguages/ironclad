@@ -76,7 +76,7 @@ class PyString_Type_test(TypeTestCase):
         self.assertUsual_tp_dealloc("PyString_Type")
 
 
-class Python25Mapper_PyString_FromString_Test(PyString_TestCase):
+class PyString_FromString_Test(PyString_TestCase):
 
     def testCreatesString(self):
         allocs = []
@@ -99,7 +99,7 @@ class Python25Mapper_PyString_FromString_Test(PyString_TestCase):
         deallocTypes()
 
 
-class Python25Mapper_InternTest(PyString_TestCase):
+class InternTest(PyString_TestCase):
         
     def testInternExisting(self):
         mapper = Python25Mapper()
@@ -132,7 +132,7 @@ class Python25Mapper_InternTest(PyString_TestCase):
         deallocTypes()
 
 
-class Python25Mapper_PyString_FromStringAndSize_Test(PyString_TestCase):
+class PyString_FromStringAndSize_Test(PyString_TestCase):
 
     def testCreateEmptyString(self):
         allocs = []
@@ -183,7 +183,7 @@ class Python25Mapper_PyString_FromStringAndSize_Test(PyString_TestCase):
         deallocTypes()
 
 
-class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
+class _PyString_Resize_Test(PyString_TestCase):
 
     def testErrorHandling(self):
         allocs = []
@@ -274,7 +274,7 @@ class Python25Mapper__PyString_Resize_Test(PyString_TestCase):
         deallocTypes()
             
 
-class Python25Mapper_PyString_Size_Test(PyString_TestCase):
+class PyString_Size_Test(PyString_TestCase):
     
     def testWorks(self):
         mapper = Python25Mapper()
@@ -343,11 +343,11 @@ class PyStringStoreTest(PyString_TestCase):
 
 suite = makesuite(
     PyString_Type_test,
-    Python25Mapper_PyString_FromString_Test,
-    Python25Mapper_InternTest,
-    Python25Mapper_PyString_FromStringAndSize_Test,
-    Python25Mapper__PyString_Resize_Test,
-    Python25Mapper_PyString_Size_Test,
+    PyString_FromString_Test,
+    InternTest,
+    PyString_FromStringAndSize_Test,
+    _PyString_Resize_Test,
+    PyString_Size_Test,
     PyString_AsStringTest,
     PyStringStoreTest,
 )

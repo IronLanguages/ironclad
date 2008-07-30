@@ -70,7 +70,7 @@ class DispatchSetupTestCase(TestCase):
     
 
 
-class Python25Mapper_DispatchTypeMethodsTest(DispatchSetupTestCase):
+class DispatchTypeMethodsTest(DispatchSetupTestCase):
 
     def assertAddTypeObject_withSingleMethod(self, methodDef, TestType):
         typeSpec = {
@@ -192,7 +192,7 @@ class Python25Mapper_DispatchTypeMethodsTest(DispatchSetupTestCase):
         deallocMethod()
 
 
-class Python25Mapper_DispatchCallTest(DispatchSetupTestCase):
+class DispatchCallTest(DispatchSetupTestCase):
     
     def testCall(self):
         calls = []
@@ -224,7 +224,7 @@ class Python25Mapper_DispatchCallTest(DispatchSetupTestCase):
         }
         self.assertTypeSpec(typeSpec, TestType)
 
-class Python25Mapper_DispatchIterTest(TestCase):
+class DispatchIterTest(TestCase):
 
     def assertDispatchesToSelfTypeMethod(self, mapper, typeSpec, expectedKeyName,
                                          expectedMethodName, TestErrorHandler):
@@ -286,7 +286,7 @@ class Python25Mapper_DispatchIterTest(TestCase):
         mapper.Dispose()
 
 
-class Python25Mapper_DispatchTrickyMethodsTest(TestCase):
+class DispatchTrickyMethodsTest(TestCase):
 
     def testNewInitDelTablePopulation(self):
         mapper = Python25Mapper()
@@ -435,7 +435,7 @@ class Python25Mapper_DispatchTrickyMethodsTest(TestCase):
         deallocTypes()
 
 
-class Python25Mapper_PropertiesTest(TestCase):
+class PropertiesTest(TestCase):
     
     def assertGetSet(self, mapper, attr, get, set, TestType, closure=IntPtr.Zero):
         doc = "take me to the airport, put me on a plane"
@@ -563,7 +563,7 @@ class Python25Mapper_PropertiesTest(TestCase):
         deallocTypes()
 
 
-class Python25Mapper_MembersTest(TestCase):
+class MembersTest(TestCase):
     
     def assertMember(self, mapper, attr, memberType, offset, flags, TestType, basicsize=32):
         doc = "hurry hurry hurry, before I go insane"
@@ -666,7 +666,7 @@ class Python25Mapper_MembersTest(TestCase):
         self.assertTypeMember('object', object(), object())
         
 
-class Python25Mapper_InheritanceTest(TestCase):
+class InheritanceTest(TestCase):
     
     def testBaseClass(self):
         mapper = Python25Mapper()
@@ -811,13 +811,13 @@ class Python25Mapper_InheritanceTest(TestCase):
 
 
 suite = makesuite(
-    Python25Mapper_DispatchTypeMethodsTest,
-    Python25Mapper_DispatchCallTest,
-    Python25Mapper_DispatchIterTest,
-    Python25Mapper_DispatchTrickyMethodsTest,
-    Python25Mapper_PropertiesTest,
-    Python25Mapper_MembersTest,
-    Python25Mapper_InheritanceTest,
+    DispatchTypeMethodsTest,
+    DispatchCallTest,
+    DispatchIterTest,
+    DispatchTrickyMethodsTest,
+    PropertiesTest,
+    MembersTest,
+    InheritanceTest,
 )
 if __name__ == '__main__':
     run(suite)

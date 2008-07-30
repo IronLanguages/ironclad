@@ -10,7 +10,7 @@ from Ironclad import CPyMarshal, Python25Mapper
 from Ironclad.Structs import PyObject
 
 
-class Python25Mapper_PyInt_Test(TestCase):
+class PyInt_Test(TestCase):
 
     def testStoreInt(self):
         mapper = Python25Mapper()
@@ -66,7 +66,7 @@ class Python25Mapper_PyInt_Test(TestCase):
         deallocTypes()
         
 
-class Python25Mapper_PyLong_Test(TestCase):
+class PyLong_Test(TestCase):
 
     def testStoreLong(self):
         mapper = Python25Mapper()
@@ -158,7 +158,7 @@ class Python25Mapper_PyLong_Test(TestCase):
         deallocTypes()
 
 
-class Python25Mapper_PyFloat_Test(TestCase):
+class PyFloat_Test(TestCase):
 
     def testStoreFloat(self):
         mapper = Python25Mapper()
@@ -188,7 +188,7 @@ class Python25Mapper_PyFloat_Test(TestCase):
         deallocTypes()
 
 
-class Python25Mapper_PyNumber_Test(TestCase):
+class PyNumber_Test(TestCase):
     
     def testPyNumber_Long(self):
         mapper = Python25Mapper()
@@ -216,10 +216,10 @@ class Python25Mapper_PyNumber_Test(TestCase):
         
 
 suite = makesuite(
-    Python25Mapper_PyInt_Test,
-    Python25Mapper_PyLong_Test,
-    Python25Mapper_PyFloat_Test,
-    Python25Mapper_PyNumber_Test,
+    PyInt_Test,
+    PyLong_Test,
+    PyFloat_Test,
+    PyNumber_Test,
 )
 
 if __name__ == '__main__':

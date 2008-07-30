@@ -13,7 +13,7 @@ from Ironclad import Python25Mapper
 
 
 
-class Python25Mapper_PyMem_Malloc_Test(TestCase):
+class PyMem_Malloc_Test(TestCase):
     
     def testPyMem_Malloc_NonZero(self):
         allocs = []
@@ -40,7 +40,7 @@ class Python25Mapper_PyMem_Malloc_Test(TestCase):
         mapper.Dispose()
         
         
-class Python25Mapper_PyMem_Free_Test(TestCase):
+class PyMem_Free_Test(TestCase):
     
     def testPyMem_Free_NonNull(self):
         frees = []
@@ -63,8 +63,8 @@ class Python25Mapper_PyMem_Free_Test(TestCase):
 
 
 suite = makesuite(
-    Python25Mapper_PyMem_Malloc_Test,
-    Python25Mapper_PyMem_Free_Test,
+    PyMem_Malloc_Test,
+    PyMem_Free_Test,
 )
 
 if __name__ == '__main__':

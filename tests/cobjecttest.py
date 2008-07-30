@@ -12,7 +12,7 @@ from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, CPython_destructor_Delegate, OpaquePyCObject, Python25Api, Python25Mapper
 from Ironclad.Structs import PyCObject, PyObject, PyTypeObject
 
-class Python25Mapper_PyCObject_Test(TestCase):
+class CObjectTest(TestCase):
     
     def testPyCObject(self):
         mapper = Python25Mapper()
@@ -69,7 +69,7 @@ class Python25Mapper_PyCObject_Test(TestCase):
 
 
 
-class Python25Mapper_PyCObject_TypeTest(TypeTestCase):
+class PyCObject_Type_Test(TypeTestCase):
         
     def testPyCObject_Dealloc(self):
         VOID_PTR = IntPtr(12345)
@@ -93,8 +93,8 @@ class Python25Mapper_PyCObject_TypeTest(TypeTestCase):
 
 
 suite = makesuite(
-    Python25Mapper_PyCObject_Test,
-    Python25Mapper_PyCObject_TypeTest
+    CObjectTest,
+    PyCObject_Type_Test
 )
 
 if __name__ == '__main__':

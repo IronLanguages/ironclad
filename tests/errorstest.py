@@ -9,7 +9,7 @@ from System.Text import Encoding
 from Ironclad import Python25Mapper
 
 
-class Python25Mapper_Exception_Test(TestCase):
+class LastExceptionTest(TestCase):
 
     def testException(self):
         mapper = Python25Mapper()
@@ -22,6 +22,8 @@ class Python25Mapper_Exception_Test(TestCase):
                           "get should retrieve last set exception")
         mapper.Dispose()
 
+
+class ErrFunctionsTest(TestCase):
 
     def testPyErr_SetString_WithNull(self):
         mapper = Python25Mapper()
@@ -160,7 +162,8 @@ class Python25Mapper_Exception_Test(TestCase):
         #
 
 suite = makesuite(
-    Python25Mapper_Exception_Test,
+    LastExceptionTest,
+    ErrFunctionsTest,
 )
 
 if __name__ == '__main__':
