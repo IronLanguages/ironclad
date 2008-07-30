@@ -31,10 +31,14 @@ namespace Ironclad
         {
             IntPtr initFP = Unmanaged.GetProcAddress(this.library, "init");
             InitDelegate initDgt = (InitDelegate)Marshal.GetDelegateForFunctionPointer(initFP, typeof(InitDelegate));
-            
             IntPtr addressGetterFP = Marshal.GetFunctionPointerForDelegate(addressGetter);
             IntPtr dataSetterFP = Marshal.GetFunctionPointerForDelegate(dataSetter);
             initDgt(addressGetterFP, dataSetterFP);
+            
+            // yes, these do appear to be necessary: rare NullReferenceExceptions will be thrown
+            // from the initDgt call otherwise. run functionalitytest in a loop to observe.
+            GC.KeepAlive(addressGetter);
+            GC.KeepAlive(dataSetter);
         }
         
         public void Dispose()
