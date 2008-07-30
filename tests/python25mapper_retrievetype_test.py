@@ -25,162 +25,204 @@ class BorkedException(System.Exception):
 INSTANCE_PTR = IntPtr(111)
 ARGS_PTR = IntPtr(222)
 KWARGS_PTR = IntPtr(333)
-EMPTY_KWARGS_PTR = IntPtr.Zero
 RESULT_PTR = IntPtr(999)
-ERROR_RESULT_PTR = IntPtr.Zero
 
 
 Null_CPythonVarargsFunction = lambda _, __: IntPtr.Zero
 Null_CPythonVarargsKwargsFunction = lambda _, __, ___: IntPtr.Zero
 
+def GetVarargsDispatchFunction(result, calls):
+    def dispatch(name, instancePtr):
+        calls.append((name, instancePtr))
+        return result
+    return dispatch
 
-class Python25Mapper_DispatchTypeMethodsTest(TestCase):
+def GetKwargsDispatchFunction(result, calls):
+    def dispatch(name, instancePtr):
+        calls.append((name, instancePtr))
+        return result
+    return dispatch
 
-    def assertAddTypeObject_withSingleMethod(self, mapper, methodDef, TestType):
+
+class DispatchSetupTestCase(TestCase):
+
+    def assertTypeSpec(self, typeSpec, TestType):
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
-        
-        typeSpec = {
-            "tp_name": "klass",
-            "tp_methods": [methodDef]
-        }
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         
         _type = mapper.Retrieve(typePtr)
         TestType(_type)
         
+        mapper.Dispose()
         deallocType()
         deallocTypes()
-            
-            
+        
+    def assertVarargsDelegate(self, dgt, calls):
+        self.assertEquals(calls, [])
+        self.assertEquals(dgt(INSTANCE_PTR, ARGS_PTR), RESULT_PTR, "wrong function in table")
+        self.assertEquals(calls, [(INSTANCE_PTR, ARGS_PTR)], "wrong function in table")
+
+    def assertKwargsDelegate(self, dgt, calls):
+        self.assertEquals(calls, [])
+        self.assertEquals(dgt(INSTANCE_PTR, ARGS_PTR, KWARGS_PTR), RESULT_PTR, "wrong function in table")
+        self.assertEquals(calls, [(INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)], "wrong function in table")
+    
+
+
+class Python25Mapper_DispatchTypeMethodsTest(DispatchSetupTestCase):
+
+    def assertAddTypeObject_withSingleMethod(self, methodDef, TestType):
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_methods": [methodDef]
+        }
+        self.assertTypeSpec(typeSpec, TestType)
+
     def testNoArgsMethod(self):
-        mapper = Python25Mapper()
-        method, deallocMethod = MakeMethodDef("method", Null_CPythonVarargsFunction, METH.NOARGS)
+        calls = []
+        def NoArgs(selfPtr, argsPtr):
+            calls.append((selfPtr, argsPtr))
+            return RESULT_PTR
+        method, deallocMethod = MakeMethodDef("method", NoArgs, METH.NOARGS)
+        
+        result = object()
+        dispatchCalls = []
+        def dispatch(name, instancePtr):
+            dispatchCalls.append((name, instancePtr))
+            return result
         
         def TestType(_type):
-            result = object()
-            def dispatch(name, instancePtr):
-                self.assertEquals(name, "klass.method", "called wrong function")
-                self.assertEquals(instancePtr, expectedInstancePtr, "called on wrong instance")
-                return result
-            _type._dispatcher.method_noargs = dispatch
             instance = _type()
-            expectedInstancePtr = instance._instancePtr
+            _type._dispatcher.method_noargs = dispatch
             self.assertEquals(instance.method(), result, "didn't use correct _dispatcher method")
+            self.assertEquals(dispatchCalls, [("klass.method", instance._instancePtr)], "called _dispatcher method wrong")
+            self.assertVarargsDelegate(_type._dispatcher.table["klass.method"], calls)
+            
             del instance
             gcwait()
         
-        self.assertAddTypeObject_withSingleMethod(mapper, method, TestType)
-        mapper.Dispose()
+        self.assertAddTypeObject_withSingleMethod(method, TestType)
         deallocMethod()
 
 
     def testObjArgMethod(self):
-        mapper = Python25Mapper()
-        method, deallocMethod = MakeMethodDef("method", Null_CPythonVarargsFunction, METH.O)
+        calls = []
+        def ObjArg(selfPtr, argsPtr):
+            calls.append((selfPtr, argsPtr))
+            return RESULT_PTR
+        method, deallocMethod = MakeMethodDef("method", ObjArg, METH.O)
+        
+        result = object()
+        dispatchCalls = []
+        def dispatch(name, instancePtr, arg):
+            dispatchCalls.append((name, instancePtr, arg))
+            return result
         
         def TestType(_type):
             arg = object()
-            result = object()
-            def dispatch(name, instancePtr, dispatch_arg):
-                self.assertEquals(name, "klass.method", "called wrong function")
-                self.assertEquals(instancePtr, expectedInstancePtr, "called on wrong instance")
-                self.assertEquals(dispatch_arg, arg, "called with wrong arg")
-                return result
-            _type._dispatcher.method_objarg = dispatch
             instance = _type()
-            expectedInstancePtr = instance._instancePtr
+            _type._dispatcher.method_objarg = dispatch
             self.assertEquals(instance.method(arg), result, "didn't use correct _dispatcher method")
+            self.assertEquals(dispatchCalls, [("klass.method", instance._instancePtr, arg)], "called _dispatcher method wrong")
+            self.assertVarargsDelegate(_type._dispatcher.table["klass.method"], calls)
+            
             del instance
             gcwait()
         
-        self.assertAddTypeObject_withSingleMethod(mapper, method, TestType)
-        mapper.Dispose()
+        self.assertAddTypeObject_withSingleMethod(method, TestType)
         deallocMethod()
 
 
     def testVarargsMethod(self):
-        mapper = Python25Mapper()
-        method, deallocMethod = MakeMethodDef("method", Null_CPythonVarargsFunction, METH.VARARGS)
+        calls = []
+        def VarArgs(selfPtr, argsPtr):
+            calls.append((selfPtr, argsPtr))
+            return RESULT_PTR
+        method, deallocMethod = MakeMethodDef("method", VarArgs, METH.VARARGS)
+        
+        result = object()
+        dispatchCalls = []
+        dispatchCalls = []
+        def dispatch(name, instancePtr, *args):
+            dispatchCalls.append((name, instancePtr, args))
+            return result
         
         def TestType(_type):
             args = ("for", "the", "horde")
-            result = object()
-            def dispatch(name, instancePtr, *dispatch_args):
-                self.assertEquals(name, "klass.method", "called wrong function")
-                self.assertEquals(instancePtr, expectedInstancePtr, "called on wrong instance")
-                self.assertEquals(dispatch_args, args, "called with wrong args")
-                return result
-            _type._dispatcher.method_varargs = dispatch
             instance = _type()
-            expectedInstancePtr = instance._instancePtr
+            _type._dispatcher.method_varargs = dispatch
             self.assertEquals(instance.method(*args), result, "didn't use correct _dispatcher method")
+            self.assertEquals(dispatchCalls, [("klass.method", instance._instancePtr, args)], "called _dispatcher method wrong")
+            self.assertVarargsDelegate(_type._dispatcher.table["klass.method"], calls)
+            
             del instance
             gcwait()
         
-        self.assertAddTypeObject_withSingleMethod(mapper, method, TestType)
-        mapper.Dispose()
+        self.assertAddTypeObject_withSingleMethod(method, TestType)
         deallocMethod()
         
 
     def testVarargsKwargsMethod(self):
-        mapper = Python25Mapper()
-        method, deallocMethod = MakeMethodDef("method", Null_CPythonVarargsKwargsFunction, METH.VARARGS | METH.KEYWORDS)
+        calls = []
+        def Kwargs(selfPtr, argsPtr, kwargsPtr):
+            calls.append((selfPtr, argsPtr, kwargsPtr))
+            return RESULT_PTR
+        method, deallocMethod = MakeMethodDef("method", Kwargs, METH.VARARGS | METH.KEYWORDS)
+        
+        result = object()
+        dispatchCalls = []
+        def dispatch(name, instancePtr, *args, **kwargs):
+            dispatchCalls.append((name, instancePtr, args, kwargs))
+            return result
         
         def TestType(_type):
             args = ("for", "the", "horde")
             kwargs = {"g1": "LM", "g2": "BS", "g3": "GM"}
-            result = object()
-            def dispatch(name, instancePtr, *dispatch_args, **dispatch_kwargs):
-                self.assertEquals(name, "klass.method", "called wrong function")
-                self.assertEquals(instancePtr, expectedInstancePtr, "called on wrong instance")
-                self.assertEquals(dispatch_args, args, "called with wrong args")
-                self.assertEquals(dispatch_kwargs, kwargs, "called with wrong args")
-                return result
-            _type._dispatcher.method_kwargs = dispatch
             instance = _type()
-            expectedInstancePtr = instance._instancePtr
+            _type._dispatcher.method_kwargs = dispatch
             self.assertEquals(instance.method(*args, **kwargs), result, "didn't use correct _dispatcher method")
+            self.assertEquals(dispatchCalls, [("klass.method", instance._instancePtr, args, kwargs)], "called _dispatcher method wrong")
+            self.assertKwargsDelegate(_type._dispatcher.table["klass.method"], calls)
+            
             del instance
             gcwait()
         
-        self.assertAddTypeObject_withSingleMethod(mapper, method, TestType)
-        mapper.Dispose()
+        self.assertAddTypeObject_withSingleMethod(method, TestType)
         deallocMethod()
 
 
-class Python25Mapper_DispatchCallTest(TestCase):
+class Python25Mapper_DispatchCallTest(DispatchSetupTestCase):
     
     def testCall(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+        calls = []
+        def Call(selfPtr, argsPtr, kwargsPtr):
+            calls.append((selfPtr, argsPtr, kwargsPtr))
+            return RESULT_PTR
+        
+        result = object()
+        dispatchCalls = []
+        def dispatch(name, instancePtr, *args, **kwargs):
+            dispatchCalls.append((name, instancePtr, args, kwargs))
+            return result
+        
+        def TestType(_type):
+            args = ("for", "the", "horde")
+            kwargs = {"g1": "LM", "g2": "BS", "g3": "GM"}
+            instance = _type()
+            _type._dispatcher.method_kwargs = dispatch
+            self.assertEquals(instance(*args, **kwargs), result)
+            self.assertEquals(dispatchCalls, [("klass.__call__", instance._instancePtr, args, kwargs)])
+            self.assertKwargsDelegate(_type._dispatcher.table["klass.__call__"], calls)
+            
+            del instance
+            gcwait()
 
         typeSpec = {
             "tp_name": "klass",
-            "tp_call": Null_CPythonVarargsKwargsFunction,
+            "tp_call": Call,
         }
-        typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
-        _type = mapper.Retrieve(typePtr)
-        instance = _type()
-        
-        args = ("for", "the", "horde")
-        kwargs = {"g1": "LM", "g2": "BS", "g3": "GM"}
-        result = object()
-        def dispatch(name, instancePtr, *dispatch_args, **dispatch_kwargs):
-            self.assertEquals(name, "klass.__call__", "called wrong function")
-            self.assertEquals(instancePtr, expectedInstancePtr, "called on wrong instance")
-            self.assertEquals(dispatch_args, args, "called with wrong args")
-            self.assertEquals(dispatch_kwargs, kwargs, "called with wrong kwargs")
-            return result
-        _type._dispatcher.method_kwargs = dispatch
-        
-        expectedInstancePtr = instance._instancePtr
-        self.assertEquals(instance(*args, **kwargs), result)
-        del instance
-        gcwait()
-
-        mapper.Dispose()
-        deallocType()
-        deallocTypes()
+        self.assertTypeSpec(typeSpec, TestType)
 
 class Python25Mapper_DispatchIterTest(TestCase):
 
