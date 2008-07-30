@@ -15,7 +15,7 @@ from Ironclad.Structs import PyObject, PyTypeObject
 
     
     
-class Python25Mapper_PyObject_Test(TestCase):
+class ObjectFunctionsTest(TestCase):
     
     def testPyObject_Call(self):
         mapper = Python25Mapper()
@@ -42,30 +42,6 @@ class Python25Mapper_PyObject_Test(TestCase):
             self.assertEquals(mapper.PyCallable_Check(x), 1, "reported not callable")
         for x in notCallables:
             self.assertEquals(mapper.PyCallable_Check(x), 0, "reported callable")
-                
-        mapper.Dispose()
-        deallocTypes()
-
-
-    def testPySequence_Check(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
-        class Sequence(object):
-            def __len__(self): raise Exception("fooled you!")
-            def __getitem__(self, _): raise Exception("fooled you!")
-            def __add__(self, _): raise Exception("fooled you!")
-            def __radd__(self, _): raise Exception("fooled you!")
-            def __mul__(self, _): raise Exception("fooled you!")
-            def __rmul__(self, _): raise Exception("fooled you!")
-        
-        sequences = map(mapper.Store, [(1, 2, 3), ['a'], Sequence(), "foo"])
-        notSequences = map(mapper.Store, [tuple, list, object(), {'foo': 'bar'}])
-        
-        for x in sequences:
-            self.assertEquals(mapper.PySequence_Check(x), 1, "reported %r not sequence" % (mapper.Retrieve(x),))
-        for x in notSequences:
-            self.assertEquals(mapper.PySequence_Check(x), 0, "reported %r sequence" % (mapper.Retrieve(x),))
                 
         mapper.Dispose()
         deallocTypes()
@@ -137,7 +113,7 @@ class Python25Mapper_PyObject_Test(TestCase):
         deallocTypes()
 
 
-class PyObject_Iter_Test(TestCase):
+class IterationTest(TestCase):
     
     def testPyObject_GetIter_Success(self):
         mapper = Python25Mapper()
@@ -245,7 +221,7 @@ class PyObject_Iter_Test(TestCase):
         deallocTypes()
     
     
-class Python25Mapper_PyBaseObject_Type_Test(TypeTestCase):
+class PyBaseObject_Type_Test(TypeTestCase):
 
     def testPyBaseObject_Type_fields(self):
         mapper = Python25Mapper()
@@ -297,7 +273,7 @@ class Python25Mapper_PyBaseObject_Type_Test(TypeTestCase):
         Marshal.FreeHGlobal(objPtr)
 
 
-class Python25Mapper_PyObject_Init_Test(TestCase):
+class InitFunctionsTest(TestCase):
     
     def testPyObject_Init(self):
         mapper = Python25Mapper()
@@ -345,10 +321,10 @@ class Python25Mapper_PyObject_Init_Test(TestCase):
         
 
 suite = makesuite(
-    Python25Mapper_PyObject_Test,
-    PyObject_Iter_Test,
-    Python25Mapper_PyBaseObject_Type_Test,
-    Python25Mapper_PyObject_Init_Test,
+    ObjectFunctionsTest,
+    IterationTest,
+    PyBaseObject_Type_Test,
+    InitFunctionsTest,
 )
 
 if __name__ == '__main__':

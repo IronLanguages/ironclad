@@ -12,7 +12,7 @@ from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, OpaquePyCObject, Python25Api, Python25Mapper
 from Ironclad.Structs import PyObject, PyTypeObject, Py_TPFLAGS
 
-class Python25Mapper_Types_Test(TestCase):
+class Types_Test(TestCase):
     
     def testTypeMappings(self):
         types = {
@@ -198,7 +198,7 @@ class PyType_Ready_InheritTest(TestCase):
         
     
         
-class Python25Mapper_PyType_GenericAlloc_Test(TestCase):
+class PyType_GenericAlloc_Test(TestCase):
 
     def testNoItems(self):
         allocs = []
@@ -258,7 +258,7 @@ class Python25Mapper_PyType_GenericAlloc_Test(TestCase):
         deallocType()
 
 
-class Python25Mapper_PyType_GenericNew_Test(TestCase):
+class PyType_GenericNew_Test(TestCase):
 
     def testCallsTypeAllocFunction(self):
         mapper = Python25Mapper()
@@ -285,10 +285,10 @@ class Python25Mapper_PyType_GenericNew_Test(TestCase):
 
 
 suite = makesuite(
-    Python25Mapper_Types_Test,
+    Types_Test,
     PyType_Ready_InheritTest,
-    Python25Mapper_PyType_GenericNew_Test,
-    Python25Mapper_PyType_GenericAlloc_Test,
+    PyType_GenericNew_Test,
+    PyType_GenericAlloc_Test,
 )
 
 if __name__ == '__main__':

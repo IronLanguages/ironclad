@@ -15,7 +15,7 @@ from Ironclad.Structs import PyObject, PyListObject, PyTypeObject
 
 
 
-class Python25Mapper_PyList_Type_Test(TypeTestCase):
+class PyList_Type_Test(TypeTestCase):
 
     def testPyListTypeField_tp_dealloc(self):
         calls = []
@@ -114,7 +114,7 @@ class Python25Mapper_PyList_Type_Test(TypeTestCase):
         deallocTypes()
 
 
-class Python25Mapper_PyList_Functions_Test(TestCase):
+class ListFunctionsTest(TestCase):
     
     def testPyList_New_ZeroLength(self):
         allocs = []
@@ -399,8 +399,8 @@ class Python25Mapper_PyList_Functions_Test(TestCase):
         
 
 suite = makesuite(
-    Python25Mapper_PyList_Type_Test,
-    Python25Mapper_PyList_Functions_Test,
+    PyList_Type_Test,
+    ListFunctionsTest,
 )
 
 if __name__ == '__main__':

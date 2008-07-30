@@ -23,7 +23,7 @@ more text
 """
 
 
-class Python25Mapper_PyFile_Type_Test(TestCase):
+class PyFile_Type_Test(TestCase):
 
     def testPyFile_Type(self):
         mapper = Python25Mapper()
@@ -131,7 +131,7 @@ class Python25Mapper_PyFile_Type_Test(TestCase):
 
 
 suite = makesuite(
-    Python25Mapper_PyFile_Type_Test,
+    PyFile_Type_Test,
 )
 
 if __name__ == '__main__':

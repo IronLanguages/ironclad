@@ -8,7 +8,7 @@ from System.Threading import Thread, ThreadStart
 from Ironclad import Python25Mapper
 
 
-class Python25Mapper_PyThread_functions_Test(TestCase):
+class PyThread_functions_Test(TestCase):
 
     def testAllocateAndFreeLocks(self):
         mapper = Python25Mapper()
@@ -134,7 +134,7 @@ class PyThreadStateDict_Test(TestCase):
 
 
 suite = makesuite(
-    Python25Mapper_PyThread_functions_Test,
+    PyThread_functions_Test,
     PyThreadStateDict_Test,
 )
 

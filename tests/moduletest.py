@@ -31,7 +31,7 @@ Null_CPythonVarargsKwargsFunction = lambda _, __, ___: IntPtr.Zero
 
 
 
-class Python25Mapper_Py_InitModule4_SetupTest(TestCase):
+class Py_InitModule4_SetupTest(TestCase):
         
     def testNewModuleHasDispatcher(self):
         mapper = Python25Mapper()
@@ -47,7 +47,7 @@ class Python25Mapper_Py_InitModule4_SetupTest(TestCase):
         mapper.Dispose()
         
 
-class Python25Mapper_Py_InitModule4_Test(TestCase):
+class Py_InitModule4_Test(TestCase):
 
     def assert_Py_InitModule4_withSingleMethod(self, mapper, methodDef, TestModule):
         methods, deallocMethods = MakeItemsTablePtr([methodDef])
@@ -166,7 +166,7 @@ class Python25Mapper_Py_InitModule4_Test(TestCase):
         deallocMethod()
         
         
-class Python25Mapper_PyModule_GetDict_Test(TestCase):
+class PyModule_GetDict_Test(TestCase):
     
     def testGetsDict(self):
         mapper = Python25Mapper()
@@ -183,7 +183,7 @@ class Python25Mapper_PyModule_GetDict_Test(TestCase):
         deallocTypes()
 
 
-class Python25Mapper_PyModule_AddConstants_Test(TestCase):
+class PyModule_AddConstants_Test(TestCase):
     
     def testAddConstants(self):
         mapper = Python25Mapper()
@@ -202,7 +202,7 @@ class Python25Mapper_PyModule_AddConstants_Test(TestCase):
         
 
 
-class Python25Mapper_PyModule_AddObject_Test(TestCase):
+class PyModule_AddObject_Test(TestCase):
 
     def testAddObjectToUnknownModuleFails(self):
         mapper = Python25Mapper()
@@ -271,7 +271,7 @@ class Python25Mapper_PyModule_AddObject_Test(TestCase):
         )
 
 
-class Python25Mapper_ImportTest(TestCase):
+class ImportTest(TestCase):
     
     def testPyImport_ImportModule(self):
         mapper = Python25Mapper()
@@ -291,12 +291,12 @@ class Python25Mapper_ImportTest(TestCase):
 
 
 suite = makesuite(
-    Python25Mapper_Py_InitModule4_SetupTest,
-    Python25Mapper_Py_InitModule4_Test,
-    Python25Mapper_PyModule_GetDict_Test,
-    Python25Mapper_PyModule_AddConstants_Test,
-    Python25Mapper_PyModule_AddObject_Test,
-    Python25Mapper_ImportTest,
+    Py_InitModule4_SetupTest,
+    Py_InitModule4_Test,
+    PyModule_GetDict_Test,
+    PyModule_AddConstants_Test,
+    PyModule_AddObject_Test,
+    ImportTest,
 )
 
 if __name__ == '__main__':

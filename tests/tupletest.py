@@ -27,7 +27,7 @@ def MakeTuple(mapper, model):
     return tuplePtr, itemPtrs
 
 
-class Python25Mapper_PyTuple_Type_Test(TypeTestCase):
+class PyTuple_Type_Test(TypeTestCase):
 
 
     def testPyTupleTypeField_tp_free(self):
@@ -88,7 +88,7 @@ class Python25Mapper_PyTuple_Type_Test(TypeTestCase):
     
 
 
-class Python25Mapper_Tuple_Test(TestCase):
+class TupleTest(TestCase):
     
     def assertPyTuple_New_Works(self, length):
         allocs = []
@@ -166,8 +166,8 @@ class Python25Mapper_Tuple_Test(TestCase):
 
 
 suite = makesuite(
-    Python25Mapper_PyTuple_Type_Test,
-    Python25Mapper_Tuple_Test,
+    PyTuple_Type_Test,
+    TupleTest,
 )
 
 if __name__ == '__main__':

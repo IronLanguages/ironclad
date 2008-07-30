@@ -12,8 +12,32 @@ from System.Runtime.InteropServices import Marshal
 from Ironclad import Python25Mapper
         
         
-class Python25Mapper_Sequence_Test(TestCase):
+class SequenceFunctionsTest(TestCase):
     
+    def testPySequence_Check(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        class Sequence(object):
+            def __len__(self): raise Exception("fooled you!")
+            def __getitem__(self, _): raise Exception("fooled you!")
+            def __add__(self, _): raise Exception("fooled you!")
+            def __radd__(self, _): raise Exception("fooled you!")
+            def __mul__(self, _): raise Exception("fooled you!")
+            def __rmul__(self, _): raise Exception("fooled you!")
+        
+        sequences = map(mapper.Store, [(1, 2, 3), ['a'], Sequence(), "foo"])
+        notSequences = map(mapper.Store, [tuple, list, object(), {'foo': 'bar'}])
+        
+        for x in sequences:
+            self.assertEquals(mapper.PySequence_Check(x), 1, "reported %r not sequence" % (mapper.Retrieve(x),))
+        for x in notSequences:
+            self.assertEquals(mapper.PySequence_Check(x), 0, "reported %r sequence" % (mapper.Retrieve(x),))
+                
+        mapper.Dispose()
+        deallocTypes()
+        
+        
     def testPySequence_Size(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
@@ -60,7 +84,7 @@ class Python25Mapper_Sequence_Test(TestCase):
 
 
 suite = makesuite(
-    Python25Mapper_Sequence_Test,
+    SequenceFunctionsTest,
 )
 
 if __name__ == '__main__':
