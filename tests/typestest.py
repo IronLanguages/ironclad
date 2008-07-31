@@ -141,11 +141,8 @@ class Types_Test(TestCase):
         self.assertEquals(obj._instancePtr, ptr)
         self.assertEquals(mapper.RefCount(ptr), refcnt)
         
-        while mapper.RefCount(ptr) < 2:
-            mapper.IncRef(ptr)
         while mapper.RefCount(ptr) > 2:
             mapper.DecRef(ptr)
-            
         del obj
         gcwait()
         self.assertEquals(ref.IsAlive, True)
@@ -159,10 +156,10 @@ class Types_Test(TestCase):
     
     def testExtensionTypesAutoActualisable(self):
         discoveryModes = {
-            "IncRef": lambda f, o: self.assertMaps(mapper, f, o, 3), 
-            "Retrieve": lambda f, o: self.assertMaps(mapper, f, o, 2), 
-            "DecRef": lambda f, o: self.assertMaps(mapper, f, o, 1), 
-            "RefCount": lambda f, o: self.assertMaps(mapper, f, o, 2),
+            "IncRef": lambda f, o: self.assertMaps(mapper, f, o, 4), 
+            "Retrieve": lambda f, o: self.assertMaps(mapper, f, o, 3), 
+            "DecRef": lambda f, o: self.assertMaps(mapper, f, o, 2), 
+            "RefCount": lambda f, o: self.assertMaps(mapper, f, o, 3),
         }
         
         allocator = HGlobalAllocator()

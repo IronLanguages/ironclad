@@ -239,7 +239,7 @@ namespace Ironclad
             Builtin.setattr(DefaultContext.Default, managedInstance, "_instancePtr", ptr);
             Builtin.setattr(DefaultContext.Default, managedInstance, "__class__", this.Retrieve(typePtr));
             this.StoreBridge(ptr, managedInstance);
-            this.Strengthen(managedInstance);
+            this.IncRef(ptr);
         }
 
         
@@ -287,7 +287,20 @@ namespace Ironclad
             this.AttemptToMap(ptr);
             if (this.map.HasPtr(ptr))
             {
-                return CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
+                int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
+                if (this.bridgePtrs.Contains(ptr))
+                {
+                    object obj = this.Retrieve(ptr);
+                    if (count > 1)
+                    {
+                        this.Strengthen(obj);
+                    }
+                    else
+                    {
+                        this.Weaken(obj);
+                    }
+                }
+                return count;
             }
             else
             {
