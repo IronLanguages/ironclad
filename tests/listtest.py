@@ -58,7 +58,6 @@ class PyList_Type_Test(TypeTestCase):
         def TestConsequences(mapper, listPtr, calls):
             for itemPtr in itemPtrs:
                 self.assertEquals(itemPtr in frees, True, "did not decref item")
-                self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
             self.assertEquals(calls, [('tp_free', listPtr)], "did not call tp_free")
             
         self.assertTypeDeallocWorks("PyList_Type", CreateMapper, CreateInstance, TestConsequences)
@@ -89,7 +88,6 @@ class PyList_Type_Test(TypeTestCase):
         
         for itemPtr in itemPtrs:
             self.assertEquals(itemPtr in frees, True, "did not decref item")
-            self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
         self.assertEquals(calls, [listPtr], "did not call type's free function")
         
         mapper.Dispose()

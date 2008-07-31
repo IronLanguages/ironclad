@@ -771,13 +771,16 @@ class InheritanceTest(TestCase):
         deallocTypes()
         
     
-    
     def testMetaclass(self):
-        mapper = Python25Mapper()
+        # this allocator is necessary because metaclass.tp_dealloc will use the mapper's allocator
+        # to dealloc klass, and will complain if it wasn't allocated in the first place. this is 
+        # probably not going to work in the long term
+        allocator = HGlobalAllocator()
+        mapper = Python25Mapper(allocator)
         deallocTypes = CreateTypes(mapper)
         
         metaclassPtr, deallocMC = MakeTypePtr(mapper, {'tp_name': 'metaclass'})
-        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': metaclassPtr})
+        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': metaclassPtr}, allocator)
         
         klass = mapper.Retrieve(klassPtr)
         self.assertEquals(type(klass), mapper.Retrieve(metaclassPtr), "didn't notice klass's type")
@@ -790,19 +793,20 @@ class InheritanceTest(TestCase):
     
     def testInheritMethodTableFromMetaclass(self):
         "probably won't work quite right with identically-named metaclass"
-        mapper = Python25Mapper()
+        # this allocator is necessary because metaclass.tp_dealloc will use the mapper's allocator
+        # to dealloc klass, and will complain if it wasn't allocated in the first place. this is 
+        # probably not going to work in the long term
+        allocator = HGlobalAllocator()
+        mapper = Python25Mapper(allocator)
         deallocTypes = CreateTypes(mapper)
         
         metaclassPtr, deallocMC = MakeTypePtr(mapper, {'tp_name': 'metaclass'})
-        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': metaclassPtr})
+        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': metaclassPtr}, allocator)
 
         klass = mapper.Retrieve(klassPtr)
         metaclass = mapper.Retrieve(metaclassPtr)
         for k, v in metaclass._dispatcher.table.items():
             self.assertEquals(klass._dispatcher.table[k], v)
-
-        del klass
-        gcwait()
 
         mapper.Dispose()
         deallocType()

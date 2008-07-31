@@ -1,6 +1,7 @@
 
 from tests.utils.runtest import makesuite, run
 
+from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.cpython import MakeTypePtr
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes, OffsetPtr
@@ -276,11 +277,13 @@ class PyBaseObject_Type_Test(TypeTestCase):
 class InitFunctionsTest(TestCase):
     
     def testPyObject_Init(self):
-        mapper = Python25Mapper()
+        frees = []
+        allocator = GetAllocatingTestAllocator([], frees)
+        mapper = Python25Mapper(allocator)
         deallocTypes = CreateTypes(mapper)
         
         typePtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'FooType'})
-        objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        objPtr = allocator.Alloc(Marshal.SizeOf(PyObject))
         
         # some C extension has allocated some memory, and wants it to be a FooType
         self.assertEquals(mapper.PyObject_Init(objPtr, typePtr), objPtr, 'did not return the "new instance"')

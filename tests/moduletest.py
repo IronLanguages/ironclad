@@ -215,12 +215,13 @@ class PyModule_AddObject_Test(TestCase):
         mapper = Python25Mapper()
         testObject = object()
         testPtr = mapper.Store(testObject)
+        mapper.IncRef(testPtr)
         modulePtr = MakeAndAddEmptyModule(mapper)
         module = mapper.Retrieve(modulePtr)
 
         result = mapper.PyModule_AddObject(modulePtr, "testObject", testPtr)
         self.assertEquals(result, 0, "bad value for success")
-        self.assertRaises(KeyError, lambda: mapper.RefCount(testPtr))
+        self.assertEquals(mapper.RefCount(testPtr), 1)
         self.assertEquals(module.testObject, testObject, "did not store real object")
         mapper.Dispose()
 

@@ -54,7 +54,6 @@ class PyTuple_Type_Test(TypeTestCase):
         def TestConsequences(mapper, tuplePtr, calls):
             for itemPtr in itemPtrs:
                 self.assertEquals(itemPtr in frees, True, "did not decref item")
-                self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
             self.assertEquals(calls, [('tp_free', tuplePtr)], "did not call tp_free")
             
         self.assertTypeDeallocWorks("PyTuple_Type", CreateMapper, CreateInstance, TestConsequences)
@@ -79,7 +78,6 @@ class PyTuple_Type_Test(TypeTestCase):
 
         for itemPtr in itemPtrs:
             self.assertEquals(itemPtr in frees, True, "did not decref item")
-            self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
         self.assertEquals(calls, [tuplePtr], "did not call type's free function")
         mapper.PyObject_Free(tuplePtr)
 

@@ -111,16 +111,22 @@ def WriteTypeField(typePtr, name, value):
     raise KeyError("WriteTypeField can't handle %s, %s" % (name, value))
 
 
-def MakeTypePtr(mapper, params):
+def MakeTypePtr(mapper, params, allocator=None):
     fields = dict(MAKETYPEPTR_DEFAULTS)
     fields.update(GetMapperTypePtrDefaults(mapper))
     fields.update(params)
     
+    deallocs = []
     typeSize = Marshal.SizeOf(PyTypeObject)
-    typePtr = Marshal.AllocHGlobal(typeSize)
+    if allocator:
+        # pretend this was constructed by a C extension, using the mapper's allocator
+        # hence mapper should do the deallocation itself
+        typePtr = allocator.Alloc(typeSize)
+    else:
+        typePtr = Marshal.AllocHGlobal(typeSize)
+        deallocs.append(lambda: Marshal.FreeHGlobal(typePtr))
     CPyMarshal.Zero(typePtr, typeSize)
     
-    deallocs = [lambda: Marshal.FreeHGlobal(typePtr)]
     for field, value in fields.items():
         deallocs.append(WriteTypeField(typePtr, field, value))
 
