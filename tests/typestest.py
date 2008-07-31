@@ -3,37 +3,39 @@ from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.cpython import MakeTypePtr
+from tests.utils.gc import gcwait
 from tests.utils.memory import OffsetPtr, CreateTypes
 from tests.utils.testcase import TestCase
 
-from System import IntPtr, UInt32
+from System import IntPtr, UInt32, WeakReference
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, OpaquePyCObject, Python25Api, Python25Mapper
+from Ironclad import CannotInterpretException, CPyMarshal, HGlobalAllocator, OpaquePyCObject, Python25Mapper
 from Ironclad.Structs import PyObject, PyTypeObject, Py_TPFLAGS
+
+BUILTIN_TYPES = {
+    "PyType_Type": type,
+    "PyBaseObject_Type": object,
+    "PyString_Type": str,
+    "PyList_Type": list,
+    "PyDict_Type": dict,
+    "PyTuple_Type": tuple,
+    "PyFile_Type": file,
+    "PyLong_Type": long,
+    "PyInt_Type": int,
+    "PyFloat_Type": float,
+    "PyComplex_Type": complex,
+    "PyCObject_Type": OpaquePyCObject,
+}
 
 class Types_Test(TestCase):
     
     def testTypeMappings(self):
-        types = {
-            "PyType_Type": type,
-            "PyBaseObject_Type": object,
-            "PyString_Type": str,
-            "PyList_Type": list,
-            "PyDict_Type": dict,
-            "PyTuple_Type": tuple,
-            "PyFile_Type": file,
-            "PyLong_Type": long,
-            "PyInt_Type": int,
-            "PyFloat_Type": float,
-            "PyComplex_Type": complex,
-            "PyCObject_Type": OpaquePyCObject,
-        }
         
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        for (k, v) in sorted(types.items()):
+        for (k, v) in BUILTIN_TYPES.items():
             typePtr = getattr(mapper, k)
             self.assertEquals(mapper.Retrieve(typePtr), v, "failed to map " + k)
             self.assertEquals(mapper.RefCount(typePtr), 1, "failed to add reference to " + k)
@@ -96,31 +98,94 @@ class Types_Test(TestCase):
     
     
     def testReadyBuiltinTypes(self):
-        types = (
-            "PyList_Type",
-            "PyTuple_Type",
-            "PyDict_Type", 
-            "PyString_Type", # yes, I'm pretending that unicode and basestring just don't exist
-            "PyFile_Type",
-            "PyInt_Type",
-            "PyLong_Type",
-            "PyFloat_Type",
-            "PyComplex_Type",
-            "PyCObject_Type",
-        )
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper, readyTypes=False)
         mapper.ReadyBuiltinTypes()
         
-        for _type in types:
+        for _type in BUILTIN_TYPES:
             typePtr = getattr(mapper, _type)
             basePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base")
-            self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
-            self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type"), mapper.PyType_Type)
+            if typePtr != mapper.PyBaseObject_Type:
+                self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
+            typeTypePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type")
+            if typePtr != mapper.PyType_Type:
+                self.assertEquals(typeTypePtr, mapper.PyType_Type)
         
         mapper.Dispose()
         deallocTypes()
+    
+    
+    def testNotAutoActualisableTypes(self):
+        safeTypes = ("PyString_Type", "PyList_Type", "PyTuple_Type", "PyType_Type")
+        discoveryModes = ("IncRef", "Retrieve", "DecRef", "RefCount")
         
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        for _type in filter(lambda s: s not in safeTypes, BUILTIN_TYPES):
+            for mode in discoveryModes:
+                objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+                CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 2)
+                CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", getattr(mapper, _type))
+                self.assertRaises(CannotInterpretException, getattr(mapper, mode), objPtr)
+                Marshal.FreeHGlobal(objPtr)
+                
+        mapper.Dispose()
+        deallocTypes()
+        
+    
+    
+    def assertMaps(self, mapper, func, ptr, refcnt):
+        func(ptr)
+        obj = mapper.Retrieve(ptr)
+        ref = WeakReference(obj)
+        self.assertEquals(obj._instancePtr, ptr)
+        self.assertEquals(mapper.RefCount(ptr), refcnt)
+        
+        while mapper.RefCount(ptr) < 2:
+            mapper.IncRef(ptr)
+        while mapper.RefCount(ptr) > 2:
+            mapper.DecRef(ptr)
+            
+        del obj
+        gcwait()
+        self.assertEquals(ref.IsAlive, True)
+        
+        obj = ref.Target
+        mapper.DecRef(ptr)
+        del obj
+        gcwait()
+        self.assertEquals(ref.IsAlive, False)
+    
+    
+    def testExtensionTypesAutoActualisable(self):
+        discoveryModes = {
+            "IncRef": lambda f, o: self.assertMaps(mapper, f, o, 3), 
+            "Retrieve": lambda f, o: self.assertMaps(mapper, f, o, 2), 
+            "DecRef": lambda f, o: self.assertMaps(mapper, f, o, 1), 
+            "RefCount": lambda f, o: self.assertMaps(mapper, f, o, 2),
+        }
+        
+        allocator = HGlobalAllocator()
+        mapper = Python25Mapper(allocator)
+        deallocTypes = CreateTypes(mapper)
+        
+        # delay deallocs to avoid types with the same addresses causing confusion
+        userTypeDeallocs = []
+        for (mode, TestFunc) in discoveryModes.items():
+            typePtr, deallocType = MakeTypePtr(mapper, {"tp_name": mode + "Class"})
+            userTypeDeallocs.append(deallocType)
+            objPtr = allocator.Alloc(Marshal.SizeOf(PyObject))
+            CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 2)
+            CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", typePtr)
+            
+            discoveryFunc = getattr(mapper, mode)
+            TestFunc(discoveryFunc, objPtr)
+                
+        mapper.Dispose()
+        for deallocFunc in userTypeDeallocs:
+            deallocFunc()
+        deallocTypes()
+            
 
 FIELDS = (
     "tp_alloc",

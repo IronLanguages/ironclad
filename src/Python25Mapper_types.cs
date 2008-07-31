@@ -17,6 +17,7 @@ namespace Ironclad
         public override void
         Fill_PyBaseObject_Type(IntPtr address)
         {
+            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_init", this.GetAddress("PyBaseObject_Init"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_alloc", this.GetAddress("PyType_GenericAlloc"));
@@ -36,6 +37,7 @@ namespace Ironclad
         public override void 
         Fill_PyFile_Type(IntPtr address)
         {
+            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.PythonFile);
         }
@@ -43,6 +45,7 @@ namespace Ironclad
         public override void
         Fill_PyInt_Type(IntPtr address)
         {
+            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.Int32);
         }
@@ -50,6 +53,7 @@ namespace Ironclad
         public override void
         Fill_PyLong_Type(IntPtr address)
         {
+            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.BigInteger);
         }
@@ -57,6 +61,7 @@ namespace Ironclad
         public override void
         Fill_PyFloat_Type(IntPtr address)
         {
+            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.Double);
         }
@@ -64,6 +69,7 @@ namespace Ironclad
         public override void
         Fill_PyComplex_Type(IntPtr address)
         {
+            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.Complex64);
         }
@@ -71,6 +77,7 @@ namespace Ironclad
         public override void 
         Fill_PyCObject_Type(IntPtr address)
         {
+            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyCObject_Dealloc"));
             this.map.Associate(address, typeof(OpaquePyCObject));
@@ -79,6 +86,7 @@ namespace Ironclad
         public override void
         Fill_PyDict_Type(IntPtr address)
         {
+            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.Dict);
         }
@@ -227,6 +235,13 @@ namespace Ironclad
             CPyMarshal.WritePtrField(newInstance, typeof(PyObject), "ob_type", typePtr);
             
             return newInstance;
+        }
+        
+        
+        private void ActualiseType(IntPtr typePtr)
+        {
+            this.PyType_Ready(typePtr);
+            this.GenerateClass(typePtr);
         }
     }
 }

@@ -31,7 +31,6 @@ class DictTest(TestCase):
         self.assertEquals(dictObj, {}, "retrieved unexpected value")
         
         mapper.DecRef(dictPtr)
-        self.assertRaises(KeyError, lambda: mapper.RefCount(dictPtr))
         self.assertEquals(frees, [dictPtr], "did not release memory")
         mapper.Dispose()
         deallocTypes()
@@ -63,7 +62,8 @@ class DictTest(TestCase):
 
 
     def testPyDict_GetItemStringSuccess(self):
-        mapper = Python25Mapper()
+        frees = []
+        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
         deallocTypes = CreateTypes(mapper)
         dictPtr = mapper.Store({"abcde": 12345})
         
@@ -71,7 +71,7 @@ class DictTest(TestCase):
         self.assertEquals(mapper.Retrieve(itemPtr), 12345, "failed to get item")
         self.assertEquals(mapper.RefCount(itemPtr), 1, "something is wrong")
         mapper.FreeTemps()
-        self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
+        self.assertEquals(itemPtr in frees, True)
         
         mapper.Dispose()
         deallocTypes()
@@ -91,7 +91,8 @@ class DictTest(TestCase):
 
 
     def testPyDict_GetItemSuccess(self):
-        mapper = Python25Mapper()
+        frees = []
+        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
         deallocTypes = CreateTypes(mapper)
         dictPtr = mapper.Store({12345: 67890})
         
@@ -99,7 +100,7 @@ class DictTest(TestCase):
         self.assertEquals(mapper.Retrieve(itemPtr), 67890, "failed to get item")
         self.assertEquals(mapper.RefCount(itemPtr), 1, "something is wrong")
         mapper.FreeTemps()
-        self.assertRaises(KeyError, lambda: mapper.RefCount(itemPtr))
+        self.assertEquals(itemPtr in frees, True)
         
         mapper.Dispose()
         deallocTypes()

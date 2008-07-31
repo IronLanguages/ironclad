@@ -124,7 +124,6 @@ class Python25Mapper_References_Test(TestCase):
         self.assertEquals(frees, [], "unexpected deallocations")
         mapper.PyObject_Free(ptr)
         self.assertEquals(frees, [ptr], "unexpected deallocations")
-        self.assertRaises(KeyError, lambda: mapper.RefCount(ptr))
         self.assertRaises(KeyError, lambda: mapper.PyObject_Free(ptr))
         
         mapper.Dispose()
@@ -378,7 +377,6 @@ class Python25Mapper_References_Test(TestCase):
         mapper.DecRef(ptr)
         self.assertEquals(frees, [ptr], "unexpected deallocations")
         self.assertRaises(KeyError, lambda: mapper.PyObject_Free(ptr))
-        self.assertRaises(KeyError, lambda: mapper.RefCount(IntPtr(1)))
         mapper.Dispose()
 
 

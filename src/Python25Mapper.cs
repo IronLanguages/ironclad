@@ -31,6 +31,13 @@ namespace Ironclad
         }
     }
 
+    public class CannotInterpretException : Exception
+    {
+        public CannotInterpretException(string message): base(message)
+        {
+        }
+    }
+
 
     public partial class Python25Mapper : Python25Api
     {
@@ -52,6 +59,7 @@ namespace Ironclad
         private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
         private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();
         private LocalDataStoreSlot threadDictStore = Thread.AllocateDataSlot();
+        private StupidSet notInterpretableTypes = new StupidSet();
 
         // TODO: this should probably be thread-local too
         private object _lastException = null;
@@ -110,12 +118,12 @@ namespace Ironclad
             GC.WaitForPendingFinalizers();
             GC.Collect();
             GC.WaitForPendingFinalizers();
-
             /* The preceding dance is intended to ensure that no bridge objects are
              * sitting around in the freachable queue waiting to be double-freed 
              * (AFAICT, SuppressFinalize does not affect objects already on the 
-             * freachable queue; hence, the dealloc function will be called once in
-             * the following loop and once at some point in the future.)
+             * freachable queue; hence, for such objects, the dealloc function would 
+             * be called once in the following loop and once at some point in the 
+             * future.)
              * 
              * If the above is nonsense, please complain :).
              */
@@ -197,10 +205,48 @@ namespace Ironclad
             this.bridgePtrs.Add(ptr);
         }
         
+
+        private void
+        AttemptToMap(IntPtr ptr)
+        {
+            if (this.map.HasPtr(ptr) || ptr == IntPtr.Zero)
+            {
+                return;
+            }
+
+            IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyTypeObject), "ob_type");
+            this.AttemptToMap(typePtr);
+
+            if (typePtr == IntPtr.Zero || this.notInterpretableTypes.Contains(typePtr))
+            {
+                throw new CannotInterpretException(String.Format("cannot translate object at {0} with type at {1}", ptr, typePtr));
+            }
+
+            if (typePtr == this.PyType_Type)
+            {
+                this.ActualiseType(ptr);
+                return;
+            }
+            
+            if (typePtr == this.PyList_Type ||
+                typePtr == this.PyString_Type ||
+                typePtr == this.PyTuple_Type)
+            {
+                throw new NotImplementedException("trying to interpret a string, list, or tuple from unmapped unmanaged memory");
+            }
+
+            object managedInstance = PythonCalls.Call(this.trivialObjectSubclass);
+            Builtin.setattr(DefaultContext.Default, managedInstance, "_instancePtr", ptr);
+            Builtin.setattr(DefaultContext.Default, managedInstance, "__class__", this.Retrieve(typePtr));
+            this.StoreBridge(ptr, managedInstance);
+            this.Strengthen(managedInstance);
+        }
+
         
         public object 
         Retrieve(IntPtr ptr)
         {
+            this.AttemptToMap(ptr);
             if (this.map.HasPtr(ptr))
             {
                 object possibleMarker = this.map.GetObj(ptr);
@@ -231,18 +277,14 @@ namespace Ironclad
             }
             else if (ptr != IntPtr.Zero)
             {
-                IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyTypeObject), "ob_type");
-                if (this.PyType_IsSubtype(typePtr, this.PyType_Type) == 1)
-                {
-                    this.GenerateClass(ptr);
-                }
             }
             return this.map.GetObj(ptr);
         }
-        
+
         public int 
         RefCount(IntPtr ptr)
         {
+            this.AttemptToMap(ptr);
             if (this.map.HasPtr(ptr))
             {
                 return CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
@@ -257,6 +299,7 @@ namespace Ironclad
         public void 
         IncRef(IntPtr ptr)
         {
+            this.AttemptToMap(ptr);
             if (this.map.HasPtr(ptr))
             {
                 int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
@@ -276,6 +319,7 @@ namespace Ironclad
         public void 
         DecRef(IntPtr ptr)
         {
+            this.AttemptToMap(ptr);
             if (this.map.HasPtr(ptr))
             {
                 int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
