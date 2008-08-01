@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Reflection;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
@@ -19,9 +18,7 @@ namespace Ironclad
             }
             
             PythonFile pyFile = (PythonFile)this.Retrieve(pyFilePtr);
-            FieldInfo streamField = (FieldInfo)(pyFile.GetType().GetMember(
-                "_stream", BindingFlags.NonPublic | BindingFlags.Instance)[0]);
-            FileStream stream = (FileStream)streamField.GetValue(pyFile);
+            FileStream stream = InappropriateReflection.StreamFromPythonFile(pyFile);
             SafeHandle safeHandle = stream.SafeFileHandle;
             IntPtr handle = safeHandle.DangerousGetHandle();
             

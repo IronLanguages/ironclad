@@ -2,6 +2,6 @@ int
 double
 BigInteger
 string
-PythonDictionary
+IDictionary
 PythonTuple
 List

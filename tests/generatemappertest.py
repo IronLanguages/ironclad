@@ -61,13 +61,16 @@ SystemError
 OverflowError
 """
 
-EXPECTED_EXCEPTIONS = """
+USINGS = """
 using System;
+using System.Collections;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Types;
 using Microsoft.Scripting.Math;
+"""
 
+EXPECTED_EXCEPTIONS = USINGS + """
 namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
@@ -90,13 +93,7 @@ BaseException
 WindowsError
 """
 
-EXPECTED_BUILTIN_EXCEPTIONS = """
-using System;
-using IronPython.Runtime;
-using IronPython.Runtime.Exceptions;
-using IronPython.Runtime.Types;
-using Microsoft.Scripting.Math;
-
+EXPECTED_BUILTIN_EXCEPTIONS = USINGS + """
 namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
@@ -120,22 +117,16 @@ Tuple
 Dict
 """
 
-EXPECTED_STORE = """
-using System;
-using IronPython.Runtime;
-using IronPython.Runtime.Exceptions;
-using IronPython.Runtime.Types;
-using Microsoft.Scripting.Math;
-
+EXPECTED_STORE = USINGS + """
 namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
         private IntPtr StoreDispatch(object obj)
         {
-            if (obj.GetType() == typeof(string)) { return this.Store((string)obj); }
-            if (obj.GetType() == typeof(Tuple)) { return this.Store((Tuple)obj); }
-            if (obj.GetType() == typeof(Dict)) { return this.Store((Dict)obj); }
+            if (obj is string) { return this.Store((string)obj); }
+            if (obj is Tuple) { return this.Store((Tuple)obj); }
+            if (obj is Dict) { return this.Store((Dict)obj); }
             return this.StoreObject(obj);
         }
     }

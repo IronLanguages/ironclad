@@ -1,7 +1,9 @@
 using System;
+using System.Collections;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
+using IronPython.Runtime.Calls;
 using IronPython.Runtime.Types;
 
 using Ironclad.Structs;
@@ -18,14 +20,13 @@ namespace Ironclad
         }
         
         private IntPtr
-        Store(PythonDictionary dictMgd)
+        Store(IDictionary dictMgd)
         {
             PyObject dict = new PyObject();
             dict.ob_refcnt = 1;
             dict.ob_type = this.PyDict_Type;
             IntPtr dictPtr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
             Marshal.StructureToPtr(dict, dictPtr, false);
-            
             this.map.Associate(dictPtr, dictMgd);
             return dictPtr;
         }
@@ -33,16 +34,21 @@ namespace Ironclad
         public override int
         PyDict_Size(IntPtr dictPtr)
         {
-            PythonDictionary dict = (PythonDictionary)this.Retrieve(dictPtr);
-            return dict.__len__();
+            IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
+            if (dict is DictProxy)
+            {
+                DictProxy proxy = (DictProxy)dict;
+                return proxy.__len__();
+            }
+            return dict.Keys.Count;
         }
         
         
         private IntPtr
         PyDict_Get(IntPtr dictPtr, object key)
         {
-            PythonDictionary dict = (PythonDictionary)this.Retrieve(dictPtr);
-            if (dict.has_key(key))
+            IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
+            if (dict.Contains(key))
             {
                 IntPtr result = this.Store(dict[key]);
                 this.RememberTempObject(result);
@@ -65,14 +71,30 @@ namespace Ironclad
             return PyDict_Get(dictPtr, key);
         }
 
+
+        private int 
+        PyDict_Set(IntPtr dictPtr, object key, object item)
+        {
+            IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
+            if (dict is DictProxy)
+            {
+                PythonType _type = InappropriateReflection.PythonTypeFromDictProxy((DictProxy)dict);
+                Builtin.setattr(DefaultContext.Default, _type, (string)key, item);
+            }
+            else
+            {
+                dict[key] = item;
+            }
+            return 0;
+        }
+
+
         public override int
         PyDict_SetItem(IntPtr dictPtr, IntPtr keyPtr, IntPtr itemPtr)
         {
             try
             {
-                PythonDictionary dict = (PythonDictionary)this.Retrieve(dictPtr);
-                dict[this.Retrieve(keyPtr)] = this.Retrieve(itemPtr);
-                return 0;
+                return this.PyDict_Set(dictPtr, this.Retrieve(keyPtr), this.Retrieve(itemPtr));
             }
             catch (Exception e)
             {
@@ -84,9 +106,7 @@ namespace Ironclad
         public override int
         PyDict_SetItemString(IntPtr dictPtr, string key, IntPtr itemPtr)
         {
-            PythonDictionary dict = (PythonDictionary)this.Retrieve(dictPtr);
-            dict[key] = this.Retrieve(itemPtr);
-            return 0;
+            return this.PyDict_Set(dictPtr, key, this.Retrieve(itemPtr));
         }
     }
 }
