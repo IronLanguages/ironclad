@@ -8,7 +8,7 @@ from tests.utils.memory import CreateTypes
 from tests.utils.python25mapper import MakeAndAddEmptyModule
 from tests.utils.testcase import TestCase
 
-from System import IntPtr, NullReferenceException, WeakReference
+from System import Int32, IntPtr, NullReferenceException, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import (
@@ -520,11 +520,29 @@ class Python25Mapper_NoneTest(TestCase):
         Marshal.FreeHGlobal(nonePtr)
 
 
+class Python25Mapper_Py_OptimizeFlag_Test(TestCase):
+
+    def testFills(self):
+        # TODO: if we set a lower value, numpy will crash inside arr_add_docstring
+        # I consider docstrings to be low-priority-enough that it's OK to fudge this
+        # for now
+        mapper = Python25Mapper()
+        flagPtr = Marshal.AllocHGlobal(Marshal.SizeOf(Int32))
+        mapper.SetData("Py_OptimizeFlag", flagPtr)
+        
+        self.assertEquals(CPyMarshal.ReadInt(flagPtr), 2)
+        
+        mapper.Dispose()
+        Marshal.FreeHGlobal(flagPtr)
+    
+
+
 suite = makesuite(
     Python25Mapper_CreateDestroy_Test,
     Python25Mapper_References_Test,
     Python25Mapper_GetAddress_NonApi_Test,
     Python25Mapper_NoneTest,
+    Python25Mapper_Py_OptimizeFlag_Test,
 )
 
 if __name__ == '__main__':

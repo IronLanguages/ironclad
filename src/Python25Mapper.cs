@@ -511,6 +511,13 @@ namespace Ironclad
             this.map.Associate(address, UnmanagedDataMarker.None);
         }
         
+        
+        public override void
+        Fill_Py_OptimizeFlag(IntPtr address)
+        {
+            CPyMarshal.WriteInt(address, 2);
+        }
+        
     }
 
 }
