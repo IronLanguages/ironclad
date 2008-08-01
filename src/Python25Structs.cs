@@ -252,7 +252,53 @@ namespace Ironclad
             public IntPtr tp_weaklist;
             public IntPtr tp_del;
         }
+        
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct PyNumberMethods
+        {
+            public IntPtr nb_add;
+            public IntPtr nb_subtract;
+            public IntPtr nb_multiply;
+            public IntPtr nb_divide;
+            public IntPtr nb_remainder;
+            public IntPtr nb_divmod;
+            public IntPtr nb_power;
+            public IntPtr nb_negative;
+            public IntPtr nb_positive;
+            public IntPtr nb_absolute;
+            public IntPtr nb_nonzero;
+            public IntPtr nb_invert;
+            public IntPtr nb_lshift;
+            public IntPtr nb_rshift;
+            public IntPtr nb_and;
+            public IntPtr nb_xor;
+            public IntPtr nb_or;
+            public IntPtr nb_coerce;
+            public IntPtr nb_int;
+            public IntPtr nb_long;
+            public IntPtr nb_float;
+            public IntPtr nb_oct;
+            public IntPtr nb_hex;
+            public IntPtr nb_inplace_add;
+            public IntPtr nb_inplace_subtract;
+            public IntPtr nb_inplace_multiply;
+            public IntPtr nb_inplace_divide;
+            public IntPtr nb_inplace_remainder;
+            public IntPtr nb_inplace_power;
+            public IntPtr nb_inplace_lshift;
+            public IntPtr nb_inplace_rshift;
+            public IntPtr nb_inplace_and;
+            public IntPtr nb_inplace_xor;
+            public IntPtr nb_inplace_or;
 
+            /* The following require the Py_TPFLAGS_HAVE_CLASS flag */
+            public IntPtr nb_floor_divide;
+            public IntPtr nb_true_divide;
+            public IntPtr nb_inplace_floor_divide;
+            public IntPtr nb_inplace_true_divide;
+
+            public IntPtr nb_index;
+        }
     }
 }
 
