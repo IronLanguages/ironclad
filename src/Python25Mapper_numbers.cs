@@ -24,6 +24,22 @@ namespace Ironclad
                 return IntPtr.Zero;
             }
         }
+        
+        
+        public override IntPtr
+        PyNumber_Float(IntPtr numberPtr)
+        {
+            try
+            {
+                double result = Converter.ConvertToDouble(this.Retrieve(numberPtr));
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
 
 
         public override IntPtr
@@ -127,6 +143,20 @@ namespace Ironclad
         PyFloat_FromDouble(double value)
         {
             return this.Store(value);
+        }
+        
+        public override double
+        PyFloat_AsDouble(IntPtr numberPtr)
+        {
+            try
+            {
+                return Converter.ConvertToDouble(this.Retrieve(numberPtr));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1.0;
+            }
         }
 
         private IntPtr

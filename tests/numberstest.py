@@ -188,6 +188,30 @@ class PyFloat_Test(TestCase):
         deallocTypes()
 
 
+    def testPyFloat_AsDouble(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        for value in (0.0, 3.3e33, -3.3e-33):
+            ptr = mapper.Store(value)
+            self.assertEquals(mapper.PyFloat_AsDouble(ptr), value, "stored/retrieved wrong")
+            mapper.DecRef(ptr)
+        
+        for value in ("cheese", object, object()):
+            ptr = mapper.Store(value)
+            self.assertEquals(mapper.PyFloat_AsDouble(ptr), -1, "did not return expected 'error' value")
+            
+            def KindaConvertError():
+                raise mapper.LastException
+            self.assertRaises(TypeError, KindaConvertError)
+            
+            mapper.DecRef(ptr)
+            
+        mapper.Dispose()
+        deallocTypes()
+        
+
+
 class PyNumber_Test(TestCase):
     
     def testPyNumber_Long(self):
@@ -210,10 +234,40 @@ class PyNumber_Test(TestCase):
             def KindaConvertError():
                 raise mapper.LastException
             self.assertRaises(TypeError, KindaConvertError)
+            
+            mapper.DecRef(ptr)
+        
+        mapper.Dispose()
+        deallocTypes()
+    
+    
+    def testPyNumber_Float(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        values = [0, 12345, 123456789012345, 123.45]
+        values += map(float, values)
+        for value in values:
+            ptr = mapper.Store(value)
+            _float = mapper.Retrieve(mapper.PyNumber_Float(ptr))
+            self.assertEquals(_float, float(value), "converted wrong")
+            mapper.DecRef(ptr)
+        
+        badvalues = ['foo', object, object()]
+        for value in badvalues:
+            ptr = mapper.Store(value)
+            self.assertEquals(mapper.PyNumber_Float(ptr), IntPtr.Zero)
+            
+            def KindaConvertError():
+                raise mapper.LastException
+            self.assertRaises(TypeError, KindaConvertError)
+            
+            mapper.DecRef(ptr)
         
         mapper.Dispose()
         deallocTypes()
         
+    
 
 suite = makesuite(
     PyInt_Test,
