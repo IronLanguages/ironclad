@@ -114,6 +114,28 @@ class ObjectFunctionsTest(TestCase):
         deallocTypes()
 
 
+    def testPyObject_Size(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        for okval in ("hullo", [0, 3, 5], (0,), {1:2}, set([1, 2])):
+            ptr = mapper.Store(okval)
+            self.assertEquals(mapper.PyObject_Size(ptr), len(okval))
+            self.assertEquals(mapper.LastException, None)
+            mapper.DecRef(ptr)
+        
+        for badval in (0, 0.0, False, object, object()):
+            ptr = mapper.Store(badval)
+            self.assertEquals(mapper.PyObject_Size(ptr), -1)
+            def KindaConvertError():
+                raise mapper.LastException
+            self.assertRaises(TypeError, KindaConvertError)
+            mapper.DecRef(ptr)
+            
+        mapper.Dispose()
+        deallocTypes()
+
+
 class IterationTest(TestCase):
     
     def testPyObject_GetIter_Success(self):

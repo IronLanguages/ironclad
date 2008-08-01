@@ -74,14 +74,28 @@ namespace Ironclad
         public override int
         PyObject_IsTrue(IntPtr objPtr)
         {
-            object obj = this.Retrieve(objPtr);
             try
             {
-                if (Converter.ConvertToBoolean(obj))
+                if (Converter.ConvertToBoolean(this.Retrieve(objPtr)))
                 {
                     return 1;
                 }
                 return 0;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
+        }
+        
+        
+        public override int
+        PyObject_Size(IntPtr objPtr)
+        {
+            try
+            {
+                return PythonOps.Length(this.Retrieve(objPtr));
             }
             catch (Exception e)
             {
