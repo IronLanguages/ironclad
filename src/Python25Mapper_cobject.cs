@@ -34,14 +34,14 @@ namespace Ironclad
         {
             IntPtr cobjPtr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyCObject)));
             CPyMarshal.Zero(cobjPtr, Marshal.SizeOf(typeof(PyCObject)));
-            CPyMarshal.WriteIntField(cobjPtr, typeof(PyCObject), "ob_refcnt", 2);
+            CPyMarshal.WriteIntField(cobjPtr, typeof(PyCObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(cobjPtr, typeof(PyCObject), "ob_type", this.PyCObject_Type);
             CPyMarshal.WritePtrField(cobjPtr, typeof(PyCObject), "cobject", cobjData);
             CPyMarshal.WritePtrField(cobjPtr, typeof(PyCObject), "destructor", destructor);
             
             OpaquePyCObject cobj = new OpaquePyCObject(this, cobjPtr);
             this.StoreBridge(cobjPtr, cobj);
-            this.Strengthen(cobj);
+            this.IncRef(cobjPtr);
             return cobjPtr;
         }
         
