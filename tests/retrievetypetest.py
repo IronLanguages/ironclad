@@ -226,8 +226,8 @@ class DispatchCallTest(DispatchSetupTestCase):
 
 class DispatchIterTest(TestCase):
 
-    def assertDispatchesToSelfTypeMethod(self, mapper, typeSpec, expectedKeyName,
-                                         expectedMethodName, TestErrorHandler):
+    def assertSelfTypeMethod(self, typeSpec, expectedKeyName, expectedMethodName, TestErrorHandler):
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         typeSpec["tp_name"] = "klass"
@@ -240,50 +240,45 @@ class DispatchIterTest(TestCase):
         def MockDispatchFunc(methodName, selfPtr, errorHandler=None):
             self.assertEquals(methodName, "klass." + expectedKeyName, "called wrong method")
             self.assertEquals(selfPtr, expectedInstancePtr, "called method on wrong instance")
-            TestErrorHandler(errorHandler)
+            TestErrorHandler(errorHandler, mapper)
             return result
         _type._dispatcher.method_selfarg = MockDispatchFunc
         
         self.assertEquals(getattr(instance, expectedMethodName)(), result, "bad return")
-        
         del instance
         gcwait()
+        
+        mapper.Dispose()
         deallocType()
         deallocTypes()
 
 
     def test_tp_iter_MethodDispatch(self):
-        mapper = Python25Mapper()
-        
-        def TestErrorHandler(errorHandler): 
+        def TestErrorHandler(errorHandler, _): 
             self.assertEquals(errorHandler, None, "no special error handling required")
 
         typeSpec = {
             "tp_iter": lambda _: IntPtr.Zero,
             "tp_flags": Py_TPFLAGS.HAVE_ITER
         }
-        self.assertDispatchesToSelfTypeMethod(
-            mapper, typeSpec, "tp_iter", "__iter__", TestErrorHandler)
-        mapper.Dispose()
+        self.assertSelfTypeMethod(
+            typeSpec, "tp_iter", "__iter__", TestErrorHandler)
 
 
     def test_tp_iternext_MethodDispatch(self):
-        mapper = Python25Mapper()
-        
-        def TestErrorHandler(errorHandler): 
+        def TestErrorHandler(errorHandler, mapper): 
             errorHandler(IntPtr(12345))
             self.assertRaises(StopIteration, errorHandler, IntPtr.Zero)
             mapper.LastException = ValueError()
             errorHandler(IntPtr.Zero)
 
-        typeKwargs = {
+        typeSpec = {
             "tp_iternext": lambda _: IntPtr.Zero,
             "tp_flags": Py_TPFLAGS.HAVE_ITER
         }
         
-        self.assertDispatchesToSelfTypeMethod(
-            mapper, typeKwargs, "tp_iternext", "next", TestErrorHandler)
-        mapper.Dispose()
+        self.assertSelfTypeMethod(
+            typeSpec, "tp_iternext", "next", TestErrorHandler)
 
 
 class DispatchTrickyMethodsTest(TestCase):
@@ -354,27 +349,28 @@ class DispatchTrickyMethodsTest(TestCase):
         CPyMarshal.WritePtrField(instancePtr, PyObject, 'ob_type', typePtr)
         
         calls = []
-        def test_tp_new(typePtr_new, argsPtr, kwargsPtr):
+        def tp_new_test(typePtr_new, argsPtr, kwargsPtr):
             calls.append("tp_new")
             self.assertEquals(typePtr_new, typePtr)
             self.assertEquals(mapper.Retrieve(argsPtr), ARGS)
             self.assertEquals(mapper.Retrieve(kwargsPtr), KWARGS)
             return instancePtr
         
-        def test_tp_init(instancePtr_init, argsPtr, kwargsPtr):
+        def tp_init_test(instancePtr_init, argsPtr, kwargsPtr):
             calls.append("tp_init")
             self.assertEquals(instancePtr_init, instancePtr)
             self.assertEquals(mapper.Retrieve(argsPtr), ARGS)
             self.assertEquals(mapper.Retrieve(kwargsPtr), KWARGS)
             return 0
             
-        _type._dispatcher.table['klass.tp_new'] = Python25Api.PyType_GenericNew_Delegate(test_tp_new)
-        _type._dispatcher.table['klass.tp_init'] = CPython_initproc_Delegate(test_tp_init)
+        _type._dispatcher.table['klass.tp_new'] = Python25Api.PyType_GenericNew_Delegate(tp_new_test)
+        _type._dispatcher.table['klass.tp_init'] = CPython_initproc_Delegate(tp_init_test)
         
         instance = _type(*ARGS, **KWARGS)
         self.assertEquals(instance._instancePtr, instancePtr)
         self.assertEquals(calls, ['tp_new', 'tp_init'])
         
+        mapper.CheckBridgePtrs()
         del instance
         gcwait()
         self.assertEquals(calls, ['tp_new', 'tp_init', 'tp_dealloc'])
@@ -421,7 +417,7 @@ class DispatchTrickyMethodsTest(TestCase):
         self.assertEquals(objref.IsAlive, True, "object died unexpectedly")
         self.assertEquals(mapper.Retrieve(objptr), objref.Target, "mapping broken")
         
-        # now, another bridge object gets destroyed, causing us to reexamine
+        # now, another (imaginary) bridge object gets destroyed, causing us to reexamine
         mapper.CheckBridgePtrs()
         
         # and, after the next 2* GCs, objref disappears
@@ -437,9 +433,12 @@ class DispatchTrickyMethodsTest(TestCase):
 
 class PropertiesTest(TestCase):
     
-    def assertGetSet(self, mapper, attr, get, set, TestType, closure=IntPtr.Zero):
+    def assertGetSet(self, attr, get, set, TestType, closure=IntPtr.Zero):
         doc = "take me to the airport, put me on a plane"
         getset, deallocGetset = MakeGetSetDef(attr, get, set, doc, closure)
+        
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
         
         typeSpec = {
             "tp_name": 'klass',
@@ -448,17 +447,16 @@ class PropertiesTest(TestCase):
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         _type = mapper.Retrieve(typePtr)
         
-        self.assertEquals(_type.boing.__doc__, doc, "bad docstring")
+        self.assertEquals(getattr(_type, attr).__doc__, doc, "bad docstring")
         TestType(_type)
         
         deallocGetset()
+        mapper.Dispose()
         deallocType()
+        deallocTypes()
     
     
     def testGet(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
         def get(_, __):
             self.fail("this should have been patched out in TestType")
         
@@ -485,15 +483,10 @@ class PropertiesTest(TestCase):
             del instance
             gcwait()
         
-        self.assertGetSet(mapper, "boing", get, None, TestType)
-        mapper.Dispose()
-        deallocTypes()
+        self.assertGetSet("boing", get, None, TestType)
 
 
     def testSet(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
         def set(_, __, ___):
             self.fail("this should have been patched out in TestType")
         
@@ -507,33 +500,28 @@ class PropertiesTest(TestCase):
             
             try:
                 # not using assertRaises because we can't del instance if it's referenced in nested scope
-                instance.boing
+                instance.splat
             except AttributeError:
                 pass
             else:
                 self.fail("Failed to raise AttributeError when getting set-only property")
                 
             value = "see my vest, see my vest, made from real gorilla chest"
-            instance.boing = value
-            self.assertEquals(calls, [('Setter', ('klass.__set_boing', instance._instancePtr, value, IntPtr.Zero))])
+            instance.splat = value
+            self.assertEquals(calls, [('Setter', ('klass.__set_splat', instance._instancePtr, value, IntPtr.Zero))])
             del instance
             gcwait()
             
-        self.assertGetSet(mapper, "boing", None, set, TestType)
-        mapper.Dispose()
-        deallocTypes()
+        self.assertGetSet("splat", None, set, TestType)
         
 
     def testClosure(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        closurePtr = IntPtr(12345)
-        
         def get(_, __):
             self.fail("this should have been patched out in TestType")
         def set(_, __, ___):
             self.fail("this should have been patched out in TestType")
         
+        CLOSURE_PTR = IntPtr(12345)
         def TestType(_type):
             instance = _type()
             
@@ -548,19 +536,18 @@ class PropertiesTest(TestCase):
                 calls.append(('Setter', (name, instancePtr, value, closurePtr)))
             _type._dispatcher.method_setter = Setter
             
-            self.assertEquals(instance.boing, result, "wrong result")
+            self.assertEquals(instance.click, result, "wrong result")
             value = "I've been called a greasy thug too, and it never stops hurting."
-            instance.boing = value
+            instance.click = value
             self.assertEquals(calls, 
-                [('Getter', ('klass.__get_boing', instance._instancePtr, closurePtr)),
-                 ('Setter', ('klass.__set_boing', instance._instancePtr, value, closurePtr))],
+                [('Getter', ('klass.__get_click', instance._instancePtr, CLOSURE_PTR)),
+                 ('Setter', ('klass.__set_click', instance._instancePtr, value, CLOSURE_PTR))],
                 "wrong calls")
+                
             del instance
             gcwait()
             
-        self.assertGetSet(mapper, "boing", get, set, TestType, closurePtr)
-        mapper.Dispose()
-        deallocTypes()
+        self.assertGetSet("click", get, set, TestType, CLOSURE_PTR)
 
 
 class MembersTest(TestCase):
@@ -577,7 +564,7 @@ class MembersTest(TestCase):
         
         self.assertEquals(getattr(_type, attr).__doc__, doc, "wrong docstring")
         TestType(_type)
-        deallocType()
+        return deallocType
     
         
     def testReadOnlyMember(self):
@@ -609,8 +596,9 @@ class MembersTest(TestCase):
             del instance
             gcwait()
             
-        self.assertMember(mapper, 'boing', MemberT.INT, offset, 1, TestType)
+        deallocType = self.assertMember(mapper, 'boing', MemberT.INT, offset, 1, TestType)
         mapper.Dispose()
+        deallocType()
         deallocTypes()
     
     
@@ -647,9 +635,10 @@ class MembersTest(TestCase):
         attr = 'boing'
         offset = 16
         TestType = self.getGetSetTypeTest(attr, name, offset, value, result)
-        self.assertMember(mapper, attr, getattr(MemberT, name.upper()), offset, 0, TestType)
+        deallocType = self.assertMember(mapper, attr, getattr(MemberT, name.upper()), offset, 0, TestType)
     
         mapper.Dispose()
+        deallocType()
         deallocTypes()
         
         

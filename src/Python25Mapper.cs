@@ -110,9 +110,23 @@ namespace Ironclad
             }
             this.alive = true;
         }
+
+        ~Python25Mapper()
+        {
+            if (this.alive)
+            {
+                Console.WriteLine("Python25Mapper finalized without being Disposed: I'm not even going to try to handle this.");
+            }
+        }
         
         public void Dispose()
         {
+            /* You must call Dispose(); really, you must call Dispose(). Shutdown seems to be reliably clean if you
+             * Dispose() *after* delling all ipy references to bridge object, and *before* deallocing any memory the 
+             * mapper might have an interest in (specifically, anything you didn't allocate with the same allocator
+             * that the mapper uses -- for example, the Py*_Type pointers).
+             */
+ 
             this.CheckBridgePtrs();
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -203,6 +217,13 @@ namespace Ironclad
         {
             this.map.WeakAssociate(ptr, obj);
             this.bridgePtrs.Add(ptr);
+        }
+        
+        
+        public bool
+        HasPtr(IntPtr ptr)
+        {
+            return this.map.HasPtr(ptr);
         }
         
 

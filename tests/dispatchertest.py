@@ -108,7 +108,7 @@ CLOSURE = IntPtr(555)
 
 class DispatcherDispatchTestCase(TestCase):
     
-    def getPatchedDispatcher(self, realMapper, callables, calls, _maybe_raise):
+    def getPatchedDispatcher(self, realMapper, callables, calls, _maybe_raise, hasPtr=False, retrieveResult=None):
         test = self
         class MockMapper(object):
             def __init__(self):
@@ -123,13 +123,22 @@ class DispatcherDispatchTestCase(TestCase):
             def Retrieve(self, ptr):
                 test.assertEquals(ptr, RESULT_PTR, "bad result")
                 calls.append(('Retrieve', (ptr,)))
+                if retrieveResult is not None:
+                    return retrieveResult
                 return RESULT
     
             def StoreBridge(self, ptr, item):
                 calls.append(('StoreBridge', (ptr, item)))
+    
+            def Strengthen(self, item):
+                calls.append(('Strengthen', (item,)))
+                
+            def HasPtr(self, ptr):
+                calls.append(('HasPtr', (ptr,)))
+                return hasPtr
             
-            def RefCount(self, _):
-                return reportedRefCount
+            def IncRef(self, ptr):
+                calls.append(('IncRef', (ptr,)))
                 
         mockMapper = MockMapper()
         dispatcher = GetDispatcherClass(realMapper)(mockMapper, callables)
@@ -559,7 +568,40 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
             ('dgt', (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
-            ('StoreBridge', (RESULT_PTR, result))
+            ('HasPtr', (RESULT_PTR,)),
+            ('StoreBridge', (RESULT_PTR, result)),
+            ('Strengthen', (result,))
+        ])
+        mapper.Dispose()
+    
+    def testDispatch_construct_singleton(self):
+        class klass(object):
+            _typePtr = TYPE_PTR
+        
+        originalObj = klass()
+        mapper = Python25Mapper()
+        calls = []
+        callables = {
+            'dgt': FuncReturning(RESULT_PTR, calls, 'dgt'),
+        }
+        _maybe_raise = FuncReturning(None, calls, '_maybe_raise')
+        dispatcher = self.getPatchedDispatcher(
+            mapper, callables, calls, _maybe_raise, hasPtr=True, retrieveResult=originalObj)
+        
+        result = CallWithFakeObjectInDispatcherModule(
+            mapper, calls, lambda: dispatcher.construct('dgt', klass, *ARGS, **KWARGS))
+        
+        self.assertEquals(result, originalObj, "did not return original object")
+        self.assertEquals(calls, [
+            ('__new__', (klass,)),
+            ('Store', (ARGS,)),
+            ('Store', (KWARGS,)),
+            ('dgt', (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
+            ('HasPtr', (RESULT_PTR,)),
+            ('IncRef', (RESULT_PTR,)),
+            ('Retrieve', (RESULT_PTR,)),
         ])
         mapper.Dispose()
     
