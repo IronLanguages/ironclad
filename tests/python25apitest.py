@@ -259,6 +259,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyTuple_Size", ('IntPtr(111)',), '999')
         
         self.assertFinds("PyNumber_Long", ('IntPtr(111)',), 'IntPtr(999)')
+        self.assertFinds("PyNumber_Float", ('IntPtr(111)',), 'IntPtr(999)')
         
         self.assertFinds("PyString_AsString", ('IntPtr(98765)',), 'IntPtr(12345)')
         self.assertFinds("PyString_FromString", ('IntPtr(333)',), 'IntPtr(444)')
@@ -279,6 +280,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyLong_FromUnsignedLongLong", ('UInt64(18000000000000000000)',), 'IntPtr(999)')
         
         self.assertFinds("PyFloat_FromDouble", ('33.3',), 'IntPtr(999)')
+        self.assertFinds("PyFloat_AsDouble", ('IntPtr(111)',), '123.45')
         
         self.assertFinds("PyFile_AsFile", ('IntPtr(111)',), 'IntPtr(999)')
         
