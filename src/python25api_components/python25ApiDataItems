@@ -46,7 +46,7 @@ _PyWeakref_CallableProxyType PyTypeObject
 
 _Py_NoneStruct PyObject
 
-
+Py_OptimizeFlag int
 
 
 
