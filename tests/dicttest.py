@@ -48,6 +48,30 @@ class DictTest(TestCase):
         Marshal.FreeHGlobal(typeBlock)
 
 
+    def testStoreTypeDictCreatesDictTypeWhichWorks(self):
+        mapper = Python25Mapper()
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        mapper.SetData("PyDict_Type", typeBlock)
+        
+        class klass(object):
+            pass
+        
+        dictPtr = mapper.Store(klass.__dict__)
+        self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), typeBlock, "wrong type")
+        
+        self.assertEquals(mapper.PyDict_SetItemString(dictPtr, 'foo', mapper.Store('bar')), 0)
+        self.assertEquals(mapper.PyDict_SetItem(dictPtr, mapper.Store('baz'), mapper.Store('qux')), 0)
+        self.assertEquals(mapper.PyDict_GetItemString(dictPtr, 'foo'), mapper.Store('bar'))
+        self.assertEquals(mapper.PyDict_GetItem(dictPtr, mapper.Store('baz')), mapper.Store('qux'))
+        self.assertEquals(klass.foo, 'bar')
+        self.assertEquals(klass.baz, 'qux')
+        self.assertEquals(mapper.PyDict_Size(dictPtr), len(klass.__dict__))
+        
+        
+        mapper.Dispose()
+        Marshal.FreeHGlobal(typeBlock)
+        
+
     def testPyDict_Size(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)

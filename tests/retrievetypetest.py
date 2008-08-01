@@ -803,6 +803,22 @@ class InheritanceTest(TestCase):
         deallocTypes()
 
 
+class TypeDictTest(TestCase):
+    
+    def testRetrieveAssignsDictTo_tp_dict(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        typePtr, deallocType = MakeTypePtr(mapper, {"tp_name": "klass"})
+        
+        _type = mapper.Retrieve(typePtr)
+        _typeDictPtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_dict")
+        self.assertEquals(mapper.Retrieve(_typeDictPtr), _type.__dict__)
+        
+        mapper.Dispose()
+        deallocType()
+        deallocTypes()
+        
+
 suite = makesuite(
     DispatchTypeMethodsTest,
     DispatchCallTest,
@@ -811,6 +827,7 @@ suite = makesuite(
     PropertiesTest,
     MembersTest,
     InheritanceTest,
+    TypeDictTest,
 )
 if __name__ == '__main__':
     run(suite)

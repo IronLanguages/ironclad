@@ -38,10 +38,7 @@ namespace Ironclad
         private PythonContext
         GetPythonContext()
         {
-            FieldInfo _languageField = (FieldInfo)(this.engine.GetType().GetMember(
-                "_language", BindingFlags.NonPublic | BindingFlags.Instance)[0]);
-            PythonContext ctx = (PythonContext)_languageField.GetValue(this.engine);
-            return ctx;
+            return InappropriateReflection.PythonContextFromEngine(this.engine);
         }
         
         
@@ -479,6 +476,9 @@ namespace Ironclad
             Builtin.setattr(DefaultContext.Default, klass, "_typePtr", typePtr);
             object _dispatcher = PythonCalls.Call(this.dispatcherClass, new object[] { this, methodTable });
             Builtin.setattr(DefaultContext.Default, klass, "_dispatcher", _dispatcher);
+            
+            object typeDict = Builtin.getattr(DefaultContext.Default, klass, "__dict__");
+            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_dict", this.Store(typeDict));
             
             this.map.Associate(typePtr, klass);
             this.IncRef(typePtr);

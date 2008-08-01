@@ -41,6 +41,7 @@ STORE_OUTFILE = "../Python25Mapper_store.cs"
 
 FILE_TEMPLATE = """
 using System;
+using System.Collections;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Types;
@@ -75,7 +76,7 @@ STORE_METHOD_TEMPLATE = """\
         }"""
 
 STORE_TYPE_TEMPLATE = """\
-            if (obj.GetType() == typeof(%(type)s)) { return this.Store((%(type)s)obj); }"""
+            if (obj is %(type)s) { return this.Store((%(type)s)obj); }"""
 
 
 if __name__ == "__main__":
