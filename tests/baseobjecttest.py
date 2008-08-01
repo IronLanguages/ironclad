@@ -294,16 +294,22 @@ class InitFunctionsTest(TestCase):
         
         _type = mapper.Retrieve(typePtr)
         obj = mapper.Retrieve(objPtr)
+        objref = WeakReference(obj)
         self.assertEquals(obj.__class__, _type, "wrong type")
         
         # the C extension decides it no longer cares about the object
         CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 1)
         
         # and so does the managed side
-        objref = WeakReference(obj)
         del obj
         gcwait()
+        self.assertEquals(objref.IsAlive, True, "GCed object while it should still have been strongly mapped")
         
+        # at some point, we check bridge ptrs, and it becomes eligible for collection
+        obj = objref.Target
+        mapper.CheckBridgePtrs()
+        del obj
+        gcwait()
         self.assertEquals(objref.IsAlive, False, "failed to GC unwanted object")
         
         mapper.Dispose()

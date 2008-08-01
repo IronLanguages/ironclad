@@ -52,10 +52,10 @@ namespace Ironclad
             Builtin.setattr(DefaultContext.Default, managedInstance, "_instancePtr", objPtr);
             Builtin.setattr(DefaultContext.Default, managedInstance, "__class__", this.Retrieve(typePtr));
             
-            CPyMarshal.WriteIntField(objPtr, typeof(PyObject), "ob_refcnt", 2);
+            CPyMarshal.WriteIntField(objPtr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(objPtr, typeof(PyObject), "ob_type", typePtr);
-            this.map.WeakAssociate(objPtr, managedInstance);
-            
+            this.StoreBridge(objPtr, managedInstance);
+            this.IncRef(objPtr);
             return objPtr;
         }
         
