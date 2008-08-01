@@ -74,9 +74,13 @@ class Dispatcher(object):
         finally:
             self._cleanup(argsPtr, kwargsPtr)
         
-        self.mapper.StoreBridge(instancePtr, instance)
-        instance._instancePtr = instancePtr
+        if self.mapper.HasPtr(instancePtr):
+            self.mapper.IncRef(instancePtr)
+            return self.mapper.Retrieve(instancePtr)
         
+        instance._instancePtr = instancePtr
+        self.mapper.StoreBridge(instancePtr, instance)
+        self.mapper.Strengthen(instance)
         return instance
 
     def init(self, name, instance, *args, **kwargs):
