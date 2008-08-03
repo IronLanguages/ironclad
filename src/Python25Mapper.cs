@@ -122,7 +122,7 @@ namespace Ironclad
         public void Dispose()
         {
             /* You must call Dispose(); really, you must call Dispose(). Shutdown seems to be reliably clean if you
-             * Dispose() *after* delling all ipy references to bridge object, and *before* deallocing any memory the 
+             * Dispose() *after* delling all ipy references to bridge objects, and *before* deallocing any memory the 
              * mapper might have an interest in (specifically, anything you didn't allocate with the same allocator
              * that the mapper uses -- for example, the Py*_Type pointers).
              */
