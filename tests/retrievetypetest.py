@@ -22,26 +22,10 @@ class BorkedException(System.Exception):
     pass
 
 
-INSTANCE_PTR = IntPtr(111)
-ARGS_PTR = IntPtr(222)
-KWARGS_PTR = IntPtr(333)
+ARG1_PTR = IntPtr(111)
+ARG2_PTR = IntPtr(222)
+ARG3_PTR = IntPtr(333)
 RESULT_PTR = IntPtr(999)
-
-
-Null_CPythonVarargsFunction = lambda _, __: IntPtr.Zero
-Null_CPythonVarargsKwargsFunction = lambda _, __, ___: IntPtr.Zero
-
-def GetVarargsDispatchFunction(result, calls):
-    def dispatch(name, instancePtr):
-        calls.append((name, instancePtr))
-        return result
-    return dispatch
-
-def GetKwargsDispatchFunction(result, calls):
-    def dispatch(name, instancePtr):
-        calls.append((name, instancePtr))
-        return result
-    return dispatch
 
 
 class DispatchSetupTestCase(TestCase):
@@ -52,25 +36,73 @@ class DispatchSetupTestCase(TestCase):
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         
         _type = mapper.Retrieve(typePtr)
-        TestType(_type)
+        TestType(_type, mapper)
         
         mapper.Dispose()
         deallocType()
         deallocTypes()
-        
-    def assertVarargsDelegate(self, dgt, calls):
-        self.assertEquals(calls, [])
-        self.assertEquals(dgt(INSTANCE_PTR, ARGS_PTR), RESULT_PTR, "wrong function in table")
-        self.assertEquals(calls, [(INSTANCE_PTR, ARGS_PTR)], "wrong function in table")
-
-    def assertKwargsDelegate(self, dgt, calls):
-        self.assertEquals(calls, [])
-        self.assertEquals(dgt(INSTANCE_PTR, ARGS_PTR, KWARGS_PTR), RESULT_PTR, "wrong function in table")
-        self.assertEquals(calls, [(INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)], "wrong function in table")
     
+    def getUnaryFunc(self, result):
+        calls = []
+        def Unary(arg1):
+            calls.append((arg1,))
+            return result
+        return Unary, calls
+    
+    def getBinaryFunc(self, result):
+        calls = []
+        def Binary(arg1, arg2):
+            calls.append((arg1, arg2))
+            return result
+        return Binary, calls
+    
+    def getTernaryFunc(self, result):
+        calls = []
+        def Ternary(arg1, arg2, arg3):
+            calls.append((arg1, arg2, arg3))
+            return result
+        return Ternary, calls
 
+    def getQuarternaryFunc(self, result):
+        calls = []
+        def Quarternary(arg1, arg2, arg3, arg4):
+            calls.append((arg1, arg2, arg3, arg4))
+            return result
+        return Quarternary, calls
+        
+    def getNaryFunc(self, result):
+        calls = []
+        def Nary(*args, **kwargs):
+            calls.append((args, kwargs))
+            return result
+        return Nary, calls
+        
 
-class DispatchTypeMethodsTest(DispatchSetupTestCase):
+    def getUnaryCFunc(self):
+        return self.getUnaryFunc(RESULT_PTR)
+
+    def getBinaryCFunc(self):
+        return self.getBinaryFunc(RESULT_PTR)
+
+    def getTernaryCFunc(self):
+        return self.getTernaryFunc(RESULT_PTR)
+
+    def assertCalls(self, dgt, args, calls, expect_args, result):
+        args, kwargs = args
+        self.assertEquals(calls, [])
+        self.assertEquals(dgt(*args, **kwargs), result)
+        self.assertEquals(calls, [expect_args])
+    
+    def assertCallsUnaryCFunc(self, dgt, calls):
+        self.assertCalls(dgt, ((ARG1_PTR,), {}), calls, (ARG1_PTR,), RESULT_PTR)
+    
+    def assertCallsBinaryCFunc(self, dgt, calls):
+        self.assertCalls(dgt, ((ARG1_PTR, ARG2_PTR), {}), calls, (ARG1_PTR, ARG2_PTR), RESULT_PTR)
+    
+    def assertCallsTernaryCFunc(self, dgt, calls):
+        self.assertCalls(dgt, ((ARG1_PTR, ARG2_PTR, ARG3_PTR), {}), calls, (ARG1_PTR, ARG2_PTR, ARG3_PTR), RESULT_PTR)
+
+class MethodsTest(DispatchSetupTestCase):
 
     def assertAddTypeObject_withSingleMethod(self, methodDef, TestType):
         typeSpec = {
@@ -80,24 +112,20 @@ class DispatchTypeMethodsTest(DispatchSetupTestCase):
         self.assertTypeSpec(typeSpec, TestType)
 
     def testNoArgsMethod(self):
-        calls = []
-        def NoArgs(selfPtr, argsPtr):
-            calls.append((selfPtr, argsPtr))
-            return RESULT_PTR
+        NoArgs, calls_cfunc = self.getBinaryCFunc()
         method, deallocMethod = MakeMethodDef("method", NoArgs, METH.NOARGS)
-        
         result = object()
-        dispatchCalls = []
-        def dispatch(name, instancePtr):
-            dispatchCalls.append((name, instancePtr))
-            return result
+        dispatch, calls_dispatch = self.getBinaryFunc(result)
         
-        def TestType(_type):
+        def TestType(_type, _):
             instance = _type()
             _type._dispatcher.method_noargs = dispatch
-            self.assertEquals(instance.method(), result, "didn't use correct _dispatcher method")
-            self.assertEquals(dispatchCalls, [("klass.method", instance._instancePtr)], "called _dispatcher method wrong")
-            self.assertVarargsDelegate(_type._dispatcher.table["klass.method"], calls)
+            self.assertCalls(
+                instance.method, (tuple(), {}), calls_dispatch, 
+                ("klass.method", instance._instancePtr), result)
+            
+            cfunc = _type._dispatcher.table["klass.method"]
+            self.assertCallsBinaryCFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -107,25 +135,20 @@ class DispatchTypeMethodsTest(DispatchSetupTestCase):
 
 
     def testObjArgMethod(self):
-        calls = []
-        def ObjArg(selfPtr, argsPtr):
-            calls.append((selfPtr, argsPtr))
-            return RESULT_PTR
+        ObjArg, calls_cfunc = self.getBinaryCFunc()
         method, deallocMethod = MakeMethodDef("method", ObjArg, METH.O)
-        
         result = object()
-        dispatchCalls = []
-        def dispatch(name, instancePtr, arg):
-            dispatchCalls.append((name, instancePtr, arg))
-            return result
+        dispatch, calls_dispatch = self.getTernaryFunc(result)
         
-        def TestType(_type):
-            arg = object()
-            instance = _type()
+        def TestType(_type, _):
+            instance, arg = _type(), object()
             _type._dispatcher.method_objarg = dispatch
-            self.assertEquals(instance.method(arg), result, "didn't use correct _dispatcher method")
-            self.assertEquals(dispatchCalls, [("klass.method", instance._instancePtr, arg)], "called _dispatcher method wrong")
-            self.assertVarargsDelegate(_type._dispatcher.table["klass.method"], calls)
+            self.assertCalls(
+                instance.method, ((arg,), {}), calls_dispatch, 
+                ("klass.method", instance._instancePtr, arg), result)
+            
+            cfunc = _type._dispatcher.table["klass.method"]
+            self.assertCallsBinaryCFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -135,26 +158,20 @@ class DispatchTypeMethodsTest(DispatchSetupTestCase):
 
 
     def testVarargsMethod(self):
-        calls = []
-        def VarArgs(selfPtr, argsPtr):
-            calls.append((selfPtr, argsPtr))
-            return RESULT_PTR
+        VarArgs, calls_cfunc = self.getBinaryCFunc()
         method, deallocMethod = MakeMethodDef("method", VarArgs, METH.VARARGS)
-        
         result = object()
-        dispatchCalls = []
-        dispatchCalls = []
-        def dispatch(name, instancePtr, *args):
-            dispatchCalls.append((name, instancePtr, args))
-            return result
+        dispatch, calls_dispatch = self.getNaryFunc(result)
         
-        def TestType(_type):
-            args = ("for", "the", "horde")
-            instance = _type()
+        def TestType(_type, _):
+            instance, args = _type(), ("for", "the", "horde")
             _type._dispatcher.method_varargs = dispatch
-            self.assertEquals(instance.method(*args), result, "didn't use correct _dispatcher method")
-            self.assertEquals(dispatchCalls, [("klass.method", instance._instancePtr, args)], "called _dispatcher method wrong")
-            self.assertVarargsDelegate(_type._dispatcher.table["klass.method"], calls)
+            self.assertCalls(
+                instance.method, (args, {}), calls_dispatch, 
+                (("klass.method", instance._instancePtr) + args, {}), result)
+            
+            cfunc = _type._dispatcher.table["klass.method"]
+            self.assertCallsBinaryCFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -164,26 +181,20 @@ class DispatchTypeMethodsTest(DispatchSetupTestCase):
         
 
     def testVarargsKwargsMethod(self):
-        calls = []
-        def Kwargs(selfPtr, argsPtr, kwargsPtr):
-            calls.append((selfPtr, argsPtr, kwargsPtr))
-            return RESULT_PTR
+        Kwargs, calls_cfunc = self.getTernaryCFunc()
         method, deallocMethod = MakeMethodDef("method", Kwargs, METH.VARARGS | METH.KEYWORDS)
-        
         result = object()
-        dispatchCalls = []
-        def dispatch(name, instancePtr, *args, **kwargs):
-            dispatchCalls.append((name, instancePtr, args, kwargs))
-            return result
+        dispatch, calls_dispatch = self.getNaryFunc(result)
         
-        def TestType(_type):
-            args = ("for", "the", "horde")
-            kwargs = {"g1": "LM", "g2": "BS", "g3": "GM"}
-            instance = _type()
+        def TestType(_type, _):
+            instance, args, kwargs = _type(), ("for", "the", "horde"), {"g1": "LM", "g2": "BS", "g3": "GM"}
             _type._dispatcher.method_kwargs = dispatch
-            self.assertEquals(instance.method(*args, **kwargs), result, "didn't use correct _dispatcher method")
-            self.assertEquals(dispatchCalls, [("klass.method", instance._instancePtr, args, kwargs)], "called _dispatcher method wrong")
-            self.assertKwargsDelegate(_type._dispatcher.table["klass.method"], calls)
+            self.assertCalls(
+                instance.method, (args, kwargs), calls_dispatch,
+                (("klass.method", instance._instancePtr) + args, kwargs), result)
+            
+            cfunc = _type._dispatcher.table["klass.method"]
+            self.assertCallsTernaryCFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -192,28 +203,22 @@ class DispatchTypeMethodsTest(DispatchSetupTestCase):
         deallocMethod()
 
 
-class DispatchCallTest(DispatchSetupTestCase):
+class CallTest(DispatchSetupTestCase):
     
     def testCall(self):
-        calls = []
-        def Call(selfPtr, argsPtr, kwargsPtr):
-            calls.append((selfPtr, argsPtr, kwargsPtr))
-            return RESULT_PTR
-        
+        Call, calls_cfunc = self.getTernaryCFunc()
         result = object()
-        dispatchCalls = []
-        def dispatch(name, instancePtr, *args, **kwargs):
-            dispatchCalls.append((name, instancePtr, args, kwargs))
-            return result
+        dispatch, calls_dispatch = self.getNaryFunc(result)
         
-        def TestType(_type):
-            args = ("for", "the", "horde")
-            kwargs = {"g1": "LM", "g2": "BS", "g3": "GM"}
-            instance = _type()
+        def TestType(_type, _):
+            instance, args, kwargs = _type(), ("for", "the", "horde"), {"g1": "LM", "g2": "BS", "g3": "GM"}
             _type._dispatcher.method_kwargs = dispatch
-            self.assertEquals(instance(*args, **kwargs), result)
-            self.assertEquals(dispatchCalls, [("klass.__call__", instance._instancePtr, args, kwargs)])
-            self.assertKwargsDelegate(_type._dispatcher.table["klass.__call__"], calls)
+            self.assertCalls(
+                instance, (args, kwargs), calls_dispatch,
+                (("klass.__call__", instance._instancePtr) + args, kwargs), result)
+            
+            cfunc = _type._dispatcher.table["klass.__call__"]
+            self.assertCallsTernaryCFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -224,45 +229,44 @@ class DispatchCallTest(DispatchSetupTestCase):
         }
         self.assertTypeSpec(typeSpec, TestType)
 
-class DispatchIterTest(TestCase):
+class IterTest(DispatchSetupTestCase):
 
-    def assertSelfTypeMethod(self, typeSpec, expectedKeyName, expectedMethodName, TestErrorHandler):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+    def assertSelfTypeMethod(self, typeFlags, keyName, expectedMethodName, TestErrorHandler):
+        func, calls_cfunc = self.getUnaryCFunc()
+        typeSpec = {
+            "tp_name": "klass",
+            keyName: func,
+            "tp_flags": typeFlags
+        }
         
-        typeSpec["tp_name"] = "klass"
-        typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
-        _type = mapper.Retrieve(typePtr)
-        result = object()
-        instance = _type()
-        expectedInstancePtr = instance._instancePtr
-
-        def MockDispatchFunc(methodName, selfPtr, errorHandler=None):
-            self.assertEquals(methodName, "klass." + expectedKeyName, "called wrong method")
-            self.assertEquals(selfPtr, expectedInstancePtr, "called method on wrong instance")
-            TestErrorHandler(errorHandler, mapper)
-            return result
-        _type._dispatcher.method_selfarg = MockDispatchFunc
+        def TestType(_type, mapper):
+            result = object()
+            calls_dispatch = []
+            def MockDispatchFunc(methodName, selfPtr, errorHandler=None):
+                calls_dispatch.append((methodName, selfPtr))
+                TestErrorHandler(errorHandler, mapper)
+                return result
+                
+            instance = _type()
+            _type._dispatcher.method_selfarg = MockDispatchFunc
+            self.assertEquals(getattr(instance, expectedMethodName)(), result, "bad return")
+            self.assertEquals(calls_dispatch, [("klass." + keyName, instance._instancePtr)])
+            
+            cfunc = _type._dispatcher.table["klass." + keyName]
+            self.assertCallsUnaryCFunc(cfunc, calls_cfunc)
+            
+            del instance
+            gcwait()
         
-        self.assertEquals(getattr(instance, expectedMethodName)(), result, "bad return")
-        del instance
-        gcwait()
-        
-        mapper.Dispose()
-        deallocType()
-        deallocTypes()
+        self.assertTypeSpec(typeSpec, TestType)
 
 
     def test_tp_iter_MethodDispatch(self):
         def TestErrorHandler(errorHandler, _): 
             self.assertEquals(errorHandler, None, "no special error handling required")
 
-        typeSpec = {
-            "tp_iter": lambda _: IntPtr.Zero,
-            "tp_flags": Py_TPFLAGS.HAVE_ITER
-        }
         self.assertSelfTypeMethod(
-            typeSpec, "tp_iter", "__iter__", TestErrorHandler)
+            Py_TPFLAGS.HAVE_ITER, "tp_iter", "__iter__", TestErrorHandler)
 
 
     def test_tp_iternext_MethodDispatch(self):
@@ -271,19 +275,14 @@ class DispatchIterTest(TestCase):
             self.assertRaises(StopIteration, errorHandler, IntPtr.Zero)
             mapper.LastException = ValueError()
             errorHandler(IntPtr.Zero)
-
-        typeSpec = {
-            "tp_iternext": lambda _: IntPtr.Zero,
-            "tp_flags": Py_TPFLAGS.HAVE_ITER
-        }
         
         self.assertSelfTypeMethod(
-            typeSpec, "tp_iternext", "next", TestErrorHandler)
+            Py_TPFLAGS.HAVE_ITER, "tp_iternext", "next", TestErrorHandler)
 
 
-class DispatchTrickyMethodsTest(TestCase):
+class NewInitDelTest(TestCase):
 
-    def testNewInitDelTablePopulation(self):
+    def testMethodTablePopulation(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
@@ -319,7 +318,7 @@ class DispatchTrickyMethodsTest(TestCase):
         deallocTypes()
 
 
-    def testNewInitDelDispatch(self):
+    def testDispatch(self):
         allocator = HGlobalAllocator()
         mapper = Python25Mapper(allocator)
         deallocTypes = CreateTypes(mapper)
@@ -380,7 +379,7 @@ class DispatchTrickyMethodsTest(TestCase):
         deallocTypes()
     
     
-    def testDeleteOnlyWhenAppropriate(self):
+    def testLifetime(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
 
@@ -820,10 +819,10 @@ class TypeDictTest(TestCase):
         
 
 suite = makesuite(
-    DispatchTypeMethodsTest,
-    DispatchCallTest,
-    DispatchIterTest,
-    DispatchTrickyMethodsTest,
+    MethodsTest,
+    CallTest,
+    IterTest,
+    NewInitDelTest,
     PropertiesTest,
     MembersTest,
     InheritanceTest,
