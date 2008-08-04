@@ -105,6 +105,7 @@ KWARGS_PTR = IntPtr(333)
 ARG = object()
 ARG_PTR = IntPtr(444)
 CLOSURE = IntPtr(555)
+SSIZE = 123456
 
 class DispatcherDispatchTestCase(TestCase):
     
@@ -434,6 +435,27 @@ class DispatcherKwargsTest(DispatcherDispatchTestCase):
             ('Retrieve', (RESULT_PTR,)),
             ('_cleanup', (RESULT_PTR, ARGS_PTR, IntPtr.Zero))
         ])
+
+
+class DispatcherSsizeargTest(DispatcherDispatchTestCase):
+    
+    def testDispatch_method_ssizearg(self):
+        calls = self.callDispatcherMethod('method_ssizearg', INSTANCE_PTR, SSIZE)
+        self.assertEquals(calls, [
+            ('dgt', (INSTANCE_PTR, SSIZE)),
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('Retrieve', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR,))
+        ])
+    
+    def testDispatch_method_ssizearg_error(self):
+        calls = self.callDispatcherErrorMethod('method_ssizearg', INSTANCE_PTR, SSIZE)
+        self.assertEquals(calls, [
+            ('dgt', (INSTANCE_PTR, SSIZE)),
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR,))
+        ])
+        
 
 
 class DispatcherGetterTest(DispatcherDispatchTestCase):
@@ -864,6 +886,7 @@ suite  = makesuite(
     DispatcherObjargTest,
     DispatcherSelfargTest,
     DispatcherKwargsTest, 
+    DispatcherSsizeargTest,
     DispatcherGetterTest,
     DispatcherSetterTest,
     DispatcherConstructTest,

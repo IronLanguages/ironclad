@@ -123,5 +123,11 @@ class {0}(_ironclad_baseclass):
         '''{1}'''
         return self._dispatcher.method_kwargs('{2}{0}', self._instancePtr, *args, **kwargs)
 ";
+
+        private const string SSIZEARG_METHOD_CODE = @"
+    def {0}(self, ssize):
+        '''{1}'''
+        return self._dispatcher.method_ssizearg('{2}{0}', self._instancePtr, ssize)
+";
     }
 }

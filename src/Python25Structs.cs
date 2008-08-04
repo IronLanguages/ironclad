@@ -26,6 +26,10 @@ namespace Ironclad
 
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate IntPtr CPython_ssizeargfunc_Delegate(IntPtr self, int i);
+    
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int CPython_initproc_Delegate(IntPtr self, IntPtr args, IntPtr kwargs);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -308,6 +312,22 @@ namespace Ironclad
             public IntPtr nb_inplace_true_divide;
 
             public IntPtr nb_index;
+        }
+        
+
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct PySequenceMethods
+        {
+            public IntPtr sq_length;
+            public IntPtr sq_concat;
+            public IntPtr sq_repeat;
+            public IntPtr sq_item;
+            public IntPtr sq_slice;
+            public IntPtr sq_ass_item;
+            public IntPtr sq_ass_slice;
+            public IntPtr sq_contains;
+            public IntPtr sq_inplace_concat;
+            public IntPtr sq_inplace_repeat;
         }
     }
 }

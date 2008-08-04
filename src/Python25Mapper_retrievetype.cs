@@ -81,6 +81,9 @@ namespace Ironclad
             IntPtr nmPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_as_number");
             this.GenerateNumberMethods(classCode, nmPtr, methodTable, tablePrefix);
 
+            IntPtr sqPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_as_sequence");
+            this.GenerateSequenceMethods(classCode, sqPtr, methodTable, tablePrefix);
+
             this.GenerateCallMethod(classCode, typePtr, methodTable, tablePrefix);
             this.GenerateIterMethods(classCode, typePtr, methodTable, tablePrefix);
 
@@ -366,42 +369,66 @@ namespace Ironclad
             }
         }
 
-        private string 
-        MapNumberMethodName(string name)
+        private void 
+        GetMagicMethodInfo(string field, out string name, out string template, out Type dgtType)
         {
-            switch (name)
+            switch (field)
             {
-                case "nb_add": return "__add__";
-                case "nb_subtract": return "__sub__";
+                case "nb_add": 
+                    name = "__add__";
+                    template = OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_subtract":
+                    name = "__sub__";
+                    template = OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "sq_item":
+                    name = "__getitem__";
+                    template = SSIZEARG_METHOD_CODE;
+                    dgtType = typeof(CPython_ssizeargfunc_Delegate);
+                    break;
                 default:
-                    throw new NotImplementedException(String.Format("unrecognised tp_as_number field: {0}", name));
+                    throw new NotImplementedException(String.Format("unrecognised field: {0}", field));
             }
+        }
+
+        private void
+        GenerateProtocolMagicMethods(StringBuilder classCode, IntPtr protocolPtr, Type protocol, string[] fields, PythonDictionary methodTable, string tablePrefix)
+        {
+            if (protocolPtr == IntPtr.Zero)
+            {
+                return;
+            }
+            foreach (string field in fields)
+            {
+                if (CPyMarshal.ReadPtrField(protocolPtr, protocol, field) != IntPtr.Zero)
+                {
+                    string name;
+                    string template;
+                    Type dgtType;
+                    this.GetMagicMethodInfo(field, out name, out template, out dgtType);
+                    methodTable[tablePrefix + name] = CPyMarshal.ReadFunctionPtrField(protocolPtr, protocol, field, dgtType); ;
+                    classCode.Append(String.Format(template, name, "", tablePrefix));
+                }
+            }
+        }
+
+        private void
+        GenerateSequenceMethods(StringBuilder classCode, IntPtr sqPtr, PythonDictionary methodTable, string tablePrefix)
+        {
+            string[] fields = new string[] { "sq_item" };
+            this.GenerateProtocolMagicMethods(
+                classCode, sqPtr, typeof(PySequenceMethods), fields, methodTable, tablePrefix);
         }
 
         private void
         GenerateNumberMethods(StringBuilder classCode, IntPtr nmPtr, PythonDictionary methodTable, string tablePrefix)
         {
-            if (nmPtr == IntPtr.Zero)
-            {
-                return;
-            }
-
-            string[] binaries = new string[] {"nb_add", "nb_subtract"};
-            foreach (string binaryfuncname in binaries)
-            {
-                if (CPyMarshal.ReadPtrField(nmPtr, typeof(PyNumberMethods), binaryfuncname) != IntPtr.Zero)
-                {
-                    CPython_binaryfunc_Delegate dgt = (CPython_binaryfunc_Delegate)
-                        CPyMarshal.ReadFunctionPtrField(
-                            nmPtr, typeof(PyNumberMethods), binaryfuncname, typeof(CPython_binaryfunc_Delegate));
-
-                    string name = this.MapNumberMethodName(binaryfuncname);
-                    methodTable[tablePrefix + name] = dgt;
-
-                    string methodCode = String.Format(OBJARG_METHOD_CODE, name, "", tablePrefix);
-                    classCode.Append(methodCode);
-                }
-            }
+            string[] fields = new string[] { "nb_add", "nb_subtract" };
+            this.GenerateProtocolMagicMethods(
+                classCode, nmPtr, typeof(PyNumberMethods), fields, methodTable, tablePrefix);
         }
 
         private void

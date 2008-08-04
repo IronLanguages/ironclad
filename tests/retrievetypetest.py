@@ -1,7 +1,7 @@
 
 from tests.utils.runtest import makesuite, run
     
-from tests.utils.cpython import MakeGetSetDef, MakeMethodDef, MakeNumberMethods, MakeTypePtr
+from tests.utils.cpython import MakeGetSetDef, MakeMethodDef, MakeNumSeqMapMethods, MakeTypePtr
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
 from tests.utils.python25mapper import MakeAndAddEmptyModule
@@ -15,7 +15,7 @@ from Ironclad import (
     CPyMarshal, CPython_destructor_Delegate, CPython_initproc_Delegate, HGlobalAllocator,
     Python25Api, Python25Mapper
 )
-from Ironclad.Structs import MemberT, METH, Py_TPFLAGS, PyMemberDef, PyObject, PyTypeObject
+from Ironclad.Structs import MemberT, METH, Py_TPFLAGS, PyMemberDef, PyNumberMethods, PyObject, PySequenceMethods, PyTypeObject
 
 
 class BorkedException(System.Exception):
@@ -25,6 +25,7 @@ class BorkedException(System.Exception):
 ARG1_PTR = IntPtr(111)
 ARG2_PTR = IntPtr(222)
 ARG3_PTR = IntPtr(333)
+ARG1_SSIZE = 111111
 RESULT_PTR = IntPtr(999)
 
 
@@ -87,6 +88,9 @@ class DispatchSetupTestCase(TestCase):
     def getTernaryCFunc(self):
         return self.getTernaryFunc(RESULT_PTR)
 
+    def getSsizeargCFunc(self):
+        return self.getBinaryFunc(RESULT_PTR)
+
     def assertCalls(self, dgt, args, calls, expect_args, result):
         args, kwargs = args
         self.assertEquals(calls, [])
@@ -101,6 +105,9 @@ class DispatchSetupTestCase(TestCase):
     
     def assertCallsTernaryCFunc(self, dgt, calls):
         self.assertCalls(dgt, ((ARG1_PTR, ARG2_PTR, ARG3_PTR), {}), calls, (ARG1_PTR, ARG2_PTR, ARG3_PTR), RESULT_PTR)
+    
+    def assertCallsSsizeargCFunc(self, dgt, calls):
+        self.assertCalls(dgt, ((ARG1_PTR, ARG1_SSIZE), {}), calls, (ARG1_PTR, ARG1_SSIZE), RESULT_PTR)
 
 class MethodsTest(DispatchSetupTestCase):
 
@@ -284,7 +291,7 @@ class NumberTest(DispatchSetupTestCase):
     
     def assertBinaryNumberMethod(self, slotName, methodName):
         func, calls_cfunc = self.getBinaryCFunc()
-        numbersPtr, deallocNumbers = MakeNumberMethods({slotName: func})
+        numbersPtr, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {slotName: func})
         typeSpec = {
             "tp_name": "klass",
             "tp_as_number": numbersPtr
@@ -313,6 +320,36 @@ class NumberTest(DispatchSetupTestCase):
 
     def testAdd(self):
         self.assertBinaryNumberMethod("nb_subtract", "__sub__")
+
+
+class SequenceTest(DispatchSetupTestCase):
+    
+    def testItem(self):
+        func, calls_cfunc = self.getSsizeargCFunc()
+        sequencesPtr, deallocSequences = MakeNumSeqMapMethods(PySequenceMethods, {"sq_item": func})
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_as_sequence": sequencesPtr
+        }
+        result = object()
+        dispatch, calls_dispatch = self.getTernaryFunc(result)
+        
+        def TestType(_type, _):
+            instance, arg = _type(), 123
+            _type._dispatcher.method_ssizearg = dispatch
+            self.assertCalls(
+                getattr(instance, "__getitem__"), ((arg,), {}), calls_dispatch, 
+                ("klass.__getitem__", instance._instancePtr, arg), result)
+            
+            cfunc = _type._dispatcher.table["klass.__getitem__"]
+            self.assertCallsSsizeargCFunc(cfunc, calls_cfunc)
+            
+            del instance
+            gcwait()
+            
+        self.assertTypeSpec(typeSpec, TestType)
+        deallocSequences()
+        
 
 
 class NewInitDelTest(TestCase):
@@ -858,6 +895,7 @@ suite = makesuite(
     CallTest,
     IterTest,
     NumberTest,
+    SequenceTest,
     NewInitDelTest,
     PropertiesTest,
     MembersTest,

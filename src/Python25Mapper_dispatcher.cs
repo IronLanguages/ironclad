@@ -160,6 +160,14 @@ class Dispatcher(object):
         finally:
             self._cleanup(resultPtr)
 
+    def method_ssizearg(self, name, instancePtr, i):
+        resultPtr = self.table[name](instancePtr, i)
+        try:
+            self._maybe_raise(resultPtr)
+            return self.mapper.Retrieve(resultPtr)
+        finally:
+            self._cleanup(resultPtr)
+
     def method_getter(self, name, instancePtr, closurePtr):
         resultPtr = self.table[name](instancePtr, closurePtr)
         try:
