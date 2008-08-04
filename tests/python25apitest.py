@@ -259,6 +259,8 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyTuple_New", ('33',), 'IntPtr(999)')
         self.assertFinds("PyTuple_Size", ('IntPtr(111)',), '999')
         
+        self.assertFinds("PyNumber_Add", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
+        self.assertFinds("PyNumber_Subtract", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
         self.assertFinds("PyNumber_Long", ('IntPtr(111)',), 'IntPtr(999)')
         self.assertFinds("PyNumber_Float", ('IntPtr(111)',), 'IntPtr(999)')
         

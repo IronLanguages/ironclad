@@ -311,6 +311,9 @@ class NumberTest(DispatchSetupTestCase):
     def testAdd(self):
         self.assertBinaryNumberMethod("nb_add", "__add__")
 
+    def testAdd(self):
+        self.assertBinaryNumberMethod("nb_subtract", "__sub__")
+
 
 class NewInitDelTest(TestCase):
 
