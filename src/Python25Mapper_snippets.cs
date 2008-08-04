@@ -94,7 +94,7 @@ class {0}(_ironclad_baseclass):
         private const string ITERNEXT_METHOD_CODE = @"
     def __raise_stop(self, resultPtr):
         if resultPtr == IntPtr(0) and self._dispatcher.mapper.LastException == None:
-                raise StopIteration()
+            raise StopIteration()
 
     def next(self):
         return self._dispatcher.method_selfarg('{0}tp_iternext', self._instancePtr, self.__raise_stop)
@@ -128,6 +128,12 @@ class {0}(_ironclad_baseclass):
     def {0}(self, ssize):
         '''{1}'''
         return self._dispatcher.method_ssizearg('{2}{0}', self._instancePtr, ssize)
+";
+
+        private const string SELFARG_METHOD_CODE = @"
+    def {0}(self):
+        '''{1}'''
+        return self._dispatcher.method_selfarg('{2}{0}', self._instancePtr)
 ";
     }
 }

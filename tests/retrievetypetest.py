@@ -289,6 +289,32 @@ class IterTest(DispatchSetupTestCase):
 
 class NumberTest(DispatchSetupTestCase):
     
+    def assertUnaryNumberMethod(self, slotName, methodName):
+        func, calls_cfunc = self.getUnaryCFunc()
+        numbersPtr, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {slotName: func})
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_as_number": numbersPtr
+        }
+        result = object()
+        dispatch, calls_dispatch = self.getBinaryFunc(result)
+        
+        def TestType(_type, _):
+            instance = _type()
+            _type._dispatcher.method_selfarg = dispatch
+            self.assertCalls(
+                getattr(instance, methodName), (tuple(), {}), calls_dispatch, 
+                ("klass." + methodName, instance._instancePtr), result)
+            
+            cfunc = _type._dispatcher.table["klass." + methodName]
+            self.assertCallsUnaryCFunc(cfunc, calls_cfunc)
+            
+            del instance
+            gcwait()
+            
+        self.assertTypeSpec(typeSpec, TestType)
+        deallocNumbers()
+    
     def assertBinaryNumberMethod(self, slotName, methodName):
         func, calls_cfunc = self.getBinaryCFunc()
         numbersPtr, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {slotName: func})
@@ -315,16 +341,19 @@ class NumberTest(DispatchSetupTestCase):
         self.assertTypeSpec(typeSpec, TestType)
         deallocNumbers()
 
+    def testAbs(self):
+        self.assertUnaryNumberMethod("nb_absolute", "__abs__")
+
     def testAdd(self):
         self.assertBinaryNumberMethod("nb_add", "__add__")
 
-    def testAdd(self):
+    def testSubtract(self):
         self.assertBinaryNumberMethod("nb_subtract", "__sub__")
 
-    def testAdd(self):
+    def testMultiply(self):
         self.assertBinaryNumberMethod("nb_multiply", "__mul__")
 
-    def testAdd(self):
+    def testDivide(self):
         self.assertBinaryNumberMethod("nb_divide", "__div__")
 
 
