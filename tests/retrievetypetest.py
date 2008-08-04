@@ -210,6 +210,39 @@ class MethodsTest(DispatchSetupTestCase):
         deallocMethod()
 
 
+class StrReprTest(DispatchSetupTestCase):
+    
+    def assertReprfunc(self, cpyName, ipyName):
+        reprfunc, calls_cfunc = self.getUnaryCFunc()
+        result = object()
+        dispatch, calls_dispatch = self.getBinaryFunc(result)
+        
+        def TestType(_type, _):
+            instance = _type()
+            _type._dispatcher.method_selfarg = dispatch
+            self.assertCalls(
+                getattr(instance, ipyName), (tuple(), {}), calls_dispatch,
+                ("klass." + ipyName, instance._instancePtr), result)
+            
+            cfunc = _type._dispatcher.table["klass." + ipyName]
+            self.assertCallsUnaryCFunc(cfunc, calls_cfunc)
+            
+            del instance
+            gcwait()
+
+        typeSpec = {
+            "tp_name": "klass",
+            cpyName: reprfunc,
+        }
+        self.assertTypeSpec(typeSpec, TestType)
+    
+    def testStr(self):
+        self.assertReprfunc("tp_str", "__str__")
+    
+    def testRepr(self):
+        self.assertReprfunc("tp_repr", "__repr__")
+
+
 class CallTest(DispatchSetupTestCase):
     
     def testCall(self):
@@ -235,6 +268,7 @@ class CallTest(DispatchSetupTestCase):
             "tp_call": Call,
         }
         self.assertTypeSpec(typeSpec, TestType)
+
 
 class IterTest(DispatchSetupTestCase):
 
@@ -927,6 +961,7 @@ class TypeDictTest(TestCase):
 
 suite = makesuite(
     MethodsTest,
+    StrReprTest,
     CallTest,
     IterTest,
     NumberTest,

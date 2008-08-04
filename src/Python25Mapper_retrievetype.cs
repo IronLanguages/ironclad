@@ -32,7 +32,7 @@ namespace Ironclad
             this.ExtractNameModule(tp_name, ref __name__, ref __module__);
 
             string __doc__ = CPyMarshal.ReadCStringField(typePtr, typeof(PyTypeObject), "tp_doc").Replace("\\", "\\\\");
-            classCode.Append(String.Format(CLASS_CODE, __name__, __module__, __doc__));
+            classCode.Append(String.Format(CodeSnippets.CLASS_CODE, __name__, __module__, __doc__));
 
             string tablePrefix = __name__ + ".";
             PythonDictionary methodTable = new PythonDictionary();
@@ -63,7 +63,7 @@ namespace Ironclad
                     IntPtr _basePtr = this.Store(_base);
                     this.PyType_Ready(_basePtr);
                 }
-                classCode.Append(CLASS_BASES_CODE);
+                classCode.Append(CodeSnippets.CLASS_BASES_CODE);
             }
 
             this.ConnectTypeField(typePtr, tablePrefix, "tp_new", methodTable, typeof(PyType_GenericNew_Delegate));
@@ -84,7 +84,7 @@ namespace Ironclad
             IntPtr sqPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_as_sequence");
             this.GenerateSequenceMethods(classCode, sqPtr, methodTable, tablePrefix);
 
-            this.GenerateCallMethod(classCode, typePtr, methodTable, tablePrefix);
+            this.GenerateMagicMethods(classCode, typePtr, methodTable, tablePrefix);
             this.GenerateIterMethods(classCode, typePtr, methodTable, tablePrefix);
 
             ScriptScope moduleScope = this.GetModuleScriptScope(this.scratchModule);
@@ -211,10 +211,10 @@ namespace Ironclad
         {
             this.GenerateCallablesFromMethodDefs(
                 code, methods, methodTable, "",
-                NOARGS_FUNCTION_CODE,
-                OBJARG_FUNCTION_CODE,
-                VARARGS_FUNCTION_CODE,
-                VARARGS_KWARGS_FUNCTION_CODE);
+                CodeSnippets.NOARGS_FUNCTION_CODE,
+                CodeSnippets.OBJARG_FUNCTION_CODE,
+                CodeSnippets.VARARGS_FUNCTION_CODE,
+                CodeSnippets.VARARGS_KWARGS_FUNCTION_CODE);
         }
 
         private void
@@ -222,10 +222,10 @@ namespace Ironclad
         {
             this.GenerateCallablesFromMethodDefs(
                 code, methods, methodTable, tablePrefix,
-                NOARGS_METHOD_CODE,
-                OBJARG_METHOD_CODE,
-                VARARGS_METHOD_CODE,
-                VARARGS_KWARGS_METHOD_CODE);
+                CodeSnippets.NOARGS_METHOD_CODE,
+                CodeSnippets.OBJARG_METHOD_CODE,
+                CodeSnippets.VARARGS_METHOD_CODE,
+                CodeSnippets.VARARGS_KWARGS_METHOD_CODE);
         }
 
         private void
@@ -251,7 +251,7 @@ namespace Ironclad
                     CPython_getter_Delegate dgt = (CPython_getter_Delegate)
                         Marshal.GetDelegateForFunctionPointer(
                             thisGetset.get, typeof(CPython_getter_Delegate));
-                    code.Append(String.Format(GETTER_METHOD_CODE, getname, tablePrefix, closure));
+                    code.Append(String.Format(CodeSnippets.GETTER_METHOD_CODE, getname, tablePrefix, closure));
                     methodTable[tablePrefix + getname] = dgt;
                 }
 
@@ -262,11 +262,11 @@ namespace Ironclad
                     CPython_setter_Delegate dgt = (CPython_setter_Delegate)
                         Marshal.GetDelegateForFunctionPointer(
                             thisGetset.set, typeof(CPython_setter_Delegate));
-                    code.Append(String.Format(SETTER_METHOD_CODE, setname, tablePrefix, closure));
+                    code.Append(String.Format(CodeSnippets.SETTER_METHOD_CODE, setname, tablePrefix, closure));
                     methodTable[tablePrefix + setname] = dgt;
                 }
 
-                code.Append(String.Format(PROPERTY_CODE, name, getname, setname, doc));
+                code.Append(String.Format(CodeSnippets.PROPERTY_CODE, name, getname, setname, doc));
                 getsetPtr = CPyMarshal.Offset(getsetPtr, Marshal.SizeOf(typeof(PyGetSetDef)));
             }
         }
@@ -315,15 +315,15 @@ namespace Ironclad
                 if (this.GetMemberMethodSuffix(thisMember.type, ref suffix))
                 {
                     string getname = String.Format("__get_{0}", name);
-                    code.Append(String.Format(MEMBER_GETTER_CODE, getname, offset, suffix));
+                    code.Append(String.Format(CodeSnippets.MEMBER_GETTER_CODE, getname, offset, suffix));
 
                     string setname = "None";
                     if ((thisMember.flags & 1) == 0)
                     {
                         setname = String.Format("__set_{0}", name);
-                        code.Append(String.Format(MEMBER_SETTER_CODE, setname, offset, suffix));
+                        code.Append(String.Format(CodeSnippets.MEMBER_SETTER_CODE, setname, offset, suffix));
                     }
-                    code.Append(String.Format(PROPERTY_CODE, name, getname, setname, doc));
+                    code.Append(String.Format(CodeSnippets.PROPERTY_CODE, name, getname, setname, doc));
                 }
                 else
                 {
@@ -343,71 +343,14 @@ namespace Ironclad
             }
             if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iter") != IntPtr.Zero)
             {
-                classCode.Append(String.Format(ITER_METHOD_CODE, tablePrefix));
+                classCode.Append(String.Format(CodeSnippets.ITER_METHOD_CODE, tablePrefix));
             }
             if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_iternext") != IntPtr.Zero)
             {
-                classCode.Append(String.Format(ITERNEXT_METHOD_CODE, tablePrefix));
+                classCode.Append(String.Format(CodeSnippets.ITERNEXT_METHOD_CODE, tablePrefix));
             }
             this.ConnectTypeField(typePtr, tablePrefix, "tp_iter", methodTable, typeof(CPythonSelfFunction_Delegate));
             this.ConnectTypeField(typePtr, tablePrefix, "tp_iternext", methodTable, typeof(CPythonSelfFunction_Delegate));
-        }
-
-        private void
-        GenerateCallMethod(StringBuilder classCode, IntPtr typePtr, PythonDictionary methodTable, string tablePrefix)
-        {
-            IntPtr methodPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_call");
-            if (methodPtr != IntPtr.Zero)
-            {
-                string name = "__call__";
-                classCode.Append(String.Format(VARARGS_KWARGS_METHOD_CODE, name, "", tablePrefix));
-
-                Delegate dgt = Marshal.GetDelegateForFunctionPointer(
-                    methodPtr,
-                    typeof(CPythonVarargsKwargsFunction_Delegate));
-                methodTable[tablePrefix + name] = dgt;
-            }
-        }
-
-        private void 
-        GetMagicMethodInfo(string field, out string name, out string template, out Type dgtType)
-        {
-            switch (field)
-            {
-                case "nb_add": 
-                    name = "__add__";
-                    template = OBJARG_METHOD_CODE;
-                    dgtType = typeof(CPython_binaryfunc_Delegate);
-                    break;
-                case "nb_subtract":
-                    name = "__sub__";
-                    template = OBJARG_METHOD_CODE;
-                    dgtType = typeof(CPython_binaryfunc_Delegate);
-                    break;
-                case "nb_multiply":
-                    name = "__mul__";
-                    template = OBJARG_METHOD_CODE;
-                    dgtType = typeof(CPython_binaryfunc_Delegate);
-                    break;
-                case "nb_divide":
-                    name = "__div__";
-                    template = OBJARG_METHOD_CODE;
-                    dgtType = typeof(CPython_binaryfunc_Delegate);
-                    break;
-                case "nb_absolute":
-                    name = "__abs__";
-                    template = SELFARG_METHOD_CODE;
-                    dgtType = typeof(CPython_unaryfunc_Delegate);
-                    break;
-
-                case "sq_item":
-                    name = "__getitem__";
-                    template = SSIZEARG_METHOD_CODE;
-                    dgtType = typeof(CPython_ssizeargfunc_Delegate);
-                    break;
-                default:
-                    throw new NotImplementedException(String.Format("unrecognised field: {0}", field));
-            }
         }
 
         private void
@@ -424,11 +367,19 @@ namespace Ironclad
                     string name;
                     string template;
                     Type dgtType;
-                    this.GetMagicMethodInfo(field, out name, out template, out dgtType);
+                    MagicMethods.GetInfo(field, out name, out template, out dgtType);
                     methodTable[tablePrefix + name] = CPyMarshal.ReadFunctionPtrField(protocolPtr, protocol, field, dgtType); ;
                     classCode.Append(String.Format(template, name, "", tablePrefix));
                 }
             }
+        }
+
+        private void
+        GenerateMagicMethods(StringBuilder classCode, IntPtr typePtr, PythonDictionary methodTable, string tablePrefix)
+        {
+            string[] fields = new string[] { "tp_call", "tp_repr", "tp_str" };
+            this.GenerateProtocolMagicMethods(
+                classCode, typePtr, typeof(PyTypeObject), fields, methodTable, tablePrefix);
         }
 
         private void

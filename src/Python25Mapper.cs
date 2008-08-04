@@ -106,7 +106,7 @@ namespace Ironclad
                     }
                 }
                 // TODO: work out why this line causes leakage
-                this.ExecInModule(INSTALL_IMPORT_HOOK_CODE, this.scratchModule);
+                this.ExecInModule(CodeSnippets.INSTALL_IMPORT_HOOK_CODE, this.scratchModule);
             }
             this.alive = true;
         }
