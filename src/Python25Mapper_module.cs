@@ -49,9 +49,9 @@ namespace Ironclad
             globals["_mapper"] = this;
             this.scratchModule = this.GetPythonContext().CreateModule(
                 id, id, globals, ModuleOptions.None);
-            this.ExecInModule(FIX_CPyMarshal_RuntimeType_CODE, this.scratchModule);
-            
-            this.ExecInModule(TRIVIAL_OBJECT_SUBCLASS_CODE, this.scratchModule);
+            this.ExecInModule(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE, this.scratchModule);
+
+            this.ExecInModule(CodeSnippets.TRIVIAL_OBJECT_SUBCLASS_CODE, this.scratchModule);
             ScriptScope moduleScope = this.GetModuleScriptScope(this.scratchModule);
             this.trivialObjectSubclass = moduleScope.GetVariable<object>("TrivialObjectSubclass");
         }
@@ -72,7 +72,7 @@ namespace Ironclad
             globals["NullReferenceException"] = typeof(NullReferenceException);
 
             StringBuilder moduleCode = new StringBuilder();
-            moduleCode.Append(FIX_CPyMarshal_RuntimeType_CODE); // eww
+            moduleCode.Append(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE); // eww
             this.GenerateFunctions(moduleCode, methods, methodTable);
 
             if (this.importName != "")

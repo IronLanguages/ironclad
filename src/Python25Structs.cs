@@ -43,6 +43,10 @@ namespace Ironclad
     public delegate int CPython_setter_Delegate(IntPtr self, IntPtr value, IntPtr closure);
 
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate IntPtr CPython_reprfunc_Delegate(IntPtr self);
+
+
     namespace Structs
     {
         [Flags]
