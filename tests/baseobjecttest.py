@@ -81,6 +81,22 @@ class ObjectFunctionsTest(TestCase):
         deallocTypes()
 
 
+    def testPyObject_HasAttrString(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        class Thingum(object):
+            def __init__(self, bob):
+                self.bob = bob
+                
+        objPtr = mapper.Store(Thingum("Poe"))
+        self.assertEquals(mapper.PyObject_HasAttrString(objPtr, "bob"), 1)
+        self.assertEquals(mapper.PyObject_HasAttrString(objPtr, "jim"), 0)
+            
+        mapper.Dispose()
+        deallocTypes()
+
+
     def testPyObject_IsTrue(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
