@@ -1,0 +1,3 @@
+int
+IntPtr obj, string name
+return 0

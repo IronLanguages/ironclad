@@ -69,6 +69,17 @@ namespace Ironclad
             }
             return IntPtr.Zero;
         }
+
+        public override int
+        PyObject_HasAttrString(IntPtr objPtr, string name)
+        {
+            object obj = this.Retrieve(objPtr);
+            if (Builtin.hasattr(DefaultContext.Default, obj, name))
+            {
+                return 1;
+            }
+            return 0;
+        }
         
         
         public override int
