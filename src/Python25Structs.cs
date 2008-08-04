@@ -13,7 +13,17 @@ namespace Ironclad
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate IntPtr CPythonVarargsKwargsFunction_Delegate(IntPtr self, IntPtr args, IntPtr kwargs);
-    
+
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate IntPtr CPython_unaryfunc_Delegate(IntPtr self);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate IntPtr CPython_binaryfunc_Delegate(IntPtr self, IntPtr arg1);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate IntPtr CPython_ternaryfunc_Delegate(IntPtr self, IntPtr arg1, IntPtr arg2);
+
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int CPython_initproc_Delegate(IntPtr self, IntPtr args, IntPtr kwargs);

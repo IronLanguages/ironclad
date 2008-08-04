@@ -2,10 +2,13 @@
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from Ironclad import (
-    CPyMarshal, CPython_destructor_Delegate, CPython_getter_Delegate, CPython_initproc_Delegate, CPython_setter_Delegate,
-    CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate, Python25Api
+    CPyMarshal, Python25Api, 
+    CPython_initproc_Delegate, CPython_destructor_Delegate, 
+    CPython_getter_Delegate, CPython_setter_Delegate,
+    CPython_unaryfunc_Delegate, CPython_binaryfunc_Delegate, CPython_ternaryfunc_Delegate, 
+    CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate, 
 )
-from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMethodDef, PyTypeObject
+from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMethodDef, PyNumberMethods, PyTypeObject
 
 from tests.utils.memory import OffsetPtr
 
@@ -61,6 +64,7 @@ MAKETYPEPTR_DEFAULTS = {
     
     "tp_base": IntPtr.Zero,
     "tp_bases": IntPtr.Zero,
+    "tp_as_number": IntPtr.Zero,
 }
 
 def GetMapperTypePtrDefaults(mapper):
@@ -72,7 +76,7 @@ def GetMapperTypePtrDefaults(mapper):
         "tp_free": mapper.PyObject_Free,
     }
 
-PTR_ARGS = ("ob_type", "tp_base", "tp_bases")
+PTR_ARGS = ("ob_type", "tp_base", "tp_bases", "tp_as_number")
 INT_ARGS = ("ob_refcnt", "tp_basicsize", "tp_itemsize", "tp_flags")
 STRING_ARGS = ("tp_name", "tp_doc")
 TABLE_ARGS = ("tp_methods", "tp_members", "tp_getset")
@@ -151,7 +155,30 @@ def MakeItemsTablePtr(items):
     def dealloc():
         Marshal.DestroyStructure(tablePtr, itemtype)
         Marshal.FreeHGlobal(tablePtr)
-
     return tablePtr, dealloc
 
+NUMBER_METHODS = {
+    "nb_add": CPython_binaryfunc_Delegate, 
+    "nb_subtract": CPython_binaryfunc_Delegate, 
+    "nb_multiply": CPython_binaryfunc_Delegate, 
+    "nb_divide": CPython_binaryfunc_Delegate, 
+    "nb_add": CPython_binaryfunc_Delegate, 
+    "nb_add": CPython_binaryfunc_Delegate, 
+    
+}
 
+def MakeNumberMethods(slots):
+    size = Marshal.SizeOf(PyNumberMethods)
+    ptr = Marshal.AllocHGlobal(size)
+    CPyMarshal.Zero(ptr, size)
+    deallocs = []
+    for (slot, func) in slots.items():
+        dgt = NUMBER_METHODS[slot](func)
+        CPyMarshal.WriteFunctionPtrField(ptr, PyNumberMethods, slot, dgt)
+        deallocs.append(GC_NotYet(dgt))
+        
+    def dealloc():
+        for f in deallocs:
+            f()
+        Marshal.FreeHGlobal(ptr)
+    return ptr, dealloc
