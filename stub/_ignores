@@ -21,7 +21,9 @@ PyArg_UnpackTuple
 _PyArg_NoKeywords
 
 PyObject_CallFunction
+_PyObject_CallFunction_SizeT
 PyObject_CallMethod
+_PyObject_CallMethod_SizeT
 
 _PyParser_TokenNames
 _Py_SwappedOp

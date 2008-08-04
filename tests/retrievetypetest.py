@@ -1,7 +1,7 @@
 
 from tests.utils.runtest import makesuite, run
     
-from tests.utils.cpython import MakeGetSetDef, MakeMethodDef, MakeTypePtr
+from tests.utils.cpython import MakeGetSetDef, MakeMethodDef, MakeNumberMethods, MakeTypePtr
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
 from tests.utils.python25mapper import MakeAndAddEmptyModule
@@ -242,13 +242,13 @@ class IterTest(DispatchSetupTestCase):
         def TestType(_type, mapper):
             result = object()
             calls_dispatch = []
-            def MockDispatchFunc(methodName, selfPtr, errorHandler=None):
+            def dispatch(methodName, selfPtr, errorHandler=None):
                 calls_dispatch.append((methodName, selfPtr))
                 TestErrorHandler(errorHandler, mapper)
                 return result
                 
             instance = _type()
-            _type._dispatcher.method_selfarg = MockDispatchFunc
+            _type._dispatcher.method_selfarg = dispatch
             self.assertEquals(getattr(instance, expectedMethodName)(), result, "bad return")
             self.assertEquals(calls_dispatch, [("klass." + keyName, instance._instancePtr)])
             
@@ -278,6 +278,38 @@ class IterTest(DispatchSetupTestCase):
         
         self.assertSelfTypeMethod(
             Py_TPFLAGS.HAVE_ITER, "tp_iternext", "next", TestErrorHandler)
+        
+
+class NumberTest(DispatchSetupTestCase):
+    
+    def assertBinaryNumberMethod(self, slotName, methodName):
+        func, calls_cfunc = self.getBinaryCFunc()
+        numbersPtr, deallocNumbers = MakeNumberMethods({slotName: func})
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_as_number": numbersPtr
+        }
+        result = object()
+        dispatch, calls_dispatch = self.getTernaryFunc(result)
+        
+        def TestType(_type, _):
+            instance, arg = _type(), object()
+            _type._dispatcher.method_objarg = dispatch
+            self.assertCalls(
+                getattr(instance, methodName), ((arg,), {}), calls_dispatch, 
+                ("klass." + methodName, instance._instancePtr, arg), result)
+            
+            cfunc = _type._dispatcher.table["klass." + methodName]
+            self.assertCallsBinaryCFunc(cfunc, calls_cfunc)
+            
+            del instance
+            gcwait()
+            
+        self.assertTypeSpec(typeSpec, TestType)
+        deallocNumbers()
+
+    def testAdd(self):
+        self.assertBinaryNumberMethod("nb_add", "__add__")
 
 
 class NewInitDelTest(TestCase):
@@ -652,7 +684,7 @@ class MembersTest(TestCase):
         
     def testReadWriteObjectMember(self):
         self.assertTypeMember('object', object(), object())
-        
+
 
 class InheritanceTest(TestCase):
     
@@ -822,6 +854,7 @@ suite = makesuite(
     MethodsTest,
     CallTest,
     IterTest,
+    NumberTest,
     NewInitDelTest,
     PropertiesTest,
     MembersTest,
