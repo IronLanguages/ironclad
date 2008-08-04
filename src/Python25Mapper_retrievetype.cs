@@ -371,8 +371,8 @@ namespace Ironclad
         {
             switch (name)
             {
-                case "nb_add":
-                    return "__add__";
+                case "nb_add": return "__add__";
+                case "nb_subtract": return "__sub__";
                 default:
                     throw new NotImplementedException(String.Format("unrecognised tp_as_number field: {0}", name));
             }
@@ -386,7 +386,7 @@ namespace Ironclad
                 return;
             }
 
-            string[] binaries = new string[] {"nb_add",};
+            string[] binaries = new string[] {"nb_add", "nb_subtract"};
             foreach (string binaryfuncname in binaries)
             {
                 if (CPyMarshal.ReadPtrField(nmPtr, typeof(PyNumberMethods), binaryfuncname) != IntPtr.Zero)

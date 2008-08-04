@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 
 using Microsoft.Scripting.Math;
 using IronPython.Runtime;
+using IronPython.Runtime.Operations;
 
 using Ironclad.Structs;
 
@@ -10,6 +11,38 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
+        public override IntPtr
+        PyNumber_Add(IntPtr arg1ptr, IntPtr arg2ptr)
+        {
+            try
+            {
+                object result = PythonSites.Add(this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
+
+        public override IntPtr
+        PyNumber_Subtract(IntPtr arg1ptr, IntPtr arg2ptr)
+        {
+            try
+            {
+                object result = PythonSites.Subtract(this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
+
         public override IntPtr
         PyNumber_Long(IntPtr numberPtr)
         {

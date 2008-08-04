@@ -214,6 +214,45 @@ class PyFloat_Test(TestCase):
 
 class PyNumber_Test(TestCase):
     
+    def assertBinaryOp(self, cpyName, ipyFunc):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        values = [1, -3.5, (1, 2), [3, 4], set([-1]), 'hullo', object(), object]
+        count = len(values)
+        for i in range(count):
+            for j in range(count):
+                error = None
+                try:
+                    result = ipyFunc(values[i], values[j])
+                except Exception, e:
+                    error = e.__class__
+                iptr = mapper.Store(values[i])
+                jptr = mapper.Store(values[j])
+                resultPtr = getattr(mapper, cpyName)(iptr, jptr)
+                
+                if error:
+                    self.assertEquals(resultPtr, IntPtr.Zero)
+                    def KindaConvertError():
+                        raise mapper.LastException
+                    self.assertRaises(error, KindaConvertError)
+                else:
+                    self.assertEquals(mapper.Retrieve(resultPtr), result)
+                    mapper.DecRef(resultPtr)
+                
+                mapper.DecRef(iptr)
+                mapper.DecRef(jptr)
+                
+        mapper.Dispose()
+        deallocTypes()
+    
+    def testPyNumber_Add(self):
+        self.assertBinaryOp("PyNumber_Add", lambda a, b: a + b)
+    
+    def testPyNumber_Subtract(self):
+        self.assertBinaryOp("PyNumber_Subtract", lambda a, b: a - b)
+        
+    
     def testPyNumber_Long(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
