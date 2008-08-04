@@ -321,6 +321,12 @@ class NumberTest(DispatchSetupTestCase):
     def testAdd(self):
         self.assertBinaryNumberMethod("nb_subtract", "__sub__")
 
+    def testAdd(self):
+        self.assertBinaryNumberMethod("nb_multiply", "__mul__")
+
+    def testAdd(self):
+        self.assertBinaryNumberMethod("nb_divide", "__div__")
+
 
 class SequenceTest(DispatchSetupTestCase):
     

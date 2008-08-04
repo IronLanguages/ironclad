@@ -44,6 +44,38 @@ namespace Ironclad
 
 
         public override IntPtr
+        PyNumber_Multiply(IntPtr arg1ptr, IntPtr arg2ptr)
+        {
+            try
+            {
+                object result = PythonSites.Multiply(this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
+
+        public override IntPtr
+        PyNumber_Divide(IntPtr arg1ptr, IntPtr arg2ptr)
+        {
+            try
+            {
+                object result = PythonSites.Divide(this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
+
+        public override IntPtr
         PyNumber_Long(IntPtr numberPtr)
         {
             try

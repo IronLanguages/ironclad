@@ -262,6 +262,8 @@ class Python25ApiFunctionsTest(TestCase):
         
         self.assertFinds("PyNumber_Add", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
         self.assertFinds("PyNumber_Subtract", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
+        self.assertFinds("PyNumber_Multiply", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
+        self.assertFinds("PyNumber_Divide", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
         self.assertFinds("PyNumber_Long", ('IntPtr(111)',), 'IntPtr(999)')
         self.assertFinds("PyNumber_Float", ('IntPtr(111)',), 'IntPtr(999)')
         

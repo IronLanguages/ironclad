@@ -218,7 +218,7 @@ class PyNumber_Test(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        values = [1, -3.5, (1, 2), [3, 4], set([-1]), 'hullo', object(), object]
+        values = [-1, 4, -3.5, (1, 2), [3, 4], set([-1]), 'hullo', object(), object]
         count = len(values)
         for i in range(count):
             for j in range(count):
@@ -251,6 +251,12 @@ class PyNumber_Test(TestCase):
     
     def testPyNumber_Subtract(self):
         self.assertBinaryOp("PyNumber_Subtract", lambda a, b: a - b)
+    
+    def testPyNumber_Multiply(self):
+        self.assertBinaryOp("PyNumber_Multiply", lambda a, b: a * b)
+    
+    def testPyNumber_Divide(self):
+        self.assertBinaryOp("PyNumber_Divide", lambda a, b: a / b)
         
     
     def testPyNumber_Long(self):
