@@ -214,6 +214,34 @@ class PyFloat_Test(TestCase):
 
 class PyNumber_Test(TestCase):
     
+    def assertUnaryOp(self, cpyName, ipyFunc):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        values = [-1, 4, -3.5, (1, 2), [3, 4], set([-1]), 'hullo', object(), object]
+        for value in values:
+            error = None
+            try:
+                result = ipyFunc(value)
+            except Exception, e:
+                error = e.__class__
+            valuePtr = mapper.Store(value)
+            resultPtr = getattr(mapper, cpyName)(valuePtr)
+            
+            if error:
+                self.assertEquals(resultPtr, IntPtr.Zero)
+                def KindaConvertError():
+                    raise mapper.LastException
+                self.assertRaises(error, KindaConvertError)
+            else:
+                self.assertEquals(mapper.Retrieve(resultPtr), result)
+                mapper.DecRef(resultPtr)
+            
+            mapper.DecRef(valuePtr)
+                
+        mapper.Dispose()
+        deallocTypes()
+    
     def assertBinaryOp(self, cpyName, ipyFunc):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
@@ -246,6 +274,9 @@ class PyNumber_Test(TestCase):
         mapper.Dispose()
         deallocTypes()
     
+    def testPyNumber_Absolute(self):
+        self.assertUnaryOp("PyNumber_Absolute", abs)
+    
     def testPyNumber_Add(self):
         self.assertBinaryOp("PyNumber_Add", lambda a, b: a + b)
     
@@ -257,7 +288,7 @@ class PyNumber_Test(TestCase):
     
     def testPyNumber_Divide(self):
         self.assertBinaryOp("PyNumber_Divide", lambda a, b: a / b)
-        
+    
     
     def testPyNumber_Long(self):
         mapper = Python25Mapper()

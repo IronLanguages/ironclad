@@ -2,7 +2,9 @@ using System;
 using System.Runtime.InteropServices;
 
 using Microsoft.Scripting.Math;
+
 using IronPython.Runtime;
+using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
 
 using Ironclad.Structs;
@@ -65,6 +67,22 @@ namespace Ironclad
             try
             {
                 object result = PythonSites.Divide(this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
+
+        public override IntPtr
+        PyNumber_Absolute(IntPtr numberPtr)
+        {
+            try
+            {
+                object result = Builtin.abs(DefaultContext.Default, this.Retrieve(numberPtr));
                 return this.Store(result);
             }
             catch (Exception e)

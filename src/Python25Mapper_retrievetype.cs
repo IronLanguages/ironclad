@@ -394,6 +394,11 @@ namespace Ironclad
                     template = OBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
                     break;
+                case "nb_absolute":
+                    name = "__abs__";
+                    template = SELFARG_METHOD_CODE;
+                    dgtType = typeof(CPython_unaryfunc_Delegate);
+                    break;
 
                 case "sq_item":
                     name = "__getitem__";
@@ -437,7 +442,7 @@ namespace Ironclad
         private void
         GenerateNumberMethods(StringBuilder classCode, IntPtr nmPtr, PythonDictionary methodTable, string tablePrefix)
         {
-            string[] fields = new string[] { "nb_add", "nb_subtract", "nb_multiply", "nb_divide" };
+            string[] fields = new string[] { "nb_add", "nb_subtract", "nb_multiply", "nb_divide", "nb_absolute" };
             this.GenerateProtocolMagicMethods(
                 classCode, nmPtr, typeof(PyNumberMethods), fields, methodTable, tablePrefix);
         }
