@@ -385,7 +385,7 @@ namespace Ironclad
         private void
         GenerateSequenceMethods(StringBuilder classCode, IntPtr sqPtr, PythonDictionary methodTable, string tablePrefix)
         {
-            string[] fields = new string[] { "sq_item" };
+            string[] fields = new string[] { "sq_item", "sq_length" };
             this.GenerateProtocolMagicMethods(
                 classCode, sqPtr, typeof(PySequenceMethods), fields, methodTable, tablePrefix);
         }

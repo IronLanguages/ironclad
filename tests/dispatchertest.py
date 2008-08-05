@@ -67,6 +67,10 @@ class DispatcherTest(TestCase):
             '_maybe_raise', (IntPtr.Zero,), [], error, None, ValueError)
         self.assertDispatcherUtilityMethod(
             '_maybe_raise', (IntPtr(1),), [], error, None, ValueError)
+        self.assertDispatcherUtilityMethod(
+            '_maybe_raise', tuple(), [])
+        self.assertDispatcherUtilityMethod(
+            '_maybe_raise', tuple(), [], error, None, ValueError)
     
     def testSurelyRaise(self):
         # this should raise the mapper's LastException, if present;
@@ -94,6 +98,7 @@ def FuncRaising(exc, calls, identifier):
 
 
 RESULT = object()
+RESULT_INT = 123
 RESULT_PTR = IntPtr(999)
 
 INSTANCE_PTR = IntPtr(111)
@@ -149,16 +154,19 @@ class DispatcherDispatchTestCase(TestCase):
     
     
     def callDispatcherMethod(self, methodname, *args, **kwargs):
+        return self.callDispatcherMethodWithResults(methodname, RESULT_PTR, RESULT, *args, **kwargs)
+    
+    def callDispatcherMethodWithResults(self, methodname, dgtResult, dispatchResult, *args, **kwargs):
         mapper = Python25Mapper()
         calls = []
         callables = {
-            'dgt': FuncReturning(RESULT_PTR, calls, 'dgt'),
+            'dgt': FuncReturning(dgtResult, calls, 'dgt'),
         }
         _maybe_raise = FuncReturning(None, calls, '_maybe_raise')
         dispatcher = self.getPatchedDispatcher(mapper, callables, calls, _maybe_raise)
         
         method = getattr(dispatcher, methodname)
-        self.assertEquals(method('dgt', *args, **kwargs), RESULT, "unexpected result")
+        self.assertEquals(method('dgt', *args, **kwargs), dispatchResult)
         mapper.Dispose()
         return calls
     
@@ -455,8 +463,17 @@ class DispatcherSsizeargTest(DispatcherDispatchTestCase):
             ('_maybe_raise', (RESULT_PTR,)),
             ('_cleanup', (RESULT_PTR,))
         ])
-        
 
+
+class DispatcherLenfuncTest(DispatcherDispatchTestCase):
+    
+    def testDispatch_method_lenfunc(self):
+        calls = self.callDispatcherMethodWithResults('method_lenfunc', RESULT_INT, RESULT_INT, INSTANCE_PTR)
+        self.assertEquals(calls, [
+            ('dgt', (INSTANCE_PTR,)),
+            ('_maybe_raise', tuple()),
+        ])
+        
 
 class DispatcherGetterTest(DispatcherDispatchTestCase):
     
@@ -887,6 +904,7 @@ suite  = makesuite(
     DispatcherSelfargTest,
     DispatcherKwargsTest, 
     DispatcherSsizeargTest,
+    DispatcherLenfuncTest,
     DispatcherGetterTest,
     DispatcherSetterTest,
     DispatcherConstructTest,

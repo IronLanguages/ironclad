@@ -79,16 +79,16 @@ class DispatchSetupTestCase(TestCase):
         return Nary, calls
         
 
-    def getUnaryCFunc(self):
+    def getUnaryPtrFunc(self):
         return self.getUnaryFunc(RESULT_PTR)
 
-    def getBinaryCFunc(self):
+    def getBinaryPtrFunc(self):
         return self.getBinaryFunc(RESULT_PTR)
 
-    def getTernaryCFunc(self):
+    def getTernaryPtrFunc(self):
         return self.getTernaryFunc(RESULT_PTR)
 
-    def getSsizeargCFunc(self):
+    def getSsizeargPtrFunc(self):
         return self.getBinaryFunc(RESULT_PTR)
 
     def assertCalls(self, dgt, args, calls, expect_args, result):
@@ -97,16 +97,16 @@ class DispatchSetupTestCase(TestCase):
         self.assertEquals(dgt(*args, **kwargs), result)
         self.assertEquals(calls, [expect_args])
     
-    def assertCallsUnaryCFunc(self, dgt, calls):
+    def assertCallsUnaryPtrFunc(self, dgt, calls):
         self.assertCalls(dgt, ((ARG1_PTR,), {}), calls, (ARG1_PTR,), RESULT_PTR)
     
-    def assertCallsBinaryCFunc(self, dgt, calls):
+    def assertCallsBinaryPtrFunc(self, dgt, calls):
         self.assertCalls(dgt, ((ARG1_PTR, ARG2_PTR), {}), calls, (ARG1_PTR, ARG2_PTR), RESULT_PTR)
     
-    def assertCallsTernaryCFunc(self, dgt, calls):
+    def assertCallsTernaryPtrFunc(self, dgt, calls):
         self.assertCalls(dgt, ((ARG1_PTR, ARG2_PTR, ARG3_PTR), {}), calls, (ARG1_PTR, ARG2_PTR, ARG3_PTR), RESULT_PTR)
     
-    def assertCallsSsizeargCFunc(self, dgt, calls):
+    def assertCallsSsizeargPtrFunc(self, dgt, calls):
         self.assertCalls(dgt, ((ARG1_PTR, ARG1_SSIZE), {}), calls, (ARG1_PTR, ARG1_SSIZE), RESULT_PTR)
 
 class MethodsTest(DispatchSetupTestCase):
@@ -119,7 +119,7 @@ class MethodsTest(DispatchSetupTestCase):
         self.assertTypeSpec(typeSpec, TestType)
 
     def testNoArgsMethod(self):
-        NoArgs, calls_cfunc = self.getBinaryCFunc()
+        NoArgs, calls_cfunc = self.getBinaryPtrFunc()
         method, deallocMethod = MakeMethodDef("method", NoArgs, METH.NOARGS)
         result = object()
         dispatch, calls_dispatch = self.getBinaryFunc(result)
@@ -132,7 +132,7 @@ class MethodsTest(DispatchSetupTestCase):
                 ("klass.method", instance._instancePtr), result)
             
             cfunc = _type._dispatcher.table["klass.method"]
-            self.assertCallsBinaryCFunc(cfunc, calls_cfunc)
+            self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -142,7 +142,7 @@ class MethodsTest(DispatchSetupTestCase):
 
 
     def testObjArgMethod(self):
-        ObjArg, calls_cfunc = self.getBinaryCFunc()
+        ObjArg, calls_cfunc = self.getBinaryPtrFunc()
         method, deallocMethod = MakeMethodDef("method", ObjArg, METH.O)
         result = object()
         dispatch, calls_dispatch = self.getTernaryFunc(result)
@@ -155,7 +155,7 @@ class MethodsTest(DispatchSetupTestCase):
                 ("klass.method", instance._instancePtr, arg), result)
             
             cfunc = _type._dispatcher.table["klass.method"]
-            self.assertCallsBinaryCFunc(cfunc, calls_cfunc)
+            self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -165,7 +165,7 @@ class MethodsTest(DispatchSetupTestCase):
 
 
     def testVarargsMethod(self):
-        VarArgs, calls_cfunc = self.getBinaryCFunc()
+        VarArgs, calls_cfunc = self.getBinaryPtrFunc()
         method, deallocMethod = MakeMethodDef("method", VarArgs, METH.VARARGS)
         result = object()
         dispatch, calls_dispatch = self.getNaryFunc(result)
@@ -178,7 +178,7 @@ class MethodsTest(DispatchSetupTestCase):
                 (("klass.method", instance._instancePtr) + args, {}), result)
             
             cfunc = _type._dispatcher.table["klass.method"]
-            self.assertCallsBinaryCFunc(cfunc, calls_cfunc)
+            self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -188,7 +188,7 @@ class MethodsTest(DispatchSetupTestCase):
         
 
     def testVarargsKwargsMethod(self):
-        Kwargs, calls_cfunc = self.getTernaryCFunc()
+        Kwargs, calls_cfunc = self.getTernaryPtrFunc()
         method, deallocMethod = MakeMethodDef("method", Kwargs, METH.VARARGS | METH.KEYWORDS)
         result = object()
         dispatch, calls_dispatch = self.getNaryFunc(result)
@@ -201,7 +201,7 @@ class MethodsTest(DispatchSetupTestCase):
                 (("klass.method", instance._instancePtr) + args, kwargs), result)
             
             cfunc = _type._dispatcher.table["klass.method"]
-            self.assertCallsTernaryCFunc(cfunc, calls_cfunc)
+            self.assertCallsTernaryPtrFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -213,7 +213,7 @@ class MethodsTest(DispatchSetupTestCase):
 class StrReprTest(DispatchSetupTestCase):
     
     def assertReprfunc(self, cpyName, ipyName):
-        reprfunc, calls_cfunc = self.getUnaryCFunc()
+        reprfunc, calls_cfunc = self.getUnaryPtrFunc()
         result = object()
         dispatch, calls_dispatch = self.getBinaryFunc(result)
         
@@ -225,7 +225,7 @@ class StrReprTest(DispatchSetupTestCase):
                 ("klass." + ipyName, instance._instancePtr), result)
             
             cfunc = _type._dispatcher.table["klass." + ipyName]
-            self.assertCallsUnaryCFunc(cfunc, calls_cfunc)
+            self.assertCallsUnaryPtrFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -241,12 +241,13 @@ class StrReprTest(DispatchSetupTestCase):
     
     def testRepr(self):
         self.assertReprfunc("tp_repr", "__repr__")
+        
 
 
 class CallTest(DispatchSetupTestCase):
     
     def testCall(self):
-        Call, calls_cfunc = self.getTernaryCFunc()
+        Call, calls_cfunc = self.getTernaryPtrFunc()
         result = object()
         dispatch, calls_dispatch = self.getNaryFunc(result)
         
@@ -258,7 +259,7 @@ class CallTest(DispatchSetupTestCase):
                 (("klass.__call__", instance._instancePtr) + args, kwargs), result)
             
             cfunc = _type._dispatcher.table["klass.__call__"]
-            self.assertCallsTernaryCFunc(cfunc, calls_cfunc)
+            self.assertCallsTernaryPtrFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -273,7 +274,7 @@ class CallTest(DispatchSetupTestCase):
 class IterTest(DispatchSetupTestCase):
 
     def assertSelfTypeMethod(self, typeFlags, keyName, expectedMethodName, TestErrorHandler):
-        func, calls_cfunc = self.getUnaryCFunc()
+        func, calls_cfunc = self.getUnaryPtrFunc()
         typeSpec = {
             "tp_name": "klass",
             keyName: func,
@@ -294,7 +295,7 @@ class IterTest(DispatchSetupTestCase):
             self.assertEquals(calls_dispatch, [("klass." + keyName, instance._instancePtr)])
             
             cfunc = _type._dispatcher.table["klass." + keyName]
-            self.assertCallsUnaryCFunc(cfunc, calls_cfunc)
+            self.assertCallsUnaryPtrFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -324,7 +325,7 @@ class IterTest(DispatchSetupTestCase):
 class NumberTest(DispatchSetupTestCase):
     
     def assertUnaryNumberMethod(self, slotName, methodName):
-        func, calls_cfunc = self.getUnaryCFunc()
+        func, calls_cfunc = self.getUnaryPtrFunc()
         numbersPtr, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {slotName: func})
         typeSpec = {
             "tp_name": "klass",
@@ -341,7 +342,7 @@ class NumberTest(DispatchSetupTestCase):
                 ("klass." + methodName, instance._instancePtr), result)
             
             cfunc = _type._dispatcher.table["klass." + methodName]
-            self.assertCallsUnaryCFunc(cfunc, calls_cfunc)
+            self.assertCallsUnaryPtrFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -350,7 +351,7 @@ class NumberTest(DispatchSetupTestCase):
         deallocNumbers()
     
     def assertBinaryNumberMethod(self, slotName, methodName):
-        func, calls_cfunc = self.getBinaryCFunc()
+        func, calls_cfunc = self.getBinaryPtrFunc()
         numbersPtr, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {slotName: func})
         typeSpec = {
             "tp_name": "klass",
@@ -367,7 +368,7 @@ class NumberTest(DispatchSetupTestCase):
                 ("klass." + methodName, instance._instancePtr, arg), result)
             
             cfunc = _type._dispatcher.table["klass." + methodName]
-            self.assertCallsBinaryCFunc(cfunc, calls_cfunc)
+            self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -394,7 +395,7 @@ class NumberTest(DispatchSetupTestCase):
 class SequenceTest(DispatchSetupTestCase):
     
     def testItem(self):
-        func, calls_cfunc = self.getSsizeargCFunc()
+        func, calls_cfunc = self.getSsizeargPtrFunc()
         sequencesPtr, deallocSequences = MakeNumSeqMapMethods(PySequenceMethods, {"sq_item": func})
         typeSpec = {
             "tp_name": "klass",
@@ -411,7 +412,7 @@ class SequenceTest(DispatchSetupTestCase):
                 ("klass.__getitem__", instance._instancePtr, arg), result)
             
             cfunc = _type._dispatcher.table["klass.__getitem__"]
-            self.assertCallsSsizeargCFunc(cfunc, calls_cfunc)
+            self.assertCallsSsizeargPtrFunc(cfunc, calls_cfunc)
             
             del instance
             gcwait()
@@ -420,6 +421,32 @@ class SequenceTest(DispatchSetupTestCase):
         deallocSequences()
         
 
+    
+    def testLen(self):
+        lenfunc, calls_cfunc = self.getUnaryFunc(123)
+        sequencesPtr, deallocSequences = MakeNumSeqMapMethods(PySequenceMethods, {"sq_length": lenfunc})
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_as_sequence": sequencesPtr,
+        }
+        result = object()
+        dispatch, calls_dispatch = self.getBinaryFunc(result)
+        
+        def TestType(_type, _):
+            instance = _type()
+            _type._dispatcher.method_lenfunc = dispatch
+            self.assertCalls(
+                instance.__len__, (tuple(), {}), calls_dispatch,
+                ("klass.__len__", instance._instancePtr), result)
+            
+            cfunc = _type._dispatcher.table["klass.__len__"]
+            self.assertCalls(
+                cfunc, ((ARG1_PTR,), {}), calls_cfunc, (ARG1_PTR,), 123)
+            
+            del instance
+            gcwait()
+
+        self.assertTypeSpec(typeSpec, TestType)
 
 class NewInitDelTest(TestCase):
 
