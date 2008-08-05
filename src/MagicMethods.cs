@@ -59,7 +59,12 @@ namespace Ironclad
                     template = CodeSnippets.SSIZEARG_METHOD_CODE;
                     dgtType = typeof(CPython_ssizeargfunc_Delegate);
                     break;
-
+                case "sq_length":
+                    name = "__len__";
+                    template = CodeSnippets.LENFUNC_METHOD_CODE;
+                    dgtType = typeof(CPython_lenfunc_Delegate);
+                    break;
+                    
                 // b0rked
                 default:
                     throw new NotImplementedException(String.Format("unrecognised field: {0}", field));

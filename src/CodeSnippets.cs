@@ -136,6 +136,12 @@ class {0}(_ironclad_baseclass):
         return self._dispatcher.method_selfarg('{2}{0}', self._instancePtr)
 ";
 
+        public const string LENFUNC_METHOD_CODE = @"
+    def {0}(self):
+        '''{1}'''
+        return self._dispatcher.method_lenfunc('{2}{0}', self._instancePtr)
+";
+
         public const string INSTALL_IMPORT_HOOK_CODE = @"
 import ihooks
 import imp
@@ -191,7 +197,7 @@ class Dispatcher(object):
         self.mapper = mapper
         self.table = table
 
-    def _maybe_raise(self, resultPtr):
+    def _maybe_raise(self, resultPtr=None):
         error = self.mapper.LastException
         if error:
             self.mapper.LastException = None
@@ -316,6 +322,11 @@ class Dispatcher(object):
             return self.mapper.Retrieve(resultPtr)
         finally:
             self._cleanup(resultPtr)
+
+    def method_lenfunc(self, name, instancePtr):
+        result = self.table[name](instancePtr)
+        self._maybe_raise()
+        return result
 
     def method_getter(self, name, instancePtr, closurePtr):
         resultPtr = self.table[name](instancePtr, closurePtr)
