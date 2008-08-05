@@ -20,13 +20,16 @@ class ObjectFunctionsTest(TestCase):
     
     def testPyObject_Call(self):
         mapper = Python25Mapper()
-        kwargsPtr = IntPtr.Zero
         deallocTypes = CreateTypes(mapper)
         
-        kallablePtr = mapper.Store(lambda x: x * 2)
+        kallablePtr = mapper.Store(lambda x, y=2: x * y)
         argsPtr = mapper.Store((4,))
-        resultPtr = mapper.PyObject_Call(kallablePtr, argsPtr, kwargsPtr)
+        resultPtr = mapper.PyObject_Call(kallablePtr, argsPtr, IntPtr.Zero)
         self.assertEquals(mapper.Retrieve(resultPtr), 8, "didn't call")
+        
+        kwargsPtr = mapper.Store({'y': 4})
+        resultPtr = mapper.PyObject_Call(kallablePtr, argsPtr, kwargsPtr)
+        self.assertEquals(mapper.Retrieve(resultPtr), 16, "didn't call with kwargs")
             
         mapper.Dispose()
         deallocTypes()

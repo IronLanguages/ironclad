@@ -34,13 +34,22 @@ namespace Ironclad
         public override IntPtr
         PyObject_Call(IntPtr objPtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
-            // TODO ignore kwargsPtr for now
             object obj = this.Retrieve(objPtr);
             ICollection args = (ICollection)this.Retrieve(argsPtr);
             object[] argsArray = new object[args.Count];
             args.CopyTo(argsArray, 0);
+
+            object result = null;
+            if (kwargsPtr == IntPtr.Zero)
+            {
+               result = PythonCalls.Call(obj, argsArray);
+            }
+            else
+            {
+                IAttributesCollection kwargs = (IAttributesCollection)this.Retrieve(kwargsPtr);
+                result = PythonCalls.CallWithKeywordArgs(obj, argsArray, kwargs);
+            }
             
-            object result = PythonCalls.Call(obj, argsArray);
             IntPtr resultPtr = this.Store(result);
             return resultPtr;
         }
@@ -106,7 +115,8 @@ namespace Ironclad
         {
             try
             {
-                return PythonOps.Length(this.Retrieve(objPtr));
+                int length = PythonOps.Length(this.Retrieve(objPtr));
+                return length;
             }
             catch (Exception e)
             {
