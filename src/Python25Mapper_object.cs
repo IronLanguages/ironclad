@@ -53,18 +53,20 @@ namespace Ironclad
             IntPtr resultPtr = this.Store(result);
             return resultPtr;
         }
+
+        public override IntPtr
+        _PyObject_New(IntPtr typePtr)
+        {
+            int ob_size = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "ob_size");
+            IntPtr objPtr = this.allocator.Alloc(ob_size);
+            return this.PyObject_Init(objPtr, typePtr);
+        }
         
         public override IntPtr
         PyObject_Init(IntPtr objPtr, IntPtr typePtr)
         {
-            object managedInstance = PythonCalls.Call(this.trivialObjectSubclass);
-            Builtin.setattr(DefaultContext.Default, managedInstance, "_instancePtr", objPtr);
-            Builtin.setattr(DefaultContext.Default, managedInstance, "__class__", this.Retrieve(typePtr));
-            
             CPyMarshal.WriteIntField(objPtr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(objPtr, typeof(PyObject), "ob_type", typePtr);
-            this.StoreBridge(objPtr, managedInstance);
-            this.IncRef(objPtr);
             return objPtr;
         }
         

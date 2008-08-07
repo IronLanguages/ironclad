@@ -3,6 +3,7 @@ using System;
 using IronPython.Runtime;
 using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
+using IronPython.Runtime.Types;
 
 namespace Ironclad
 {
@@ -15,7 +16,7 @@ namespace Ironclad
             // I don't *think* a type's attributes can meaningfully count...
             // TODO: regardless, there must be a better way to do this
             object obj = this.Retrieve(objPtr);
-            if (this.PyType_IsSubtype(objPtr, this.PyType_Type) != 1 &&
+            if ((!Builtin.isinstance(obj, TypeCache.PythonType)) &&
                 Builtin.hasattr(DefaultContext.Default, obj, "__len__") &&
                 Builtin.hasattr(DefaultContext.Default, obj, "__getitem__") &&
                 Builtin.hasattr(DefaultContext.Default, obj, "__add__") &&

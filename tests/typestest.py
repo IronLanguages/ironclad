@@ -55,21 +55,32 @@ class Types_Test(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        self.assertTrue(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyType_Type), "wrong")
-        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyString_Type, mapper.PyString_Type), "wrong")
-        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyBaseObject_Type, mapper.PyBaseObject_Type), "wrong")
-        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyList_Type, mapper.PyList_Type), "wrong")
+        self.assertTrue(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyType_Type))
+        self.assertTrue(mapper.PyType_IsSubtype(mapper.PyString_Type, mapper.PyString_Type))
+        self.assertTrue(mapper.PyType_IsSubtype(mapper.PyBaseObject_Type, mapper.PyBaseObject_Type))
+        self.assertTrue(mapper.PyType_IsSubtype(mapper.PyList_Type, mapper.PyList_Type))
         
-        self.assertTrue(mapper.PyType_IsSubtype(mapper.PyBaseObject_Type, mapper.PyType_Type), "wrong")
-        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyBaseObject_Type), "wrong")
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyBaseObject_Type, mapper.PyType_Type))
+        self.assertTrue(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyBaseObject_Type))
         
-        self.assertTrue(mapper.PyType_IsSubtype(mapper.PyList_Type, mapper.PyType_Type), "wrong")
-        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyList_Type), "wrong")
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyList_Type, mapper.PyType_Type))
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyList_Type))
         
-        self.assertTrue(mapper.PyType_IsSubtype(mapper.PyString_Type, mapper.PyType_Type), "wrong")
-        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyString_Type), "wrong")
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyString_Type, mapper.PyType_Type))
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyString_Type))
         
-        self.assertFalse(mapper.PyType_IsSubtype(mapper.Store("foo"), mapper.PyString_Type), "wrong")
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.Store("foo"), mapper.PyString_Type))
+        
+        class T(type): pass
+        Tptr = mapper.Store(T)
+        self.assertTrue(mapper.PyType_IsSubtype(Tptr, mapper.PyType_Type))
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyType_Type, Tptr))
+        
+        class S(str): pass
+        Sptr = mapper.Store(S)
+        self.assertTrue(mapper.PyType_IsSubtype(Sptr, mapper.PyString_Type))
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyString_Type, Sptr))
+        self.assertFalse(mapper.PyType_IsSubtype(Sptr, mapper.PyType_Type))
         
         mapper.Dispose()
         deallocTypes()
@@ -196,6 +207,7 @@ FIELDS = (
     "tp_doc",
     "tp_call",
     "tp_as_number",
+    "tp_as_sequence",
     # more to come, no doubt
 )
 BASE_FIELD = IntPtr(11111)
