@@ -784,10 +784,13 @@ class DispatcherDeleteTest(TestCase):
                 calls.append(('CheckBridgePtrs',))
             def DecRef(self, ptr):
                 calls.append(('DecRef', ptr))
+            def Unmap(self, ptr):
+                calls.append(('Unmap', ptr))
         
         expectedCalls = [
             ('CheckBridgePtrs',),
             ('DecRef', INSTANCE_PTR),
+            ('Unmap', INSTANCE_PTR),
         ]
         self.assertDispatchDelete(MockMapper(), calls, expectedCalls)
     
