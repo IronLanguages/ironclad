@@ -155,6 +155,33 @@ class ObjectFunctionsTest(TestCase):
         deallocTypes()
 
 
+    def testPyObject_Str(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        for okval in ("hullo", [0, 3, 5], (0,), {1:2}, set([1, 2])):
+            ptr = mapper.Store(okval)
+            strptr = mapper.PyObject_Str(ptr)
+            self.assertEquals(mapper.Retrieve(strptr), str(okval))
+            self.assertEquals(mapper.LastException, None)
+            mapper.DecRef(ptr)
+            mapper.DecRef(strptr)
+        
+        class BadStr(object):
+            def __str__(self):
+                raise TypeError('this object cannot be represented in your puny alphabet')
+        
+        ptr = mapper.Store(BadStr())
+        self.assertEquals(mapper.PyObject_Str(ptr), IntPtr.Zero)
+        def KindaConvertError():
+            raise mapper.LastException
+        self.assertRaises(TypeError, KindaConvertError)
+        mapper.DecRef(ptr)
+            
+        mapper.Dispose()
+        deallocTypes()
+        
+
 class IterationTest(TestCase):
     
     def testPyObject_GetIter_Success(self):
