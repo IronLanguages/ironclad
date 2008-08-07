@@ -253,6 +253,7 @@ class Dispatcher(object):
         if self.mapper.Alive:
             self.mapper.CheckBridgePtrs()
             self.mapper.DecRef(instance._instancePtr)
+            self.mapper.Unmap(instance._instancePtr)
 
 
     def function_noargs(self, name):

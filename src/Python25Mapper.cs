@@ -217,6 +217,7 @@ namespace Ironclad
         {
             this.map.WeakAssociate(ptr, obj);
             this.bridgePtrs.Add(ptr);
+            this.Strengthen(obj);
         }
         
         
@@ -295,9 +296,6 @@ namespace Ironclad
                             throw new Exception("Found impossible data in pointer map");
                     }
                 }
-            }
-            else if (ptr != IntPtr.Zero)
-            {
             }
             return this.map.GetObj(ptr);
         }
@@ -435,9 +433,18 @@ namespace Ironclad
                 Unmanaged.fclose(this.FILEs[ptr]);
                 this.FILEs.Remove(ptr);
             }
-            this.bridgePtrs.RemoveIfPresent(ptr);
-            this.map.Release(ptr);
+            this.Unmap(ptr);
             this.allocator.Free(ptr);
+        }
+
+        public void Unmap(IntPtr ptr)
+        {
+            // TODO: very badly tested (nothing works if this isn't here, but...)
+            this.bridgePtrs.RemoveIfPresent(ptr);
+            if (this.map.HasPtr(ptr))
+            {
+                this.map.Release(ptr);
+            }
         }
 
         public void RememberTempObject(IntPtr ptr)

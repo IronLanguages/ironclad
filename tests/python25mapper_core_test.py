@@ -308,11 +308,10 @@ class Python25Mapper_References_Test(TestCase):
         CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
         CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
         mapper.StoreBridge(ptr, obj)
-        mapper.Strengthen(obj)
         
         del obj
         gcwait()
-        self.assertEquals(objref.IsAlive, True, "was not strengthened")
+        self.assertEquals(objref.IsAlive, True, "was not strongly referenced")
         
         sameobj = objref.Target
         mapper.Weaken(sameobj)
@@ -406,7 +405,6 @@ class Python25Mapper_References_Test(TestCase):
         self.assertRaises(KeyError, lambda: mapper.IncRef(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.DecRef(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.Retrieve(IntPtr.Zero))
-        self.assertRaises(KeyError, lambda: mapper.PyObject_Free(IntPtr.Zero))
         self.assertRaises(KeyError, lambda: mapper.RefCount(IntPtr.Zero))
         self.assertEquals(mapper.HasPtr(IntPtr.Zero), False)
         mapper.Dispose()
