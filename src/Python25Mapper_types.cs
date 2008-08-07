@@ -138,16 +138,15 @@ namespace Ironclad
         {
             PythonType _type = this.Retrieve(typePtr) as PythonType;
             PythonType subtype = this.Retrieve(subtypePtr) as PythonType;
-            if (subtype == null || _type == null) { return 0; }
-
-            PythonType midtype;
-            while (true)
+            if (subtype == null || _type == null)
             {
-                midtype = (PythonType)PythonCalls.Call(Builtin.type, new object[1] { subtype });
-                if (midtype == _type) { return 1; }
-                if (subtype == midtype) { return 0; }
-                subtype = midtype;
+                return 0;
             }
+            if (Builtin.issubclass(subtype, _type))
+            {
+                return 1;
+            }
+            return 0;
         }
         
                 
@@ -204,6 +203,7 @@ namespace Ironclad
             this.InheritPtrField(typePtr, "tp_doc");
             this.InheritPtrField(typePtr, "tp_call");
             this.InheritPtrField(typePtr, "tp_as_number");
+            this.InheritPtrField(typePtr, "tp_as_sequence");
             
             flags |= Py_TPFLAGS.READY;
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);

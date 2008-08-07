@@ -180,6 +180,20 @@ class Python25Mapper_References_Test(TestCase):
         mapper.Dispose()
 
 
+    def testEqualFloatsIntsStoredSeparately(self):
+        mapper = Python25Mapper()
+        
+        result1 = mapper.Store(0)
+        result2 = mapper.Store(0.0)
+        
+        self.assertNotEquals(result1, result2, "confused separate objects")
+        self.assertEquals(mapper.RefCount(result1), 1, "wrong")
+        self.assertEquals(mapper.RefCount(result2), 1, "wrong")
+        
+        mapper.Dispose()
+        
+
+
     def testDecRefObjectWithZeroRefCountFails(self):
         allocator = HGlobalAllocator()
         mapper = Python25Mapper(allocator)

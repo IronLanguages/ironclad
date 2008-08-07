@@ -315,45 +315,22 @@ class PyBaseObject_Type_Test(TypeTestCase):
         Marshal.FreeHGlobal(objPtr)
 
 
-class InitFunctionsTest(TestCase):
+class NewInitFunctionsTest(TestCase):
     
     def testPyObject_Init(self):
-        frees = []
-        allocator = GetAllocatingTestAllocator([], frees)
-        mapper = Python25Mapper(allocator)
+        mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
         typePtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'FooType'})
-        objPtr = allocator.Alloc(Marshal.SizeOf(PyObject))
+        objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
         
-        # some C extension has allocated some memory, and wants it to be a FooType
         self.assertEquals(mapper.PyObject_Init(objPtr, typePtr), objPtr, 'did not return the "new instance"')
-        
-        # check that it is correct from the extension's perspective
-        self.assertEquals(CPyMarshal.ReadIntField(objPtr, PyObject, "ob_refcnt"), 2, "wrong refcount")
         self.assertEquals(CPyMarshal.ReadPtrField(objPtr, PyObject, "ob_type"), typePtr, "wrong type")
-        
-        _type = mapper.Retrieve(typePtr)
-        obj = mapper.Retrieve(objPtr)
-        objref = WeakReference(obj)
-        self.assertEquals(obj.__class__, _type, "wrong type")
-        
-        # the C extension decides it no longer cares about the object
-        CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 1)
-        
-        # and so does the managed side
-        del obj
-        gcwait()
-        self.assertEquals(objref.IsAlive, True, "GCed object while it should still have been strongly mapped")
-        
-        # at some point, we check bridge ptrs, and it becomes eligible for collection
-        obj = objref.Target
-        mapper.CheckBridgePtrs()
-        del obj
-        gcwait()
-        self.assertEquals(objref.IsAlive, False, "failed to GC unwanted object")
+        self.assertEquals(CPyMarshal.ReadIntField(objPtr, PyObject, "ob_refcnt"), 1, "wrong refcount")
+        self.assertEquals(mapper.HasPtr(objPtr), False)
         
         mapper.Dispose()
+        Marshal.FreeHGlobal(objPtr)
         deallocType()
         deallocTypes()
 
@@ -367,14 +344,35 @@ class InitFunctionsTest(TestCase):
         
         mapper.Dispose()
         deallocTypes()
+    
+    
+    def test_PyObject_New(self):
+        allocs = []
+        allocator = GetAllocatingTestAllocator(allocs, [])
+        mapper = Python25Mapper(allocator)
+        deallocTypes = CreateTypes(mapper)
         
+        typeObjSize = Marshal.SizeOf(PyTypeObject)
+        typePtr = Marshal.AllocHGlobal(typeObjSize)
+        CPyMarshal.Zero(typePtr, typeObjSize)
+        CPyMarshal.WriteIntField(typePtr, PyTypeObject, "ob_size", 31337)
+        
+        del allocs[:]
+        objPtr = mapper._PyObject_New(typePtr)
+        self.assertEquals(allocs, [(objPtr, 31337)])
+        self.assertEquals(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_type'), typePtr)
+        self.assertEquals(CPyMarshal.ReadIntField(objPtr, PyObject, 'ob_refcnt'), 1)
+        self.assertEquals(mapper.HasPtr(objPtr), False)
+        
+        mapper.Dispose()
+        deallocTypes()
         
 
 suite = makesuite(
     ObjectFunctionsTest,
     IterationTest,
     PyBaseObject_Type_Test,
-    InitFunctionsTest,
+    NewInitFunctionsTest,
 )
 
 if __name__ == '__main__':
