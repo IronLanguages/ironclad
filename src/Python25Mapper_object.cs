@@ -126,6 +126,28 @@ namespace Ironclad
                 return -1;
             }
         }
+
+
+        public override IntPtr
+        PyObject_Str(IntPtr objPtr)
+        {
+            try
+            {
+                object obj = this.Retrieve(objPtr);
+                string str = obj as string;
+                if (str != null)
+                {
+                    return this.Store(str);
+                }
+                return this.Store(PythonCalls.Call(Builtin.str, new object[] { obj }));
+                
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
         
         
         public override IntPtr
