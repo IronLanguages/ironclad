@@ -107,8 +107,8 @@ class Python25Mapper_References_Test(TestCase):
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
         
+        del allocs[:]
         obj1 = object()
-        self.assertEquals(allocs, [], "unexpected allocations")
         ptr = mapper.Store(obj1)
         self.assertEquals(len(allocs), 1, "unexpected number of allocations")
         self.assertEquals(allocs[0], (ptr, Marshal.SizeOf(PyObject)), "unexpected result")

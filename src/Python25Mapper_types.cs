@@ -47,6 +47,7 @@ namespace Ironclad
         {
             this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            this.AddDefaultNumberMethods(address);
             this.map.Associate(address, TypeCache.Int32);
         }
 
@@ -55,6 +56,7 @@ namespace Ironclad
         {
             this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            this.AddDefaultNumberMethods(address);
             this.map.Associate(address, TypeCache.BigInteger);
         }
 
@@ -63,6 +65,7 @@ namespace Ironclad
         {
             this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            this.AddDefaultNumberMethods(address);
             this.map.Associate(address, TypeCache.Double);
         }
 
@@ -113,7 +116,19 @@ namespace Ironclad
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyTuple_Dealloc"));
             this.map.Associate(address, TypeCache.PythonTuple);
         }
-        
+
+        private void
+        AddDefaultNumberMethods(IntPtr typePtr)
+        {
+            int nmSize = Marshal.SizeOf(typeof(PyNumberMethods));
+            IntPtr nmPtr = this.allocator.Alloc(nmSize);
+            CPyMarshal.Zero(nmPtr, nmSize);
+
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_float", this.GetAddress("PyNumber_Float"));
+
+            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_as_number", nmPtr);
+        }
+
         
         public void
         ReadyBuiltinTypes()

@@ -379,6 +379,9 @@ class NumberTest(DispatchSetupTestCase):
     def testAbs(self):
         self.assertUnaryNumberMethod("nb_absolute", "__abs__")
 
+    def testFloat(self):
+        self.assertUnaryNumberMethod("nb_float", "__float__")
+
     def testAdd(self):
         self.assertBinaryNumberMethod("nb_add", "__add__")
 

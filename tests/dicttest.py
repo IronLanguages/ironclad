@@ -23,6 +23,7 @@ class DictTest(TestCase):
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
     
+        del allocs[:]
         dictPtr = mapper.PyDict_New()
         self.assertEquals(mapper.RefCount(dictPtr), 1, "bad refcount")
         self.assertEquals(allocs, [(dictPtr, Marshal.SizeOf(PyObject))], "did not allocate as expected")

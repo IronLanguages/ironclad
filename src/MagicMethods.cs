@@ -52,6 +52,11 @@ namespace Ironclad
                     template = CodeSnippets.SELFARG_METHOD_CODE;
                     dgtType = typeof(CPython_unaryfunc_Delegate);
                     break;
+                case "nb_float":
+                    name = "__float__";
+                    template = CodeSnippets.SELFARG_METHOD_CODE;
+                    dgtType = typeof(CPython_unaryfunc_Delegate);
+                    break;
 
                 // PySequenceMethods
                 case "sq_item":
