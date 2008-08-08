@@ -111,6 +111,8 @@ ARG = object()
 ARG_PTR = IntPtr(444)
 CLOSURE = IntPtr(555)
 SSIZE = 123456
+ARG2 = object()
+ARG2_PTR = IntPtr(666)
 
 class DispatcherDispatchTestCase(TestCase):
     
@@ -123,6 +125,7 @@ class DispatcherDispatchTestCase(TestCase):
             def Store(self, item):
                 calls.append(('Store', (item,)))
                 if item == ARG: return ARG_PTR
+                if item == ARG2: return ARG2_PTR
                 if item == ARGS: return ARGS_PTR
                 if item == KWARGS: return KWARGS_PTR
             
@@ -462,6 +465,30 @@ class DispatcherSsizeargTest(DispatcherDispatchTestCase):
             ('dgt', (INSTANCE_PTR, SSIZE)),
             ('_maybe_raise', (RESULT_PTR,)),
             ('_cleanup', (RESULT_PTR,))
+        ])
+
+
+class DispatcherTernaryTest(DispatcherDispatchTestCase):
+    
+    def testDispatch_method_ternary(self):
+        calls = self.callDispatcherMethod('method_ternary', INSTANCE_PTR, ARG, ARG2)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('Store', (ARG2,)),
+            ('dgt', (INSTANCE_PTR, ARG_PTR, ARG2_PTR)),
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('Retrieve', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR, ARG_PTR, ARG2_PTR))
+        ])
+    
+    def testDispatch_method_ternary_error(self):
+        calls = self.callDispatcherErrorMethod('method_ternary', INSTANCE_PTR, ARG, ARG2)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('Store', (ARG2,)),
+            ('dgt', (INSTANCE_PTR, ARG_PTR, ARG2_PTR)),
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR, ARG_PTR, ARG2_PTR))
         ])
 
 
@@ -907,6 +934,7 @@ suite  = makesuite(
     DispatcherSelfargTest,
     DispatcherKwargsTest, 
     DispatcherSsizeargTest,
+    DispatcherTernaryTest,
     DispatcherLenfuncTest,
     DispatcherGetterTest,
     DispatcherSetterTest,
