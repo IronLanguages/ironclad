@@ -393,6 +393,37 @@ class NumberTest(DispatchSetupTestCase):
 
     def testDivide(self):
         self.assertBinaryNumberMethod("nb_divide", "__div__")
+    
+    def testPower(self):
+        func, calls_cfunc = self.getTernaryPtrFunc()
+        numbersPtr, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {'nb_power': func})
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_as_number": numbersPtr
+        }
+        result = object()
+        dispatch, calls_dispatch = self.getQuarternaryFunc(result)
+        
+        def TestType(_type, _):
+            instance, arg1, arg2 = _type(), object(), object()
+            _type._dispatcher.method_ternary = dispatch
+            self.assertCalls(
+                instance.__pow__, ((arg1, arg2), {}), calls_dispatch, 
+                ("klass.__pow__", instance._instancePtr, arg1, arg2), result)
+                
+            del calls_dispatch[:]
+            self.assertCalls(
+                lambda x, y: x ** y, ((instance, arg1), {}), calls_dispatch, 
+                ("klass.__pow__", instance._instancePtr, arg1, None), result)
+            
+            cfunc = _type._dispatcher.table["klass.__pow__"]
+            self.assertCallsTernaryPtrFunc(cfunc, calls_cfunc)
+            
+            del instance
+            gcwait()
+            
+        self.assertTypeSpec(typeSpec, TestType)
+        deallocNumbers()
 
 
 class SequenceTest(DispatchSetupTestCase):

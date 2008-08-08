@@ -57,6 +57,11 @@ namespace Ironclad
                     template = CodeSnippets.SELFARG_METHOD_CODE;
                     dgtType = typeof(CPython_unaryfunc_Delegate);
                     break;
+                case "nb_power":
+                    name = "__pow__";
+                    template = CodeSnippets.TERNARY_METHOD_CODE;
+                    dgtType = typeof(CPython_ternaryfunc_Delegate);
+                    break;
 
                 // PySequenceMethods
                 case "sq_item":

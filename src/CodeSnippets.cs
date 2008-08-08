@@ -142,6 +142,12 @@ class {0}(_ironclad_baseclass):
         return self._dispatcher.method_lenfunc('{2}{0}', self._instancePtr)
 ";
 
+        public const string TERNARY_METHOD_CODE = @"
+    def {0}(self, arg1, arg2=None):
+        '''{1}'''
+        return self._dispatcher.method_ternary('{2}{0}', self._instancePtr, arg1, arg2)
+";
+
         public const string INSTALL_IMPORT_HOOK_CODE = @"
 import ihooks
 import imp
@@ -323,6 +329,16 @@ class Dispatcher(object):
             return self.mapper.Retrieve(resultPtr)
         finally:
             self._cleanup(resultPtr)
+
+    def method_ternary(self, name, instancePtr, arg1, arg2):
+        arg1Ptr = self.mapper.Store(arg1)
+        arg2Ptr = self.mapper.Store(arg2)
+        resultPtr = self.table[name](instancePtr, arg1Ptr, arg2Ptr)
+        try:
+            self._maybe_raise(resultPtr)
+            return self.mapper.Retrieve(resultPtr)
+        finally:
+            self._cleanup(resultPtr, arg1Ptr, arg2Ptr)
 
     def method_lenfunc(self, name, instancePtr):
         result = self.table[name](instancePtr)

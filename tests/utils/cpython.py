@@ -162,6 +162,7 @@ def MakeItemsTablePtr(items):
     return tablePtr, dealloc
 
 NUMSEQMAP_METHODS = {
+    "nb_power": CPython_ternaryfunc_Delegate, 
     "nb_add": CPython_binaryfunc_Delegate, 
     "nb_subtract": CPython_binaryfunc_Delegate, 
     "nb_multiply": CPython_binaryfunc_Delegate, 
