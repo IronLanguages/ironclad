@@ -169,6 +169,7 @@ NUMSEQMAP_METHODS = {
     "nb_add": CPython_binaryfunc_Delegate, 
     "nb_add": CPython_binaryfunc_Delegate, 
     "nb_absolute": CPython_unaryfunc_Delegate, 
+    "nb_float": CPython_unaryfunc_Delegate, 
     
     "sq_item": CPython_ssizeargfunc_Delegate,
     "sq_length": CPython_lenfunc_Delegate,

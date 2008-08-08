@@ -119,6 +119,7 @@ class ListFunctionsTest(TestCase):
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
         
+        del allocs[:]
         listPtr = mapper.PyList_New(0)
         self.assertEquals(allocs, [(listPtr, Marshal.SizeOf(PyListObject))], "bad alloc")
 
@@ -138,6 +139,7 @@ class ListFunctionsTest(TestCase):
         allocs = []
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
+        del allocs[:]
         
         SIZE = 27
         listPtr = mapper.PyList_New(SIZE)
@@ -168,6 +170,7 @@ class ListFunctionsTest(TestCase):
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, deallocs))
         deallocTypes = CreateTypes(mapper)
         
+        del allocs[:]
         listPtr = mapper.PyList_New(0)
         self.assertEquals(allocs, [(listPtr, Marshal.SizeOf(PyListObject))], "bad alloc")
 

@@ -11,7 +11,7 @@ from System import IntPtr, UInt32, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CannotInterpretException, CPyMarshal, HGlobalAllocator, OpaquePyCObject, Python25Mapper
-from Ironclad.Structs import PyObject, PyTypeObject, Py_TPFLAGS
+from Ironclad.Structs import PyObject, PyNumberMethods, PyTypeObject, Py_TPFLAGS
 
 BUILTIN_TYPES = {
     "PyType_Type": type,
@@ -142,7 +142,28 @@ class Types_Test(TestCase):
                 
         mapper.Dispose()
         deallocTypes()
+    
+    
+    def testNumberMethods(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
         
+        numberTypes = ("PyInt_Type", "PyLong_Type", "PyFloat_Type")
+        implementedFields = {
+            "nb_float": mapper.GetAddress("PyNumber_Float")
+        }
+        
+        for _type in numberTypes:
+            typePtr = getattr(mapper, _type)
+            nmPtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_as_number")
+            self.assertNotEquals(nmPtr, IntPtr.Zero)
+            for field in implementedFields:
+                fieldPtr = CPyMarshal.ReadPtrField(nmPtr, PyNumberMethods, field)
+                self.assertNotEquals(fieldPtr, IntPtr.Zero)
+                self.assertEquals(fieldPtr, implementedFields[field])
+                
+        mapper.Dispose()
+        deallocTypes()
     
     
     def assertMaps(self, mapper, func, ptr, refcnt):
@@ -283,6 +304,8 @@ class PyType_GenericAlloc_Test(TestCase):
             "tp_itemsize": 64,
         }
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
+        
+        del allocs[:]
         result = mapper.PyType_GenericAlloc(typePtr, 0)
         self.assertEquals(allocs, [(result, 32)], "allocated wrong")
 
@@ -312,6 +335,8 @@ class PyType_GenericAlloc_Test(TestCase):
             "tp_itemsize": 64,
         }
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
+        
+        del allocs[:]
         result = mapper.PyType_GenericAlloc(typePtr, 3)
         self.assertEquals(allocs, [(result, 224)], "allocated wrong")
 

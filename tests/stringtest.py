@@ -82,6 +82,7 @@ class PyString_FromString_Test(PyString_TestCase):
         allocs = []
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
+        del allocs[:]
 
         testString = "beset on all sides" + self.getStringWithValues(1, 256)
         bytes = self.byteArrayFromString(testString)
@@ -138,6 +139,7 @@ class PyString_FromStringAndSize_Test(PyString_TestCase):
         allocs = []
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
+        del allocs[:]
 
         testString = "we run the grease racket in this town" + self.getStringWithValues(0, 256)
         testLength = len(testString)
@@ -165,6 +167,7 @@ class PyString_FromStringAndSize_Test(PyString_TestCase):
         allocs = []
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
+        del allocs[:]
 
         testString = "we also run the shovel racket" + self.getStringWithValues(0, 256)
         testBytes = self.byteArrayFromString(testString)
@@ -190,6 +193,7 @@ class _PyString_Resize_Test(PyString_TestCase):
         frees = []
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
+        del allocs[:]
 
         data = mapper.PyString_FromStringAndSize(IntPtr.Zero, 365)
         ptrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
@@ -210,6 +214,7 @@ class _PyString_Resize_Test(PyString_TestCase):
         frees = []
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
+        del allocs[:]
 
         oldLength = 365
         newLength = 20
@@ -238,6 +243,7 @@ class _PyString_Resize_Test(PyString_TestCase):
         frees = []
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
+        del allocs[:]
 
         oldLength = 20
         testString = "slings and arrows" + self.getStringWithValues(0, 256)
@@ -316,13 +322,14 @@ class PyStringStoreTest(PyString_TestCase):
     def testStoreStringCreatesStringType(self):
         allocs = []
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        deallocTypes = CreateTypes(mapper)
+        del allocs[:]
 
         testString = "fnord" + self.getStringWithValues(1, 256)
         testBytes = self.byteArrayFromString(testString)
         testData = self.ptrFromByteArray(testBytes)
         testLength = len(testString)
 
-        deallocTypes = CreateTypes(mapper)
         strPtr = mapper.Store(testString)
         baseSize = Marshal.SizeOf(PyStringObject)
         
