@@ -78,7 +78,7 @@ def GetMapperTypePtrDefaults(mapper):
         "tp_free": mapper.PyObject_Free,
     }
 
-PTR_ARGS = ("ob_type", "tp_base", "tp_bases", "tp_as_number", "tp_as_sequence")
+PTR_ARGS = ("ob_type", "tp_base", "tp_bases", "tp_as_number", "tp_as_sequence", "tp_as_mapping")
 INT_ARGS = ("ob_refcnt", "tp_basicsize", "tp_itemsize", "tp_flags")
 STRING_ARGS = ("tp_name", "tp_doc")
 TABLE_ARGS = ("tp_methods", "tp_members", "tp_getset")
@@ -174,6 +174,8 @@ NUMSEQMAP_METHODS = {
     
     "sq_item": CPython_ssizeargfunc_Delegate,
     "sq_length": CPython_lenfunc_Delegate,
+    
+    "mp_subscript": CPython_binaryfunc_Delegate,
 }
 
 def MakeNumSeqMapMethods(_type, slots):
