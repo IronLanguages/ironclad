@@ -15,7 +15,7 @@ from Ironclad import (
     CPyMarshal, CPython_destructor_Delegate, CPython_initproc_Delegate, HGlobalAllocator,
     Python25Api, Python25Mapper
 )
-from Ironclad.Structs import MemberT, METH, Py_TPFLAGS, PyMemberDef, PyNumberMethods, PyObject, PySequenceMethods, PyTypeObject
+from Ironclad.Structs import MemberT, METH, Py_TPFLAGS, PyMemberDef, PyNumberMethods, PyObject, PyMappingMethods, PySequenceMethods, PyTypeObject
 
 
 class BorkedException(System.Exception):
@@ -454,7 +454,6 @@ class SequenceTest(DispatchSetupTestCase):
         self.assertTypeSpec(typeSpec, TestType)
         deallocSequences()
         
-
     
     def testLen(self):
         lenfunc, calls_cfunc = self.getUnaryFunc(123)
@@ -481,6 +480,36 @@ class SequenceTest(DispatchSetupTestCase):
             gcwait()
 
         self.assertTypeSpec(typeSpec, TestType)
+
+
+class MappingTest(DispatchSetupTestCase):
+    
+    def testItem(self):
+        func, calls_cfunc = self.getBinaryPtrFunc()
+        mappingPtr, deallocMapping = MakeNumSeqMapMethods(PyMappingMethods, {"mp_subscript": func})
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_as_mapping": mappingPtr
+        }
+        result = object()
+        dispatch, calls_dispatch = self.getTernaryFunc(result)
+        
+        def TestType(_type, _):
+            instance, arg = _type(), object()
+            _type._dispatcher.method_objarg = dispatch
+            self.assertCalls(
+                getattr(instance, "__getitem__"), ((arg,), {}), calls_dispatch, 
+                ("klass.__getitem__", instance._instancePtr, arg), result)
+            
+            cfunc = _type._dispatcher.table["klass.__getitem__"]
+            self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
+            
+            del instance
+            gcwait()
+            
+        self.assertTypeSpec(typeSpec, TestType)
+        deallocMapping()
+
 
 class NewInitDelTest(TestCase):
 
@@ -1027,6 +1056,7 @@ suite = makesuite(
     IterTest,
     NumberTest,
     SequenceTest,
+    MappingTest,
     NewInitDelTest,
     PropertiesTest,
     MembersTest,

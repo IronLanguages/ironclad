@@ -336,6 +336,15 @@ namespace Ironclad
             public IntPtr sq_inplace_concat;
             public IntPtr sq_inplace_repeat;
         }
+        
+
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct PyMappingMethods
+        {
+            public IntPtr mp_length;
+            public IntPtr mp_subscript;
+            public IntPtr mp_ass_subscript;
+        }
     }
 }
 

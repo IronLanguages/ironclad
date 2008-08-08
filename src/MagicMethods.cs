@@ -74,6 +74,13 @@ namespace Ironclad
                     template = CodeSnippets.LENFUNC_METHOD_CODE;
                     dgtType = typeof(CPython_lenfunc_Delegate);
                     break;
+
+                // PyMappingMethods
+                case "mp_subscript":
+                    name = "__getitem__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
                     
                 // b0rked
                 default:

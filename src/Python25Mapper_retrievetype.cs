@@ -78,8 +78,11 @@ namespace Ironclad
             IntPtr methodsPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_methods");
             this.GenerateMethods(classCode, methodsPtr, methodTable, tablePrefix);
 
-            IntPtr nmPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_as_number");
-            this.GenerateNumberMethods(classCode, nmPtr, methodTable, tablePrefix);
+            IntPtr nbPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_as_number");
+            this.GenerateNumberMethods(classCode, nbPtr, methodTable, tablePrefix);
+
+            IntPtr mpPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_as_mapping");
+            this.GenerateMappingMethods(classCode, mpPtr, methodTable, tablePrefix);
 
             IntPtr sqPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_as_sequence");
             this.GenerateSequenceMethods(classCode, sqPtr, methodTable, tablePrefix);
@@ -391,11 +394,19 @@ namespace Ironclad
         }
 
         private void
-        GenerateNumberMethods(StringBuilder classCode, IntPtr nmPtr, PythonDictionary methodTable, string tablePrefix)
+        GenerateMappingMethods(StringBuilder classCode, IntPtr mpPtr, PythonDictionary methodTable, string tablePrefix)
+        {
+            string[] fields = new string[] { "mp_subscript" };
+            this.GenerateProtocolMagicMethods(
+                classCode, mpPtr, typeof(PyMappingMethods), fields, methodTable, tablePrefix);
+        }
+
+        private void
+        GenerateNumberMethods(StringBuilder classCode, IntPtr nbPtr, PythonDictionary methodTable, string tablePrefix)
         {
             string[] fields = new string[] { "nb_add", "nb_subtract", "nb_multiply", "nb_divide", "nb_absolute", "nb_float", "nb_power" };
             this.GenerateProtocolMagicMethods(
-                classCode, nmPtr, typeof(PyNumberMethods), fields, methodTable, tablePrefix);
+                classCode, nbPtr, typeof(PyNumberMethods), fields, methodTable, tablePrefix);
         }
 
         private void
