@@ -75,5 +75,24 @@ namespace Ironclad
             this.PrintToStdErr(this.LastException);
             this.LastException = null;
         }
+
+        public override IntPtr
+        PyErr_NewException(string name, IntPtr _base, IntPtr dict)
+        {
+            if (_base != IntPtr.Zero || dict != IntPtr.Zero)
+            {
+                throw new NotImplementedException("PyErr_NewException called with non-null base or dict");
+            }
+            string __name__ = null;
+            string __module__ = null;
+            this.ExtractNameModule(name, ref __name__, ref __module__);
+
+            string excCode = String.Format(CodeSnippets.NEW_EXCEPTION, __name__, __module__);
+            this.ExecInModule(excCode, this.scratchModule);
+            object newExc = this.GetModuleScriptScope(this.scratchModule).GetVariable<object>(__name__);
+            IntPtr newExcPtr = this.Store(newExc);
+            this.IncRef(newExcPtr);
+            return newExcPtr;
+        }
     }
 }

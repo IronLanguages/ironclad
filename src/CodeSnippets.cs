@@ -36,6 +36,11 @@ def {0}(*args, **kwargs):
     return _dispatcher.function_kwargs('{2}{0}', *args, **kwargs)
 ";
 
+        public const string NEW_EXCEPTION = @"
+class {0}(Exception):
+    __module__ = '{1}'
+";
+
         public const string CLASS_CODE = @"
 class {0}(_ironclad_baseclass):
     '''{2}'''
