@@ -382,6 +382,9 @@ class NumberTest(DispatchSetupTestCase):
     def testFloat(self):
         self.assertUnaryNumberMethod("nb_float", "__float__")
 
+    def testNegative(self):
+        self.assertUnaryNumberMethod("nb_negative", "__neg__")
+
     def testAdd(self):
         self.assertBinaryNumberMethod("nb_add", "__add__")
 
