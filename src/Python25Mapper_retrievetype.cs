@@ -404,7 +404,7 @@ namespace Ironclad
         private void
         GenerateNumberMethods(StringBuilder classCode, IntPtr nbPtr, PythonDictionary methodTable, string tablePrefix)
         {
-            string[] fields = new string[] { "nb_add", "nb_subtract", "nb_multiply", "nb_divide", "nb_absolute", "nb_float", "nb_power" };
+            string[] fields = new string[] { "nb_add", "nb_subtract", "nb_multiply", "nb_divide", "nb_absolute", "nb_float", "nb_power", "nb_negative" };
             this.GenerateProtocolMagicMethods(
                 classCode, nbPtr, typeof(PyNumberMethods), fields, methodTable, tablePrefix);
         }
