@@ -91,6 +91,23 @@ namespace Ironclad
             }
             return 0;
         }
+
+        public override int
+        PyObject_SetAttrString(IntPtr objPtr, string name, IntPtr valuePtr)
+        {
+            object obj = this.Retrieve(objPtr);
+            object value = this.Retrieve(valuePtr);
+            try
+            {
+                Builtin.setattr(DefaultContext.Default, obj, name, value);
+                return 0;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
+        }
         
         
         public override int
