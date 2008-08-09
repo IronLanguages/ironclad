@@ -3,10 +3,22 @@ using System.Runtime.InteropServices;
 
 namespace Ironclad
 {
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct DoubleStruct
+    {
+        public double value;
+
+        public DoubleStruct(double inValue)
+        {
+            this.value = inValue;
+        }
+    }
+
     public class CPyMarshal
     {
         public const int PtrSize = 4;
         public const int IntSize = 4;
+        public const int DoubleSize = 8;
 
         public static void Zero(IntPtr start, Int32 bytes)
         {
@@ -44,6 +56,18 @@ namespace Ironclad
         {
             IntPtr readAddr = CPyMarshal.GetField(addr, type, field);
             return CPyMarshal.ReadInt(readAddr);
+        }
+
+        public static void WriteDoubleField(IntPtr addr, Type type, string field, double data)
+        {
+            IntPtr writeAddr = CPyMarshal.GetField(addr, type, field);
+            CPyMarshal.WriteDouble(writeAddr, data);
+        }
+
+        public static double ReadDoubleField(IntPtr addr, Type type, string field)
+        {
+            IntPtr readAddr = CPyMarshal.GetField(addr, type, field);
+            return CPyMarshal.ReadDouble(readAddr);
         }
         
         public static string ReadCStringField(IntPtr addr, Type type, string field)
@@ -110,6 +134,18 @@ namespace Ironclad
         public static uint ReadUInt(IntPtr address)
         {
             return (uint)Marshal.ReadInt32(address);
+        }
+
+        public static void WriteDouble(IntPtr address, double value)
+        {
+            DoubleStruct ds = new DoubleStruct(value);
+            Marshal.StructureToPtr(ds, address, false);
+        }
+
+        public static double ReadDouble(IntPtr address)
+        {
+            DoubleStruct ds = (DoubleStruct)Marshal.PtrToStructure(address, typeof(DoubleStruct));
+            return ds.value;
         }
         
         public static void WriteByte(IntPtr address, byte value)

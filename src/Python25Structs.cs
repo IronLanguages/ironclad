@@ -166,6 +166,22 @@ namespace Ironclad
             public uint ob_refcnt;
             public IntPtr ob_type;
         }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        public struct PyIntObject
+        {
+            public uint ob_refcnt;
+            public IntPtr ob_type;
+            public int ob_ival;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        public struct PyFloatObject
+        {
+            public uint ob_refcnt;
+            public IntPtr ob_type;
+            public double ob_fval;
+        }
         
         [StructLayout(LayoutKind.Sequential, Pack=1)]
         public struct PyTupleObject

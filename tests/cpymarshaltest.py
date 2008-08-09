@@ -7,8 +7,8 @@ from tests.utils.testcase import TestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, CPython_initproc_Delegate
-from Ironclad.Structs import PyObject, PyTypeObject
+from Ironclad import CPyMarshal, CPython_initproc_Delegate, DoubleStruct
+from Ironclad.Structs import PyObject, PyFloatObject, PyTypeObject
 
 class CPyMarshalTest_32(TestCase):
 
@@ -83,6 +83,27 @@ class CPyMarshalTest_32(TestCase):
         
         CPyMarshal.WriteIntField(data, PyObject, "ob_refcnt", 123)
         self.assertEquals(CPyMarshal.ReadIntField(data, PyObject, "ob_refcnt"), 123, "failed to read")
+        
+        Marshal.FreeHGlobal(data)
+    
+    
+    def testWriteDoubleField(self):
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyFloatObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyFloatObject))
+        
+        CPyMarshal.WriteDoubleField(data, PyFloatObject, "ob_fval", 7.6e-5)
+        dataStruct = Marshal.PtrToStructure(data, PyFloatObject)
+        self.assertEquals(dataStruct.ob_fval, 7.6e-5)
+        
+        Marshal.FreeHGlobal(data)
+    
+    
+    def testReadDoubleField(self):
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyFloatObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyFloatObject))
+        
+        CPyMarshal.WriteDoubleField(data, PyFloatObject, "ob_fval", -1.2e34)
+        self.assertEquals(CPyMarshal.ReadDoubleField(data, PyFloatObject, "ob_fval"), -1.2e34)
         
         Marshal.FreeHGlobal(data)
     
@@ -172,7 +193,7 @@ class CPyMarshalTest_32(TestCase):
 
 
     def testWriteInt(self):
-        data = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
+        data = Marshal.AllocHGlobal(CPyMarshal.IntSize)
         
         CPyMarshal.WriteInt(data, 0)
         self.assertEquals(Marshal.ReadInt32(data), 0, "wrong")
@@ -184,7 +205,7 @@ class CPyMarshalTest_32(TestCase):
 
 
     def testReadInt(self):
-        data = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
+        data = Marshal.AllocHGlobal(CPyMarshal.IntSize)
         
         Marshal.WriteInt32(data, 0)
         self.assertEquals(CPyMarshal.ReadInt(data), 0, "wrong")
@@ -196,7 +217,7 @@ class CPyMarshalTest_32(TestCase):
 
 
     def testWriteUInt(self):
-        data = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
+        data = Marshal.AllocHGlobal(CPyMarshal.IntSize)
         
         CPyMarshal.WriteUInt(data, 0)
         self.assertEquals(Marshal.ReadInt32(data), 0, "wrong")
@@ -208,13 +229,33 @@ class CPyMarshalTest_32(TestCase):
 
 
     def testReadUInt(self):
-        data = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
+        data = Marshal.AllocHGlobal(CPyMarshal.IntSize)
         
         Marshal.WriteInt32(data, 0)
         self.assertEquals(CPyMarshal.ReadUInt(data), 0, "wrong")
 
         Marshal.WriteInt32(data, -1)
         self.assertEquals(CPyMarshal.ReadUInt(data), 0xFFFFFFFF, "wrong")
+        
+        Marshal.FreeHGlobal(data)
+
+
+    def testWriteDouble(self):
+        data = Marshal.AllocHGlobal(CPyMarshal.DoubleSize)
+        
+        CPyMarshal.WriteDouble(data, 2.2e22)
+        doubleStruct = Marshal.PtrToStructure(data, DoubleStruct)
+        self.assertEquals(doubleStruct.value, 2.2e22)
+        
+        Marshal.FreeHGlobal(data)
+
+
+    def testReadDouble(self):
+        data = Marshal.AllocHGlobal(CPyMarshal.DoubleSize)
+        
+        doubleStruct = DoubleStruct(2.2e22)
+        Marshal.StructureToPtr(doubleStruct, data, False)
+        self.assertEquals(CPyMarshal.ReadDouble(data), 2.2e22)
         
         Marshal.FreeHGlobal(data)
 
