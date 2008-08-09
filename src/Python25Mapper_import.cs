@@ -47,6 +47,13 @@ namespace Ironclad
             return this.Store(this.Import(name));
         }
 
+        public override IntPtr
+        PyImport_Import(string name)
+        {
+            // TODO: work out distinction between this method and PyImport_ImportModule
+            return this.Store(this.Import(name));
+        }
+
         private void
         CreateModulesContaining(string name)
         {
