@@ -84,6 +84,35 @@ class ObjectFunctionsTest(TestCase):
         deallocTypes()
 
 
+    def testPyObject_SetAttrString(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        class C(object):
+            pass
+        obj = C()
+        objPtr = mapper.Store(obj)
+        self.assertEquals(mapper.PyObject_SetAttrString(objPtr, "bob", mapper.Store(123)), 0)
+        self.assertEquals(obj.bob, 123)
+            
+        mapper.Dispose()
+        deallocTypes()
+
+
+    def testPyObject_SetAttrString_Failure(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        objPtr = mapper.Store(object())
+        self.assertEquals(mapper.PyObject_SetAttrString(objPtr, "bob", mapper.Store(123)), -1)
+        def KindaConvertError():
+            raise mapper.LastException
+        self.assertRaises(AttributeError, KindaConvertError)
+            
+        mapper.Dispose()
+        deallocTypes()
+
+
     def testPyObject_HasAttrString(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
