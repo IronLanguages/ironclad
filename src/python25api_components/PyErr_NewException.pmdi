@@ -1,0 +1,3 @@
+IntPtr
+string name, IntPtr _base, IntPtr dict
+return IntPtr.Zero

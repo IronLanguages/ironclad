@@ -85,6 +85,20 @@ class ErrFunctionsTest(TestCase):
         mapper.Dispose()
 
 
+    def testPyErr_NewException(self):
+        mapper = Python25Mapper()
+        
+        newExcPtr = mapper.PyErr_NewException("foo.bar.bazerror", IntPtr.Zero, IntPtr.Zero)
+        self.assertEquals(mapper.RefCount(newExcPtr), 2)
+        
+        newExc = mapper.Retrieve(newExcPtr)
+        self.assertEquals(newExc.__name__, 'bazerror')
+        self.assertEquals(newExc.__module__, 'foo.bar')
+        self.assertEquals(issubclass(newExc, Exception), True)
+        
+        mapper.Dispose()
+
+
     def assertSetStringSetsCorrectError(self, name):
         mapper = Python25Mapper()
         errorPtr = mapper.GetAddress("PyExc_" + name)
