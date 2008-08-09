@@ -7,7 +7,7 @@ from tests.utils.testcase import TestCase
 from System import Int64, IntPtr, UInt32, UInt64
 
 from Ironclad import CPyMarshal, Python25Mapper
-from Ironclad.Structs import PyObject
+from Ironclad.Structs import PyObject, PyIntObject, PyFloatObject
 
 
 class PyInt_Test(TestCase):
@@ -19,7 +19,8 @@ class PyInt_Test(TestCase):
         for value in (0, 2147483647, -2147483648):
             ptr = mapper.Store(value)
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyInt_Type, "bad type")
+            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
+            self.assertEquals(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
             mapper.DecRef(ptr)
             
         mapper.Dispose()
@@ -33,7 +34,8 @@ class PyInt_Test(TestCase):
         for value in (0, 2147483647, -2147483648):
             ptr = mapper.PyInt_FromLong(value)
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyInt_Type, "bad type")
+            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
+            self.assertEquals(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
             mapper.DecRef(ptr)
                 
         mapper.Dispose()
@@ -46,7 +48,8 @@ class PyInt_Test(TestCase):
         for value in (0, 2147483647, -2147483648):
             ptr = mapper.PyInt_FromSsize_t(value)
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyInt_Type, "bad type")
+            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
+            self.assertEquals(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
             mapper.DecRef(ptr)
                 
         mapper.Dispose()
@@ -167,7 +170,9 @@ class PyFloat_Test(TestCase):
         for value in (0.0, 3.3e33, -3.3e-33):
             ptr = mapper.Store(value)
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyFloat_Type, "bad type")
+            self.assertEquals(CPyMarshal.ReadIntField(ptr, PyFloatObject, "ob_refcnt"), 1)
+            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyFloatObject, "ob_type"), mapper.PyFloat_Type)
+            self.assertEquals(CPyMarshal.ReadDoubleField(ptr, PyFloatObject, "ob_fval"), value)
             mapper.DecRef(ptr)
                 
         mapper.Dispose()
@@ -181,7 +186,9 @@ class PyFloat_Test(TestCase):
         for value in (0.0, 3.3e33, -3.3e-33):
             ptr = mapper.PyFloat_FromDouble(value)
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyFloat_Type, "bad type")
+            self.assertEquals(CPyMarshal.ReadIntField(ptr, PyFloatObject, "ob_refcnt"), 1)
+            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyFloatObject, "ob_type"), mapper.PyFloat_Type)
+            self.assertEquals(CPyMarshal.ReadDoubleField(ptr, PyFloatObject, "ob_fval"), value)
             mapper.DecRef(ptr)
                 
         mapper.Dispose()
