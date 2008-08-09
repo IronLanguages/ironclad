@@ -1,4 +1,4 @@
-
+import sys
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.cpython import MakeItemsTablePtr, MakeMethodDef, MakeTypePtr
@@ -286,6 +286,23 @@ class ImportTest(TestCase):
         
         self.assertEquals(mapper.PyImport_ImportModule("test_module"), modulePtr, "wrong result")
         self.assertEquals(mapper.RefCount(modulePtr), 2, "did not incref")
+        
+        mapper.Dispose()
+        deallocTypes()
+    
+    def testPyImport_AddModule(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        sysPtr = mapper.PyImport_AddModule("sys")
+        sysModule = mapper.Retrieve(sysPtr)
+        
+        foobarbazPtr = mapper.PyImport_AddModule("foo.bar.baz")
+        self.assertEquals(mapper.Retrieve(foobarbazPtr), sysModule.modules['foo.bar.baz'])
+        self.assertEquals('foo.bar' in sysModule.modules, True)
+        self.assertEquals(sysModule.modules['foo.bar'].baz, sysModule.modules['foo.bar.baz'])
+        self.assertEquals('foo' in sysModule.modules, True)
+        self.assertEquals(sysModule.modules['foo'].bar, sysModule.modules['foo.bar'])
         
         mapper.Dispose()
         deallocTypes()

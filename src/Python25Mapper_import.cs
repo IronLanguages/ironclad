@@ -1,5 +1,10 @@
 using System;
+using System.Collections.Generic;
 
+using IronPython.Runtime;
+
+using Microsoft.Scripting.Hosting;
+using Microsoft.Scripting.Runtime;
 
 namespace Ironclad
 {
@@ -40,6 +45,33 @@ namespace Ironclad
         PyImport_ImportModule(string name)
         {
             return this.Store(this.Import(name));
+        }
+
+        private void
+        CreateModulesContaining(string name)
+        {
+            PythonContext ctx = this.GetPythonContext();
+            if (!ctx.SystemStateModules.ContainsKey(name))
+            {
+                ctx.CreateModule(name, name, new Dictionary<string, object>(), ModuleOptions.PublishModule);
+            }
+            object innerScope = this.GetModuleScope(name);
+
+            int lastDot = name.LastIndexOf('.');
+            if (lastDot != -1)
+            {
+                this.CreateModulesContaining(name.Substring(0, lastDot));
+                Scope outerScope = (Scope)this.GetModuleScope(name.Substring(0, lastDot));
+                ScriptScope outerScriptScope = this.engine.CreateScope(outerScope.Dict);
+                outerScriptScope.SetVariable(name.Substring(lastDot + 1), innerScope);
+            }
+        }
+
+        public override IntPtr
+        PyImport_AddModule(string name)
+        {
+            this.CreateModulesContaining(name);
+            return this.Store(this.GetModuleScope(name));
         }
         
         public void 
