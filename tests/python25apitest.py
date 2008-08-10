@@ -218,7 +218,7 @@ class Python25ApiFunctionsTest(TestCase):
         
         self.assertFinds("PyImport_ImportModule", ('"name"', ), 'IntPtr(123)')
         self.assertFinds("PyImport_AddModule", ('"name"', ), 'IntPtr(123)')
-        self.assertFinds("PyImport_Import", ('"name"', ), 'IntPtr(123)')
+        self.assertFinds("PyImport_Import", ('IntPtr(111)', ), 'IntPtr(123)')
         
         self.assertFinds("PyErr_SetString", ('IntPtr(98765)', '"and in the darkness bind them"'), 'None')
         self.assertFinds("PyErr_NewException", ('"foo.bar.bazerror"', 'IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')

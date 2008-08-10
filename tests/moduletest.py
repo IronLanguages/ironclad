@@ -274,7 +274,7 @@ class PyModule_AddObject_Test(TestCase):
 
 class ImportTest(TestCase):
     
-    def assertImports(self, funcname):
+    def testPyImport_ImportModule(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         modulePtr = mapper.Py_InitModule4(
@@ -284,18 +284,27 @@ class ImportTest(TestCase):
             IntPtr.Zero,
             12345)
         
-        self.assertEquals(getattr(mapper, funcname)("test_module"), modulePtr, "wrong result")
+        self.assertEquals(mapper.PyImport_ImportModule("test_module"), modulePtr, "wrong result")
         self.assertEquals(mapper.RefCount(modulePtr), 2, "did not incref")
         
         mapper.Dispose()
         deallocTypes()
     
-    def testPyImport_ImportModule(self):
-        self.assertImports("PyImport_ImportModule")
-    
     def testPyImport_Import(self):
-        # this probably should be subtly different to the above, but I'm really not sure what the distinction is
-        self.assertImports("PyImport_Import")
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        modulePtr = mapper.Py_InitModule4(
+            "test_module",
+            IntPtr.Zero,
+            "test_docstring",
+            IntPtr.Zero,
+            12345)
+        
+        self.assertEquals(mapper.PyImport_Import(mapper.Store("test_module")), modulePtr, "wrong result")
+        self.assertEquals(mapper.RefCount(modulePtr), 2, "did not incref")
+        
+        mapper.Dispose()
+        deallocTypes()
     
     def testPyImport_AddModule(self):
         mapper = Python25Mapper()
