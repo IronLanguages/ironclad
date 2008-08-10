@@ -1,3 +1,3 @@
 IntPtr
-string name
+IntPtr name
 return IntPtr.Zero

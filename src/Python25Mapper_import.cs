@@ -48,9 +48,9 @@ namespace Ironclad
         }
 
         public override IntPtr
-        PyImport_Import(string name)
+        PyImport_Import(IntPtr namePtr)
         {
-            // TODO: work out distinction between this method and PyImport_ImportModule
+            string name = (string)this.Retrieve(namePtr);
             return this.Store(this.Import(name));
         }
 
