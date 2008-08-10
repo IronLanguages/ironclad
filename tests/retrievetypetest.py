@@ -385,6 +385,9 @@ class NumberTest(DispatchSetupTestCase):
     def testNegative(self):
         self.assertUnaryNumberMethod("nb_negative", "__neg__")
 
+    def testInvert(self):
+        self.assertUnaryNumberMethod("nb_invert", "__invert__")
+
     def testAdd(self):
         self.assertBinaryNumberMethod("nb_add", "__add__")
 
@@ -396,6 +399,12 @@ class NumberTest(DispatchSetupTestCase):
 
     def testDivide(self):
         self.assertBinaryNumberMethod("nb_divide", "__div__")
+
+    def testOr(self):
+        self.assertBinaryNumberMethod("nb_or", "__or__")
+
+    def testAnd(self):
+        self.assertBinaryNumberMethod("nb_and", "__and__")
     
     def testPower(self):
         func, calls_cfunc = self.getTernaryPtrFunc()

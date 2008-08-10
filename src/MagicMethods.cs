@@ -47,6 +47,16 @@ namespace Ironclad
                     template = CodeSnippets.OBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
                     break;
+                case "nb_or":
+                    name = "__or__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_and":
+                    name = "__and__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
                 case "nb_absolute":
                     name = "__abs__";
                     template = CodeSnippets.SELFARG_METHOD_CODE;
@@ -59,6 +69,11 @@ namespace Ironclad
                     break;
                 case "nb_negative":
                     name = "__neg__";
+                    template = CodeSnippets.SELFARG_METHOD_CODE;
+                    dgtType = typeof(CPython_unaryfunc_Delegate);
+                    break;
+                case "nb_invert":
+                    name = "__invert__";
                     template = CodeSnippets.SELFARG_METHOD_CODE;
                     dgtType = typeof(CPython_unaryfunc_Delegate);
                     break;
