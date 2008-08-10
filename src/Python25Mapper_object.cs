@@ -108,8 +108,14 @@ namespace Ironclad
                 return -1;
             }
         }
-        
-        
+
+        public override int
+        PyObject_SetAttr(IntPtr objPtr, IntPtr namePtr, IntPtr valuePtr)
+        {
+            string name = (string)this.Retrieve(namePtr);
+            return this.PyObject_SetAttrString(objPtr, name, valuePtr);
+        }
+
         public override int
         PyObject_IsTrue(IntPtr objPtr)
         {
