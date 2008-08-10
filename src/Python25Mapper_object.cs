@@ -35,9 +35,18 @@ namespace Ironclad
         PyObject_Call(IntPtr objPtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
             object obj = this.Retrieve(objPtr);
-            ICollection args = (ICollection)this.Retrieve(argsPtr);
-            object[] argsArray = new object[args.Count];
-            args.CopyTo(argsArray, 0);
+            object[] argsArray = null;
+
+            if (argsPtr == IntPtr.Zero)
+            {
+                argsArray = new object[0];
+            }
+            else
+            {
+                ICollection args = (ICollection)this.Retrieve(argsPtr);
+                argsArray = new object[args.Count];
+                args.CopyTo(argsArray, 0);
+            }
 
             object result = null;
             if (kwargsPtr == IntPtr.Zero)

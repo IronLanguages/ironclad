@@ -33,6 +33,17 @@ class ObjectFunctionsTest(TestCase):
             
         mapper.Dispose()
         deallocTypes()
+    
+    def testPyObject_Call_noargs(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        kallablePtr = mapper.Store(lambda: 2)
+        resultPtr = mapper.PyObject_Call(kallablePtr, IntPtr.Zero, IntPtr.Zero)
+        self.assertEquals(mapper.Retrieve(resultPtr), 2, "didn't call")
+            
+        mapper.Dispose()
+        deallocTypes()
 
 
     def testPyCallable_Check(self):
