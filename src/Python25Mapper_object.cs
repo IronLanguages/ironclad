@@ -90,6 +90,13 @@ namespace Ironclad
             return IntPtr.Zero;
         }
 
+        public override IntPtr
+        PyObject_GetAttr(IntPtr objPtr, IntPtr namePtr)
+        {
+            string name = (string)this.Retrieve(namePtr);
+            return this.PyObject_GetAttrString(objPtr, name);
+        }
+
         public override int
         PyObject_HasAttrString(IntPtr objPtr, string name)
         {
