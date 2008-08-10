@@ -311,6 +311,8 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyThread_release_lock", ('IntPtr(123)',), 'None')
         
         self.assertFinds("PyThreadState_GetDict", tuple(), 'IntPtr(123)')
+        
+        self.assertFinds("PyEval_InitThreads", tuple(), 'None')
 
 
     def testPython25ApiImplementationOf_PyEval_SaveThread(self):
@@ -321,6 +323,11 @@ class Python25ApiFunctionsTest(TestCase):
     def testPython25ApiImplementationOf_PyEval_RestoreThread(self):
         Python25Api().PyEval_RestoreThread(IntPtr.Zero)
         # would have raised before getting here
+
+
+    def testPython25ApiImplementationOf_PyEval_InitThreads(self):
+        # I think I can get away with ignoring this function
+        self.assertEquals(Python25Api().PyEval_InitThreads(), None)
 
 
 suite = makesuite(
