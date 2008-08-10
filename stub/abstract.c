@@ -161,3 +161,9 @@ _PyObject_CallMethod_SizeT(PyObject *o, char *name, char *format, ...)
 
 	return retval;
 }
+
+PyObject *
+PyObject_CallObject(PyObject *o, PyObject *a)
+{
+	return PyEval_CallObjectWithKeywords(o, a, NULL);
+}

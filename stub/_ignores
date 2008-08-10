@@ -20,6 +20,7 @@ _PyArg_VaParseTupleAndKeywords_SizeT
 PyArg_UnpackTuple
 _PyArg_NoKeywords
 
+PyObject_CallObject
 PyObject_CallFunction
 _PyObject_CallFunction_SizeT
 PyObject_CallMethod
