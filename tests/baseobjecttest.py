@@ -95,6 +95,39 @@ class ObjectFunctionsTest(TestCase):
         deallocTypes()
 
 
+    def testPyObject_GetAttr(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        class Thingum(object):
+            def __init__(self, bob):
+                self.bob = bob
+                
+        objPtr = mapper.Store(Thingum("Poe"))
+        resultPtr = mapper.PyObject_GetAttr(objPtr, mapper.Store("bob"))
+        self.assertEquals(mapper.Retrieve(resultPtr), "Poe", "wrong")
+            
+        mapper.Dispose()
+        deallocTypes()
+
+
+    def testPyObject_GetAttrStringFailure(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        class Thingum(object):
+            def __init__(self, bob):
+                self.bob = bob
+                
+        objPtr = mapper.Store(Thingum("Poe"))
+        resultPtr = mapper.PyObject_GetAttr(objPtr, mapper.Store("ben"))
+        self.assertEquals(resultPtr, IntPtr.Zero, "wrong")
+        self.assertEquals(mapper.LastException, None, "no need to set exception, assuming this matches GetAttrString")
+            
+        mapper.Dispose()
+        deallocTypes()
+
+
     def testPyObject_SetAttrString(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
