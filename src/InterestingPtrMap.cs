@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Ironclad
 {
@@ -39,11 +40,6 @@ namespace Ironclad
         public void Weaken(object obj)
         {
             this.strongrefs.RemoveIfPresent(obj);
-        }
-        
-        public object[] GetStrongRefs()
-        {
-            return this.strongrefs.ElementsArray;
         }
         
         public bool HasObj(object obj)

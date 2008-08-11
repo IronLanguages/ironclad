@@ -111,25 +111,6 @@ class InterestingPtrMapTest(TestCase):
         self.assertRaises(KeyError, map.GetObj, ptr)
         self.assertEquals(map.HasPtr(ptr), False, "wrong")
         
-        
-    def testGetStrongRefs(self):
-        map, ptr1, obj1, obj1ref = self.getVars()
-        _, ptr2, obj2, obj2ref = self.getVars()
-        
-        def GetStrongRefsSet():
-            return set([x for x in map.GetStrongRefs()])
-        
-        map.WeakAssociate(ptr1, obj1)
-        map.WeakAssociate(ptr2, obj2)
-        
-        self.assertEquals(GetStrongRefsSet(), set(), "should be no strong refs")
-        map.Strengthen(obj1)
-        self.assertEquals(GetStrongRefsSet(), set([obj1]), "should be one strong ref")
-        map.Strengthen(obj2)
-        self.assertEquals(GetStrongRefsSet(), set([obj1, obj2]), "should be two strong refs")
-        map.Weaken(obj1)
-        self.assertEquals(GetStrongRefsSet(), set([obj2]), "should be one strong ref")
-        
 
 
 suite = makesuite(InterestingPtrMapTest)
