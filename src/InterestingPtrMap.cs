@@ -2,8 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
+using Ironclad.Structs;
+
 namespace Ironclad
 {
+    
+    public delegate void PtrFunc(IntPtr ptr);
     
     public class InterestingPtrMap
     {
@@ -25,11 +29,54 @@ namespace Ironclad
             this.ptr2obj[ptr] = udm;
         }
         
-        public void WeakAssociate(IntPtr ptr, object obj)
+        public void BridgeAssociate(IntPtr ptr, object obj)
         {
             WeakReference wref = new WeakReference(obj, true);
             this.ptr2ref[ptr] = wref;
             this.ref2ptr[wref] = ptr;
+            this.strongrefs.Add(obj);
+        }
+        
+        private void UpdateStrength(IntPtr ptr, object obj)
+        {
+            int refcnt = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
+            if (refcnt > 1)
+            {
+                this.Strengthen(obj);
+            }
+            else
+            {
+                this.Weaken(obj);
+            }
+        }
+        
+        public void UpdateStrength(IntPtr ptr)
+        {
+            if (this.ptr2obj.ContainsKey(ptr))
+            {
+                // items in this mapping are always strongly referenced
+                return;
+            }
+            this.UpdateStrength(ptr, this.GetObj(ptr));
+        }
+        
+        public void CheckBridgePtrs()
+        {
+            foreach (KeyValuePair<WeakReference, IntPtr> pair in this.ref2ptr)
+            {
+                this.UpdateStrength(pair.Value, pair.Key.Target);
+            }
+        }
+        
+        public void MapOverBridgePtrs(PtrFunc f)
+        {
+            Dictionary<IntPtr, WeakReference>.KeyCollection keys = this.ptr2ref.Keys;
+            IntPtr[] keysCopy = new IntPtr[keys.Count];
+            keys.CopyTo(keysCopy, 0);
+            foreach (IntPtr ptr in keysCopy)
+            {
+                f(ptr);
+            }
         }
         
         public void Strengthen(object obj)
@@ -40,6 +87,33 @@ namespace Ironclad
         public void Weaken(object obj)
         {
             this.strongrefs.RemoveIfPresent(obj);
+        }
+        
+        public void Release(IntPtr ptr)
+        {
+            if (this.ptr2obj.ContainsKey(ptr))
+            {
+                object obj = this.ptr2obj[ptr];
+                this.ptr2obj.Remove(ptr);
+                if (this.obj2ptr.ContainsKey(obj))
+                {
+                    this.obj2ptr.Remove(obj);
+                }
+            }
+            else if (this.ptr2ref.ContainsKey(ptr))
+            {
+                WeakReference wref = this.ptr2ref[ptr];
+                this.ptr2ref.Remove(ptr);
+                this.ref2ptr.Remove(wref);
+                if (wref.IsAlive)
+                {
+                    this.strongrefs.RemoveIfPresent(wref.Target);
+                }
+            }
+            else
+            {
+                throw new KeyNotFoundException(String.Format("tried to release unmapped ptr {0}", ptr));
+            }
         }
         
         public bool HasObj(object obj)
@@ -103,33 +177,6 @@ namespace Ironclad
                 throw new NullReferenceException(String.Format("Weakly mapped object for ptr {0} was apparently GCed too soon", ptr));
             }
             throw new KeyNotFoundException(String.Format("No ptr-to-obj mapping for {0}", ptr));
-        }
-        
-        public void Release(IntPtr ptr)
-        {
-            if (this.ptr2obj.ContainsKey(ptr))
-            {
-                object obj = this.ptr2obj[ptr];
-                this.ptr2obj.Remove(ptr);
-                if (this.obj2ptr.ContainsKey(obj))
-                {
-                    this.obj2ptr.Remove(obj);
-                }
-            }
-            else if (this.ptr2ref.ContainsKey(ptr))
-            {
-                WeakReference wref = this.ptr2ref[ptr];
-                this.ptr2ref.Remove(ptr);
-                this.ref2ptr.Remove(wref);
-                if (wref.IsAlive)
-                {
-                    this.strongrefs.RemoveIfPresent(wref.Target);
-                }
-            }
-            else
-            {
-                throw new KeyNotFoundException(String.Format("tried to release unmapped ptr {0}", ptr));
-            }
         }
     
     }
