@@ -53,7 +53,6 @@ namespace Ironclad
         private object dispatcherClass;
         private object trivialObjectSubclass;
 
-        private StupidSet bridgePtrs = new StupidSet();
         private List<IntPtr> tempObjects = new List<IntPtr>();
         private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
         private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
@@ -119,6 +118,17 @@ namespace Ironclad
             }
         }
         
+        
+        private void DumpPtr(IntPtr ptr)
+        {
+            GC.SuppressFinalize(this.Retrieve(ptr));
+            IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
+            CPython_destructor_Delegate dgt = (CPython_destructor_Delegate)
+                CPyMarshal.ReadFunctionPtrField(
+                    typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(CPython_destructor_Delegate));
+            dgt(ptr);
+        }
+        
         public void Dispose()
         {
             /* You must call Dispose(); really, you must call Dispose(). Shutdown seems to be reliably clean if you
@@ -142,15 +152,7 @@ namespace Ironclad
              * If the above is nonsense, please complain :).
              */
 
-            foreach (object ptr in this.bridgePtrs.ElementsArray)
-            {
-                GC.SuppressFinalize(this.Retrieve((IntPtr)ptr));
-                IntPtr typePtr = CPyMarshal.ReadPtrField((IntPtr)ptr, typeof(PyObject), "ob_type");
-                CPython_destructor_Delegate dgt = (CPython_destructor_Delegate)
-                    CPyMarshal.ReadFunctionPtrField(
-                        typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(CPython_destructor_Delegate));
-                dgt((IntPtr)ptr);
-            }
+            this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
             this.alive = false;
             this.allocator.FreeAll();
             foreach (IntPtr FILE in this.FILEs.Values)
@@ -215,9 +217,7 @@ namespace Ironclad
         public void
         StoreBridge(IntPtr ptr, object obj)
         {
-            this.map.WeakAssociate(ptr, obj);
-            this.bridgePtrs.Add(ptr);
-            this.Strengthen(obj);
+            this.map.BridgeAssociate(ptr, obj);
         }
         
         
@@ -306,19 +306,8 @@ namespace Ironclad
             this.AttemptToMap(ptr);
             if (this.map.HasPtr(ptr))
             {
+                this.map.UpdateStrength(ptr);
                 int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
-                if (this.bridgePtrs.Contains(ptr))
-                {
-                    object obj = this.Retrieve(ptr);
-                    if (count > 1)
-                    {
-                        this.Strengthen(obj);
-                    }
-                    else
-                    {
-                        this.Weaken(obj);
-                    }
-                }
                 return count;
             }
             else
@@ -335,11 +324,8 @@ namespace Ironclad
             if (this.map.HasPtr(ptr))
             {
                 int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
-                if (count == 1 && this.bridgePtrs.Contains(ptr))
-                {
-                    this.Strengthen(this.Retrieve(ptr));
-                }
                 CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count + 1);
+                this.map.UpdateStrength(ptr);
             }
             else
             {
@@ -381,11 +367,8 @@ namespace Ironclad
                 }
                 else
                 {
-                    if (count == 2 && this.bridgePtrs.Contains(ptr))
-                    {
-                        this.Weaken(this.Retrieve(ptr));
-                    }
                     CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count - 1);
+                    this.map.UpdateStrength(ptr);
                 }
             }
             else
@@ -410,19 +393,7 @@ namespace Ironclad
         public void
         CheckBridgePtrs()
         {
-            foreach (object ptro in this.bridgePtrs.ElementsArray)
-            {
-                IntPtr ptr = (IntPtr)ptro;
-                int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
-                if (count == 1)
-                {
-                    this.Weaken(this.Retrieve(ptr));
-                }
-                if (count == 2)
-                {
-                    this.Strengthen(this.Retrieve(ptr));
-                }
-            }
+            this.map.CheckBridgePtrs();
         }
         
         public override void 
@@ -440,7 +411,6 @@ namespace Ironclad
         public void Unmap(IntPtr ptr)
         {
             // TODO: very badly tested (nothing works if this isn't here, but...)
-            this.bridgePtrs.RemoveIfPresent(ptr);
             if (this.map.HasPtr(ptr))
             {
                 this.map.Release(ptr);
