@@ -18,6 +18,7 @@ class InterestingPtrMapTest(TestCase):
         TestCase.setUp(self)
         self.ptrs = []
     
+    
     def tearDown(self):
         for ptr in self.ptrs:
             Marshal.FreeHGlobal(ptr)
@@ -31,7 +32,7 @@ class InterestingPtrMapTest(TestCase):
         self.ptrs.append(ptr)
         return InterestingPtrMap(), ptr, obj, WeakReference(obj)
         
-    
+        
     def testAssociateIsStrong(self):
         map, ptr, obj, objref = self.getVars()
         map.Associate(ptr, obj)
@@ -152,7 +153,6 @@ class InterestingPtrMapTest(TestCase):
         self.assertEquals(len(ptrs), 2)
         self.assertEquals(set(ptrs), set([ptr1, ptr2]))
         
-    
 
     def testReleaseStrongRefWeakens(self):
         map, ptr, obj, objref = self.getVars()
@@ -164,7 +164,6 @@ class InterestingPtrMapTest(TestCase):
         self.assertEquals(objref.IsAlive, False, "failed to GC")
         self.assertRaises(KeyError, map.GetObj, ptr)
         self.assertEquals(map.HasPtr(ptr), False, "wrong")
-
 
 
 suite = makesuite(InterestingPtrMapTest)

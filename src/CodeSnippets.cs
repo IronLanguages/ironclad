@@ -56,7 +56,7 @@ class {0}(_ironclad_baseclass):
         try:
             self._dispatcher.delete(self)
         except Exception, e:
-            print 'error deleting object', self, self._instancePtr, type(self)
+            print 'error deleting object', self._instancePtr, type(self)
             print type(e), e
             print e.clsException.StackTrace
 ";

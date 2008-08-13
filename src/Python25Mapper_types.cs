@@ -151,6 +151,10 @@ namespace Ironclad
         public override int
         PyType_IsSubtype(IntPtr subtypePtr, IntPtr typePtr)
         {
+            if (subtypePtr == IntPtr.Zero || typePtr == IntPtr.Zero)
+            {
+                return 0;
+            }
             PythonType _type = this.Retrieve(typePtr) as PythonType;
             PythonType subtype = this.Retrieve(subtypePtr) as PythonType;
             if (subtype == null || _type == null)

@@ -144,7 +144,7 @@ namespace Ironclad
         public override int
         PyInt_AsLong(IntPtr valuePtr)
         {
-            int result = (int)this.Retrieve(valuePtr);
+            int result = Converter.ConvertToInt32(this.Retrieve(valuePtr));
             return result;
         }
 

@@ -17,166 +17,210 @@ namespace Ironclad
         private Dictionary<WeakReference, IntPtr> ref2ptr = new Dictionary<WeakReference, IntPtr>();
         private Dictionary<IntPtr, WeakReference> ptr2ref = new Dictionary<IntPtr, WeakReference>();
         private StupidSet strongrefs = new StupidSet();
+        
+        private Object _lock = new Object();
     
         public void Associate(IntPtr ptr, object obj)
         {
-            this.ptr2obj[ptr] = obj;
-            this.obj2ptr[obj] = ptr;
+            lock (this._lock)
+            {
+                this.ptr2obj[ptr] = obj;
+                this.obj2ptr[obj] = ptr;
+            }
         }
         
         public void Associate(IntPtr ptr, UnmanagedDataMarker udm)
         {
-            this.ptr2obj[ptr] = udm;
+            lock (this._lock)
+            {
+                this.ptr2obj[ptr] = udm;
+            }
         }
         
         public void BridgeAssociate(IntPtr ptr, object obj)
         {
-            WeakReference wref = new WeakReference(obj, true);
-            this.ptr2ref[ptr] = wref;
-            this.ref2ptr[wref] = ptr;
-            this.strongrefs.Add(obj);
+            lock (this._lock)
+            {
+                WeakReference wref = new WeakReference(obj, true);
+                this.ptr2ref[ptr] = wref;
+                this.ref2ptr[wref] = ptr;
+                this.strongrefs.Add(obj);
+            }
         }
         
         private void UpdateStrength(IntPtr ptr, object obj)
         {
-            int refcnt = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
-            if (refcnt > 1)
+            lock (this._lock)
             {
-                this.Strengthen(obj);
-            }
-            else
-            {
-                this.Weaken(obj);
+                int refcnt = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
+                if (refcnt > 1)
+                {
+                    this.Strengthen(obj);
+                }
+                else
+                {
+                    this.Weaken(obj);
+                }
             }
         }
         
         public void UpdateStrength(IntPtr ptr)
         {
-            if (this.ptr2obj.ContainsKey(ptr))
+            lock (this._lock)
             {
-                // items in this mapping are always strongly referenced
-                return;
+                if (this.ptr2obj.ContainsKey(ptr))
+                {
+                    // items in this mapping are always strongly referenced
+                    return;
+                }
+                this.UpdateStrength(ptr, this.GetObj(ptr));
             }
-            this.UpdateStrength(ptr, this.GetObj(ptr));
         }
         
         public void CheckBridgePtrs()
         {
-            foreach (KeyValuePair<WeakReference, IntPtr> pair in this.ref2ptr)
+            lock (this._lock)
             {
-                this.UpdateStrength(pair.Value, pair.Key.Target);
+                foreach (KeyValuePair<WeakReference, IntPtr> pair in this.ref2ptr)
+                {
+                    this.UpdateStrength(pair.Value, pair.Key.Target);
+                }
             }
         }
         
         public void MapOverBridgePtrs(PtrFunc f)
         {
-            Dictionary<IntPtr, WeakReference>.KeyCollection keys = this.ptr2ref.Keys;
-            IntPtr[] keysCopy = new IntPtr[keys.Count];
-            keys.CopyTo(keysCopy, 0);
-            foreach (IntPtr ptr in keysCopy)
+            lock (this._lock)
             {
-                f(ptr);
+                Dictionary<IntPtr, WeakReference>.KeyCollection keys = this.ptr2ref.Keys;
+                IntPtr[] keysCopy = new IntPtr[keys.Count];
+                keys.CopyTo(keysCopy, 0);
+                foreach (IntPtr ptr in keysCopy)
+                {
+                    f(ptr);
+                }
             }
         }
         
         public void Strengthen(object obj)
         {
-            this.strongrefs.Add(obj);
+            lock (this._lock)
+            {
+                this.strongrefs.Add(obj);
+            }
         }
         
         public void Weaken(object obj)
         {
-            this.strongrefs.RemoveIfPresent(obj);
+            lock (this._lock)
+            {
+                this.strongrefs.RemoveIfPresent(obj);
+            }
         }
         
         public void Release(IntPtr ptr)
         {
-            if (this.ptr2obj.ContainsKey(ptr))
+            lock (this._lock)
             {
-                object obj = this.ptr2obj[ptr];
-                this.ptr2obj.Remove(ptr);
-                if (this.obj2ptr.ContainsKey(obj))
+                if (this.ptr2obj.ContainsKey(ptr))
                 {
-                    this.obj2ptr.Remove(obj);
+                    object obj = this.ptr2obj[ptr];
+                    this.ptr2obj.Remove(ptr);
+                    if (this.obj2ptr.ContainsKey(obj))
+                    {
+                        this.obj2ptr.Remove(obj);
+                    }
                 }
-            }
-            else if (this.ptr2ref.ContainsKey(ptr))
-            {
-                WeakReference wref = this.ptr2ref[ptr];
-                this.ptr2ref.Remove(ptr);
-                this.ref2ptr.Remove(wref);
-                if (wref.IsAlive)
+                else if (this.ptr2ref.ContainsKey(ptr))
                 {
-                    this.strongrefs.RemoveIfPresent(wref.Target);
+                    WeakReference wref = this.ptr2ref[ptr];
+                    this.ptr2ref.Remove(ptr);
+                    this.ref2ptr.Remove(wref);
+                    if (wref.IsAlive)
+                    {
+                        this.strongrefs.RemoveIfPresent(wref.Target);
+                    }
                 }
-            }
-            else
-            {
-                throw new KeyNotFoundException(String.Format("tried to release unmapped ptr {0}", ptr));
+                else
+                {
+                    throw new KeyNotFoundException(String.Format("tried to release unmapped ptr {0}", ptr));
+                }
             }
         }
         
         public bool HasObj(object obj)
         {
-            if (this.obj2ptr.ContainsKey(obj))
+            lock (this._lock)
             {
-                return true;
-            }
-            foreach (WeakReference wref in this.ref2ptr.Keys)
-            {
-                if (Object.ReferenceEquals(obj, wref.Target))
+                if (this.obj2ptr.ContainsKey(obj))
                 {
                     return true;
                 }
+                foreach (WeakReference wref in this.ref2ptr.Keys)
+                {
+                    if (Object.ReferenceEquals(obj, wref.Target))
+                    {
+                        return true;
+                    }
+                }
+                return false;
             }
-            return false;
         }
         
         public IntPtr GetPtr(object obj)
         {
-            if (this.obj2ptr.ContainsKey(obj))
+            lock (this._lock)
             {
-                return this.obj2ptr[obj];
-            }
-            foreach (WeakReference wref in this.ref2ptr.Keys)
-            {
-                if (Object.ReferenceEquals(obj, wref.Target))
+                if (this.obj2ptr.ContainsKey(obj))
                 {
-                    return this.ref2ptr[wref];
+                    return this.obj2ptr[obj];
                 }
+                foreach (WeakReference wref in this.ref2ptr.Keys)
+                {
+                    if (Object.ReferenceEquals(obj, wref.Target))
+                    {
+                        return this.ref2ptr[wref];
+                    }
+                }
+                throw new KeyNotFoundException(String.Format("No obj-to-ptr mapping for {0}", obj));
             }
-            throw new KeyNotFoundException(String.Format("No obj-to-ptr mapping for {0}", obj));
         }
         
         public bool HasPtr(IntPtr ptr)
         {
-            if (this.ptr2obj.ContainsKey(ptr))
+            lock (this._lock)
             {
-                return true;
+                if (this.ptr2obj.ContainsKey(ptr))
+                {
+                    return true;
+                }
+                if (this.ptr2ref.ContainsKey(ptr))
+                {
+                    return true;
+                }
+                return false;
             }
-            if (this.ptr2ref.ContainsKey(ptr))
-            {
-                return true;
-            }
-            return false;
         }
         
         public object GetObj(IntPtr ptr)
         {
-            if (this.ptr2obj.ContainsKey(ptr))
+            lock (this._lock)
             {
-                return this.ptr2obj[ptr];
-            }
-            if (this.ptr2ref.ContainsKey(ptr))
-            {
-                WeakReference wref = this.ptr2ref[ptr];
-                if (wref.IsAlive)
+                if (this.ptr2obj.ContainsKey(ptr))
                 {
-                    return wref.Target;
+                    return this.ptr2obj[ptr];
                 }
-                throw new NullReferenceException(String.Format("Weakly mapped object for ptr {0} was apparently GCed too soon", ptr));
+                if (this.ptr2ref.ContainsKey(ptr))
+                {
+                    WeakReference wref = this.ptr2ref[ptr];
+                    if (wref.IsAlive)
+                    {
+                        return wref.Target;
+                    }
+                    throw new NullReferenceException(String.Format("Weakly mapped object for ptr {0} was apparently GCed too soon", ptr));
+                }
+                throw new KeyNotFoundException(String.Format("No ptr-to-obj mapping for {0}", ptr));
             }
-            throw new KeyNotFoundException(String.Format("No ptr-to-obj mapping for {0}", ptr));
         }
     
     }

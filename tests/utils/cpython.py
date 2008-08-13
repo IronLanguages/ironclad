@@ -172,6 +172,7 @@ NUMSEQMAP_METHODS = {
     
     "nb_absolute": CPython_unaryfunc_Delegate, 
     "nb_float": CPython_unaryfunc_Delegate, 
+    "nb_int": CPython_unaryfunc_Delegate, 
     "nb_negative": CPython_unaryfunc_Delegate, 
     "nb_invert": CPython_unaryfunc_Delegate, 
     

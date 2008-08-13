@@ -67,7 +67,23 @@ class PyInt_Test(TestCase):
                 
         mapper.Dispose()
         deallocTypes()
+    
+    
+    def testPyInt_AsLong_StrangeType(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
         
+        class NotInt(object):
+            def __int__(self):
+                return 12345
+        
+        ptr = mapper.Store(NotInt())
+        self.assertEquals(mapper.PyInt_AsLong(ptr), 12345, "failed to map back")
+                
+        mapper.Dispose()
+        deallocTypes()
+        
+    
 
 class PyLong_Test(TestCase):
 
