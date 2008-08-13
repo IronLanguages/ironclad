@@ -55,6 +55,9 @@ class Types_Test(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyType_Type, IntPtr.Zero))
+        self.assertFalse(mapper.PyType_IsSubtype(IntPtr.Zero, mapper.PyType_Type))
+        
         self.assertTrue(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyType_Type))
         self.assertTrue(mapper.PyType_IsSubtype(mapper.PyString_Type, mapper.PyString_Type))
         self.assertTrue(mapper.PyType_IsSubtype(mapper.PyBaseObject_Type, mapper.PyBaseObject_Type))
