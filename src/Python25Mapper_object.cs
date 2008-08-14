@@ -59,8 +59,7 @@ namespace Ironclad
                 result = PythonCalls.CallWithKeywordArgs(obj, argsArray, kwargs);
             }
             
-            IntPtr resultPtr = this.Store(result);
-            return resultPtr;
+            return this.Store(result);
         }
 
         public override IntPtr

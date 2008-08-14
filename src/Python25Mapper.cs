@@ -252,7 +252,9 @@ namespace Ironclad
             
             if (typePtr == this.PyList_Type ||
                 typePtr == this.PyString_Type ||
-                typePtr == this.PyTuple_Type)
+                typePtr == this.PyTuple_Type ||
+                typePtr == this.PyFloat_Type ||
+                typePtr == this.PyInt_Type)
             {
                 throw new NotImplementedException("trying to interpret a string, list, or tuple from unmapped unmanaged memory");
             }
