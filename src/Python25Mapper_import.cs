@@ -34,6 +34,31 @@ namespace Ironclad
                 return this.GetModuleScope(name);
             }
             
+            if (name == "numpy")
+            {
+                Console.WriteLine(@"Detected numpy import; faking out modules:
+  parser
+  pydoc
+  mmap
+  urllib2
+  ctypes
+  numpy.ma");
+                this.CreateModule("parser");
+                this.CreateModule("pydoc");
+                this.CreateModule("mmap");
+                
+                PythonModule urllib2 = this.CreateModule("urllib2");
+                ScriptScope scope = this.GetModuleScriptScope(urllib2);
+                scope.SetVariable("urlopen", new Object());
+                scope.SetVariable("URLError", new Object());
+                
+                // ctypeslib specifically handles ctypes being None
+                this.GetPythonContext().SystemStateModules["ctypes"] = null;
+                
+                this.CreateModule("numpy.ma");
+                
+            }
+            
             this.importName = name;
             this.ExecInModule(String.Format("import {0}", name), this.scratchModule);
             this.importName = "";
@@ -54,14 +79,21 @@ namespace Ironclad
             return this.Store(this.Import(name));
         }
 
-        private void
-        CreateModulesContaining(string name)
+        private PythonModule
+        CreateModule(string name)
         {
             PythonContext ctx = this.GetPythonContext();
             if (!ctx.SystemStateModules.ContainsKey(name))
             {
-                ctx.CreateModule(name, name, new Dictionary<string, object>(), ModuleOptions.PublishModule);
+                return ctx.CreateModule(name, name, new Dictionary<string, object>(), ModuleOptions.PublishModule);
             }
+            return null;
+        }
+
+        private void
+        CreateModulesContaining(string name)
+        {
+            this.CreateModule(name);
             object innerScope = this.GetModuleScope(name);
 
             int lastDot = name.LastIndexOf('.');
