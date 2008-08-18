@@ -197,6 +197,7 @@ namespace Ironclad
             {
                 IntPtr ptr = this.map.GetPtr(obj);
                 this.IncRef(ptr);
+                GC.KeepAlive(obj); // please test me, if you can work out how to
                 return ptr;
             }
             return this.StoreDispatch(obj);
@@ -259,11 +260,12 @@ namespace Ironclad
                 throw new NotImplementedException("trying to interpret a string, list, or tuple from unmapped unmanaged memory");
             }
 
-            object managedInstance = PythonCalls.Call(this.trivialObjectSubclass);
-            Builtin.setattr(DefaultContext.Default, managedInstance, "_instancePtr", ptr);
-            Builtin.setattr(DefaultContext.Default, managedInstance, "__class__", this.Retrieve(typePtr));
-            this.StoreBridge(ptr, managedInstance);
+            object obj = PythonCalls.Call(this.trivialObjectSubclass);
+            Builtin.setattr(DefaultContext.Default, obj, "_instancePtr", ptr);
+            Builtin.setattr(DefaultContext.Default, obj, "__class__", this.Retrieve(typePtr));
+            this.StoreBridge(ptr, obj);
             this.IncRef(ptr);
+            GC.KeepAlive(obj); // please test me, if you can work out how to
         }
 
         
