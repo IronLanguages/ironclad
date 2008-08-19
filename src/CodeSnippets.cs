@@ -202,7 +202,17 @@ _importer.install()
 ";
 
         public const string DISPATCHER_MODULE_CODE = @"
+def lock(f):
+    def locked(*args, **kwargs):
+        MonitorEnter(Dispatcher._lock)
+        try:
+            return f(*args, **kwargs)
+        finally:
+            MonitorExit(Dispatcher._lock)
+    return locked
+
 class Dispatcher(object):
+    _lock = object()
 
     def __init__(self, mapper, table):
         self.mapper = mapper
@@ -229,7 +239,7 @@ class Dispatcher(object):
             if arg != IntPtr(0):
                 self.mapper.DecRef(arg)
     
-
+    @lock
     def construct(self, name, klass, *args, **kwargs):
         instance = object.__new__(klass)
         argsPtr = self.mapper.Store(args)
@@ -249,6 +259,7 @@ class Dispatcher(object):
         self.mapper.Strengthen(instance)
         return instance
 
+    @lock
     def init(self, name, instance, *args, **kwargs):
         if not self.table.has_key(name):
             return
@@ -260,6 +271,7 @@ class Dispatcher(object):
         if result < 0:
             self._surely_raise(Exception('%s failed; object is probably not safe to use' % name))
 
+    @lock
     def delete(self, instance):
         self.mapper.CheckBridgePtrs()
         self.mapper.DecRef(instance._instancePtr)
@@ -268,9 +280,11 @@ class Dispatcher(object):
     def dontDelete(_, __):
         pass
 
+    @lock
     def function_noargs(self, name):
         return self.method_noargs(name, IntPtr(0))
 
+    @lock
     def method_noargs(self, name, instancePtr):
         resultPtr = self.table[name](instancePtr, IntPtr(0))
         try:
@@ -279,9 +293,11 @@ class Dispatcher(object):
         finally:
             self._cleanup(resultPtr)
 
+    @lock
     def function_objarg(self, name, arg):
         return self.method_objarg(name, IntPtr(0), arg)
         
+    @lock
     def method_objarg(self, name, instancePtr, arg):
         argPtr = self.mapper.Store(arg)
         resultPtr = self.table[name](instancePtr, argPtr)
@@ -291,9 +307,11 @@ class Dispatcher(object):
         finally:
             self._cleanup(resultPtr, argPtr)
 
+    @lock
     def function_varargs(self, name, *args):
         return self.method_varargs(name, IntPtr(0), *args)
 
+    @lock
     def method_varargs(self, name, instancePtr, *args):
         argsPtr = self.mapper.Store(args)
         resultPtr = self.table[name](instancePtr, argsPtr)
@@ -303,9 +321,11 @@ class Dispatcher(object):
         finally:
             self._cleanup(resultPtr, argsPtr)
 
+    @lock
     def function_kwargs(self, name, *args, **kwargs):
         return self.method_kwargs(name, IntPtr(0), *args, **kwargs)
 
+    @lock
     def method_kwargs(self, name, instancePtr, *args, **kwargs):
         argsPtr = self.mapper.Store(args)
         kwargsPtr = IntPtr(0)
@@ -318,6 +338,7 @@ class Dispatcher(object):
         finally:
             self._cleanup(resultPtr, argsPtr, kwargsPtr)
     
+    @lock
     def method_selfarg(self, name, instancePtr, errorHandler=None):
         resultPtr = self.table[name](instancePtr)
         try:
@@ -328,6 +349,7 @@ class Dispatcher(object):
         finally:
             self._cleanup(resultPtr)
 
+    @lock
     def method_ssizearg(self, name, instancePtr, i):
         resultPtr = self.table[name](instancePtr, i)
         try:
@@ -336,6 +358,7 @@ class Dispatcher(object):
         finally:
             self._cleanup(resultPtr)
 
+    @lock
     def method_ternary(self, name, instancePtr, arg1, arg2):
         arg1Ptr = self.mapper.Store(arg1)
         arg2Ptr = self.mapper.Store(arg2)
@@ -346,11 +369,13 @@ class Dispatcher(object):
         finally:
             self._cleanup(resultPtr, arg1Ptr, arg2Ptr)
 
+    @lock
     def method_lenfunc(self, name, instancePtr):
         result = self.table[name](instancePtr)
         self._maybe_raise()
         return result
 
+    @lock
     def method_getter(self, name, instancePtr, closurePtr):
         resultPtr = self.table[name](instancePtr, closurePtr)
         try:
@@ -359,6 +384,7 @@ class Dispatcher(object):
         finally:
             self._cleanup(resultPtr)
 
+    @lock
     def method_setter(self, name, instancePtr, value, closurePtr):
         valuePtr = self.mapper.Store(value)
         result = self.table[name](instancePtr, valuePtr, closurePtr)
@@ -367,24 +393,31 @@ class Dispatcher(object):
             self._surely_raise(Exception('%s failed' % name))
 
 
+    @lock
     def set_member_int(self, address, value):
         CPyMarshal.WriteInt(address, value)
 
+    @lock
     def get_member_int(self, address):
         return CPyMarshal.ReadInt(address)
 
+    @lock
     def set_member_char(self, address, value):
         CPyMarshal.WriteByte(address, ord(value))
 
+    @lock
     def get_member_char(self, address):
         return chr(CPyMarshal.ReadByte(address))
 
+    @lock
     def set_member_ubyte(self, address, value):
         CPyMarshal.WriteByte(address, value)
 
+    @lock
     def get_member_ubyte(self, address):
         return CPyMarshal.ReadByte(address)
 
+    @lock
     def set_member_object(self, address, value):
         valuePtr = self.mapper.Store(value)
         oldvPtr = CPyMarshal.ReadPtr(address)
@@ -392,6 +425,7 @@ class Dispatcher(object):
         if oldvPtr != IntPtr(0):
             self.mapper.DecRef(oldvPtr)
 
+    @lock
     def get_member_object(self, address):
         valuePtr = CPyMarshal.ReadPtr(address)
         if valuePtr != IntPtr(0):
