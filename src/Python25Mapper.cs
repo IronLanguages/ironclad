@@ -49,9 +49,10 @@ namespace Ironclad
         private InterestingPtrMap map = new InterestingPtrMap();
 
         private PythonModule scratchModule;
+        private object trivialObjectSubclass;
         private PythonModule dispatcherModule;
         private object dispatcherClass;
-        private object trivialObjectSubclass;
+        private object dispatcherLock;
 
         private List<IntPtr> tempObjects = new List<IntPtr>();
         private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
@@ -127,20 +128,23 @@ namespace Ironclad
         
         protected virtual void Dispose(bool disposing)
         {
-            if (this.alive)
+            lock (this.dispatcherLock)
             {
-                this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
-                this.StopDispatchingDeletes();
-                this.alive = false;
-                this.allocator.FreeAll();
-                foreach (IntPtr FILE in this.FILEs.Values)
+                if (this.alive)
                 {
-                    Unmanaged.fclose(FILE);
-                }
-                if (this.stub != null)
-                {
-                    this.importer.Dispose();
-                    this.stub.Dispose();
+                    this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
+                    this.StopDispatchingDeletes();
+                    this.alive = false;
+                    this.allocator.FreeAll();
+                    foreach (IntPtr FILE in this.FILEs.Values)
+                    {
+                        Unmanaged.fclose(FILE);
+                    }
+                    if (this.stub != null)
+                    {
+                        this.importer.Dispose();
+                        this.stub.Dispose();
+                    }
                 }
             }
         }
@@ -235,7 +239,7 @@ namespace Ironclad
                 this.ActualiseType(ptr);
                 return;
             }
-            
+
             if (typePtr == this.PyList_Type ||
                 typePtr == this.PyString_Type ||
                 typePtr == this.PyTuple_Type ||
@@ -334,7 +338,7 @@ namespace Ironclad
                 {
                     throw new BadRefCountException("Trying to DecRef an object with ref count 0");
                 }
-                
+
                 if (count == 1)
                 {
                     IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
