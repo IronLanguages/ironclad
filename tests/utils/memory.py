@@ -2,7 +2,7 @@
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad.Structs import PyTypeObject
+from Ironclad.Structs import PyIntObject, PyObject, PyTypeObject
 
 def OffsetPtr(ptr, offset):
     if type(offset) == IntPtr:
@@ -10,7 +10,6 @@ def OffsetPtr(ptr, offset):
     return IntPtr(ptr.ToInt32() + offset)
 
 _types = (
-    "PyBool_Type",
     "PyBuffer_Type",
     "PyCell_Type",
     "PyClass_Type",
@@ -32,6 +31,7 @@ _types = (
     "PyStaticMethod_Type",
     "PyGen_Type",
     "PyInt_Type",
+    "PyBool_Type", # needs to come after PyInt_Type, if it's to have tp_base filled in correctly
     "PySeqIter_Type",
     "PyCallIter_Type",
     "PyList_Type",
@@ -52,17 +52,28 @@ _types = (
     "PyTraceBack_Type",
     "PyTuple_Type",
     "PyUnicode_Type",
+    "PyNone_Type", # not exported, for some reason
     "_PyWeakref_RefType",
     "_PyWeakref_ProxyType",
     "_PyWeakref_CallableProxyType"
 )
+_others = {
+    "_Py_NoneStruct": Marshal.SizeOf(PyObject),
+    "_Py_ZeroStruct": Marshal.SizeOf(PyIntObject),
+    "_Py_TrueStruct": Marshal.SizeOf(PyIntObject),
+}
 def CreateTypes(mapper, readyTypes=True):
     blocks = []
-    for _type in _types:
-        block = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        mapper.SetData(_type, block)
+    def create(name, size):
+        block = Marshal.AllocHGlobal(size)
+        mapper.SetData(name, block)
         blocks.append(block)
     
+    for _type in _types:
+        create(_type, Marshal.SizeOf(PyTypeObject))
+    for (_other, size) in _others.items():
+        create(_other, size)
+        
     if readyTypes:
         mapper.ReadyBuiltinTypes()
     

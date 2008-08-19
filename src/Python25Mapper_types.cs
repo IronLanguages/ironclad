@@ -34,6 +34,14 @@ namespace Ironclad
             this.map.Associate(address, TypeCache.PythonType);
         }
 
+        public override void
+        Fill_PyNone_Type(IntPtr address)
+        {
+            this.notInterpretableTypes.Add(address);
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            this.map.Associate(address, TypeCache.None);
+        }
+
         public override void 
         Fill_PyFile_Type(IntPtr address)
         {
@@ -49,6 +57,15 @@ namespace Ironclad
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.AddDefaultNumberMethods(address);
             this.map.Associate(address, TypeCache.Int32);
+        }
+
+        public override void
+        Fill_PyBool_Type(IntPtr address)
+        {
+            this.notInterpretableTypes.Add(address);
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_base", this.PyInt_Type);
+            this.map.Associate(address, TypeCache.Boolean);
         }
 
         public override void
@@ -136,6 +153,7 @@ namespace Ironclad
             this.PyType_Ready(this.PyType_Type);
             this.PyType_Ready(this.PyBaseObject_Type);
             this.PyType_Ready(this.PyInt_Type);
+            this.PyType_Ready(this.PyBool_Type);
             this.PyType_Ready(this.PyLong_Type);
             this.PyType_Ready(this.PyFloat_Type);
             this.PyType_Ready(this.PyComplex_Type);
@@ -145,6 +163,7 @@ namespace Ironclad
             this.PyType_Ready(this.PyDict_Type);
             this.PyType_Ready(this.PyFile_Type);
             this.PyType_Ready(this.PyCObject_Type);
+            this.PyType_Ready(this.PyNone_Type);
         }
         
         

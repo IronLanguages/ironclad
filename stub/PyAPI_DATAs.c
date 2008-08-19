@@ -40,6 +40,7 @@ PyAPI_DATA(PyTypeObject) PySymtableEntry_Type;
 PyAPI_DATA(PyTypeObject) PyTraceBack_Type;
 PyAPI_DATA(PyTypeObject) PyTuple_Type;
 PyAPI_DATA(PyTypeObject) PyUnicode_Type;
+PyAPI_DATA(PyTypeObject) PyNone_Type;  // this one is not exported, but should still exist
 PyAPI_DATA(PyTypeObject) _PyWeakref_RefType;
 PyAPI_DATA(PyTypeObject) _PyWeakref_ProxyType;
 PyAPI_DATA(PyTypeObject) _PyWeakref_CallableProxyType;

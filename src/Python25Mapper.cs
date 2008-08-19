@@ -480,6 +480,28 @@ namespace Ironclad
             Marshal.StructureToPtr(none, address, false);
             this.map.Associate(address, UnmanagedDataMarker.None);
         }
+
+        public override void
+        Fill__Py_ZeroStruct(IntPtr address)
+        {
+            PyIntObject False = new PyIntObject();
+            False.ob_refcnt = 1;
+            False.ob_type = this.PyBool_Type;
+            False.ob_ival = 0;
+            Marshal.StructureToPtr(False, address, false);
+            this.map.Associate(address, false);
+        }
+
+        public override void
+        Fill__Py_TrueStruct(IntPtr address)
+        {
+            PyIntObject True = new PyIntObject();
+            True.ob_refcnt = 1;
+            True.ob_type = this.PyBool_Type;
+            True.ob_ival = 1;
+            Marshal.StructureToPtr(True, address, false);
+            this.map.Associate(address, true);
+        }
         
         
         public override void
