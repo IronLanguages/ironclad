@@ -1,0 +1,3 @@
+void
+IntPtr typePtr, IntPtr valuePtr, IntPtr tbPtr
+return

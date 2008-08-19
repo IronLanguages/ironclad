@@ -16,6 +16,8 @@ def GetAllocatingTestAllocator(allocsList, freesList):
         def Free(self, ptr):
             freesList.append(ptr)
             HGlobalAllocator.Free(self, ptr)
+        def Contains(self, ptr):
+            return HGlobalAllocator.Contains(self, ptr)
     return TestAllocator()
 
 def GetDoNothingTestAllocator(freesList):
@@ -26,4 +28,6 @@ def GetDoNothingTestAllocator(freesList):
             freesList.append(ptr)
         def FreeAll(self):
             pass
+        def Contains(self, ptr):
+            return False
     return TestAllocator()

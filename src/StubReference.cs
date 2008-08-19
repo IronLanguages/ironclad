@@ -13,9 +13,10 @@ namespace Ironclad
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void InitDelegate(IntPtr addressGetter, IntPtr dataSetter);
 
-    public class StubReference
+    public class StubReference : IDisposable
     {
         private IntPtr library;
+        private bool alive = true;
     
         public StubReference(string dllPath)
         {
@@ -24,7 +25,7 @@ namespace Ironclad
         
         ~StubReference()
         {
-            this.Dispose();
+            this.Dispose(false);
         }
     
         public void Init(AddressGetterDelegate addressGetter, DataSetterDelegate dataSetter)
@@ -41,12 +42,20 @@ namespace Ironclad
             GC.KeepAlive(dataSetter);
         }
         
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.alive)
+            {
+                Unmanaged.FreeLibrary(this.library);
+                this.library = IntPtr.Zero;
+                this.alive = false;
+            }
+        }
+        
         public void Dispose()
         {
-            Unmanaged.FreeLibrary(this.library);
-            this.library = IntPtr.Zero;
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
-
-
 }

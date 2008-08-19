@@ -39,7 +39,7 @@ namespace Ironclad
     }
 
 
-    public partial class Python25Mapper : Python25Api
+    public partial class Python25Mapper : Python25Api, IDisposable
     {
         private bool alive = false;
         private ScriptEngine engine;
@@ -109,18 +109,14 @@ namespace Ironclad
             }
             this.alive = true;
         }
-
-        ~Python25Mapper()
-        {
-            if (this.alive)
-            {
-                Console.WriteLine("Python25Mapper finalized without being Disposed: I'm not even going to try to handle this.");
-            }
-        }
         
         
         private void DumpPtr(IntPtr ptr)
         {
+            if (!this.allocator.Contains(ptr))
+            {
+                return;
+            }
             GC.SuppressFinalize(this.Retrieve(ptr));
             IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
             CPython_destructor_Delegate dgt = (CPython_destructor_Delegate)
@@ -129,41 +125,30 @@ namespace Ironclad
             dgt(ptr);
         }
         
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.alive)
+            {
+                this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
+                this.StopDispatchingDeletes();
+                this.alive = false;
+                this.allocator.FreeAll();
+                foreach (IntPtr FILE in this.FILEs.Values)
+                {
+                    Unmanaged.fclose(FILE);
+                }
+                if (this.stub != null)
+                {
+                    this.importer.Dispose();
+                    this.stub.Dispose();
+                }
+            }
+        }
+        
         public void Dispose()
         {
-            /* You must call Dispose(); really, you must call Dispose(). Shutdown seems to be reliably clean if you
-             * Dispose() *after* delling all ipy references to bridge objects, and *before* deallocing any memory the 
-             * mapper might have an interest in (specifically, anything you didn't allocate with the same allocator
-             * that the mapper uses -- for example, the Py*_Type pointers).
-             */
- 
-            this.CheckBridgePtrs();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            /* The preceding dance is intended to ensure that no bridge objects are
-             * sitting around in the freachable queue waiting to be double-freed 
-             * (AFAICT, SuppressFinalize does not affect objects already on the 
-             * freachable queue; hence, for such objects, the dealloc function would 
-             * be called once in the following loop and once at some point in the 
-             * future.)
-             * 
-             * If the above is nonsense, please complain :).
-             */
-
-            this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
-            this.alive = false;
-            this.allocator.FreeAll();
-            foreach (IntPtr FILE in this.FILEs.Values)
-            {
-                Unmanaged.fclose(FILE);
-            }
-            if (this.stub != null)
-            {
-                this.importer.Dispose();
-                this.stub.Dispose();
-            }
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         public bool

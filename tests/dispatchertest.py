@@ -23,6 +23,14 @@ class DispatcherTest(TestCase):
         self.assertNotEquals(Dispatcher, None, "failed to locate Dispatcher")
         mapper.Dispose()
         
+        
+    def testDisposeMapperPreventsDispatcherDelete(self):
+        mapper = Python25Mapper()
+        Dispatcher = GetDispatcherClass(mapper)
+        dontDelete = Dispatcher.dontDelete
+        mapper.Dispose()
+        self.assertEquals(Dispatcher.delete, dontDelete)
+        
     
     def assertDispatcherUtilityMethod(self, methodname, args, expectedCalls, exceptionSet=None, exceptionAfter=None, expectedExceptionClass=None):
         realMapper = Python25Mapper()
@@ -790,7 +798,7 @@ class DispatcherInitTest(DispatcherDispatchTestCase):
 
 class DispatcherDeleteTest(TestCase):
         
-    def assertDispatchDelete(self, mockMapper, calls, expectedCalls):
+    def assertDispatchDelete(self, mockMapper, calls, expectedCalls, method='delete'):
         class klass(object):
             pass
         instance = klass()
@@ -798,15 +806,14 @@ class DispatcherDeleteTest(TestCase):
         
         mapper = Python25Mapper()
         dispatcher = GetDispatcherClass(mapper)(mockMapper, {})
-        dispatcher.delete(instance)
+        getattr(dispatcher, method)(instance)
         self.assertEquals(calls, expectedCalls)
         mapper.Dispose()
 
 
-    def testDispatchDeleteNormal(self):
+    def testDispatchDelete(self):
         calls = []
         class MockMapper(object):
-            Alive = True
             def CheckBridgePtrs(self):
                 calls.append(('CheckBridgePtrs',))
             def DecRef(self, ptr):
@@ -820,11 +827,19 @@ class DispatcherDeleteTest(TestCase):
             ('Unmap', INSTANCE_PTR),
         ]
         self.assertDispatchDelete(MockMapper(), calls, expectedCalls)
-    
-    def testDispatchDeleteDeadMapper(self):
+
+
+    def testDispatchDontDelete(self):
+        calls = []
         class MockMapper(object):
-            Alive = False
-        self.assertDispatchDelete(MockMapper(), [], [])
+            def CheckBridgePtrs(self):
+                calls.append(('CheckBridgePtrs',))
+            def DecRef(self, ptr):
+                calls.append(('DecRef', ptr))
+            def Unmap(self, ptr):
+                calls.append(('Unmap', ptr))
+        
+        self.assertDispatchDelete(MockMapper(), calls, [], method='dontDelete')
         
 
 

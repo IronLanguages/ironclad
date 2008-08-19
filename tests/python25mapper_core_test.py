@@ -26,6 +26,8 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
         self.assertEquals(mapper.Alive, True)
         mapper.Dispose()
         self.assertEquals(mapper.Alive, False)
+        mapper.Dispose()
+        # jolly good, didn't crash
         
     
     def testLoadsStubWhenPassedPathAndUnloadsOnDispose(self):
@@ -96,7 +98,17 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
         
         deallocType()
         deallocTypes()
+    
+    
+    def testIgnoresBridgeObjectsNotAllocatedByAllocator(self):
+        obj = object()
+        ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        CPyMarshal.WriteIntField(ptr, PyObject, 'ob_refcnt', 2)
         
+        mapper = Python25Mapper()
+        mapper.StoreBridge(ptr, obj)
+        mapper.Dispose()
+        # attempting to free ptr would have failed
 
 
 class Python25Mapper_References_Test(TestCase):

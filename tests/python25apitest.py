@@ -225,6 +225,8 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyErr_Occurred", tuple(), 'IntPtr(123)')
         self.assertFinds("PyErr_Clear", tuple(), 'None')
         self.assertFinds("PyErr_Print", tuple(), 'None')
+        self.assertFinds("PyErr_Fetch", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'None')
+        self.assertFinds("PyErr_Restore", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'None')
         
         self.assertFinds("PyType_GenericNew", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'IntPtr(999)')
         self.assertFinds("PyType_GenericAlloc", ('IntPtr(111)', '22'), 'IntPtr(999)')

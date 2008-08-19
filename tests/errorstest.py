@@ -5,8 +5,9 @@ from tests.utils.testcase import TestCase
 import System
 from System import IntPtr
 from System.IO import MemoryStream, StreamReader
+from System.Runtime.InteropServices import Marshal
 from System.Text import Encoding
-from Ironclad import Python25Mapper
+from Ironclad import CPyMarshal, Python25Mapper
 
 
 class LastExceptionTest(TestCase):
@@ -62,6 +63,59 @@ class ErrFunctionsTest(TestCase):
         mapper.PyErr_Clear()
         
         mapper.Dispose()
+    
+    
+    def testPyErr_FetchRestoreError(self):
+        mapper = Python25Mapper()
+        
+        mapper.LastException = Exception("borked")
+        space = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 3)
+        typePtrPtr = space
+        valuePtrPtr = CPyMarshal.Offset(typePtrPtr, CPyMarshal.PtrSize)
+        tbPtrPtr = CPyMarshal.Offset(valuePtrPtr, CPyMarshal.PtrSize)
+        
+        mapper.PyErr_Fetch(typePtrPtr, valuePtrPtr, tbPtrPtr)
+        self.assertEquals(mapper.LastException, None)
+        
+        typePtr = CPyMarshal.ReadPtr(typePtrPtr)
+        self.assertEquals(mapper.Retrieve(typePtr), Exception)
+        
+        valuePtr = CPyMarshal.ReadPtr(valuePtrPtr)
+        self.assertEquals(mapper.Retrieve(valuePtr), "borked")
+        
+        tbPtr = CPyMarshal.ReadPtr(tbPtrPtr)
+        self.assertEquals(tbPtr, IntPtr.Zero)
+        
+        mapper.PyErr_Restore(typePtr, valuePtr, tbPtr)
+        self.assertEquals(type(mapper.LastException), Exception)
+        self.assertEquals(str(mapper.LastException), "borked")
+        
+        Marshal.FreeHGlobal(space)
+    
+    
+    def testPyErr_FetchRestoreNoError(self):
+        mapper = Python25Mapper()
+        space = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 3)
+        typePtrPtr = space
+        valuePtrPtr = CPyMarshal.Offset(typePtrPtr, CPyMarshal.PtrSize)
+        tbPtrPtr = CPyMarshal.Offset(valuePtrPtr, CPyMarshal.PtrSize)
+        
+        mapper.PyErr_Fetch(typePtrPtr, valuePtrPtr, tbPtrPtr)
+        self.assertEquals(mapper.LastException, None)
+        
+        typePtr = CPyMarshal.ReadPtr(typePtrPtr)
+        self.assertEquals(typePtr, IntPtr.Zero)
+        
+        valuePtr = CPyMarshal.ReadPtr(valuePtrPtr)
+        self.assertEquals(valuePtr, IntPtr.Zero)
+        
+        tbPtr = CPyMarshal.ReadPtr(tbPtrPtr)
+        self.assertEquals(tbPtr, IntPtr.Zero)
+        
+        mapper.PyErr_Restore(typePtr, valuePtr, tbPtr)
+        self.assertEquals(mapper.LastException, None)
+        
+        Marshal.FreeHGlobal(space)
         
 
     def testPyErr_Print(self):

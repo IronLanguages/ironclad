@@ -12,22 +12,30 @@ class HGlobalAllocatorTest(TestCase):
     def testAllocFree(self):
         allocator = HGlobalAllocator()
         ptr = allocator.Alloc(REASONABLE_SIZE)
+        self.assertEquals(allocator.Contains(ptr), True)
         CPyMarshal.WriteInt(ptr, 123)
         
         allocator.Free(ptr)
+        self.assertEquals(allocator.Contains(ptr), False)
         self.assertRaises(KeyError, allocator.Free, ptr)
     
     
     def testAllocFreeAll(self):
         allocator = HGlobalAllocator()
         ptr1 = allocator.Alloc(REASONABLE_SIZE)
+        self.assertEquals(allocator.Contains(ptr1), True)
         ptr2 = allocator.Alloc(REASONABLE_SIZE)
+        self.assertEquals(allocator.Contains(ptr2), True)
         ptr3 = allocator.Alloc(REASONABLE_SIZE)
+        self.assertEquals(allocator.Contains(ptr3), True)
         
         allocator.Free(ptr1)
+        self.assertEquals(allocator.Contains(ptr1), False)
         self.assertRaises(KeyError, allocator.Free, ptr1)
         
         allocator.FreeAll()
+        self.assertEquals(allocator.Contains(ptr2), False)
+        self.assertEquals(allocator.Contains(ptr3), False)
         self.assertRaises(KeyError, allocator.Free, ptr2)
         self.assertRaises(KeyError, allocator.Free, ptr3)
         
@@ -40,8 +48,11 @@ class HGlobalAllocatorTest(TestCase):
             if (ptr1 == ptr2):
                 return False
             
+            self.assertEquals(allocator.Contains(ptr1), False)
+            self.assertEquals(allocator.Contains(ptr2), True)
             self.assertRaises(KeyError, allocator.Free, ptr1)
             allocator.FreeAll()
+            self.assertEquals(allocator.Contains(ptr2), False)
             self.assertRaises(KeyError, allocator.Free, ptr2)
             return True
         
