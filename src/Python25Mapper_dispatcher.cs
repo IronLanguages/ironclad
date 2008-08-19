@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 
-using IronPython.Runtime;
 using Microsoft.Scripting.Hosting;
+
+using IronPython.Runtime;
+using IronPython.Runtime.Calls;
 
 namespace Ironclad
 {
@@ -33,6 +35,12 @@ namespace Ironclad
             
             ScriptScope scope = this.GetModuleScriptScope(this.dispatcherModule);
             this.dispatcherClass = scope.GetVariable<object>("Dispatcher");
+        }
+        
+        private void StopDispatchingDeletes()
+        {
+            Builtin.setattr(DefaultContext.Default, this.dispatcherClass, "delete",
+                Builtin.getattr(DefaultContext.Default, this.dispatcherClass, "dontDelete"));
         }
     }
 }

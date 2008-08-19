@@ -7,6 +7,7 @@ namespace Ironclad
     {
         IntPtr Alloc(int bytes);
         IntPtr Realloc(IntPtr old, int bytes);
+        bool Contains(IntPtr ptr);
         void Free(IntPtr address);
         void FreeAll();
     }
@@ -30,6 +31,12 @@ namespace Ironclad
             this.allocated.SetRemove(oldptr);        
             this.allocated.Add(newptr);
             return newptr;
+        }
+        
+        public virtual bool
+        Contains(IntPtr ptr)
+        {
+            return this.allocated.Contains(ptr);
         }
         
         public virtual void 

@@ -11,14 +11,10 @@ namespace Ironclad
     public delegate void PydInit_Delegate();
 
 
-    public class PydImporter
+    public class PydImporter : IDisposable
     {
         private List<IntPtr> handles = new List<IntPtr>();
-        
-        ~PydImporter()
-        {
-            this.Dispose();
-        }
+        private bool alive = true;
         
         public void Load(string path)
         {
@@ -30,15 +26,28 @@ namespace Ironclad
             d();
         }
         
+        ~PydImporter()
+        {
+            this.Dispose(false);
+        }
+        
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.alive)
+            {
+                foreach (IntPtr l in this.handles)
+                {
+                    Unmanaged.FreeLibrary(l);
+                }
+                this.handles.Clear();
+                this.alive = false;
+            }
+        }
+        
         public void Dispose()
         {
-            foreach (IntPtr l in this.handles)
-            {
-                Unmanaged.FreeLibrary(l);
-            }
-            this.handles.Clear();
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
-
-
 }

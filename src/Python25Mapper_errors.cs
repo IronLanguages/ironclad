@@ -11,8 +11,6 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-
-
         public object LastException
         {
             get
@@ -55,6 +53,33 @@ namespace Ironclad
         PyErr_Clear()
         {
             this.LastException = null;
+        }
+        
+        public override void
+        PyErr_Fetch(IntPtr typePtrPtr, IntPtr valuePtrPtr, IntPtr tbPtrPtr)
+        {
+            CPyMarshal.Zero(typePtrPtr, CPyMarshal.PtrSize);
+            CPyMarshal.Zero(valuePtrPtr, CPyMarshal.PtrSize);
+            CPyMarshal.Zero(tbPtrPtr, CPyMarshal.PtrSize);
+            
+            if (this.LastException != null)
+            {
+                object excType = PythonCalls.Call(Builtin.type, new object[] { this.LastException });
+                CPyMarshal.WritePtr(typePtrPtr, this.Store(excType));
+                CPyMarshal.WritePtr(valuePtrPtr, this.Store(this.LastException.ToString()));
+            }
+            this.LastException = null;
+        }
+        
+        public override void
+        PyErr_Restore(IntPtr typePtr, IntPtr valuePtr, IntPtr tbPtr)
+        {
+            if (typePtr != IntPtr.Zero && valuePtr != IntPtr.Zero)
+            {
+                this.LastException = PythonCalls.Call(this.Retrieve(typePtr), new object[] { this.Retrieve(valuePtr) });
+                this.DecRef(typePtr);
+                this.DecRef(valuePtr);
+            }
         }
 
         private void

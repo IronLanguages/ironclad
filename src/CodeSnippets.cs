@@ -261,11 +261,12 @@ class Dispatcher(object):
             self._surely_raise(Exception('%s failed; object is probably not safe to use' % name))
 
     def delete(self, instance):
-        if self.mapper.Alive:
-            self.mapper.CheckBridgePtrs()
-            self.mapper.DecRef(instance._instancePtr)
-            self.mapper.Unmap(instance._instancePtr)
+        self.mapper.CheckBridgePtrs()
+        self.mapper.DecRef(instance._instancePtr)
+        self.mapper.Unmap(instance._instancePtr)
 
+    def dontDelete(_, __):
+        pass
 
     def function_noargs(self, name):
         return self.method_noargs(name, IntPtr(0))
