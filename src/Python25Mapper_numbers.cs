@@ -13,6 +13,18 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
+        private IntPtr
+        Store(bool value)
+        {
+            IntPtr ptr = this._Py_ZeroStruct;
+            if (value)
+            {
+                ptr = this._Py_TrueStruct;
+            }
+            this.IncRef(ptr);
+            return ptr;
+        }
+
         public override IntPtr
         PyNumber_Add(IntPtr arg1ptr, IntPtr arg2ptr)
         {

@@ -23,15 +23,16 @@ BUILTIN_TYPES = {
     "PyFile_Type": file,
     "PyLong_Type": long,
     "PyInt_Type": int,
+    "PyBool_Type": bool,
     "PyFloat_Type": float,
     "PyComplex_Type": complex,
     "PyCObject_Type": OpaquePyCObject,
+    "PyNone_Type": type(None)
 }
 
 class Types_Test(TestCase):
     
     def testTypeMappings(self):
-        
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
@@ -44,6 +45,8 @@ class Types_Test(TestCase):
             basePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base")
             if k == "PyBaseObject_Type":
                 self.assertEquals(basePtr, IntPtr.Zero)
+            elif k == "PyBool_Type":
+                self.assertEquals(basePtr, mapper.PyInt_Type)
             else:
                 self.assertEquals(basePtr, mapper.PyBaseObject_Type)
              
@@ -119,8 +122,10 @@ class Types_Test(TestCase):
         for _type in BUILTIN_TYPES:
             typePtr = getattr(mapper, _type)
             basePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base")
-            if typePtr != mapper.PyBaseObject_Type:
+            if typePtr not in (mapper.PyBaseObject_Type, mapper.PyBool_Type):
                 self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
+            if typePtr == mapper.PyBool_Type:
+                self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyInt_Type)
             typeTypePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type")
             if typePtr != mapper.PyType_Type:
                 self.assertEquals(typeTypePtr, mapper.PyType_Type)

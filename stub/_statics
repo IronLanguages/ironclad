@@ -1,4 +1,3 @@
-PyBool_Type
 PyBuffer_Type
 PyCell_Type
 PyClass_Type
@@ -20,6 +19,7 @@ PyClassMethod_Type
 PyStaticMethod_Type
 PyGen_Type
 PyInt_Type
+PyBool_Type
 PySeqIter_Type
 PyCallIter_Type
 PyList_Type
@@ -40,6 +40,7 @@ PySymtableEntry_Type
 PyTraceBack_Type
 PyTuple_Type
 PyUnicode_Type
+PyNone_Type
 _PyWeakref_RefType
 _PyWeakref_ProxyType
 _PyWeakref_CallableProxyType

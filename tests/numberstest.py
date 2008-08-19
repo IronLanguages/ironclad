@@ -5,9 +5,36 @@ from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase
 
 from System import Int64, IntPtr, UInt32, UInt64
+from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, Python25Mapper
 from Ironclad.Structs import PyObject, PyIntObject, PyFloatObject
+
+
+class PyBool_Test(TestCase):
+    
+    def testTrueFalse(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        truePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
+        mapper.SetData("_Py_TrueStruct", truePtr)
+        self.assertEquals(CPyMarshal.ReadPtrField(truePtr, PyIntObject, 'ob_type'), mapper.PyBool_Type)
+        self.assertEquals(CPyMarshal.ReadIntField(truePtr, PyIntObject, 'ob_refcnt'), 1)
+        self.assertEquals(CPyMarshal.ReadIntField(truePtr, PyIntObject, 'ob_ival'), 1)
+        truePtr2 = mapper.Store(True)
+        self.assertEquals(truePtr2, truePtr)
+        
+        falsePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
+        mapper.SetData("_Py_ZeroStruct", falsePtr)
+        self.assertEquals(CPyMarshal.ReadPtrField(falsePtr, PyIntObject, 'ob_type'), mapper.PyBool_Type)
+        self.assertEquals(CPyMarshal.ReadIntField(falsePtr, PyIntObject, 'ob_refcnt'), 1)
+        self.assertEquals(CPyMarshal.ReadIntField(falsePtr, PyIntObject, 'ob_ival'), 0)
+        falsePtr2 = mapper.Store(False)
+        self.assertEquals(falsePtr2, falsePtr)
+        
+        mapper.Dispose()
+        deallocTypes()
 
 
 class PyInt_Test(TestCase):
@@ -369,6 +396,7 @@ class PyNumber_Test(TestCase):
     
 
 suite = makesuite(
+    PyBool_Test,
     PyInt_Test,
     PyLong_Test,
     PyFloat_Test,
