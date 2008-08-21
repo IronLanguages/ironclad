@@ -57,9 +57,39 @@ namespace Ironclad
             return threadDict.Ptr;
         }
 
+        public override IntPtr
+        PyEval_SaveThread()
+        {
+            ThreadLocalCounter threadGIL = (ThreadLocalCounter)Thread.GetData(this.threadGILStore);
+            if (threadGIL == null)
+            {
+                threadGIL = new ThreadLocalCounter();
+                Thread.SetData(this.threadGILStore, threadGIL);
+            }
+            threadGIL.Increment();
+            if (threadGIL.Count == 1)
+            {
+                Monitor.Exit(this.dispatcherLock);
+                return new IntPtr(1);
+            }
+            return IntPtr.Zero;
+        }
 
-        // untested GILly stuff follows:
+        public override void
+        PyEval_RestoreThread(IntPtr token)
+        {
+            // no check: if someone calls Restore before Save we may as well just explode
+            ThreadLocalCounter threadGIL = (ThreadLocalCounter)Thread.GetData(this.threadGILStore);
+            threadGIL.Decrement();
+            if (token != IntPtr.Zero || threadGIL.Count == 0)
+            {
+                threadGIL.Reset();
+                Monitor.Enter(this.dispatcherLock);
+            }
+        }
+
         // I can only assume that an enum is near-enough the same as an int :)
+        // I also assume nobody will call Ensure twice without an intervening Release
         public override int
         PyGILState_Ensure()
         {

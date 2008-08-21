@@ -1,9 +1,11 @@
 
+from tests.utils.dispatcher import GetDispatcherClass
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
 from tests.utils.gc import gcwait
 
-from System.Threading import Thread, ThreadStart
+from System import IntPtr
+from System.Threading import AutoResetEvent, Monitor, Thread, ThreadStart
 
 from Ironclad import Python25Mapper
 
@@ -133,9 +135,122 @@ class PyThreadStateDict_Test(TestCase):
         mapper.Dispose()
 
 
+class PyEvalGILThreadTest(TestCase):
+    
+    def assertLock(self, lock, expectLocked):
+        unlocked = [False]
+        def CheckUnlocked():
+            unlocked[0] = Monitor.TryEnter(lock)
+            if unlocked[0]:
+                Monitor.Exit(lock)
+        t = Thread(ThreadStart(CheckUnlocked))
+        t.Start()
+        t.Join()
+        self.assertEquals(not unlocked[0], expectLocked)
+    
+    def testMultipleSaveRestoreOneThread(self):
+        mapper = Python25Mapper()
+        lock = GetDispatcherClass(mapper)._lock
+        
+        mapper.PyGILState_Ensure()
+        self.assertLock(lock, True)
+        mapper.PyEval_SaveThread()
+        self.assertLock(lock, False)
+        mapper.PyEval_SaveThread()
+        self.assertLock(lock, False)
+        mapper.PyEval_RestoreThread(IntPtr.Zero)
+        self.assertLock(lock, False)
+        mapper.PyEval_RestoreThread(IntPtr.Zero)
+        self.assertLock(lock, True)
+        self.assertRaises(Exception, mapper.PyEval_RestoreThread)
+        mapper.PyGILState_Release(0)
+        
+        mapper.Dispose()
+    
+    def testMultipleSaveRestoreMultiThread(self):       # order of execution (intended)
+        mapper = Python25Mapper()
+        lock = GetDispatcherClass(mapper)._lock
+    
+        oneThreadActed = AutoResetEvent(False)
+        anotherThreadActed = AutoResetEvent(False)
+        
+        def OneThread():
+            wait = lambda: anotherThreadActed.WaitOne()
+            signal = lambda: oneThreadActed.Set()
+            
+            mapper.PyGILState_Ensure()                  # 1
+            signal(); wait()
+            
+            pe_token = mapper.PyEval_SaveThread()       # 3
+            self.assertNotEquals(pe_token, IntPtr.Zero)
+            signal(); wait()
+            
+            self.assertFalse(Monitor.TryEnter(lock))    # 5
+            signal(); wait()
+            
+            self.assertTrue(Monitor.TryEnter(lock))     # 7
+            Monitor.Exit(lock)
+            signal(); wait()
+            
+            self.assertTrue(Monitor.TryEnter(lock))     # 9
+            Monitor.Exit(lock)
+            signal(); wait()
+            
+            self.assertTrue(Monitor.TryEnter(lock))     # 11
+            Monitor.Exit(lock)
+            signal(); wait()
+            
+            self.assertFalse(Monitor.TryEnter(lock))    # 13
+            signal(); wait()
+            
+            mapper.PyEval_RestoreThread(pe_token)       # 15
+            signal(); wait()
+            
+            mapper.PyGILState_Release(0)                # 17
+
+        def AnotherThread():
+            wait = lambda: oneThreadActed.WaitOne()
+            signal = lambda: anotherThreadActed.Set()
+            wait()
+            
+            self.assertFalse(Monitor.TryEnter(lock))    # 2
+            signal(); wait()
+            
+            mapper.PyGILState_Ensure()                  # 4
+            signal(); wait()
+            
+            pe_token = mapper.PyEval_SaveThread()       # 6
+            self.assertNotEquals(pe_token, IntPtr.Zero)
+            signal(); wait()
+            
+            x = mapper.PyEval_SaveThread()              # 8
+            self.assertEquals(x, IntPtr.Zero)
+            signal(); wait()
+            
+            mapper.PyEval_RestoreThread(x)              # 10
+            signal(); wait()
+            
+            mapper.PyEval_RestoreThread(pe_token)       # 12
+            signal(); wait()
+            
+            mapper.PyGILState_Release(0)                # 14
+            signal(); wait()
+            
+            self.assertFalse(Monitor.TryEnter(lock))    # 16
+            signal()
+            
+        t = Thread(ThreadStart(AnotherThread))
+        t.Start()
+        OneThread()
+        t.Join()
+    
+        mapper.Dispose()
+
+
 suite = makesuite(
     PyThread_functions_Test,
     PyThreadStateDict_Test,
+    PyEvalGILThreadTest,
 )
 
 if __name__ == '__main__':

@@ -59,11 +59,12 @@ namespace Ironclad
         private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
         private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();
         private LocalDataStoreSlot threadDictStore = Thread.AllocateDataSlot();
-        private StupidSet notInterpretableTypes = new StupidSet();
+        private LocalDataStoreSlot threadGILStore = Thread.AllocateDataSlot();
 
         // TODO: this should probably be thread-local too
         private object _lastException = null;
 
+        private StupidSet notInterpretableTypes = new StupidSet();
         // one day, perhaps, this 'set' will be empty
         private StupidSet unknownNames = new StupidSet();
 
