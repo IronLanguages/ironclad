@@ -52,6 +52,9 @@ namespace Ironclad
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate IntPtr CPython_richcmpfunc_Delegate(IntPtr self, IntPtr other, int op);
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int CPython_inquiry_Delegate(IntPtr self);
+
 
     namespace Structs
     {

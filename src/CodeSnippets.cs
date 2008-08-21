@@ -168,6 +168,11 @@ class {0}(_ironclad_baseclass):
         return self._dispatcher.method_richcmp('{0}tp_richcompare', self._instancePtr, other, 5)
 ";
 
+        public const string INQURY_METHOD_CODE = @"
+    def {0}(self):
+        '''{1}'''
+        return self._dispatcher.method_inquiry('{2}{0}', self._instancePtr)
+";
 
         public const string INSTALL_IMPORT_HOOK_CODE = @"
 import ihooks
@@ -373,6 +378,12 @@ class Dispatcher(object):
             return self.mapper.Retrieve(resultPtr)
         finally:
             self._cleanup(resultPtr)
+
+    @lock
+    def method_inquiry(self, name, instancePtr):
+        result = self.table[name](instancePtr)
+        self._maybe_raise()
+        return result
 
     @lock
     def method_ternary(self, name, instancePtr, arg1, arg2):

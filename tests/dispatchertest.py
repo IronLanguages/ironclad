@@ -476,6 +476,23 @@ class DispatcherSsizeargTest(DispatcherDispatchTestCase):
         ])
 
 
+class DispatcherInquiryTest(DispatcherDispatchTestCase):
+    
+    def testDispatch_method_inquiry(self):
+        calls = self.callDispatcherMethodWithResults('method_inquiry', SSIZE, SSIZE, INSTANCE_PTR)
+        self.assertEquals(calls, [
+            ('dgt', (INSTANCE_PTR,)),
+            ('_maybe_raise', tuple()),
+        ])
+    
+    def testDispatch_method_inquiry_error(self):
+        calls = self.callDispatcherErrorMethod('method_inquiry', INSTANCE_PTR)
+        self.assertEquals(calls, [
+            ('dgt', (INSTANCE_PTR,)),
+            ('_maybe_raise', tuple()),
+        ])
+
+
 class DispatcherTernaryTest(DispatcherDispatchTestCase):
     
     def testDispatch_method_ternary(self):
@@ -971,6 +988,7 @@ suite  = makesuite(
     DispatcherSelfargTest,
     DispatcherKwargsTest, 
     DispatcherSsizeargTest,
+    DispatcherInquiryTest,
     DispatcherTernaryTest,
     DispatcherRichcmpTest,
     DispatcherLenfuncTest,
