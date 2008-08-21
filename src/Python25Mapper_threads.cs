@@ -56,5 +56,21 @@ namespace Ironclad
             }
             return threadDict.Ptr;
         }
+
+
+        // untested GILly stuff follows:
+        // I can only assume that an enum is near-enough the same as an int :)
+        public override int
+        PyGILState_Ensure()
+        {
+            Monitor.Enter(this.dispatcherLock);
+            return 0;
+        }
+
+        public override void
+        PyGILState_Release(int _)
+        {
+            Monitor.Exit(this.dispatcherLock);
+        }
     }
 }

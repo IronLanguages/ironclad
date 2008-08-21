@@ -318,6 +318,10 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyThreadState_GetDict", tuple(), 'IntPtr(123)')
         
         self.assertFinds("PyEval_InitThreads", tuple(), 'None')
+        self.assertFinds("PyEval_SaveThread", tuple(), 'IntPtr(123)')
+        self.assertFinds("PyEval_RestoreThread", ('IntPtr(123)',), 'None')
+        self.assertFinds("PyGILState_Ensure", tuple(), '123')
+        self.assertFinds("PyGILState_Release", ('123',), 'None')
 
 
     def testPython25ApiImplementationOf_PyEval_SaveThread(self):
