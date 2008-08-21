@@ -324,16 +324,6 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyGILState_Release", ('123',), 'None')
 
 
-    def testPython25ApiImplementationOf_PyEval_SaveThread(self):
-        self.assertEquals(Python25Api().PyEval_SaveThread(), IntPtr.Zero,
-                          "unexpectedly wrong implementation")
-
-
-    def testPython25ApiImplementationOf_PyEval_RestoreThread(self):
-        Python25Api().PyEval_RestoreThread(IntPtr.Zero)
-        # would have raised before getting here
-
-
     def testPython25ApiImplementationOf_PyEval_InitThreads(self):
         # I think I can get away with ignoring this function
         self.assertEquals(Python25Api().PyEval_InitThreads(), None)

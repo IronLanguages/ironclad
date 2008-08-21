@@ -1,18 +1,13 @@
 
 from tests.utils.runtest import makesuite, run
 
-from tests.utils.python25mapper import ModuleWrapper
+from tests.utils.dispatcher import GetDispatcherClass
 from tests.utils.testcase import TestCase
 
 from System import IntPtr, NullReferenceException
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, Python25Mapper
-
-def GetDispatcherClass(mapper):
-    moduleDict = mapper.DispatcherModule.Scope.Dict
-    moduleScope = mapper.Engine.CreateScope(moduleDict)
-    return moduleScope.GetVariable[object]("Dispatcher")
 
 
 class DispatcherTest(TestCase):
