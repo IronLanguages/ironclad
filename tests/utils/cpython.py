@@ -7,7 +7,7 @@ from Ironclad import (
     CPython_getter_Delegate, CPython_setter_Delegate,
     CPython_unaryfunc_Delegate, CPython_binaryfunc_Delegate, CPython_ternaryfunc_Delegate, 
     CPython_ssizeargfunc_Delegate,
-    CPython_reprfunc_Delegate, CPython_lenfunc_Delegate,
+    CPython_reprfunc_Delegate, CPython_lenfunc_Delegate, CPython_richcmpfunc_Delegate,
     CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate, 
 )
 from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMethodDef, PyNumberMethods, PyTypeObject
@@ -93,6 +93,7 @@ FUNC_ARGS = {
     "tp_call": CPythonVarargsKwargsFunction_Delegate,
     "tp_str": CPython_reprfunc_Delegate,
     "tp_repr": CPython_reprfunc_Delegate,
+    "tp_richcompare": CPython_richcmpfunc_Delegate,
 }
 
 def WriteTypeField(typePtr, name, value):

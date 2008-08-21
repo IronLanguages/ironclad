@@ -158,7 +158,8 @@ class Types_Test(TestCase):
         
         numberTypes = ("PyInt_Type", "PyLong_Type", "PyFloat_Type")
         implementedFields = {
-            "nb_float": mapper.GetAddress("PyNumber_Float")
+            "nb_float": mapper.GetAddress("PyNumber_Float"),
+            "nb_int": mapper.GetAddress("PyNumber_Int"),
         }
         
         for _type in numberTypes:

@@ -153,6 +153,22 @@ class {0}(_ironclad_baseclass):
         return self._dispatcher.method_ternary('{2}{0}', self._instancePtr, arg1, arg2)
 ";
 
+        public const string RICHCMP_METHOD_CODE = @"
+    def __lt__(self, other):
+        return self._dispatcher.method_richcmp('{0}tp_richcompare', self._instancePtr, other, 0)
+    def __le__(self, other):
+        return self._dispatcher.method_richcmp('{0}tp_richcompare', self._instancePtr, other, 1)
+    def __eq__(self, other):
+        return self._dispatcher.method_richcmp('{0}tp_richcompare', self._instancePtr, other, 2)
+    def __ne__(self, other):
+        return self._dispatcher.method_richcmp('{0}tp_richcompare', self._instancePtr, other, 3)
+    def __gt__(self, other):
+        return self._dispatcher.method_richcmp('{0}tp_richcompare', self._instancePtr, other, 4)
+    def __ge__(self, other):
+        return self._dispatcher.method_richcmp('{0}tp_richcompare', self._instancePtr, other, 5)
+";
+
+
         public const string INSTALL_IMPORT_HOOK_CODE = @"
 import ihooks
 import imp
@@ -368,6 +384,16 @@ class Dispatcher(object):
             return self.mapper.Retrieve(resultPtr)
         finally:
             self._cleanup(resultPtr, arg1Ptr, arg2Ptr)
+
+    @lock
+    def method_richcmp(self, name, instancePtr, arg1, op):
+        arg1Ptr = self.mapper.Store(arg1)
+        resultPtr = self.table[name](instancePtr, arg1Ptr, op)
+        try:
+            self._maybe_raise(resultPtr)
+            return self.mapper.Retrieve(resultPtr)
+        finally:
+            self._cleanup(resultPtr, arg1Ptr)
 
     @lock
     def method_lenfunc(self, name, instancePtr):

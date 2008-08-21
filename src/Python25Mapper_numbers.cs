@@ -13,6 +13,18 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
+        public override IntPtr
+        PyBool_FromLong(int value)
+        {
+            IntPtr ptr = this._Py_ZeroStruct;
+            if (value != 0)
+            {
+                ptr = this._Py_TrueStruct;
+            }
+            this.IncRef(ptr);
+            return ptr;
+        }
+        
         private IntPtr
         Store(bool value)
         {
@@ -101,6 +113,21 @@ namespace Ironclad
             {
                 this.LastException = e;
                 return IntPtr.Zero;
+            }
+        }
+
+
+        public override IntPtr
+        PyNumber_Int(IntPtr numberPtr)
+        {
+            try
+            {
+                int result = Converter.ConvertToInt32(this.Retrieve(numberPtr));
+                return this.Store(result);
+            }
+            catch
+            {
+                return this.PyNumber_Long(numberPtr);
             }
         }
 
