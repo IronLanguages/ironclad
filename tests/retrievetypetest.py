@@ -64,12 +64,12 @@ class DispatchSetupTestCase(TestCase):
             return result
         return Ternary, calls
 
-    def getQuarternaryFunc(self, result):
+    def getQuaternaryFunc(self, result):
         calls = []
-        def Quarternary(arg1, arg2, arg3, arg4):
+        def Quaternary(arg1, arg2, arg3, arg4):
             calls.append((arg1, arg2, arg3, arg4))
             return result
-        return Quarternary, calls
+        return Quaternary, calls
         
     def getNaryFunc(self, result):
         calls = []
@@ -108,6 +108,7 @@ class DispatchSetupTestCase(TestCase):
     
     def assertCallsSsizeargPtrFunc(self, dgt, calls):
         self.assertCalls(dgt, ((ARG1_PTR, ARG1_SSIZE), {}), calls, (ARG1_PTR, ARG1_SSIZE), RESULT_PTR)
+
 
 class MethodsTest(DispatchSetupTestCase):
 
@@ -322,6 +323,48 @@ class IterTest(DispatchSetupTestCase):
             Py_TPFLAGS.HAVE_ITER, "tp_iternext", "next", TestErrorHandler)
         
 
+class RichCompareTest(DispatchSetupTestCase):
+    
+    def testRichCompare(self):
+        func, calls_cfunc = self.getTernaryPtrFunc()
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_richcompare": func,
+        }
+        result = object()
+        dispatch, calls_dispatch = self.getQuaternaryFunc(result)
+
+        def TestType(_type, _):
+            instance = _type()
+            _type._dispatcher.method_richcmp = dispatch
+            
+            magic = {
+                "__lt__": 0,
+                "__le__": 1,
+                "__eq__": 2,
+                "__ne__": 3,
+                "__gt__": 4,
+                "__ge__": 5,
+            }
+            for (methodname, magicnumber) in magic.items():
+                del calls_cfunc[:]
+                del calls_dispatch[:]
+                comparee = object()
+                self.assertCalls(
+                    getattr(instance, methodname), ((comparee,), {}), calls_dispatch, 
+                    ("klass.tp_richcompare", instance._instancePtr, comparee, magicnumber), result)
+            
+            cfunc = _type._dispatcher.table["klass.tp_richcompare"]
+            self.assertCalls(
+                cfunc, ((ARG1_PTR, ARG2_PTR, ARG1_SSIZE,), {}), calls_cfunc, 
+                (ARG1_PTR, ARG2_PTR, ARG1_SSIZE,), RESULT_PTR)
+            
+            del instance
+            gcwait()
+            
+        self.assertTypeSpec(typeSpec, TestType)
+
+
 class NumberTest(DispatchSetupTestCase):
     
     def assertUnaryNumberMethod(self, slotName, methodName):
@@ -417,7 +460,7 @@ class NumberTest(DispatchSetupTestCase):
             "tp_as_number": numbersPtr
         }
         result = object()
-        dispatch, calls_dispatch = self.getQuarternaryFunc(result)
+        dispatch, calls_dispatch = self.getQuaternaryFunc(result)
         
         def TestType(_type, _):
             instance, arg1, arg2 = _type(), object(), object()
@@ -1069,6 +1112,7 @@ suite = makesuite(
     StrReprTest,
     CallTest,
     IterTest,
+    RichCompareTest,
     NumberTest,
     SequenceTest,
     MappingTest,

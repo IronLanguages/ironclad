@@ -49,6 +49,9 @@ namespace Ironclad
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int CPython_lenfunc_Delegate(IntPtr self);
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate IntPtr CPython_richcmpfunc_Delegate(IntPtr self, IntPtr other, int op);
+
 
     namespace Structs
     {

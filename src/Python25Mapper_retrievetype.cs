@@ -88,7 +88,6 @@ namespace Ironclad
             this.GenerateSequenceMethods(classCode, sqPtr, methodTable, tablePrefix);
 
             this.GenerateMagicMethods(classCode, typePtr, methodTable, tablePrefix);
-            this.GenerateIterMethods(classCode, typePtr, methodTable, tablePrefix);
 
             ScriptScope moduleScope = this.GetModuleScriptScope(this.scratchModule);
             moduleScope.SetVariable("_ironclad_baseclass", tp_base);
@@ -357,6 +356,16 @@ namespace Ironclad
         }
 
         private void
+        GenerateRichcmpMethods(StringBuilder classCode, IntPtr typePtr, PythonDictionary methodTable, string tablePrefix)
+        {
+            if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_richcompare") != IntPtr.Zero)
+            {
+                classCode.Append(String.Format(CodeSnippets.RICHCMP_METHOD_CODE, tablePrefix));
+                this.ConnectTypeField(typePtr, tablePrefix, "tp_richcompare", methodTable, typeof(CPython_richcmpfunc_Delegate));
+            }
+        }
+
+        private void
         GenerateProtocolMagicMethods(StringBuilder classCode, IntPtr protocolPtr, Type protocol, string[] fields, PythonDictionary methodTable, string tablePrefix)
         {
             if (protocolPtr == IntPtr.Zero)
@@ -383,6 +392,9 @@ namespace Ironclad
             string[] fields = new string[] { "tp_call", "tp_repr", "tp_str" };
             this.GenerateProtocolMagicMethods(
                 classCode, typePtr, typeof(PyTypeObject), fields, methodTable, tablePrefix);
+            
+            this.GenerateIterMethods(classCode, typePtr, methodTable, tablePrefix);
+            this.GenerateRichcmpMethods(classCode, typePtr, methodTable, tablePrefix);
         }
 
         private void

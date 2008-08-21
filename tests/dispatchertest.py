@@ -500,6 +500,28 @@ class DispatcherTernaryTest(DispatcherDispatchTestCase):
         ])
 
 
+class DispatcherRichcmpTest(DispatcherDispatchTestCase):
+    
+    def testDispatch_method_richcmp(self):
+        calls = self.callDispatcherMethod('method_richcmp', INSTANCE_PTR, ARG, SSIZE)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('dgt', (INSTANCE_PTR, ARG_PTR, SSIZE)),
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('Retrieve', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR, ARG_PTR))
+        ])
+    
+    def testDispatch_method_richcmp_error(self):
+        calls = self.callDispatcherErrorMethod('method_richcmp', INSTANCE_PTR, ARG, SSIZE)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('dgt', (INSTANCE_PTR, ARG_PTR, SSIZE)),
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR, ARG_PTR))
+        ])
+
+
 class DispatcherLenfuncTest(DispatcherDispatchTestCase):
     
     def testDispatch_method_lenfunc(self):
@@ -950,6 +972,7 @@ suite  = makesuite(
     DispatcherKwargsTest, 
     DispatcherSsizeargTest,
     DispatcherTernaryTest,
+    DispatcherRichcmpTest,
     DispatcherLenfuncTest,
     DispatcherGetterTest,
     DispatcherSetterTest,

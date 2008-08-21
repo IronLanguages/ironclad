@@ -275,6 +275,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyNumber_Multiply", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
         self.assertFinds("PyNumber_Divide", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
         self.assertFinds("PyNumber_Absolute", ('IntPtr(111)',), 'IntPtr(999)')
+        self.assertFinds("PyNumber_Int", ('IntPtr(111)',), 'IntPtr(999)')
         self.assertFinds("PyNumber_Long", ('IntPtr(111)',), 'IntPtr(999)')
         self.assertFinds("PyNumber_Float", ('IntPtr(111)',), 'IntPtr(999)')
         
@@ -289,6 +290,8 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyInt_FromLong", ('33',), 'IntPtr(999)')
         self.assertFinds("PyInt_FromSsize_t", ('33',), 'IntPtr(999)')
         self.assertFinds("PyInt_AsLong", ('IntPtr(123)',), '999')
+        
+        self.assertFinds("PyBool_FromLong", ('33',), 'IntPtr(999)')
         
         self.assertFinds("PyLong_AsLong", ('IntPtr(999)',), '2000000000')
         self.assertFinds("PyLong_AsLongLong", ('IntPtr(999)',), 'Int64(5555555555)')

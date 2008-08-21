@@ -24,6 +24,7 @@ class PyBool_Test(TestCase):
         self.assertEquals(CPyMarshal.ReadIntField(truePtr, PyIntObject, 'ob_ival'), 1)
         truePtr2 = mapper.Store(True)
         self.assertEquals(truePtr2, truePtr)
+        self.assertEquals(mapper.RefCount(truePtr), 2)
         
         falsePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
         mapper.SetData("_Py_ZeroStruct", falsePtr)
@@ -32,6 +33,23 @@ class PyBool_Test(TestCase):
         self.assertEquals(CPyMarshal.ReadIntField(falsePtr, PyIntObject, 'ob_ival'), 0)
         falsePtr2 = mapper.Store(False)
         self.assertEquals(falsePtr2, falsePtr)
+        self.assertEquals(mapper.RefCount(falsePtr), 2)
+        
+        mapper.Dispose()
+        deallocTypes()
+
+
+    def testPyBool_FromLong(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        truePtr = mapper.PyBool_FromLong(23151)
+        self.assertEquals(truePtr, mapper._Py_TrueStruct)
+        self.assertEquals(mapper.RefCount(truePtr), 2)
+        
+        falsePtr = mapper.PyBool_FromLong(0)
+        self.assertEquals(falsePtr, mapper._Py_ZeroStruct)
+        self.assertEquals(mapper.RefCount(falsePtr), 2)
         
         mapper.Dispose()
         deallocTypes()
@@ -383,6 +401,33 @@ class PyNumber_Test(TestCase):
         for value in badvalues:
             ptr = mapper.Store(value)
             self.assertEquals(mapper.PyNumber_Float(ptr), IntPtr.Zero)
+            
+            def KindaConvertError():
+                raise mapper.LastException
+            self.assertRaises(TypeError, KindaConvertError)
+            
+            mapper.DecRef(ptr)
+        
+        mapper.Dispose()
+        deallocTypes()
+    
+    
+    def testPyNumber_Int(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        values = [0, 12345, 123456789012345, 123.45]
+        values += map(float, values)
+        for value in values:
+            ptr = mapper.Store(value)
+            _int = mapper.Retrieve(mapper.PyNumber_Int(ptr))
+            self.assertEquals(_int, int(value), "converted wrong")
+            mapper.DecRef(ptr)
+        
+        badvalues = ['foo', object, object()]
+        for value in badvalues:
+            ptr = mapper.Store(value)
+            self.assertEquals(mapper.PyNumber_Int(ptr), IntPtr.Zero)
             
             def KindaConvertError():
                 raise mapper.LastException
