@@ -7,7 +7,7 @@ from Ironclad import (
     CPython_getter_Delegate, CPython_setter_Delegate,
     CPython_unaryfunc_Delegate, CPython_binaryfunc_Delegate, CPython_ternaryfunc_Delegate, 
     CPython_ssizeargfunc_Delegate,
-    CPython_reprfunc_Delegate, CPython_lenfunc_Delegate, CPython_richcmpfunc_Delegate,
+    CPython_reprfunc_Delegate, CPython_lenfunc_Delegate, CPython_richcmpfunc_Delegate, CPython_inquiry_Delegate,
     CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate, 
 )
 from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMethodDef, PyNumberMethods, PyTypeObject
@@ -170,6 +170,7 @@ NUMSEQMAP_METHODS = {
     "nb_divide": CPython_binaryfunc_Delegate, 
     "nb_or": CPython_binaryfunc_Delegate, 
     "nb_and": CPython_binaryfunc_Delegate, 
+    "nb_nonzero": CPython_inquiry_Delegate,
     
     "nb_absolute": CPython_unaryfunc_Delegate, 
     "nb_float": CPython_unaryfunc_Delegate, 

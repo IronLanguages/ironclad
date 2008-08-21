@@ -87,6 +87,11 @@ namespace Ironclad
                     template = CodeSnippets.TERNARY_METHOD_CODE;
                     dgtType = typeof(CPython_ternaryfunc_Delegate);
                     break;
+                case "nb_nonzero":
+                    name = "__nonzero__";
+                    template = CodeSnippets.INQURY_METHOD_CODE;
+                    dgtType = typeof(CPython_inquiry_Delegate);
+                    break;
 
                 // PySequenceMethods
                 case "sq_item":

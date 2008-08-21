@@ -482,6 +482,33 @@ class NumberTest(DispatchSetupTestCase):
             
         self.assertTypeSpec(typeSpec, TestType)
         deallocNumbers()
+    
+    def testNonzero(self):
+        func, calls_cfunc = self.getUnaryFunc(1)
+        numbersPtr, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {'nb_nonzero': func})
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_as_number": numbersPtr
+        }
+        result = object()
+        dispatch, calls_dispatch = self.getBinaryFunc(result)
+        
+        def TestType(_type, _):
+            instance = _type()
+            _type._dispatcher.method_inquiry = dispatch
+            self.assertCalls(
+                instance.__nonzero__, (tuple(), {}), calls_dispatch, 
+                ("klass.__nonzero__", instance._instancePtr), result)
+            
+            cfunc = _type._dispatcher.table["klass.__nonzero__"]
+            self.assertCalls(
+                cfunc, ((ARG1_PTR,), {}), calls_cfunc, (ARG1_PTR,), 1)
+            
+            del instance
+            gcwait()
+            
+        self.assertTypeSpec(typeSpec, TestType)
+        deallocNumbers()
 
 
 class SequenceTest(DispatchSetupTestCase):
