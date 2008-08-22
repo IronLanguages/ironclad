@@ -6,3 +6,4 @@ string
 IDictionary
 PythonTuple
 List
+Slice

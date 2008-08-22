@@ -1,4 +1,6 @@
 
+import types
+
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
@@ -27,7 +29,9 @@ BUILTIN_TYPES = {
     "PyFloat_Type": float,
     "PyComplex_Type": complex,
     "PyCObject_Type": OpaquePyCObject,
-    "PyNone_Type": type(None)
+    "PySlice_Type": slice,
+    "PyEllipsis_Type": types.EllipsisType,
+    "PyNone_Type": types.NoneType,
 }
 
 class Types_Test(TestCase):

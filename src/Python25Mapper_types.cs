@@ -42,6 +42,24 @@ namespace Ironclad
             this.map.Associate(address, TypeCache.None);
         }
 
+        public override void
+        Fill_PySlice_Type(IntPtr address)
+        {
+            this.notInterpretableTypes.Add(address);
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            this.map.Associate(address, Builtin.slice);
+        }
+
+        public override void
+        Fill_PyEllipsis_Type(IntPtr address)
+        {
+            this.notInterpretableTypes.Add(address);
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            // surely there's a better way...
+            object ellipsisType = PythonCalls.Call(Builtin.type, new object[] { PythonOps.Ellipsis });
+            this.map.Associate(address, ellipsisType);
+        }
+
         public override void 
         Fill_PyFile_Type(IntPtr address)
         {
@@ -165,6 +183,8 @@ namespace Ironclad
             this.PyType_Ready(this.PyFile_Type);
             this.PyType_Ready(this.PyCObject_Type);
             this.PyType_Ready(this.PyNone_Type);
+            this.PyType_Ready(this.PySlice_Type);
+            this.PyType_Ready(this.PyEllipsis_Type);
         }
         
         
