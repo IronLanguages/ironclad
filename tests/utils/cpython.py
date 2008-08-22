@@ -6,7 +6,7 @@ from Ironclad import (
     CPython_initproc_Delegate, CPython_destructor_Delegate, 
     CPython_getter_Delegate, CPython_setter_Delegate,
     CPython_unaryfunc_Delegate, CPython_binaryfunc_Delegate, CPython_ternaryfunc_Delegate, 
-    CPython_ssizeargfunc_Delegate,
+    CPython_ssizeargfunc_Delegate, CPython_ssizessizeargfunc_Delegate,
     CPython_reprfunc_Delegate, CPython_lenfunc_Delegate, CPython_richcmpfunc_Delegate, CPython_inquiry_Delegate,
     CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate, 
 )
@@ -179,6 +179,7 @@ NUMSEQMAP_METHODS = {
     "nb_invert": CPython_unaryfunc_Delegate, 
     
     "sq_item": CPython_ssizeargfunc_Delegate,
+    "sq_slice": CPython_ssizessizeargfunc_Delegate,
     "sq_length": CPython_lenfunc_Delegate,
     
     "mp_subscript": CPython_binaryfunc_Delegate,

@@ -27,6 +27,9 @@ namespace Ironclad
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate IntPtr CPython_ssizeargfunc_Delegate(IntPtr self, int i);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate IntPtr CPython_ssizessizeargfunc_Delegate(IntPtr self, int i, int j);
     
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

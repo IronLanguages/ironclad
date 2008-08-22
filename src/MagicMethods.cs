@@ -95,9 +95,14 @@ namespace Ironclad
 
                 // PySequenceMethods
                 case "sq_item":
-                    name = "__getitem__";
+                    name = "_getitem_sq_item";
                     template = CodeSnippets.SSIZEARG_METHOD_CODE;
                     dgtType = typeof(CPython_ssizeargfunc_Delegate);
+                    break;
+                case "sq_slice":
+                    name = "__getslice__";
+                    template = CodeSnippets.SSIZESSIZEARG_METHOD_CODE;
+                    dgtType = typeof(CPython_ssizessizeargfunc_Delegate);
                     break;
                 case "sq_length":
                     name = "__len__";
@@ -107,7 +112,7 @@ namespace Ironclad
 
                 // PyMappingMethods
                 case "mp_subscript":
-                    name = "__getitem__";
+                    name = "_getitem_mp_subscript";
                     template = CodeSnippets.OBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
                     break;
