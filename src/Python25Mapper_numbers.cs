@@ -102,6 +102,38 @@ namespace Ironclad
 
 
         public override IntPtr
+        PyNumber_TrueDivide(IntPtr arg1ptr, IntPtr arg2ptr)
+        {
+            try
+            {
+                object result = PythonSites.TrueDivide(this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
+
+        public override IntPtr
+        PyNumber_FloorDivide(IntPtr arg1ptr, IntPtr arg2ptr)
+        {
+            try
+            {
+                object result = PythonSites.FloorDivide(this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
+
+        public override IntPtr
         PyNumber_Absolute(IntPtr numberPtr)
         {
             try
