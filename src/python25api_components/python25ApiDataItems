@@ -41,11 +41,13 @@ PyTraceBack_Type PyTypeObject
 PyTuple_Type PyTypeObject
 PyUnicode_Type PyTypeObject
 PyNone_Type PyTypeObject
+PyEllipsis_Type PyTypeObject
 _PyWeakref_RefType PyTypeObject
 _PyWeakref_ProxyType PyTypeObject
 _PyWeakref_CallableProxyType PyTypeObject
 
 _Py_NoneStruct PyObject
+_Py_EllipsisObject PyObject
 _Py_ZeroStruct PyIntObject
 _Py_TrueStruct PyIntObject
 

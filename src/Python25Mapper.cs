@@ -503,6 +503,16 @@ namespace Ironclad
             Marshal.StructureToPtr(True, address, false);
             this.map.Associate(address, true);
         }
+
+        public override void
+        Fill__Py_EllipsisObject(IntPtr address)
+        {
+            PyObject ellipsis = new PyObject();
+            ellipsis.ob_refcnt = 1;
+            ellipsis.ob_type = this.PyEllipsis_Type;
+            Marshal.StructureToPtr(ellipsis, address, false);
+            this.map.Associate(address, Builtin.Ellipsis);
+        }
         
         
         public override void

@@ -41,6 +41,7 @@ PyTraceBack_Type
 PyTuple_Type
 PyUnicode_Type
 PyNone_Type
+PyEllipsis_Type
 _PyWeakref_RefType
 _PyWeakref_ProxyType
 _PyWeakref_CallableProxyType
