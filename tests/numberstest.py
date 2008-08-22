@@ -1,4 +1,6 @@
 
+import operator
+
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.memory import CreateTypes
@@ -355,7 +357,13 @@ class PyNumber_Test(TestCase):
         self.assertBinaryOp("PyNumber_Multiply", lambda a, b: a * b)
     
     def testPyNumber_Divide(self):
-        self.assertBinaryOp("PyNumber_Divide", lambda a, b: a / b)
+        self.assertBinaryOp("PyNumber_Divide", operator.div)
+    
+    def testPyNumber_TrueDivide(self):
+        self.assertBinaryOp("PyNumber_TrueDivide", operator.truediv)
+    
+    def testPyNumber_FloorDivide(self):
+        self.assertBinaryOp("PyNumber_FloorDivide", operator.floordiv)
     
     
     def testPyNumber_Long(self):
