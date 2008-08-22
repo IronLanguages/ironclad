@@ -87,6 +87,12 @@ namespace Ironclad
             IntPtr sqPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_as_sequence");
             this.GenerateSequenceMethods(classCode, sqPtr, methodTable, tablePrefix);
 
+            if (methodTable.has_key(tablePrefix+"_getitem_sq_item") ||
+                methodTable.has_key(tablePrefix+"_getitem_mp_subscript"))
+            {
+                classCode.Append(CodeSnippets.GETITEM_CODE);
+            }
+
             this.GenerateMagicMethods(classCode, typePtr, methodTable, tablePrefix);
 
             ScriptScope moduleScope = this.GetModuleScriptScope(this.scratchModule);
@@ -400,7 +406,7 @@ namespace Ironclad
         private void
         GenerateSequenceMethods(StringBuilder classCode, IntPtr sqPtr, PythonDictionary methodTable, string tablePrefix)
         {
-            string[] fields = new string[] { "sq_item", "sq_length" };
+            string[] fields = new string[] { "sq_item", "sq_length", "sq_slice" };
             this.GenerateProtocolMagicMethods(
                 classCode, sqPtr, typeof(PySequenceMethods), fields, methodTable, tablePrefix);
         }

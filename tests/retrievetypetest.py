@@ -26,6 +26,7 @@ ARG1_PTR = IntPtr(111)
 ARG2_PTR = IntPtr(222)
 ARG3_PTR = IntPtr(333)
 ARG1_SSIZE = 111111
+ARG2_SSIZE = 222222
 RESULT_PTR = IntPtr(999)
 
 
@@ -91,6 +92,9 @@ class DispatchSetupTestCase(TestCase):
     def getSsizeargPtrFunc(self):
         return self.getBinaryFunc(RESULT_PTR)
 
+    def getSsizessizeargPtrFunc(self):
+        return self.getTernaryFunc(RESULT_PTR)
+
     def assertCalls(self, dgt, args, calls, expect_args, result):
         args, kwargs = args
         self.assertEquals(calls, [])
@@ -108,6 +112,9 @@ class DispatchSetupTestCase(TestCase):
     
     def assertCallsSsizeargPtrFunc(self, dgt, calls):
         self.assertCalls(dgt, ((ARG1_PTR, ARG1_SSIZE), {}), calls, (ARG1_PTR, ARG1_SSIZE), RESULT_PTR)
+    
+    def assertCallsSsizessizeargPtrFunc(self, dgt, calls):
+        self.assertCalls(dgt, ((ARG1_PTR, ARG1_SSIZE, ARG2_SSIZE), {}), calls, (ARG1_PTR, ARG1_SSIZE, ARG2_SSIZE), RESULT_PTR)
 
 
 class MethodsTest(DispatchSetupTestCase):
@@ -528,9 +535,9 @@ class SequenceTest(DispatchSetupTestCase):
             _type._dispatcher.method_ssizearg = dispatch
             self.assertCalls(
                 getattr(instance, "__getitem__"), ((arg,), {}), calls_dispatch, 
-                ("klass.__getitem__", instance._instancePtr, arg), result)
+                ("klass._getitem_sq_item", instance._instancePtr, arg), result)
             
-            cfunc = _type._dispatcher.table["klass.__getitem__"]
+            cfunc = _type._dispatcher.table["klass._getitem_sq_item"]
             self.assertCallsSsizeargPtrFunc(cfunc, calls_cfunc)
             
             del instance
@@ -538,7 +545,34 @@ class SequenceTest(DispatchSetupTestCase):
             
         self.assertTypeSpec(typeSpec, TestType)
         deallocSequences()
+    
+    
+    def testSimpleSlice(self):
+        func, calls_cfunc = self.getSsizessizeargPtrFunc()
+        sequencesPtr, deallocSequences = MakeNumSeqMapMethods(PySequenceMethods, {"sq_slice": func})
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_as_sequence": sequencesPtr
+        }
+        result = object()
+        dispatch, calls_dispatch = self.getQuaternaryFunc(result)
         
+        def TestType(_type, _):
+            instance, arg1, arg2 = _type(), 123, 456
+            _type._dispatcher.method_ssizessizearg = dispatch
+            self.assertCalls(
+                getattr(instance, "__getslice__"), ((arg1, arg2), {}), calls_dispatch, 
+                ("klass.__getslice__", instance._instancePtr, arg1, arg2), result)
+            
+            cfunc = _type._dispatcher.table["klass.__getslice__"]
+            self.assertCallsSsizessizeargPtrFunc(cfunc, calls_cfunc)
+            
+            del instance
+            gcwait()
+            
+        self.assertTypeSpec(typeSpec, TestType)
+        deallocSequences()
+    
     
     def testLen(self):
         lenfunc, calls_cfunc = self.getUnaryFunc(123)
@@ -565,6 +599,7 @@ class SequenceTest(DispatchSetupTestCase):
             gcwait()
 
         self.assertTypeSpec(typeSpec, TestType)
+        deallocSequences()
 
 
 class MappingTest(DispatchSetupTestCase):
@@ -574,7 +609,7 @@ class MappingTest(DispatchSetupTestCase):
         mappingPtr, deallocMapping = MakeNumSeqMapMethods(PyMappingMethods, {"mp_subscript": func})
         typeSpec = {
             "tp_name": "klass",
-            "tp_as_mapping": mappingPtr
+            "tp_as_mapping": mappingPtr,
         }
         result = object()
         dispatch, calls_dispatch = self.getTernaryFunc(result)
@@ -584,9 +619,9 @@ class MappingTest(DispatchSetupTestCase):
             _type._dispatcher.method_objarg = dispatch
             self.assertCalls(
                 getattr(instance, "__getitem__"), ((arg,), {}), calls_dispatch, 
-                ("klass.__getitem__", instance._instancePtr, arg), result)
+                ("klass._getitem_mp_subscript", instance._instancePtr, arg), result)
             
-            cfunc = _type._dispatcher.table["klass.__getitem__"]
+            cfunc = _type._dispatcher.table["klass._getitem_mp_subscript"]
             self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
             
             del instance
@@ -594,6 +629,73 @@ class MappingTest(DispatchSetupTestCase):
             
         self.assertTypeSpec(typeSpec, TestType)
         deallocMapping()
+
+
+class SequenceMappingInteractionTest(DispatchSetupTestCase):
+    
+    def testAllSortsOfSubscriptingAtOnce(self):
+        calls = []
+        common_result_ptr = [IntPtr.Zero]
+        sequence_length_ptr = [IntPtr.Zero]
+        
+        def sq_item(instancePtr, i):
+            calls.append(("sq_item", instancePtr, i))
+            return common_result_ptr[0]
+        
+        def sq_slice(instancePtr, i, j):
+            calls.append(("sq_slice", instancePtr, i, j))
+            return common_result_ptr[0]
+        
+        def sq_length(_):
+            # must be defined for slicing to work; don't care about calls tho
+            return 10
+        
+        def mp_subscript(instancePtr, objPtr):
+            calls.append(("mp_subscript", instancePtr, objPtr))
+            return common_result_ptr[0]
+            
+        sequencesPtr, deallocSequences = MakeNumSeqMapMethods(
+            PySequenceMethods, {"sq_slice": sq_slice, "sq_item": sq_item, "sq_length": sq_length})
+        mappingPtr, deallocMapping = MakeNumSeqMapMethods(
+            PyMappingMethods, {"mp_subscript": mp_subscript})
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_as_mapping": mappingPtr,
+            "tp_as_sequence": sequencesPtr,
+        }
+        
+        def TestType(_type, mapper):
+            instance = _type()
+            instancePtr = instance._instancePtr
+            common_result = object()
+            common_result_ptr[0] = mapper.Store(common_result)
+            map(mapper.IncRef, common_result_ptr * 3) # decreffed each time it's returned
+            
+            self.assertEquals(instance[1], common_result)
+            self.assertEquals(calls, [("sq_item", instancePtr, 1)])
+            del calls[:]
+            
+            self.assertEquals(instance[1:-3], common_result)
+            self.assertEquals(calls, [("sq_slice", instancePtr, 1, 7)])
+            del calls[:]
+            
+            self.assertEquals(instance[1:-3:3], common_result)
+            self.assertEquals(len(calls), 1)
+            self.assertEquals(calls[0][:-1], ("mp_subscript", instancePtr))
+            del calls[:]
+            
+            self.assertEquals(instance[object()], common_result)
+            self.assertEquals(len(calls), 1)
+            self.assertEquals(calls[0][:-1], ("mp_subscript", instancePtr))
+            del calls[:]
+            
+            del instance
+        
+        
+        self.assertTypeSpec(typeSpec, TestType)
+        deallocSequences()
+        deallocMapping()
+        
 
 
 class NewInitDelTest(TestCase):
@@ -1143,6 +1245,7 @@ suite = makesuite(
     NumberTest,
     SequenceTest,
     MappingTest,
+    SequenceMappingInteractionTest,
     NewInitDelTest,
     PropertiesTest,
     MembersTest,

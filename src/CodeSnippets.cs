@@ -91,6 +91,15 @@ class {0}(_ironclad_baseclass):
     {0} = property({1}, {2}, None, '''{3}''')
 ";
 
+        public const string GETITEM_CODE = @"
+    def __getitem__(self, item):
+        if hasattr(self, '_getitem_sq_item') and isinstance(item, int):
+            return self._getitem_sq_item(item)
+        if hasattr(self, '_getitem_mp_subscript'):
+            return self._getitem_mp_subscript(item)
+        raise IndexError('no idea how to index %s' % item)
+";
+
         public const string ITER_METHOD_CODE = @"
     def __iter__(self):
         return self._dispatcher.method_selfarg('{0}tp_iter', self._instancePtr)
@@ -133,6 +142,12 @@ class {0}(_ironclad_baseclass):
     def {0}(self, ssize):
         '''{1}'''
         return self._dispatcher.method_ssizearg('{2}{0}', self._instancePtr, ssize)
+";
+
+        public const string SSIZESSIZEARG_METHOD_CODE = @"
+    def {0}(self, ssize1, ssize2):
+        '''{1}'''
+        return self._dispatcher.method_ssizessizearg('{2}{0}', self._instancePtr, ssize1, ssize2)
 ";
 
         public const string SELFARG_METHOD_CODE = @"
@@ -373,6 +388,15 @@ class Dispatcher(object):
     @lock
     def method_ssizearg(self, name, instancePtr, i):
         resultPtr = self.table[name](instancePtr, i)
+        try:
+            self._maybe_raise(resultPtr)
+            return self.mapper.Retrieve(resultPtr)
+        finally:
+            self._cleanup(resultPtr)
+
+    @lock
+    def method_ssizessizearg(self, name, instancePtr, i, j):
+        resultPtr = self.table[name](instancePtr, i, j)
         try:
             self._maybe_raise(resultPtr)
             return self.mapper.Retrieve(resultPtr)

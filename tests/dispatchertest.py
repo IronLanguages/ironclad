@@ -114,6 +114,7 @@ ARG = object()
 ARG_PTR = IntPtr(444)
 CLOSURE = IntPtr(555)
 SSIZE = 123456
+SSIZE2 = 789012
 ARG2 = object()
 ARG2_PTR = IntPtr(666)
 
@@ -466,6 +467,26 @@ class DispatcherSsizeargTest(DispatcherDispatchTestCase):
         calls = self.callDispatcherErrorMethod('method_ssizearg', INSTANCE_PTR, SSIZE)
         self.assertEquals(calls, [
             ('dgt', (INSTANCE_PTR, SSIZE)),
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR,))
+        ])
+
+
+class DispatcherSsizessizeargTest(DispatcherDispatchTestCase):
+    
+    def testDispatch_method_ssizessizearg(self):
+        calls = self.callDispatcherMethod('method_ssizessizearg', INSTANCE_PTR, SSIZE, SSIZE2)
+        self.assertEquals(calls, [
+            ('dgt', (INSTANCE_PTR, SSIZE, SSIZE2)),
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('Retrieve', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR,))
+        ])
+    
+    def testDispatch_method_ssizessizearg_error(self):
+        calls = self.callDispatcherErrorMethod('method_ssizessizearg', INSTANCE_PTR, SSIZE, SSIZE2)
+        self.assertEquals(calls, [
+            ('dgt', (INSTANCE_PTR, SSIZE, SSIZE2)),
             ('_maybe_raise', (RESULT_PTR,)),
             ('_cleanup', (RESULT_PTR,))
         ])
@@ -983,6 +1004,7 @@ suite  = makesuite(
     DispatcherSelfargTest,
     DispatcherKwargsTest, 
     DispatcherSsizeargTest,
+    DispatcherSsizessizeargTest,
     DispatcherInquiryTest,
     DispatcherTernaryTest,
     DispatcherRichcmpTest,
