@@ -446,6 +446,9 @@ namespace Ironclad
                 case "PyTuple_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyTuple_Dealloc);
                     break;
+                case "PySlice_Dealloc":
+                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PySlice_Dealloc);
+                    break;
                 case "PyList_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyList_Dealloc);
                     break;

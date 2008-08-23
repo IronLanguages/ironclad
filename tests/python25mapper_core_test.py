@@ -508,7 +508,9 @@ class Python25Mapper_GetAddress_NonApi_Test(TestCase):
         methods = (
             "PyBaseObject_Dealloc",
             "PyBaseObject_Init",
+            "PyCObject_Dealloc",
             "PyTuple_Dealloc",
+            "PySlice_Dealloc",
             "PyList_Dealloc",
         )
         for method in methods:

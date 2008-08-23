@@ -200,6 +200,16 @@ namespace Ironclad
             public uint ob_size;
             public IntPtr ob_item;
         }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        public struct PySliceObject
+        {
+            public uint ob_refcnt;
+            public IntPtr ob_type;
+            public IntPtr start;
+            public IntPtr stop;
+            public IntPtr step;
+        }
         
         [StructLayout(LayoutKind.Sequential, Pack=1)]
         public struct PyListObject
