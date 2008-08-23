@@ -47,6 +47,7 @@ namespace Ironclad
         {
             this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PySlice_Dealloc"));
             this.map.Associate(address, Builtin.slice);
         }
 
