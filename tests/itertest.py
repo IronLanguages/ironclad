@@ -2,11 +2,13 @@
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
 
+from tests.utils.cpython import MakeTypePtr, MakeNumSeqMapMethods
 from tests.utils.memory import CreateTypes
 
 from System import IntPtr
 
 from Ironclad import Python25Mapper
+from Ironclad.Structs import Py_TPFLAGS, PySequenceMethods
 
 class IterationTest(TestCase):
     
@@ -151,9 +153,47 @@ class SequenceIterationTest(TestCase):
         deallocTypes()
 
 
+    def testIterableClassWith__iter__whichCallsPySeqIter_New(self):
+        # original implementation used PythonOps.GetEnumerator;
+        # the problem is that PythonOps.GetEnumerator will just call __iter__,
+        # which will call PySeqIter_New, which will stack overflow in short order.
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        def tp_iter(instancePtr):
+            return mapper.PySeqIter_New(instancePtr)
+        def sq_item(instancePtr, i):
+            if i < 3:
+                return mapper.Store(i * 10)
+            mapper.LastException = IndexError("no. not yours.")
+            return IntPtr.Zero
+        def sq_length(instancePtr):
+            return mapper.Store(3)
+        seqPtr, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {"sq_item": sq_item, "sq_length": sq_length})
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_flags": Py_TPFLAGS.HAVE_CLASS | Py_TPFLAGS.HAVE_ITER,
+            "tp_iter": tp_iter,
+            "tp_as_sequence": seqPtr,
+        }
+        typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
+        klass = mapper.Retrieve(typePtr)
+        instance = klass()
+        
+        self.assertEquals([x for x in instance], [0, 10, 20])
+    
+        mapper.Dispose()
+        deallocType()
+        deallocSeq()
+        deallocTypes()
+        
+        
+        
+
+
 suite = makesuite(
     IterationTest,
     SequenceIterationTest,
 )
 if __name__ == '__main__':
-    run(suite)
+    run(suite, 2)

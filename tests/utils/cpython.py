@@ -10,7 +10,7 @@ from Ironclad import (
     CPython_reprfunc_Delegate, CPython_lenfunc_Delegate, CPython_richcmpfunc_Delegate, CPython_inquiry_Delegate,
     CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate, 
 )
-from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMethodDef, PyNumberMethods, PyTypeObject
+from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMethodDef, PyTypeObject
 
 from tests.utils.memory import OffsetPtr
 
