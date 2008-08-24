@@ -194,6 +194,7 @@ class PyLong_Test(TestCase):
         
         for value in (9223372036854775808, -9223372036854775809):
             ptr = mapper.Store(value)
+            mapper.LastException = None
             self.assertEquals(mapper.PyLong_AsLongLong(ptr), 0)
             
             def KindaConvertError():
@@ -214,6 +215,7 @@ class PyLong_Test(TestCase):
         
         for value in (2147483648, -2147483649):
             ptr = mapper.Store(long(value))
+            mapper.LastException = None
             self.assertEquals(mapper.PyLong_AsLong(ptr), 0)
             
             def KindaConvertError():
@@ -269,6 +271,7 @@ class PyFloat_Test(TestCase):
         
         for value in ("cheese", object, object()):
             ptr = mapper.Store(value)
+            mapper.LastException = None
             self.assertEquals(mapper.PyFloat_AsDouble(ptr), -1, "did not return expected 'error' value")
             
             def KindaConvertError():
@@ -296,6 +299,7 @@ class PyNumber_Test(TestCase):
             except Exception, e:
                 error = e.__class__
             valuePtr = mapper.Store(value)
+            mapper.LastException = None
             resultPtr = getattr(mapper, cpyName)(valuePtr)
             
             if error:
@@ -327,6 +331,7 @@ class PyNumber_Test(TestCase):
                     error = e.__class__
                 iptr = mapper.Store(values[i])
                 jptr = mapper.Store(values[j])
+                mapper.LastException = None
                 resultPtr = getattr(mapper, cpyName)(iptr, jptr)
                 
                 if error:
@@ -381,6 +386,7 @@ class PyNumber_Test(TestCase):
         badvalues = ['foo', object, object()]
         for value in badvalues:
             ptr = mapper.Store(value)
+            mapper.LastException = None
             self.assertEquals(mapper.PyNumber_Long(ptr), IntPtr.Zero)
             
             def KindaConvertError():
@@ -408,6 +414,7 @@ class PyNumber_Test(TestCase):
         badvalues = ['foo', object, object()]
         for value in badvalues:
             ptr = mapper.Store(value)
+            mapper.LastException = None
             self.assertEquals(mapper.PyNumber_Float(ptr), IntPtr.Zero)
             
             def KindaConvertError():
@@ -435,6 +442,7 @@ class PyNumber_Test(TestCase):
         badvalues = ['foo', object, object()]
         for value in badvalues:
             ptr = mapper.Store(value)
+            mapper.LastException = None
             self.assertEquals(mapper.PyNumber_Int(ptr), IntPtr.Zero)
             
             def KindaConvertError():

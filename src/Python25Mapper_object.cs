@@ -187,42 +187,5 @@ namespace Ironclad
             }
         }
         
-        
-        public override IntPtr
-        PyObject_GetIter(IntPtr objPtr)
-        {
-            IEnumerable enumerable = this.Retrieve(objPtr) as IEnumerable;
-            if (enumerable == null)
-            {
-                this.LastException = new ArgumentTypeException("PyObject_GetIter: object is not iterable");
-                return IntPtr.Zero;
-            }
-            return this.Store(enumerable.GetEnumerator());
-        }
-        
-        public override IntPtr
-        PyIter_Next(IntPtr iterPtr)
-        {
-            IEnumerator enumerator = this.Retrieve(iterPtr) as IEnumerator;
-            if (enumerator == null)
-            {
-                this.LastException = new ArgumentTypeException("PyIter_Next: object is not an iterator");
-                return IntPtr.Zero;
-            }
-            try
-            {
-                bool notFinished = enumerator.MoveNext();
-                if (notFinished)
-                {
-                    return this.Store(enumerator.Current);
-                }
-                return IntPtr.Zero;
-            }
-            catch (Exception e)
-            {
-                this.LastException = e;
-                return IntPtr.Zero;
-            }
-        }
     }
 }

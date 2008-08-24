@@ -1,0 +1,3 @@
+IntPtr
+IntPtr iterPtr
+return IntPtr.Zero
