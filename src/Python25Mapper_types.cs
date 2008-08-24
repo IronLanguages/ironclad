@@ -24,6 +24,8 @@ namespace Ironclad
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_new", this.GetAddress("PyType_GenericNew"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyBaseObject_Dealloc"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_free", this.GetAddress("PyObject_Free"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_str", this.GetAddress("PyObject_Str"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_repr", this.GetAddress("PyObject_Repr"));
             this.map.Associate(address, TypeCache.Object);
         }
         
