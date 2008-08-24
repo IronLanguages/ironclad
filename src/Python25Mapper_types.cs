@@ -153,6 +153,14 @@ namespace Ironclad
             this.map.Associate(address, TypeCache.PythonTuple);
         }
 
+        public override void
+        Fill_PySeqIter_Type(IntPtr address)
+        {
+            this.notInterpretableTypes.Add(address);
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            this.map.Associate(address, typeof(ItemEnumerator));
+        }
+
         private void
         AddDefaultNumberMethods(IntPtr typePtr)
         {
@@ -186,6 +194,7 @@ namespace Ironclad
             this.PyType_Ready(this.PyNone_Type);
             this.PyType_Ready(this.PySlice_Type);
             this.PyType_Ready(this.PyEllipsis_Type);
+            this.PyType_Ready(this.PySeqIter_Type);
         }
         
         

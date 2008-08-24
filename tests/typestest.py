@@ -15,6 +15,11 @@ from System.Runtime.InteropServices import Marshal
 from Ironclad import CannotInterpretException, CPyMarshal, HGlobalAllocator, OpaquePyCObject, Python25Mapper
 from Ironclad.Structs import PyObject, PyNumberMethods, PyTypeObject, Py_TPFLAGS
 
+class ItemEnumeratorThing(object):
+    def __getitem__(self):
+        pass
+ItemEnumeratorType = type(iter(ItemEnumeratorThing()))
+
 BUILTIN_TYPES = {
     "PyType_Type": type,
     "PyBaseObject_Type": object,
@@ -28,10 +33,11 @@ BUILTIN_TYPES = {
     "PyBool_Type": bool,
     "PyFloat_Type": float,
     "PyComplex_Type": complex,
-    "PyCObject_Type": OpaquePyCObject,
     "PySlice_Type": slice,
+    "PyCObject_Type": OpaquePyCObject,
     "PyEllipsis_Type": types.EllipsisType,
     "PyNone_Type": types.NoneType,
+    "PySeqIter_Type": ItemEnumeratorType,
 }
 
 class Types_Test(TestCase):
