@@ -257,7 +257,7 @@ class ObjectFunctionsTest(TestCase):
         deallocTypes()
 
 
-    def testPyObject_Str(self):
+    def testPyObject_StrRepr(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
@@ -266,15 +266,27 @@ class ObjectFunctionsTest(TestCase):
             strptr = mapper.PyObject_Str(ptr)
             self.assertEquals(mapper.Retrieve(strptr), str(okval))
             self.assertEquals(mapper.LastException, None)
+            reprptr = mapper.PyObject_Repr(ptr)
+            self.assertEquals(mapper.Retrieve(reprptr), repr(okval))
+            self.assertEquals(mapper.LastException, None)
             mapper.DecRef(ptr)
             mapper.DecRef(strptr)
+            mapper.DecRef(reprptr)
         
         class BadStr(object):
             def __str__(self):
                 raise TypeError('this object cannot be represented in your puny alphabet')
+            def __repr__(self):
+                raise TypeError('this object cannot be represented in your puny alphabet')
         
-        ptr = mapper.Store(BadStr())
-        self.assertEquals(mapper.PyObject_Str(ptr), IntPtr.Zero)
+        badptr = mapper.Store(BadStr())
+        self.assertEquals(mapper.PyObject_Str(badptr), IntPtr.Zero)
+        def KindaConvertError():
+            raise mapper.LastException
+        self.assertRaises(TypeError, KindaConvertError)
+        
+        mapper.LastException = None
+        self.assertEquals(mapper.PyObject_Repr(badptr), IntPtr.Zero)
         def KindaConvertError():
             raise mapper.LastException
         self.assertRaises(TypeError, KindaConvertError)
@@ -296,9 +308,13 @@ class PyBaseObject_Type_Test(TypeTestCase):
             self.assertNotEquals(field, IntPtr.Zero)
             self.assertEquals(field, value)
         
-        AssertPtrField("tp_init", mapper.GetAddress("PyBaseObject_Init"))
-        AssertPtrField("tp_alloc", mapper.GetAddress("PyType_GenericAlloc"))
         AssertPtrField("tp_new", mapper.GetAddress("PyType_GenericNew"))
+        AssertPtrField("tp_alloc", mapper.GetAddress("PyType_GenericAlloc"))
+        AssertPtrField("tp_init", mapper.GetAddress("PyBaseObject_Init"))
+        AssertPtrField("tp_dealloc", mapper.GetAddress("PyBaseObject_Dealloc"))
+        AssertPtrField("tp_free", mapper.GetAddress("PyObject_Free"))
+        
+        AssertPtrField("tp_str", mapper.GetAddress("PyObject_Str"))
         
         mapper.Dispose()
         deallocTypes()

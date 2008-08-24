@@ -165,7 +165,6 @@ namespace Ironclad
             }
         }
 
-
         public override IntPtr
         PyObject_Str(IntPtr objPtr)
         {
@@ -179,6 +178,22 @@ namespace Ironclad
                 }
                 return this.Store(PythonCalls.Call(Builtin.str, new object[] { obj }));
                 
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
+        public override IntPtr
+        PyObject_Repr(IntPtr objPtr)
+        {
+            try
+            {
+                object obj = this.Retrieve(objPtr);
+                return this.Store(Builtin.repr(obj));
+
             }
             catch (Exception e)
             {
