@@ -14,3 +14,4 @@
 #include "abstract.c"
 #include "stringobject.c"
 #include "ceval.c"
+#include "mysnprintf.c"

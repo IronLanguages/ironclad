@@ -29,6 +29,9 @@ _PyObject_CallMethod_SizeT
 PyEval_CallObject
 PyEval_CallObjectWithKeywords
 
+PyOS_snprintf
+PyOS_vsnprintf
+
 _PyParser_TokenNames
 _Py_SwappedOp
 _PyLong_DigitValue
