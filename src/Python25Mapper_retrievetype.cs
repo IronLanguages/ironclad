@@ -437,9 +437,16 @@ namespace Ironclad
         GenerateNumberMethods(StringBuilder classCode, IntPtr nbPtr, PythonDictionary methodTable, string tablePrefix)
         {
             string[] fields = new string[] { 
-                "nb_add", "nb_subtract", "nb_multiply", "nb_divide", "nb_absolute", 
-                "nb_float", "nb_power", "nb_negative", "nb_or", "nb_and", "nb_invert",
-                "nb_int", "nb_nonzero"};
+                "nb_add", "nb_subtract", "nb_multiply", "nb_divide", "nb_true_divide", 
+                  "nb_floor_divide", "nb_remainder", "nb_divmod", 
+                "nb_lshift", "nb_rshift", "nb_and", "nb_xor", "nb_or", 
+                  "nb_inplace_add", "nb_inplace_subtract", "nb_inplace_multiply", "nb_inplace_divide", 
+                  "nb_inplace_true_divide", "nb_inplace_floor_divide", "nb_inplace_remainder", 
+                  "nb_inplace_lshift", "nb_inplace_rshift", "nb_inplace_and", "nb_inplace_xor", "nb_inplace_or", 
+                "nb_negative", "nb_positive", "nb_absolute", "nb_invert", "nb_int", "nb_long", "nb_float", 
+                  "nb_oct", "nb_hex", "nb_index", 
+                "nb_nonzero",
+                "nb_power", "nb_inplace_power",};
             this.GenerateProtocolMagicMethods(
                 classCode, nbPtr, typeof(PyNumberMethods), fields, methodTable, tablePrefix);
         }

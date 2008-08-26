@@ -52,8 +52,38 @@ namespace Ironclad
                     dgtType = typeof(CPython_binaryfunc_Delegate);
                     needGetSwappedInfo = true;
                     break;
-                case "nb_or":
-                    name = "__or__";
+                case "nb_true_divide":
+                    name = "__truediv__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    needGetSwappedInfo = true;
+                    break;
+                case "nb_floor_divide":
+                    name = "__floordiv__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    needGetSwappedInfo = true;
+                    break;
+                case "nb_remainder":
+                    name = "__mod__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    needGetSwappedInfo = true;
+                    break;
+                case "nb_divmod":
+                    name = "__divmod__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    needGetSwappedInfo = true;
+                    break;
+                case "nb_lshift":
+                    name = "__lshift__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    needGetSwappedInfo = true;
+                    break;
+                case "nb_rshift":
+                    name = "__rshift__";
                     template = CodeSnippets.OBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
                     needGetSwappedInfo = true;
@@ -64,23 +94,92 @@ namespace Ironclad
                     dgtType = typeof(CPython_binaryfunc_Delegate);
                     needGetSwappedInfo = true;
                     break;
-                case "nb_absolute":
-                    name = "__abs__";
-                    template = CodeSnippets.SELFARG_METHOD_CODE;
-                    dgtType = typeof(CPython_unaryfunc_Delegate);
+                case "nb_xor":
+                    name = "__xor__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    needGetSwappedInfo = true;
                     break;
-                case "nb_float":
-                    name = "__float__";
-                    template = CodeSnippets.SELFARG_METHOD_CODE;
-                    dgtType = typeof(CPython_unaryfunc_Delegate);
+                case "nb_or":
+                    name = "__or__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    needGetSwappedInfo = true;
                     break;
-                case "nb_int":
-                    name = "__int__";
-                    template = CodeSnippets.SELFARG_METHOD_CODE;
-                    dgtType = typeof(CPython_unaryfunc_Delegate);
+
+                case "nb_inplace_add":
+                    name = "__iadd__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
                     break;
+                case "nb_inplace_subtract":
+                    name = "__isub__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_inplace_multiply":
+                    name = "__imul__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_inplace_divide":
+                    name = "__idiv__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_inplace_true_divide":
+                    name = "__itruediv__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_inplace_floor_divide":
+                    name = "__ifloordiv__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_inplace_remainder":
+                    name = "__imod__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_inplace_lshift":
+                    name = "__ilshift__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_inplace_rshift":
+                    name = "__irshift__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_inplace_and":
+                    name = "__iand__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_inplace_xor":
+                    name = "__ixor__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_inplace_or":
+                    name = "__ior__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+
                 case "nb_negative":
                     name = "__neg__";
+                    template = CodeSnippets.SELFARG_METHOD_CODE;
+                    dgtType = typeof(CPython_unaryfunc_Delegate);
+                    break;
+                case "nb_positive":
+                    name = "__pos__";
+                    template = CodeSnippets.SELFARG_METHOD_CODE;
+                    dgtType = typeof(CPython_unaryfunc_Delegate);
+                    break;
+                case "nb_absolute":
+                    name = "__abs__";
                     template = CodeSnippets.SELFARG_METHOD_CODE;
                     dgtType = typeof(CPython_unaryfunc_Delegate);
                     break;
@@ -89,12 +188,49 @@ namespace Ironclad
                     template = CodeSnippets.SELFARG_METHOD_CODE;
                     dgtType = typeof(CPython_unaryfunc_Delegate);
                     break;
+                case "nb_int":
+                    name = "__int__";
+                    template = CodeSnippets.SELFARG_METHOD_CODE;
+                    dgtType = typeof(CPython_unaryfunc_Delegate);
+                    break;
+                case "nb_long":
+                    name = "__long__";
+                    template = CodeSnippets.SELFARG_METHOD_CODE;
+                    dgtType = typeof(CPython_unaryfunc_Delegate);
+                    break;
+                case "nb_float":
+                    name = "__float__";
+                    template = CodeSnippets.SELFARG_METHOD_CODE;
+                    dgtType = typeof(CPython_unaryfunc_Delegate);
+                    break;
+                case "nb_oct":
+                    name = "__oct__";
+                    template = CodeSnippets.SELFARG_METHOD_CODE;
+                    dgtType = typeof(CPython_unaryfunc_Delegate);
+                    break;
+                case "nb_hex":
+                    name = "__hex__";
+                    template = CodeSnippets.SELFARG_METHOD_CODE;
+                    dgtType = typeof(CPython_unaryfunc_Delegate);
+                    break;
+                case "nb_index":
+                    name = "__index__";
+                    template = CodeSnippets.SELFARG_METHOD_CODE;
+                    dgtType = typeof(CPython_unaryfunc_Delegate);
+                    break;
+                    
                 case "nb_power":
                     name = "__pow__";
                     template = CodeSnippets.TERNARY_METHOD_CODE;
                     dgtType = typeof(CPython_ternaryfunc_Delegate);
                     needGetSwappedInfo = true;
                     break;
+                case "nb_inplace_power":
+                    name = "__ipow__";
+                    template = CodeSnippets.TERNARY_METHOD_CODE;
+                    dgtType = typeof(CPython_ternaryfunc_Delegate);
+                    break;
+                    
                 case "nb_nonzero":
                     name = "__nonzero__";
                     template = CodeSnippets.INQURY_METHOD_CODE;
@@ -171,13 +307,48 @@ namespace Ironclad
                     template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
                     break;
-                case "nb_or":
-                    name = "__ror__";
+                case "nb_true_divide":
+                    name = "__rtruediv__";
+                    template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_floor_divide":
+                    name = "__rfloordiv__";
+                    template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_remainder":
+                    name = "__rmod__";
+                    template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_divmod":
+                    name = "__rdivmod__";
+                    template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_lshift":
+                    name = "__rlshift__";
+                    template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_rshift":
+                    name = "__rrshift__";
                     template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
                     break;
                 case "nb_and":
                     name = "__rand__";
+                    template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_xor":
+                    name = "__rxor__";
+                    template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_or":
+                    name = "__ror__";
                     template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
                     break;
