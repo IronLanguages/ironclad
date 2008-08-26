@@ -93,6 +93,12 @@ namespace Ironclad
                 classCode.Append(CodeSnippets.GETITEM_CODE);
             }
 
+            if (methodTable.has_key(tablePrefix + "_setitem_sq_ass_item") ||
+                methodTable.has_key(tablePrefix + "_setitem_mp_ass_subscript"))
+            {
+                classCode.Append(CodeSnippets.SETITEM_CODE);
+            }
+
             this.GenerateMagicMethods(classCode, typePtr, methodTable, tablePrefix);
 
             ScriptScope moduleScope = this.GetModuleScriptScope(this.scratchModule);
@@ -406,7 +412,7 @@ namespace Ironclad
         private void
         GenerateSequenceMethods(StringBuilder classCode, IntPtr sqPtr, PythonDictionary methodTable, string tablePrefix)
         {
-            string[] fields = new string[] { "sq_item", "sq_length", "sq_slice" };
+            string[] fields = new string[] { "sq_item", "sq_ass_item", "sq_length", "sq_slice", "sq_ass_slice" };
             this.GenerateProtocolMagicMethods(
                 classCode, sqPtr, typeof(PySequenceMethods), fields, methodTable, tablePrefix);
         }
@@ -414,7 +420,7 @@ namespace Ironclad
         private void
         GenerateMappingMethods(StringBuilder classCode, IntPtr mpPtr, PythonDictionary methodTable, string tablePrefix)
         {
-            string[] fields = new string[] { "mp_subscript" };
+            string[] fields = new string[] { "mp_subscript", "mp_ass_subscript" };
             this.GenerateProtocolMagicMethods(
                 classCode, mpPtr, typeof(PyMappingMethods), fields, methodTable, tablePrefix);
         }
