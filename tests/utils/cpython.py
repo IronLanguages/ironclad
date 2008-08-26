@@ -7,6 +7,7 @@ from Ironclad import (
     CPython_getter_Delegate, CPython_setter_Delegate,
     CPython_unaryfunc_Delegate, CPython_binaryfunc_Delegate, CPython_ternaryfunc_Delegate, 
     CPython_ssizeargfunc_Delegate, CPython_ssizessizeargfunc_Delegate,
+    CPython_ssizeobjargproc_Delegate, CPython_ssizessizeobjargproc_Delegate, CPython_objobjargproc_Delegate,
     CPython_reprfunc_Delegate, CPython_lenfunc_Delegate, CPython_richcmpfunc_Delegate, CPython_inquiry_Delegate,
     CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate, 
 )
@@ -180,9 +181,12 @@ NUMSEQMAP_METHODS = {
     
     "sq_item": CPython_ssizeargfunc_Delegate,
     "sq_slice": CPython_ssizessizeargfunc_Delegate,
+    "sq_ass_item": CPython_ssizeobjargproc_Delegate,
+    "sq_ass_slice": CPython_ssizessizeobjargproc_Delegate,
     "sq_length": CPython_lenfunc_Delegate,
     
     "mp_subscript": CPython_binaryfunc_Delegate,
+    "mp_ass_subscript": CPython_objobjargproc_Delegate,
 }
 
 def MakeNumSeqMapMethods(_type, slots):

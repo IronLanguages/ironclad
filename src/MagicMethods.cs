@@ -99,10 +99,20 @@ namespace Ironclad
                     template = CodeSnippets.SSIZEARG_METHOD_CODE;
                     dgtType = typeof(CPython_ssizeargfunc_Delegate);
                     break;
+                case "sq_ass_item":
+                    name = "_setitem_sq_ass_item";
+                    template = CodeSnippets.SSIZEOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_ssizeobjargproc_Delegate);
+                    break;
                 case "sq_slice":
                     name = "__getslice__";
                     template = CodeSnippets.SSIZESSIZEARG_METHOD_CODE;
                     dgtType = typeof(CPython_ssizessizeargfunc_Delegate);
+                    break;
+                case "sq_ass_slice":
+                    name = "__setslice__";
+                    template = CodeSnippets.SSIZESSIZEOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_ssizessizeobjargproc_Delegate);
                     break;
                 case "sq_length":
                     name = "__len__";
@@ -115,6 +125,11 @@ namespace Ironclad
                     name = "_getitem_mp_subscript";
                     template = CodeSnippets.OBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "mp_ass_subscript":
+                    name = "_setitem_mp_ass_subscript";
+                    template = CodeSnippets.OBJOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_objobjargproc_Delegate);
                     break;
                     
                 // b0rked

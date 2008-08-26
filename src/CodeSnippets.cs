@@ -92,12 +92,21 @@ class {0}(_ironclad_baseclass):
 ";
 
         public const string GETITEM_CODE = @"
-    def __getitem__(self, item):
-        if hasattr(self, '_getitem_sq_item') and isinstance(item, int):
-            return self._getitem_sq_item(item)
+    def __getitem__(self, key):
+        if hasattr(self, '_getitem_sq_item') and isinstance(key, int):
+            return self._getitem_sq_item(key)
         if hasattr(self, '_getitem_mp_subscript'):
-            return self._getitem_mp_subscript(item)
-        raise IndexError('no idea how to index %s' % item)
+            return self._getitem_mp_subscript(key)
+        raise IndexError('no idea how to index %s' % key)
+";
+
+        public const string SETITEM_CODE = @"
+    def __setitem__(self, key, item):
+        if hasattr(self, '_setitem_sq_ass_item') and isinstance(key, int):
+            return self._setitem_sq_ass_item(key, item)
+        if hasattr(self, '_setitem_mp_ass_subscript'):
+            return self._setitem_mp_ass_subscript(key, item)
+        raise IndexError('no idea how to index %s' % key)
 ";
 
         public const string ITER_METHOD_CODE = @"
@@ -144,10 +153,22 @@ class {0}(_ironclad_baseclass):
         return self._dispatcher.method_ssizearg('{2}{0}', self._instancePtr, ssize)
 ";
 
+        public const string SSIZEOBJARG_METHOD_CODE = @"
+    def {0}(self, ssize, obj):
+        '''{1}'''
+        return self._dispatcher.method_ssizeobjarg('{2}{0}', self._instancePtr, ssize, obj)
+";
+
         public const string SSIZESSIZEARG_METHOD_CODE = @"
     def {0}(self, ssize1, ssize2):
         '''{1}'''
         return self._dispatcher.method_ssizessizearg('{2}{0}', self._instancePtr, ssize1, ssize2)
+";
+
+        public const string SSIZESSIZEOBJARG_METHOD_CODE = @"
+    def {0}(self, ssize1, ssize2, obj):
+        '''{1}'''
+        return self._dispatcher.method_ssizessizeobjarg('{2}{0}', self._instancePtr, ssize1, ssize2, obj)
 ";
 
         public const string SELFARG_METHOD_CODE = @"
@@ -160,6 +181,12 @@ class {0}(_ironclad_baseclass):
     def {0}(self):
         '''{1}'''
         return self._dispatcher.method_lenfunc('{2}{0}', self._instancePtr)
+";
+
+        public const string OBJOBJARG_METHOD_CODE = @"
+    def {0}(self, arg1, arg2):
+        '''{1}'''
+        return self._dispatcher.method_objobjarg('{2}{0}', self._instancePtr, arg1, arg2)
 ";
 
         public const string TERNARY_METHOD_CODE = @"
@@ -395,6 +422,16 @@ class Dispatcher(object):
             self._cleanup(resultPtr)
 
     @lock
+    def method_ssizeobjarg(self, name, instancePtr, i, arg):
+        argPtr = self.mapper.Store(arg)
+        result = self.table[name](instancePtr, i, argPtr)
+        try:
+            self._maybe_raise()
+            return result
+        finally:
+            self._cleanup(argPtr)
+
+    @lock
     def method_ssizessizearg(self, name, instancePtr, i, j):
         resultPtr = self.table[name](instancePtr, i, j)
         try:
@@ -402,6 +439,27 @@ class Dispatcher(object):
             return self.mapper.Retrieve(resultPtr)
         finally:
             self._cleanup(resultPtr)
+
+    @lock
+    def method_ssizessizeobjarg(self, name, instancePtr, i, j, arg):
+        argPtr = self.mapper.Store(arg)
+        result = self.table[name](instancePtr, i, j, argPtr)
+        try:
+            self._maybe_raise()
+            return result
+        finally:
+            self._cleanup(argPtr)
+
+    @lock
+    def method_objobjarg(self, name, instancePtr, arg1, arg2):
+        arg1Ptr = self.mapper.Store(arg1)
+        arg2Ptr = self.mapper.Store(arg2)
+        result = self.table[name](instancePtr, arg1Ptr, arg2Ptr)
+        try:
+            self._maybe_raise()
+            return result
+        finally:
+            self._cleanup(arg1Ptr, arg2Ptr)
 
     @lock
     def method_inquiry(self, name, instancePtr):

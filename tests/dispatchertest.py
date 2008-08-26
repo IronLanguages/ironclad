@@ -103,6 +103,7 @@ def FuncRaising(exc, calls, identifier):
 RESULT = object()
 RESULT_INT = 123
 RESULT_PTR = IntPtr(999)
+RESULT_SSIZE = 99999
 
 INSTANCE_PTR = IntPtr(111)
 ARGS = (1, 2, 3)
@@ -472,6 +473,27 @@ class DispatcherSsizeargTest(DispatcherDispatchTestCase):
         ])
 
 
+class DispatcherSsizeobjargTest(DispatcherDispatchTestCase):
+    
+    def testDispatch_method_ssizeobjarg(self):
+        calls = self.callDispatcherMethodWithResults('method_ssizeobjarg', RESULT_INT, RESULT_INT, INSTANCE_PTR, SSIZE, ARG)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('dgt', (INSTANCE_PTR, SSIZE, ARG_PTR)),
+            ('_maybe_raise', tuple()),
+            ('_cleanup', (ARG_PTR,))
+        ])
+    
+    def testDispatch_method_ssizeobjarg_error(self):
+        calls = self.callDispatcherErrorMethod('method_ssizeobjarg', INSTANCE_PTR, SSIZE, ARG)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('dgt', (INSTANCE_PTR, SSIZE, ARG_PTR)),
+            ('_maybe_raise', tuple()),
+            ('_cleanup', (ARG_PTR,))
+        ])
+
+
 class DispatcherSsizessizeargTest(DispatcherDispatchTestCase):
     
     def testDispatch_method_ssizessizearg(self):
@@ -492,10 +514,54 @@ class DispatcherSsizessizeargTest(DispatcherDispatchTestCase):
         ])
 
 
+class DispatcherSsizessizeobjargTest(DispatcherDispatchTestCase):
+    
+    def testDispatch_method_ssizessizeobjarg(self):
+        calls = self.callDispatcherMethodWithResults('method_ssizessizeobjarg', RESULT_INT, RESULT_INT, INSTANCE_PTR, SSIZE, SSIZE2, ARG)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('dgt', (INSTANCE_PTR, SSIZE, SSIZE2, ARG_PTR)),
+            ('_maybe_raise', tuple()),
+            ('_cleanup', (ARG_PTR,))
+        ])
+    
+    def testDispatch_method_ssizessizeobjarg_error(self):
+        calls = self.callDispatcherErrorMethod('method_ssizessizeobjarg', INSTANCE_PTR, SSIZE, SSIZE2, ARG)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('dgt', (INSTANCE_PTR, SSIZE, SSIZE2, ARG_PTR)),
+            ('_maybe_raise', tuple()),
+            ('_cleanup', (ARG_PTR,))
+        ])
+
+
+class DispatcherObjobjargTest(DispatcherDispatchTestCase):
+    
+    def testDispatch_method_objobjarg(self):
+        calls = self.callDispatcherMethodWithResults('method_objobjarg', RESULT_INT, RESULT_INT, INSTANCE_PTR, ARG, ARG2)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('Store', (ARG2,)),
+            ('dgt', (INSTANCE_PTR, ARG_PTR, ARG2_PTR)),
+            ('_maybe_raise', tuple()),
+            ('_cleanup', (ARG_PTR, ARG2_PTR))
+        ])
+    
+    def testDispatch_method_objobjarg_error(self):
+        calls = self.callDispatcherErrorMethod('method_objobjarg', INSTANCE_PTR, ARG, ARG2)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('Store', (ARG2,)),
+            ('dgt', (INSTANCE_PTR, ARG_PTR, ARG2_PTR)),
+            ('_maybe_raise', tuple()),
+            ('_cleanup', (ARG_PTR, ARG2_PTR))
+        ])
+
+
 class DispatcherInquiryTest(DispatcherDispatchTestCase):
     
     def testDispatch_method_inquiry(self):
-        calls = self.callDispatcherMethodWithResults('method_inquiry', SSIZE, SSIZE, INSTANCE_PTR)
+        calls = self.callDispatcherMethodWithResults('method_inquiry', RESULT_INT, RESULT_INT, INSTANCE_PTR)
         self.assertEquals(calls, [
             ('dgt', (INSTANCE_PTR,)),
             ('_maybe_raise', tuple()),
@@ -1004,7 +1070,10 @@ suite  = makesuite(
     DispatcherSelfargTest,
     DispatcherKwargsTest, 
     DispatcherSsizeargTest,
+    DispatcherSsizeobjargTest,
     DispatcherSsizessizeargTest,
+    DispatcherSsizessizeobjargTest,
+    DispatcherObjobjargTest,
     DispatcherInquiryTest,
     DispatcherTernaryTest,
     DispatcherRichcmpTest,
