@@ -5,8 +5,9 @@ namespace Ironclad
     public class MagicMethods
     {
         public static void
-        GetInfo(string field, out string name, out string template, out Type dgtType)
+        GetInfo(string field, out string name, out string template, out Type dgtType, out bool needGetSwappedInfo)
         {
+            needGetSwappedInfo = false;
             switch (field)
             {
                 // PyTypeObject
@@ -31,31 +32,37 @@ namespace Ironclad
                     name = "__add__";
                     template = CodeSnippets.OBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
+                    needGetSwappedInfo = true;
                     break;
                 case "nb_subtract":
                     name = "__sub__";
                     template = CodeSnippets.OBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
+                    needGetSwappedInfo = true;
                     break;
                 case "nb_multiply":
                     name = "__mul__";
                     template = CodeSnippets.OBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
+                    needGetSwappedInfo = true;
                     break;
                 case "nb_divide":
                     name = "__div__";
                     template = CodeSnippets.OBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
+                    needGetSwappedInfo = true;
                     break;
                 case "nb_or":
                     name = "__or__";
                     template = CodeSnippets.OBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
+                    needGetSwappedInfo = true;
                     break;
                 case "nb_and":
                     name = "__and__";
                     template = CodeSnippets.OBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_binaryfunc_Delegate);
+                    needGetSwappedInfo = true;
                     break;
                 case "nb_absolute":
                     name = "__abs__";
@@ -86,6 +93,7 @@ namespace Ironclad
                     name = "__pow__";
                     template = CodeSnippets.TERNARY_METHOD_CODE;
                     dgtType = typeof(CPython_ternaryfunc_Delegate);
+                    needGetSwappedInfo = true;
                     break;
                 case "nb_nonzero":
                     name = "__nonzero__";
@@ -133,6 +141,52 @@ namespace Ironclad
                     break;
                     
                 // b0rked
+                default:
+                    throw new NotImplementedException(String.Format("unrecognised field: {0}", field));
+            }
+        }
+        
+        public static void
+        GetSwappedInfo(string field, out string name, out string template, out Type dgtType)
+        {
+            switch (field)
+            {
+                case "nb_add":
+                    name = "__radd__";
+                    template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_subtract":
+                    name = "__rsub__";
+                    template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_multiply":
+                    name = "__rmul__";
+                    template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_divide":
+                    name = "__rdiv__";
+                    template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_or":
+                    name = "__ror__";
+                    template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_and":
+                    name = "__rand__";
+                    template = CodeSnippets.SWAPPEDOBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
+                case "nb_power":
+                    name = "__rpow__";
+                    template = CodeSnippets.SWAPPEDTERNARY_METHOD_CODE;
+                    dgtType = typeof(CPython_ternaryfunc_Delegate);
+                    break;
+            
                 default:
                     throw new NotImplementedException(String.Format("unrecognised field: {0}", field));
             }

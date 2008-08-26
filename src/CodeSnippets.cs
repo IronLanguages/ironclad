@@ -135,6 +135,12 @@ class {0}(_ironclad_baseclass):
         return self._dispatcher.method_objarg('{2}{0}', self._instancePtr, arg)
 ";
 
+        public const string SWAPPEDOBJARG_METHOD_CODE = @"
+    def {0}(self, arg):
+        '''{1}'''
+        return self._dispatcher.method_objarg_swapped('{2}{0}', self._instancePtr, arg)
+";
+
         public const string VARARGS_METHOD_CODE = @"
     def {0}(self, *args):
         '''{1}'''
@@ -193,6 +199,12 @@ class {0}(_ironclad_baseclass):
     def {0}(self, arg1, arg2=None):
         '''{1}'''
         return self._dispatcher.method_ternary('{2}{0}', self._instancePtr, arg1, arg2)
+";
+
+        public const string SWAPPEDTERNARY_METHOD_CODE = @"
+    def {0}(self, arg):
+        '''{1}'''
+        return self._dispatcher.method_ternary_swapped('{2}{0}', self._instancePtr, arg)
 ";
 
         public const string RICHCMP_METHOD_CODE = @"
@@ -343,7 +355,6 @@ class Dispatcher(object):
     def dontDelete(_, __):
         pass
 
-    @lock
     def function_noargs(self, name):
         return self.method_noargs(name, IntPtr(0))
 
@@ -356,7 +367,6 @@ class Dispatcher(object):
         finally:
             self._cleanup(resultPtr)
 
-    @lock
     def function_objarg(self, name, arg):
         return self.method_objarg(name, IntPtr(0), arg)
         
@@ -369,8 +379,17 @@ class Dispatcher(object):
             return self.mapper.Retrieve(resultPtr)
         finally:
             self._cleanup(resultPtr, argPtr)
-
+        
     @lock
+    def method_objarg_swapped(self, name, instancePtr, arg):
+        argPtr = self.mapper.Store(arg)
+        resultPtr = self.table[name](argPtr, instancePtr)
+        try:
+            self._maybe_raise(resultPtr)
+            return self.mapper.Retrieve(resultPtr)
+        finally:
+            self._cleanup(resultPtr, argPtr)
+
     def function_varargs(self, name, *args):
         return self.method_varargs(name, IntPtr(0), *args)
 
@@ -384,7 +403,6 @@ class Dispatcher(object):
         finally:
             self._cleanup(resultPtr, argsPtr)
 
-    @lock
     def function_kwargs(self, name, *args, **kwargs):
         return self.method_kwargs(name, IntPtr(0), *args, **kwargs)
 
@@ -477,6 +495,16 @@ class Dispatcher(object):
             return self.mapper.Retrieve(resultPtr)
         finally:
             self._cleanup(resultPtr, arg1Ptr, arg2Ptr)
+
+    @lock
+    def method_ternary_swapped(self, name, instancePtr, arg):
+        argPtr = self.mapper.Store(arg)
+        resultPtr = self.table[name](argPtr, instancePtr, IntPtr(0))
+        try:
+            self._maybe_raise(resultPtr)
+            return self.mapper.Retrieve(resultPtr)
+        finally:
+            self._cleanup(resultPtr, argPtr)
 
     @lock
     def method_richcmp(self, name, instancePtr, arg1, op):
