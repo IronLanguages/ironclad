@@ -391,9 +391,17 @@ namespace Ironclad
                     string name;
                     string template;
                     Type dgtType;
-                    MagicMethods.GetInfo(field, out name, out template, out dgtType);
-                    methodTable[tablePrefix + name] = CPyMarshal.ReadFunctionPtrField(protocolPtr, protocol, field, dgtType); ;
+                    bool needGetSwappedInfo;
+                    MagicMethods.GetInfo(field, out name, out template, out dgtType, out needGetSwappedInfo);
+                    methodTable[tablePrefix + name] = CPyMarshal.ReadFunctionPtrField(protocolPtr, protocol, field, dgtType);
                     classCode.Append(String.Format(template, name, "", tablePrefix));
+                    
+                    if (needGetSwappedInfo)
+                    {
+                        MagicMethods.GetSwappedInfo(field, out name, out template, out dgtType);
+                        methodTable[tablePrefix + name] = CPyMarshal.ReadFunctionPtrField(protocolPtr, protocol, field, dgtType); ;
+                        classCode.Append(String.Format(template, name, "", tablePrefix));
+                    }
                 }
             }
         }

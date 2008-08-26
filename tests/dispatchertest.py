@@ -317,6 +317,25 @@ class DispatcherObjargTest(DispatcherDispatchTestCase):
             ('_maybe_raise', (RESULT_PTR,)),
             ('_cleanup', (RESULT_PTR, ARG_PTR))
         ])
+    
+    def testDispatch_method_objarg_swapped(self):
+        calls = self.callDispatcherMethod('method_objarg_swapped', INSTANCE_PTR, ARG)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('dgt', (ARG_PTR, INSTANCE_PTR)), 
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('Retrieve', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR, ARG_PTR))
+        ])
+    
+    def testDispatch_method_objarg_swapped_error(self):
+        calls = self.callDispatcherErrorMethod('method_objarg_swapped', INSTANCE_PTR, ARG)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('dgt', (ARG_PTR, INSTANCE_PTR)), 
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR, ARG_PTR))
+        ])
 
 
 class DispatcherSelfargTest(DispatcherDispatchTestCase):
@@ -596,6 +615,28 @@ class DispatcherTernaryTest(DispatcherDispatchTestCase):
             ('dgt', (INSTANCE_PTR, ARG_PTR, ARG2_PTR)),
             ('_maybe_raise', (RESULT_PTR,)),
             ('_cleanup', (RESULT_PTR, ARG_PTR, ARG2_PTR))
+        ])
+    
+    
+    # method_ternary_swapped only takes 2 args, but calls a ternaryfunc
+    # see __rpow__ docs
+    def testDispatch_method_ternary_swapped(self):
+        calls = self.callDispatcherMethod('method_ternary_swapped', INSTANCE_PTR, ARG)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('dgt', (ARG_PTR, INSTANCE_PTR, IntPtr.Zero)),
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('Retrieve', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR, ARG_PTR))
+        ])
+    
+    def testDispatch_method_ternary_swapped_error(self):
+        calls = self.callDispatcherErrorMethod('method_ternary_swapped', INSTANCE_PTR, ARG)
+        self.assertEquals(calls, [
+            ('Store', (ARG,)),
+            ('dgt', (ARG_PTR, INSTANCE_PTR, IntPtr.Zero)),
+            ('_maybe_raise', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR, ARG_PTR))
         ])
 
 

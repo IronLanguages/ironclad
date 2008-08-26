@@ -395,7 +395,7 @@ class NumberTest(DispatchSetupTestCase):
         self.assertTypeSpec(typeSpec, TestType)
         deallocNumbers()
     
-    def assertBinaryNumberMethod(self, slotName, methodName):
+    def assertBinaryNumberMethod(self, slotName, methodName, swappedMethodName):
         func, calls_cfunc = self.getBinaryPtrFunc()
         numbersPtr, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {slotName: func})
         typeSpec = {
@@ -411,6 +411,12 @@ class NumberTest(DispatchSetupTestCase):
             self.assertCalls(
                 getattr(instance, methodName), ((arg,), {}), calls_dispatch, 
                 ("klass." + methodName, instance._instancePtr, arg), result)
+            
+            del calls_dispatch[:]
+            _type._dispatcher.method_objarg_swapped = dispatch
+            self.assertCalls(
+                getattr(instance, swappedMethodName), ((arg,), {}), calls_dispatch, 
+                ("klass." + swappedMethodName, instance._instancePtr, arg), result)
             
             cfunc = _type._dispatcher.table["klass." + methodName]
             self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
@@ -437,22 +443,22 @@ class NumberTest(DispatchSetupTestCase):
         self.assertUnaryNumberMethod("nb_invert", "__invert__")
 
     def testAdd(self):
-        self.assertBinaryNumberMethod("nb_add", "__add__")
+        self.assertBinaryNumberMethod("nb_add", "__add__", "__radd__")
 
     def testSubtract(self):
-        self.assertBinaryNumberMethod("nb_subtract", "__sub__")
+        self.assertBinaryNumberMethod("nb_subtract", "__sub__", "__rsub__")
 
     def testMultiply(self):
-        self.assertBinaryNumberMethod("nb_multiply", "__mul__")
+        self.assertBinaryNumberMethod("nb_multiply", "__mul__", "__rmul__")
 
     def testDivide(self):
-        self.assertBinaryNumberMethod("nb_divide", "__div__")
+        self.assertBinaryNumberMethod("nb_divide", "__div__", "__rdiv__")
 
     def testOr(self):
-        self.assertBinaryNumberMethod("nb_or", "__or__")
+        self.assertBinaryNumberMethod("nb_or", "__or__", "__ror__")
 
     def testAnd(self):
-        self.assertBinaryNumberMethod("nb_and", "__and__")
+        self.assertBinaryNumberMethod("nb_and", "__and__", "__rand__")
     
     def testPower(self):
         func, calls_cfunc = self.getTernaryPtrFunc()
@@ -463,6 +469,8 @@ class NumberTest(DispatchSetupTestCase):
         }
         result = object()
         dispatch, calls_dispatch = self.getQuaternaryFunc(result)
+        # handling swapped args with modulus is 'too complex'. phew.
+        dispatch_swapped, calls_dispatch_swapped = self.getTernaryFunc(result)
         
         def TestType(_type, _):
             instance, arg1, arg2 = _type(), object(), object()
@@ -475,6 +483,11 @@ class NumberTest(DispatchSetupTestCase):
             self.assertCalls(
                 lambda x, y: x ** y, ((instance, arg1), {}), calls_dispatch, 
                 ("klass.__pow__", instance._instancePtr, arg1, None), result)
+                
+            _type._dispatcher.method_ternary_swapped = dispatch_swapped
+            self.assertCalls(
+                lambda x, y: y ** x, ((instance, arg1), {}), calls_dispatch_swapped, 
+                ("klass.__rpow__", instance._instancePtr, arg1), result)
             
             cfunc = _type._dispatcher.table["klass.__pow__"]
             self.assertCallsTernaryPtrFunc(cfunc, calls_cfunc)
