@@ -272,12 +272,15 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyTuple_New", ('33',), 'IntPtr(999)')
         self.assertFinds("PyTuple_Size", ('IntPtr(111)',), '999')
         
-        self.assertFinds("PyNumber_Add", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
-        self.assertFinds("PyNumber_Subtract", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
-        self.assertFinds("PyNumber_Multiply", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
-        self.assertFinds("PyNumber_Divide", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
-        self.assertFinds("PyNumber_TrueDivide", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
-        self.assertFinds("PyNumber_FloorDivide", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
+        binaryfuncs = (
+            "PyNumber_Add", "PyNumber_Subtract", "PyNumber_Multiply", "PyNumber_Divide",
+            "PyNumber_TrueDivide", "PyNumber_FloorDivide", "PyNumber_Remainder",
+            "PyNumber_Lshift", "PyNumber_Rshift",  "PyNumber_And", 
+            "PyNumber_Or", "PyNumber_Xor",
+        )
+        for name in binaryfuncs:
+            self.assertFinds(name, ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
+        
         self.assertFinds("PyNumber_Absolute", ('IntPtr(111)',), 'IntPtr(999)')
         self.assertFinds("PyNumber_Int", ('IntPtr(111)',), 'IntPtr(999)')
         self.assertFinds("PyNumber_Long", ('IntPtr(111)',), 'IntPtr(999)')

@@ -353,13 +353,13 @@ class PyNumber_Test(TestCase):
         self.assertUnaryOp("PyNumber_Absolute", abs)
     
     def testPyNumber_Add(self):
-        self.assertBinaryOp("PyNumber_Add", lambda a, b: a + b)
+        self.assertBinaryOp("PyNumber_Add", operator.add)
     
     def testPyNumber_Subtract(self):
-        self.assertBinaryOp("PyNumber_Subtract", lambda a, b: a - b)
+        self.assertBinaryOp("PyNumber_Subtract", operator.sub)
     
     def testPyNumber_Multiply(self):
-        self.assertBinaryOp("PyNumber_Multiply", lambda a, b: a * b)
+        self.assertBinaryOp("PyNumber_Multiply", operator.mul)
     
     def testPyNumber_Divide(self):
         self.assertBinaryOp("PyNumber_Divide", operator.div)
@@ -369,6 +369,24 @@ class PyNumber_Test(TestCase):
     
     def testPyNumber_FloorDivide(self):
         self.assertBinaryOp("PyNumber_FloorDivide", operator.floordiv)
+    
+    def testPyNumber_Remainder(self):
+        self.assertBinaryOp("PyNumber_Remainder", operator.mod)
+    
+    def testPyNumber_Lshift(self):
+        self.assertBinaryOp("PyNumber_Lshift", operator.lshift)
+    
+    def testPyNumber_Rshift(self):
+        self.assertBinaryOp("PyNumber_Rshift", operator.rshift)
+    
+    def testPyNumber_And(self):
+        self.assertBinaryOp("PyNumber_And", operator.and_)
+    
+    def testPyNumber_Or(self):
+        self.assertBinaryOp("PyNumber_Or", operator.or_)
+    
+    def testPyNumber_Xor(self):
+        self.assertBinaryOp("PyNumber_Xor", operator.xor)
     
     
     def testPyNumber_Long(self):
