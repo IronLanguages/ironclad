@@ -31,8 +31,8 @@ def main():
     filename = os.path.splitext(os.path.basename(sourceDll))[0]
 
     os.chdir(outputDir)
-    generateOutput("generated.c", sm.generate_c())
-    generateOutput("generated.asm", sm.generate_asm())
+    generateOutput("stub.generated.c", sm.generate_c())
+    generateOutput("stub.generated.asm", sm.generate_asm())
 
 
 if __name__ == "__main__":

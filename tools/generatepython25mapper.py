@@ -33,11 +33,11 @@ def run():
     
 
 EXCEPTIONS_INFILE = "exceptions"
-EXCEPTIONS_OUTFILE = "../Python25Mapper_exceptions.cs"
+EXCEPTIONS_OUTFILE = "../Python25Mapper_exceptions.Generated.cs"
 BUILTIN_EXCEPTIONS_INFILE = "builtin_exceptions"
-BUILTIN_EXCEPTIONS_OUTFILE = "../Python25Mapper_builtin_exceptions.cs"
+BUILTIN_EXCEPTIONS_OUTFILE = "../Python25Mapper_builtin_exceptions.Generated.cs"
 STORE_INFILE = "store"
-STORE_OUTFILE = "../Python25Mapper_store.cs"
+STORE_OUTFILE = "../Python25Mapper_store.Generated.cs"
 
 FILE_TEMPLATE = """
 using System;
