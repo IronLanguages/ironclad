@@ -39,8 +39,10 @@ class GeneratePython25MapperTest(TestCase):
         try:
             write("exceptions", EXCEPTIONS)
             write("builtin_exceptions", BUILTIN_EXCEPTIONS)
-            write("store", STORE)
+            write("store_dispatch", STORE)
             write("numbers_pythonsites", NUMBERS_PYTHONSITES)
+            write("numbers_convert_c2py", NUMBERS_CONVERT_C2PY)
+            write("numbers_convert_py2c", NUMBERS_CONVERT_PY2C)
 
             retVal = spawn("ipy", toolPath)
             self.assertEquals(retVal, 0, "process ended badly")
@@ -50,9 +52,13 @@ class GeneratePython25MapperTest(TestCase):
                               "generated exceptions wrong")
             self.assertEquals(read("Python25Mapper_builtin_exceptions.Generated.cs"), EXPECTED_BUILTIN_EXCEPTIONS, 
                               "generated builtin exceptions wrong")
-            self.assertEquals(read("Python25Mapper_store.Generated.cs"), EXPECTED_STORE, 
+            self.assertEquals(read("Python25Mapper_store_dispatch.Generated.cs"), EXPECTED_STORE, 
                               "generated wrong")
             self.assertEquals(read("Python25Mapper_numbers_PythonSites.Generated.cs"), EXPECTED_NUMBERS_PYTHONSITES, 
+                              "generated wrong")
+            self.assertEquals(read("Python25Mapper_numbers_convert_c2py.Generated.cs"), EXPECTED_NUMBERS_CONVERT_C2PY, 
+                              "generated wrong")
+            self.assertEquals(read("Python25Mapper_numbers_convert_py2c.Generated.cs"), EXPECTED_NUMBERS_CONVERT_PY2C, 
                               "generated wrong")
 
         finally:
@@ -136,10 +142,12 @@ namespace Ironclad
     }
 }
 """
+
 NUMBERS_PYTHONSITES = """
 PyNumber_Add Add
 PyNumber_Remainder Mod
 """
+
 EXPECTED_NUMBERS_PYTHONSITES = USINGS + """
 namespace Ironclad
 {
@@ -172,6 +180,74 @@ namespace Ironclad
             {
                 this.LastException = e;
                 return IntPtr.Zero;
+            }
+        }
+    }
+}
+"""
+
+NUMBERS_CONVERT_C2PY = """
+
+PyInt_FromLong int
+PyLong_FromLongLong long (BigInteger)
+"""
+
+EXPECTED_NUMBERS_CONVERT_C2PY = USINGS + """
+namespace Ironclad
+{
+    public partial class Python25Mapper : Python25Api
+    {
+        public override IntPtr
+        PyInt_FromLong(int value)
+        {
+            return this.Store(value);
+        }
+
+        public override IntPtr
+        PyLong_FromLongLong(long value)
+        {
+            return this.Store((BigInteger)value);
+        }
+    }
+}
+"""
+
+NUMBERS_CONVERT_PY2C = """
+
+PyFloat_AsDouble ConvertToDouble double -1.0
+PyLong_AsLong ConvertToBigInteger int -1 .ToInt32()
+"""
+
+EXPECTED_NUMBERS_CONVERT_PY2C = USINGS + """
+namespace Ironclad
+{
+    public partial class Python25Mapper : Python25Api
+    {
+        public override double
+        PyFloat_AsDouble(IntPtr valuePtr)
+        {
+            try
+            {
+                return Converter.ConvertToDouble(this.Retrieve(valuePtr));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1.0;
+            }
+        }
+
+        public override int
+        PyLong_AsLong(IntPtr valuePtr)
+        {
+            try
+            {
+                return Converter.ConvertToBigInteger(this.Retrieve(valuePtr)).ToInt32();
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
             }
         }
     }

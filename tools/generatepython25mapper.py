@@ -8,13 +8,21 @@ def read_interesting_lines(name):
     finally:
         f.close()
 
-def write(name, text):
+def writefile(name, text):
     f = open(name, "w")
     try:
-        f.write(text)
+        f.write(FILE_TEMPLATE % text)
     finally:
         f.close()
-    
+
+def foreversplit(line):
+    for part in line.split():
+        yield part
+    yield ''
+
+def mapstrings(names, infile, template):
+    extract = lambda line: template % dict(zip(names, foreversplit(line)))
+    return map(extract, read_interesting_lines(infile))
 
 def run():
     exception_kinds = (
@@ -22,17 +30,21 @@ def run():
         (BUILTIN_EXCEPTIONS_INFILE, BUILTIN_EXCEPTION_TEMPLATE, BUILTIN_EXCEPTIONS_OUTFILE),
     )
     for (infile, template, outfile) in exception_kinds:
-        exceptions = [dict([("symbol", s)]) for s in read_interesting_lines(infile)]
-        exceptions_code = "\n\n".join([template % x for x in exceptions])
-        write(outfile, FILE_TEMPLATE % exceptions_code)
+        snippets = mapstrings(("name",), infile, template)
+        writefile(outfile, "\n\n".join(snippets))
     
-    store_types = [dict([("type", t)]) for t in read_interesting_lines(STORE_INFILE)]
-    store_code = STORE_METHOD_TEMPLATE % "\n".join([STORE_TYPE_TEMPLATE % x for x in store_types])
-    write(STORE_OUTFILE, FILE_TEMPLATE % store_code)
+    store_snippets = mapstrings(("type",), STORE_INFILE, STORE_TYPE_TEMPLATE)
+    store_code = STORE_METHOD_TEMPLATE % "\n".join(store_snippets)
+    writefile(STORE_OUTFILE, store_code)
     
-    numbers_pythonsites_types = [dict(zip(("symbol", "site"), line.split())) for line in read_interesting_lines(NUMBERS_PYTHONSITES_INFILE)]
-    numbers_pythonsites_code = "\n\n".join([NUMBER_PYTHONSITE_TEMPLATE % x for x in numbers_pythonsites_types])
-    write(NUMBERS_PYTHONSITES_OUTFILE, FILE_TEMPLATE % numbers_pythonsites_code)
+    pythonsites_snippets = mapstrings(("name", "site"), PYTHONSITES_INFILE, PYTHONSITES_TEMPLATE)
+    writefile(PYTHONSITES_OUTFILE, "\n\n".join(pythonsites_snippets))
+    
+    c2py_types = mapstrings(("name", "type", "cast"), C2PY_INFILE, C2PY_TEMPLATE)
+    writefile(C2PY_OUTFILE, "\n\n".join(c2py_types))
+    
+    py2c_types = mapstrings(("name", "converter", "type", "default", "coerce"), PY2C_INFILE, PY2C_TEMPLATE)
+    writefile(PY2C_OUTFILE, "\n\n".join(py2c_types))
     
     
 
@@ -40,10 +52,14 @@ EXCEPTIONS_INFILE = "exceptions"
 EXCEPTIONS_OUTFILE = "../Python25Mapper_exceptions.Generated.cs"
 BUILTIN_EXCEPTIONS_INFILE = "builtin_exceptions"
 BUILTIN_EXCEPTIONS_OUTFILE = "../Python25Mapper_builtin_exceptions.Generated.cs"
-STORE_INFILE = "store"
-STORE_OUTFILE = "../Python25Mapper_store.Generated.cs"
-NUMBERS_PYTHONSITES_INFILE = "numbers_pythonsites"
-NUMBERS_PYTHONSITES_OUTFILE = "../Python25mapper_numbers_PythonSites.Generated.cs"
+STORE_INFILE = "store_dispatch"
+STORE_OUTFILE = "../Python25Mapper_store_dispatch.Generated.cs"
+PYTHONSITES_INFILE = "numbers_pythonsites"
+PYTHONSITES_OUTFILE = "../Python25mapper_numbers_PythonSites.Generated.cs"
+C2PY_INFILE = "numbers_convert_c2py"
+C2PY_OUTFILE = "../Python25mapper_numbers_convert_c2py.Generated.cs"
+PY2C_INFILE = "numbers_convert_py2c"
+PY2C_OUTFILE = "../Python25mapper_numbers_convert_py2c.Generated.cs"
 
 FILE_TEMPLATE = """
 using System;
@@ -64,15 +80,15 @@ namespace Ironclad
 """
 
 EXCEPTION_TEMPLATE = """\
-        public override IntPtr Make_PyExc_%(symbol)s()
+        public override IntPtr Make_PyExc_%(name)s()
         {
-            return this.Store(PythonExceptions.%(symbol)s);
+            return this.Store(PythonExceptions.%(name)s);
         }"""
 
 BUILTIN_EXCEPTION_TEMPLATE = """\
-        public override IntPtr Make_PyExc_%(symbol)s()
+        public override IntPtr Make_PyExc_%(name)s()
         {
-            return this.Store(Builtin.%(symbol)s);
+            return this.Store(Builtin.%(name)s);
         }"""
 
 STORE_METHOD_TEMPLATE = """\
@@ -85,9 +101,9 @@ STORE_METHOD_TEMPLATE = """\
 STORE_TYPE_TEMPLATE = """\
             if (obj is %(type)s) { return this.Store((%(type)s)obj); }"""
 
-NUMBER_PYTHONSITE_TEMPLATE = """\
+PYTHONSITES_TEMPLATE = """\
         public override IntPtr
-        %(symbol)s(IntPtr arg1ptr, IntPtr arg2ptr)
+        %(name)s(IntPtr arg1ptr, IntPtr arg2ptr)
         {
             try
             {
@@ -101,6 +117,27 @@ NUMBER_PYTHONSITE_TEMPLATE = """\
             }
         }"""
 
+C2PY_TEMPLATE = """\
+        public override IntPtr
+        %(name)s(%(type)s value)
+        {
+            return this.Store(%(cast)svalue);
+        }"""
+
+PY2C_TEMPLATE = """\
+        public override %(type)s
+        %(name)s(IntPtr valuePtr)
+        {
+            try
+            {
+                return Converter.%(converter)s(this.Retrieve(valuePtr))%(coerce)s;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return %(default)s;
+            }
+        }"""
 
 if __name__ == "__main__":
     run()

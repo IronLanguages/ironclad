@@ -24,7 +24,7 @@ namespace Ironclad
             this.IncRef(ptr);
             return ptr;
         }
-        
+
         private IntPtr
         Store(bool value)
         {
@@ -37,22 +37,37 @@ namespace Ironclad
             return ptr;
         }
 
-
-        public override IntPtr
-        PyNumber_Absolute(IntPtr numberPtr)
+        private IntPtr
+        Store(int value)
         {
-            try
-            {
-                object result = Builtin.abs(DefaultContext.Default, this.Retrieve(numberPtr));
-                return this.Store(result);
-            }
-            catch (Exception e)
-            {
-                this.LastException = e;
-                return IntPtr.Zero;
-            }
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyIntObject)));
+            CPyMarshal.WriteIntField(ptr, typeof(PyIntObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), "ob_type", this.PyInt_Type);
+            CPyMarshal.WriteIntField(ptr, typeof(PyIntObject), "ob_ival", value);
+            this.map.Associate(ptr, value);
+            return ptr;
         }
 
+        private IntPtr
+        Store(BigInteger value)
+        {
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
+            CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyLong_Type);
+            this.map.Associate(ptr, value);
+            return ptr;
+        }
+
+        private IntPtr
+        Store(double value)
+        {
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyFloatObject)));
+            CPyMarshal.WriteIntField(ptr, typeof(PyFloatObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyFloatObject), "ob_type", this.PyFloat_Type);
+            CPyMarshal.WriteDoubleField(ptr, typeof(PyFloatObject), "ob_fval", value);
+            this.map.Associate(ptr, value);
+            return ptr;
+        }
 
         public override IntPtr
         PyNumber_Int(IntPtr numberPtr)
@@ -67,7 +82,6 @@ namespace Ironclad
                 return this.PyNumber_Long(numberPtr);
             }
         }
-
 
         public override IntPtr
         PyNumber_Long(IntPtr numberPtr)
@@ -84,7 +98,6 @@ namespace Ironclad
             }
         }
         
-        
         public override IntPtr
         PyNumber_Float(IntPtr numberPtr)
         {
@@ -100,134 +113,19 @@ namespace Ironclad
             }
         }
 
-
         public override IntPtr
-        PyInt_FromLong(int value)
-        {
-            IntPtr result = this.Store(value);
-            return result;
-        }
-        
-        
-        public override IntPtr
-        PyInt_FromSsize_t(int value)
-        {
-            IntPtr result = this.Store(value);
-            return result;
-        }
-
-
-        public override int
-        PyInt_AsLong(IntPtr valuePtr)
-        {
-            int result = Converter.ConvertToInt32(this.Retrieve(valuePtr));
-            return result;
-        }
-
-        private IntPtr
-        Store(int value)
-        {
-            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyIntObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyIntObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), "ob_type", this.PyInt_Type);
-            CPyMarshal.WriteIntField(ptr, typeof(PyIntObject), "ob_ival", value);
-            this.map.Associate(ptr, value);
-            return ptr;
-        }
-
-
-        public override int
-        PyLong_AsLong(IntPtr valuePtr)
+        PyNumber_Absolute(IntPtr numberPtr)
         {
             try
             {
-                BigInteger value = Converter.ConvertToBigInteger(this.Retrieve(valuePtr));
-                return value.ToInt32();
+                object result = Builtin.abs(DefaultContext.Default, this.Retrieve(numberPtr));
+                return this.Store(result);
             }
             catch (Exception e)
             {
                 this.LastException = e;
-                return 0;
+                return IntPtr.Zero;
             }
-        }
-
-
-        public override Int64
-        PyLong_AsLongLong(IntPtr valuePtr)
-        {
-            try
-            {
-                BigInteger value = Converter.ConvertToBigInteger(this.Retrieve(valuePtr));
-                return value.ToInt64();
-            }
-            catch (Exception e)
-            {
-                this.LastException = e;
-                return 0;
-            }
-        }
-
-        public override IntPtr
-        PyLong_FromLongLong(long value)
-        {
-            IntPtr result = this.Store((BigInteger)value);
-            return result;
-        }
-
-        public override IntPtr
-        PyLong_FromUnsignedLong(uint value)
-        {
-            IntPtr result = this.Store((BigInteger)value);
-            return result;
-        }
-
-
-        public override IntPtr
-        PyLong_FromUnsignedLongLong(ulong value)
-        {
-            IntPtr result = this.Store((BigInteger)value);
-            return result;
-        }
-
-        private IntPtr
-        Store(BigInteger value)
-        {
-            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyLong_Type);
-            this.map.Associate(ptr, value);
-            return ptr;
-        }
-        
-        public override IntPtr
-        PyFloat_FromDouble(double value)
-        {
-            return this.Store(value);
-        }
-        
-        public override double
-        PyFloat_AsDouble(IntPtr numberPtr)
-        {
-            try
-            {
-                return Converter.ConvertToDouble(this.Retrieve(numberPtr));
-            }
-            catch (Exception e)
-            {
-                this.LastException = e;
-                return -1.0;
-            }
-        }
-
-        private IntPtr
-        Store(double value)
-        {
-            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyFloatObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyFloatObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyFloatObject), "ob_type", this.PyFloat_Type);
-            CPyMarshal.WriteDoubleField(ptr, typeof(PyFloatObject), "ob_fval", value);
-            this.map.Associate(ptr, value);
-            return ptr;
         }
         
     }

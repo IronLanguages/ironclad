@@ -1,0 +1,4 @@
+PyInt_AsLong ConvertToInt32 int -1
+PyFloat_AsDouble ConvertToDouble double -1.0
+PyLong_AsLong ConvertToBigInteger int -1 .ToInt32()
+PyLong_AsLongLong ConvertToBigInteger long -1 .ToInt64()
