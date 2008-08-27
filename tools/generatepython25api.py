@@ -67,7 +67,7 @@ DATA_ITEMS_FILE = "python25ApiDataItems"
 DATA_PTR_ITEMS_FILE = "python25ApiDataPtrItems"
 
 DELEGATE_EXT = ".pmdi"
-OUTFILE = "../Python25Api.cs"
+OUTFILE = "../Python25Api.Generated.cs"
 
 FILE_TEMPLATE = """
 using System;

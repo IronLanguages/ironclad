@@ -39,7 +39,7 @@ class GeneratePython25ApiTest(TestCase):
             self.assertEquals(retVal, 0, "process ended badly")
 
             os.chdir(testBuildDir)
-            f = open("Python25Api.cs", 'r')
+            f = open("Python25Api.Generated.cs", 'r')
             try:
                 result = f.read()
                 self.assertEquals(result, EXPECTED_OUTPUT, "generated wrong")

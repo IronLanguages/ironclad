@@ -45,11 +45,11 @@ class GeneratePython25MapperTest(TestCase):
             self.assertEquals(retVal, 0, "process ended badly")
 
             os.chdir(testBuildDir)
-            self.assertEquals(read("Python25Mapper_exceptions.cs"), EXPECTED_EXCEPTIONS, 
+            self.assertEquals(read("Python25Mapper_exceptions.Generated.cs"), EXPECTED_EXCEPTIONS, 
                               "generated exceptions wrong")
-            self.assertEquals(read("Python25Mapper_builtin_exceptions.cs"), EXPECTED_BUILTIN_EXCEPTIONS, 
+            self.assertEquals(read("Python25Mapper_builtin_exceptions.Generated.cs"), EXPECTED_BUILTIN_EXCEPTIONS, 
                               "generated builtin exceptions wrong")
-            self.assertEquals(read("Python25Mapper_store.cs"), EXPECTED_STORE, 
+            self.assertEquals(read("Python25Mapper_store.Generated.cs"), EXPECTED_STORE, 
                               "generated wrong")
 
         finally:

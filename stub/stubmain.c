@@ -7,7 +7,7 @@
 #include "PyAPI_DATAs.c"
 #include "PyAPI_FUNCs.c"
 
-#include "generated.c"
+#include "stub.generated.c"
 
 #include "getargs.c"
 #include "modsupport.c"
