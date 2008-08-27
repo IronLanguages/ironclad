@@ -30,6 +30,10 @@ def run():
     store_code = STORE_METHOD_TEMPLATE % "\n".join([STORE_TYPE_TEMPLATE % x for x in store_types])
     write(STORE_OUTFILE, FILE_TEMPLATE % store_code)
     
+    numbers_pythonsites_types = [dict(zip(("symbol", "site"), line.split())) for line in read_interesting_lines(NUMBERS_PYTHONSITES_INFILE)]
+    numbers_pythonsites_code = "\n\n".join([NUMBER_PYTHONSITE_TEMPLATE % x for x in numbers_pythonsites_types])
+    write(NUMBERS_PYTHONSITES_OUTFILE, FILE_TEMPLATE % numbers_pythonsites_code)
+    
     
 
 EXCEPTIONS_INFILE = "exceptions"
@@ -38,12 +42,15 @@ BUILTIN_EXCEPTIONS_INFILE = "builtin_exceptions"
 BUILTIN_EXCEPTIONS_OUTFILE = "../Python25Mapper_builtin_exceptions.Generated.cs"
 STORE_INFILE = "store"
 STORE_OUTFILE = "../Python25Mapper_store.Generated.cs"
+NUMBERS_PYTHONSITES_INFILE = "numbers_pythonsites"
+NUMBERS_PYTHONSITES_OUTFILE = "../Python25mapper_numbers_PythonSites.Generated.cs"
 
 FILE_TEMPLATE = """
 using System;
 using System.Collections;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
+using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 using Microsoft.Scripting.Math;
 
@@ -77,6 +84,22 @@ STORE_METHOD_TEMPLATE = """\
 
 STORE_TYPE_TEMPLATE = """\
             if (obj is %(type)s) { return this.Store((%(type)s)obj); }"""
+
+NUMBER_PYTHONSITE_TEMPLATE = """\
+        public override IntPtr
+        %(symbol)s(IntPtr arg1ptr, IntPtr arg2ptr)
+        {
+            try
+            {
+                object result = PythonSites.%(site)s(this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }"""
 
 
 if __name__ == "__main__":

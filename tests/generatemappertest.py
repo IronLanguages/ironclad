@@ -40,6 +40,7 @@ class GeneratePython25MapperTest(TestCase):
             write("exceptions", EXCEPTIONS)
             write("builtin_exceptions", BUILTIN_EXCEPTIONS)
             write("store", STORE)
+            write("numbers_pythonsites", NUMBERS_PYTHONSITES)
 
             retVal = spawn("ipy", toolPath)
             self.assertEquals(retVal, 0, "process ended badly")
@@ -51,23 +52,26 @@ class GeneratePython25MapperTest(TestCase):
                               "generated builtin exceptions wrong")
             self.assertEquals(read("Python25Mapper_store.Generated.cs"), EXPECTED_STORE, 
                               "generated wrong")
+            self.assertEquals(read("Python25Mapper_numbers_PythonSites.Generated.cs"), EXPECTED_NUMBERS_PYTHONSITES, 
+                              "generated wrong")
 
         finally:
             os.chdir(origCwd)
         shutil.rmtree(tempDir)
-
-EXCEPTIONS = """
-SystemError
-OverflowError
-"""
 
 USINGS = """
 using System;
 using System.Collections;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
+using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 using Microsoft.Scripting.Math;
+"""
+
+EXCEPTIONS = """
+SystemError
+OverflowError
 """
 
 EXPECTED_EXCEPTIONS = USINGS + """
@@ -128,6 +132,47 @@ namespace Ironclad
             if (obj is Tuple) { return this.Store((Tuple)obj); }
             if (obj is Dict) { return this.Store((Dict)obj); }
             return this.StoreObject(obj);
+        }
+    }
+}
+"""
+NUMBERS_PYTHONSITES = """
+PyNumber_Add Add
+PyNumber_Remainder Mod
+"""
+EXPECTED_NUMBERS_PYTHONSITES = USINGS + """
+namespace Ironclad
+{
+    public partial class Python25Mapper : Python25Api
+    {
+        public override IntPtr
+        PyNumber_Add(IntPtr arg1ptr, IntPtr arg2ptr)
+        {
+            try
+            {
+                object result = PythonSites.Add(this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
+        public override IntPtr
+        PyNumber_Remainder(IntPtr arg1ptr, IntPtr arg2ptr)
+        {
+            try
+            {
+                object result = PythonSites.Mod(this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
         }
     }
 }
