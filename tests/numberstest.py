@@ -111,6 +111,15 @@ class PyInt_Test(TestCase):
             ptr = mapper.PyInt_FromLong(value)
             self.assertEquals(mapper.PyInt_AsLong(ptr), value, "failed to map back")
             self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyInt_Type, "bad type")
+            
+        for (value, error) in ((2147483648, OverflowError), (-2147483649, OverflowError), (object(), TypeError)):
+            ptr = mapper.Store(value)
+            mapper.LastException = None
+            self.assertEquals(mapper.PyInt_AsLong(ptr), -1)
+            
+            def KindaConvertError():
+                raise mapper.LastException
+            self.assertRaises(error, KindaConvertError)
                 
         mapper.Dispose()
         deallocTypes()
@@ -195,7 +204,7 @@ class PyLong_Test(TestCase):
         for value in (9223372036854775808, -9223372036854775809):
             ptr = mapper.Store(value)
             mapper.LastException = None
-            self.assertEquals(mapper.PyLong_AsLongLong(ptr), 0)
+            self.assertEquals(mapper.PyLong_AsLongLong(ptr), -1)
             
             def KindaConvertError():
                 raise mapper.LastException
@@ -216,7 +225,7 @@ class PyLong_Test(TestCase):
         for value in (2147483648, -2147483649):
             ptr = mapper.Store(long(value))
             mapper.LastException = None
-            self.assertEquals(mapper.PyLong_AsLong(ptr), 0)
+            self.assertEquals(mapper.PyLong_AsLong(ptr), -1)
             
             def KindaConvertError():
                 raise mapper.LastException
@@ -291,7 +300,7 @@ class PyNumber_Test(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        values = [-1, 4, -3.5, (1, 2), [3, 4], set([-1]), 'hullo', object(), object]
+        values = [-1, 4, 2, -3.5, (1, 2), [3, 4], set([-1]), 'hullo', object(), object]
         for value in values:
             error = None
             try:
@@ -320,7 +329,7 @@ class PyNumber_Test(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        values = [-1, 4, -3.5, (1, 2), [3, 4], set([-1]), 'hullo', object(), object]
+        values = [-1, 4, 2, -3.5, (1, 2), [3, 4], set([-1]), 'hullo', object(), object]
         count = len(values)
         for i in range(count):
             for j in range(count):
