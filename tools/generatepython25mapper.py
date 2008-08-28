@@ -18,7 +18,8 @@ def writefile(name, text):
 def foreversplit(line):
     for part in line.split():
         yield part
-    yield ''
+    while True:
+        yield ''
 
 def mapstrings(names, infile, template):
     extract = lambda line: template % dict(zip(names, foreversplit(line)))
