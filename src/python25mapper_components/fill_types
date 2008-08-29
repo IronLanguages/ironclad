@@ -1,0 +1,15 @@
+PyBaseObject_Type TypeCache.Object {"tp_alloc": "PyType_GenericAlloc", "tp_new": "PyType_GenericNew", "tp_init": "PyBaseObject_Init", "tp_dealloc": "PyBaseObject_Dealloc", "tp_free": "PyObject_Free", "tp_str": "PyObject_Str", "tp_repr": "PyObject_Repr"}
+PyType_Type TypeCache.PythonType
+PyNone_Type TypeCache.None
+PySlice_Type Builtin.slice {"tp_dealloc": "PySlice_Dealloc"}
+PyFile_Type TypeCache.PythonFile
+PyInt_Type TypeCache.Int32 {"tp_as_number": True}
+PyLong_Type TypeCache.BigInteger {"tp_as_number": True}
+PyFloat_Type TypeCache.Double {"tp_as_number": True}
+PyComplex_Type TypeCache.Complex64
+PyCObject_Type typeof(OpaquePyCObject) {"tp_dealloc": "PyCObject_Dealloc"}
+PyDict_Type TypeCache.Dict
+PyList_Type TypeCache.List {"tp_dealloc": "PyList_Dealloc"}
+PyString_Type TypeCache.String
+PyTuple_Type TypeCache.PythonTuple {"tp_dealloc": "PyTuple_Dealloc"}
+PySeqIter_Type typeof(ItemEnumerator)

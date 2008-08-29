@@ -16,139 +16,22 @@ namespace Ironclad
     public partial class Python25Mapper
     {
         public override void
-        Fill_PyBaseObject_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_init", this.GetAddress("PyBaseObject_Init"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_alloc", this.GetAddress("PyType_GenericAlloc"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_new", this.GetAddress("PyType_GenericNew"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyBaseObject_Dealloc"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_free", this.GetAddress("PyObject_Free"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_str", this.GetAddress("PyObject_Str"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_repr", this.GetAddress("PyObject_Repr"));
-            this.map.Associate(address, TypeCache.Object);
-        }
-        
-        public override void
-        Fill_PyType_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            this.map.Associate(address, TypeCache.PythonType);
-        }
-
-        public override void
-        Fill_PyNone_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            this.map.Associate(address, TypeCache.None);
-        }
-
-        public override void
-        Fill_PySlice_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PySlice_Dealloc"));
-            this.map.Associate(address, Builtin.slice);
-        }
-
-        public override void
         Fill_PyEllipsis_Type(IntPtr address)
         {
+            // not quite trivial to autogenerate
+            // (surely there's a better way to get the Ellipsis object...)
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            // surely there's a better way to get the Ellipsis object...
             object ellipsisType = PythonCalls.Call(Builtin.type, new object[] { PythonOps.Ellipsis });
             this.map.Associate(address, ellipsisType);
-        }
-
-        public override void 
-        Fill_PyFile_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            this.map.Associate(address, TypeCache.PythonFile);
-        }
-
-        public override void
-        Fill_PyInt_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            this.AddDefaultNumberMethods(address);
-            this.map.Associate(address, TypeCache.Int32);
         }
 
         public override void
         Fill_PyBool_Type(IntPtr address)
         {
+            // not quite trivial to autogenerate
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_base", this.PyInt_Type);
             this.map.Associate(address, TypeCache.Boolean);
-        }
-
-        public override void
-        Fill_PyLong_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            this.AddDefaultNumberMethods(address);
-            this.map.Associate(address, TypeCache.BigInteger);
-        }
-
-        public override void
-        Fill_PyFloat_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            this.AddDefaultNumberMethods(address);
-            this.map.Associate(address, TypeCache.Double);
-        }
-
-        public override void
-        Fill_PyComplex_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            this.map.Associate(address, TypeCache.Complex64);
-        }
-        
-        public override void 
-        Fill_PyCObject_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyCObject_Dealloc"));
-            this.map.Associate(address, typeof(OpaquePyCObject));
-        }
-        
-        public override void
-        Fill_PyDict_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            this.map.Associate(address, TypeCache.Dict);
-        }
-        
-        public override void
-        Fill_PyList_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyList_Dealloc"));
-            this.map.Associate(address, TypeCache.List);
-        }
-        
-        public override void
-        Fill_PyString_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            this.map.Associate(address, TypeCache.String);
-        }
-        
-        public override void
-        Fill_PyTuple_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyTuple_Dealloc"));
-            this.map.Associate(address, TypeCache.PythonTuple);
-        }
-
-        public override void
-        Fill_PySeqIter_Type(IntPtr address)
-        {
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            this.map.Associate(address, typeof(ItemEnumerator));
         }
 
         private void
@@ -163,7 +46,6 @@ namespace Ironclad
 
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_as_number", nmPtr);
         }
-
         
         public void
         ReadyBuiltinTypes()
@@ -171,7 +53,7 @@ namespace Ironclad
             this.PyType_Ready(this.PyType_Type);
             this.PyType_Ready(this.PyBaseObject_Type);
             this.PyType_Ready(this.PyInt_Type);
-            this.PyType_Ready(this.PyBool_Type);
+            this.PyType_Ready(this.PyBool_Type); // note: bool should come after int, because bools are ints
             this.PyType_Ready(this.PyLong_Type);
             this.PyType_Ready(this.PyFloat_Type);
             this.PyType_Ready(this.PyComplex_Type);
@@ -210,7 +92,8 @@ namespace Ironclad
         }
         
                 
-        private void InheritPtrField(IntPtr typePtr, string name)
+        private void
+        InheritPtrField(IntPtr typePtr, string name)
         {
             IntPtr fieldPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), name);
             if (fieldPtr == IntPtr.Zero)
@@ -223,7 +106,6 @@ namespace Ironclad
                 }
             }
         }
-        
         
         public override int
         PyType_Ready(IntPtr typePtr)
