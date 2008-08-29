@@ -43,6 +43,7 @@ class GeneratePython25MapperTest(TestCase):
             write("numbers_pythonsites", NUMBERS_PYTHONSITES)
             write("numbers_convert_c2py", NUMBERS_CONVERT_C2PY)
             write("numbers_convert_py2c", NUMBERS_CONVERT_PY2C)
+            write("fill_types", FILL_TYPES)
 
             retVal = spawn("ipy", toolPath)
             self.assertEquals(retVal, 0, "process ended badly")
@@ -60,6 +61,8 @@ class GeneratePython25MapperTest(TestCase):
                               "generated wrong")
             self.assertEquals(read("Python25Mapper_numbers_convert_py2c.Generated.cs"), EXPECTED_NUMBERS_CONVERT_PY2C, 
                               "generated wrong")
+            self.assertEquals(read("Python25Mapper_fill_types.Generated.cs"), EXPECTED_FILL_TYPES, 
+                              "generated wrong")
 
         finally:
             os.chdir(origCwd)
@@ -73,6 +76,7 @@ using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 using Microsoft.Scripting.Math;
+using Ironclad.Structs;
 """
 
 EXCEPTIONS = """
@@ -249,6 +253,47 @@ namespace Ironclad
                 this.LastException = e;
                 return -1;
             }
+        }
+    }
+}
+"""
+
+FILL_TYPES = """
+
+PyFoo_Type TypeCache.Foo {"tp_init": "SomeInitMethod", "tp_iter": "SomeIterMethod"}
+PyBar_Type TypeCache.Bar {"tp_init": "SomeOtherInitMethod", "tp_as_number": True}
+PyBaz_Type TypeCache.Baz
+"""
+
+EXPECTED_FILL_TYPES = USINGS + """
+namespace Ironclad
+{
+    public partial class Python25Mapper : Python25Api
+    {
+        public override void
+        Fill_PyFoo_Type(IntPtr ptr)
+        {
+            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetAddress("SomeInitMethod"));
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_iter", this.GetAddress("SomeIterMethod"));
+            this.map.Associate(ptr, TypeCache.Foo);
+        }
+
+        public override void
+        Fill_PyBar_Type(IntPtr ptr)
+        {
+            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetAddress("SomeOtherInitMethod"));
+            this.AddDefaultNumberMethods(ptr);
+            this.map.Associate(ptr, TypeCache.Bar);
+        }
+
+        public override void
+        Fill_PyBaz_Type(IntPtr ptr)
+        {
+            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
+
+            this.map.Associate(ptr, TypeCache.Baz);
         }
     }
 }

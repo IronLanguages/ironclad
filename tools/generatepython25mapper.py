@@ -41,11 +41,30 @@ def run():
     pythonsites_snippets = mapstrings(("name", "site"), PYTHONSITES_INFILE, PYTHONSITES_TEMPLATE)
     writefile(PYTHONSITES_OUTFILE, "\n\n".join(pythonsites_snippets))
     
-    c2py_types = mapstrings(("name", "type", "cast"), C2PY_INFILE, C2PY_TEMPLATE)
-    writefile(C2PY_OUTFILE, "\n\n".join(c2py_types))
+    c2py_snippets = mapstrings(("name", "type", "cast"), C2PY_INFILE, C2PY_TEMPLATE)
+    writefile(C2PY_OUTFILE, "\n\n".join(c2py_snippets))
     
-    py2c_types = mapstrings(("name", "converter", "type", "default", "coerce"), PY2C_INFILE, PY2C_TEMPLATE)
-    writefile(PY2C_OUTFILE, "\n\n".join(py2c_types))
+    py2c_snippets = mapstrings(("name", "converter", "type", "default", "coerce"), PY2C_INFILE, PY2C_TEMPLATE)
+    writefile(PY2C_OUTFILE, "\n\n".join(py2c_snippets))
+    
+    fill_types_snippets = []
+    for line in read_interesting_lines(FILL_TYPES_INFILE):
+        _input = line.split(None, 2)
+        _dict = dict(name=_input[0], type=_input[1])
+        
+        _extra_snippets = []
+        if len(_input) > 2:
+            _extra = eval(_input[-1])
+            for (k, v) in _extra.items():
+                if k == "tp_as_number":
+                    _extra_snippets.append(FILL_TYPES_NUMBERS)
+                else:
+                    _extra_snippets.append(FILL_TYPES_EXTRA_TEMPLATE % (k, v))
+        _dict["extra"] = '\n'.join(_extra_snippets)
+        
+        fill_types_snippets.append(FILL_TYPES_TEMPLATE % _dict)
+    writefile(FILL_TYPES_OUTFILE, "\n\n".join(fill_types_snippets))
+    
     
     
 
@@ -61,6 +80,8 @@ C2PY_INFILE = "numbers_convert_c2py"
 C2PY_OUTFILE = "../Python25mapper_numbers_convert_c2py.Generated.cs"
 PY2C_INFILE = "numbers_convert_py2c"
 PY2C_OUTFILE = "../Python25mapper_numbers_convert_py2c.Generated.cs"
+FILL_TYPES_INFILE = "fill_types"
+FILL_TYPES_OUTFILE = "../Python25mapper_fill_types.Generated.cs"
 
 FILE_TEMPLATE = """
 using System;
@@ -70,6 +91,7 @@ using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 using Microsoft.Scripting.Math;
+using Ironclad.Structs;
 
 namespace Ironclad
 {
@@ -139,6 +161,21 @@ PY2C_TEMPLATE = """\
                 return %(default)s;
             }
         }"""
+
+FILL_TYPES_TEMPLATE = """\
+        public override void
+        Fill_%(name)s(IntPtr ptr)
+        {
+            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
+%(extra)s
+            this.map.Associate(ptr, %(type)s);
+        }"""
+
+FILL_TYPES_NUMBERS = """\
+            this.AddDefaultNumberMethods(ptr);"""
+
+FILL_TYPES_EXTRA_TEMPLATE = """\
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "%s", this.GetAddress("%s"));"""
 
 if __name__ == "__main__":
     run()
