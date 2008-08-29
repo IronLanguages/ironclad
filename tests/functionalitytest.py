@@ -78,6 +78,7 @@ class ExternalFunctionalityTest(TestCase):
     def testImportHookSimple(self):
         testDir = self.getTestDir()
         self.write(os.path.join(testDir, 'test.py'), dedent("""\
+            import sys
             import ironclad
             import bz2
             assert bz2.compress(%(uncompressed)r) == %(compressed)r
@@ -110,6 +111,21 @@ class ExternalFunctionalityTest(TestCase):
             ironclad.shutdown()
             """) % (bz2i__file__end, bz2ii__file__end)
         )
+        
+        self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
+        shutil.rmtree(testDir)
+
+
+    def testImportHookSysStateAfterImport(self):
+        testDir = self.getTestDir()
+        self.write(os.path.join(testDir, 'test.py'), dedent("""\
+            import ironclad
+            import bz2
+            import sys
+            assert sys.executable != None
+            assert sys.__displayhook__ == sys.displayhook
+            ironclad.shutdown()
+            """))
         
         self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
         shutil.rmtree(testDir)

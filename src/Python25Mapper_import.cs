@@ -1,7 +1,9 @@
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 
 using IronPython.Runtime;
+using IronPython.Runtime.Calls;
 
 using Microsoft.Scripting.Hosting;
 using Microsoft.Scripting.Runtime;
@@ -25,10 +27,22 @@ namespace Ironclad
         {
             return this.GetPythonContext().SystemStateModules[name];
         }
-        
+
+        private void
+        MessWithSys()
+        {
+            // have not worked out how to test this -- cannot induce the mising 
+            // executable, except during numpy import (er, before any of numpy
+            // is executed...), but it definitely happens and is very upsetting.
+            object sys = this.GetModuleScope("sys");
+            Builtin.setattr(DefaultContext.Default, sys, "executable",
+                Assembly.GetEntryAssembly().Location);
+        }
+
         public object
         Import(string name)
         {
+            this.MessWithSys();
             if (this.GetPythonContext().SystemStateModules.ContainsKey(name))
             {
                 return this.GetModuleScope(name);
@@ -38,13 +52,11 @@ namespace Ironclad
             {
                 Console.WriteLine(@"Detected numpy import; faking out modules:
   parser
-  pydoc
   mmap
   urllib2
   ctypes
   numpy.ma");
                 this.CreateModule("parser");
-                this.CreateModule("pydoc");
                 this.CreateModule("mmap");
                 
                 PythonModule urllib2 = this.CreateModule("urllib2");
