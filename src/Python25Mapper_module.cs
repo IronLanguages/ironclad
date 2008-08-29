@@ -73,7 +73,7 @@ namespace Ironclad
 
             StringBuilder moduleCode = new StringBuilder();
             moduleCode.Append(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE); // eww
-            this.GenerateFunctions(moduleCode, methods, methodTable);
+            CallableBuilder.GenerateFunctions(moduleCode, methods, methodTable);
 
             if (this.importName != "")
             {

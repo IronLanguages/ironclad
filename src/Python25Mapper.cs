@@ -38,15 +38,14 @@ namespace Ironclad
         }
     }
 
+    internal delegate void ActualiseDelegate(IntPtr typePtr);
 
     public partial class Python25Mapper : Python25Api, IDisposable
     {
-        private bool alive = false;
         private ScriptEngine engine;
         private StubReference stub;
         private PydImporter importer;
         private IAllocator allocator;
-        private InterestingPtrMap map = new InterestingPtrMap();
 
         private PythonModule scratchModule;
         private object trivialObjectSubclass;
@@ -54,21 +53,23 @@ namespace Ironclad
         private object dispatcherClass;
         private object dispatcherLock;
 
-        private List<IntPtr> tempObjects = new List<IntPtr>();
-        private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
+        private bool alive = false;
+        private InterestingPtrMap map = new InterestingPtrMap();
+        private Dictionary<IntPtr, ActualiseDelegate> actualisableTypes = new Dictionary<IntPtr, ActualiseDelegate>();
         private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
         private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();
+        private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
+        private List<IntPtr> tempObjects = new List<IntPtr>();
+
         private LocalDataStoreSlot threadDictStore = Thread.AllocateDataSlot();
         private LocalDataStoreSlot threadGILStore = Thread.AllocateDataSlot();
-
         // TODO: this should probably be thread-local too
         private object _lastException = null;
 
-        private StupidSet notInterpretableTypes = new StupidSet();
         // one day, perhaps, this 'set' will be empty
         private StupidSet unknownNames = new StupidSet();
 
-        // TODO must be a better way to handle imports...
+        // TODO: must be a better way to handle imports...
         private string importName = "";
         private string importPath = null;
         
@@ -222,40 +223,26 @@ namespace Ironclad
         private void
         AttemptToMap(IntPtr ptr)
         {
-            if (this.map.HasPtr(ptr) || ptr == IntPtr.Zero)
+            if (this.map.HasPtr(ptr))
             {
                 return;
+            }
+
+            if (ptr == IntPtr.Zero)
+            {
+                throw new CannotInterpretException(
+                    String.Format("cannot map IntPtr.Zero"));
             }
 
             IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyTypeObject), "ob_type");
             this.AttemptToMap(typePtr);
 
-            if (typePtr == IntPtr.Zero || this.notInterpretableTypes.Contains(typePtr))
+            if (!this.actualisableTypes.ContainsKey(typePtr))
             {
-                throw new CannotInterpretException(String.Format("cannot translate object at {0} with type at {1}", ptr, typePtr));
+                throw new CannotInterpretException(
+                    String.Format("cannot map object at {0} with type at {1}", ptr.ToString("x"), typePtr.ToString("x")));
             }
-
-            if (typePtr == this.PyType_Type)
-            {
-                this.ActualiseType(ptr);
-                return;
-            }
-
-            if (typePtr == this.PyList_Type ||
-                typePtr == this.PyString_Type ||
-                typePtr == this.PyTuple_Type ||
-                typePtr == this.PyFloat_Type ||
-                typePtr == this.PyInt_Type)
-            {
-                throw new NotImplementedException("trying to interpret a string, list, or tuple from unmapped unmanaged memory");
-            }
-
-            object obj = PythonCalls.Call(this.trivialObjectSubclass);
-            Builtin.setattr(DefaultContext.Default, obj, "_instancePtr", ptr);
-            Builtin.setattr(DefaultContext.Default, obj, "__class__", this.Retrieve(typePtr));
-            this.StoreBridge(ptr, obj);
-            this.IncRef(ptr);
-            GC.KeepAlive(obj); // please test me, if you can work out how to
+            this.actualisableTypes[typePtr](ptr);
         }
 
         
