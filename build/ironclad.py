@@ -24,5 +24,8 @@ for path in sys.path:
 sys.path_hooks.append(Importer)
 sys.path_importer_cache.clear()
 
+# required for numpy; should be fixed in ipy at some point
+sys.__displayhook__ = sys.displayhook
+
 def shutdown():
     _mapper.Dispose()
