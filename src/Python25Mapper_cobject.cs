@@ -48,8 +48,7 @@ namespace Ironclad
         public override IntPtr
         PyCObject_AsVoidPtr(IntPtr cobjPtr)
         {
-            IntPtr cobjData = CPyMarshal.ReadPtrField(cobjPtr, typeof(PyCObject), "cobject");
-            return cobjData;
+            return CPyMarshal.ReadPtrField(cobjPtr, typeof(PyCObject), "cobject");
         }
     
         public void

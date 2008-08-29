@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
+using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
@@ -17,7 +18,6 @@ namespace Ironclad
         public override void
         Fill_PyBaseObject_Type(IntPtr address)
         {
-            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_init", this.GetAddress("PyBaseObject_Init"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_alloc", this.GetAddress("PyType_GenericAlloc"));
@@ -39,7 +39,6 @@ namespace Ironclad
         public override void
         Fill_PyNone_Type(IntPtr address)
         {
-            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.None);
         }
@@ -47,7 +46,6 @@ namespace Ironclad
         public override void
         Fill_PySlice_Type(IntPtr address)
         {
-            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PySlice_Dealloc"));
             this.map.Associate(address, Builtin.slice);
@@ -56,9 +54,8 @@ namespace Ironclad
         public override void
         Fill_PyEllipsis_Type(IntPtr address)
         {
-            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            // surely there's a better way...
+            // surely there's a better way to get the Ellipsis object...
             object ellipsisType = PythonCalls.Call(Builtin.type, new object[] { PythonOps.Ellipsis });
             this.map.Associate(address, ellipsisType);
         }
@@ -66,7 +63,6 @@ namespace Ironclad
         public override void 
         Fill_PyFile_Type(IntPtr address)
         {
-            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.PythonFile);
         }
@@ -74,7 +70,6 @@ namespace Ironclad
         public override void
         Fill_PyInt_Type(IntPtr address)
         {
-            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.AddDefaultNumberMethods(address);
             this.map.Associate(address, TypeCache.Int32);
@@ -83,7 +78,6 @@ namespace Ironclad
         public override void
         Fill_PyBool_Type(IntPtr address)
         {
-            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_base", this.PyInt_Type);
             this.map.Associate(address, TypeCache.Boolean);
@@ -92,7 +86,6 @@ namespace Ironclad
         public override void
         Fill_PyLong_Type(IntPtr address)
         {
-            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.AddDefaultNumberMethods(address);
             this.map.Associate(address, TypeCache.BigInteger);
@@ -101,7 +94,6 @@ namespace Ironclad
         public override void
         Fill_PyFloat_Type(IntPtr address)
         {
-            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.AddDefaultNumberMethods(address);
             this.map.Associate(address, TypeCache.Double);
@@ -110,7 +102,6 @@ namespace Ironclad
         public override void
         Fill_PyComplex_Type(IntPtr address)
         {
-            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.Complex64);
         }
@@ -118,7 +109,6 @@ namespace Ironclad
         public override void 
         Fill_PyCObject_Type(IntPtr address)
         {
-            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_dealloc", this.GetAddress("PyCObject_Dealloc"));
             this.map.Associate(address, typeof(OpaquePyCObject));
@@ -127,7 +117,6 @@ namespace Ironclad
         public override void
         Fill_PyDict_Type(IntPtr address)
         {
-            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, TypeCache.Dict);
         }
@@ -158,7 +147,6 @@ namespace Ironclad
         public override void
         Fill_PySeqIter_Type(IntPtr address)
         {
-            this.notInterpretableTypes.Add(address);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             this.map.Associate(address, typeof(ItemEnumerator));
         }
@@ -197,8 +185,9 @@ namespace Ironclad
             this.PyType_Ready(this.PySlice_Type);
             this.PyType_Ready(this.PyEllipsis_Type);
             this.PyType_Ready(this.PySeqIter_Type);
+
+            this.actualisableTypes[this.PyType_Type] = new ActualiseDelegate(this.ActualiseType);
         }
-        
         
         public override int
         PyType_IsSubtype(IntPtr subtypePtr, IntPtr typePtr)
@@ -307,12 +296,27 @@ namespace Ironclad
             
             return newInstance;
         }
+
+
+        private void
+        ActualiseCPyObject(IntPtr ptr)
+        {
+            IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
+            object obj = PythonCalls.Call(this.trivialObjectSubclass);
+            Builtin.setattr(DefaultContext.Default, obj, "_instancePtr", ptr);
+            Builtin.setattr(DefaultContext.Default, obj, "__class__", this.Retrieve(typePtr));
+            this.StoreBridge(ptr, obj);
+            this.IncRef(ptr);
+            GC.KeepAlive(obj); // please test me, if you can work out how to
+        }
+
         
-        
-        private void ActualiseType(IntPtr typePtr)
+        private void 
+        ActualiseType(IntPtr typePtr)
         {
             this.PyType_Ready(typePtr);
             this.GenerateClass(typePtr);
+            this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseCPyObject);
         }
     }
 }

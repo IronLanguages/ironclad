@@ -110,7 +110,7 @@ namespace Ironclad
             }
             string __name__ = null;
             string __module__ = null;
-            this.ExtractNameModule(name, ref __name__, ref __module__);
+            CallableBuilder.ExtractNameModule(name, ref __name__, ref __module__);
 
             string excCode = String.Format(CodeSnippets.NEW_EXCEPTION, __name__, __module__);
             this.ExecInModule(excCode, this.scratchModule);

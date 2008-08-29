@@ -12,7 +12,7 @@ from System import Int32, IntPtr, NullReferenceException, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import (
-    BadRefCountException, CPyMarshal, CPython_destructor_Delegate, HGlobalAllocator, Python25Mapper, 
+    BadRefCountException, CannotInterpretException, CPyMarshal, CPython_destructor_Delegate, HGlobalAllocator, Python25Mapper, 
     Unmanaged, UnmanagedDataMarker
 )
 from Ironclad.Structs import PyObject, PyTypeObject
@@ -414,10 +414,10 @@ class Python25Mapper_References_Test(TestCase):
         allocator = GetDoNothingTestAllocator([])
         mapper = Python25Mapper(allocator)
 
-        self.assertRaises(KeyError, lambda: mapper.IncRef(IntPtr.Zero))
-        self.assertRaises(KeyError, lambda: mapper.DecRef(IntPtr.Zero))
-        self.assertRaises(KeyError, lambda: mapper.Retrieve(IntPtr.Zero))
-        self.assertRaises(KeyError, lambda: mapper.RefCount(IntPtr.Zero))
+        self.assertRaises(CannotInterpretException, lambda: mapper.IncRef(IntPtr.Zero))
+        self.assertRaises(CannotInterpretException, lambda: mapper.DecRef(IntPtr.Zero))
+        self.assertRaises(CannotInterpretException, lambda: mapper.Retrieve(IntPtr.Zero))
+        self.assertRaises(CannotInterpretException, lambda: mapper.RefCount(IntPtr.Zero))
         self.assertEquals(mapper.HasPtr(IntPtr.Zero), False)
         mapper.Dispose()
 
