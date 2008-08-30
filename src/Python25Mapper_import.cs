@@ -37,6 +37,11 @@ namespace Ironclad
             object sys = this.GetModuleScope("sys");
             Builtin.setattr(DefaultContext.Default, sys, "executable",
                 Assembly.GetEntryAssembly().Location);
+
+            // it seems that the same thing happens to __displayhook__, which is
+            // why I keep resetting it here.
+            Builtin.setattr(DefaultContext.Default, sys, "__displayhook__",
+                Builtin.getattr(DefaultContext.Default, sys, "displayhook"));
         }
 
         public object
