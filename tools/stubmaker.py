@@ -1,9 +1,11 @@
 
 import os
+import sys
 
 from System.Diagnostics import Process, ProcessStartInfo
 
 def popen(executable, arguments):
+    global process # XXX: keep it alive
     processStartInfo = ProcessStartInfo(executable, arguments)
     processStartInfo.UseShellExecute = False
     processStartInfo.CreateNoWindow = True
@@ -28,7 +30,13 @@ class StubMaker(object):
 
 
     def _read_symbol_table(self, source):
-        self._read_symbol_table_pexports(source)
+        if os.name == 'nt':
+            self._read_symbol_table_pexports(source)
+        elif os.name == 'posix':
+            self._read_symbol_table_objdump(source)
+        else:
+            print 'Platform', os.name, 'is not supported'
+            sys.exit(1)
 
 
     def _read_symbol_table_pexports(self, source):
@@ -44,6 +52,32 @@ class StubMaker(object):
                     self.functions.append(parts[0])
                 else:
                     self.ptr_data.append(parts[0])
+        finally:
+            f.close()
+
+
+    def _read_symbol_table_objdump(self, source):
+        f = popen('objdump', '-T %s' % source)
+        try:
+            for line in f:
+                if line.strip() == 'DYNAMIC SYMBOL TABLE:':
+                    break
+            for line in f:
+                line = line.strip()
+                if not line:
+                    break
+                flag = line[15]
+                fields = line[17:].split()
+                if len(fields) == 3:
+                    section, size, name = fields
+                if len(fields) == 4:
+                    section, size, version, name = fields
+                if section not in ('.bss', '.data', '.text'):
+                    continue
+                if flag == 'F':
+                    self.functions.append(name)
+                if flag == 'O':
+                    self.ptr_data.append(name)
         finally:
             f.close()
 
