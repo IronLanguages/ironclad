@@ -1,6 +1,6 @@
 
 
-Ironclad's build process deserves a brief discussion. At the moment, it only works on 32-bit Windows, and requires:
+Ironclad's build process deserves a brief discussion. On 32-bit Windows, it requires:
 
 * ipy from IronPython 2.0b1
 * mingw (including gcc and make)
@@ -9,6 +9,17 @@ Ironclad's build process deserves a brief discussion. At the moment, it only wor
 * .NET 2.0 (csc, specifically)
 * Python 2.5
 * msvcr71.dll (distributed with Python 2.5)
+
+On 32-bit Linux, requirements are:
+
+* ipy from IronPython 2.0b1
+* gcc and make
+* objdump
+* nasm
+* "recent" Mono (with gmcs compiler)
+* Python 2.5, with -dev package
+
+Ironclad's build process is configured by the file Makefile.config in the top-level directory. Change the value of variables NET and OS appropriately.
 
 Running make in the top-level directory should do the following:
 
