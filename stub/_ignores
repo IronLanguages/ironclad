@@ -35,3 +35,17 @@ PyOS_vsnprintf
 _PyParser_TokenNames
 _Py_SwappedOp
 _PyLong_DigitValue
+
+PyDictIterItem_Type
+PyDictIterKey_Type
+PyDictIterValue_Type
+PyListIter_Type
+PyListRevIter_Type
+PyStructSequence_UnnamedField
+PyTupleIter_Type
+_PyGC_generation0
+_PyImport_Filetab
+_PyImport_Inittab
+_PyParser_Grammar
+_Py_abstract_hack
+_Py_cobject_hack
