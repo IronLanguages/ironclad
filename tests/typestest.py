@@ -234,7 +234,25 @@ class Types_Test(TestCase):
         for deallocFunc in userTypeDeallocs:
             deallocFunc()
         deallocTypes()
-            
+
+
+    def testStoreUnknownType(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+
+        class C(int):
+            pass
+        cPtr = mapper.Store(C)
+        self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "ob_type"), mapper.PyType_Type)
+        self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_base"), mapper.PyInt_Type)
+        self.assertEquals(CPyMarshal.ReadIntField(cPtr, PyTypeObject, "ob_refcnt"), 1)
+
+        baseFlags = CPyMarshal.ReadIntField(cPtr, PyTypeObject, "tp_flags")
+        self.assertEquals(baseFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready newly-stored type")
+
+        mapper.Dispose()
+        deallocTypes()
+  
 
 FIELDS = (
     "tp_alloc",
@@ -249,7 +267,7 @@ FIELDS = (
     "tp_call",
     "tp_as_number",
     "tp_as_sequence",
-    # more to come, no doubt
+    "tp_as_mapping"
 )
 BASE_FIELD = IntPtr(11111)
 KEEP_FIELD = IntPtr(22222)
@@ -297,9 +315,13 @@ class PyType_Ready_InheritTest(TestCase):
         
         
     def testPyType_Ready_InheritsFields(self):
-        # TODO: multiple inheritance ignored here for now
+        # TODO: multiple inheritance ignored here for now; also ignored is
+        # the likelihood that some type will want to inherit tp_as_foo and
+        # overwrite some fields (ie, we need to *copy* tp_as_foo fields,
+        # and probably some others, but currently we don't)
         for field in FIELDS:
             self.assertInherits(field)
+        
         
     
     def testPyType_Ready_MissingBaseType(self):

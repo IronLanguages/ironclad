@@ -113,8 +113,8 @@ class StubMaker(object):
         _init_function = '    jumptable[%s] = address_getter("%s");\n'
 
         result = [_boilerplate % len(self.functions)]
-        result.extend([_init_ptr_data % (s, s) for s in self.ptr_data])
         result.extend([_init_static_data % (s, s) for s in self.static_data])
+        result.extend([_init_ptr_data % (s, s) for s in self.ptr_data])
         for i, name in enumerate(self.functions):
             result.append(_init_function % (i, name))
         result.append('}\n')

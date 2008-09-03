@@ -521,14 +521,15 @@ class Python25Mapper_NoneTest(TestCase):
     
     def testFillNone(self):
         mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
         
-        nonePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
-        mapper.Fill__Py_NoneStruct(nonePtr)
+        nonePtr = mapper._Py_NoneStruct
         noneStruct = Marshal.PtrToStructure(nonePtr, PyObject)
         self.assertEquals(noneStruct.ob_refcnt, 1, "bad refcount")
-        self.assertEquals(noneStruct.ob_type, IntPtr.Zero, "unexpected type")
+        self.assertEquals(noneStruct.ob_type, mapper.PyNone_Type, "unexpected type")
+        
         mapper.Dispose()
-        Marshal.FreeHGlobal(nonePtr)
+        deallocTypes()
     
     
     def testStoreNone(self):

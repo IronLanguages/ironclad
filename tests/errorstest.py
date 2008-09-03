@@ -1,6 +1,7 @@
 
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
+from tests.utils.memory import CreateTypes
 
 import System
 from System import IntPtr
@@ -67,6 +68,7 @@ class ErrFunctionsTest(TestCase):
     
     def testPyErr_FetchRestoreError(self):
         mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
         
         mapper.LastException = Exception("borked")
         space = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 3)
@@ -90,11 +92,15 @@ class ErrFunctionsTest(TestCase):
         self.assertEquals(type(mapper.LastException), Exception)
         self.assertEquals(str(mapper.LastException), "borked")
         
+        mapper.Dispose()
         Marshal.FreeHGlobal(space)
+        deallocTypes()
     
     
     def testPyErr_FetchRestoreNoError(self):
         mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
         space = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 3)
         typePtrPtr = space
         valuePtrPtr = CPyMarshal.Offset(typePtrPtr, CPyMarshal.PtrSize)
@@ -115,7 +121,9 @@ class ErrFunctionsTest(TestCase):
         mapper.PyErr_Restore(typePtr, valuePtr, tbPtr)
         self.assertEquals(mapper.LastException, None)
         
+        mapper.Dispose()
         Marshal.FreeHGlobal(space)
+        deallocTypes()
         
 
     def testPyErr_Print(self):
@@ -141,6 +149,7 @@ class ErrFunctionsTest(TestCase):
 
     def testPyErr_NewException(self):
         mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
         
         newExcPtr = mapper.PyErr_NewException("foo.bar.bazerror", IntPtr.Zero, IntPtr.Zero)
         self.assertEquals(mapper.RefCount(newExcPtr), 2)
@@ -151,10 +160,12 @@ class ErrFunctionsTest(TestCase):
         self.assertEquals(issubclass(newExc, Exception), True)
         
         mapper.Dispose()
+        deallocTypes()
 
 
     def assertSetStringSetsCorrectError(self, name):
         mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
         errorPtr = mapper.GetAddress("PyExc_" + name)
         self.assertNotEquals(errorPtr, IntPtr.Zero, "failed to find %s" % name)
 
@@ -168,6 +179,7 @@ class ErrFunctionsTest(TestCase):
         else:
             self.fail("got no exception")
         mapper.Dispose()
+        deallocTypes()
         
 
     def testSetsMostErrors(self):
