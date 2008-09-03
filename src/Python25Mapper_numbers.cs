@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 using Microsoft.Scripting.Math;
 
 using IronPython.Runtime;
-using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
 
 using Ironclad.Structs;

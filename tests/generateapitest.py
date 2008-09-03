@@ -94,7 +94,7 @@ namespace Ironclad
     {
         protected Dictionary<string, Delegate> dgtMap = new Dictionary<string, Delegate>();
         private Dictionary<string, IntPtr> dataMap = new Dictionary<string, IntPtr>();
-    
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void CPython_null_Delegate();
 
@@ -112,14 +112,14 @@ namespace Ironclad
             return IntPtr.Zero;
         }
 
-        public void SomeOther_NotImplemented_Function()
-        {
-            throw new NotImplementedException("called SomeOther_NotImplemented_Function -- stack is probably corrupt now");
-        }
-
         public void Some_NotImplemented_Function()
         {
             throw new NotImplementedException("called Some_NotImplemented_Function -- stack is probably corrupt now");
+        }
+
+        public void SomeOther_NotImplemented_Function()
+        {
+            throw new NotImplementedException("called SomeOther_NotImplemented_Function -- stack is probably corrupt now");
         }
 
         public virtual IntPtr Make_PyExc_SystemError() { return IntPtr.Zero; }
@@ -155,11 +155,11 @@ namespace Ironclad
                 case "Py_InitModule4":
                     this.dgtMap[name] = new Py_InitModule4_Delegate(this.Py_InitModule4);
                     break;
-                case "SomeOther_NotImplemented_Function":
-                    this.dgtMap[name] = new CPython_null_Delegate(this.SomeOther_NotImplemented_Function);
-                    break;
                 case "Some_NotImplemented_Function":
                     this.dgtMap[name] = new CPython_null_Delegate(this.Some_NotImplemented_Function);
+                    break;
+                case "SomeOther_NotImplemented_Function":
+                    this.dgtMap[name] = new CPython_null_Delegate(this.SomeOther_NotImplemented_Function);
                     break;
                 case "PyExc_SystemError":
                     this.dataMap[name] = this.Make_PyExc_SystemError();

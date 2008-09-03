@@ -40,7 +40,7 @@ class GeneratePython25MapperTest(TestCase):
             write("exceptions", EXCEPTIONS)
             write("builtin_exceptions", BUILTIN_EXCEPTIONS)
             write("store_dispatch", STORE)
-            write("numbers_pythonsites", NUMBERS_PYTHONSITES)
+            write("numbers_operator", NUMBERS_OPERATOR)
             write("numbers_convert_c2py", NUMBERS_CONVERT_C2PY)
             write("numbers_convert_py2c", NUMBERS_CONVERT_PY2C)
             write("fill_types", FILL_TYPES)
@@ -55,7 +55,7 @@ class GeneratePython25MapperTest(TestCase):
                               "generated builtin exceptions wrong")
             self.assertEquals(read("Python25Mapper_store_dispatch.Generated.cs"), EXPECTED_STORE, 
                               "generated wrong")
-            self.assertEquals(read("Python25Mapper_numbers_PythonSites.Generated.cs"), EXPECTED_NUMBERS_PYTHONSITES, 
+            self.assertEquals(read("Python25Mapper_numbers_operator.Generated.cs"), EXPECTED_NUMBERS_OPERATOR, 
                               "generated wrong")
             self.assertEquals(read("Python25Mapper_numbers_convert_c2py.Generated.cs"), EXPECTED_NUMBERS_CONVERT_C2PY, 
                               "generated wrong")
@@ -71,6 +71,7 @@ class GeneratePython25MapperTest(TestCase):
 USINGS = """
 using System;
 using System.Collections;
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
@@ -147,12 +148,12 @@ namespace Ironclad
 }
 """
 
-NUMBERS_PYTHONSITES = """
-PyNumber_Add Add
-PyNumber_Remainder Mod
+NUMBERS_OPERATOR = """
+PyNumber_Add add
+PyNumber_Remainder mod
 """
 
-EXPECTED_NUMBERS_PYTHONSITES = USINGS + """
+EXPECTED_NUMBERS_OPERATOR = USINGS + """
 namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
@@ -162,7 +163,7 @@ namespace Ironclad
         {
             try
             {
-                object result = PythonSites.Add(this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                object result = PythonOperator.add(DefaultContext.Default, this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
                 return this.Store(result);
             }
             catch (Exception e)
@@ -177,7 +178,7 @@ namespace Ironclad
         {
             try
             {
-                object result = PythonSites.Mod(this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                object result = PythonOperator.mod(DefaultContext.Default, this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
                 return this.Store(result);
             }
             catch (Exception e)

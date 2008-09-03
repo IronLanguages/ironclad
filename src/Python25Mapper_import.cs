@@ -2,10 +2,11 @@ using System;
 using System.Reflection;
 using System.Collections.Generic;
 
+using IronPython.Hosting;
 using IronPython.Runtime;
-using IronPython.Runtime.Calls;
 
 using Microsoft.Scripting.Hosting;
+using Microsoft.Scripting.Hosting.Providers;
 using Microsoft.Scripting.Runtime;
 
 namespace Ironclad
@@ -22,65 +23,52 @@ namespace Ironclad
             this.importPath = null;
         }
 
-        public object 
-        GetModuleScope(string name)
-        {
-            return this.GetPythonContext().SystemStateModules[name];
-        }
-
         private void
         MessWithSys()
         {
             // have not worked out how to test this -- cannot induce the mising 
             // executable, except during numpy import (er, before any of numpy
             // is executed...), but it definitely happens and is very upsetting.
-            object sys = this.GetModuleScope("sys");
-            Builtin.setattr(DefaultContext.Default, sys, "executable",
-                Assembly.GetEntryAssembly().Location);
+            ScriptScope sys = Python.GetSysModule(this.Engine);
+            sys.SetVariable("executable", Assembly.GetEntryAssembly().Location);
 
             // it seems that the same thing happens to __displayhook__, which is
             // why I keep resetting it here.
-            Builtin.setattr(DefaultContext.Default, sys, "__displayhook__",
-                Builtin.getattr(DefaultContext.Default, sys, "displayhook"));
+            sys.SetVariable("__displayhook__", sys.GetVariable("displayhook"));
         }
 
         public object
         Import(string name)
         {
             this.MessWithSys();
-            if (this.GetPythonContext().SystemStateModules.ContainsKey(name))
+            object module = this.GetModule(name);
+            if (module != null)
             {
-                return this.GetModuleScope(name);
+                return module;
             }
             
             if (name == "numpy")
             {
-                Console.WriteLine(@"Detected numpy import; faking out modules:
-  parser
-  mmap
-  urllib2
-  ctypes
-  numpy.ma");
+                Console.WriteLine(@"Detected numpy import, faking out modules: parser, mmap, urllib2, ctypes, numpy.ma");
                 this.CreateModule("parser");
                 this.CreateModule("mmap");
-                
-                PythonModule urllib2 = this.CreateModule("urllib2");
-                ScriptScope scope = this.GetModuleScriptScope(urllib2);
-                scope.SetVariable("urlopen", new Object());
-                scope.SetVariable("URLError", new Object());
-                
-                // ctypeslib specifically handles ctypes being None
-                this.GetPythonContext().SystemStateModules["ctypes"] = null;
-                
                 this.CreateModule("numpy.ma");
                 
+                ScriptScope urllib2 = this.CreateModule("urllib2");
+                urllib2.SetVariable("urlopen", new Object());
+                urllib2.SetVariable("URLError", new Object());
+                
+                // ctypeslib specifically handles ctypes being None
+                ScriptScope sys = Python.GetSysModule(this.Engine);
+                PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
+                modules["ctypes"] = null;
             }
             
             this.importName = name;
             this.ExecInModule(String.Format("import {0}", name), this.scratchModule);
             this.importName = "";
-            
-            return this.GetModuleScope(name);
+    
+            return this.GetModule(name);
         }
         
         public override IntPtr
@@ -96,13 +84,16 @@ namespace Ironclad
             return this.Store(this.Import(name));
         }
 
-        private PythonModule
+        private ScriptScope
         CreateModule(string name)
         {
-            PythonContext ctx = this.GetPythonContext();
-            if (!ctx.SystemStateModules.ContainsKey(name))
+            if (this.GetModule(name) == null)
             {
-                return ctx.CreateModule(name, name, new Dictionary<string, object>(), ModuleOptions.PublishModule);
+                PythonDictionary __dict__ = new PythonDictionary();
+                __dict__["__name__"] = name;
+                ScriptScope module = this.engine.CreateScope(__dict__);
+                this.AddModule(name, module);
+                return module;
             }
             return null;
         }
@@ -111,15 +102,14 @@ namespace Ironclad
         CreateModulesContaining(string name)
         {
             this.CreateModule(name);
-            object innerScope = this.GetModuleScope(name);
+            object innerScope = this.GetModule(name);
 
             int lastDot = name.LastIndexOf('.');
             if (lastDot != -1)
             {
                 this.CreateModulesContaining(name.Substring(0, lastDot));
-                Scope outerScope = (Scope)this.GetModuleScope(name.Substring(0, lastDot));
-                ScriptScope outerScriptScope = this.engine.CreateScope(outerScope.Dict);
-                outerScriptScope.SetVariable(name.Substring(lastDot + 1), innerScope);
+                ScriptScope outerScope = this.GetModuleScriptScope((Scope)this.GetModule(name.Substring(0, lastDot)));
+                outerScope.SetVariable(name.Substring(lastDot + 1), innerScope);
             }
         }
 
@@ -127,13 +117,7 @@ namespace Ironclad
         PyImport_AddModule(string name)
         {
             this.CreateModulesContaining(name);
-            return this.Store(this.GetModuleScope(name));
-        }
-        
-        public void 
-        AddToPath(string path)
-        {
-            this.GetPythonContext().AddToPath(path);
+            return this.Store(this.GetModule(name));
         }
     }
 }

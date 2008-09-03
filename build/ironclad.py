@@ -19,8 +19,6 @@ class Importer(object):
         return _mapper.Import(fullname)
 
 import sys
-for path in sys.path:
-    _mapper.AddToPath(path)
 sys.path_hooks.append(Importer)
 sys.path_importer_cache.clear()
 

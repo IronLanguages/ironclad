@@ -11,6 +11,7 @@ from Ironclad import Python25Mapper
 from TestUtils import ExecUtils
 
 from System.Diagnostics import Process
+from System.Threading import Thread
 
 
 bz2_doc = """The python bz2 module provides a comprehensive interface for
@@ -107,13 +108,11 @@ class ExternalFunctionalityTest(TestCase):
             import nastypackage.another.bz2 as testbz2ii
             assert testbz2i.__file__.endswith(%r)
             assert testbz2ii.__file__.endswith(%r)
-            
             ironclad.shutdown()
             """) % (bz2i__file__end, bz2ii__file__end)
         )
         
         self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
-        shutil.rmtree(testDir)
 
 
     def testImportHookSysStateAfterImport(self):

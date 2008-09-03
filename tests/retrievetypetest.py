@@ -1056,7 +1056,7 @@ class NewInitDelTest(TestCase):
         deallocTypes()
     
     
-    def testLifetime(self):
+    def testObjectSurvives(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
 
@@ -1071,33 +1071,39 @@ class NewInitDelTest(TestCase):
         # from managed code; this shouldn't happen without a Store (which will IncRef)
         self.assertEquals(mapper.Store(obj), objptr)
         self.assertEquals(mapper.RefCount(objptr), 2)
-        
-        # unmanaged code grabs a reference to obj
         CPyMarshal.WriteIntField(objptr, PyObject, 'ob_refcnt', 3)
-        
-        # control passes back to managed code; this should DecRef
         mapper.DecRef(objptr)
-        self.assertEquals(mapper.RefCount(objptr), 2)
         
-        # managed code forgets obj for a bit
+        # managed code forgets obj for a while, while unmanaged code still holds a reference
         del obj
         gcwait()
         self.assertEquals(objref.IsAlive, True, "object died before its time")
         self.assertEquals(mapper.Retrieve(objptr), objref.Target, "mapping broken")
         
-        # unmanaged code forgets about obj too
-        CPyMarshal.WriteIntField(objptr, PyObject, 'ob_refcnt', 1)
+        mapper.Dispose()
+        deallocType()
+        deallocTypes()
+    
+    
+    def testObjectDies(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+
+        typePtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass'})
+        _type = mapper.Retrieve(typePtr)
         
-        # however, nothing happens to cause us to reexamine bridge ptrs
-        gcwait()
-        self.assertEquals(objref.IsAlive, True, "object died unexpectedly")
-        self.assertEquals(mapper.Retrieve(objptr), objref.Target, "mapping broken")
+        obj = _type()
+        objref = WeakReference(obj, True)
+        objptr = obj._instancePtr
         
-        # now, another (imaginary) bridge object gets destroyed, causing us to reexamine
-        mapper.CheckBridgePtrs()
+        # for unmanaged code to mess with ob_refcnt, it must have been passed a reference
+        # from managed code; this shouldn't happen without a Store (which will IncRef)
+        self.assertEquals(mapper.Store(obj), objptr)
+        self.assertEquals(mapper.RefCount(objptr), 2)
+        mapper.DecRef(objptr)
         
-        # and, after the next 2* GCs, objref disappears
-        # * 1 to notice it's collectable, 1 to actually collect it
+        # managed code forgets obj, no refs from unmanaged code
+        del obj
         gcwait()
         gcwait()
         self.assertEquals(objref.IsAlive, False, "object didn't die")
@@ -1382,7 +1388,8 @@ class InheritanceTest(TestCase):
         klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': base1Ptr, 'tp_bases': basesPtr})
         
         klass = mapper.Retrieve(klassPtr)
-        self.assertEquals(klass.__bases__, bases)
+        for base in bases:
+            self.assertEquals(issubclass(klass, base), True)
         self.assertEquals(mapper.RefCount(base1Ptr), 5, "subtype did not keep reference to bases")
         self.assertEquals(mapper.RefCount(base2Ptr), 4, "subtype did not keep reference to bases")
         self.assertEquals(CPyMarshal.ReadPtrField(base1Ptr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type 1")
@@ -1428,9 +1435,17 @@ class InheritanceTest(TestCase):
         klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': basePtr, 'tp_bases': basesPtr})
 
         klass = mapper.Retrieve(klassPtr)
-        self.assertEquals(klass.__bases__, bases)
+        for base in bases:
+            self.assertEquals(issubclass(klass, base), True)
+
+        unknownInstancePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        CPyMarshal.WriteIntField(unknownInstancePtr, PyObject, "ob_refcnt", 1)
+        CPyMarshal.WritePtrField(unknownInstancePtr, PyObject, "ob_type", klassPtr)
+        unknownInstance = mapper.Retrieve(unknownInstancePtr)
+        self.assertEquals(isinstance(unknownInstance, klass), True)
 
         mapper.Dispose()
+        Marshal.FreeHGlobal(unknownInstancePtr)
         deallocType()
         deallocBase()
         deallocTypes()

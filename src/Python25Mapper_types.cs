@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
-using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
@@ -41,8 +40,9 @@ namespace Ironclad
             IntPtr nmPtr = this.allocator.Alloc(nmSize);
             CPyMarshal.Zero(nmPtr, nmSize);
 
-            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_float", this.GetAddress("PyNumber_Float"));
             CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_int", this.GetAddress("PyNumber_Int"));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_long", this.GetAddress("PyNumber_Long"));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_float", this.GetAddress("PyNumber_Float"));
 
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_as_number", nmPtr);
         }
@@ -184,7 +184,8 @@ namespace Ironclad
         ActualiseCPyObject(IntPtr ptr)
         {
             IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
-            object obj = PythonCalls.Call(this.trivialObjectSubclass);
+            object actualiser = this.actualiseHelpers[typePtr];
+            object obj = PythonCalls.Call(actualiser);
             Builtin.setattr(DefaultContext.Default, obj, "_instancePtr", ptr);
             Builtin.setattr(DefaultContext.Default, obj, "__class__", this.Retrieve(typePtr));
             this.StoreBridge(ptr, obj);

@@ -83,7 +83,7 @@ namespace Ironclad
     {
         protected Dictionary<string, Delegate> dgtMap = new Dictionary<string, Delegate>();
         private Dictionary<string, IntPtr> dataMap = new Dictionary<string, IntPtr>();
-    
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void CPython_null_Delegate();
 
@@ -187,5 +187,6 @@ DATA_ITEM_CASE = """\
 
 if __name__ == "__main__":
     run()
+
 
 

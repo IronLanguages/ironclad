@@ -3,7 +3,6 @@ using System.Collections;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
-using IronPython.Runtime.Calls;
 using IronPython.Runtime.Types;
 
 using Ironclad.Structs;
@@ -38,7 +37,7 @@ namespace Ironclad
             if (dict is DictProxy)
             {
                 DictProxy proxy = (DictProxy)dict;
-                return proxy.__len__();
+                return proxy.__len__(DefaultContext.Default);
             }
             return dict.Keys.Count;
         }

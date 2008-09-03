@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 
 using IronPython.Runtime;
-using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
@@ -56,7 +55,7 @@ namespace Ironclad
             else
             {
                 IAttributesCollection kwargs = (IAttributesCollection)this.Retrieve(kwargsPtr);
-                result = PythonCalls.CallWithKeywordArgs(obj, argsArray, kwargs);
+                result = PythonCalls.CallWithKeywordArgs(DefaultContext.Default, obj, argsArray, kwargs);
             }
             
             return this.Store(result);
@@ -192,7 +191,7 @@ namespace Ironclad
             try
             {
                 object obj = this.Retrieve(objPtr);
-                return this.Store(Builtin.repr(obj));
+                return this.Store(Builtin.repr(DefaultContext.Default, obj));
 
             }
             catch (Exception e)

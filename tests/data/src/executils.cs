@@ -26,7 +26,7 @@ namespace TestUtils
         public static object
         GetPythonModule(ScriptEngine engine, string name)
         {
-            return GetPythonContext(engine).SystemStateModules[name];
+            return engine.Runtime.Globals.GetVariable(name);
         }
     }
 }
