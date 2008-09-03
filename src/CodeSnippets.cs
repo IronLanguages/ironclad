@@ -6,10 +6,13 @@ namespace Ironclad
 CPyMarshal = CPyMarshal() # eww
 ";
 
-        public const string TRIVIAL_OBJECT_SUBCLASS_CODE = @"
-class TrivialObjectSubclass(object):
-    def __del__(self):
-        pass
+        public const string FIX_math_log_log10_CODE = @"
+import math
+math._log = math.log
+math.log = lambda x: math._log(float(x))
+math._log10 = math.log10
+math.log10 = lambda x: math._log10(float(x))
+
 ";
 
         public const string NOARGS_FUNCTION_CODE = @"
