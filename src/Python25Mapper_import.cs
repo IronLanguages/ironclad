@@ -17,10 +17,8 @@ namespace Ironclad
         LoadModule(string path, string name)
         {
             this.importName = name;
-            this.importPath = path;
             this.importer.Load(path);
             this.importName = "";
-            this.importPath = null;
         }
 
         private void

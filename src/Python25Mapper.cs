@@ -72,7 +72,6 @@ namespace Ironclad
 
         // TODO: must be a better way to handle imports...
         private string importName = "";
-        private string importPath = null;
         
         public Python25Mapper() : this(null, Python.CreateEngine(), new HGlobalAllocator())
         {

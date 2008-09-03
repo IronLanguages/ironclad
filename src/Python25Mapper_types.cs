@@ -17,15 +17,18 @@ namespace Ironclad
         private IntPtr
         Store(PythonType _type)
         {
+            int typeSize = Marshal.SizeOf(typeof(PyTypeObject));
+            IntPtr typePtr = this.allocator.Alloc(typeSize);
+            CPyMarshal.Zero(typePtr, typeSize);
+
             object ob_type = PythonCalls.Call(DefaultContext.Default, Builtin.type, new object[] { _type });
             // TODO: handle multiple inheritance
             PythonTuple tp_bases = (PythonTuple)_type.__getattribute__(DefaultContext.Default, "__bases__");
             object tp_base = tp_bases[0];
-            
-            IntPtr typePtr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.Store(ob_type));
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", this.Store(tp_base));
+
             this.PyType_Ready(typePtr);
             this.map.Associate(typePtr, _type);
             return typePtr;
