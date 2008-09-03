@@ -240,12 +240,13 @@ class Types_Test(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
 
-        class C(int):
+        class C(object):
             pass
         cPtr = mapper.Store(C)
-        self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "ob_type"), mapper.PyType_Type)
-        self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_base"), mapper.PyInt_Type)
         self.assertEquals(CPyMarshal.ReadIntField(cPtr, PyTypeObject, "ob_refcnt"), 1)
+        self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "ob_type"), mapper.PyType_Type)
+        self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
+        self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_as_number"), IntPtr.Zero)
 
         baseFlags = CPyMarshal.ReadIntField(cPtr, PyTypeObject, "tp_flags")
         self.assertEquals(baseFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready newly-stored type")
