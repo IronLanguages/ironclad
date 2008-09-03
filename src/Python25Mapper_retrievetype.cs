@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 
 using IronPython.Runtime;
-using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
@@ -35,24 +34,26 @@ namespace Ironclad
                 {
                     this.UpdateMethodTableObj(cb.methodTable, _base);
                 }
-                cb.code.Append(CodeSnippets.CLASS_BASES_CODE);
+            }
+            if (tp_bases == null)
+            {
+                tp_bases = new PythonTuple(new object[] { tp_base });
             }
 
-            ScriptScope moduleScope = this.GetModuleScriptScope(this.scratchModule);
-            moduleScope.SetVariable("_ironclad_baseclass", tp_base);
-            moduleScope.SetVariable("_ironclad_metaclass", ob_type);
-            moduleScope.SetVariable("_ironclad_bases", tp_bases);
-
+            this.scratchModule.SetVariable("_ironclad_metaclass", ob_type);
+            this.scratchModule.SetVariable("_ironclad_bases", tp_bases);
             this.ExecInModule(cb.code.ToString(), this.scratchModule);
-            object klass = moduleScope.GetVariable<object>(cb.__name__);
 
-            object _dispatcher = PythonCalls.Call(this.dispatcherClass, new object[] { this, cb.methodTable });
+            object klass = this.scratchModule.GetVariable<object>(cb.__name__);
             Builtin.setattr(DefaultContext.Default, klass, "_typePtr", typePtr);
+            object _dispatcher = PythonCalls.Call(this.dispatcherClass, new object[] { this, cb.methodTable });
             Builtin.setattr(DefaultContext.Default, klass, "_dispatcher", _dispatcher);
-
             object typeDict = Builtin.getattr(DefaultContext.Default, klass, "__dict__");
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_dict", this.Store(typeDict));
 
+            object klass_actualiser = this.scratchModule.GetVariable<object>(cb.__name__ + "_actualiser");
+            this.actualiseHelpers[typePtr] = klass_actualiser;
+            
             this.map.Associate(typePtr, klass);
             this.IncRef(typePtr);
         }

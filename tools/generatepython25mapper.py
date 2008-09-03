@@ -38,8 +38,8 @@ def run():
     store_code = STORE_METHOD_TEMPLATE % "\n".join(store_snippets)
     writefile(STORE_OUTFILE, store_code)
     
-    pythonsites_snippets = mapstrings(("name", "site"), PYTHONSITES_INFILE, PYTHONSITES_TEMPLATE)
-    writefile(PYTHONSITES_OUTFILE, "\n\n".join(pythonsites_snippets))
+    operator_snippets = mapstrings(("name", "operator"), OPERATOR_INFILE, OPERATOR_TEMPLATE)
+    writefile(OPERATOR_OUTFILE, "\n\n".join(operator_snippets))
     
     c2py_snippets = mapstrings(("name", "type", "cast"), C2PY_INFILE, C2PY_TEMPLATE)
     writefile(C2PY_OUTFILE, "\n\n".join(c2py_snippets))
@@ -74,8 +74,8 @@ BUILTIN_EXCEPTIONS_INFILE = "builtin_exceptions"
 BUILTIN_EXCEPTIONS_OUTFILE = "../Python25Mapper_builtin_exceptions.Generated.cs"
 STORE_INFILE = "store_dispatch"
 STORE_OUTFILE = "../Python25Mapper_store_dispatch.Generated.cs"
-PYTHONSITES_INFILE = "numbers_pythonsites"
-PYTHONSITES_OUTFILE = "../Python25mapper_numbers_PythonSites.Generated.cs"
+OPERATOR_INFILE = "numbers_operator"
+OPERATOR_OUTFILE = "../Python25mapper_numbers_operator.Generated.cs"
 C2PY_INFILE = "numbers_convert_c2py"
 C2PY_OUTFILE = "../Python25mapper_numbers_convert_c2py.Generated.cs"
 PY2C_INFILE = "numbers_convert_py2c"
@@ -86,6 +86,7 @@ FILL_TYPES_OUTFILE = "../Python25mapper_fill_types.Generated.cs"
 FILE_TEMPLATE = """
 using System;
 using System.Collections;
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
@@ -124,13 +125,13 @@ STORE_METHOD_TEMPLATE = """\
 STORE_TYPE_TEMPLATE = """\
             if (obj is %(type)s) { return this.Store((%(type)s)obj); }"""
 
-PYTHONSITES_TEMPLATE = """\
+OPERATOR_TEMPLATE = """\
         public override IntPtr
         %(name)s(IntPtr arg1ptr, IntPtr arg2ptr)
         {
             try
             {
-                object result = PythonSites.%(site)s(this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                object result = PythonOperator.%(operator)s(DefaultContext.Default, this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
                 return this.Store(result);
             }
             catch (Exception e)
@@ -179,5 +180,6 @@ FILL_TYPES_EXTRA_TEMPLATE = """\
 
 if __name__ == "__main__":
     run()
+
 
 

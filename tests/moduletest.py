@@ -3,7 +3,7 @@ from tests.utils.runtest import makesuite, run
 
 from tests.utils.cpython import MakeItemsTablePtr, MakeMethodDef, MakeTypePtr
 from tests.utils.memory import CreateTypes
-from tests.utils.python25mapper import TempPtrCheckingPython25Mapper, MakeAndAddEmptyModule, ModuleWrapper
+from tests.utils.python25mapper import TempPtrCheckingPython25Mapper, MakeAndAddEmptyModule
 from tests.utils.testcase import TestCase
 
 from System import IntPtr
@@ -37,9 +37,8 @@ class Py_InitModule4_SetupTest(TestCase):
         mapper = Python25Mapper()
         modulePtr = MakeAndAddEmptyModule(mapper)
         module = mapper.Retrieve(modulePtr)
-        dispatcherModule = ModuleWrapper(mapper.Engine, mapper.DispatcherModule)
         
-        Dispatcher = dispatcherModule.Dispatcher
+        Dispatcher = mapper.DispatcherModule.Dispatcher
         _dispatcher = module._dispatcher
         
         self.assertEquals(isinstance(_dispatcher, Dispatcher), True, "wrong dispatcher class")
@@ -284,7 +283,7 @@ class ImportTest(TestCase):
             IntPtr.Zero,
             12345)
         
-        self.assertEquals(mapper.PyImport_ImportModule("test_module"), modulePtr, "wrong result")
+        self.assertEquals(mapper.PyImport_ImportModule("test_module"), modulePtr)
         self.assertEquals(mapper.RefCount(modulePtr), 2, "did not incref")
         
         mapper.Dispose()
@@ -300,7 +299,7 @@ class ImportTest(TestCase):
             IntPtr.Zero,
             12345)
         
-        self.assertEquals(mapper.PyImport_Import(mapper.Store("test_module")), modulePtr, "wrong result")
+        self.assertEquals(mapper.PyImport_Import(mapper.Store("test_module")), modulePtr)
         self.assertEquals(mapper.RefCount(modulePtr), 2, "did not incref")
         
         mapper.Dispose()
@@ -310,15 +309,15 @@ class ImportTest(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        sysPtr = mapper.PyImport_AddModule("sys")
-        sysModule = mapper.Retrieve(sysPtr)
+        sysPtr = mapper.PyImport_ImportModule("sys")
+        modules = mapper.Retrieve(sysPtr).modules
         
         foobarbazPtr = mapper.PyImport_AddModule("foo.bar.baz")
-        self.assertEquals(mapper.Retrieve(foobarbazPtr), sysModule.modules['foo.bar.baz'])
-        self.assertEquals('foo.bar' in sysModule.modules, True)
-        self.assertEquals(sysModule.modules['foo.bar'].baz, sysModule.modules['foo.bar.baz'])
-        self.assertEquals('foo' in sysModule.modules, True)
-        self.assertEquals(sysModule.modules['foo'].bar, sysModule.modules['foo.bar'])
+        self.assertEquals(mapper.Retrieve(foobarbazPtr), modules['foo.bar.baz'])
+        self.assertEquals('foo.bar' in modules, True)
+        self.assertEquals(modules['foo.bar'].baz, modules['foo.bar.baz'])
+        self.assertEquals('foo' in modules, True)
+        self.assertEquals(modules['foo'].bar, modules['foo.bar'])
         
         mapper.Dispose()
         deallocTypes()

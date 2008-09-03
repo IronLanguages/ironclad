@@ -1,11 +1,12 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 
+using IronPython.Hosting;
 using IronPython.Runtime;
-using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
 
 using Microsoft.Scripting;
@@ -47,15 +48,15 @@ namespace Ironclad
         private PydImporter importer;
         private IAllocator allocator;
 
-        private PythonModule scratchModule;
-        private object trivialObjectSubclass;
-        private PythonModule dispatcherModule;
+        private ScriptScope scratchModule;
+        private ScriptScope dispatcherModule;
         private object dispatcherClass;
         private object dispatcherLock;
 
         private bool alive = false;
         private InterestingPtrMap map = new InterestingPtrMap();
         private Dictionary<IntPtr, ActualiseDelegate> actualisableTypes = new Dictionary<IntPtr, ActualiseDelegate>();
+        private Dictionary<IntPtr, object> actualiseHelpers = new Dictionary<IntPtr, object>();
         private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
         private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();
         private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
@@ -73,15 +74,15 @@ namespace Ironclad
         private string importName = "";
         private string importPath = null;
         
-        public Python25Mapper() : this(null, ScriptRuntime.Create().GetEngine("py"), new HGlobalAllocator())
+        public Python25Mapper() : this(null, Python.CreateEngine(), new HGlobalAllocator())
         {
         }
 
-        public Python25Mapper(string stubPath) : this(stubPath, ScriptRuntime.Create().GetEngine("py"), new HGlobalAllocator())
+        public Python25Mapper(string stubPath) : this(stubPath, Python.CreateEngine(), new HGlobalAllocator())
         {
         }
 
-        public Python25Mapper(IAllocator alloc) : this(null, ScriptRuntime.Create().GetEngine("py"), alloc)
+        public Python25Mapper(IAllocator alloc) : this(null, Python.CreateEngine(), alloc)
         {
         }
 
@@ -89,6 +90,7 @@ namespace Ironclad
         {
             this.engine = inEngine;
             this.allocator = alloc;
+            this.AddPaths();
             this.CreateDispatcherModule();
             this.CreateScratchModule();
             if (stubPath != null)
@@ -98,19 +100,30 @@ namespace Ironclad
                 this.ReadyBuiltinTypes();
                 this.importer = new PydImporter();
                 
-                string path = Environment.GetEnvironmentVariable("IRONPYTHONPATH");
-                if (path != null && path.Length > 0)
-                {
-                    string[] paths = path.Split(Path.PathSeparator);
-                    foreach (string p in paths) 
-                    {
-                        this.AddToPath(p);
-                    }
-                }
                 // TODO: work out why this line causes leakage
                 this.ExecInModule(CodeSnippets.INSTALL_IMPORT_HOOK_CODE, this.scratchModule);
             }
             this.alive = true;
+        }
+        
+        
+        private void AddPaths()
+        {
+            List<string> paths = new List<string>();
+            string rootPath = Assembly.GetExecutingAssembly().Location;
+            paths.Add(Directory.GetParent(rootPath).FullName);
+
+            string ipyPath = Environment.GetEnvironmentVariable("IRONPYTHONPATH");
+            if (ipyPath != null && ipyPath.Length > 0)
+            {
+                string[] ipyPaths = ipyPath.Split(Path.PathSeparator);
+                foreach (string p in ipyPaths) 
+                {
+                    paths.Add(p);
+                }
+            }
+            
+            this.engine.SetSearchPaths(paths.ToArray());
         }
         
         
@@ -454,7 +467,7 @@ namespace Ironclad
         public override int
         PyCallable_Check(IntPtr objPtr)
         {
-            if (Builtin.callable(this.Retrieve(objPtr)))
+            if (Builtin.callable(DefaultContext.Default, this.Retrieve(objPtr)))
             {
                 return 1;
             }

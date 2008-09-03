@@ -49,16 +49,16 @@ class PyThread_functions_Test(TestCase):
         t2 = Thread(ThreadStart(lambda: AcquireLock(lockPtr2)))
         t1.Start()
         t2.Start()
-        Thread.Sleep(100)
+        Thread.CurrentThread.Join(100)
 
         self.assertEquals(acquired, set(), "not properly locked")
 
         mapper.PyThread_release_lock(lockPtr1)
-        Thread.Sleep(100)
+        Thread.CurrentThread.Join(100)
         self.assertEquals(acquired, set([lockPtr1]), "release failed")
 
         mapper.PyThread_release_lock(lockPtr2)
-        Thread.Sleep(100)
+        Thread.CurrentThread.Join(100)
         self.assertEquals(acquired, set([lockPtr1, lockPtr2]), "release failed")    
         mapper.Dispose()
 
@@ -81,7 +81,7 @@ class PyThread_functions_Test(TestCase):
         t2 = Thread(ThreadStart(lambda: FailToAcquireLock(lockPtr2)))
         t1.Start()
         t2.Start()
-        Thread.Sleep(100)
+        Thread.CurrentThread.Join(100)
 
         self.assertEquals(failedToAcquire, set([lockPtr1, lockPtr2]), "failed")
 
@@ -98,7 +98,7 @@ class PyThread_functions_Test(TestCase):
         t2 = Thread(ThreadStart(lambda: AcquireLock(lockPtr2)))
         t1.Start()
         t2.Start()
-        Thread.Sleep(100)
+        Thread.CurrentThread.Join(100)
 
         self.assertEquals(acquired, set([lockPtr1, lockPtr2]), "acquires failed")    
         mapper.Dispose()

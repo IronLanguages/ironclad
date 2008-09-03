@@ -2,17 +2,17 @@
 
 Ironclad's build process deserves a brief discussion. On 32-bit Windows, it requires:
 
-* ipy from IronPython 2.0b1
+* ipy from IronPython r38340 (included in /ironpython)
 * mingw (including gcc and make)
 * pexports
 * nasm
-* .NET 2.0 (csc, specifically)
+* .NET 2.0 Service Pack 1 (csc, specifically)
 * Python 2.5
 * msvcr71.dll (distributed with Python 2.5)
 
 On 32-bit Linux, requirements are:
 
-* ipy from IronPython 2.0b1
+* ipy from IronPython r38340 (included in /ironpython)
 * gcc and make
 * objdump
 * nasm

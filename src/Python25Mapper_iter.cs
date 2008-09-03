@@ -4,7 +4,6 @@ using System.Collections;
 using Microsoft.Scripting;
 
 using IronPython.Runtime;
-using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 

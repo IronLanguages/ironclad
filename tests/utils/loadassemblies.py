@@ -1,4 +1,3 @@
-
 import clr
 clr.AddReferenceToFile("build/ironclad.dll")
 clr.AddReferenceToFile("tests/data/testutils.dll")

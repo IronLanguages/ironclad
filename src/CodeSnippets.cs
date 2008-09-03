@@ -42,10 +42,18 @@ class {0}(Exception):
 ";
 
         public const string CLASS_CODE = @"
-class {0}(_ironclad_baseclass):
+_anon_superclass = _ironclad_metaclass('anon', _ironclad_bases, dict())
+class {0}_actualiser(_anon_superclass):
+    def __new__(cls, *args, **kwargs):
+        return object.__new__(cls)
+    def __init__(self, *args, **kwargs):
+        pass
+    def __del__(self):
+        pass
+    
+class {0}(_anon_superclass):
     '''{2}'''
     __module__ = '{1}'
-    __metaclass__ = _ironclad_metaclass
     def __new__(cls, *args, **kwargs):
         return cls._dispatcher.construct('{0}.tp_new', cls, *args, **kwargs)
     
@@ -62,7 +70,7 @@ class {0}(_ironclad_baseclass):
 ";
 
         public const string CLASS_BASES_CODE = @"
-    __bases__ = _ironclad_bases
+{0}.__bases__ += _ironclad_bases[1:]
 ";
 
         public const string MEMBER_GETTER_CODE = @"
@@ -241,7 +249,7 @@ class _IroncladHooks(ihooks.Hooks):
 
     def load_dynamic(self, name, filename, file):
         _mapper.LoadModule(filename, name)
-        module = _mapper.GetModuleScope(name)
+        module = _mapper.GetModule(name)
         self.modules_dict()[name] = module
         return module
 

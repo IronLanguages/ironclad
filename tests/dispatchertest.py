@@ -768,13 +768,11 @@ def CallWithFakeObjectInDispatcherModule(mapper, calls, callWithFakeObject):
             calls.append(('__new__', (cls,)))
             return cls()
 
-    moduleDict = mapper.DispatcherModule.Scope.Dict
-    moduleScope = mapper.Engine.CreateScope(moduleDict)
-    moduleScope.SetVariable('object', FakeObject)
+    mapper.DispatcherModule.object = FakeObject
     try:
         return callWithFakeObject()
     finally:
-        moduleScope.SetVariable('object', object)
+        mapper.DispatcherModule.object = object
 
 
 class DispatcherConstructTest(DispatcherDispatchTestCase):

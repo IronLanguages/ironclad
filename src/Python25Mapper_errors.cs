@@ -2,8 +2,8 @@ using System;
 
 using Microsoft.Scripting.Runtime;
 
+using IronPython.Hosting;
 using IronPython.Runtime;
-using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
 
 
@@ -85,7 +85,7 @@ namespace Ironclad
         private void
         PrintToStdErr(object obj)
         {
-            object stderr = Builtin.getattr(DefaultContext.Default, this.GetPythonContext().SystemStateModules["sys"], "__stderr__");
+            object stderr = Python.GetSysModule(this.Engine).GetVariable("__stderr__");
             PythonOps.PrintWithDest(DefaultContext.Default, stderr, obj);
         }
 
@@ -114,7 +114,7 @@ namespace Ironclad
 
             string excCode = String.Format(CodeSnippets.NEW_EXCEPTION, __name__, __module__);
             this.ExecInModule(excCode, this.scratchModule);
-            object newExc = this.GetModuleScriptScope(this.scratchModule).GetVariable<object>(__name__);
+            object newExc = this.scratchModule.GetVariable<object>(__name__);
             IntPtr newExcPtr = this.Store(newExc);
             this.IncRef(newExcPtr);
             return newExcPtr;

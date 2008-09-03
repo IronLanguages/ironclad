@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
+using IronPython.Hosting;
 using IronPython.Runtime;
-using IronPython.Runtime.Calls;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
+using Microsoft.Scripting.Hosting.Providers;
 using Microsoft.Scripting.Runtime;
 
 namespace Ironclad
@@ -18,55 +19,75 @@ namespace Ironclad
     {
 
         private void
-        ExecInModule(string code, PythonModule module)
+        ExecInModule(string code, ScriptScope module)
         {
             ScriptSource script = this.engine.CreateScriptSourceFromString(code, SourceCodeKind.Statements);
-            ScriptScope scope = this.GetModuleScriptScope(module);
-            script.Execute(scope);
-        }
-
-        private ScriptScope
-        GetModuleScriptScope(PythonModule module)
-        {
-            return this.engine.CreateScope(module.Scope.Dict);
-        }
-
-
-        private PythonContext
-        GetPythonContext()
-        {
-            return InappropriateReflection.PythonContextFromEngine(this.engine);
+            script.Execute(module);
         }
         
+        public void
+        AddModule(string name, ScriptScope module)
+        {
+            Scope scope = HostingHelpers.GetScope(module);
+            this.Engine.Runtime.Globals.SetVariable(name, scope);
+            ScriptScope sys = Python.GetSysModule(this.Engine);
+            PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
+            modules[name] = scope;
+        }
+
+        public object 
+        GetModule(string name)
+        {
+            object value = null;
+            this.Engine.Runtime.Globals.TryGetVariable(name, out value);
+            if (value == null)
+            {
+                // It is entirely beyond my understanding why I need to check both 
+                // Engine.Runtime.Globals *and* sys.modules, because I thought they
+                // were meant to be the same...
+                ScriptScope sys = Python.GetSysModule(this.Engine);
+                PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
+                if (modules.has_key(name))
+                {
+                    value = modules[name];
+                }
+            }
+            return (Scope)value;
+        }
+
+        public ScriptScope 
+        GetModuleScriptScope(Scope module)
+        {
+            return this.Engine.CreateScope(module.Dict);
+        }
         
         private void
         CreateScratchModule()
         {
-            string id = "_ironclad_scratch";
-            Dictionary<string, object> globals = new Dictionary<string, object>();
+            PythonDictionary globals = new PythonDictionary();
             globals["IntPtr"] = typeof(IntPtr);
             globals["CPyMarshal"] = typeof(CPyMarshal);
             globals["_mapper"] = this;
-            this.scratchModule = this.GetPythonContext().CreateModule(
-                id, id, globals, ModuleOptions.None);
+            this.scratchModule = this.engine.CreateScope(globals);
             this.ExecInModule(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE, this.scratchModule);
-
-            this.ExecInModule(CodeSnippets.TRIVIAL_OBJECT_SUBCLASS_CODE, this.scratchModule);
-            ScriptScope moduleScope = this.GetModuleScriptScope(this.scratchModule);
-            this.trivialObjectSubclass = moduleScope.GetVariable<object>("TrivialObjectSubclass");
         }
         
         
         public override IntPtr 
         Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
         {
-            Dictionary<string, object> globals = new Dictionary<string, object>();
+            if (this.importName != "")
+            {
+                name = this.importName;
+            }
+            
             PythonDictionary methodTable = new PythonDictionary();
+            PythonDictionary globals = new PythonDictionary();
+            object moduleDispatcher = PythonCalls.Call(this.dispatcherClass, new object[] { this, methodTable });
 
             globals["__doc__"] = doc;
-            globals["_dispatcher"] = PythonCalls.Call(this.dispatcherClass, new object[] { this, methodTable });
-
-            // hack to help moduleCode run -- can't import from System for some reason
+            globals["__name__"] = name;
+            globals["_dispatcher"] = moduleDispatcher;
             globals["IntPtr"] = typeof(IntPtr);
             globals["CPyMarshal"] = typeof(CPyMarshal);
             globals["NullReferenceException"] = typeof(NullReferenceException);
@@ -75,23 +96,17 @@ namespace Ironclad
             moduleCode.Append(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE); // eww
             CallableBuilder.GenerateFunctions(moduleCode, methods, methodTable);
 
-            if (this.importName != "")
-            {
-                name = this.importName;
-            }
-            
-            PythonModule module = this.GetPythonContext().CreateModule(
-                name, this.importPath, globals, ModuleOptions.PublishModule);
+            ScriptScope module = this.engine.CreateScope(globals);
             this.ExecInModule(moduleCode.ToString(), module);
-            return this.Store(this.GetModuleScope(name));
+            this.AddModule(name, module);
+            return this.Store(this.GetModule(name));
         }
-
 
         public override IntPtr
         PyModule_GetDict(IntPtr modulePtr)
         {
-            Scope moduleScope = (Scope)this.Retrieve(modulePtr);
-            return this.Store(ScopeOps.Get__dict__(moduleScope));
+            Scope module = (Scope)this.Retrieve(modulePtr);
+            return this.Store(ScopeOps.Get__dict__(module));
         }
 
         private int PyModule_Add(IntPtr modulePtr, string name, object value)
@@ -100,8 +115,8 @@ namespace Ironclad
             {
                 return -1;
             }
-            Scope moduleScope = (Scope)this.Retrieve(modulePtr);
-            ScopeOps.__setattr__(moduleScope, name, value);
+            ScriptScope moduleScope = this.GetModuleScriptScope((Scope)this.Retrieve(modulePtr));
+            moduleScope.SetVariable(name, value);
             return 0;
         }
         
