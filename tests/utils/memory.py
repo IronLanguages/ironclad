@@ -10,6 +10,8 @@ def OffsetPtr(ptr, offset):
     return IntPtr(ptr.ToInt32() + offset)
 
 _types = (
+    "PyType_Type",
+    "PyBaseObject_Type",
     "PyBuffer_Type",
     "PyCell_Type",
     "PyClass_Type",
@@ -38,8 +40,6 @@ _types = (
     "PyLong_Type",
     "PyCFunction_Type",
     "PyModule_Type",
-    "PyType_Type",
-    "PyBaseObject_Type",
     "PySuper_Type",
     "PyRange_Type",
     "PySet_Type",

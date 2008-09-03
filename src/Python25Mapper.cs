@@ -480,7 +480,7 @@ namespace Ironclad
         {
             PyObject none = new PyObject();
             none.ob_refcnt = 1;
-            none.ob_type = IntPtr.Zero;
+            none.ob_type = this.PyNone_Type;
             Marshal.StructureToPtr(none, address, false);
             this.map.Associate(address, UnmanagedDataMarker.None);
         }

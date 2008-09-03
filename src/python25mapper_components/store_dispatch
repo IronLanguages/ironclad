@@ -4,6 +4,7 @@ double
 BigInteger
 string
 IDictionary
+PythonType
 PythonTuple
 List
 Slice

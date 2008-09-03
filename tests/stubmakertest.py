@@ -48,10 +48,10 @@ class StubMakerGenerateCTest(TestCase):
         void *jumptable[2];
 
         void init(void*(*address_getter)(char*), void(*data_setter)(char*, void*)) {
-            DATA1 = address_getter("DATA1");
-            DATA2 = address_getter("DATA2");
             data_setter("DATA3", &DATA3);
             data_setter("DATA4", &DATA4);
+            DATA1 = address_getter("DATA1");
+            DATA2 = address_getter("DATA2");
             jumptable[0] = address_getter("FUNC1");
             jumptable[1] = address_getter("FUNC2");
         }

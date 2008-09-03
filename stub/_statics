@@ -1,3 +1,5 @@
+PyType_Type
+PyBaseObject_Type
 PyBuffer_Type
 PyCell_Type
 PyClass_Type
@@ -26,8 +28,6 @@ PyList_Type
 PyLong_Type
 PyCFunction_Type
 PyModule_Type
-PyType_Type
-PyBaseObject_Type
 PySuper_Type
 PyRange_Type
 PySet_Type
