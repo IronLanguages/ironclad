@@ -243,13 +243,21 @@ class Types_Test(TestCase):
         class C(object):
             pass
         cPtr = mapper.Store(C)
-        self.assertEquals(CPyMarshal.ReadIntField(cPtr, PyTypeObject, "ob_refcnt"), 1)
+        self.assertEquals(CPyMarshal.ReadIntField(cPtr, PyTypeObject, "ob_refcnt"), 2, "seems easiest to 'leak' types, and ensure they live forever")
         self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "ob_type"), mapper.PyType_Type)
         self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
         self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_as_number"), IntPtr.Zero)
 
         baseFlags = CPyMarshal.ReadIntField(cPtr, PyTypeObject, "tp_flags")
         self.assertEquals(baseFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready newly-stored type")
+        
+        instancePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        CPyMarshal.WritePtrField(instancePtr, PyObject, "ob_type", cPtr)
+        CPyMarshal.WriteIntField(instancePtr, PyObject, "ob_refcnt", 2)
+        
+        instance = mapper.Retrieve(instancePtr)
+        self.assertEquals(isinstance(instance, C), True)
+        self.assertEquals(instance._instancePtr, instancePtr)
 
         mapper.Dispose()
         deallocTypes()
@@ -322,7 +330,6 @@ class PyType_Ready_InheritTest(TestCase):
         # and probably some others, but currently we don't)
         for field in FIELDS:
             self.assertInherits(field)
-        
         
     
     def testPyType_Ready_MissingBaseType(self):

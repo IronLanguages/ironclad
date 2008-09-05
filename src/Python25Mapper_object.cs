@@ -57,7 +57,6 @@ namespace Ironclad
                 IAttributesCollection kwargs = (IAttributesCollection)this.Retrieve(kwargsPtr);
                 result = PythonCalls.CallWithKeywordArgs(DefaultContext.Default, obj, argsArray, kwargs);
             }
-            
             return this.Store(result);
         }
 

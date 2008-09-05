@@ -115,9 +115,7 @@ namespace Ironclad
             string excCode = String.Format(CodeSnippets.NEW_EXCEPTION, __name__, __module__);
             this.ExecInModule(excCode, this.scratchModule);
             object newExc = this.scratchModule.GetVariable<object>(__name__);
-            IntPtr newExcPtr = this.Store(newExc);
-            this.IncRef(newExcPtr);
-            return newExcPtr;
+            return this.Store(newExc);
         }
     }
 }
