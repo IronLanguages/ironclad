@@ -44,6 +44,16 @@ class {0}(Exception):
     __module__ = '{1}'
 ";
 
+        public const string ACTUALISER_CODE = @"
+class anon_actualiser(_ironclad_superclass):
+    def __new__(cls, *args, **kwargs):
+        return object.__new__(cls)
+    def __init__(self, *args, **kwargs):
+        pass
+    def __del__(self):
+        pass
+";
+
         public const string CLASS_CODE = @"
 _anon_superclass = _ironclad_metaclass('anon', _ironclad_bases, dict())
 class {0}_actualiser(_anon_superclass):

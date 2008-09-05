@@ -25,9 +25,14 @@ namespace Ironclad
             // TODO: handle multiple inheritance
             PythonTuple tp_bases = (PythonTuple)_type.__getattribute__(DefaultContext.Default, "__bases__");
             object tp_base = tp_bases[0];
-            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "ob_refcnt", 2);
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.Store(ob_type));
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", this.Store(tp_base));
+
+            this.scratchModule.SetVariable("_ironclad_superclass", _type);
+            this.ExecInModule(CodeSnippets.ACTUALISER_CODE, this.scratchModule);
+            this.actualiseHelpers[typePtr] = this.scratchModule.GetVariable<object>("anon_actualiser");
+            this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
 
             this.PyType_Ready(typePtr);
             this.map.Associate(typePtr, _type);
@@ -204,7 +209,7 @@ namespace Ironclad
 
 
         private void
-        ActualiseCPyObject(IntPtr ptr)
+        ActualiseArbitraryObject(IntPtr ptr)
         {
             IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
             object actualiser = this.actualiseHelpers[typePtr];
@@ -222,7 +227,7 @@ namespace Ironclad
         {
             this.PyType_Ready(typePtr);
             this.GenerateClass(typePtr);
-            this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseCPyObject);
+            this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
         }
     }
 }
