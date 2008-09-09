@@ -22,8 +22,7 @@ namespace Ironclad
                 object seq = this.Retrieve(seqPtr);
                 if (Builtin.isinstance(seq, TypeCache.PythonType))
                 {
-                    // I always seem to be able to create an ItemEnumerator when I pass in a 
-                    // type, which I'm pretty sure is wrong -- dirty hack fix here.
+                    // bugtest.py
                     throw new ArgumentTypeException(String.Format("Even though I apparently can enumerate {0}, I'm pretty sure I shouldn't", seq));
                 }
                 IEnumerator enumerator = InappropriateReflection.CreateItemEnumerator(seq);
@@ -40,13 +39,21 @@ namespace Ironclad
         public override IntPtr
         PyObject_GetIter(IntPtr objPtr)
         {
-            IEnumerable enumerable = this.Retrieve(objPtr) as IEnumerable;
-            if (enumerable == null)
+            try
             {
-                this.LastException = new ArgumentTypeException("PyObject_GetIter: object is not iterable");
+                object obj = this.Retrieve(objPtr);
+                if (Builtin.isinstance(obj, TypeCache.PythonType))
+                {
+                    // bugtest.py
+                    throw new ArgumentTypeException(String.Format("Even though I apparently can iter() {0}, I'm pretty sure I shouldn't", obj));
+                }
+                return this.Store(Builtin.iter(obj));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
                 return IntPtr.Zero;
             }
-            return this.Store(enumerable.GetEnumerator());
         }
 
         public override IntPtr
