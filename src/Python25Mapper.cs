@@ -22,7 +22,6 @@ namespace Ironclad
         PyStringObject,
         PyTupleObject,
         PyListObject,
-        None,
     }
 
     public class BadRefCountException : Exception
@@ -57,6 +56,7 @@ namespace Ironclad
         private InterestingPtrMap map = new InterestingPtrMap();
         private Dictionary<IntPtr, ActualiseDelegate> actualisableTypes = new Dictionary<IntPtr, ActualiseDelegate>();
         private Dictionary<IntPtr, object> actualiseHelpers = new Dictionary<IntPtr, object>();
+        private Dictionary<IntPtr, UnmanagedDataMarker> incompleteObjects = new Dictionary<IntPtr, UnmanagedDataMarker>();
         private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
         private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();
         private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
@@ -189,7 +189,7 @@ namespace Ironclad
         {
             if (obj != null && obj.GetType() == typeof(UnmanagedDataMarker))
             {
-                throw new ArgumentTypeException("UnmanagedDataMarkers should not be stored by clients.");
+                throw new ArgumentTypeException("UnmanagedDataMarkers should not be Store()d.");
             }
             if (obj == null)
             {
@@ -228,14 +228,22 @@ namespace Ironclad
         public bool
         HasPtr(IntPtr ptr)
         {
-            return this.map.HasPtr(ptr);
+            if (ptr == IntPtr.Zero)
+            {
+                return false;
+            }
+            if (ptr == this._Py_NoneStruct)
+            {
+                return true;
+            }
+            return (this.map.HasPtr(ptr) || this.incompleteObjects.ContainsKey(ptr));
         }
         
 
         private void
         AttemptToMap(IntPtr ptr)
         {
-            if (this.map.HasPtr(ptr))
+            if (this.HasPtr(ptr))
             {
                 return;
             }
@@ -262,32 +270,29 @@ namespace Ironclad
         Retrieve(IntPtr ptr)
         {
             this.AttemptToMap(ptr);
-            if (this.map.HasPtr(ptr))
+            if (ptr == this._Py_NoneStruct)
             {
-                object possibleMarker = this.map.GetObj(ptr);
-                if (possibleMarker.GetType() == typeof(UnmanagedDataMarker))
+                return null;
+            }
+
+            if (this.incompleteObjects.ContainsKey(ptr))
+            {
+                switch (this.incompleteObjects[ptr])
                 {
-                    UnmanagedDataMarker marker = (UnmanagedDataMarker)possibleMarker;
-                    switch (marker)
-                    {
-                        case UnmanagedDataMarker.None:
-                            return null;
+                    case UnmanagedDataMarker.PyStringObject:
+                        this.ActualiseString(ptr);
+                        break;
 
-                        case UnmanagedDataMarker.PyStringObject:
-                            this.ActualiseString(ptr);
-                            break;
+                    case UnmanagedDataMarker.PyTupleObject:
+                        this.ActualiseTuple(ptr);
+                        break;
 
-                        case UnmanagedDataMarker.PyTupleObject:
-                            this.ActualiseTuple(ptr);
-                            break;
+                    case UnmanagedDataMarker.PyListObject:
+                        ActualiseList(ptr);
+                        break;
 
-                        case UnmanagedDataMarker.PyListObject:
-                            ActualiseList(ptr);
-                            break;
-
-                        default:
-                            throw new Exception("Found impossible data in pointer map");
-                    }
+                    default:
+                        throw new Exception("{0} pointed to unknown UDM");
                 }
             }
             return this.map.GetObj(ptr);
@@ -297,11 +302,13 @@ namespace Ironclad
         RefCount(IntPtr ptr)
         {
             this.AttemptToMap(ptr);
-            if (this.map.HasPtr(ptr))
+            if (this.HasPtr(ptr))
             {
-                this.map.UpdateStrength(ptr);
-                int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
-                return count;
+                if (this.map.HasPtr(ptr))
+                {
+                    this.map.UpdateStrength(ptr);
+                }
+                return CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
             }
             else
             {
@@ -314,11 +321,14 @@ namespace Ironclad
         IncRef(IntPtr ptr)
         {
             this.AttemptToMap(ptr);
-            if (this.map.HasPtr(ptr))
+            if (this.HasPtr(ptr))
             {
                 int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
                 CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count + 1);
-                this.map.UpdateStrength(ptr);
+                if (this.map.HasPtr(ptr))
+                {
+                    this.map.UpdateStrength(ptr);
+                }
             }
             else
             {
@@ -331,7 +341,7 @@ namespace Ironclad
         DecRef(IntPtr ptr)
         {
             this.AttemptToMap(ptr);
-            if (this.map.HasPtr(ptr))
+            if (this.HasPtr(ptr))
             {
                 int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
                 if (count == 0)
@@ -361,7 +371,10 @@ namespace Ironclad
                 else
                 {
                     CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count - 1);
-                    this.map.UpdateStrength(ptr);
+                    if (this.map.HasPtr(ptr))
+                    {
+                        this.map.UpdateStrength(ptr);
+                    }
                 }
             }
             else
@@ -407,6 +420,10 @@ namespace Ironclad
             if (this.map.HasPtr(ptr))
             {
                 this.map.Release(ptr);
+            }
+            if (this.incompleteObjects.ContainsKey(ptr))
+            {
+                this.incompleteObjects.Remove(ptr);
             }
         }
 
@@ -481,7 +498,7 @@ namespace Ironclad
             none.ob_refcnt = 1;
             none.ob_type = this.PyNone_Type;
             Marshal.StructureToPtr(none, address, false);
-            this.map.Associate(address, UnmanagedDataMarker.None);
+            // no need to Associate: None/null is special-cased
         }
 
         public override void

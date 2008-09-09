@@ -381,7 +381,6 @@ class Python25Mapper_References_Test(TestCase):
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyStringObject))
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyTupleObject))
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyListObject))
-        self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.None))
         mapper.Dispose()
 
 
@@ -414,11 +413,11 @@ class Python25Mapper_References_Test(TestCase):
         allocator = GetDoNothingTestAllocator([])
         mapper = Python25Mapper(allocator)
 
+        self.assertEquals(mapper.HasPtr(IntPtr.Zero), False)
         self.assertRaises(CannotInterpretException, lambda: mapper.IncRef(IntPtr.Zero))
         self.assertRaises(CannotInterpretException, lambda: mapper.DecRef(IntPtr.Zero))
         self.assertRaises(CannotInterpretException, lambda: mapper.Retrieve(IntPtr.Zero))
         self.assertRaises(CannotInterpretException, lambda: mapper.RefCount(IntPtr.Zero))
-        self.assertEquals(mapper.HasPtr(IntPtr.Zero), False)
         mapper.Dispose()
 
 

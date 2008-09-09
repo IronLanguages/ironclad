@@ -51,32 +51,44 @@ namespace Ironclad
             }
             return listPtr;
         }
-        
+
+        private IntPtr
+        PyList_New_Zero()
+        {
+            PyListObject list = new PyListObject();
+            list.ob_refcnt = 1;
+            list.ob_type = this.PyList_Type;
+            list.ob_size = 0;
+            list.allocated = 0;
+            list.ob_item = IntPtr.Zero;
+
+            IntPtr listPtr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyListObject)));
+            Marshal.StructureToPtr(list, listPtr, false);
+            this.map.Associate(listPtr, new List());
+            return listPtr;
+        }
+
         public override IntPtr 
         PyList_New(int length)
         {
-            object ipylist = UnmanagedDataMarker.PyListObject;
+            if (length == 0)
+            {
+                return this.PyList_New_Zero();
+            }
+
             PyListObject list = new PyListObject();
             list.ob_refcnt = 1;
             list.ob_type = this.PyList_Type;
             list.ob_size = (uint)length;
             list.allocated = (uint)length;
             
-            if (length == 0)
-            {
-                list.ob_item = IntPtr.Zero;
-                ipylist = new List();
-            }
-            else
-            {
-                int bytes = length * CPyMarshal.PtrSize;
-                list.ob_item = this.allocator.Alloc(bytes);
-                CPyMarshal.Zero(list.ob_item, bytes);
-            }
+            int bytes = length * CPyMarshal.PtrSize;
+            list.ob_item = this.allocator.Alloc(bytes);
+            CPyMarshal.Zero(list.ob_item, bytes);
             
             IntPtr listPtr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyListObject)));
             Marshal.StructureToPtr(list, listPtr, false);
-            this.map.Associate(listPtr, ipylist);
+            this.incompleteObjects[listPtr] = UnmanagedDataMarker.PyListObject;
             return listPtr;
         }   
         
@@ -133,33 +145,13 @@ namespace Ironclad
         public override int
         PyList_SetItem(IntPtr listPtr, int index, IntPtr itemPtr)
         {
-            if (listPtr == IntPtr.Zero)
+            if (!this.HasPtr(listPtr))
             {
                 this.DecRef(itemPtr);
                 return -1;
             }
-            bool listPtrValid = this.map.HasPtr(listPtr);
-            if (!listPtrValid)
-            {
-                this.DecRef(itemPtr);
-                return -1;
-            }
-            bool okToContinue = false;
-            object ipylist = this.map.GetObj(listPtr);
-            List realIpylist = ipylist as List;
-            if (realIpylist != null)
-            {
-                okToContinue = true;
-            }
-            if (ipylist.GetType() == typeof(UnmanagedDataMarker))
-            {
-                UnmanagedDataMarker marker = (UnmanagedDataMarker)ipylist;
-                if (marker == UnmanagedDataMarker.PyListObject)
-                {
-                    okToContinue = true;
-                }
-            }
-            if (!okToContinue)
+            IntPtr typePtr = CPyMarshal.ReadPtrField(listPtr, typeof(PyObject), "ob_type");
+            if (typePtr != this.PyList_Type)
             {
                 this.DecRef(itemPtr);
                 return -1;
@@ -181,10 +173,11 @@ namespace Ironclad
             }
             CPyMarshal.WritePtr(oldItemPtrPtr, itemPtr);
             
-            if (realIpylist != null)
+            if (this.map.HasPtr(listPtr))
             {
                 object item = this.Retrieve(itemPtr);
-                realIpylist[index] = item;
+                List list = (List)this.Retrieve(listPtr);
+                list[index] = item;
             }      
             return 0;
         }
@@ -197,7 +190,6 @@ namespace Ironclad
             IntPtr result = this.Store(sliced);
             return result;
         }
-        
                 
         private void
         ActualiseList(IntPtr ptr)
@@ -236,8 +228,8 @@ namespace Ironclad
                 }
             }
             this.listsBeingActualised.Remove(ptr);
+            this.incompleteObjects.Remove(ptr);
             this.map.Associate(ptr, newList);
-            
         }
     }
 

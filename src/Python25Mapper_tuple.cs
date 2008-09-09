@@ -33,7 +33,7 @@ namespace Ironclad
         PyTuple_New(int size)
         {
             IntPtr tuplePtr = this.CreateTuple(size);
-            this.map.Associate(tuplePtr, UnmanagedDataMarker.PyTupleObject);
+            this.incompleteObjects[tuplePtr] = UnmanagedDataMarker.PyTupleObject;
             return tuplePtr;
         }
         
@@ -98,6 +98,7 @@ namespace Ironclad
                 items[i] = this.Retrieve(itemPtr);
                 itemAddressPtr = CPyMarshal.Offset(itemAddressPtr, CPyMarshal.PtrSize);
             }
+            this.incompleteObjects.Remove(ptr);
             this.map.Associate(ptr, new PythonTuple(items));
         }
     }
