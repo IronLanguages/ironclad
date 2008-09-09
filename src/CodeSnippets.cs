@@ -12,7 +12,14 @@ math._log = math.log
 math.log = lambda x: math._log(float(x))
 math._log10 = math.log10
 math.log10 = lambda x: math._log10(float(x))
+";
 
+        public const string FAKE_numpy_testing_CODE = @"
+class Tester():
+    def test(self, *args, **kwargs):
+        print 'numpy.testing is faked out, and doesn\'t actually do anything'
+    def bench(self, *args, **kwargs):
+        print 'numpy.testing is faked out, and doesn\'t actually do anything'
 ";
 
         public const string NOARGS_FUNCTION_CODE = @"
