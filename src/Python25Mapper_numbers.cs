@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 
 using Microsoft.Scripting.Math;
 
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Operations;
 
@@ -118,6 +119,21 @@ namespace Ironclad
             try
             {
                 object result = Builtin.abs(DefaultContext.Default, this.Retrieve(numberPtr));
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
+        public override IntPtr
+        PyNumber_Index(IntPtr numberPtr)
+        {
+            try
+            {
+                object result = PythonOperator.index(this.Retrieve(numberPtr));
                 return this.Store(result);
             }
             catch (Exception e)
