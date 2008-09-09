@@ -361,6 +361,9 @@ class PyNumber_Test(TestCase):
     def testPyNumber_Absolute(self):
         self.assertUnaryOp("PyNumber_Absolute", abs)
     
+    def testPyNumber_Index(self):
+        self.assertUnaryOp("PyNumber_Index", operator.index)
+    
     def testPyNumber_Add(self):
         self.assertBinaryOp("PyNumber_Add", operator.add)
     
