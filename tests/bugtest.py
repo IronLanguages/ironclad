@@ -19,6 +19,15 @@ class BugTest(TestCase):
         self.assertRaises(ValueError, math.log10, Number())
         # when these start failing, we should no longer need to patch math on numpy import
 
+    def testIterType(self):
+        class C(object):
+            def __iter__(self):
+                yield 1
+        
+        iter(C)
+        # when this fails, fix PySeqIter_New and PyObject_GetIter
+
+
 suite = makesuite(BugTest)
 if __name__ == '__main__':
     run(suite)

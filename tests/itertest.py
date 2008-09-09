@@ -20,11 +20,36 @@ class IterationTest(TestCase):
         listPtr = mapper.Store(testList)
         iterPtr = mapper.PyObject_GetIter(listPtr)
         iter = mapper.Retrieve(iterPtr)
-        self.assertEquals([x for x in iter], testList, "bad iterator")
+        self.assertEquals(list(iter), testList, "bad iterator")
             
         mapper.Dispose()
         deallocTypes()
     
+    
+    def testPyObject_GetIter_NotIEnumerable(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        class iterclass(object):
+            def __iter__(self):
+                for i in range(10):
+                    yield i
+        
+        obj = iterclass()
+        objPtr = mapper.Store(obj)
+        iterPtr = mapper.PyObject_GetIter(objPtr)
+        _iter = mapper.Retrieve(iterPtr)
+        self.assertEquals(list(_iter), range(10))
+        
+        classPtr = mapper.Store(iterclass)
+        self.assertEquals(mapper.PyObject_GetIter(classPtr), IntPtr.Zero)
+        def KindaConvertError():
+            raise mapper.LastException
+        self.assertRaises(TypeError, KindaConvertError)
+        
+        mapper.Dispose()
+        deallocTypes()
+        
     
     def testPyObject_GetIter_Failure(self):
         mapper = Python25Mapper()
@@ -36,14 +61,9 @@ class IterationTest(TestCase):
         self.assertEquals(iterPtr, IntPtr.Zero, "returned iterator inappropriately")
         self.assertNotEquals(mapper.LastException, None, "failed to set exception")
         
-        def Raise():
+        def KindaConvertError():
             raise mapper.LastException
-        try:
-            Raise()
-        except TypeError, e:
-            self.assertEquals(str(e), "PyObject_GetIter: object is not iterable", "bad message")
-        else:
-            self.fail("wrong exception")
+        self.assertRaises(TypeError, KindaConvertError)
                 
         mapper.Dispose()
         deallocTypes()
@@ -78,14 +98,9 @@ class IterationTest(TestCase):
         self.assertEquals(mapper.PyIter_Next(notIterPtr), IntPtr.Zero, "bad return")
         self.assertNotEquals(mapper.LastException, None, "failed to set exception")
         
-        def Raise():
+        def KindaConvertError():
             raise mapper.LastException
-        try:
-            Raise()
-        except TypeError, e:
-            self.assertEquals(str(e), "PyIter_Next: object is not an iterator", "bad message")
-        else:
-            self.fail("wrong exception")
+        self.assertRaises(TypeError, KindaConvertError)
             
         mapper.Dispose()
         deallocTypes()
