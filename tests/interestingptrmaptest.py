@@ -8,7 +8,7 @@ from System import IntPtr, NullReferenceException, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 
-from Ironclad import CPyMarshal, InterestingPtrMap, PtrFunc, UnmanagedDataMarker
+from Ironclad import CPyMarshal, InterestingPtrMap, PtrFunc
 from Ironclad.Structs import PyObject
 
 
@@ -54,27 +54,6 @@ class InterestingPtrMapTest(TestCase):
         self.assertEquals(objref.IsAlive, False, "failed to GC")
         self.assertRaises(KeyError, map.GetObj, ptr)
         # can't really try to get the ptr, because we don't have the obj any more
-        
-
-    def testAssociateUDMGivesOneWayMap(self):
-        map = InterestingPtrMap()
-        ptr1 = IntPtr(123)
-        ptr2 = IntPtr(456)
-        udm = UnmanagedDataMarker.PyListObject
-        
-        map.Associate(ptr1, udm)
-        map.Associate(ptr2, udm)
-        
-        self.assertEquals(map.HasPtr(ptr1), True, "wrong")
-        self.assertEquals(map.HasPtr(ptr2), True, "wrong")
-        self.assertEquals(map.GetObj(ptr1), udm, "failed to retrieve udm 1")
-        self.assertEquals(map.GetObj(ptr2), udm, "failed to retrieve udm 2")
-        
-        self.assertEquals(map.HasObj(udm), False, "should not claim to have UDMs")
-        self.assertRaises(KeyError, map.GetPtr, udm)
-        
-        map.Release(ptr1)
-        map.Release(ptr2)
     
     
     def testBridgeAssociateAssociatesStrongly(self):

@@ -296,7 +296,7 @@ class ListFunctionsTest(TestCase):
         listPtr = mapper.Store([1, 2, 3])
         
         self.assertEquals(mapper.PyList_SetItem(listPtr, 1, itemPtr), 0, "did not report success")
-        self.assertEquals(mapper.Retrieve(listPtr), [1, item, 3], "did not replace list content")
+        self.assertEquals(mapper.Retrieve(listPtr), [1, item, 3])
         
         mapper.Dispose()
         deallocTypes()

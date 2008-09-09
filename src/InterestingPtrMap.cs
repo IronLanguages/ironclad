@@ -24,11 +24,6 @@ namespace Ironclad
             this.obj2ptr[obj] = ptr;
         }
         
-        public void Associate(IntPtr ptr, UnmanagedDataMarker udm)
-        {
-            this.ptr2obj[ptr] = udm;
-        }
-        
         public void BridgeAssociate(IntPtr ptr, object obj)
         {
             WeakReference wref = new WeakReference(obj, true);

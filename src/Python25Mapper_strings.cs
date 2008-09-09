@@ -79,7 +79,7 @@ namespace Ironclad
             if (stringData == IntPtr.Zero)
             {
                 IntPtr data = this.AllocPyString(length);
-                this.map.Associate(data, UnmanagedDataMarker.PyStringObject);
+                this.incompleteObjects[data] = UnmanagedDataMarker.PyStringObject;
                 return data;
             }
             else
@@ -157,8 +157,8 @@ namespace Ironclad
                 return -1;
             }
             CPyMarshal.WritePtr(strPtrPtr, newStr);
-            this.map.Release(oldStr);
-            this.map.Associate(newStr, UnmanagedDataMarker.PyStringObject);
+            this.incompleteObjects.Remove(oldStr);
+            this.incompleteObjects[newStr] = UnmanagedDataMarker.PyStringObject;
             return this._PyString_Resize_NoGrow(newStr, newSize);
         }
         
@@ -226,6 +226,7 @@ namespace Ironclad
             Marshal.Copy(buffer, bytes, 0, length);
             char[] chars = Array.ConvertAll<byte, char>(
                 bytes, new Converter<byte, char>(CharFromByte));
+            this.incompleteObjects.Remove(ptr);
             this.map.Associate(ptr, new string(chars));
         }
     }
