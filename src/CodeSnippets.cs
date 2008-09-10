@@ -82,12 +82,7 @@ class {0}(_anon_superclass):
         self._dispatcher.init('{0}.tp_init', self, *args, **kwargs)
     
     def __del__(self):
-        try:
-            self._dispatcher.delete(self)
-        except Exception, e:
-            print 'error deleting object', self._instancePtr, type(self)
-            print type(e), e
-            print e.clsException.StackTrace
+        self._dispatcher.delete(self)
 ";
 
         public const string CLASS_BASES_CODE = @"

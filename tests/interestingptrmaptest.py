@@ -143,7 +143,8 @@ class InterestingPtrMapTest(TestCase):
         self.assertEquals(objref.IsAlive, False, "failed to GC")
         self.assertRaises(KeyError, map.GetObj, ptr)
         self.assertEquals(map.HasPtr(ptr), False, "wrong")
-
+        
+        
 
 suite = makesuite(InterestingPtrMapTest)
 if __name__ == '__main__':

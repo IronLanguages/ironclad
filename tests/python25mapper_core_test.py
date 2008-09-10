@@ -209,7 +209,6 @@ class Python25Mapper_References_Test(TestCase):
         mapper.Dispose()
         
 
-
     def testDecRefObjectWithZeroRefCountFails(self):
         allocator = HGlobalAllocator()
         mapper = Python25Mapper(allocator)
