@@ -66,6 +66,7 @@ class PyList_Type_Test(TypeTestCase):
     def testPyList_DeallocDecRefsItemsAndCallsCorrectFreeFunction(self):
         frees = []
         mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
+        deallocTypes = CreateTypes(mapper)
         
         calls = []
         def CustomFree(ptr):
@@ -73,9 +74,7 @@ class PyList_Type_Test(TypeTestCase):
             mapper.PyObject_Free(listPtr)
         self.freeDgt = Python25Api.PyObject_Free_Delegate(CustomFree)
         
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        mapper.SetData("PyList_Type", typeBlock)
-        CPyMarshal.WriteFunctionPtrField(typeBlock, PyTypeObject, "tp_free", self.freeDgt)
+        CPyMarshal.WriteFunctionPtrField(mapper.PyList_Type, PyTypeObject, "tp_free", self.freeDgt)
         
         listPtr = mapper.Store([1, 2, 3])
         itemPtrs = []
@@ -91,7 +90,7 @@ class PyList_Type_Test(TypeTestCase):
         self.assertEquals(calls, [listPtr], "did not call type's free function")
         
         mapper.Dispose()
-        Marshal.FreeHGlobal(typeBlock)
+        deallocTypes()
         
         
     def testStoreList(self):
