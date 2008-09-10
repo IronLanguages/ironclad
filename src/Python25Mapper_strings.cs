@@ -33,6 +33,14 @@ namespace Ironclad
             return data;
         }
         
+        private string
+        StringFromBytes(byte[] bytes)
+        {
+            char[] chars = Array.ConvertAll<byte, char>(
+                bytes, new Converter<byte, char>(CharFromByte));
+            return new string(chars);
+        }
+        
         private IntPtr
         CreatePyStringWithBytes(byte[] bytes)
         {
@@ -40,10 +48,6 @@ namespace Ironclad
             IntPtr bufPtr = CPyMarshal.Offset(
                 strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
             Marshal.Copy(bytes, 0, bufPtr, bytes.Length);
-            
-            char[] chars = Array.ConvertAll<byte, char>(
-                bytes, new Converter<byte, char>(CharFromByte));
-            this.map.Associate(strPtr, new string(chars));
             return strPtr;
         }
         
@@ -53,7 +57,9 @@ namespace Ironclad
             char[] chars = s.ToCharArray();
             byte[] bytes = Array.ConvertAll<char, byte>(
                 chars, new Converter<char, byte>(ByteFromChar));
-            return this.CreatePyStringWithBytes(bytes);
+            IntPtr strPtr = this.CreatePyStringWithBytes(bytes);
+            this.map.Associate(strPtr, s);
+            return strPtr;
         }
         
         
@@ -69,7 +75,9 @@ namespace Ironclad
             }
             byte[] bytes = new byte[bytesList.Count];
             bytesList.CopyTo(bytes);
-            return this.CreatePyStringWithBytes(bytes);
+            IntPtr strPtr = this.CreatePyStringWithBytes(bytes);
+            this.map.Associate(strPtr, this.StringFromBytes(bytes));
+            return strPtr;
         }
         
         
@@ -86,7 +94,9 @@ namespace Ironclad
             {
                 byte[] bytes = new byte[length];
                 Marshal.Copy(stringData, bytes, 0, length);
-                return this.CreatePyStringWithBytes(bytes);
+                IntPtr strPtr = this.CreatePyStringWithBytes(bytes);
+                this.map.Associate(strPtr, this.StringFromBytes(bytes));
+                return strPtr;
             }
         }
 

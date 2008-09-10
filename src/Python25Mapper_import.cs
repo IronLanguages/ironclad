@@ -48,7 +48,7 @@ namespace Ironclad
             if (name == "numpy")
             {
                 Console.WriteLine("Detected numpy import");
-                Console.WriteLine("  faking out modules: parser, mmap, urllib2, ctypes, numpy.ma, numpy.testing");
+                Console.WriteLine("  faking out modules: parser, mmap, urllib2, ctypes, numpy.testing");
                 this.CreateModule("parser");
                 this.CreateModule("mmap");
                 
@@ -61,7 +61,6 @@ namespace Ironclad
                 PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
                 modules["ctypes"] = null;
                 
-                this.CreateModule("numpy.ma");
                 ScriptScope testing = this.CreateModule("numpy.testing");
                 this.ExecInModule(CodeSnippets.FAKE_numpy_testing_CODE, testing);
                 

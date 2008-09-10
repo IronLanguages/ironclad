@@ -62,8 +62,8 @@ class DictTest(TestCase):
         
         self.assertEquals(mapper.PyDict_SetItemString(dictPtr, 'foo', mapper.Store('bar')), 0)
         self.assertEquals(mapper.PyDict_SetItem(dictPtr, mapper.Store('baz'), mapper.Store('qux')), 0)
-        self.assertEquals(mapper.PyDict_GetItemString(dictPtr, 'foo'), mapper.Store('bar'))
-        self.assertEquals(mapper.PyDict_GetItem(dictPtr, mapper.Store('baz')), mapper.Store('qux'))
+        self.assertEquals(mapper.Retrieve(mapper.PyDict_GetItemString(dictPtr, 'foo')), 'bar')
+        self.assertEquals(mapper.Retrieve(mapper.PyDict_GetItem(dictPtr, mapper.Store('baz'))), 'qux')
         self.assertEquals(klass.foo, 'bar')
         self.assertEquals(klass.baz, 'qux')
         self.assertEquals(mapper.PyDict_Size(dictPtr), len(klass.__dict__))

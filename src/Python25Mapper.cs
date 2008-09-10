@@ -130,14 +130,22 @@ namespace Ironclad
         {
             if (!this.allocator.Contains(ptr))
             {
+                // we don't own this memory; not our problem.
                 return;
             }
-            GC.SuppressFinalize(this.Retrieve(ptr));
-            IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
-            CPython_destructor_Delegate dgt = (CPython_destructor_Delegate)
-                CPyMarshal.ReadFunctionPtrField(
-                    typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(CPython_destructor_Delegate));
-            dgt(ptr);
+            try
+            {
+                GC.SuppressFinalize(this.Retrieve(ptr));
+                IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
+                CPython_destructor_Delegate dgt = (CPython_destructor_Delegate)
+                    CPyMarshal.ReadFunctionPtrField(
+                        typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(CPython_destructor_Delegate));
+                dgt(ptr);
+            }
+            catch
+            {
+                // meh, we're probably deallocing things out of order. tough.
+            }
         }
         
         protected virtual void Dispose(bool disposing)
@@ -146,9 +154,9 @@ namespace Ironclad
             {
                 if (this.alive)
                 {
-                    this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
-                    this.StopDispatchingDeletes();
                     this.alive = false;
+                    this.StopDispatchingDeletes();
+                    this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
                     this.allocator.FreeAll();
                     foreach (IntPtr FILE in this.FILEs.Values)
                     {

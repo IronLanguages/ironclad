@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
+using IronPython.Runtime;
+
 using Ironclad.Structs;
 
 namespace Ironclad
@@ -11,8 +13,9 @@ namespace Ironclad
     
     public class InterestingPtrMap
     {
-        private Dictionary<object, IntPtr> obj2ptr = new Dictionary<object, IntPtr>();
-        private Dictionary<IntPtr, object> ptr2obj = new Dictionary<IntPtr, object>();
+        private Dictionary<object, IntPtr> id2ptr = new Dictionary<object, IntPtr>();
+        private Dictionary<IntPtr, object> ptr2id = new Dictionary<IntPtr, object>();
+        private Dictionary<object, object> id2obj = new Dictionary<object, object>();
         
         private Dictionary<WeakReference, IntPtr> ref2ptr = new Dictionary<WeakReference, IntPtr>();
         private Dictionary<IntPtr, WeakReference> ptr2ref = new Dictionary<IntPtr, WeakReference>();
@@ -20,8 +23,10 @@ namespace Ironclad
     
         public void Associate(IntPtr ptr, object obj)
         {
-            this.ptr2obj[ptr] = obj;
-            this.obj2ptr[obj] = ptr;
+            object id = Builtin.id(obj);
+            this.ptr2id[ptr] = id;
+            this.id2ptr[id] = ptr;
+            this.id2obj[id] = obj;
         }
         
         public void BridgeAssociate(IntPtr ptr, object obj)
@@ -47,7 +52,7 @@ namespace Ironclad
         
         public void UpdateStrength(IntPtr ptr)
         {
-            if (this.ptr2obj.ContainsKey(ptr))
+            if (this.ptr2id.ContainsKey(ptr))
             {
                 // items in this mapping are always strongly referenced
                 return;
@@ -86,14 +91,13 @@ namespace Ironclad
         
         public void Release(IntPtr ptr)
         {
-            if (this.ptr2obj.ContainsKey(ptr))
+            if (this.ptr2id.ContainsKey(ptr))
             {
-                object obj = this.ptr2obj[ptr];
-                this.ptr2obj.Remove(ptr);
-                if (this.obj2ptr.ContainsKey(obj))
-                {
-                    this.obj2ptr.Remove(obj);
-                }
+                object id = this.ptr2id[ptr];
+                object obj = this.id2obj[id];
+                this.ptr2id.Remove(ptr);
+                this.id2obj.Remove(id);
+                this.id2ptr.Remove(id);
             }
             else if (this.ptr2ref.ContainsKey(ptr))
             {
@@ -113,7 +117,7 @@ namespace Ironclad
         
         public bool HasObj(object obj)
         {
-            if (this.obj2ptr.ContainsKey(obj))
+            if (this.id2ptr.ContainsKey(Builtin.id(obj)))
             {
                 return true;
             }
@@ -129,9 +133,10 @@ namespace Ironclad
         
         public IntPtr GetPtr(object obj)
         {
-            if (this.obj2ptr.ContainsKey(obj))
+            object id = Builtin.id(obj);
+            if (this.id2ptr.ContainsKey(id))
             {
-                return this.obj2ptr[obj];
+                return this.id2ptr[id];
             }
             foreach (WeakReference wref in this.ref2ptr.Keys)
             {
@@ -145,7 +150,7 @@ namespace Ironclad
         
         public bool HasPtr(IntPtr ptr)
         {
-            if (this.ptr2obj.ContainsKey(ptr))
+            if (this.ptr2id.ContainsKey(ptr))
             {
                 return true;
             }
@@ -158,9 +163,9 @@ namespace Ironclad
         
         public object GetObj(IntPtr ptr)
         {
-            if (this.ptr2obj.ContainsKey(ptr))
+            if (this.ptr2id.ContainsKey(ptr))
             {
-                return this.ptr2obj[ptr];
+                return this.id2obj[this.ptr2id[ptr]];
             }
             if (this.ptr2ref.ContainsKey(ptr))
             {

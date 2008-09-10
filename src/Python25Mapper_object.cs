@@ -169,10 +169,9 @@ namespace Ironclad
             try
             {
                 object obj = this.Retrieve(objPtr);
-                string str = obj as string;
-                if (str != null)
+                if (obj is string)
                 {
-                    return this.Store(str);
+                    return this.Store(obj);
                 }
                 return this.Store(PythonCalls.Call(Builtin.str, new object[] { obj }));
                 
