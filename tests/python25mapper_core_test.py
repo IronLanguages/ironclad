@@ -158,7 +158,9 @@ class Python25Mapper_References_Test(TestCase):
         frees = []
         allocs = []
         mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+        deallocTypes = CreateTypes(mapper)
         
+        del allocs[:]
         obj1 = object()
         result1 = mapper.Store(obj1)
         result2 = mapper.Store(obj1)
@@ -168,8 +170,9 @@ class Python25Mapper_References_Test(TestCase):
         self.assertEquals(mapper.RefCount(result1), 2, "did not incref")
         
         mapper.DecRef(result1)
-        mapper.DecRef(result1)
         
+        del frees[:]
+        mapper.DecRef(result1)
         self.assertEquals(frees, [result1], "did not free memory")
         
         result3 = mapper.Store(obj1)
@@ -177,6 +180,7 @@ class Python25Mapper_References_Test(TestCase):
                           [(result1, Marshal.SizeOf(PyObject)), (result3, Marshal.SizeOf(PyObject))], 
                           "unexpected result -- failed to clear reverse mapping?")
         mapper.Dispose()
+        deallocTypes()
         
 
     def testStoreEqualObjectStoresSeparately(self):
@@ -251,9 +255,10 @@ class Python25Mapper_References_Test(TestCase):
         mapper.Dispose()
     
     
-    def testFinalDecRefDoesNotCallNull_tp_dealloc_ButDoesFreeMemory(self):
+    def testFinalDecRefComplainsAboutMissing_tp_dealloc(self):
         frees = []
         mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
+        deallocTypes = CreateTypes(mapper)
         
         typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_dealloc", IntPtr.Zero)
@@ -263,11 +268,14 @@ class Python25Mapper_References_Test(TestCase):
         CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", typePtr)
         
         mapper.IncRef(objPtr)
+        
+        del frees [:]
         mapper.DecRef(objPtr)
         self.assertEquals(frees, [], "freed prematurely")
-        mapper.DecRef(objPtr)
-        self.assertEquals(frees, [objPtr], "not freed when refcount hit 0")
+        self.assertRaises(CannotInterpretException, mapper.DecRef, objPtr)
+        
         mapper.Dispose()
+        deallocTypes()
     
 
     def testStoreBridge(self):
@@ -388,6 +396,7 @@ class Python25Mapper_References_Test(TestCase):
         frees = []
         allocator = GetAllocatingTestAllocator([], frees)
         mapper = Python25Mapper(allocator)
+        deallocTypes = CreateTypes(mapper)
 
         obj1 = object()
         ptr = mapper.Store(obj1)
@@ -397,6 +406,7 @@ class Python25Mapper_References_Test(TestCase):
         self.assertEquals(mapper.RefCount(ptr), 2, "unexpected refcount")
         self.assertEquals(mapper.HasPtr(ptr), True)
 
+        del frees[:]
         mapper.DecRef(ptr)
         self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
         self.assertEquals(mapper.HasPtr(ptr), True)
@@ -406,7 +416,9 @@ class Python25Mapper_References_Test(TestCase):
         self.assertEquals(mapper.HasPtr(ptr), False)
         self.assertEquals(frees, [ptr], "unexpected deallocations")
         self.assertRaises(KeyError, lambda: mapper.PyObject_Free(ptr))
+        
         mapper.Dispose()
+        deallocTypes()
 
 
     def testNullPointers(self):

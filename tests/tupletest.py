@@ -63,15 +63,14 @@ class PyTuple_Type_Test(TypeTestCase):
     def testPyTuple_DeallocDecRefsItemsAndCallsCorrectFreeFunction(self):
         frees = []
         mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
+        deallocTypes = CreateTypes(mapper)
         
         calls = []
         def CustomFree(ptr):
             calls.append(ptr)
         freeDgt = Python25Api.PyObject_Free_Delegate(CustomFree)
         
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        mapper.SetData("PyTuple_Type", typeBlock)
-        CPyMarshal.WriteFunctionPtrField(typeBlock, PyTypeObject, "tp_free", freeDgt)
+        CPyMarshal.WriteFunctionPtrField(mapper.PyTuple_Type, PyTypeObject, "tp_free", freeDgt)
         tuplePtr, itemPtrs = MakeTuple(mapper, (1, 2, 3))
 
         mapper.PyTuple_Dealloc(tuplePtr)
@@ -82,7 +81,7 @@ class PyTuple_Type_Test(TypeTestCase):
         mapper.PyObject_Free(tuplePtr)
 
         mapper.Dispose()
-        Marshal.FreeHGlobal(typeBlock)
+        deallocTypes()
     
 
 

@@ -363,10 +363,11 @@ namespace Ironclad
                             deallocDgt(ptr);
                             return;
                         }
+                        throw new CannotInterpretException(String.Format(
+                            "Cannot destroy object at {0} with type at {1}: no dealloc function", ptr.ToString("x"), typePtr.ToString("x")));
                     }
-                    // TODO: remove this get-out-of-jail-free, and ensure that 
-                    // all the types I create actually have dealloc functions
-                    this.PyObject_Free(ptr);
+                    throw new CannotInterpretException(String.Format(
+                        "Cannot destroy object at {0}: null type", ptr.ToString("x")));
                 }
                 else
                 {
