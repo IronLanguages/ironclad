@@ -257,6 +257,8 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyIter_Next", ('IntPtr(123)',), 'IntPtr(999)')
         self.assertFinds("PySeqIter_New", ('IntPtr(123)',), 'IntPtr(999)')
         
+        self.assertFinds("PyMapping_Check", ('IntPtr(111)',), '0')
+        
         self.assertFinds("PyDict_New", tuple(), 'IntPtr(999)')
         self.assertFinds("PyDict_Size", ('IntPtr(111)',), '999')
         self.assertFinds("PyDict_GetItem", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(333)')

@@ -26,6 +26,9 @@ _PyObject_CallFunction_SizeT
 PyObject_CallMethod
 _PyObject_CallMethod_SizeT
 
+PyTuple_GetItem
+PyTuple_SetItem
+
 PyEval_CallObject
 PyEval_CallObjectWithKeywords
 
