@@ -6,9 +6,15 @@ namespace Ironclad
     public partial class Python25Mapper : Python25Api
     {
         public override IntPtr 
-        PyThread_allocate_lock(/* no args */)
+        PyThread_allocate_lock()
         {
             return this.Store(new Object());
+        }
+
+        public override void 
+        PyThread_free_lock(IntPtr lockPtr)
+        {
+            this.PyObject_Free(lockPtr);
         }
 
         public override int 
@@ -37,12 +43,6 @@ namespace Ironclad
         PyThread_release_lock(IntPtr lockPtr)
         {
             Monitor.Exit(this.Retrieve(lockPtr));
-        }
-
-        public override void 
-        PyThread_free_lock(IntPtr lockPtr)
-        {
-            this.PyObject_Free(lockPtr);
         }
 
         public override IntPtr

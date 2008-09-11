@@ -145,7 +145,7 @@ namespace Ironclad
         }
 
         private static bool
-        GetMemberMethodSuffix(MemberT type, ref string suffix)
+        TryGetMemberMethodSuffix(MemberT type, ref string suffix)
         {
             switch (type)
             {
@@ -173,7 +173,7 @@ namespace Ironclad
                 memberPtr, typeof(PyMemberDef));
 
             string suffix = null;
-            if (GetMemberMethodSuffix(member.type, ref suffix))
+            if (TryGetMemberMethodSuffix(member.type, ref suffix))
             {
                 string getname = String.Format("__get_{0}", member.name);
                 this.code.Append(String.Format(CodeSnippets.MEMBER_GETTER_CODE, getname, member.offset, suffix));
@@ -284,8 +284,5 @@ namespace Ironclad
                 this.methodTable[this.tablePrefix + fieldName] = dgt;
             }
         }
-
-
-
     }
 }

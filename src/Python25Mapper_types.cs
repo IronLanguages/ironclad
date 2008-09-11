@@ -14,31 +14,99 @@ namespace Ironclad
 
     public partial class Python25Mapper
     {
-        private IntPtr
-        Store(PythonType _type)
+        public override IntPtr 
+        PyType_GenericNew(IntPtr typePtr, IntPtr args, IntPtr kwargs)
         {
-            int typeSize = Marshal.SizeOf(typeof(PyTypeObject));
-            IntPtr typePtr = this.allocator.Alloc(typeSize);
-            CPyMarshal.Zero(typePtr, typeSize);
-
-            object ob_type = PythonCalls.Call(this.scratchContext, Builtin.type, new object[] { _type });
-            // TODO: handle multiple inheritance
-            PythonTuple tp_bases = (PythonTuple)_type.__getattribute__(this.scratchContext, "__bases__");
-            object tp_base = tp_bases[0];
-            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "ob_refcnt", 2);
-            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.Store(ob_type));
-            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", this.Store(tp_base));
-
-            this.scratchModule.SetVariable("_ironclad_superclass", _type);
-            this.ExecInModule(CodeSnippets.ACTUALISER_CODE, this.scratchModule);
-            this.actualiseHelpers[typePtr] = this.scratchModule.GetVariable<object>("anon_actualiser");
-            this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
-
-            this.PyType_Ready(typePtr);
-            this.map.Associate(typePtr, _type);
-            return typePtr;
+            PyType_GenericAlloc_Delegate dgt = (PyType_GenericAlloc_Delegate)CPyMarshal.ReadFunctionPtrField(
+                typePtr, typeof(PyTypeObject), "tp_alloc", typeof(PyType_GenericAlloc_Delegate));
+            return dgt(typePtr, 0);
         }
         
+        public override IntPtr 
+        PyType_GenericAlloc(IntPtr typePtr, int nItems)
+        {
+            int size = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
+            
+            if (nItems > 0)
+            {
+                int itemsize = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_itemsize");
+                size += (nItems * itemsize);
+            }
+            
+            IntPtr newInstance = this.allocator.Alloc(size);
+            CPyMarshal.Zero(newInstance, size);
+            CPyMarshal.WriteIntField(newInstance, typeof(PyObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(newInstance, typeof(PyObject), "ob_type", typePtr);
+            
+            return newInstance;
+        }
+        
+        public override int
+        PyType_IsSubtype(IntPtr subtypePtr, IntPtr typePtr)
+        {
+            if (subtypePtr == IntPtr.Zero || typePtr == IntPtr.Zero)
+            {
+                return 0;
+            }
+            PythonType _type = this.Retrieve(typePtr) as PythonType;
+            PythonType subtype = this.Retrieve(subtypePtr) as PythonType;
+            if (subtype == null || _type == null)
+            {
+                return 0;
+            }
+            if (Builtin.issubclass(subtype, _type))
+            {
+                return 1;
+            }
+            return 0;
+        }
+        
+        public override int
+        PyType_Ready(IntPtr typePtr)
+        {
+            if (typePtr == IntPtr.Zero)
+            {
+                return -1;
+            }
+            
+            Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
+            if ((Int32)(flags & Py_TPFLAGS.READY) != 0)
+            {
+                return 0;
+            }
+            
+            IntPtr typeTypePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "ob_type");
+            if ((typeTypePtr == IntPtr.Zero) && (typePtr != this.PyType_Type))
+            {
+                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.PyType_Type);
+            }
+            IntPtr typeBasePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
+            if ((typeBasePtr == IntPtr.Zero) && (typePtr != this.PyBaseObject_Type))
+            {
+                typeBasePtr = this.PyBaseObject_Type;
+                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", typeBasePtr);
+            }
+            PyType_Ready(typeBasePtr);
+            
+            this.InheritPtrField(typePtr, "tp_alloc");
+            this.InheritPtrField(typePtr, "tp_init");
+            this.InheritPtrField(typePtr, "tp_new");
+            this.InheritPtrField(typePtr, "tp_dealloc");
+            this.InheritPtrField(typePtr, "tp_free");
+            this.InheritPtrField(typePtr, "tp_print");
+            this.InheritPtrField(typePtr, "tp_repr");
+            this.InheritPtrField(typePtr, "tp_str");
+            this.InheritPtrField(typePtr, "tp_doc");
+            this.InheritPtrField(typePtr, "tp_call");
+            // TODO: these fields should probably point to copies of supertype's fields
+            this.InheritPtrField(typePtr, "tp_as_number");
+            this.InheritPtrField(typePtr, "tp_as_sequence");
+            this.InheritPtrField(typePtr, "tp_as_mapping");
+            
+            flags |= Py_TPFLAGS.READY;
+            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
+            return 0;
+        }
         
         public override void
         Fill_PyEllipsis_Type(IntPtr address)
@@ -96,27 +164,6 @@ namespace Ironclad
 
             this.actualisableTypes[this.PyType_Type] = new ActualiseDelegate(this.ActualiseType);
         }
-        
-        public override int
-        PyType_IsSubtype(IntPtr subtypePtr, IntPtr typePtr)
-        {
-            if (subtypePtr == IntPtr.Zero || typePtr == IntPtr.Zero)
-            {
-                return 0;
-            }
-            PythonType _type = this.Retrieve(typePtr) as PythonType;
-            PythonType subtype = this.Retrieve(subtypePtr) as PythonType;
-            if (subtype == null || _type == null)
-            {
-                return 0;
-            }
-            if (Builtin.issubclass(subtype, _type))
-            {
-                return 1;
-            }
-            return 0;
-        }
-        
                 
         private void
         InheritPtrField(IntPtr typePtr, string name)
@@ -132,82 +179,40 @@ namespace Ironclad
                 }
             }
         }
-        
-        public override int
-        PyType_Ready(IntPtr typePtr)
-        {
-            if (typePtr == IntPtr.Zero)
-            {
-                return -1;
-            }
-            
-            Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
-            if ((Int32)(flags & Py_TPFLAGS.READY) != 0)
-            {
-                return 0;
-            }
-            
-            IntPtr typeTypePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "ob_type");
-            if ((typeTypePtr == IntPtr.Zero) && (typePtr != this.PyType_Type))
-            {
-                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.PyType_Type);
-            }
-            IntPtr typeBasePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
-            if ((typeBasePtr == IntPtr.Zero) && (typePtr != this.PyBaseObject_Type))
-            {
-                typeBasePtr = this.PyBaseObject_Type;
-                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", typeBasePtr);
-            }
-            PyType_Ready(typeBasePtr);
-            
-            this.InheritPtrField(typePtr, "tp_alloc");
-            this.InheritPtrField(typePtr, "tp_init");
-            this.InheritPtrField(typePtr, "tp_new");
-            this.InheritPtrField(typePtr, "tp_dealloc");
-            this.InheritPtrField(typePtr, "tp_free");
-            this.InheritPtrField(typePtr, "tp_print");
-            this.InheritPtrField(typePtr, "tp_repr");
-            this.InheritPtrField(typePtr, "tp_str");
-            this.InheritPtrField(typePtr, "tp_doc");
-            this.InheritPtrField(typePtr, "tp_call");
-            // TODO: these fields should probably point to copies of supertype's fields
-            this.InheritPtrField(typePtr, "tp_as_number");
-            this.InheritPtrField(typePtr, "tp_as_sequence");
-            this.InheritPtrField(typePtr, "tp_as_mapping");
-            
-            flags |= Py_TPFLAGS.READY;
-            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
-            return 0;
-        }
-        
-        public override IntPtr 
-        PyType_GenericNew(IntPtr typePtr, IntPtr args, IntPtr kwargs)
-        {
-            PyType_GenericAlloc_Delegate dgt = (PyType_GenericAlloc_Delegate)CPyMarshal.ReadFunctionPtrField(
-                typePtr, typeof(PyTypeObject), "tp_alloc", typeof(PyType_GenericAlloc_Delegate));
-            return dgt(typePtr, 0);
-        }
-        
-        public override IntPtr 
-        PyType_GenericAlloc(IntPtr typePtr, int nItems)
-        {
-            int size = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
-            
-            if (nItems > 0)
-            {
-                int itemsize = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_itemsize");
-                size += (nItems * itemsize);
-            }
-            
-            IntPtr newInstance = this.allocator.Alloc(size);
-            CPyMarshal.Zero(newInstance, size);
-            CPyMarshal.WriteIntField(newInstance, typeof(PyObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(newInstance, typeof(PyObject), "ob_type", typePtr);
-            
-            return newInstance;
-        }
 
+        private IntPtr
+        Store(PythonType _type)
+        {
+            int typeSize = Marshal.SizeOf(typeof(PyTypeObject));
+            IntPtr typePtr = this.allocator.Alloc(typeSize);
+            CPyMarshal.Zero(typePtr, typeSize);
 
+            // TODO: handle multiple inheritance
+            object ob_type = PythonCalls.Call(this.scratchContext, Builtin.type, new object[] { _type });
+            PythonTuple tp_bases = (PythonTuple)_type.__getattribute__(this.scratchContext, "__bases__");
+            object tp_base = tp_bases[0];
+            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "ob_refcnt", 2);
+            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.Store(ob_type));
+            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", this.Store(tp_base));
+
+            this.scratchModule.SetVariable("_ironclad_superclass", _type);
+            this.ExecInModule(CodeSnippets.ACTUALISER_CODE, this.scratchModule);
+            this.actualiseHelpers[typePtr] = this.scratchModule.GetVariable<object>("anon_actualiser");
+            this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
+
+            this.PyType_Ready(typePtr);
+            this.map.Associate(typePtr, _type);
+            return typePtr;
+        }
+        
+        private void 
+        ActualiseType(IntPtr typePtr)
+        {
+            this.PyType_Ready(typePtr);
+            this.GenerateClass(typePtr);
+            this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
+        }
+        
         private void
         ActualiseArbitraryObject(IntPtr ptr)
         {
@@ -219,15 +224,6 @@ namespace Ironclad
             this.StoreBridge(ptr, obj);
             this.IncRef(ptr);
             GC.KeepAlive(obj); // please test me, if you can work out how to
-        }
-
-        
-        private void 
-        ActualiseType(IntPtr typePtr)
-        {
-            this.PyType_Ready(typePtr);
-            this.GenerateClass(typePtr);
-            this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
         }
     }
 }

@@ -30,7 +30,5 @@ namespace Ironclad
                 this.allocator.Free(ptr);
             }
         }
-        
-        
     }
 }

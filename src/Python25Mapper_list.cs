@@ -196,7 +196,7 @@ namespace Ironclad
         {
             if (this.listsBeingActualised.ContainsKey(ptr))
             {
-                throw new Exception("Fatal logic error -- Python25Mapper.listsBeingActualised is somehow corrupt");
+                throw new Exception("Fatal error: Python25Mapper.listsBeingActualised is somehow corrupt");
             }
             
             List newList = new List();

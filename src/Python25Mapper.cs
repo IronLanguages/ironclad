@@ -53,7 +53,7 @@ namespace Ironclad
         
         private ScriptScope dispatcherModule;
         private object dispatcherClass;
-        private object dispatcherLock;
+        private object dispatcherLock; // essentialy the GIL
 
         private bool alive = false;
         private InterestingPtrMap map = new InterestingPtrMap();
@@ -92,9 +92,11 @@ namespace Ironclad
         {
             this.engine = inEngine;
             this.allocator = alloc;
+            
             this.AddPaths();
             this.CreateScratchModule();
             this.CreateDispatcherModule();
+            
             if (stubPath != null)
             {
                 this.stub = new StubReference(stubPath);
@@ -138,12 +140,13 @@ namespace Ironclad
             }
             try
             {
+                // note: SuppressFinalize won't work on ipy objects, but is required for OpaquePyCObjects.
                 GC.SuppressFinalize(this.Retrieve(ptr));
                 IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
-                CPython_destructor_Delegate dgt = (CPython_destructor_Delegate)
+                CPython_destructor_Delegate dealloc = (CPython_destructor_Delegate)
                     CPyMarshal.ReadFunctionPtrField(
                         typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(CPython_destructor_Delegate));
-                dgt(ptr);
+                dealloc(ptr);
             }
             catch
             {
@@ -413,18 +416,6 @@ namespace Ironclad
         {
             this.map.CheckBridgePtrs();
         }
-        
-        public override void 
-        PyObject_Free(IntPtr ptr)
-        {
-            if (this.FILEs.ContainsKey(ptr))
-            {
-                Unmanaged.fclose(this.FILEs[ptr]);
-                this.FILEs.Remove(ptr);
-            }
-            this.Unmap(ptr);
-            this.allocator.Free(ptr);
-        }
 
         public void Unmap(IntPtr ptr)
         {
@@ -491,18 +482,6 @@ namespace Ironclad
             return Marshal.GetFunctionPointerForDelegate(this.dgtMap[name]);
         }
         
-        
-        public override int
-        PyCallable_Check(IntPtr objPtr)
-        {
-            if (Builtin.callable(this.scratchContext, this.Retrieve(objPtr)))
-            {
-                return 1;
-            }
-            return 0;
-        }
-        
-        
         public override void
         Fill__Py_NoneStruct(IntPtr address)
         {
@@ -544,7 +523,6 @@ namespace Ironclad
             Marshal.StructureToPtr(ellipsis, address, false);
             this.map.Associate(address, Builtin.Ellipsis);
         }
-        
         
         public override void
         Fill_Py_OptimizeFlag(IntPtr address)

@@ -311,7 +311,7 @@ def lock(f):
     return locked
 
 class Dispatcher(object):
-    _lock = object()
+    _lock = object() # this is effectively the GIL
 
     def __init__(self, mapper, table):
         self.mapper = mapper

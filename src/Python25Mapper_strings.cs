@@ -12,57 +12,6 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        
-        private IntPtr 
-        AllocPyString(int length)
-        {
-            int size = Marshal.SizeOf(typeof(PyStringObject)) + length;
-            IntPtr data = this.allocator.Alloc(size);
-            
-            PyStringObject s = new PyStringObject();
-            s.ob_refcnt = 1;
-            s.ob_type = this.PyString_Type;
-            s.ob_size = (uint)length;
-            s.ob_shash = -1;
-            s.ob_sstate = 0;
-            Marshal.StructureToPtr(s, data, false);
-            
-            IntPtr terminator = CPyMarshal.Offset(data, size - 1);
-            CPyMarshal.WriteByte(terminator, 0);
-        
-            return data;
-        }
-        
-        private string
-        StringFromBytes(byte[] bytes)
-        {
-            char[] chars = Array.ConvertAll<byte, char>(
-                bytes, new Converter<byte, char>(CharFromByte));
-            return new string(chars);
-        }
-        
-        private IntPtr
-        CreatePyStringWithBytes(byte[] bytes)
-        {
-            IntPtr strPtr = this.AllocPyString(bytes.Length);
-            IntPtr bufPtr = CPyMarshal.Offset(
-                strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
-            Marshal.Copy(bytes, 0, bufPtr, bytes.Length);
-            return strPtr;
-        }
-        
-        private IntPtr
-        Store(string s)
-        {
-            char[] chars = s.ToCharArray();
-            byte[] bytes = Array.ConvertAll<char, byte>(
-                chars, new Converter<char, byte>(ByteFromChar));
-            IntPtr strPtr = this.CreatePyStringWithBytes(bytes);
-            this.map.Associate(strPtr, s);
-            return strPtr;
-        }
-        
-        
         public override IntPtr 
         PyString_FromString(IntPtr stringData)
         {
@@ -79,7 +28,6 @@ namespace Ironclad
             this.map.Associate(strPtr, this.StringFromBytes(bytes));
             return strPtr;
         }
-        
         
         public override IntPtr
         PyString_FromStringAndSize(IntPtr stringData, int length)
@@ -100,7 +48,6 @@ namespace Ironclad
             }
         }
 
-
         public override IntPtr
         PyString_InternFromString(IntPtr stringData)
         {
@@ -110,7 +57,6 @@ namespace Ironclad
             this.PyString_InternInPlace(newStrPtrPtr);
             return CPyMarshal.ReadPtr(newStrPtrPtr);
         }
-
 
         public override void
         PyString_InternInPlace(IntPtr strPtrPtr)
@@ -133,7 +79,6 @@ namespace Ironclad
             this.DecRef(strPtr);
             CPyMarshal.WritePtr(strPtrPtr, intStrPtr);
         }
-        
         
         public override IntPtr
         PyString_AsString(IntPtr strPtr)
@@ -172,7 +117,6 @@ namespace Ironclad
             return this._PyString_Resize_NoGrow(newStr, newSize);
         }
         
-        
         private int
         _PyString_Resize_NoGrow(IntPtr strPtr, int newSize)
         {
@@ -203,7 +147,6 @@ namespace Ironclad
             }
         }
         
-        
         public override int
         PyString_Size(IntPtr strPtr)
         {
@@ -211,6 +154,25 @@ namespace Ironclad
             return (int)str.ob_size;
         }
         
+        private IntPtr 
+        AllocPyString(int length)
+        {
+            int size = Marshal.SizeOf(typeof(PyStringObject)) + length;
+            IntPtr data = this.allocator.Alloc(size);
+            
+            PyStringObject s = new PyStringObject();
+            s.ob_refcnt = 1;
+            s.ob_type = this.PyString_Type;
+            s.ob_size = (uint)length;
+            s.ob_shash = -1;
+            s.ob_sstate = 0;
+            Marshal.StructureToPtr(s, data, false);
+            
+            IntPtr terminator = CPyMarshal.Offset(data, size - 1);
+            CPyMarshal.WriteByte(terminator, 0);
+        
+            return data;
+        }
         
         private static char
         CharFromByte(byte b)
@@ -224,6 +186,34 @@ namespace Ironclad
             return (byte)c;
         }
         
+        private string
+        StringFromBytes(byte[] bytes)
+        {
+            char[] chars = Array.ConvertAll<byte, char>(
+                bytes, new Converter<byte, char>(CharFromByte));
+            return new string(chars);
+        }
+        
+        private IntPtr
+        CreatePyStringWithBytes(byte[] bytes)
+        {
+            IntPtr strPtr = this.AllocPyString(bytes.Length);
+            IntPtr bufPtr = CPyMarshal.Offset(
+                strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+            Marshal.Copy(bytes, 0, bufPtr, bytes.Length);
+            return strPtr;
+        }
+        
+        private IntPtr
+        Store(string str)
+        {
+            char[] chars = str.ToCharArray();
+            byte[] bytes = Array.ConvertAll<char, byte>(
+                chars, new Converter<char, byte>(ByteFromChar));
+            IntPtr strPtr = this.CreatePyStringWithBytes(bytes);
+            this.map.Associate(strPtr, str);
+            return strPtr;
+        }
         
         private void
         ActualiseString(IntPtr ptr)

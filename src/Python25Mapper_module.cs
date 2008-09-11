@@ -17,55 +17,6 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-
-        private void
-        ExecInModule(string code, ScriptScope module)
-        {
-            ScriptSource script = this.engine.CreateScriptSourceFromString(code, SourceCodeKind.Statements);
-            script.Execute(module);
-        }
-        
-        public void
-        AddModule(string name, ScriptScope module)
-        {
-            ScriptScope sys = Python.GetSysModule(this.Engine);
-            PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
-            modules[name] = HostingHelpers.GetScope(module);
-        }
-
-        public object 
-        GetModule(string name)
-        {
-            ScriptScope sys = Python.GetSysModule(this.Engine);
-            PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
-            if (modules.has_key(name))
-            {
-                return modules[name];
-            }
-            return null;
-        }
-
-        public ScriptScope 
-        GetModuleScriptScope(Scope module)
-        {
-            return this.Engine.CreateScope(module.Dict);
-        }
-        
-        private void
-        CreateScratchModule()
-        {
-            PythonDictionary globals = new PythonDictionary();
-            globals["IntPtr"] = typeof(IntPtr);
-            globals["CPyMarshal"] = typeof(CPyMarshal);
-            globals["_mapper"] = this;
-            this.scratchModule = this.engine.CreateScope(globals);
-            this.ExecInModule(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE, this.scratchModule);
-            
-            Scope scratchScope = HostingHelpers.GetScope(this.scratchModule);
-            this.scratchContext = new CodeContext(scratchScope, HostingHelpers.GetLanguageContext(this.engine));
-        }
-        
-        
         public override IntPtr 
         Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
         {
@@ -135,6 +86,53 @@ namespace Ironclad
         PyModule_AddStringConstant(IntPtr modulePtr, string name, string value)
         {
             return this.PyModule_Add(modulePtr, name, value);
+        }
+
+        private void
+        ExecInModule(string code, ScriptScope module)
+        {
+            ScriptSource script = this.engine.CreateScriptSourceFromString(code, SourceCodeKind.Statements);
+            script.Execute(module);
+        }
+        
+        public void
+        AddModule(string name, ScriptScope module)
+        {
+            ScriptScope sys = Python.GetSysModule(this.Engine);
+            PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
+            modules[name] = HostingHelpers.GetScope(module);
+        }
+
+        public object 
+        GetModule(string name)
+        {
+            ScriptScope sys = Python.GetSysModule(this.Engine);
+            PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
+            if (modules.has_key(name))
+            {
+                return modules[name];
+            }
+            return null;
+        }
+
+        public ScriptScope 
+        GetModuleScriptScope(Scope module)
+        {
+            return this.Engine.CreateScope(module.Dict);
+        }
+        
+        private void
+        CreateScratchModule()
+        {
+            PythonDictionary globals = new PythonDictionary();
+            globals["IntPtr"] = typeof(IntPtr);
+            globals["CPyMarshal"] = typeof(CPyMarshal);
+            globals["_mapper"] = this;
+            this.scratchModule = this.engine.CreateScope(globals);
+            this.ExecInModule(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE, this.scratchModule);
+            
+            Scope scratchScope = HostingHelpers.GetScope(this.scratchModule);
+            this.scratchContext = new CodeContext(scratchScope, HostingHelpers.GetLanguageContext(this.engine));
         }
     }
 }
