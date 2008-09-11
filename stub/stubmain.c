@@ -14,5 +14,6 @@
 #include "modsupport.c"
 #include "abstract.c"
 #include "stringobject.c"
+#include "tupleobject.c"
 #include "ceval.c"
 #include "mysnprintf.c"
