@@ -28,31 +28,21 @@ namespace Ironclad
         public void
         AddModule(string name, ScriptScope module)
         {
-            Scope scope = HostingHelpers.GetScope(module);
-            this.Engine.Runtime.Globals.SetVariable(name, scope);
             ScriptScope sys = Python.GetSysModule(this.Engine);
             PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
-            modules[name] = scope;
+            modules[name] = HostingHelpers.GetScope(module);
         }
 
         public object 
         GetModule(string name)
         {
-            object value = null;
-            this.Engine.Runtime.Globals.TryGetVariable(name, out value);
-            if (value == null)
+            ScriptScope sys = Python.GetSysModule(this.Engine);
+            PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
+            if (modules.has_key(name))
             {
-                // It is entirely beyond my understanding why I need to check both 
-                // Engine.Runtime.Globals *and* sys.modules, because I thought they
-                // were meant to be the same...
-                ScriptScope sys = Python.GetSysModule(this.Engine);
-                PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
-                if (modules.has_key(name))
-                {
-                    value = modules[name];
-                }
+                return modules[name];
             }
-            return (Scope)value;
+            return null;
         }
 
         public ScriptScope 
@@ -70,6 +60,9 @@ namespace Ironclad
             globals["_mapper"] = this;
             this.scratchModule = this.engine.CreateScope(globals);
             this.ExecInModule(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE, this.scratchModule);
+            
+            Scope scratchScope = HostingHelpers.GetScope(this.scratchModule);
+            this.scratchContext = new CodeContext(scratchScope, HostingHelpers.GetLanguageContext(this.engine));
         }
         
         

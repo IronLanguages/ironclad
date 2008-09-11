@@ -45,10 +45,10 @@ namespace Ironclad
             this.ExecInModule(cb.code.ToString(), this.scratchModule);
 
             object klass = this.scratchModule.GetVariable<object>(cb.__name__);
-            Builtin.setattr(DefaultContext.Default, klass, "_typePtr", typePtr);
+            Builtin.setattr(this.scratchContext, klass, "_typePtr", typePtr);
             object _dispatcher = PythonCalls.Call(this.dispatcherClass, new object[] { this, cb.methodTable });
-            Builtin.setattr(DefaultContext.Default, klass, "_dispatcher", _dispatcher);
-            object typeDict = Builtin.getattr(DefaultContext.Default, klass, "__dict__");
+            Builtin.setattr(this.scratchContext, klass, "_dispatcher", _dispatcher);
+            object typeDict = Builtin.getattr(this.scratchContext, klass, "__dict__");
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_dict", this.Store(typeDict));
 
             object klass_actualiser = this.scratchModule.GetVariable<object>(cb.__name__ + "_actualiser");
@@ -75,12 +75,12 @@ namespace Ironclad
         private object
         UpdateMethodTableObj(PythonDictionary methodTable, object potentialMethodSource)
         {
-            if (Builtin.hasattr(DefaultContext.Default, potentialMethodSource, "_dispatcher"))
+            if (Builtin.hasattr(this.scratchContext, potentialMethodSource, "_dispatcher"))
             {
                 PythonDictionary methodSource = (PythonDictionary)Builtin.getattr(
-                    DefaultContext.Default, Builtin.getattr(
-                        DefaultContext.Default, potentialMethodSource, "_dispatcher"), "table");
-                methodTable.update(DefaultContext.Default, methodSource);
+                    this.scratchContext, Builtin.getattr(
+                        this.scratchContext, potentialMethodSource, "_dispatcher"), "table");
+                methodTable.update(this.scratchContext, methodSource);
             }
             this.Store(potentialMethodSource);
             return potentialMethodSource;

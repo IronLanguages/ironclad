@@ -1,6 +1,8 @@
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
 using System.Reflection;
+
+using IronPython.Hosting;
 using IronPython.Runtime;
 
 namespace TestUtils
@@ -26,7 +28,14 @@ namespace TestUtils
         public static object
         GetPythonModule(ScriptEngine engine, string name)
         {
-            return engine.Runtime.Globals.GetVariable(name);
+            object value = null;
+            ScriptScope sys = Python.GetSysModule(engine);
+            PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
+            if (modules.has_key(name))
+            {
+                value = modules[name];
+            }
+            return value;
         }
     }
 }

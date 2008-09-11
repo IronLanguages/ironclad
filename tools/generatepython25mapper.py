@@ -131,7 +131,7 @@ OPERATOR_TEMPLATE = """\
         {
             try
             {
-                object result = PythonOperator.%(operator)s(DefaultContext.Default, this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                object result = PythonOperator.%(operator)s(this.scratchContext, this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
                 return this.Store(result);
             }
             catch (Exception e)

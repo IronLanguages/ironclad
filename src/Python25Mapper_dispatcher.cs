@@ -35,13 +35,13 @@ namespace Ironclad
             this.ExecInModule(CodeSnippets.DISPATCHER_MODULE_CODE, this.dispatcherModule);
             
             this.dispatcherClass = this.dispatcherModule.GetVariable<object>("Dispatcher");
-            this.dispatcherLock = Builtin.getattr(DefaultContext.Default, this.dispatcherClass, "_lock");
+            this.dispatcherLock = Builtin.getattr(this.scratchContext, this.dispatcherClass, "_lock");
         }
         
         private void StopDispatchingDeletes()
         {
-            Builtin.setattr(DefaultContext.Default, this.dispatcherClass, "delete",
-                Builtin.getattr(DefaultContext.Default, this.dispatcherClass, "dontDelete"));
+            Builtin.setattr(this.scratchContext, this.dispatcherClass, "delete",
+                Builtin.getattr(this.scratchContext, this.dispatcherClass, "dontDelete"));
         }
     }
 }

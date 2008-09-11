@@ -16,13 +16,13 @@ namespace Ironclad
             // TODO: regardless, there must be a better way to do this
             object obj = this.Retrieve(objPtr);
             if ((!Builtin.isinstance(obj, TypeCache.PythonType)) &&
-                Builtin.hasattr(DefaultContext.Default, obj, "__len__") &&
-                Builtin.hasattr(DefaultContext.Default, obj, "__getitem__") &&
-                Builtin.hasattr(DefaultContext.Default, obj, "__add__") &&
-                Builtin.hasattr(DefaultContext.Default, obj, "__radd__") &&
-                Builtin.hasattr(DefaultContext.Default, obj, "__mul__") &&
-                Builtin.hasattr(DefaultContext.Default, obj, "__rmul__") &&
-                !Builtin.hasattr(DefaultContext.Default, obj, "__coerce__"))
+                Builtin.hasattr(this.scratchContext, obj, "__len__") &&
+                Builtin.hasattr(this.scratchContext, obj, "__getitem__") &&
+                Builtin.hasattr(this.scratchContext, obj, "__add__") &&
+                Builtin.hasattr(this.scratchContext, obj, "__radd__") &&
+                Builtin.hasattr(this.scratchContext, obj, "__mul__") &&
+                Builtin.hasattr(this.scratchContext, obj, "__rmul__") &&
+                !Builtin.hasattr(this.scratchContext, obj, "__coerce__"))
             {
                 return 1;
             }

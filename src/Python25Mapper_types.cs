@@ -21,9 +21,9 @@ namespace Ironclad
             IntPtr typePtr = this.allocator.Alloc(typeSize);
             CPyMarshal.Zero(typePtr, typeSize);
 
-            object ob_type = PythonCalls.Call(DefaultContext.Default, Builtin.type, new object[] { _type });
+            object ob_type = PythonCalls.Call(this.scratchContext, Builtin.type, new object[] { _type });
             // TODO: handle multiple inheritance
-            PythonTuple tp_bases = (PythonTuple)_type.__getattribute__(DefaultContext.Default, "__bases__");
+            PythonTuple tp_bases = (PythonTuple)_type.__getattribute__(this.scratchContext, "__bases__");
             object tp_base = tp_bases[0];
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "ob_refcnt", 2);
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.Store(ob_type));
@@ -214,8 +214,8 @@ namespace Ironclad
             IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
             object actualiser = this.actualiseHelpers[typePtr];
             object obj = PythonCalls.Call(actualiser);
-            Builtin.setattr(DefaultContext.Default, obj, "_instancePtr", ptr);
-            Builtin.setattr(DefaultContext.Default, obj, "__class__", this.Retrieve(typePtr));
+            Builtin.setattr(this.scratchContext, obj, "_instancePtr", ptr);
+            Builtin.setattr(this.scratchContext, obj, "__class__", this.Retrieve(typePtr));
             this.StoreBridge(ptr, obj);
             this.IncRef(ptr);
             GC.KeepAlive(obj); // please test me, if you can work out how to

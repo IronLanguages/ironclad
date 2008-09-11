@@ -37,7 +37,7 @@ namespace Ironclad
             if (dict is DictProxy)
             {
                 DictProxy proxy = (DictProxy)dict;
-                return proxy.__len__(DefaultContext.Default);
+                return proxy.__len__(this.scratchContext);
             }
             return dict.Keys.Count;
         }
@@ -78,7 +78,7 @@ namespace Ironclad
             if (dict is DictProxy)
             {
                 PythonType _type = InappropriateReflection.PythonTypeFromDictProxy((DictProxy)dict);
-                Builtin.setattr(DefaultContext.Default, _type, (string)key, item);
+                Builtin.setattr(this.scratchContext, _type, (string)key, item);
             }
             else
             {
