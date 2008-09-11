@@ -163,7 +163,7 @@ namespace Ironclad
         {
             try
             {
-                object result = PythonOperator.add(DefaultContext.Default, this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                object result = PythonOperator.add(this.scratchContext, this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
                 return this.Store(result);
             }
             catch (Exception e)
@@ -178,7 +178,7 @@ namespace Ironclad
         {
             try
             {
-                object result = PythonOperator.mod(DefaultContext.Default, this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
+                object result = PythonOperator.mod(this.scratchContext, this.Retrieve(arg1ptr), this.Retrieve(arg2ptr));
                 return this.Store(result);
             }
             catch (Exception e)

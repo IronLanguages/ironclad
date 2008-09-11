@@ -21,24 +21,9 @@ namespace Ironclad
             this.importName = "";
         }
 
-        private void
-        MessWithSys()
-        {
-            // have not worked out how to test this -- cannot induce the mising 
-            // executable, except during numpy import (er, before any of numpy
-            // is executed...), but it definitely happens and is very upsetting.
-            ScriptScope sys = Python.GetSysModule(this.Engine);
-            sys.SetVariable("executable", Assembly.GetEntryAssembly().Location);
-
-            // it seems that the same thing happens to __displayhook__, which is
-            // why I keep resetting it here.
-            sys.SetVariable("__displayhook__", sys.GetVariable("displayhook"));
-        }
-
         public object
         Import(string name)
         {
-            this.MessWithSys();
             object module = this.GetModule(name);
             if (module != null)
             {

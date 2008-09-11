@@ -55,7 +55,7 @@ namespace Ironclad
             else
             {
                 IAttributesCollection kwargs = (IAttributesCollection)this.Retrieve(kwargsPtr);
-                result = PythonCalls.CallWithKeywordArgs(DefaultContext.Default, obj, argsArray, kwargs);
+                result = PythonCalls.CallWithKeywordArgs(this.scratchContext, obj, argsArray, kwargs);
             }
             return this.Store(result);
         }
@@ -80,9 +80,9 @@ namespace Ironclad
         PyObject_GetAttrString(IntPtr objPtr, string name)
         {
             object obj = this.Retrieve(objPtr);
-            if (Builtin.hasattr(DefaultContext.Default, obj, name))
+            if (Builtin.hasattr(this.scratchContext, obj, name))
             {
-                return this.Store(Builtin.getattr(DefaultContext.Default, obj, name));
+                return this.Store(Builtin.getattr(this.scratchContext, obj, name));
             }
             return IntPtr.Zero;
         }
@@ -98,7 +98,7 @@ namespace Ironclad
         PyObject_HasAttrString(IntPtr objPtr, string name)
         {
             object obj = this.Retrieve(objPtr);
-            if (Builtin.hasattr(DefaultContext.Default, obj, name))
+            if (Builtin.hasattr(this.scratchContext, obj, name))
             {
                 return 1;
             }
@@ -112,7 +112,7 @@ namespace Ironclad
             object value = this.Retrieve(valuePtr);
             try
             {
-                Builtin.setattr(DefaultContext.Default, obj, name, value);
+                Builtin.setattr(this.scratchContext, obj, name, value);
                 return 0;
             }
             catch (Exception e)
@@ -189,7 +189,7 @@ namespace Ironclad
             try
             {
                 object obj = this.Retrieve(objPtr);
-                return this.Store(Builtin.repr(DefaultContext.Default, obj));
+                return this.Store(Builtin.repr(this.scratchContext, obj));
 
             }
             catch (Exception e)

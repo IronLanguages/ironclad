@@ -86,7 +86,7 @@ namespace Ironclad
         PrintToStdErr(object obj)
         {
             object stderr = Python.GetSysModule(this.Engine).GetVariable("__stderr__");
-            PythonOps.PrintWithDest(DefaultContext.Default, stderr, obj);
+            PythonOps.PrintWithDest(this.scratchContext, stderr, obj);
         }
 
 

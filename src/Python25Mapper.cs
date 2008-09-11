@@ -11,6 +11,7 @@ using IronPython.Runtime.Operations;
 
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
+using Microsoft.Scripting.Runtime;
 
 using Ironclad.Structs;
 
@@ -48,6 +49,8 @@ namespace Ironclad
         private IAllocator allocator;
 
         private ScriptScope scratchModule;
+        private CodeContext scratchContext;
+        
         private ScriptScope dispatcherModule;
         private object dispatcherClass;
         private object dispatcherLock;
@@ -90,8 +93,8 @@ namespace Ironclad
             this.engine = inEngine;
             this.allocator = alloc;
             this.AddPaths();
-            this.CreateDispatcherModule();
             this.CreateScratchModule();
+            this.CreateDispatcherModule();
             if (stubPath != null)
             {
                 this.stub = new StubReference(stubPath);
@@ -492,7 +495,7 @@ namespace Ironclad
         public override int
         PyCallable_Check(IntPtr objPtr)
         {
-            if (Builtin.callable(DefaultContext.Default, this.Retrieve(objPtr)))
+            if (Builtin.callable(this.scratchContext, this.Retrieve(objPtr)))
             {
                 return 1;
             }

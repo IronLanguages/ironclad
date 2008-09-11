@@ -118,7 +118,7 @@ namespace Ironclad
         {
             try
             {
-                object result = Builtin.abs(DefaultContext.Default, this.Retrieve(numberPtr));
+                object result = Builtin.abs(this.scratchContext, this.Retrieve(numberPtr));
                 return this.Store(result);
             }
             catch (Exception e)
