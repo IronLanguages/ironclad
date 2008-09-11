@@ -22,8 +22,8 @@ namespace Ironclad
             this.handles.Add(l);
             string funcName = "init" + Path.GetFileNameWithoutExtension(path);
             IntPtr funcPtr = Unmanaged.GetProcAddress(l, funcName);
-            PydInit_Delegate d = (PydInit_Delegate)Marshal.GetDelegateForFunctionPointer(funcPtr, typeof(PydInit_Delegate));
-            d();
+            PydInit_Delegate initmodule = (PydInit_Delegate)Marshal.GetDelegateForFunctionPointer(funcPtr, typeof(PydInit_Delegate));
+            initmodule();
         }
         
         ~PydImporter()

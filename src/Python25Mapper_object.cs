@@ -14,6 +14,21 @@ namespace Ironclad
 
     public partial class Python25Mapper: Python25Api
     {
+        public override IntPtr
+        _PyObject_New(IntPtr typePtr)
+        {
+            int ob_size = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "ob_size");
+            IntPtr objPtr = this.allocator.Alloc(ob_size);
+            return this.PyObject_Init(objPtr, typePtr);
+        }
+        
+        public override IntPtr
+        PyObject_Init(IntPtr objPtr, IntPtr typePtr)
+        {
+            CPyMarshal.WriteIntField(objPtr, typeof(PyObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(objPtr, typeof(PyObject), "ob_type", typePtr);
+            return objPtr;
+        }
         
         public int PyBaseObject_Init(IntPtr self, IntPtr args, IntPtr kwargs)
         {
@@ -28,6 +43,29 @@ namespace Ironclad
                 CPyMarshal.ReadFunctionPtrField(
                     objType, typeof(PyTypeObject), "tp_free", typeof(PyObject_Free_Delegate));
             freeDgt(objPtr);
+        }
+        
+        public override void 
+        PyObject_Free(IntPtr ptr)
+        {
+            if (this.FILEs.ContainsKey(ptr))
+            {
+                Unmanaged.fclose(this.FILEs[ptr]);
+                this.FILEs.Remove(ptr);
+            }
+            this.Unmap(ptr);
+            this.allocator.Free(ptr);
+        }
+        
+        
+        public override int
+        PyCallable_Check(IntPtr objPtr)
+        {
+            if (Builtin.callable(this.scratchContext, this.Retrieve(objPtr)))
+            {
+                return 1;
+            }
+            return 0;
         }
         
         public override IntPtr
@@ -60,22 +98,6 @@ namespace Ironclad
             return this.Store(result);
         }
 
-        public override IntPtr
-        _PyObject_New(IntPtr typePtr)
-        {
-            int ob_size = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "ob_size");
-            IntPtr objPtr = this.allocator.Alloc(ob_size);
-            return this.PyObject_Init(objPtr, typePtr);
-        }
-        
-        public override IntPtr
-        PyObject_Init(IntPtr objPtr, IntPtr typePtr)
-        {
-            CPyMarshal.WriteIntField(objPtr, typeof(PyObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(objPtr, typeof(PyObject), "ob_type", typePtr);
-            return objPtr;
-        }
-        
         public override IntPtr
         PyObject_GetAttrString(IntPtr objPtr, string name)
         {

@@ -12,6 +12,16 @@ namespace Ironclad
     public partial class Python25Mapper : Python25Api
     {
 
+        private void
+        AssertNotType(object obj)
+        {
+            // see bugtest.py
+            if (Builtin.isinstance(obj, TypeCache.PythonType))
+            {
+                throw new ArgumentTypeException(String.Format("Even though I apparently can enumerate {0}, I'm pretty sure I shouldn't", obj));
+            }
+        }
+
         public override IntPtr
         PySeqIter_New(IntPtr seqPtr)
         {
@@ -20,11 +30,7 @@ namespace Ironclad
             try
             {
                 object seq = this.Retrieve(seqPtr);
-                if (Builtin.isinstance(seq, TypeCache.PythonType))
-                {
-                    // bugtest.py
-                    throw new ArgumentTypeException(String.Format("Even though I apparently can enumerate {0}, I'm pretty sure I shouldn't", seq));
-                }
+                this.AssertNotType(seq);
                 IEnumerator enumerator = InappropriateReflection.CreateItemEnumerator(seq);
                 return this.Store(enumerator);
             }
@@ -42,11 +48,7 @@ namespace Ironclad
             try
             {
                 object obj = this.Retrieve(objPtr);
-                if (Builtin.isinstance(obj, TypeCache.PythonType))
-                {
-                    // bugtest.py
-                    throw new ArgumentTypeException(String.Format("Even though I apparently can iter() {0}, I'm pretty sure I shouldn't", obj));
-                }
+                this.AssertNotType(obj);
                 return this.Store(Builtin.iter(obj));
             }
             catch (Exception e)

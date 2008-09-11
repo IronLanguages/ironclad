@@ -8,7 +8,6 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        
         public override int
         PySequence_Check(IntPtr objPtr)
         {
@@ -29,7 +28,6 @@ namespace Ironclad
             return 0;
         }
         
-        
         public override int
         PySequence_Size(IntPtr objPtr)
         {
@@ -43,7 +41,6 @@ namespace Ironclad
                 return -1;
             }
         }
-        
         
         public override IntPtr
         PySequence_GetItem(IntPtr objPtr, int idx)
@@ -65,6 +62,5 @@ namespace Ironclad
                 return IntPtr.Zero;
             }
         }
-        
     }
 }

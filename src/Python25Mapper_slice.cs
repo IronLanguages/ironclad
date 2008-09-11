@@ -22,7 +22,6 @@ namespace Ironclad
             return ptr;
         }
 
-
         public void
         PySlice_Dealloc(IntPtr slicePtr)
         {
@@ -35,6 +34,5 @@ namespace Ironclad
                     this.PySlice_Type, typeof(PyTypeObject), "tp_free", typeof(PyObject_Free_Delegate));
             freeDgt(slicePtr);
         }
-        
     }
 }

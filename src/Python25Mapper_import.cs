@@ -13,6 +13,26 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
+        public override IntPtr
+        PyImport_ImportModule(string name)
+        {
+            return this.Store(this.Import(name));
+        }
+
+        public override IntPtr
+        PyImport_Import(IntPtr namePtr)
+        {
+            string name = (string)this.Retrieve(namePtr);
+            return this.Store(this.Import(name));
+        }
+
+        public override IntPtr
+        PyImport_AddModule(string name)
+        {
+            this.CreateModulesContaining(name);
+            return this.Store(this.GetModule(name));
+        }
+
         public void 
         LoadModule(string path, string name)
         {
@@ -32,25 +52,7 @@ namespace Ironclad
             
             if (name == "numpy")
             {
-                Console.WriteLine("Detected numpy import");
-                Console.WriteLine("  faking out modules: parser, mmap, urllib2, ctypes, numpy.testing");
-                this.CreateModule("parser");
-                this.CreateModule("mmap");
-                
-                ScriptScope urllib2 = this.CreateModule("urllib2");
-                urllib2.SetVariable("urlopen", new Object());
-                urllib2.SetVariable("URLError", new Object());
-                
-                // ctypeslib specifically handles ctypes being None
-                ScriptScope sys = Python.GetSysModule(this.Engine);
-                PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
-                modules["ctypes"] = null;
-                
-                ScriptScope testing = this.CreateModule("numpy.testing");
-                this.ExecInModule(CodeSnippets.FAKE_numpy_testing_CODE, testing);
-                
-                Console.WriteLine("  tweaking math.log, math.log10");
-                this.ExecInModule(CodeSnippets.FIX_math_log_log10_CODE, this.scratchModule);
+                this.PerpetrateNumpyFixes();
             }
             
             this.importName = name;
@@ -60,19 +62,6 @@ namespace Ironclad
             return this.GetModule(name);
         }
         
-        public override IntPtr
-        PyImport_ImportModule(string name)
-        {
-            return this.Store(this.Import(name));
-        }
-
-        public override IntPtr
-        PyImport_Import(IntPtr namePtr)
-        {
-            string name = (string)this.Retrieve(namePtr);
-            return this.Store(this.Import(name));
-        }
-
         private ScriptScope
         CreateModule(string name)
         {
@@ -102,11 +91,28 @@ namespace Ironclad
             }
         }
 
-        public override IntPtr
-        PyImport_AddModule(string name)
+        private void
+        PerpetrateNumpyFixes()
         {
-            this.CreateModulesContaining(name);
-            return this.Store(this.GetModule(name));
+            Console.WriteLine("Detected numpy import");
+            Console.WriteLine("  faking out modules: parser, mmap, urllib2, ctypes, numpy.testing");
+            this.CreateModule("parser");
+            this.CreateModule("mmap");
+
+            ScriptScope urllib2 = this.CreateModule("urllib2");
+            urllib2.SetVariable("urlopen", new Object());
+            urllib2.SetVariable("URLError", new Object());
+
+            // ctypeslib specifically handles ctypes being None
+            ScriptScope sys = Python.GetSysModule(this.Engine);
+            PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
+            modules["ctypes"] = null;
+
+            ScriptScope testing = this.CreateModule("numpy.testing");
+            this.ExecInModule(CodeSnippets.FAKE_numpy_testing_CODE, testing);
+
+            Console.WriteLine("  tweaking math.log, math.log10");
+            this.ExecInModule(CodeSnippets.FIX_math_log_log10_CODE, this.scratchModule);
         }
     }
 }
