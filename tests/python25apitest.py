@@ -288,6 +288,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyNumber_Float", ('IntPtr(111)',), 'IntPtr(999)')
         self.assertFinds("PyNumber_Index", ('IntPtr(111)',), 'IntPtr(999)')
         self.assertFinds("PyNumber_Absolute", ('IntPtr(111)',), 'IntPtr(999)')
+        self.assertFinds("PyNumber_Check", ('IntPtr(111)',), '0')
         
         self.assertFinds("PyString_AsString", ('IntPtr(98765)',), 'IntPtr(12345)')
         self.assertFinds("PyString_FromString", ('IntPtr(333)',), 'IntPtr(444)')
