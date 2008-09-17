@@ -517,6 +517,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
 #ifdef Py_USING_UNICODE
 	PyObject *uarg;
 #endif
+
 	switch (c) {
 
 	case 'b': { /* unsigned byte -- very short int */
@@ -742,7 +743,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
 	case 's': {/* string */
 		if (*format == '#') {
 			void **p = (void **)va_arg(*p_va, char **);
-			
+
 			FETCH_SIZE;
 
 			if (PyString_Check(arg)) {

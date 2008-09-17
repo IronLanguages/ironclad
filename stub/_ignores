@@ -26,6 +26,11 @@ _PyObject_CallFunction_SizeT
 PyObject_CallMethod
 _PyObject_CallMethod_SizeT
 
+PyObject_AsCharBuffer
+PyObject_CheckReadBuffer
+PyObject_AsReadBuffer
+PyObject_AsWriteBuffer
+
 PyTuple_GetItem
 PyTuple_SetItem
 

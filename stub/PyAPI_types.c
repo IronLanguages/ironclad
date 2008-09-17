@@ -19,6 +19,7 @@ typedef ssize_t Py_ssize_t;
 #   endif
 #endif
 
+#define HAVE_LONG_LONG 1
 #define PY_LONG_LONG long long
 
 #define Py_GCC_ATTRIBUTE(x) __attribute__(x)
