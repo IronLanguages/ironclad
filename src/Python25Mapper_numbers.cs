@@ -6,6 +6,7 @@ using Microsoft.Scripting.Math;
 using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Operations;
+using IronPython.Runtime.Types;
 
 using Ironclad.Structs;
 
@@ -23,6 +24,21 @@ namespace Ironclad
             }
             this.IncRef(ptr);
             return ptr;
+        }
+
+        public override int
+        PyNumber_Check(IntPtr numberPtr)
+        {
+            object obj = this.Retrieve(numberPtr);
+            if (Builtin.isinstance(obj, TypeCache.PythonType))
+            {
+                return 0;
+            }
+            if (Builtin.hasattr(this.scratchContext, obj, "__abs__"))
+            {
+                return 1;
+            }
+            return 0;
         }
 
         public override IntPtr

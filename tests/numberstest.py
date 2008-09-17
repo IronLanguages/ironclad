@@ -401,6 +401,30 @@ class PyNumber_Test(TestCase):
         self.assertBinaryOp("PyNumber_Xor", operator.xor)
     
     
+    def testPyNumber_Check(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        class NumberLike(object):
+            def __abs__(self):  
+                return 99
+        
+        for number in (-1, 32.3, NumberLike(), 4+5j):
+            ptr = mapper.Store(number)
+            self.assertEquals(mapper.PyNumber_Check(ptr), 1)
+            self.assertEquals(mapper.LastException, None)
+            mapper.DecRef(ptr)
+            
+        for notnumber in ("foo", NumberLike, [1, 2, 3]):
+            ptr = mapper.Store(notnumber)
+            self.assertEquals(mapper.PyNumber_Check(ptr), 0)
+            self.assertEquals(mapper.LastException, None)
+            mapper.DecRef(ptr)
+            
+        mapper.Dispose()
+        deallocTypes()
+        
+    
     def testPyNumber_Long(self):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
