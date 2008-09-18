@@ -3,7 +3,7 @@
 Ironclad's build process deserves a brief discussion. On 32-bit Windows, it 
 requires:
 
-* ipy from IronPython r38340 (included in /ironpython)
+* IronPython 2.0B5
 * mingw (including gcc and make)
 * pexports
 * nasm
@@ -14,7 +14,7 @@ requires:
 
 On 32-bit Linux, requirements are:
 
-* ipy from IronPython r38340 (included in /ironpython)
+* IronPython 2.0B5
 * gcc and make
 * objdump
 * nasm
