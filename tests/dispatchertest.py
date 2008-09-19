@@ -37,6 +37,8 @@ class DispatcherTest(TestCase):
                 self.calls = []
             def FreeTemps(self):
                 self.calls.append('FreeTemps')
+            def IncRef(self, ptr):
+                self.calls.append(('IncRef', ptr))
             def DecRef(self, ptr):
                 self.calls.append(('DecRef', ptr))
         
@@ -50,7 +52,6 @@ class DispatcherTest(TestCase):
         self.assertEquals(mockMapper.calls, expectedCalls, 'unexpected behaviour')
         self.assertEquals(mockMapper.LastException, exceptionAfter, 'unexpected exception set after call')
         realMapper.Dispose()
-        
     
     def testCleanup(self):
         error = ValueError('huh?')
@@ -61,6 +62,12 @@ class DispatcherTest(TestCase):
         self.assertDispatcherUtilityMethod(
             '_cleanup', (IntPtr(1), IntPtr.Zero, IntPtr(2)), 
             ['FreeTemps', ('DecRef', IntPtr(1)), ('DecRef', IntPtr(2))], error, error)
+    
+    def testMaybeIncRef(self):
+        self.assertDispatcherUtilityMethod(
+            '_maybe_incref', (IntPtr.Zero,), [])
+        self.assertDispatcherUtilityMethod(
+            '_maybe_incref', (IntPtr(123),), [('IncRef', IntPtr(123))])
     
     def testMaybeRaise(self):
         error = ValueError('huh?')
@@ -159,9 +166,9 @@ class DispatcherDispatchTestCase(TestCase):
         mockMapper = MockMapper()
         dispatcher = GetDispatcherClass(realMapper)(mockMapper, callables)
         dispatcher._maybe_raise = _maybe_raise
+        dispatcher._maybe_incref = FuncReturning(None, calls, '_maybe_incref')
         dispatcher._cleanup = FuncReturning(None, calls, '_cleanup')
         return dispatcher
-    
     
     def callDispatcherMethod(self, methodname, *args, **kwargs):
         return self.callDispatcherMethodWithResults(methodname, RESULT_PTR, RESULT, *args, **kwargs)
@@ -179,7 +186,6 @@ class DispatcherDispatchTestCase(TestCase):
         self.assertEquals(method('dgt', *args, **kwargs), dispatchResult)
         mapper.Dispose()
         return calls
-    
     
     def callDispatcherErrorMethod(self, methodname, *args, **kwargs):
         mapper = Python25Mapper()
@@ -201,38 +207,41 @@ class DispatcherNoargsTest(DispatcherDispatchTestCase):
     def testDispatch_function_noargs(self):
         calls = self.callDispatcherMethod('function_noargs')
         self.assertEquals(calls, [
+            ('_maybe_incref', (IntPtr.Zero,)),
             ('dgt', (IntPtr.Zero, IntPtr.Zero)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (IntPtr.Zero, RESULT_PTR,))
         ])
-    
     
     def testDispatch_function_noargs_error(self):
         calls = self.callDispatcherErrorMethod('function_noargs')
         self.assertEquals(calls, [
+            ('_maybe_incref', (IntPtr.Zero,)),
             ('dgt', (IntPtr.Zero, IntPtr.Zero)), 
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (IntPtr.Zero, RESULT_PTR,))
         ])
     
     
     def testDispatch_method_noargs(self):
         calls = self.callDispatcherMethod('method_noargs', INSTANCE_PTR)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR, IntPtr.Zero)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR))
         ])
     
     
     def testDispatch_method_noargs_error(self):
         calls = self.callDispatcherErrorMethod('method_noargs', INSTANCE_PTR)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR, IntPtr.Zero)), 
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR))
         ])
     
     
@@ -241,42 +250,46 @@ class DispatcherVarargsTest(DispatcherDispatchTestCase):
     def testDispatch_function_varargs(self):
         calls = self.callDispatcherMethod('function_varargs', *ARGS)
         self.assertEquals(calls, [
+            ('_maybe_incref', (IntPtr.Zero,)),
             ('Store', (ARGS,)),
             ('dgt', (IntPtr.Zero, ARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARGS_PTR))
+            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARGS_PTR))
         ])
     
     
     def testDispatch_function_varargs_error(self):
         calls = self.callDispatcherErrorMethod('function_varargs', *ARGS)
         self.assertEquals(calls, [
+            ('_maybe_incref', (IntPtr.Zero,)),
             ('Store', (ARGS,)),
             ('dgt', (IntPtr.Zero, ARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARGS_PTR))
+            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARGS_PTR))
         ])
     
     
     def testDispatch_method_varargs(self):
         calls = self.callDispatcherMethod('method_varargs', *INSTANCE_ARGS)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARGS,)),
             ('dgt', (INSTANCE_PTR, ARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARGS_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARGS_PTR))
         ])
     
     
     def testDispatch_method_varargs_error(self):
         calls = self.callDispatcherErrorMethod('method_varargs', *INSTANCE_ARGS)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARGS,)),
             ('dgt', (INSTANCE_PTR, ARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARGS_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARGS_PTR))
         ])
 
 
@@ -285,58 +298,64 @@ class DispatcherObjargTest(DispatcherDispatchTestCase):
     def testDispatch_function_objarg(self):
         calls = self.callDispatcherMethod('function_objarg', ARG)
         self.assertEquals(calls, [
+            ('_maybe_incref', (IntPtr.Zero,)),
             ('Store', (ARG,)),
             ('dgt', (IntPtr.Zero, ARG_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARG_PTR))
+            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARG_PTR))
         ])
     
     def testDispatch_function_objarg_error(self):
         calls = self.callDispatcherErrorMethod('function_objarg', ARG)
         self.assertEquals(calls, [
+            ('_maybe_incref', (IntPtr.Zero,)),
             ('Store', (ARG,)),
             ('dgt', (IntPtr.Zero, ARG_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARG_PTR))
+            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARG_PTR))
         ])
     
     def testDispatch_method_objarg(self):
         calls = self.callDispatcherMethod('method_objarg', INSTANCE_PTR, ARG)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (INSTANCE_PTR, ARG_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARG_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
         ])
     
     def testDispatch_method_objarg_error(self):
         calls = self.callDispatcherErrorMethod('method_objarg', INSTANCE_PTR, ARG)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (INSTANCE_PTR, ARG_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARG_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
         ])
     
     def testDispatch_method_objarg_swapped(self):
         calls = self.callDispatcherMethod('method_objarg_swapped', INSTANCE_PTR, ARG)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (ARG_PTR, INSTANCE_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARG_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
         ])
     
     def testDispatch_method_objarg_swapped_error(self):
         calls = self.callDispatcherErrorMethod('method_objarg_swapped', INSTANCE_PTR, ARG)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (ARG_PTR, INSTANCE_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARG_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
         ])
 
 
@@ -345,18 +364,20 @@ class DispatcherSelfargTest(DispatcherDispatchTestCase):
     def testDispatch_method_selfarg(self):
         calls = self.callDispatcherMethod('method_selfarg', INSTANCE_PTR)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR,)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
         ])
     
     def testDispatch_method_selfarg_error(self):
         calls = self.callDispatcherErrorMethod('method_selfarg', INSTANCE_PTR)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR,)), 
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
         ])
         
     def testDispatch_method_selfarg_errorHandler(self):
@@ -373,11 +394,12 @@ class DispatcherSelfargTest(DispatcherDispatchTestCase):
         
         self.assertEquals(dispatcher.method_selfarg('dgt', INSTANCE_PTR, ErrorHandler), RESULT, "unexpected result")
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR,)), 
             ('ErrorHandler', (RESULT_PTR,)),
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
         ])
         mapper.Dispose()
         
@@ -396,9 +418,10 @@ class DispatcherSelfargTest(DispatcherDispatchTestCase):
         
         self.assertRaises(Exception, lambda: dispatcher.method_selfarg('dgt', INSTANCE_PTR, ErrorHandler))
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR,)), 
             ('ErrorHandler', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
         ])
         mapper.Dispose()
     
@@ -409,68 +432,74 @@ class DispatcherKwargsTest(DispatcherDispatchTestCase):
     def testDispatch_function_kwargs(self):
         calls = self.callDispatcherMethod('function_kwargs', *ARGS, **KWARGS)
         self.assertEquals(calls, [
+            ('_maybe_incref', (IntPtr.Zero,)),
             ('Store', (ARGS,)),
             ('Store', (KWARGS,)),
             ('dgt', (IntPtr.Zero, ARGS_PTR, KWARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARGS_PTR, KWARGS_PTR))
+            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARGS_PTR, KWARGS_PTR))
         ])
     
     
     def testDispatch_function_kwargs_error(self):
         calls = self.callDispatcherErrorMethod('function_kwargs', *ARGS, **KWARGS)
         self.assertEquals(calls, [
+            ('_maybe_incref', (IntPtr.Zero,)),
             ('Store', (ARGS,)),
             ('Store', (KWARGS,)),
             ('dgt', (IntPtr.Zero, ARGS_PTR, KWARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARGS_PTR, KWARGS_PTR))
+            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARGS_PTR, KWARGS_PTR))
         ])
     
     
     def testDispatch_function_kwargs_withoutActualKwargs(self):
         calls = self.callDispatcherMethod('function_kwargs', *ARGS)
         self.assertEquals(calls, [
+            ('_maybe_incref', (IntPtr.Zero,)),
             ('Store', (ARGS,)),
             ('dgt', (IntPtr.Zero, ARGS_PTR, IntPtr.Zero)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARGS_PTR, IntPtr.Zero))
+            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARGS_PTR, IntPtr.Zero))
         ])
     
     
     def testDispatch_method_kwargs(self):
         calls = self.callDispatcherMethod('method_kwargs', *INSTANCE_ARGS, **KWARGS)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARGS,)),
             ('Store', (KWARGS,)),
             ('dgt', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARGS_PTR, KWARGS_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARGS_PTR, KWARGS_PTR))
         ])
     
     
     def testDispatch_method_kwargs_error(self):
         calls = self.callDispatcherErrorMethod('method_kwargs', *INSTANCE_ARGS, **KWARGS)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARGS,)),
             ('Store', (KWARGS,)),
             ('dgt', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARGS_PTR, KWARGS_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARGS_PTR, KWARGS_PTR))
         ])
     
     
     def testDispatch_method_kwargs_withoutActualKwargs(self):
         calls = self.callDispatcherMethod('method_kwargs', *INSTANCE_ARGS)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARGS,)),
             ('dgt', (INSTANCE_PTR, ARGS_PTR, IntPtr.Zero)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARGS_PTR, IntPtr.Zero))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARGS_PTR, IntPtr.Zero))
         ])
 
 
@@ -479,18 +508,20 @@ class DispatcherSsizeargTest(DispatcherDispatchTestCase):
     def testDispatch_method_ssizearg(self):
         calls = self.callDispatcherMethod('method_ssizearg', INSTANCE_PTR, SSIZE)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR, SSIZE)),
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
         ])
     
     def testDispatch_method_ssizearg_error(self):
         calls = self.callDispatcherErrorMethod('method_ssizearg', INSTANCE_PTR, SSIZE)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR, SSIZE)),
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
         ])
 
 
@@ -499,19 +530,21 @@ class DispatcherSsizeobjargTest(DispatcherDispatchTestCase):
     def testDispatch_method_ssizeobjarg(self):
         calls = self.callDispatcherMethodWithResults('method_ssizeobjarg', RESULT_INT, RESULT_INT, INSTANCE_PTR, SSIZE, ARG)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (INSTANCE_PTR, SSIZE, ARG_PTR)),
             ('_maybe_raise', tuple()),
-            ('_cleanup', (ARG_PTR,))
+            ('_cleanup', (INSTANCE_PTR, ARG_PTR,))
         ])
     
     def testDispatch_method_ssizeobjarg_error(self):
         calls = self.callDispatcherErrorMethod('method_ssizeobjarg', INSTANCE_PTR, SSIZE, ARG)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (INSTANCE_PTR, SSIZE, ARG_PTR)),
             ('_maybe_raise', tuple()),
-            ('_cleanup', (ARG_PTR,))
+            ('_cleanup', (INSTANCE_PTR, ARG_PTR,))
         ])
 
 
@@ -520,18 +553,20 @@ class DispatcherSsizessizeargTest(DispatcherDispatchTestCase):
     def testDispatch_method_ssizessizearg(self):
         calls = self.callDispatcherMethod('method_ssizessizearg', INSTANCE_PTR, SSIZE, SSIZE2)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR, SSIZE, SSIZE2)),
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
         ])
     
     def testDispatch_method_ssizessizearg_error(self):
         calls = self.callDispatcherErrorMethod('method_ssizessizearg', INSTANCE_PTR, SSIZE, SSIZE2)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR, SSIZE, SSIZE2)),
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
         ])
 
 
@@ -540,19 +575,21 @@ class DispatcherSsizessizeobjargTest(DispatcherDispatchTestCase):
     def testDispatch_method_ssizessizeobjarg(self):
         calls = self.callDispatcherMethodWithResults('method_ssizessizeobjarg', RESULT_INT, RESULT_INT, INSTANCE_PTR, SSIZE, SSIZE2, ARG)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (INSTANCE_PTR, SSIZE, SSIZE2, ARG_PTR)),
             ('_maybe_raise', tuple()),
-            ('_cleanup', (ARG_PTR,))
+            ('_cleanup', (INSTANCE_PTR, ARG_PTR,))
         ])
     
     def testDispatch_method_ssizessizeobjarg_error(self):
         calls = self.callDispatcherErrorMethod('method_ssizessizeobjarg', INSTANCE_PTR, SSIZE, SSIZE2, ARG)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (INSTANCE_PTR, SSIZE, SSIZE2, ARG_PTR)),
             ('_maybe_raise', tuple()),
-            ('_cleanup', (ARG_PTR,))
+            ('_cleanup', (INSTANCE_PTR, ARG_PTR,))
         ])
 
 
@@ -561,21 +598,23 @@ class DispatcherObjobjargTest(DispatcherDispatchTestCase):
     def testDispatch_method_objobjarg(self):
         calls = self.callDispatcherMethodWithResults('method_objobjarg', RESULT_INT, RESULT_INT, INSTANCE_PTR, ARG, ARG2)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('Store', (ARG2,)),
             ('dgt', (INSTANCE_PTR, ARG_PTR, ARG2_PTR)),
             ('_maybe_raise', tuple()),
-            ('_cleanup', (ARG_PTR, ARG2_PTR))
+            ('_cleanup', (INSTANCE_PTR, ARG_PTR, ARG2_PTR))
         ])
     
     def testDispatch_method_objobjarg_error(self):
         calls = self.callDispatcherErrorMethod('method_objobjarg', INSTANCE_PTR, ARG, ARG2)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('Store', (ARG2,)),
             ('dgt', (INSTANCE_PTR, ARG_PTR, ARG2_PTR)),
             ('_maybe_raise', tuple()),
-            ('_cleanup', (ARG_PTR, ARG2_PTR))
+            ('_cleanup', (INSTANCE_PTR, ARG_PTR, ARG2_PTR))
         ])
 
 
@@ -584,15 +623,19 @@ class DispatcherInquiryTest(DispatcherDispatchTestCase):
     def testDispatch_method_inquiry(self):
         calls = self.callDispatcherMethodWithResults('method_inquiry', RESULT_INT, RESULT_INT, INSTANCE_PTR)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR,)),
             ('_maybe_raise', tuple()),
+            ('_cleanup', (INSTANCE_PTR,)),
         ])
     
     def testDispatch_method_inquiry_error(self):
         calls = self.callDispatcherErrorMethod('method_inquiry', INSTANCE_PTR)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR,)),
             ('_maybe_raise', tuple()),
+            ('_cleanup', (INSTANCE_PTR,)),
         ])
 
 
@@ -601,22 +644,24 @@ class DispatcherTernaryTest(DispatcherDispatchTestCase):
     def testDispatch_method_ternary(self):
         calls = self.callDispatcherMethod('method_ternary', INSTANCE_PTR, ARG, ARG2)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('Store', (ARG2,)),
             ('dgt', (INSTANCE_PTR, ARG_PTR, ARG2_PTR)),
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARG_PTR, ARG2_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR, ARG2_PTR))
         ])
     
     def testDispatch_method_ternary_error(self):
         calls = self.callDispatcherErrorMethod('method_ternary', INSTANCE_PTR, ARG, ARG2)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('Store', (ARG2,)),
             ('dgt', (INSTANCE_PTR, ARG_PTR, ARG2_PTR)),
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARG_PTR, ARG2_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR, ARG2_PTR))
         ])
     
     
@@ -625,20 +670,22 @@ class DispatcherTernaryTest(DispatcherDispatchTestCase):
     def testDispatch_method_ternary_swapped(self):
         calls = self.callDispatcherMethod('method_ternary_swapped', INSTANCE_PTR, ARG)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (ARG_PTR, INSTANCE_PTR, IntPtr.Zero)),
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARG_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
         ])
     
     def testDispatch_method_ternary_swapped_error(self):
         calls = self.callDispatcherErrorMethod('method_ternary_swapped', INSTANCE_PTR, ARG)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (ARG_PTR, INSTANCE_PTR, IntPtr.Zero)),
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARG_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
         ])
 
 
@@ -647,20 +694,22 @@ class DispatcherRichcmpTest(DispatcherDispatchTestCase):
     def testDispatch_method_richcmp(self):
         calls = self.callDispatcherMethod('method_richcmp', INSTANCE_PTR, ARG, SSIZE)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (INSTANCE_PTR, ARG_PTR, SSIZE)),
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARG_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
         ])
     
     def testDispatch_method_richcmp_error(self):
         calls = self.callDispatcherErrorMethod('method_richcmp', INSTANCE_PTR, ARG, SSIZE)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (INSTANCE_PTR, ARG_PTR, SSIZE)),
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR, ARG_PTR))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
         ])
 
 
@@ -669,8 +718,10 @@ class DispatcherLenfuncTest(DispatcherDispatchTestCase):
     def testDispatch_method_lenfunc(self):
         calls = self.callDispatcherMethodWithResults('method_lenfunc', RESULT_INT, RESULT_INT, INSTANCE_PTR)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR,)),
             ('_maybe_raise', tuple()),
+            ('_cleanup', (INSTANCE_PTR,)),
         ])
         
 
@@ -679,18 +730,20 @@ class DispatcherGetterTest(DispatcherDispatchTestCase):
     def testDispatch_method_getter(self):
         calls = self.callDispatcherMethod('method_getter', INSTANCE_PTR, CLOSURE)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR, CLOSURE)),
             ('_maybe_raise', (RESULT_PTR,)),
             ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
         ])
     
     def testDispatch_method_getter_error(self):
         calls = self.callDispatcherErrorMethod('method_getter', INSTANCE_PTR, CLOSURE)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('dgt', (INSTANCE_PTR, CLOSURE)),
             ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (RESULT_PTR,))
+            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
         ])
 
 
@@ -711,9 +764,10 @@ class DispatcherSetterTest(DispatcherDispatchTestCase):
         dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
         dispatcher.method_setter('dgt', INSTANCE_PTR, ARG, CLOSURE)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (INSTANCE_PTR, ARG_PTR, CLOSURE)), 
-            ('_cleanup', (ARG_PTR,)),
+            ('_cleanup', (INSTANCE_PTR, ARG_PTR,)),
         ])
         mapper.Dispose()
 
@@ -732,9 +786,10 @@ class DispatcherSetterTest(DispatcherDispatchTestCase):
         dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
         self.assertRaises(Exception, lambda: dispatcher.method_setter('dgt', INSTANCE_PTR, ARG, CLOSURE))
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (INSTANCE_PTR, ARG_PTR, CLOSURE)), 
-            ('_cleanup', (ARG_PTR,)),
+            ('_cleanup', (INSTANCE_PTR, ARG_PTR,)),
         ])
         mapper.Dispose()
 
@@ -755,9 +810,10 @@ class DispatcherSetterTest(DispatcherDispatchTestCase):
         self.assertRaises(ValueError, lambda: dispatcher.method_setter('dgt', INSTANCE_PTR, ARG, CLOSURE))
         self.assertEquals(dispatcher.mapper.LastException, None, "failed to clear error")
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARG,)),
             ('dgt', (INSTANCE_PTR, ARG_PTR, CLOSURE)), 
-            ('_cleanup', (ARG_PTR,)),
+            ('_cleanup', (INSTANCE_PTR, ARG_PTR,)),
         ])
         mapper.Dispose()
     
@@ -894,10 +950,11 @@ class DispatcherInitTest(DispatcherDispatchTestCase):
         dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
         dispatcher.init('dgt', instance, *ARGS, **KWARGS)
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARGS,)),
             ('Store', (KWARGS,)),
             ('dgt', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
-            ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
+            ('_cleanup', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)),
         ])
         mapper.Dispose()
     
@@ -932,10 +989,11 @@ class DispatcherInitTest(DispatcherDispatchTestCase):
         dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
         self.assertRaises(Exception, lambda: dispatcher.init('dgt', instance, *ARGS, **KWARGS))
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARGS,)),
             ('Store', (KWARGS,)),
             ('dgt', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
-            ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
+            ('_cleanup', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)),
         ])
         mapper.Dispose()
     
@@ -956,16 +1014,17 @@ class DispatcherInitTest(DispatcherDispatchTestCase):
         self.assertRaises(ValueError, lambda: dispatcher.init('dgt', instance, *ARGS, **KWARGS))
         self.assertEquals(dispatcher.mapper.LastException, None, "failed to clear error")
         self.assertEquals(calls, [
+            ('_maybe_incref', (INSTANCE_PTR,)),
             ('Store', (ARGS,)),
             ('Store', (KWARGS,)),
             ('dgt', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
-            ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
+            ('_cleanup', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)),
         ])
         mapper.Dispose()
 
 
 class DispatcherDeleteTest(TestCase):
-        
+    
     def assertDispatchDelete(self, mockMapper, calls, expectedCalls, method='delete'):
         class klass(object):
             pass
@@ -1009,8 +1068,6 @@ class DispatcherDeleteTest(TestCase):
         
         self.assertDispatchDelete(MockMapper(), calls, [], method='dontDelete')
         
-
-
 
 class DispatcherSimpleMembersTest(TestCase):
     
@@ -1106,8 +1163,6 @@ class DispatcherObjectMembersTest(TestCase):
         
         mapper.Dispose()
         
-        
-
 
 suite  = makesuite(
     DispatcherTest,
