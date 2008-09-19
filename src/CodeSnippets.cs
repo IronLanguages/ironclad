@@ -343,7 +343,10 @@ class Dispatcher(object):
         instance = object.__new__(klass)
         argsPtr = self.mapper.Store(args)
         kwargsPtr = self.mapper.Store(kwargs)
-        instancePtr = self.table[name](klass._typePtr, argsPtr, kwargsPtr)
+        # TODO: yes, I do leak a reference to klass here. proper reference counting 
+        # for types will be implemented as soon as it actually breaks something; for
+        # now, laziness and short-term sanity-preservation win the day.
+        instancePtr = self.table[name](self.mapper.Store(klass), argsPtr, kwargsPtr)
         try:
             self._maybe_raise(instancePtr)
         finally:

@@ -121,7 +121,7 @@ ARG2_PTR = IntPtr(666)
 
 class DispatcherDispatchTestCase(TestCase):
     
-    def getPatchedDispatcher(self, realMapper, callables, calls, _maybe_raise, hasPtr=False, retrieveResult=None):
+    def getPatchedDispatcher(self, realMapper, callables, calls, _maybe_raise, hasPtr=False, retrieveResult=None, storeMap=None):
         test = self
         class MockMapper(object):
             def __init__(self):
@@ -133,6 +133,8 @@ class DispatcherDispatchTestCase(TestCase):
                 if item == ARG2: return ARG2_PTR
                 if item == ARGS: return ARGS_PTR
                 if item == KWARGS: return KWARGS_PTR
+                if storeMap:
+                    return storeMap[item]
             
             def Retrieve(self, ptr):
                 test.assertEquals(ptr, RESULT_PTR, "bad result")
@@ -781,7 +783,8 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
     
     def testDispatch_construct(self):
         class klass(object):
-            _typePtr = TYPE_PTR
+            pass
+        storeMap = {klass: TYPE_PTR}
         
         mapper = Python25Mapper()
         calls = []
@@ -789,7 +792,7 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
             'dgt': FuncReturning(RESULT_PTR, calls, 'dgt'),
         }
         _maybe_raise = FuncReturning(None, calls, '_maybe_raise')
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, _maybe_raise)
+        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, _maybe_raise, storeMap=storeMap)
         
         result = CallWithFakeObjectInDispatcherModule(
             mapper, calls, lambda: dispatcher.construct('dgt', klass, *ARGS, **KWARGS))
@@ -799,6 +802,7 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
             ('__new__', (klass,)),
             ('Store', (ARGS,)),
             ('Store', (KWARGS,)),
+            ('Store', (klass,)),
             ('dgt', (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
@@ -810,7 +814,8 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
     
     def testDispatch_construct_singleton(self):
         class klass(object):
-            _typePtr = TYPE_PTR
+            pass
+        storeMap = {klass: TYPE_PTR}
         
         originalObj = klass()
         mapper = Python25Mapper()
@@ -820,7 +825,7 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
         }
         _maybe_raise = FuncReturning(None, calls, '_maybe_raise')
         dispatcher = self.getPatchedDispatcher(
-            mapper, callables, calls, _maybe_raise, hasPtr=True, retrieveResult=originalObj)
+            mapper, callables, calls, _maybe_raise, hasPtr=True, retrieveResult=originalObj, storeMap=storeMap)
         
         result = CallWithFakeObjectInDispatcherModule(
             mapper, calls, lambda: dispatcher.construct('dgt', klass, *ARGS, **KWARGS))
@@ -830,6 +835,7 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
             ('__new__', (klass,)),
             ('Store', (ARGS,)),
             ('Store', (KWARGS,)),
+            ('Store', (klass,)),
             ('dgt', (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
@@ -841,7 +847,8 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
     
     def testDispatch_construct_error(self):
         class klass(object):
-            _typePtr = TYPE_PTR
+            pass
+        storeMap = {klass: TYPE_PTR}
         
         mapper = Python25Mapper()
         calls = []
@@ -849,7 +856,7 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
             'dgt': FuncReturning(RESULT_PTR, calls, 'dgt'),
         }
         _maybe_raise = FuncRaising(ValueError, calls, '_maybe_raise')
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, _maybe_raise)
+        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, _maybe_raise, storeMap=storeMap)
         
         testCall = lambda: CallWithFakeObjectInDispatcherModule(
             mapper, calls, lambda: dispatcher.construct('dgt', klass, *ARGS, **KWARGS))
@@ -859,6 +866,7 @@ class DispatcherConstructTest(DispatcherDispatchTestCase):
             ('__new__', (klass,)),
             ('Store', (ARGS,)),
             ('Store', (KWARGS,)),
+            ('Store', (klass,)),
             ('dgt', (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_maybe_raise', (RESULT_PTR,)),
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
