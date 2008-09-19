@@ -64,7 +64,7 @@ class ExternalFunctionalityTest(TestCase):
         process.StartInfo.FileName = "ipy.exe"
         process.StartInfo.Arguments = name
         process.StartInfo.WorkingDirectory = testDir
-        process.StartInfo.UseShellExecute = False
+        process.StartInfo.UseShellExecute = True
         process.Start()
         process.WaitForExit()
         return process.ExitCode
@@ -129,6 +129,22 @@ class ExternalFunctionalityTest(TestCase):
         self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
         shutil.rmtree(testDir)
 
+    
+    def testImportNumPy(self):
+        # note: this will fail if you don't have numpy on your IRONPYTHONPATH
+        testDir = self.getTestDir()
+        self.write(os.path.join(testDir, 'test.py'), dedent("""\
+            import ironclad
+            import numpy as np
+            r1 = np.arange(20)
+            r2 = np.arange(20)
+            assert np.all(r1 == r2)
+            assert not r1 is r2
+            ironclad.shutdown()
+            """))
+            
+        self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
+        shutil.rmtree(testDir)
 
 class FunctionalityTest(TestCase):
 
@@ -138,7 +154,6 @@ class FunctionalityTest(TestCase):
             ExecUtils.Exec(mapper.Engine, testCode)
         finally:
             mapper.Dispose()
-
 
     def testCanCreateIronPythonBZ2ModuleWithMethodsAndDocstrings(self):
         self.assertRuns(dedent("""
@@ -428,7 +443,6 @@ class FunctionalityTest(TestCase):
 
     def testBZ2FileWriteLines_Tuple(self):
         self.assertBZ2FileWriteLines(tuple([bz2_test_str] * 1000))
-
 
 
 suite = makesuite(
