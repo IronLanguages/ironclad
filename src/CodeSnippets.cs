@@ -317,6 +317,10 @@ class Dispatcher(object):
         self.mapper = mapper
         self.table = table
 
+    def _maybe_incref(self, ptr):
+        if ptr != IntPtr(0):
+            self.mapper.IncRef(ptr)
+
     def _maybe_raise(self, resultPtr=None):
         error = self.mapper.LastException
         if error:
@@ -365,10 +369,11 @@ class Dispatcher(object):
     def init(self, name, instance, *args, **kwargs):
         if not self.table.has_key(name):
             return
+        self._maybe_incref(instance._instancePtr)
         argsPtr = self.mapper.Store(args)
         kwargsPtr = self.mapper.Store(kwargs)
         result = self.table[name](instance._instancePtr, argsPtr, kwargsPtr)
-        self._cleanup(argsPtr, kwargsPtr)
+        self._cleanup(instance._instancePtr, argsPtr, kwargsPtr)
             
         if result < 0:
             self._surely_raise(Exception('%s failed; object is probably not safe to use' % name))
@@ -387,54 +392,59 @@ class Dispatcher(object):
 
     @lock
     def method_noargs(self, name, instancePtr):
+        self._maybe_incref(instancePtr)
         resultPtr = self.table[name](instancePtr, IntPtr(0))
         try:
             self._maybe_raise(resultPtr)
             return self.mapper.Retrieve(resultPtr)
         finally:
-            self._cleanup(resultPtr)
+            self._cleanup(instancePtr, resultPtr)
 
     def function_objarg(self, name, arg):
         return self.method_objarg(name, IntPtr(0), arg)
         
     @lock
     def method_objarg(self, name, instancePtr, arg):
+        self._maybe_incref(instancePtr)
         argPtr = self.mapper.Store(arg)
         resultPtr = self.table[name](instancePtr, argPtr)
         try:
             self._maybe_raise(resultPtr)
             return self.mapper.Retrieve(resultPtr)
         finally:
-            self._cleanup(resultPtr, argPtr)
+            self._cleanup(instancePtr, resultPtr, argPtr)
         
     @lock
     def method_objarg_swapped(self, name, instancePtr, arg):
+        self._maybe_incref(instancePtr)
         argPtr = self.mapper.Store(arg)
         resultPtr = self.table[name](argPtr, instancePtr)
         try:
             self._maybe_raise(resultPtr)
             return self.mapper.Retrieve(resultPtr)
         finally:
-            self._cleanup(resultPtr, argPtr)
+            self._cleanup(instancePtr, resultPtr, argPtr)
 
     def function_varargs(self, name, *args):
         return self.method_varargs(name, IntPtr(0), *args)
 
     @lock
     def method_varargs(self, name, instancePtr, *args):
+        self._maybe_incref(instancePtr)
         argsPtr = self.mapper.Store(args)
         resultPtr = self.table[name](instancePtr, argsPtr)
         try:
             self._maybe_raise(resultPtr)
             return self.mapper.Retrieve(resultPtr)
         finally:
-            self._cleanup(resultPtr, argsPtr)
+            self._cleanup(instancePtr, resultPtr, argsPtr)
 
     def function_kwargs(self, name, *args, **kwargs):
         return self.method_kwargs(name, IntPtr(0), *args, **kwargs)
 
     @lock
     def method_kwargs(self, name, instancePtr, *args, **kwargs):
+        self._maybe_incref(instancePtr)
         argsPtr = self.mapper.Store(args)
         kwargsPtr = IntPtr(0)
         if kwargs != {}:
@@ -444,10 +454,11 @@ class Dispatcher(object):
             self._maybe_raise(resultPtr)
             return self.mapper.Retrieve(resultPtr)
         finally:
-            self._cleanup(resultPtr, argsPtr, kwargsPtr)
+            self._cleanup(instancePtr, resultPtr, argsPtr, kwargsPtr)
     
     @lock
     def method_selfarg(self, name, instancePtr, errorHandler=None):
+        self._maybe_incref(instancePtr)
         resultPtr = self.table[name](instancePtr)
         try:
             if errorHandler:
@@ -455,48 +466,53 @@ class Dispatcher(object):
             self._maybe_raise(resultPtr)
             return self.mapper.Retrieve(resultPtr)
         finally:
-            self._cleanup(resultPtr)
+            self._cleanup(instancePtr, resultPtr)
 
     @lock
     def method_ssizearg(self, name, instancePtr, i):
+        self._maybe_incref(instancePtr)
         resultPtr = self.table[name](instancePtr, i)
         try:
             self._maybe_raise(resultPtr)
             return self.mapper.Retrieve(resultPtr)
         finally:
-            self._cleanup(resultPtr)
+            self._cleanup(instancePtr, resultPtr)
 
     @lock
     def method_ssizeobjarg(self, name, instancePtr, i, arg):
+        self._maybe_incref(instancePtr)
         argPtr = self.mapper.Store(arg)
         result = self.table[name](instancePtr, i, argPtr)
         try:
             self._maybe_raise()
             return result
         finally:
-            self._cleanup(argPtr)
+            self._cleanup(instancePtr, argPtr)
 
     @lock
     def method_ssizessizearg(self, name, instancePtr, i, j):
+        self._maybe_incref(instancePtr)
         resultPtr = self.table[name](instancePtr, i, j)
         try:
             self._maybe_raise(resultPtr)
             return self.mapper.Retrieve(resultPtr)
         finally:
-            self._cleanup(resultPtr)
+            self._cleanup(instancePtr, resultPtr)
 
     @lock
     def method_ssizessizeobjarg(self, name, instancePtr, i, j, arg):
+        self._maybe_incref(instancePtr)
         argPtr = self.mapper.Store(arg)
         result = self.table[name](instancePtr, i, j, argPtr)
         try:
             self._maybe_raise()
             return result
         finally:
-            self._cleanup(argPtr)
+            self._cleanup(instancePtr, argPtr)
 
     @lock
     def method_objobjarg(self, name, instancePtr, arg1, arg2):
+        self._maybe_incref(instancePtr)
         arg1Ptr = self.mapper.Store(arg1)
         arg2Ptr = self.mapper.Store(arg2)
         result = self.table[name](instancePtr, arg1Ptr, arg2Ptr)
@@ -504,16 +520,21 @@ class Dispatcher(object):
             self._maybe_raise()
             return result
         finally:
-            self._cleanup(arg1Ptr, arg2Ptr)
+            self._cleanup(instancePtr, arg1Ptr, arg2Ptr)
 
     @lock
     def method_inquiry(self, name, instancePtr):
+        self._maybe_incref(instancePtr)
         result = self.table[name](instancePtr)
-        self._maybe_raise()
-        return result
+        try:
+            self._maybe_raise()
+            return result
+        finally:
+            self._cleanup(instancePtr)
 
     @lock
     def method_ternary(self, name, instancePtr, arg1, arg2):
+        self._maybe_incref(instancePtr)
         arg1Ptr = self.mapper.Store(arg1)
         arg2Ptr = self.mapper.Store(arg2)
         resultPtr = self.table[name](instancePtr, arg1Ptr, arg2Ptr)
@@ -521,48 +542,56 @@ class Dispatcher(object):
             self._maybe_raise(resultPtr)
             return self.mapper.Retrieve(resultPtr)
         finally:
-            self._cleanup(resultPtr, arg1Ptr, arg2Ptr)
+            self._cleanup(instancePtr, resultPtr, arg1Ptr, arg2Ptr)
 
     @lock
     def method_ternary_swapped(self, name, instancePtr, arg):
+        self._maybe_incref(instancePtr)
         argPtr = self.mapper.Store(arg)
         resultPtr = self.table[name](argPtr, instancePtr, IntPtr(0))
         try:
             self._maybe_raise(resultPtr)
             return self.mapper.Retrieve(resultPtr)
         finally:
-            self._cleanup(resultPtr, argPtr)
+            self._cleanup(instancePtr, resultPtr, argPtr)
 
     @lock
     def method_richcmp(self, name, instancePtr, arg1, op):
+        self._maybe_incref(instancePtr)
         arg1Ptr = self.mapper.Store(arg1)
         resultPtr = self.table[name](instancePtr, arg1Ptr, op)
         try:
             self._maybe_raise(resultPtr)
             return self.mapper.Retrieve(resultPtr)
         finally:
-            self._cleanup(resultPtr, arg1Ptr)
+            self._cleanup(instancePtr, resultPtr, arg1Ptr)
 
     @lock
     def method_lenfunc(self, name, instancePtr):
+        self._maybe_incref(instancePtr)
         result = self.table[name](instancePtr)
-        self._maybe_raise()
-        return result
+        try:
+            self._maybe_raise()
+            return result
+        finally:
+            self._cleanup(instancePtr)
 
     @lock
     def method_getter(self, name, instancePtr, closurePtr):
+        self._maybe_incref(instancePtr)
         resultPtr = self.table[name](instancePtr, closurePtr)
         try:
             self._maybe_raise(resultPtr)
             return self.mapper.Retrieve(resultPtr)
         finally:
-            self._cleanup(resultPtr)
+            self._cleanup(instancePtr, resultPtr)
 
     @lock
     def method_setter(self, name, instancePtr, value, closurePtr):
+        self._maybe_incref(instancePtr)
         valuePtr = self.mapper.Store(value)
         result = self.table[name](instancePtr, valuePtr, closurePtr)
-        self._cleanup(valuePtr)
+        self._cleanup(instancePtr, valuePtr)
         if result < 0:
             self._surely_raise(Exception('%s failed' % name))
 
