@@ -111,7 +111,8 @@ namespace Ironclad
         }
         
         
-        private void AddPaths()
+        private void 
+        AddPaths()
         {
             List<string> paths = new List<string>();
             string rootPath = Assembly.GetExecutingAssembly().Location;
@@ -131,7 +132,8 @@ namespace Ironclad
         }
         
         
-        private void DumpPtr(IntPtr ptr)
+        private void 
+        DumpPtr(IntPtr ptr)
         {
             if (!this.allocator.Contains(ptr))
             {
@@ -154,7 +156,8 @@ namespace Ironclad
             }
         }
         
-        protected virtual void Dispose(bool disposing)
+        protected virtual void 
+        Dispose(bool disposing)
         {
             lock (this.dispatcherLock)
             {
@@ -177,7 +180,8 @@ namespace Ironclad
             }
         }
         
-        public void Dispose()
+        public void 
+        Dispose()
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
