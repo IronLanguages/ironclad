@@ -1,98 +1,15 @@
 
 from tests.utils.runtest import makesuite, run
-
-from tests.utils.dispatcher import GetDispatcherClass
 from tests.utils.testcase import TestCase
 
 from System import IntPtr, NullReferenceException
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, Python25Mapper
-
-
-class DispatcherTest(TestCase):
+from Ironclad.Structs import PyObject
     
-    def testMapperCreatesModuleContainingDispatcher(self):
-        mapper = Python25Mapper()
-        Dispatcher = GetDispatcherClass(mapper)
-        self.assertNotEquals(Dispatcher, None, "failed to locate Dispatcher")
-        mapper.Dispose()
-        
-        
-    def testDisposeMapperPreventsDispatcherDelete(self):
-        mapper = Python25Mapper()
-        Dispatcher = GetDispatcherClass(mapper)
-        dontDelete = Dispatcher.dontDelete
-        mapper.Dispose()
-        self.assertEquals(Dispatcher.delete, dontDelete)
-        
-    
-    def assertDispatcherUtilityMethod(self, methodname, args, expectedCalls, exceptionSet=None, exceptionAfter=None, expectedExceptionClass=None):
-        realMapper = Python25Mapper()
-        Dispatcher = GetDispatcherClass(realMapper)
-        
-        class MockMapper(object):
-            def __init__(self):
-                self.LastException = exceptionSet
-                self.calls = []
-            def FreeTemps(self):
-                self.calls.append('FreeTemps')
-            def IncRef(self, ptr):
-                self.calls.append(('IncRef', ptr))
-            def DecRef(self, ptr):
-                self.calls.append(('DecRef', ptr))
-        
-        mockMapper = MockMapper()
-        dispatcher = Dispatcher(mockMapper, {})
-        callmethod = lambda: getattr(dispatcher, methodname)(*args)
-        if expectedExceptionClass:
-            self.assertRaises(expectedExceptionClass, callmethod)
-        else:
-            callmethod()
-        self.assertEquals(mockMapper.calls, expectedCalls, 'unexpected behaviour')
-        self.assertEquals(mockMapper.LastException, exceptionAfter, 'unexpected exception set after call')
-        realMapper.Dispose()
-    
-    def testCleanup(self):
-        error = ValueError('huh?')
-        self.assertDispatcherUtilityMethod(
-            '_cleanup', tuple(), ['FreeTemps'])
-        self.assertDispatcherUtilityMethod(
-            '_cleanup', tuple(), ['FreeTemps'], error, error)
-        self.assertDispatcherUtilityMethod(
-            '_cleanup', (IntPtr(1), IntPtr.Zero, IntPtr(2)), 
-            ['FreeTemps', ('DecRef', IntPtr(1)), ('DecRef', IntPtr(2))], error, error)
-    
-    def testMaybeIncRef(self):
-        self.assertDispatcherUtilityMethod(
-            '_maybe_incref', (IntPtr.Zero,), [])
-        self.assertDispatcherUtilityMethod(
-            '_maybe_incref', (IntPtr(123),), [('IncRef', IntPtr(123))])
-    
-    def testMaybeRaise(self):
-        error = ValueError('huh?')
-        self.assertDispatcherUtilityMethod(
-            '_maybe_raise', (IntPtr.Zero,), [], None, None, NullReferenceException)
-        self.assertDispatcherUtilityMethod(
-            '_maybe_raise', (IntPtr.Zero,), [], error, None, ValueError)
-        self.assertDispatcherUtilityMethod(
-            '_maybe_raise', (IntPtr(1),), [], error, None, ValueError)
-        self.assertDispatcherUtilityMethod(
-            '_maybe_raise', tuple(), [])
-        self.assertDispatcherUtilityMethod(
-            '_maybe_raise', tuple(), [], error, None, ValueError)
-    
-    def testSurelyRaise(self):
-        # this should raise the mapper's LastException, if present;
-        # if no LastException, raise the error passed in
-        error1 = ValueError('huh?')
-        error2 = TypeError('meh')
-        self.assertDispatcherUtilityMethod(
-            "_surely_raise", (error1,), [], None, None, ValueError)
-        self.assertDispatcherUtilityMethod(
-            "_surely_raise", (error1,), [], error2, None, TypeError)
-    
-    
+# many constants, and EvilHackDict
+from tests.utils.dispatcherhelpers import *
 
 def FuncReturning(resultPtr, calls, identifier):
     def RecordCall(*args):
@@ -107,1017 +24,641 @@ def FuncRaising(exc, calls, identifier):
     return RecordCall
 
 
-RESULT = object()
-RESULT_INT = 123
-RESULT_PTR = IntPtr(999)
-RESULT_SSIZE = 99999
-
-INSTANCE_PTR = IntPtr(111)
-ARGS = (1, 2, 3)
-INSTANCE_ARGS = (INSTANCE_PTR, 1, 2, 3)
-ARGS_PTR = IntPtr(222)
-KWARGS = {"1": 2, "3": 4}
-KWARGS_PTR = IntPtr(333)
-ARG = object()
-ARG_PTR = IntPtr(444)
-CLOSURE = IntPtr(555)
-SSIZE = 123456
-SSIZE2 = 789012
-ARG2 = object()
-ARG2_PTR = IntPtr(666)
-
-class DispatcherDispatchTestCase(TestCase):
+class DispatcherTest(TestCase):
     
-    def getPatchedDispatcher(self, realMapper, callables, calls, _maybe_raise, hasPtr=False, retrieveResult=None, storeMap=None):
-        test = self
+    def testMapperCreatesModuleContainingDispatcher(self):
+        mapper = Python25Mapper()
+        Dispatcher = mapper.DispatcherModule.Dispatcher
+        self.assertNotEquals(Dispatcher, None, "failed to locate Dispatcher")
+        mapper.Dispose()
+        
+    def testDisposeMapperPreventsDispatcherDelete(self):
+        mapper = Python25Mapper()
+        Dispatcher = mapper.DispatcherModule.Dispatcher
+        dontDelete = Dispatcher.dontDelete
+        mapper.Dispose()
+        self.assertEquals(Dispatcher.delete, dontDelete)
+    
+    def assertDispatcherUtilityMethod(
+            self, methodname, args, expectedCalls, 
+            exceptionSet=None, expectedExceptionClass=None, 
+            result=None, dispatcherMembers=None):
+        realMapper = Python25Mapper()
+        Dispatcher = realMapper.DispatcherModule.Dispatcher
+        realMapper.DispatcherModule.Null = NULL
+        
+        outer = self
         class MockMapper(object):
             def __init__(self):
-                self.LastException = None
-            
-            def Store(self, item):
-                calls.append(('Store', (item,)))
-                if item == ARG: return ARG_PTR
-                if item == ARG2: return ARG2_PTR
-                if item == ARGS: return ARGS_PTR
-                if item == KWARGS: return KWARGS_PTR
-                if storeMap:
-                    return storeMap[item]
-            
-            def Retrieve(self, ptr):
-                test.assertEquals(ptr, RESULT_PTR, "bad result")
-                calls.append(('Retrieve', (ptr,)))
-                if retrieveResult is not None:
-                    return retrieveResult
-                return RESULT
-    
-            def StoreBridge(self, ptr, item):
-                calls.append(('StoreBridge', (ptr, item)))
-    
-            def Strengthen(self, item):
-                calls.append(('Strengthen', (item,)))
-                
-            def HasPtr(self, ptr):
-                calls.append(('HasPtr', (ptr,)))
-                return hasPtr
-            
-            def IncRef(self, ptr):
-                calls.append(('IncRef', (ptr,)))
-                
+                self.LastException = exceptionSet
+                outer.calls = []
+            def Store(_, obj):
+                outer.calls.append(('Store', obj))
+                return OBJ_PTR
+            def FreeTemps(_):
+                outer.calls.append('FreeTemps')
+            def DecRef(_, ptr):
+                outer.calls.append(('DecRef', ptr))
+            def Retrieve(_, ptr):
+                outer.calls.append(('Retrieve', ptr))
+                return result
+        
         mockMapper = MockMapper()
-        dispatcher = GetDispatcherClass(realMapper)(mockMapper, callables)
-        dispatcher._maybe_raise = _maybe_raise
-        dispatcher._maybe_incref = FuncReturning(None, calls, '_maybe_incref')
+        dispatcher = Dispatcher(mockMapper, {})
+        if dispatcherMembers:
+            for name, value in dispatcherMembers.items():
+                setattr(dispatcher, name, value)
+        method = getattr(dispatcher, methodname)
+        if expectedExceptionClass:
+            self.assertRaises(expectedExceptionClass, method, *args)
+        else:
+            self.assertEquals(method(*args), result)
+        self.assertEquals(self.calls, expectedCalls, 'unexpected behaviour')
+        self.assertEquals(mockMapper.LastException, None, 'unexpected exception set after call')
+        realMapper.Dispose()
+        
+    def testStore(self):
+        self.assertDispatcherUtilityMethod(
+            "_store", (OBJ,), [('Store', OBJ)], result=OBJ_PTR)
+        test_null = object()
+        self.assertDispatcherUtilityMethod(
+            "_store", (NULL,), [], result=NULL_PTR)
+    
+    def testCleanup(self):
+        error = ValueError('huh?')
+        self.assertDispatcherUtilityMethod(
+            '_cleanup', (), ['FreeTemps'])
+        self.assertDispatcherUtilityMethod(
+            '_cleanup', (OBJ_PTR, NULL_PTR, OBJ_PTR), 
+            ['FreeTemps', ('DecRef', OBJ_PTR), ('DecRef', OBJ_PTR)])
+    
+    def testCheckError(self):
+        self.assertDispatcherUtilityMethod(
+            '_check_error', (), [])
+        self.assertDispatcherUtilityMethod(
+            '_check_error', (), [], ValueError('huh?'), ValueError)
+    
+    def testRaise(self):
+        error1 = ValueError('huh?')
+        error2 = TypeError('meh')
+        self.assertDispatcherUtilityMethod(
+            "_raise", (error1,), [], None, ValueError)
+        self.assertDispatcherUtilityMethod(
+            "_raise", (error1,), [], error2, TypeError)
+    
+    def testReturn(self):
+        def _check_error():
+            self.calls.append('_check_error')
+        members = {'_check_error': _check_error}
+        
+        self.assertDispatcherUtilityMethod(
+            "_return", (), ['_check_error'], dispatcherMembers=members)
+        self.assertDispatcherUtilityMethod(
+            "_return", (OBJ,), ['_check_error'], result=OBJ, dispatcherMembers=members)
+    
+    def testReturnRetrieve(self):
+        def _check_error_safe():
+            self.calls.append('_check_error')
+        def _check_error_bad():
+            self.calls.append('_check_error')
+            raise ValueError('not yours')
+        members_safe = {'_check_error': _check_error_safe}
+        members_bad = {'_check_error': _check_error_bad}
+        
+        self.assertDispatcherUtilityMethod(
+            "_return_retrieve", (OBJ_PTR,), ['_check_error', ('Retrieve', OBJ_PTR)], dispatcherMembers=members_safe)
+        self.assertDispatcherUtilityMethod(
+            "_return_retrieve", (OBJ_PTR,), ['_check_error', ('Retrieve', OBJ_PTR)], result=OBJ, dispatcherMembers=members_safe)
+        self.assertDispatcherUtilityMethod(
+            "_return_retrieve", (NULL_PTR,), ['_check_error'], expectedExceptionClass=NullReferenceException, dispatcherMembers=members_safe)
+        self.assertDispatcherUtilityMethod(
+            "_return_retrieve", (OBJ_PTR,), ['_check_error'], expectedExceptionClass=ValueError, dispatcherMembers=members_bad)
+
+
+class TrivialDispatchTest(TestCase):
+    
+    def assertDispatcherMethodDelegates(self, methodname, args, kwargs, implname, expectedArgs):
+        mapper = Python25Mapper()
+        mapper.DispatcherModule.Null = NULL
+        dispatcher = mapper.DispatcherModule.Dispatcher(mapper, [])
+        calls = []
+        setattr(dispatcher, implname, FuncReturning(OBJ, calls, implname))
+        self.assertEquals(getattr(dispatcher, methodname)(*args, **kwargs), OBJ)
+        self.assertEquals(calls, [(implname, expectedArgs)])
+        mapper.Dispose()
+    
+    def testEasyDelegations(self):
+        self.assertDispatcherMethodDelegates(
+            'function_noargs', (NAME,), {}, '_call_O_OO', (NAME, NULL, NULL))
+        self.assertDispatcherMethodDelegates(
+            'method_noargs', (NAME, OBJ), {}, '_call_O_OO', (NAME, OBJ, NULL))
+        self.assertDispatcherMethodDelegates(
+            'function_objarg', (NAME, ARG), {}, '_call_O_OO', (NAME, NULL, ARG))
+        self.assertDispatcherMethodDelegates(
+            'method_objarg', (NAME, OBJ, ARG), {}, '_call_O_OO', (NAME, OBJ, ARG))
+        self.assertDispatcherMethodDelegates(
+            'function_varargs', (NAME,) + ARGS, {}, '_call_O_OO', (NAME, NULL, ARGS))
+        self.assertDispatcherMethodDelegates(
+            'method_varargs', (NAME, ARG,) + ARGS, {}, '_call_O_OO', (NAME, ARG, ARGS))
+            
+        self.assertDispatcherMethodDelegates(
+            'method_ternary', (NAME, OBJ, ARG, ARG2), {}, '_call_O_OOO', (NAME, OBJ, ARG, ARG2))
+        self.assertDispatcherMethodDelegates( # this one is for __rpow__
+            'method_ternary_swapped', (NAME, OBJ, ARG), {}, '_call_O_OOO', (NAME, ARG, OBJ, NULL))
+        
+        self.assertDispatcherMethodDelegates(
+            'function_kwargs', (NAME,) + ARGS, {}, '_call_O_OOO', (NAME, NULL, ARGS, NULL))
+        self.assertDispatcherMethodDelegates(
+            'function_kwargs', (NAME,) + ARGS, KWARGS, '_call_O_OOO', (NAME, NULL, ARGS, KWARGS))
+        self.assertDispatcherMethodDelegates(
+            'method_kwargs', (NAME, OBJ,) + ARGS, {}, '_call_O_OOO', (NAME, OBJ, ARGS, NULL))
+        self.assertDispatcherMethodDelegates(
+            'method_kwargs', (NAME, OBJ,) + ARGS, KWARGS, '_call_O_OOO', (NAME, OBJ, ARGS, KWARGS))
+    
+
+class DispatchTestCase(TestCase):
+    
+    def getPatchedDispatcher(self, mapper, calls, dgtResult, _returnFails=False, mockMapper=None):
+        mapper.DispatcherModule.Null = NULL
+        dispatcher = mapper.DispatcherModule.Dispatcher(mockMapper or mapper, {NAME: FuncReturning(dgtResult, calls, NAME)})
+        
+        def getmapmethod(name):
+            def mapmethod(item):
+                calls.append((name, (item,)))
+                return PTRMAP[item]
+            return mapmethod
+        
+        dispatcher._store = getmapmethod('_store')
         dispatcher._cleanup = FuncReturning(None, calls, '_cleanup')
+        dispatcher._check_error = FuncReturning(None, calls, '_check_error')
+        if _returnFails:
+            dispatcher._return = FuncRaising(ValueError, calls, '_return')
+            dispatcher._return_retrieve = FuncRaising(ValueError, calls, '_return_retrieve')
+        else:
+            dispatcher._return = FuncReturning(dgtResult, calls, '_return')
+            dispatcher._return_retrieve = getmapmethod('_return_retrieve')
+        
         return dispatcher
     
-    def callDispatcherMethod(self, methodname, *args, **kwargs):
-        return self.callDispatcherMethodWithResults(methodname, RESULT_PTR, RESULT, *args, **kwargs)
-    
-    def callDispatcherMethodWithResults(self, methodname, dgtResult, dispatchResult, *args, **kwargs):
+    def assertDispatcherMethod(self, methodname, args, expectedCalls):
         mapper = Python25Mapper()
-        calls = []
-        callables = {
-            'dgt': FuncReturning(dgtResult, calls, 'dgt'),
-        }
-        _maybe_raise = FuncReturning(None, calls, '_maybe_raise')
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, _maybe_raise)
         
+        calls = []
+        dispatcher = self.getPatchedDispatcher(mapper, calls, RESULT_PTR)
         method = getattr(dispatcher, methodname)
-        self.assertEquals(method('dgt', *args, **kwargs), dispatchResult)
+        self.assertEquals(method(*args), RESULT)
+        self.assertEquals(calls, expectedCalls)
+        
+        calls = []
+        dispatcher = self.getPatchedDispatcher(mapper, calls, RESULT_PTR, _returnFails=True)
+        method = getattr(dispatcher, methodname)
+        self.assertRaises(ValueError, method, *args)
+        self.assertEquals(calls, expectedCalls)
         mapper.Dispose()
-        return calls
     
-    def callDispatcherErrorMethod(self, methodname, *args, **kwargs):
+    def assertDispatcherMethodWithResult(self, methodname, result, args, expectedCalls):
         mapper = Python25Mapper()
-        calls = []
-        callables = {
-            'dgt': FuncReturning(RESULT_PTR, calls, 'dgt'),
-        }
-        _maybe_raise = FuncRaising(ValueError, calls, '_maybe_raise')
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, _maybe_raise)
         
+        calls = []
+        dispatcher = self.getPatchedDispatcher(mapper, calls, result)
         method = getattr(dispatcher, methodname)
-        self.assertRaises(ValueError, lambda: method('dgt', *args, **kwargs))
+        self.assertEquals(method(*args), result)
+        self.assertEquals(calls, expectedCalls)
+        
+        calls = []
+        dispatcher = self.getPatchedDispatcher(mapper, calls, result, _returnFails=True)
+        method = getattr(dispatcher, methodname)
+        self.assertRaises(ValueError, method, *args)
+        self.assertEquals(calls, expectedCalls)
         mapper.Dispose()
-        return calls
+    
+class SimpleDispatchTest(DispatchTestCase):
 
-
-class DispatcherNoargsTest(DispatcherDispatchTestCase):
+    def testDispatch__call_O_OO(self):
+        self.assertDispatcherMethod(
+            '_call_O_OO',  (NAME, ARG, ARG2),
+            [('_store', (ARG,)),
+             ('_store', (ARG2,)),
+             (NAME, (ARG_PTR, ARG2_PTR)), 
+             ('_return_retrieve', (RESULT_PTR,)),
+             ('_cleanup', (ARG_PTR, ARG2_PTR, RESULT_PTR,))
+            ])
     
-    def testDispatch_function_noargs(self):
-        calls = self.callDispatcherMethod('function_noargs')
-        self.assertEquals(calls, [
-            ('_maybe_incref', (IntPtr.Zero,)),
-            ('dgt', (IntPtr.Zero, IntPtr.Zero)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (IntPtr.Zero, RESULT_PTR,))
-        ])
+    def testDispatch__call_O_OOO(self):
+        self.assertDispatcherMethod(
+            '_call_O_OOO', (NAME, ARG, ARG2, ARG3),
+            [('_store', (ARG,)),
+             ('_store', (ARG2,)),
+             ('_store', (ARG3,)),
+             (NAME, (ARG_PTR, ARG2_PTR, ARG3_PTR)), 
+             ('_return_retrieve', (RESULT_PTR,)),
+             ('_cleanup', (ARG_PTR, ARG2_PTR, ARG3_PTR, RESULT_PTR,))
+            ])
     
-    def testDispatch_function_noargs_error(self):
-        calls = self.callDispatcherErrorMethod('function_noargs')
-        self.assertEquals(calls, [
-            ('_maybe_incref', (IntPtr.Zero,)),
-            ('dgt', (IntPtr.Zero, IntPtr.Zero)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (IntPtr.Zero, RESULT_PTR,))
-        ])
+    def testDispatch_method_ssizearg(self):
+        self.assertDispatcherMethod(
+            'method_ssizearg', (NAME, OBJ, SSIZE),
+            [('_store', (OBJ,)),
+             (NAME, (OBJ_PTR, SSIZE)), 
+             ('_return_retrieve', (RESULT_PTR,)),
+             ('_cleanup', (OBJ_PTR, RESULT_PTR,))
+            ])
     
+    def testDispatch_method_ssizessizearg(self):
+        self.assertDispatcherMethod(
+            'method_ssizessizearg', (NAME, OBJ, SSIZE, SSIZE2),
+            [('_store', (OBJ,)),
+             (NAME, (OBJ_PTR, SSIZE, SSIZE2)), 
+             ('_return_retrieve', (RESULT_PTR,)),
+             ('_cleanup', (OBJ_PTR, RESULT_PTR,))
+            ])
     
-    def testDispatch_method_noargs(self):
-        calls = self.callDispatcherMethod('method_noargs', INSTANCE_PTR)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR, IntPtr.Zero)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR))
-        ])
+    def testDispatch_method_richcmp(self):
+        self.assertDispatcherMethod(
+            'method_richcmp', (NAME, OBJ, ARG, SSIZE),
+            [('_store', (OBJ,)),
+             ('_store', (ARG,)),
+             (NAME, (OBJ_PTR, ARG_PTR, SSIZE)), 
+             ('_return_retrieve', (RESULT_PTR,)),
+             ('_cleanup', (OBJ_PTR, ARG_PTR, RESULT_PTR))
+            ])
     
+    def testDispatch_method_ssizeobjarg(self):
+        self.assertDispatcherMethodWithResult(
+            'method_ssizeobjarg', RESULT_INT, (NAME, OBJ, SSIZE, ARG),
+            [('_store', (OBJ,)),
+             ('_store', (ARG,)),
+             (NAME, (OBJ_PTR, SSIZE, ARG_PTR)), 
+             ('_return', (RESULT_INT,)),
+             ('_cleanup', (OBJ_PTR, ARG_PTR,))
+            ])
     
-    def testDispatch_method_noargs_error(self):
-        calls = self.callDispatcherErrorMethod('method_noargs', INSTANCE_PTR)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR, IntPtr.Zero)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR))
-        ])
+    def testDispatch_method_ssizessizeobjarg(self):
+        self.assertDispatcherMethodWithResult(
+            'method_ssizessizeobjarg', RESULT_INT, (NAME, OBJ, SSIZE, SSIZE2, ARG), 
+            [('_store', (OBJ,)),
+             ('_store', (ARG,)),
+             (NAME, (OBJ_PTR, SSIZE, SSIZE2, ARG_PTR)), 
+             ('_return', (RESULT_INT,)),
+             ('_cleanup', (OBJ_PTR, ARG_PTR,))
+            ])
     
+    def testDispatch_method_objobjarg(self):
+        self.assertDispatcherMethodWithResult(
+            'method_objobjarg', RESULT_INT, (NAME, OBJ, ARG, ARG2), 
+            [('_store', (OBJ,)),
+             ('_store', (ARG,)),
+             ('_store', (ARG2,)),
+             (NAME, (OBJ_PTR, ARG_PTR, ARG2_PTR)), 
+             ('_return', (RESULT_INT,)),
+             ('_cleanup', (OBJ_PTR, ARG_PTR, ARG2_PTR))
+            ])
     
-class DispatcherVarargsTest(DispatcherDispatchTestCase):
+    def testDispatch_method_inquiry(self):
+        self.assertDispatcherMethodWithResult(
+            'method_inquiry', RESULT_INT, (NAME, OBJ), 
+            [('_store', (OBJ,)),
+             (NAME, (OBJ_PTR,)), 
+             ('_return', (RESULT_INT,)),
+             ('_cleanup', (OBJ_PTR,))
+            ])
     
-    def testDispatch_function_varargs(self):
-        calls = self.callDispatcherMethod('function_varargs', *ARGS)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (IntPtr.Zero,)),
-            ('Store', (ARGS,)),
-            ('dgt', (IntPtr.Zero, ARGS_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARGS_PTR))
-        ])
+    def testDispatch_method_lenfunc(self):
+        self.assertDispatcherMethodWithResult(
+            'method_lenfunc', RESULT_SSIZE, (NAME, OBJ), 
+            [('_store', (OBJ,)),
+             (NAME, (OBJ_PTR,)), 
+             ('_return', (RESULT_SSIZE,)),
+             ('_cleanup', (OBJ_PTR,))
+            ])
     
-    
-    def testDispatch_function_varargs_error(self):
-        calls = self.callDispatcherErrorMethod('function_varargs', *ARGS)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (IntPtr.Zero,)),
-            ('Store', (ARGS,)),
-            ('dgt', (IntPtr.Zero, ARGS_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARGS_PTR))
-        ])
-    
-    
-    def testDispatch_method_varargs(self):
-        calls = self.callDispatcherMethod('method_varargs', *INSTANCE_ARGS)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARGS,)),
-            ('dgt', (INSTANCE_PTR, ARGS_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARGS_PTR))
-        ])
-    
-    
-    def testDispatch_method_varargs_error(self):
-        calls = self.callDispatcherErrorMethod('method_varargs', *INSTANCE_ARGS)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARGS,)),
-            ('dgt', (INSTANCE_PTR, ARGS_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARGS_PTR))
-        ])
-
-
-class DispatcherObjargTest(DispatcherDispatchTestCase):
-    
-    def testDispatch_function_objarg(self):
-        calls = self.callDispatcherMethod('function_objarg', ARG)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (IntPtr.Zero,)),
-            ('Store', (ARG,)),
-            ('dgt', (IntPtr.Zero, ARG_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARG_PTR))
-        ])
-    
-    def testDispatch_function_objarg_error(self):
-        calls = self.callDispatcherErrorMethod('function_objarg', ARG)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (IntPtr.Zero,)),
-            ('Store', (ARG,)),
-            ('dgt', (IntPtr.Zero, ARG_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARG_PTR))
-        ])
-    
-    def testDispatch_method_objarg(self):
-        calls = self.callDispatcherMethod('method_objarg', INSTANCE_PTR, ARG)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
-        ])
-    
-    def testDispatch_method_objarg_error(self):
-        calls = self.callDispatcherErrorMethod('method_objarg', INSTANCE_PTR, ARG)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
-        ])
-    
-    def testDispatch_method_objarg_swapped(self):
-        calls = self.callDispatcherMethod('method_objarg_swapped', INSTANCE_PTR, ARG)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (ARG_PTR, INSTANCE_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
-        ])
-    
-    def testDispatch_method_objarg_swapped_error(self):
-        calls = self.callDispatcherErrorMethod('method_objarg_swapped', INSTANCE_PTR, ARG)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (ARG_PTR, INSTANCE_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
-        ])
-
-
-class DispatcherSelfargTest(DispatcherDispatchTestCase):
+    def testDispatch_method_getter(self):
+        self.assertDispatcherMethod(
+            'method_getter', (NAME, OBJ, CLOSURE),
+            [('_store', (OBJ,)),
+             (NAME, (OBJ_PTR, CLOSURE)), 
+             ('_return_retrieve', (RESULT_PTR,)),
+             ('_cleanup', (OBJ_PTR, RESULT_PTR))
+            ])
     
     def testDispatch_method_selfarg(self):
-        calls = self.callDispatcherMethod('method_selfarg', INSTANCE_PTR)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR,)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
-        ])
-    
-    def testDispatch_method_selfarg_error(self):
-        calls = self.callDispatcherErrorMethod('method_selfarg', INSTANCE_PTR)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR,)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
-        ])
+        self.assertDispatcherMethod(
+            'method_selfarg', (NAME, OBJ),
+            [('_store', (OBJ,)),
+             (NAME, (OBJ_PTR,)), 
+             ('_return_retrieve', (RESULT_PTR,)),
+             ('_cleanup', (OBJ_PTR, RESULT_PTR,))
+            ])
         
     def testDispatch_method_selfarg_errorHandler(self):
         mapper = Python25Mapper()
         calls = []
-        callables = {
-            'dgt': FuncReturning(RESULT_PTR, calls, 'dgt'),
-        }
-        _maybe_raise = FuncReturning(None, calls, '_maybe_raise')
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, _maybe_raise)
-        
-        def ErrorHandler(ptr):
-            calls.append(("ErrorHandler", (ptr,)))
-        
-        self.assertEquals(dispatcher.method_selfarg('dgt', INSTANCE_PTR, ErrorHandler), RESULT, "unexpected result")
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR,)), 
-            ('ErrorHandler', (RESULT_PTR,)),
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
-        ])
+        dispatcher = self.getPatchedDispatcher(mapper, calls, RESULT_PTR)
+        self.assertEquals(
+            dispatcher.method_selfarg(NAME, OBJ, FuncReturning(None, calls, 'ErrorHandler')), 
+            RESULT)
+        self.assertEquals(
+            calls,
+            [('_store', (OBJ,)),
+             (NAME, (OBJ_PTR,)), 
+             ('ErrorHandler', (RESULT_PTR,)),
+             ('_return_retrieve', (RESULT_PTR,)),
+             ('_cleanup', (OBJ_PTR, RESULT_PTR,))
+            ])
         mapper.Dispose()
         
     def testDispatch_method_selfarg_errorHandlerError(self):
         mapper = Python25Mapper()
         calls = []
-        callables = {
-            'dgt': FuncReturning(RESULT_PTR, calls, 'dgt'),
-        }
-        _maybe_raise = FuncReturning(None, calls, '_maybe_raise')
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, _maybe_raise)
-        
-        def ErrorHandler(ptr):
-            calls.append(("ErrorHandler", (ptr,)))
-            raise Exception()
-        
-        self.assertRaises(Exception, lambda: dispatcher.method_selfarg('dgt', INSTANCE_PTR, ErrorHandler))
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR,)), 
-            ('ErrorHandler', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
-        ])
+        dispatcher = self.getPatchedDispatcher(mapper, calls, RESULT_PTR)
+        self.assertRaises(
+            ValueError, 
+            dispatcher.method_selfarg,
+            NAME, OBJ, FuncRaising(ValueError, calls, 'ErrorHandler'))
+        self.assertEquals(
+            calls,
+            [('_store', (OBJ,)),
+             (NAME, (OBJ_PTR,)), 
+             ('ErrorHandler', (RESULT_PTR,)),
+             ('_cleanup', (OBJ_PTR, RESULT_PTR,))
+            ])
         mapper.Dispose()
-    
-
-    
-class DispatcherKwargsTest(DispatcherDispatchTestCase):
-    
-    def testDispatch_function_kwargs(self):
-        calls = self.callDispatcherMethod('function_kwargs', *ARGS, **KWARGS)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (IntPtr.Zero,)),
-            ('Store', (ARGS,)),
-            ('Store', (KWARGS,)),
-            ('dgt', (IntPtr.Zero, ARGS_PTR, KWARGS_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARGS_PTR, KWARGS_PTR))
-        ])
-    
-    
-    def testDispatch_function_kwargs_error(self):
-        calls = self.callDispatcherErrorMethod('function_kwargs', *ARGS, **KWARGS)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (IntPtr.Zero,)),
-            ('Store', (ARGS,)),
-            ('Store', (KWARGS,)),
-            ('dgt', (IntPtr.Zero, ARGS_PTR, KWARGS_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARGS_PTR, KWARGS_PTR))
-        ])
-    
-    
-    def testDispatch_function_kwargs_withoutActualKwargs(self):
-        calls = self.callDispatcherMethod('function_kwargs', *ARGS)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (IntPtr.Zero,)),
-            ('Store', (ARGS,)),
-            ('dgt', (IntPtr.Zero, ARGS_PTR, IntPtr.Zero)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (IntPtr.Zero, RESULT_PTR, ARGS_PTR, IntPtr.Zero))
-        ])
-    
-    
-    def testDispatch_method_kwargs(self):
-        calls = self.callDispatcherMethod('method_kwargs', *INSTANCE_ARGS, **KWARGS)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARGS,)),
-            ('Store', (KWARGS,)),
-            ('dgt', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARGS_PTR, KWARGS_PTR))
-        ])
-    
-    
-    def testDispatch_method_kwargs_error(self):
-        calls = self.callDispatcherErrorMethod('method_kwargs', *INSTANCE_ARGS, **KWARGS)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARGS,)),
-            ('Store', (KWARGS,)),
-            ('dgt', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARGS_PTR, KWARGS_PTR))
-        ])
-    
-    
-    def testDispatch_method_kwargs_withoutActualKwargs(self):
-        calls = self.callDispatcherMethod('method_kwargs', *INSTANCE_ARGS)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARGS,)),
-            ('dgt', (INSTANCE_PTR, ARGS_PTR, IntPtr.Zero)), 
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARGS_PTR, IntPtr.Zero))
-        ])
-
-
-class DispatcherSsizeargTest(DispatcherDispatchTestCase):
-    
-    def testDispatch_method_ssizearg(self):
-        calls = self.callDispatcherMethod('method_ssizearg', INSTANCE_PTR, SSIZE)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR, SSIZE)),
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
-        ])
-    
-    def testDispatch_method_ssizearg_error(self):
-        calls = self.callDispatcherErrorMethod('method_ssizearg', INSTANCE_PTR, SSIZE)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR, SSIZE)),
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
-        ])
-
-
-class DispatcherSsizeobjargTest(DispatcherDispatchTestCase):
-    
-    def testDispatch_method_ssizeobjarg(self):
-        calls = self.callDispatcherMethodWithResults('method_ssizeobjarg', RESULT_INT, RESULT_INT, INSTANCE_PTR, SSIZE, ARG)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, SSIZE, ARG_PTR)),
-            ('_maybe_raise', tuple()),
-            ('_cleanup', (INSTANCE_PTR, ARG_PTR,))
-        ])
-    
-    def testDispatch_method_ssizeobjarg_error(self):
-        calls = self.callDispatcherErrorMethod('method_ssizeobjarg', INSTANCE_PTR, SSIZE, ARG)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, SSIZE, ARG_PTR)),
-            ('_maybe_raise', tuple()),
-            ('_cleanup', (INSTANCE_PTR, ARG_PTR,))
-        ])
-
-
-class DispatcherSsizessizeargTest(DispatcherDispatchTestCase):
-    
-    def testDispatch_method_ssizessizearg(self):
-        calls = self.callDispatcherMethod('method_ssizessizearg', INSTANCE_PTR, SSIZE, SSIZE2)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR, SSIZE, SSIZE2)),
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
-        ])
-    
-    def testDispatch_method_ssizessizearg_error(self):
-        calls = self.callDispatcherErrorMethod('method_ssizessizearg', INSTANCE_PTR, SSIZE, SSIZE2)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR, SSIZE, SSIZE2)),
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
-        ])
-
-
-class DispatcherSsizessizeobjargTest(DispatcherDispatchTestCase):
-    
-    def testDispatch_method_ssizessizeobjarg(self):
-        calls = self.callDispatcherMethodWithResults('method_ssizessizeobjarg', RESULT_INT, RESULT_INT, INSTANCE_PTR, SSIZE, SSIZE2, ARG)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, SSIZE, SSIZE2, ARG_PTR)),
-            ('_maybe_raise', tuple()),
-            ('_cleanup', (INSTANCE_PTR, ARG_PTR,))
-        ])
-    
-    def testDispatch_method_ssizessizeobjarg_error(self):
-        calls = self.callDispatcherErrorMethod('method_ssizessizeobjarg', INSTANCE_PTR, SSIZE, SSIZE2, ARG)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, SSIZE, SSIZE2, ARG_PTR)),
-            ('_maybe_raise', tuple()),
-            ('_cleanup', (INSTANCE_PTR, ARG_PTR,))
-        ])
-
-
-class DispatcherObjobjargTest(DispatcherDispatchTestCase):
-    
-    def testDispatch_method_objobjarg(self):
-        calls = self.callDispatcherMethodWithResults('method_objobjarg', RESULT_INT, RESULT_INT, INSTANCE_PTR, ARG, ARG2)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('Store', (ARG2,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR, ARG2_PTR)),
-            ('_maybe_raise', tuple()),
-            ('_cleanup', (INSTANCE_PTR, ARG_PTR, ARG2_PTR))
-        ])
-    
-    def testDispatch_method_objobjarg_error(self):
-        calls = self.callDispatcherErrorMethod('method_objobjarg', INSTANCE_PTR, ARG, ARG2)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('Store', (ARG2,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR, ARG2_PTR)),
-            ('_maybe_raise', tuple()),
-            ('_cleanup', (INSTANCE_PTR, ARG_PTR, ARG2_PTR))
-        ])
-
-
-class DispatcherInquiryTest(DispatcherDispatchTestCase):
-    
-    def testDispatch_method_inquiry(self):
-        calls = self.callDispatcherMethodWithResults('method_inquiry', RESULT_INT, RESULT_INT, INSTANCE_PTR)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR,)),
-            ('_maybe_raise', tuple()),
-            ('_cleanup', (INSTANCE_PTR,)),
-        ])
-    
-    def testDispatch_method_inquiry_error(self):
-        calls = self.callDispatcherErrorMethod('method_inquiry', INSTANCE_PTR)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR,)),
-            ('_maybe_raise', tuple()),
-            ('_cleanup', (INSTANCE_PTR,)),
-        ])
-
-
-class DispatcherTernaryTest(DispatcherDispatchTestCase):
-    
-    def testDispatch_method_ternary(self):
-        calls = self.callDispatcherMethod('method_ternary', INSTANCE_PTR, ARG, ARG2)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('Store', (ARG2,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR, ARG2_PTR)),
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR, ARG2_PTR))
-        ])
-    
-    def testDispatch_method_ternary_error(self):
-        calls = self.callDispatcherErrorMethod('method_ternary', INSTANCE_PTR, ARG, ARG2)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('Store', (ARG2,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR, ARG2_PTR)),
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR, ARG2_PTR))
-        ])
-    
-    
-    # method_ternary_swapped only takes 2 args, but calls a ternaryfunc
-    # see __rpow__ docs
-    def testDispatch_method_ternary_swapped(self):
-        calls = self.callDispatcherMethod('method_ternary_swapped', INSTANCE_PTR, ARG)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (ARG_PTR, INSTANCE_PTR, IntPtr.Zero)),
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
-        ])
-    
-    def testDispatch_method_ternary_swapped_error(self):
-        calls = self.callDispatcherErrorMethod('method_ternary_swapped', INSTANCE_PTR, ARG)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (ARG_PTR, INSTANCE_PTR, IntPtr.Zero)),
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
-        ])
-
-
-class DispatcherRichcmpTest(DispatcherDispatchTestCase):
-    
-    def testDispatch_method_richcmp(self):
-        calls = self.callDispatcherMethod('method_richcmp', INSTANCE_PTR, ARG, SSIZE)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR, SSIZE)),
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
-        ])
-    
-    def testDispatch_method_richcmp_error(self):
-        calls = self.callDispatcherErrorMethod('method_richcmp', INSTANCE_PTR, ARG, SSIZE)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR, SSIZE)),
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR, ARG_PTR))
-        ])
-
-
-class DispatcherLenfuncTest(DispatcherDispatchTestCase):
-    
-    def testDispatch_method_lenfunc(self):
-        calls = self.callDispatcherMethodWithResults('method_lenfunc', RESULT_INT, RESULT_INT, INSTANCE_PTR)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR,)),
-            ('_maybe_raise', tuple()),
-            ('_cleanup', (INSTANCE_PTR,)),
-        ])
-        
-
-class DispatcherGetterTest(DispatcherDispatchTestCase):
-    
-    def testDispatch_method_getter(self):
-        calls = self.callDispatcherMethod('method_getter', INSTANCE_PTR, CLOSURE)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR, CLOSURE)),
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
-        ])
-    
-    def testDispatch_method_getter_error(self):
-        calls = self.callDispatcherErrorMethod('method_getter', INSTANCE_PTR, CLOSURE)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('dgt', (INSTANCE_PTR, CLOSURE)),
-            ('_maybe_raise', (RESULT_PTR,)),
-            ('_cleanup', (INSTANCE_PTR, RESULT_PTR,))
-        ])
-
-
-class DispatcherSetterTest(DispatcherDispatchTestCase):
 
     def testDispatch_method_setter(self):
-        class klass(object):
-            pass
-        instance = klass()
-        instance._instancePtr = INSTANCE_PTR
-        
         mapper = Python25Mapper()
         calls = []
-        callables = {
-            'dgt': FuncReturning(0, calls, 'dgt'),
-        }
-        
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
-        dispatcher.method_setter('dgt', INSTANCE_PTR, ARG, CLOSURE)
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR, CLOSURE)), 
-            ('_cleanup', (INSTANCE_PTR, ARG_PTR,)),
-        ])
+        dispatcher = self.getPatchedDispatcher(mapper, calls, 0)
+        dispatcher.method_setter(NAME, OBJ, ARG, CLOSURE)
+        self.assertEquals(
+            calls, 
+            [('_store', (OBJ,)),
+             ('_store', (ARG,)),
+             (NAME, (OBJ_PTR, ARG_PTR, CLOSURE)), 
+             ('_cleanup', (OBJ_PTR, ARG_PTR)),
+             ('_check_error', ()),
+             ('_return', ()),
+            ])
         mapper.Dispose()
 
     def testDispatch_method_setter_error(self):
-        class klass(object):
-            pass
-        instance = klass()
-        instance._instancePtr = INSTANCE_PTR
-        
         mapper = Python25Mapper()
         calls = []
-        callables = {
-            'dgt': FuncReturning(-1, calls, 'dgt'),
-        }
-        
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
-        self.assertRaises(Exception, lambda: dispatcher.method_setter('dgt', INSTANCE_PTR, ARG, CLOSURE))
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR, CLOSURE)), 
-            ('_cleanup', (INSTANCE_PTR, ARG_PTR,)),
-        ])
+        dispatcher = self.getPatchedDispatcher(mapper, calls, -1)
+        self.assertRaises(Exception, dispatcher.method_setter, NAME, OBJ, ARG, CLOSURE)
+        self.assertEquals(
+            calls, 
+            [('_store', (OBJ,)),
+             ('_store', (ARG,)),
+             (NAME, (OBJ_PTR, ARG_PTR, CLOSURE)), 
+             ('_cleanup', (OBJ_PTR, ARG_PTR)),
+             ('_check_error', ()),
+            ])
         mapper.Dispose()
 
-    def testDispatch_method_setter_specificError(self):
-        class klass(object):
-            pass
-        instance = klass()
-        instance._instancePtr = INSTANCE_PTR
-        
-        mapper = Python25Mapper()
-        calls = []
-        callables = {
-            'dgt': FuncReturning(-1, calls, 'dgt'),
-        }
-        
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
-        dispatcher.mapper.LastException = ValueError("arrgh!")
-        self.assertRaises(ValueError, lambda: dispatcher.method_setter('dgt', INSTANCE_PTR, ARG, CLOSURE))
-        self.assertEquals(dispatcher.mapper.LastException, None, "failed to clear error")
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARG,)),
-            ('dgt', (INSTANCE_PTR, ARG_PTR, CLOSURE)), 
-            ('_cleanup', (INSTANCE_PTR, ARG_PTR,)),
-        ])
-        mapper.Dispose()
+
+class IckyDispatchTest(DispatchTestCase):
     
-
-TYPE_PTR = IntPtr(555)
-
-def CallWithFakeObjectInDispatcherModule(mapper, calls, callWithFakeObject):
-    class FakeObject(object):
-        def __new__(cls):
-            calls.append(('__new__', (cls,)))
-            return cls()
-
-    mapper.DispatcherModule.object = FakeObject
-    try:
-        return callWithFakeObject()
-    finally:
-        mapper.DispatcherModule.object = object
-
-
-class DispatcherConstructTest(DispatcherDispatchTestCase):
+    def getVars(self):
+        class klass(object):
+            pass
+        instance = klass()
+        storeMap = {
+            klass: TYPE_PTR,
+            instance: INSTANCE_PTR,
+            INSTANCE_PTR: instance}
+        return klass, instance, storeMap
+    
+    def getMapperPatchedDispatcher(
+            self, realMapper, calls, dgtResult, hasPtr=False, _checkErrorFails=False, storeMap=None):
+        class MockMapper(object):
+            def StoreBridge(self, ptr, item):
+                calls.append(('StoreBridge', (ptr, item)))
+            def Strengthen(self, item):
+                calls.append(('Strengthen', (item,)))
+            def HasPtr(self, ptr):
+                calls.append(('HasPtr', (ptr,)))
+                return hasPtr
+            def IncRef(self, ptr):
+                calls.append(('IncRef', (ptr,)))
+            def DecRef(self, ptr):
+                calls.append(('DecRef', (ptr,)))
+            def RefCount(self, ptr):
+                calls.append(('RefCount', (ptr,)))
+                return 2
+            def Unmap(self, ptr):
+                calls.append(('Unmap', (ptr,)))
+            def CheckBridgePtrs(self):
+                calls.append(('CheckBridgePtrs', ()))
+                
+        _ptrmap = dict(PTRMAP)
+        if storeMap:
+            _ptrmap.update(storeMap)
+        def _store(item):
+            calls.append(('_store', (item,)))
+            if isinstance(item, dict):
+                item = EvilHackDict(item)
+            return _ptrmap[item]
+        
+        dispatcher = self.getPatchedDispatcher(realMapper, calls, dgtResult, mockMapper=MockMapper())
+        dispatcher._store = _store
+        if _checkErrorFails:
+            dispatcher._check_error = FuncRaising(ValueError, calls, '_check_error')
+        return dispatcher
+    
     # NOTE: a failing __new__ will leak memory. However, if __new__ fails,
     # the want of a few bytes is unlikely to be your primary concern.
-    
     def testDispatch_construct(self):
-        class klass(object):
-            pass
-        storeMap = {klass: TYPE_PTR}
-        
+        klass, instance, storeMap = self.getVars()
         mapper = Python25Mapper()
         calls = []
-        callables = {
-            'dgt': FuncReturning(RESULT_PTR, calls, 'dgt'),
-        }
-        _maybe_raise = FuncReturning(None, calls, '_maybe_raise')
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, _maybe_raise, storeMap=storeMap)
+        dispatcher = self.getMapperPatchedDispatcher(mapper, calls, INSTANCE_PTR, storeMap=storeMap)
+        class FakeObject(object):
+            def __new__(cls):
+                calls.append(('__new__', (cls,)))
+                return instance
+        mapper.DispatcherModule.object = FakeObject
+        try:
+            self.assertEquals(dispatcher.construct(NAME, klass, *ARGS, **KWARGS), instance)
+        finally:
+            mapper.DispatcherModule.object = object
         
-        result = CallWithFakeObjectInDispatcherModule(
-            mapper, calls, lambda: dispatcher.construct('dgt', klass, *ARGS, **KWARGS))
-        
-        self.assertEquals(result._instancePtr, RESULT_PTR, "instance lacked reference to its alter-ego")
         self.assertEquals(calls, [
-            ('__new__', (klass,)),
-            ('Store', (ARGS,)),
-            ('Store', (KWARGS,)),
-            ('Store', (klass,)),
-            ('dgt', (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
+            ('_store', (klass,)),
+            ('_store', (ARGS,)),
+            ('_store', (KWARGS,)),
+            (NAME, (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
+            ('_check_error', ()),
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
-            ('HasPtr', (RESULT_PTR,)),
-            ('StoreBridge', (RESULT_PTR, result)),
-            ('Strengthen', (result,))
+            ('HasPtr', (INSTANCE_PTR,)),
+            ('__new__', (klass,)),
+            ('StoreBridge', (INSTANCE_PTR, instance)),
+            ('Strengthen', (instance,))
         ])
         mapper.Dispose()
     
     def testDispatch_construct_singleton(self):
-        class klass(object):
-            pass
-        storeMap = {klass: TYPE_PTR}
-        
-        originalObj = klass()
+        klass, _, storeMap = self.getVars()
         mapper = Python25Mapper()
         calls = []
-        callables = {
-            'dgt': FuncReturning(RESULT_PTR, calls, 'dgt'),
-        }
-        _maybe_raise = FuncReturning(None, calls, '_maybe_raise')
-        dispatcher = self.getPatchedDispatcher(
-            mapper, callables, calls, _maybe_raise, hasPtr=True, retrieveResult=originalObj, storeMap=storeMap)
+        dispatcher = self.getMapperPatchedDispatcher(
+            mapper, calls, RESULT_PTR, hasPtr=True, storeMap=storeMap)
         
-        result = CallWithFakeObjectInDispatcherModule(
-            mapper, calls, lambda: dispatcher.construct('dgt', klass, *ARGS, **KWARGS))
-        
-        self.assertEquals(result, originalObj, "did not return original object")
+        self.assertEquals(
+            dispatcher.construct(NAME, klass, *ARGS, **KWARGS),
+            RESULT)
         self.assertEquals(calls, [
-            ('__new__', (klass,)),
-            ('Store', (ARGS,)),
-            ('Store', (KWARGS,)),
-            ('Store', (klass,)),
-            ('dgt', (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
+            ('_store', (klass,)),
+            ('_store', (ARGS,)),
+            ('_store', (KWARGS,)),
+            (NAME, (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
+            ('_check_error', ()),
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
             ('HasPtr', (RESULT_PTR,)),
             ('IncRef', (RESULT_PTR,)),
-            ('Retrieve', (RESULT_PTR,)),
+            ('_return_retrieve', (RESULT_PTR,)),
         ])
         mapper.Dispose()
     
     def testDispatch_construct_error(self):
-        class klass(object):
-            pass
-        storeMap = {klass: TYPE_PTR}
-        
+        klass, _, storeMap = self.getVars()
         mapper = Python25Mapper()
         calls = []
-        callables = {
-            'dgt': FuncReturning(RESULT_PTR, calls, 'dgt'),
-        }
-        _maybe_raise = FuncRaising(ValueError, calls, '_maybe_raise')
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, _maybe_raise, storeMap=storeMap)
+        dispatcher = self.getMapperPatchedDispatcher(
+            mapper, calls, RESULT_PTR, _checkErrorFails=True, storeMap=storeMap)
         
-        testCall = lambda: CallWithFakeObjectInDispatcherModule(
-            mapper, calls, lambda: dispatcher.construct('dgt', klass, *ARGS, **KWARGS))
-        self.assertRaises(ValueError, testCall)
-        
+        self.assertRaises(ValueError,
+            dispatcher.construct, NAME, klass, *ARGS, **KWARGS)
         self.assertEquals(calls, [
-            ('__new__', (klass,)),
-            ('Store', (ARGS,)),
-            ('Store', (KWARGS,)),
-            ('Store', (klass,)),
-            ('dgt', (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
-            ('_maybe_raise', (RESULT_PTR,)),
+            ('_store', (klass,)),
+            ('_store', (ARGS,)),
+            ('_store', (KWARGS,)),
+            (NAME, (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
+            ('_check_error', ()),
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
         ])
         mapper.Dispose()
-
-        
-class DispatcherInitTest(DispatcherDispatchTestCase):
-    # NOTE: we couldn't work out how to test that object.__init__ was called...
-    # but we also couldn't work out what would go wrong, so we don't actually call it.
-    # This will probably change at some stage.
     
     def testDispatch_init(self):
-        class klass(object):
-            pass
-        instance = klass()
-        instance._instancePtr = INSTANCE_PTR
-        
+        _, instance, storeMap = self.getVars()
         mapper = Python25Mapper()
         calls = []
-        callables = {
-            'dgt': FuncReturning(0, calls, 'dgt'),
-        }
-        
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
-        dispatcher.init('dgt', instance, *ARGS, **KWARGS)
+        dispatcher = self.getMapperPatchedDispatcher(mapper, calls, 0, storeMap=storeMap)
+        dispatcher.init(NAME, instance, *ARGS, **KWARGS)
         self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARGS,)),
-            ('Store', (KWARGS,)),
-            ('dgt', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
+            ('_store', (instance,)),
+            ('_store', (ARGS,)),
+            ('_store', (KWARGS,)),
+            (NAME, (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_cleanup', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)),
+            ('_check_error', ())
         ])
         mapper.Dispose()
     
-    def testDispatch_init_null(self):
-        class klass(object):
-            pass
-        instance = klass()
-        instance._instancePtr = INSTANCE_PTR
-        
+    def testDispatch_init_noimplementation(self):
+        klass, instance, storeMap = self.getVars()
         mapper = Python25Mapper()
         calls = []
-        callables = {}
         
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
+        dispatcher = self.getMapperPatchedDispatcher(mapper, calls, -1, storeMap=storeMap)
         dispatcher.init('dgt_not_there', instance, *ARGS, **KWARGS)
         self.assertEquals(calls, [])
         mapper.Dispose()
-        
     
     def testDispatch_init_error(self):
-        class klass(object):
-            pass
-        instance = klass()
-        instance._instancePtr = INSTANCE_PTR
-        
+        klass, instance, storeMap = self.getVars()
         mapper = Python25Mapper()
         calls = []
-        callables = {
-            'dgt': FuncReturning(-1, calls, 'dgt'),
-        }
         
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
-        self.assertRaises(Exception, lambda: dispatcher.init('dgt', instance, *ARGS, **KWARGS))
+        dispatcher = self.getMapperPatchedDispatcher(mapper, calls, -1, _checkErrorFails=True, storeMap=storeMap)
+        self.assertRaises(ValueError, lambda: dispatcher.init(NAME, instance, *ARGS, **KWARGS))
         self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARGS,)),
-            ('Store', (KWARGS,)),
-            ('dgt', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
+            ('_store', (instance,)),
+            ('_store', (ARGS,)),
+            ('_store', (KWARGS,)),
+            (NAME, (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_cleanup', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)),
+            ('_check_error', ())
         ])
         mapper.Dispose()
     
-    def testDispatch_init_specificError(self):
-        class klass(object):
-            pass
-        instance = klass()
-        instance._instancePtr = INSTANCE_PTR
-        
-        mapper = Python25Mapper()
-        calls = []
-        callables = {
-            'dgt': FuncReturning(-1, calls, 'dgt'),
-        }
-        
-        dispatcher = self.getPatchedDispatcher(mapper, callables, calls, lambda _: None)
-        dispatcher.mapper.LastException = ValueError('arrgh!')
-        self.assertRaises(ValueError, lambda: dispatcher.init('dgt', instance, *ARGS, **KWARGS))
-        self.assertEquals(dispatcher.mapper.LastException, None, "failed to clear error")
-        self.assertEquals(calls, [
-            ('_maybe_incref', (INSTANCE_PTR,)),
-            ('Store', (ARGS,)),
-            ('Store', (KWARGS,)),
-            ('dgt', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
-            ('_cleanup', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)),
-        ])
-        mapper.Dispose()
-
-
-class DispatcherDeleteTest(TestCase):
-    
-    def assertDispatchDelete(self, mockMapper, calls, expectedCalls, method='delete'):
-        class klass(object):
-            pass
-        instance = klass()
-        instance._instancePtr = INSTANCE_PTR
-        
-        mapper = Python25Mapper()
-        dispatcher = GetDispatcherClass(mapper)(mockMapper, {})
-        getattr(dispatcher, method)(instance)
-        self.assertEquals(calls, expectedCalls)
-        mapper.Dispose()
-
-
     def testDispatchDelete(self):
+        _, instance, storeMap = self.getVars()
+        mapper = Python25Mapper()
         calls = []
-        class MockMapper(object):
-            def CheckBridgePtrs(self):
-                calls.append(('CheckBridgePtrs',))
-            def DecRef(self, ptr):
-                calls.append(('DecRef', ptr))
-            def Unmap(self, ptr):
-                calls.append(('Unmap', ptr))
-        
-        expectedCalls = [
-            ('CheckBridgePtrs',),
-            ('DecRef', INSTANCE_PTR),
-            ('Unmap', INSTANCE_PTR),
-        ]
-        self.assertDispatchDelete(MockMapper(), calls, expectedCalls)
-
+        dispatcher = self.getMapperPatchedDispatcher(mapper, calls, None, storeMap=storeMap)
+        dispatcher.delete(instance)
+        self.assertEquals(calls, [
+            ('_store', (instance,)),
+            ('RefCount', (INSTANCE_PTR,)),
+            ('CheckBridgePtrs', ()),
+            ('DecRef', (INSTANCE_PTR,)),
+            ('DecRef', (INSTANCE_PTR,)),
+            ('Unmap', (INSTANCE_PTR,)),
+            ('_check_error', ()),
+        ])
+        mapper.Dispose()
 
     def testDispatchDontDelete(self):
+        _, instance, storeMap = self.getVars()
+        mapper = Python25Mapper()
         calls = []
-        class MockMapper(object):
-            def CheckBridgePtrs(self):
-                calls.append(('CheckBridgePtrs',))
-            def DecRef(self, ptr):
-                calls.append(('DecRef', ptr))
-            def Unmap(self, ptr):
-                calls.append(('Unmap', ptr))
-        
-        self.assertDispatchDelete(MockMapper(), calls, [], method='dontDelete')
+        dispatcher = self.getMapperPatchedDispatcher(mapper, calls, None)
+        dispatcher.dontDelete(instance)
+        self.assertEquals(calls, [])
+        mapper.Dispose()
         
 
-class DispatcherSimpleMembersTest(TestCase):
+class EasyMembersTest(TestCase):
     
     def assertGetsAndSets(self, name, value):
         mapper = Python25Mapper()
-        dispatcher = GetDispatcherClass(mapper)(mapper, {})
+        dispatcher = mapper.DispatcherModule.Dispatcher(mapper, {})
         
-        ptr = Marshal.AllocHGlobal(16)
-        getattr(dispatcher, 'set_member_' + name)(ptr, value)
-        self.assertEquals(getattr(dispatcher, 'get_member_' + name)(ptr), value)
+        ptr = Marshal.AllocHGlobal(SIZE)
+        CPyMarshal.WriteIntField(ptr, PyObject, 'ob_refcnt', 2)
+        mapper.StoreBridge(ptr, OBJ)
+        
+        getattr(dispatcher, 'set_member_' + name)(OBJ, OFFSET, value)
+        self.assertEquals(getattr(dispatcher, 'get_member_' + name)(OBJ, OFFSET), value)
         Marshal.FreeHGlobal(ptr)
-        
         mapper.Dispose()
         
-        
     def testDispatch_member_int(self):
-        self.assertGetsAndSets('int', 30000)
-        
+        self.assertGetsAndSets('int', 300000)
         
     def testDispatch_member_char(self):
         self.assertGetsAndSets('char', 'x')
-        
         
     def testDispatch_member_ubyte(self):
         self.assertGetsAndSets('ubyte', 200)
 
 
-class DispatcherObjectMembersTest(TestCase):
+class ObjectMembersTest(TestCase):
 
     def testDispatch_set_member_object1(self):
         # was null, set to non-null
         mapper = Python25Mapper()
-        dispatcher = GetDispatcherClass(mapper)(mapper, {})
+        dispatcher = mapper.DispatcherModule.Dispatcher(mapper, {})
         
         value = object()
         valuePtr = mapper.Store(value)
         
-        ptr = Marshal.AllocHGlobal(4)
-        CPyMarshal.Zero(ptr, 4)
-        dispatcher.set_member_object(ptr, value)
-        self.assertEquals(CPyMarshal.ReadPtr(ptr), valuePtr)
+        ptr = Marshal.AllocHGlobal(SIZE)
+        CPyMarshal.Zero(ptr, SIZE)
+        fieldPtr = CPyMarshal.Offset(ptr, OFFSET)
+        CPyMarshal.WriteIntField(ptr, PyObject, 'ob_refcnt', 2)
+        mapper.StoreBridge(ptr, OBJ)
+        
+        dispatcher.set_member_object(OBJ, OFFSET, value)
+        self.assertEquals(CPyMarshal.ReadPtr(fieldPtr), valuePtr)
         self.assertEquals(mapper.RefCount(valuePtr), 2, "failed to incref")
         Marshal.FreeHGlobal(ptr)
-        
         mapper.Dispose()
 
     def testDispatch_set_member_object2(self):
         # was non-null, set to non-null
         mapper = Python25Mapper()
-        dispatcher = GetDispatcherClass(mapper)(mapper, {})
+        dispatcher = mapper.DispatcherModule.Dispatcher(mapper, {})
         
         value1 = object()
         value1Ptr = mapper.Store(value1)
@@ -1125,68 +666,61 @@ class DispatcherObjectMembersTest(TestCase):
         value2 = object()
         value2Ptr = mapper.Store(value2)
         
-        ptr = Marshal.AllocHGlobal(4)
-        CPyMarshal.WritePtr(ptr, value1Ptr)
+        ptr = Marshal.AllocHGlobal(SIZE)
+        CPyMarshal.WriteIntField(ptr, PyObject, 'ob_refcnt', 2)
+        fieldPtr = CPyMarshal.Offset(ptr, OFFSET)
+        CPyMarshal.WritePtr(fieldPtr, value1Ptr)
+        mapper.StoreBridge(ptr, OBJ)
         
-        dispatcher.set_member_object(ptr, value2)
-        self.assertEquals(CPyMarshal.ReadPtr(ptr), value2Ptr)
+        dispatcher.set_member_object(OBJ, OFFSET, value2)
+        self.assertEquals(CPyMarshal.ReadPtr(fieldPtr), value2Ptr)
         self.assertEquals(mapper.RefCount(value1Ptr), 1, "failed to decref old object")
         self.assertEquals(mapper.RefCount(value2Ptr), 2, "failed to incref new object")
         Marshal.FreeHGlobal(ptr)
-        
         mapper.Dispose()
 
     def testDispatch_get_member_object1(self):
         # non-null
         mapper = Python25Mapper()
-        dispatcher = GetDispatcherClass(mapper)(mapper, {})
+        dispatcher = mapper.DispatcherModule.Dispatcher(mapper, {})
         
         value = object()
         valuePtr = mapper.Store(value)
         
-        ptr = Marshal.AllocHGlobal(4)
-        CPyMarshal.WritePtr(ptr, valuePtr)
-        self.assertEquals(dispatcher.get_member_object(ptr), value)
-        Marshal.FreeHGlobal(ptr)
+        ptr = Marshal.AllocHGlobal(SIZE)
+        CPyMarshal.WriteIntField(ptr, PyObject, 'ob_refcnt', 2)
+        fieldPtr = CPyMarshal.Offset(ptr, OFFSET)
+        CPyMarshal.WritePtr(fieldPtr, valuePtr)
+        mapper.StoreBridge(ptr, OBJ)
         
+        self.assertEquals(dispatcher.get_member_object(OBJ, OFFSET), value)
+        self.assertEquals(mapper.RefCount(valuePtr), 2, "failed to incref returned object")
+        Marshal.FreeHGlobal(ptr)
         mapper.Dispose()
 
     def testDispatch_get_member_object2(self):
         # null should become None here
         mapper = Python25Mapper()
-        dispatcher = GetDispatcherClass(mapper)(mapper, {})
+        dispatcher = mapper.DispatcherModule.Dispatcher(mapper, {})
         
-        ptr = Marshal.AllocHGlobal(4)
-        CPyMarshal.Zero(ptr, 4)
-        self.assertEquals(dispatcher.get_member_object(ptr), None)
+        ptr = Marshal.AllocHGlobal(SIZE)
+        CPyMarshal.Zero(ptr, SIZE)
+        CPyMarshal.WriteIntField(ptr, PyObject, 'ob_refcnt', 2)
+        fieldPtr = CPyMarshal.Offset(ptr, OFFSET)
+        mapper.StoreBridge(ptr, OBJ)
+        
+        self.assertEquals(dispatcher.get_member_object(OBJ, OFFSET), None)
         Marshal.FreeHGlobal(ptr)
-        
         mapper.Dispose()
         
 
-suite  = makesuite(
+suite = makesuite(
     DispatcherTest,
-    DispatcherNoargsTest, 
-    DispatcherVarargsTest, 
-    DispatcherObjargTest,
-    DispatcherSelfargTest,
-    DispatcherKwargsTest, 
-    DispatcherSsizeargTest,
-    DispatcherSsizeobjargTest,
-    DispatcherSsizessizeargTest,
-    DispatcherSsizessizeobjargTest,
-    DispatcherObjobjargTest,
-    DispatcherInquiryTest,
-    DispatcherTernaryTest,
-    DispatcherRichcmpTest,
-    DispatcherLenfuncTest,
-    DispatcherGetterTest,
-    DispatcherSetterTest,
-    DispatcherConstructTest,
-    DispatcherInitTest,
-    DispatcherDeleteTest,
-    DispatcherSimpleMembersTest,
-    DispatcherObjectMembersTest,
+    TrivialDispatchTest,
+    SimpleDispatchTest,
+    IckyDispatchTest,
+    EasyMembersTest, 
+    ObjectMembersTest, 
 )
 
 if __name__ == '__main__':

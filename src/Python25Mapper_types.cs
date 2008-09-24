@@ -219,7 +219,6 @@ namespace Ironclad
             IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
             object actualiser = this.actualiseHelpers[typePtr];
             object obj = PythonCalls.Call(actualiser);
-            Builtin.setattr(this.scratchContext, obj, "_instancePtr", ptr);
             Builtin.setattr(this.scratchContext, obj, "__class__", this.Retrieve(typePtr));
             this.StoreBridge(ptr, obj);
             this.IncRef(ptr);
