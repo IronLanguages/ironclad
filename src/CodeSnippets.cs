@@ -85,30 +85,24 @@ class {0}(_anon_superclass):
         self._dispatcher.delete(self)
 ";
 
-        public const string CLASS_BASES_CODE = @"
-{0}.__bases__ += _ironclad_bases[1:]
-";
-
         public const string MEMBER_GETTER_CODE = @"
     def {0}(self):
-        fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
-        return self._dispatcher.get_member_{2}(fieldPtr)
+        return self._dispatcher.get_member_{2}(self, {1})
 ";
 
         public const string MEMBER_SETTER_CODE = @"
     def {0}(self, value):
-        fieldPtr = CPyMarshal.Offset(self._instancePtr, {1})
-        self._dispatcher.set_member_{2}(fieldPtr, value)
+        self._dispatcher.set_member_{2}(self, {1}, value)
 ";
 
         public const string GETTER_METHOD_CODE = @"
     def {0}(self):
-        return self._dispatcher.method_getter('{1}{0}', self._instancePtr, IntPtr({2}))
+        return self._dispatcher.method_getter('{1}{0}', self, IntPtr({2}))
 ";
 
         public const string SETTER_METHOD_CODE = @"
     def {0}(self, value):
-        return self._dispatcher.method_setter('{1}{0}', self._instancePtr, value, IntPtr({2}))
+        return self._dispatcher.method_setter('{1}{0}', self, value, IntPtr({2}))
 ";
 
         public const string PROPERTY_CODE = @"
@@ -135,7 +129,7 @@ class {0}(_anon_superclass):
 
         public const string ITER_METHOD_CODE = @"
     def __iter__(self):
-        return self._dispatcher.method_selfarg('{0}tp_iter', self._instancePtr)
+        return self._dispatcher.method_selfarg('{0}tp_iter', self)
 ";
 
         public const string ITERNEXT_METHOD_CODE = @"
@@ -144,112 +138,112 @@ class {0}(_anon_superclass):
             raise StopIteration()
 
     def next(self):
-        return self._dispatcher.method_selfarg('{0}tp_iternext', self._instancePtr, self.__raise_stop)
+        return self._dispatcher.method_selfarg('{0}tp_iternext', self, self.__raise_stop)
 ";
 
         public const string NOARGS_METHOD_CODE = @"
     def {0}(self):
         '''{1}'''
-        return self._dispatcher.method_noargs('{2}{0}', self._instancePtr)
+        return self._dispatcher.method_noargs('{2}{0}', self)
 ";
 
         public const string OBJARG_METHOD_CODE = @"
     def {0}(self, arg):
         '''{1}'''
-        return self._dispatcher.method_objarg('{2}{0}', self._instancePtr, arg)
+        return self._dispatcher.method_objarg('{2}{0}', self, arg)
 ";
 
         public const string SWAPPEDOBJARG_METHOD_CODE = @"
     def {0}(self, arg):
         '''{1}'''
-        return self._dispatcher.method_objarg_swapped('{2}{0}', self._instancePtr, arg)
+        return self._dispatcher.method_objarg('{2}{0}', arg, self)
 ";
 
         public const string VARARGS_METHOD_CODE = @"
     def {0}(self, *args):
         '''{1}'''
-        return self._dispatcher.method_varargs('{2}{0}', self._instancePtr, *args)
+        return self._dispatcher.method_varargs('{2}{0}', self, *args)
 ";
 
         public const string VARARGS_KWARGS_METHOD_CODE = @"
     def {0}(self, *args, **kwargs):
         '''{1}'''
-        return self._dispatcher.method_kwargs('{2}{0}', self._instancePtr, *args, **kwargs)
+        return self._dispatcher.method_kwargs('{2}{0}', self, *args, **kwargs)
 ";
 
         public const string SSIZEARG_METHOD_CODE = @"
     def {0}(self, ssize):
         '''{1}'''
-        return self._dispatcher.method_ssizearg('{2}{0}', self._instancePtr, ssize)
+        return self._dispatcher.method_ssizearg('{2}{0}', self, ssize)
 ";
 
         public const string SSIZEOBJARG_METHOD_CODE = @"
     def {0}(self, ssize, obj):
         '''{1}'''
-        return self._dispatcher.method_ssizeobjarg('{2}{0}', self._instancePtr, ssize, obj)
+        return self._dispatcher.method_ssizeobjarg('{2}{0}', self, ssize, obj)
 ";
 
         public const string SSIZESSIZEARG_METHOD_CODE = @"
     def {0}(self, ssize1, ssize2):
         '''{1}'''
-        return self._dispatcher.method_ssizessizearg('{2}{0}', self._instancePtr, ssize1, ssize2)
+        return self._dispatcher.method_ssizessizearg('{2}{0}', self, ssize1, ssize2)
 ";
 
         public const string SSIZESSIZEOBJARG_METHOD_CODE = @"
     def {0}(self, ssize1, ssize2, obj):
         '''{1}'''
-        return self._dispatcher.method_ssizessizeobjarg('{2}{0}', self._instancePtr, ssize1, ssize2, obj)
+        return self._dispatcher.method_ssizessizeobjarg('{2}{0}', self, ssize1, ssize2, obj)
 ";
 
         public const string SELFARG_METHOD_CODE = @"
     def {0}(self):
         '''{1}'''
-        return self._dispatcher.method_selfarg('{2}{0}', self._instancePtr)
+        return self._dispatcher.method_selfarg('{2}{0}', self)
 ";
 
         public const string LENFUNC_METHOD_CODE = @"
     def {0}(self):
         '''{1}'''
-        return self._dispatcher.method_lenfunc('{2}{0}', self._instancePtr)
+        return self._dispatcher.method_lenfunc('{2}{0}', self)
 ";
 
         public const string OBJOBJARG_METHOD_CODE = @"
     def {0}(self, arg1, arg2):
         '''{1}'''
-        return self._dispatcher.method_objobjarg('{2}{0}', self._instancePtr, arg1, arg2)
+        return self._dispatcher.method_objobjarg('{2}{0}', self, arg1, arg2)
 ";
 
         public const string TERNARY_METHOD_CODE = @"
     def {0}(self, arg1, arg2=None):
         '''{1}'''
-        return self._dispatcher.method_ternary('{2}{0}', self._instancePtr, arg1, arg2)
+        return self._dispatcher.method_ternary('{2}{0}', self, arg1, arg2)
 ";
 
         public const string SWAPPEDTERNARY_METHOD_CODE = @"
     def {0}(self, arg):
         '''{1}'''
-        return self._dispatcher.method_ternary_swapped('{2}{0}', self._instancePtr, arg)
+        return self._dispatcher.method_ternary_swapped('{2}{0}', self, arg)
 ";
 
         public const string RICHCMP_METHOD_CODE = @"
     def __lt__(self, other):
-        return self._dispatcher.method_richcmp('{0}tp_richcompare', self._instancePtr, other, 0)
+        return self._dispatcher.method_richcmp('{0}tp_richcompare', self, other, 0)
     def __le__(self, other):
-        return self._dispatcher.method_richcmp('{0}tp_richcompare', self._instancePtr, other, 1)
+        return self._dispatcher.method_richcmp('{0}tp_richcompare', self, other, 1)
     def __eq__(self, other):
-        return self._dispatcher.method_richcmp('{0}tp_richcompare', self._instancePtr, other, 2)
+        return self._dispatcher.method_richcmp('{0}tp_richcompare', self, other, 2)
     def __ne__(self, other):
-        return self._dispatcher.method_richcmp('{0}tp_richcompare', self._instancePtr, other, 3)
+        return self._dispatcher.method_richcmp('{0}tp_richcompare', self, other, 3)
     def __gt__(self, other):
-        return self._dispatcher.method_richcmp('{0}tp_richcompare', self._instancePtr, other, 4)
+        return self._dispatcher.method_richcmp('{0}tp_richcompare', self, other, 4)
     def __ge__(self, other):
-        return self._dispatcher.method_richcmp('{0}tp_richcompare', self._instancePtr, other, 5)
+        return self._dispatcher.method_richcmp('{0}tp_richcompare', self, other, 5)
 ";
 
         public const string INQURY_METHOD_CODE = @"
     def {0}(self):
         '''{1}'''
-        return self._dispatcher.method_inquiry('{2}{0}', self._instancePtr)
+        return self._dispatcher.method_inquiry('{2}{0}', self)
 ";
 
         public const string INSTALL_IMPORT_HOOK_CODE = @"
@@ -310,6 +304,9 @@ def lock(f):
             MonitorExit(Dispatcher._lock)
     return locked
 
+Null = object()
+NullPtr = IntPtr(0)
+
 class Dispatcher(object):
     _lock = object() # this is effectively the GIL
 
@@ -317,50 +314,53 @@ class Dispatcher(object):
         self.mapper = mapper
         self.table = table
 
-    def _maybe_incref(self, ptr):
-        if ptr != IntPtr(0):
-            self.mapper.IncRef(ptr)
-
-    def _maybe_raise(self, resultPtr=None):
-        error = self.mapper.LastException
-        if error:
-            self.mapper.LastException = None
-            raise error
-        if resultPtr == IntPtr(0):
-            raise NullReferenceException('CPython callable returned null without setting an exception')
-
-    def _surely_raise(self, fallbackError):
-        error = self.mapper.LastException
-        if error:
-            self.mapper.LastException = None
-            raise error
-        raise fallbackError
+    def _store(self, obj):
+        if obj is Null: return NullPtr
+        return self.mapper.Store(obj)
 
     def _cleanup(self, *args):
         self.mapper.FreeTemps()
         for arg in args:
-            if arg != IntPtr(0):
+            if arg != NullPtr:
                 self.mapper.DecRef(arg)
+
+    def _check_error(self):
+        error = self.mapper.LastException
+        if error:
+            self.mapper.LastException = None
+            raise error
+
+    def _raise(self, fallbackError):
+        self._check_error()
+        raise fallbackError
+
+    def _return(self, result=None):
+        self._check_error()
+        return result
+
+    def _return_retrieve(self, resultPtr):
+        self._check_error()
+        if resultPtr == NullPtr:
+            raise NullReferenceException('CPython callable returned null without setting an exception')
+        return self.mapper.Retrieve(resultPtr)
     
     @lock
     def construct(self, name, klass, *args, **kwargs):
-        instance = object.__new__(klass)
-        argsPtr = self.mapper.Store(args)
-        kwargsPtr = self.mapper.Store(kwargs)
         # TODO: yes, I do leak a reference to klass here. proper reference counting 
         # for types will be implemented as soon as it actually breaks something; for
         # now, laziness and short-term sanity-preservation win the day.
-        instancePtr = self.table[name](self.mapper.Store(klass), argsPtr, kwargsPtr)
+        klassPtr, argsPtr, kwargsPtr = map(self._store, [klass, args, kwargs])
+        instancePtr = self.table[name](klassPtr, argsPtr, kwargsPtr)
         try:
-            self._maybe_raise(instancePtr)
+            self._check_error()
         finally:
             self._cleanup(argsPtr, kwargsPtr)
         
         if self.mapper.HasPtr(instancePtr):
             self.mapper.IncRef(instancePtr)
-            return self.mapper.Retrieve(instancePtr)
+            return self._return_retrieve(instancePtr)
         
-        instance._instancePtr = instancePtr
+        instance = object.__new__(klass)
         self.mapper.StoreBridge(instancePtr, instance)
         self.mapper.Strengthen(instance)
         return instance
@@ -369,270 +369,234 @@ class Dispatcher(object):
     def init(self, name, instance, *args, **kwargs):
         if not self.table.has_key(name):
             return
-        self._maybe_incref(instance._instancePtr)
-        argsPtr = self.mapper.Store(args)
-        kwargsPtr = self.mapper.Store(kwargs)
-        result = self.table[name](instance._instancePtr, argsPtr, kwargsPtr)
-        self._cleanup(instance._instancePtr, argsPtr, kwargsPtr)
-            
+        instancePtr, argsPtr, kwargsPtr = map(self._store, [instance, args, kwargs])
+        result = self.table[name](instancePtr, argsPtr, kwargsPtr)
+        self._cleanup(instancePtr, argsPtr, kwargsPtr)
         if result < 0:
-            self._surely_raise(Exception('%s failed; object is probably not safe to use' % name))
+            self._raise(Exception('%s failed; object is probably not safe to use' % name))
+        self._check_error()
 
     @lock
     def delete(self, instance):
-        self.mapper.CheckBridgePtrs()
-        self.mapper.DecRef(instance._instancePtr)
-        self.mapper.Unmap(instance._instancePtr)
+        # note: _store will incref, so we need to decref twice here
+        instancePtr = self._store(instance)
+        refcnt = self.mapper.RefCount(instancePtr)
+        if refcnt != 2:
+            print 'eek! deleting object with bad refcount. id: %d, ptr: %s, refcnt: %d' % (
+                id(instance), instancePtr.ToString('x'), refcnt)
 
-    def dontDelete(_, __):
+        self.mapper.CheckBridgePtrs()
+        self.mapper.DecRef(instancePtr)
+        self.mapper.DecRef(instancePtr)
+        self.mapper.Unmap(instancePtr)
+        self._check_error()
+
+    def dontDelete(self, _):
         pass
 
     def function_noargs(self, name):
-        return self.method_noargs(name, IntPtr(0))
+        return self._call_O_OO(name, Null, Null)
 
-    @lock
-    def method_noargs(self, name, instancePtr):
-        self._maybe_incref(instancePtr)
-        resultPtr = self.table[name](instancePtr, IntPtr(0))
-        try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
-        finally:
-            self._cleanup(instancePtr, resultPtr)
+    def method_noargs(self, name, instance):
+        return self._call_O_OO(name, instance, Null)
 
     def function_objarg(self, name, arg):
-        return self.method_objarg(name, IntPtr(0), arg)
+        return self._call_O_OO(name, Null, arg)
         
-    @lock
-    def method_objarg(self, name, instancePtr, arg):
-        self._maybe_incref(instancePtr)
-        argPtr = self.mapper.Store(arg)
-        resultPtr = self.table[name](instancePtr, argPtr)
-        try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
-        finally:
-            self._cleanup(instancePtr, resultPtr, argPtr)
-        
-    @lock
-    def method_objarg_swapped(self, name, instancePtr, arg):
-        self._maybe_incref(instancePtr)
-        argPtr = self.mapper.Store(arg)
-        resultPtr = self.table[name](argPtr, instancePtr)
-        try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
-        finally:
-            self._cleanup(instancePtr, resultPtr, argPtr)
+    def method_objarg(self, name, instance, arg):
+        return self._call_O_OO(name, instance, arg)
 
     def function_varargs(self, name, *args):
-        return self.method_varargs(name, IntPtr(0), *args)
+        return self._call_O_OO(name, Null, args)
 
-    @lock
-    def method_varargs(self, name, instancePtr, *args):
-        self._maybe_incref(instancePtr)
-        argsPtr = self.mapper.Store(args)
-        resultPtr = self.table[name](instancePtr, argsPtr)
-        try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
-        finally:
-            self._cleanup(instancePtr, resultPtr, argsPtr)
+    def method_varargs(self, name, instance, *args):
+        return self._call_O_OO(name, instance, args)
 
     def function_kwargs(self, name, *args, **kwargs):
-        return self.method_kwargs(name, IntPtr(0), *args, **kwargs)
+        if not kwargs: kwargs = Null
+        return self._call_O_OOO(name, Null, args, kwargs)
+
+    def method_kwargs(self, name, instance, *args, **kwargs):
+        if not kwargs: kwargs = Null
+        return self._call_O_OOO(name, instance, args, kwargs)
+
+    def method_ternary(self, name, instance, arg1, arg2):
+        return self._call_O_OOO(name, instance, arg1, arg2)
+
+    def method_ternary_swapped(self, name, instance, arg):
+        return self._call_O_OOO(name, arg, instance, Null)
 
     @lock
-    def method_kwargs(self, name, instancePtr, *args, **kwargs):
-        self._maybe_incref(instancePtr)
-        argsPtr = self.mapper.Store(args)
-        kwargsPtr = IntPtr(0)
-        if kwargs != {}:
-            kwargsPtr = self.mapper.Store(kwargs)
-        resultPtr = self.table[name](instancePtr, argsPtr, kwargsPtr)
+    def _call_O_OO(self, name, arg1, arg2):
+        arg1Ptr, arg2Ptr = map(self._store, [arg1, arg2])
+        resultPtr = self.table[name](arg1Ptr, arg2Ptr)
         try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
+            return self._return_retrieve(resultPtr)
         finally:
-            self._cleanup(instancePtr, resultPtr, argsPtr, kwargsPtr)
+            self._cleanup(arg1Ptr, arg2Ptr, resultPtr)
+
+    @lock
+    def _call_O_OOO(self, name, arg1, arg2, arg3):
+        arg1Ptr, arg2Ptr, arg3Ptr = map(self._store, [arg1, arg2, arg3])
+        resultPtr = self.table[name](arg1Ptr, arg2Ptr, arg3Ptr)
+        try:
+            return self._return_retrieve(resultPtr)
+        finally:
+            self._cleanup(arg1Ptr, arg2Ptr, arg3Ptr, resultPtr)
     
     @lock
-    def method_selfarg(self, name, instancePtr, errorHandler=None):
-        self._maybe_incref(instancePtr)
+    def method_selfarg(self, name, instance, errorHandler=None):
+        instancePtr = self._store(instance)
         resultPtr = self.table[name](instancePtr)
         try:
-            if errorHandler:
-                errorHandler(resultPtr)
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
+            if errorHandler: errorHandler(resultPtr)
+            return self._return_retrieve(resultPtr)
         finally:
             self._cleanup(instancePtr, resultPtr)
 
     @lock
-    def method_ssizearg(self, name, instancePtr, i):
-        self._maybe_incref(instancePtr)
+    def method_ssizearg(self, name, instance, i):
+        instancePtr = self._store(instance)
         resultPtr = self.table[name](instancePtr, i)
         try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
+            return self._return_retrieve(resultPtr)
         finally:
             self._cleanup(instancePtr, resultPtr)
 
     @lock
-    def method_ssizeobjarg(self, name, instancePtr, i, arg):
-        self._maybe_incref(instancePtr)
-        argPtr = self.mapper.Store(arg)
-        result = self.table[name](instancePtr, i, argPtr)
-        try:
-            self._maybe_raise()
-            return result
-        finally:
-            self._cleanup(instancePtr, argPtr)
-
-    @lock
-    def method_ssizessizearg(self, name, instancePtr, i, j):
-        self._maybe_incref(instancePtr)
+    def method_ssizessizearg(self, name, instance, i, j):
+        instancePtr = self._store(instance)
         resultPtr = self.table[name](instancePtr, i, j)
         try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
+            return self._return_retrieve(resultPtr)
         finally:
             self._cleanup(instancePtr, resultPtr)
 
     @lock
-    def method_ssizessizeobjarg(self, name, instancePtr, i, j, arg):
-        self._maybe_incref(instancePtr)
-        argPtr = self.mapper.Store(arg)
-        result = self.table[name](instancePtr, i, j, argPtr)
+    def method_richcmp(self, name, instance, arg, op):
+        instancePtr, argPtr = map(self._store, [instance, arg])
+        resultPtr = self.table[name](instancePtr, argPtr, op)
         try:
-            self._maybe_raise()
-            return result
+            return self._return_retrieve(resultPtr)
+        finally:
+            self._cleanup(instancePtr, argPtr, resultPtr)
+
+    @lock
+    def method_ssizeobjarg(self, name, instance, i, arg):
+        instancePtr, argPtr = map(self._store, [instance, arg])
+        result = self.table[name](instancePtr, i, argPtr)
+        try:
+            return self._return(result)
         finally:
             self._cleanup(instancePtr, argPtr)
 
     @lock
-    def method_objobjarg(self, name, instancePtr, arg1, arg2):
-        self._maybe_incref(instancePtr)
-        arg1Ptr = self.mapper.Store(arg1)
-        arg2Ptr = self.mapper.Store(arg2)
+    def method_ssizessizeobjarg(self, name, instance, i, j, arg):
+        instancePtr, argPtr = map(self._store, [instance, arg])
+        result = self.table[name](instancePtr, i, j, argPtr)
+        try:
+            return self._return(result)
+        finally:
+            self._cleanup(instancePtr, argPtr)
+
+    @lock
+    def method_objobjarg(self, name, instance, arg1, arg2):
+        instancePtr, arg1Ptr, arg2Ptr = map(self._store, [instance, arg1, arg2])
         result = self.table[name](instancePtr, arg1Ptr, arg2Ptr)
         try:
-            self._maybe_raise()
-            return result
+            return self._return(result)
         finally:
             self._cleanup(instancePtr, arg1Ptr, arg2Ptr)
 
     @lock
-    def method_inquiry(self, name, instancePtr):
-        self._maybe_incref(instancePtr)
+    def method_inquiry(self, name, instance):
+        instancePtr = self._store(instance)
         result = self.table[name](instancePtr)
         try:
-            self._maybe_raise()
-            return result
+            return self._return(result)
         finally:
             self._cleanup(instancePtr)
 
     @lock
-    def method_ternary(self, name, instancePtr, arg1, arg2):
-        self._maybe_incref(instancePtr)
-        arg1Ptr = self.mapper.Store(arg1)
-        arg2Ptr = self.mapper.Store(arg2)
-        resultPtr = self.table[name](instancePtr, arg1Ptr, arg2Ptr)
-        try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
-        finally:
-            self._cleanup(instancePtr, resultPtr, arg1Ptr, arg2Ptr)
-
-    @lock
-    def method_ternary_swapped(self, name, instancePtr, arg):
-        self._maybe_incref(instancePtr)
-        argPtr = self.mapper.Store(arg)
-        resultPtr = self.table[name](argPtr, instancePtr, IntPtr(0))
-        try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
-        finally:
-            self._cleanup(instancePtr, resultPtr, argPtr)
-
-    @lock
-    def method_richcmp(self, name, instancePtr, arg1, op):
-        self._maybe_incref(instancePtr)
-        arg1Ptr = self.mapper.Store(arg1)
-        resultPtr = self.table[name](instancePtr, arg1Ptr, op)
-        try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
-        finally:
-            self._cleanup(instancePtr, resultPtr, arg1Ptr)
-
-    @lock
-    def method_lenfunc(self, name, instancePtr):
-        self._maybe_incref(instancePtr)
+    def method_lenfunc(self, name, instance):
+        instancePtr = self._store(instance)
         result = self.table[name](instancePtr)
         try:
-            self._maybe_raise()
-            return result
+            return self._return(result)
         finally:
             self._cleanup(instancePtr)
 
     @lock
-    def method_getter(self, name, instancePtr, closurePtr):
-        self._maybe_incref(instancePtr)
+    def method_getter(self, name, instance, closurePtr):
+        instancePtr = self._store(instance)
         resultPtr = self.table[name](instancePtr, closurePtr)
         try:
-            self._maybe_raise(resultPtr)
-            return self.mapper.Retrieve(resultPtr)
+            return self._return_retrieve(resultPtr)
         finally:
             self._cleanup(instancePtr, resultPtr)
 
     @lock
-    def method_setter(self, name, instancePtr, value, closurePtr):
-        self._maybe_incref(instancePtr)
-        valuePtr = self.mapper.Store(value)
+    def method_setter(self, name, instance, value, closurePtr):
+        instancePtr, valuePtr = map(self._store, [instance, value])
         result = self.table[name](instancePtr, valuePtr, closurePtr)
         self._cleanup(instancePtr, valuePtr)
         if result < 0:
-            self._surely_raise(Exception('%s failed' % name))
+            self._raise(Exception('%s failed' % name))
+        self._check_error()
+        return self._return()
 
+    def get_member_int(self, instance, offset):
+        return self._get_member(instance, offset, 'ReadInt')
 
-    @lock
-    def set_member_int(self, address, value):
-        CPyMarshal.WriteInt(address, value)
+    def set_member_int(self, instance, offset, value):
+        self._set_member(instance, offset, 'WriteInt', value)
 
-    @lock
-    def get_member_int(self, address):
-        return CPyMarshal.ReadInt(address)
+    def get_member_char(self, instance, offset):
+        return chr(self._get_member(instance, offset, 'ReadByte'))
 
-    @lock
-    def set_member_char(self, address, value):
-        CPyMarshal.WriteByte(address, ord(value))
+    def set_member_char(self, instance, offset, value):
+        self._set_member(instance, offset, 'WriteByte', ord(value))
 
-    @lock
-    def get_member_char(self, address):
-        return chr(CPyMarshal.ReadByte(address))
+    def get_member_ubyte(self, instance, offset):
+        return self._get_member(instance, offset, 'ReadByte')
 
-    @lock
-    def set_member_ubyte(self, address, value):
-        CPyMarshal.WriteByte(address, value)
-
-    @lock
-    def get_member_ubyte(self, address):
-        return CPyMarshal.ReadByte(address)
+    def set_member_ubyte(self, instance, offset, value):
+        self._set_member(instance, offset, 'WriteByte', value)
 
     @lock
-    def set_member_object(self, address, value):
-        valuePtr = self.mapper.Store(value)
-        oldvPtr = CPyMarshal.ReadPtr(address)
-        CPyMarshal.WritePtr(address, valuePtr)
-        if oldvPtr != IntPtr(0):
-            self.mapper.DecRef(oldvPtr)
+    def _get_member(self, instance, offset, method):
+        instancePtr = self._store(instance)
+        address = CPyMarshal.Offset(instancePtr, offset)
+        result = getattr(CPyMarshal, method)(address)
+        self._cleanup(instancePtr)
+        return result
 
     @lock
-    def get_member_object(self, address):
+    def _set_member(self, instance, offset, method, value):
+        instancePtr = self._store(instance)
+        address = CPyMarshal.Offset(instancePtr, offset)
+        getattr(CPyMarshal, method)(address, value)
+        self._cleanup(instancePtr)
+
+    @lock
+    def get_member_object(self, instance, offset):
+        instancePtr = self._store(instance)
+        address = CPyMarshal.Offset(instancePtr, offset)
         valuePtr = CPyMarshal.ReadPtr(address)
-        if valuePtr != IntPtr(0):
-            return self.mapper.Retrieve(valuePtr)
+        result = None
+        if valuePtr != NullPtr:
+            result = self.mapper.Retrieve(valuePtr)
+            self._store(result)
+        self._cleanup(instancePtr)
+        return result
+
+    @lock
+    def set_member_object(self, instance, offset, value):
+        instancePtr, valuePtr = map(self._store, [instance, value])
+        address = CPyMarshal.Offset(instancePtr, offset)
+        oldValuePtr = CPyMarshal.ReadPtr(address)
+        CPyMarshal.WritePtr(address, valuePtr)
+        self._cleanup(instancePtr, oldValuePtr)
 
 ";
     }

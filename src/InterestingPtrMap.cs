@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 
 using IronPython.Runtime;
+using IronPython.Runtime.Operations;
 
 using Ironclad.Structs;
 
@@ -111,7 +112,7 @@ namespace Ironclad
             }
             else
             {
-                throw new KeyNotFoundException(String.Format("tried to release unmapped ptr {0}", ptr));
+                throw new KeyNotFoundException(String.Format("tried to release unmapped ptr {0}", ptr.ToString("x")));
             }
         }
         
@@ -174,9 +175,9 @@ namespace Ironclad
                 {
                     return wref.Target;
                 }
-                throw new NullReferenceException(String.Format("Weakly mapped object for ptr {0} was apparently GCed too soon", ptr));
+                throw new NullReferenceException(String.Format("Weakly mapped object for ptr {0} was apparently GCed too soon", ptr.ToString("x")));
             }
-            throw new KeyNotFoundException(String.Format("No ptr-to-obj mapping for {0}", ptr));
+            throw new KeyNotFoundException(String.Format("No ptr-to-obj mapping for {0}", ptr.ToString("x")));
         }
     
     }

@@ -1,5 +1,4 @@
 
-from tests.utils.dispatcher import GetDispatcherClass
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
 from tests.utils.gc import gcwait
@@ -150,7 +149,7 @@ class PyEvalGILThreadTest(TestCase):
     
     def testMultipleSaveRestoreOneThread(self):
         mapper = Python25Mapper()
-        lock = GetDispatcherClass(mapper)._lock
+        lock = mapper.DispatcherModule.Dispatcher._lock
         
         mapper.PyGILState_Ensure()
         self.assertLock(lock, True)
@@ -169,7 +168,7 @@ class PyEvalGILThreadTest(TestCase):
     
     def testMultipleSaveRestoreMultiThread(self):       # order of execution (intended)
         mapper = Python25Mapper()
-        lock = GetDispatcherClass(mapper)._lock
+        lock = mapper.DispatcherModule.Dispatcher._lock
     
         oneThreadActed = AutoResetEvent(False)
         anotherThreadActed = AutoResetEvent(False)

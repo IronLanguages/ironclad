@@ -310,7 +310,7 @@ namespace Ironclad
                         break;
 
                     default:
-                        throw new Exception("{0} pointed to unknown UDM");
+                        throw new Exception(String.Format("{0} pointed to unknown UDM", ptr.ToString("x")));
                 }
             }
             return this.map.GetObj(ptr);
@@ -331,7 +331,7 @@ namespace Ironclad
             else
             {
                 throw new KeyNotFoundException(String.Format(
-                    "RefCount: missing key in pointer map: {0}", ptr));
+                    "RefCount: missing key in pointer map: {0}", ptr.ToString("x")));
             }
         }
         
@@ -351,7 +351,7 @@ namespace Ironclad
             else
             {
                 throw new KeyNotFoundException(String.Format(
-                    "IncRef: missing key in pointer map: {0}", ptr));
+                    "IncRef: missing key in pointer map: {0}", ptr.ToString("x")));
             }
         }
         
@@ -399,7 +399,7 @@ namespace Ironclad
             else
             {
                 throw new KeyNotFoundException(String.Format(
-                    "DecRef: missing key in pointer map: {0}", ptr));
+                    "DecRef: missing key in pointer map: {0}", ptr.ToString("x")));
             }
         }
         

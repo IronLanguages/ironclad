@@ -132,7 +132,7 @@ class MethodsTest(DispatchSetupTestCase):
             _type._dispatcher.method_noargs = dispatch
             self.assertCalls(
                 instance.method, (tuple(), {}), calls_dispatch, 
-                ("klass.method", instance._instancePtr), result)
+                ("klass.method", instance), result)
             
             cfunc = _type._dispatcher.table["klass.method"]
             self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
@@ -155,7 +155,7 @@ class MethodsTest(DispatchSetupTestCase):
             _type._dispatcher.method_objarg = dispatch
             self.assertCalls(
                 instance.method, ((arg,), {}), calls_dispatch, 
-                ("klass.method", instance._instancePtr, arg), result)
+                ("klass.method", instance, arg), result)
             
             cfunc = _type._dispatcher.table["klass.method"]
             self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
@@ -178,7 +178,7 @@ class MethodsTest(DispatchSetupTestCase):
             _type._dispatcher.method_varargs = dispatch
             self.assertCalls(
                 instance.method, (args, {}), calls_dispatch, 
-                (("klass.method", instance._instancePtr) + args, {}), result)
+                (("klass.method", instance) + args, {}), result)
             
             cfunc = _type._dispatcher.table["klass.method"]
             self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
@@ -201,7 +201,7 @@ class MethodsTest(DispatchSetupTestCase):
             _type._dispatcher.method_kwargs = dispatch
             self.assertCalls(
                 instance.method, (args, kwargs), calls_dispatch,
-                (("klass.method", instance._instancePtr) + args, kwargs), result)
+                (("klass.method", instance) + args, kwargs), result)
             
             cfunc = _type._dispatcher.table["klass.method"]
             self.assertCallsTernaryPtrFunc(cfunc, calls_cfunc)
@@ -225,7 +225,7 @@ class StrReprTest(DispatchSetupTestCase):
             _type._dispatcher.method_selfarg = dispatch
             self.assertCalls(
                 getattr(instance, ipyName), (tuple(), {}), calls_dispatch,
-                ("klass." + ipyName, instance._instancePtr), result)
+                ("klass." + ipyName, instance), result)
             
             cfunc = _type._dispatcher.table["klass." + ipyName]
             self.assertCallsUnaryPtrFunc(cfunc, calls_cfunc)
@@ -259,7 +259,7 @@ class CallTest(DispatchSetupTestCase):
             _type._dispatcher.method_kwargs = dispatch
             self.assertCalls(
                 instance, (args, kwargs), calls_dispatch,
-                (("klass.__call__", instance._instancePtr) + args, kwargs), result)
+                (("klass.__call__", instance) + args, kwargs), result)
             
             cfunc = _type._dispatcher.table["klass.__call__"]
             self.assertCallsTernaryPtrFunc(cfunc, calls_cfunc)
@@ -295,7 +295,7 @@ class IterTest(DispatchSetupTestCase):
             instance = _type()
             _type._dispatcher.method_selfarg = dispatch
             self.assertEquals(getattr(instance, expectedMethodName)(), result, "bad return")
-            self.assertEquals(calls_dispatch, [("klass." + keyName, instance._instancePtr)])
+            self.assertEquals(calls_dispatch, [("klass." + keyName, instance)])
             
             cfunc = _type._dispatcher.table["klass." + keyName]
             self.assertCallsUnaryPtrFunc(cfunc, calls_cfunc)
@@ -354,7 +354,7 @@ class RichCompareTest(DispatchSetupTestCase):
                 comparee = object()
                 self.assertCalls(
                     getattr(instance, methodname), ((comparee,), {}), calls_dispatch, 
-                    ("klass.tp_richcompare", instance._instancePtr, comparee, magicnumber), result)
+                    ("klass.tp_richcompare", instance, comparee, magicnumber), result)
             
             cfunc = _type._dispatcher.table["klass.tp_richcompare"]
             self.assertCalls(
@@ -384,7 +384,7 @@ class NumberTest(DispatchSetupTestCase):
             _type._dispatcher.method_selfarg = dispatch
             self.assertCalls(
                 getattr(instance, methodName), (tuple(), {}), calls_dispatch, 
-                ("klass." + methodName, instance._instancePtr), result)
+                ("klass." + methodName, instance), result)
             
             cfunc = _type._dispatcher.table["klass." + methodName]
             self.assertCallsUnaryPtrFunc(cfunc, calls_cfunc)
@@ -410,15 +410,15 @@ class NumberTest(DispatchSetupTestCase):
             _type._dispatcher.method_objarg = dispatch
             self.assertCalls(
                 getattr(instance, methodName), ((arg,), {}), calls_dispatch, 
-                ("klass." + methodName, instance._instancePtr, arg), result)
-            
+                ("klass." + methodName, instance, arg), result)
+                
             if swappedMethodName:
                 del calls_dispatch[:]
-                _type._dispatcher.method_objarg_swapped = dispatch
+                _type._dispatcher.method_objarg = dispatch
                 self.assertCalls(
                     getattr(instance, swappedMethodName), ((arg,), {}), calls_dispatch, 
-                    ("klass." + swappedMethodName, instance._instancePtr, arg), result)
-            
+                    ("klass." + swappedMethodName, arg, instance), result)
+                    
             cfunc = _type._dispatcher.table["klass." + methodName]
             self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
             
@@ -431,7 +431,7 @@ class NumberTest(DispatchSetupTestCase):
     def testNegative(self):
         self.assertUnaryNumberMethod("nb_negative", "__neg__")
 
-    def testPositivetive(self):
+    def testPositive(self):
         self.assertUnaryNumberMethod("nb_positive", "__pos__")
 
     def testAbs(self):
@@ -483,10 +483,10 @@ class NumberTest(DispatchSetupTestCase):
         self.assertBinaryNumberMethod("nb_divmod", "__divmod__", "__rdivmod__")
 
     def testLshift(self):
-        self.assertBinaryNumberMethod("nb_lshift", "__lshift__", "__lshift__")
+        self.assertBinaryNumberMethod("nb_lshift", "__lshift__", "__rlshift__")
 
     def testRshift(self):
-        self.assertBinaryNumberMethod("nb_rshift", "__rshift__", "__rshift__")
+        self.assertBinaryNumberMethod("nb_rshift", "__rshift__", "__rrshift__")
 
     def testAnd(self):
         self.assertBinaryNumberMethod("nb_and", "__and__", "__rand__")
@@ -550,17 +550,17 @@ class NumberTest(DispatchSetupTestCase):
             _type._dispatcher.method_ternary = dispatch
             self.assertCalls(
                 instance.__pow__, ((arg1, arg2), {}), calls_dispatch, 
-                ("klass.__pow__", instance._instancePtr, arg1, arg2), result)
+                ("klass.__pow__", instance, arg1, arg2), result)
                 
             del calls_dispatch[:]
             self.assertCalls(
                 lambda x, y: x ** y, ((instance, arg1), {}), calls_dispatch, 
-                ("klass.__pow__", instance._instancePtr, arg1, None), result)
+                ("klass.__pow__", instance, arg1, None), result)
                 
             _type._dispatcher.method_ternary_swapped = dispatch_swapped
             self.assertCalls(
                 lambda x, y: y ** x, ((instance, arg1), {}), calls_dispatch_swapped, 
-                ("klass.__rpow__", instance._instancePtr, arg1), result)
+                ("klass.__rpow__", instance, arg1), result)
             
             cfunc = _type._dispatcher.table["klass.__pow__"]
             self.assertCallsTernaryPtrFunc(cfunc, calls_cfunc)
@@ -586,12 +586,12 @@ class NumberTest(DispatchSetupTestCase):
             _type._dispatcher.method_ternary = dispatch
             self.assertCalls(
                 instance.__ipow__, ((arg1, arg2), {}), calls_dispatch, 
-                ("klass.__ipow__", instance._instancePtr, arg1, arg2), result)
+                ("klass.__ipow__", instance, arg1, arg2), result)
                 
             del calls_dispatch[:]
             self.assertCalls(
                 instance.__ipow__, ((arg1,), {}), calls_dispatch, 
-                ("klass.__ipow__", instance._instancePtr, arg1, None), result)
+                ("klass.__ipow__", instance, arg1, None), result)
             
             cfunc = _type._dispatcher.table["klass.__ipow__"]
             self.assertCallsTernaryPtrFunc(cfunc, calls_cfunc)
@@ -617,7 +617,7 @@ class NumberTest(DispatchSetupTestCase):
             _type._dispatcher.method_inquiry = dispatch
             self.assertCalls(
                 instance.__nonzero__, (tuple(), {}), calls_dispatch, 
-                ("klass.__nonzero__", instance._instancePtr), result)
+                ("klass.__nonzero__", instance), result)
             
             cfunc = _type._dispatcher.table["klass.__nonzero__"]
             self.assertCalls(
@@ -647,7 +647,7 @@ class SequenceTest(DispatchSetupTestCase):
             _type._dispatcher.method_ssizearg = dispatch
             self.assertCalls(
                 instance.__getitem__, ((arg,), {}), calls_dispatch, 
-                ("klass._getitem_sq_item", instance._instancePtr, arg), result)
+                ("klass._getitem_sq_item", instance, arg), result)
             
             cfunc = _type._dispatcher.table["klass._getitem_sq_item"]
             self.assertCallsSsizeargPtrFunc(cfunc, calls_cfunc)
@@ -674,7 +674,7 @@ class SequenceTest(DispatchSetupTestCase):
             _type._dispatcher.method_ssizeobjarg = dispatch
             self.assertCalls(
                 instance.__setitem__, ((arg1, arg2), {}), calls_dispatch, 
-                ("klass._setitem_sq_ass_item", instance._instancePtr, arg1, arg2), result)
+                ("klass._setitem_sq_ass_item", instance, arg1, arg2), result)
             
             cfunc = _type._dispatcher.table["klass._setitem_sq_ass_item"]
             self.assertCalls(
@@ -703,7 +703,7 @@ class SequenceTest(DispatchSetupTestCase):
             _type._dispatcher.method_ssizessizearg = dispatch
             self.assertCalls(
                 getattr(instance, "__getslice__"), ((arg1, arg2), {}), calls_dispatch, 
-                ("klass.__getslice__", instance._instancePtr, arg1, arg2), result)
+                ("klass.__getslice__", instance, arg1, arg2), result)
             
             cfunc = _type._dispatcher.table["klass.__getslice__"]
             self.assertCallsSsizessizeargPtrFunc(cfunc, calls_cfunc)
@@ -730,7 +730,7 @@ class SequenceTest(DispatchSetupTestCase):
             _type._dispatcher.method_ssizessizeobjarg = dispatch
             self.assertCalls(
                 instance.__setslice__, ((arg1, arg2, arg3), {}), calls_dispatch, 
-                (("klass.__setslice__", instance._instancePtr, arg1, arg2, arg3), {}), result)
+                (("klass.__setslice__", instance, arg1, arg2, arg3), {}), result)
             
             cfunc = _type._dispatcher.table["klass.__setslice__"]
             self.assertCalls(
@@ -759,7 +759,7 @@ class SequenceTest(DispatchSetupTestCase):
             _type._dispatcher.method_lenfunc = dispatch
             self.assertCalls(
                 instance.__len__, (tuple(), {}), calls_dispatch,
-                ("klass.__len__", instance._instancePtr), result)
+                ("klass.__len__", instance), result)
             
             cfunc = _type._dispatcher.table["klass.__len__"]
             self.assertCalls(
@@ -789,7 +789,7 @@ class MappingTest(DispatchSetupTestCase):
             _type._dispatcher.method_objarg = dispatch
             self.assertCalls(
                 instance.__getitem__, ((arg,), {}), calls_dispatch, 
-                ("klass._getitem_mp_subscript", instance._instancePtr, arg), result)
+                ("klass._getitem_mp_subscript", instance, arg), result)
             
             cfunc = _type._dispatcher.table["klass._getitem_mp_subscript"]
             self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
@@ -816,7 +816,7 @@ class MappingTest(DispatchSetupTestCase):
             _type._dispatcher.method_objobjarg = dispatch
             self.assertCalls(
                 instance.__setitem__, ((arg1, arg2), {}), calls_dispatch, 
-                ("klass._setitem_mp_ass_subscript", instance._instancePtr, arg1, arg2), result)
+                ("klass._setitem_mp_ass_subscript", instance, arg1, arg2), result)
             
             cfunc = _type._dispatcher.table["klass._setitem_mp_ass_subscript"]
             self.assertCalls(
@@ -864,7 +864,7 @@ class SequenceMappingInteractionTest(DispatchSetupTestCase):
         
         def TestType(_type, mapper):
             instance = _type()
-            instancePtr = instance._instancePtr
+            instancePtr = mapper.Store(instance)
             common_result = object()
             common_result_ptr[0] = mapper.Store(common_result)
             map(mapper.IncRef, common_result_ptr * 3) # decreffed each time it's returned
@@ -925,7 +925,7 @@ class SequenceMappingInteractionTest(DispatchSetupTestCase):
         
         def TestType(_type, mapper):
             instance = _type()
-            instancePtr = instance._instancePtr
+            instancePtr = mapper.Store(instance)
             obj = object()
             objPtr = mapper.Store(obj)
             
@@ -948,9 +948,7 @@ class SequenceMappingInteractionTest(DispatchSetupTestCase):
             self.assertEquals(calls[0][:-2], ("mp_ass_subscript", instancePtr))
             self.assertEquals(calls[0][-1], objPtr)
             del calls[:]
-            
             del instance
-        
         
         self.assertTypeSpec(typeSpec, TestType)
         deallocSequences()
@@ -985,8 +983,7 @@ class NewInitDelTest(TestCase):
         table = _type._dispatcher.table
         table['klass.tp_new'](IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)
         table['klass.tp_init'](IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)
-        self.assertEquals(calls, ['tp_new', 'tp_init'], "not hooked up somewhere")
-        
+        self.assertEquals(calls, ['tp_new', 'tp_init'])
         self.assertFalse(table.has_key('klass.tp_dealloc'), 
             "tp_dealloc should be called indirectly, by the final decref of an instance")
         
@@ -1043,7 +1040,8 @@ class NewInitDelTest(TestCase):
         _type._dispatcher.table['klass.tp_init'] = CPython_initproc_Delegate(tp_init_test)
         
         instance = _type(*ARGS, **KWARGS)
-        self.assertEquals(instance._instancePtr, instancePtr)
+        self.assertEquals(mapper.Store(instance), instancePtr)
+        mapper.DecRef(instancePtr)
         self.assertEquals(calls, ['tp_new', 'tp_init'])
         
         mapper.CheckBridgePtrs()
@@ -1065,11 +1063,10 @@ class NewInitDelTest(TestCase):
         
         obj = _type()
         objref = WeakReference(obj, True)
-        objptr = obj._instancePtr
         
         # for unmanaged code to mess with ob_refcnt, it must have been passed a reference
         # from managed code; this shouldn't happen without a Store (which will IncRef)
-        self.assertEquals(mapper.Store(obj), objptr)
+        objptr = mapper.Store(obj)
         self.assertEquals(mapper.RefCount(objptr), 2)
         CPyMarshal.WriteIntField(objptr, PyObject, 'ob_refcnt', 3)
         mapper.DecRef(objptr)
@@ -1094,11 +1091,10 @@ class NewInitDelTest(TestCase):
         
         obj = _type()
         objref = WeakReference(obj, True)
-        objptr = obj._instancePtr
         
         # for unmanaged code to mess with ob_refcnt, it must have been passed a reference
         # from managed code; this shouldn't happen without a Store (which will IncRef)
-        self.assertEquals(mapper.Store(obj), objptr)
+        objptr = mapper.Store(obj)
         self.assertEquals(mapper.RefCount(objptr), 2)
         mapper.DecRef(objptr)
         
@@ -1153,7 +1149,7 @@ class PropertiesTest(TestCase):
             _type._dispatcher.method_getter = Getter
             
             self.assertEquals(instance.boing, result, "bad result")
-            self.assertEquals(calls, [('Getter', ('klass.__get_boing', instance._instancePtr, IntPtr.Zero))])
+            self.assertEquals(calls, [('Getter', ('klass.__get_boing', instance, IntPtr.Zero))])
             
             try:
                 # not using assertRaises because we can't del instance if it's referenced in nested scope
@@ -1190,7 +1186,7 @@ class PropertiesTest(TestCase):
                 
             value = "see my vest, see my vest, made from real gorilla chest"
             instance.splat = value
-            self.assertEquals(calls, [('Setter', ('klass.__set_splat', instance._instancePtr, value, IntPtr.Zero))])
+            self.assertEquals(calls, [('Setter', ('klass.__set_splat', instance, value, IntPtr.Zero))])
             del instance
             gcwait()
             
@@ -1222,8 +1218,8 @@ class PropertiesTest(TestCase):
             value = "I've been called a greasy thug too, and it never stops hurting."
             instance.click = value
             self.assertEquals(calls, 
-                [('Getter', ('klass.__get_click', instance._instancePtr, CLOSURE_PTR)),
-                 ('Setter', ('klass.__set_click', instance._instancePtr, value, CLOSURE_PTR))],
+                [('Getter', ('klass.__get_click', instance, CLOSURE_PTR)),
+                 ('Setter', ('klass.__set_click', instance, value, CLOSURE_PTR))],
                 "wrong calls")
                 
             del instance
@@ -1231,6 +1227,8 @@ class PropertiesTest(TestCase):
             
         self.assertGetSet("click", get, set, TestType, CLOSURE_PTR)
 
+
+OFFSET = 16
 
 class MembersTest(TestCase):
     
@@ -1245,7 +1243,7 @@ class MembersTest(TestCase):
         _type = mapper.Retrieve(typePtr)
         
         self.assertEquals(getattr(_type, attr).__doc__, doc, "wrong docstring")
-        TestType(_type)
+        TestType(mapper, _type)
         return deallocType
     
         
@@ -1253,11 +1251,8 @@ class MembersTest(TestCase):
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        offset = 16
-        def TestType(_type):
+        def TestType(mapper, _type):
             instance = _type()
-            fieldPtr = CPyMarshal.Offset(instance._instancePtr, offset)
-            
             try:
                 instance.boing = 54231
             except AttributeError:
@@ -1266,35 +1261,32 @@ class MembersTest(TestCase):
                 self.fail("Failed to raise AttributeError when setting get-only property")
             
             calls = []
-            def Get(address):
-                calls.append(('Get', (address,)))
+            def Get(_instance, offset):
+                calls.append(('Get', (_instance, offset)))
                 return 12345
             _type._dispatcher.get_member_int = Get
             
             self.assertEquals(instance.boing, 12345)
-            self.assertEquals(calls, [
-                ('Get', (fieldPtr,)),
-            ])
+            self.assertEquals(calls, [('Get', (instance, OFFSET))])
             del instance
             gcwait()
             
-        deallocType = self.assertMember(mapper, 'boing', MemberT.INT, offset, 1, TestType)
+        deallocType = self.assertMember(mapper, 'boing', MemberT.INT, OFFSET, 1, TestType)
         mapper.Dispose()
         deallocType()
         deallocTypes()
     
     
     def getGetSetTypeTest(self, attr, suffix, offset, value, result):
-        def TestType(_type):
+        def TestType(mapper, _type):
             instance = _type()
-            fieldPtr = CPyMarshal.Offset(instance._instancePtr, offset)
             
             calls = []
-            def Get(address):
-                calls.append(('Get', (address,)))
+            def Get(_instance, offset):
+                calls.append(('Get', (_instance, offset)))
                 return result
-            def Set(address, value):
-                calls.append(('Set', (address, value)))
+            def Set(_instance, offset, value):
+                calls.append(('Set', (_instance, offset, value)))
             setattr(_type._dispatcher, 'get_member_' + suffix, Get)
             setattr(_type._dispatcher, 'set_member_' + suffix, Set)
                 
@@ -1302,8 +1294,8 @@ class MembersTest(TestCase):
             setattr(instance, attr, value)
             
             self.assertEquals(calls, [
-                ('Get', (fieldPtr,)),
-                ('Set', (fieldPtr, value)),
+                ('Get', (instance, offset)),
+                ('Set', (instance, offset, value)),
             ])
             del instance
             gcwait()
@@ -1315,9 +1307,8 @@ class MembersTest(TestCase):
         deallocTypes = CreateTypes(mapper)
         
         attr = 'boing'
-        offset = 16
-        TestType = self.getGetSetTypeTest(attr, name, offset, value, result)
-        deallocType = self.assertMember(mapper, attr, getattr(MemberT, name.upper()), offset, 0, TestType)
+        TestType = self.getGetSetTypeTest(attr, name, OFFSET, value, result)
+        deallocType = self.assertMember(mapper, attr, getattr(MemberT, name.upper()), OFFSET, 0, TestType)
     
         mapper.Dispose()
         deallocType()

@@ -90,7 +90,7 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
         
         easyptr = mapper.Store(123)
         instance = module.klass()
-        hardptr = instance._instancePtr
+        hardptr = mapper.Store(instance)
         
         mapper.Dispose()
         self.assertEquals(frees.index(hardptr) < frees.index(easyptr), True, "failed to dealloc in correct order")

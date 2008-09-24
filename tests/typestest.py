@@ -190,7 +190,7 @@ class Types_Test(TestCase):
         func(ptr)
         obj = mapper.Retrieve(ptr)
         ref = WeakReference(obj)
-        self.assertEquals(obj._instancePtr, ptr)
+        self.assertEquals(mapper.Store(obj), ptr)
         self.assertEquals(mapper.RefCount(ptr), refcnt)
         
         while mapper.RefCount(ptr) > 2:
@@ -208,10 +208,10 @@ class Types_Test(TestCase):
     
     def testExtensionTypesAutoActualisable(self):
         discoveryModes = {
-            "IncRef": lambda f, o: self.assertMaps(mapper, f, o, 4), 
-            "Retrieve": lambda f, o: self.assertMaps(mapper, f, o, 3), 
-            "DecRef": lambda f, o: self.assertMaps(mapper, f, o, 2), 
-            "RefCount": lambda f, o: self.assertMaps(mapper, f, o, 3),
+            "IncRef": lambda f, o: self.assertMaps(mapper, f, o, 5), 
+            "Retrieve": lambda f, o: self.assertMaps(mapper, f, o, 4), 
+            "DecRef": lambda f, o: self.assertMaps(mapper, f, o, 3), 
+            "RefCount": lambda f, o: self.assertMaps(mapper, f, o, 4),
         }
         
         allocator = HGlobalAllocator()
@@ -257,7 +257,7 @@ class Types_Test(TestCase):
         
         instance = mapper.Retrieve(instancePtr)
         self.assertEquals(isinstance(instance, C), True)
-        self.assertEquals(instance._instancePtr, instancePtr)
+        self.assertEquals(mapper.Store(instance), instancePtr)
 
         mapper.Dispose()
         deallocTypes()
