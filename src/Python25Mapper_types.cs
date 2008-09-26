@@ -98,10 +98,11 @@ namespace Ironclad
             this.InheritPtrField(typePtr, "tp_str");
             this.InheritPtrField(typePtr, "tp_doc");
             this.InheritPtrField(typePtr, "tp_call");
-            // TODO: these fields should probably point to copies of supertype's fields
+            // TODO: these fields should definitely point to copies of supertype's fields
             this.InheritPtrField(typePtr, "tp_as_number");
             this.InheritPtrField(typePtr, "tp_as_sequence");
             this.InheritPtrField(typePtr, "tp_as_mapping");
+            this.InheritPtrField(typePtr, "tp_as_buffer");
             
             flags |= Py_TPFLAGS.READY;
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);

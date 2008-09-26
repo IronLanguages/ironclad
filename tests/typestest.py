@@ -276,7 +276,8 @@ FIELDS = (
     "tp_call",
     "tp_as_number",
     "tp_as_sequence",
-    "tp_as_mapping"
+    "tp_as_mapping",
+    "tp_as_buffer"
 )
 BASE_FIELD = IntPtr(11111)
 KEEP_FIELD = IntPtr(22222)
