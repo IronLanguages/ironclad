@@ -6,6 +6,9 @@ from System.Reflection import Assembly
 clr.AddReference(Assembly.LoadFile(os.path.join(_dirname, "ironclad.dll")))
 from Ironclad import Python25Mapper
 _mapper = Python25Mapper(os.path.join(_dirname, "python25.dll"))
+clr.AddReference('IronPython')
+from IronPython.Hosting import Python
+_other_sys = Python.GetSysModule(_mapper.Engine)
 
 class Importer(object):
     
@@ -16,7 +19,13 @@ class Importer(object):
         return self
 
     def load_module(self, fullname):
-        return _mapper.Import(fullname)
+        _mapper.Import(fullname)
+        dotted = fullname + '.'
+        for name, module in _other_sys.modules.items():
+            if name == fullname or name.startswith(dotted):
+                sys.modules[name] = module
+        return sys.modules[fullname]
+        
 
 import sys
 sys.path_hooks.append(Importer)

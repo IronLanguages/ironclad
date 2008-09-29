@@ -136,6 +136,9 @@ class ExternalFunctionalityTest(TestCase):
         self.write(os.path.join(testDir, 'test.py'), dedent("""\
             import ironclad
             import numpy as np
+            # check sys.modules is fully populated
+            import sys
+            assert 'numpy.linalg.lapack_lite' in sys.modules
             r1 = np.arange(20)
             r2 = np.arange(20)
             assert np.all(r1 == r2)
