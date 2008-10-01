@@ -107,7 +107,7 @@ namespace Ironclad
             }
             catch (OutOfMemoryException e)
             {
-                this._lastException = e;
+                this.LastException = e;
                 this.PyObject_Free(oldStr);
                 return -1;
             }

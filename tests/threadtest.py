@@ -134,6 +134,25 @@ class PyThreadStateDict_Test(TestCase):
         mapper.Dispose()
 
 
+class PyThreadExceptionTest(TestCase):
+    
+    def testLastExceptionIsThreadLocal(self):
+        mapper = Python25Mapper()
+
+        def CheckOtherThread():
+            self.assertEquals(mapper.LastException, None)
+            mapper.LastException = ValueError('foo')
+            self.assertEquals(isinstance(mapper.LastException, ValueError), True)
+
+        mapper.LastException = TypeError('bar')
+        thread = Thread(ThreadStart(CheckOtherThread))
+        thread.Start()
+        thread.Join()
+        self.assertEquals(isinstance(mapper.LastException, TypeError), True)
+
+        mapper.Dispose()
+
+
 class PyEvalGILThreadTest(TestCase):
     
     def assertLock(self, lock, expectLocked):
@@ -249,6 +268,7 @@ class PyEvalGILThreadTest(TestCase):
 suite = makesuite(
     PyThread_functions_Test,
     PyThreadStateDict_Test,
+    PyThreadExceptionTest,
     PyEvalGILThreadTest,
 )
 
