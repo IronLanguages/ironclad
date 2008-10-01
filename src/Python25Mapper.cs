@@ -66,9 +66,8 @@ namespace Ironclad
         private List<IntPtr> tempObjects = new List<IntPtr>();
 
         private LocalDataStoreSlot threadDictStore = Thread.AllocateDataSlot();
-        private LocalDataStoreSlot threadGILStore = Thread.AllocateDataSlot();
-        // TODO: this should probably be thread-local too
-        private object _lastException = null;
+        private LocalDataStoreSlot threadLockStore = Thread.AllocateDataSlot();
+        private LocalDataStoreSlot threadErrorStore = Thread.AllocateDataSlot();
 
         // one day, perhaps, this 'set' will be empty
         private StupidSet unknownNames = new StupidSet();

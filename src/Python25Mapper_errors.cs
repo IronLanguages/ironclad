@@ -11,29 +11,17 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        public object LastException
-        {
-            get
-            {
-                return this._lastException;
-            }
-            set
-            {
-                this._lastException = value;
-            }
-        }
-
         public override void
         PyErr_SetString(IntPtr excTypePtr, string message)
         {
             if (excTypePtr == IntPtr.Zero)
             {
-                this._lastException = new Exception(message);
+                this.LastException = new Exception(message);
             }
             else
             {
                 object excType = this.Retrieve(excTypePtr);
-                this._lastException = PythonCalls.Call(excType, new object[1] { message });
+                this.LastException = PythonCalls.Call(excType, new object[1] { message });
             }
         }
 

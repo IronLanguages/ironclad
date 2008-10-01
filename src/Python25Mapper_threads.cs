@@ -5,6 +5,30 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
+        public override IntPtr
+        PyThreadState_GetDict()
+        {
+            ThreadLocalDict threadDict = (ThreadLocalDict)Thread.GetData(this.threadDictStore);
+            if (threadDict == null)
+            {
+                threadDict = new ThreadLocalDict(this);
+                Thread.SetData(this.threadDictStore, threadDict);
+            }
+            return threadDict.Ptr;
+        }
+        
+        public object LastException
+        {
+            get
+            {
+                return Thread.GetData(this.threadErrorStore);
+            }
+            set
+            {
+                Thread.SetData(this.threadErrorStore, value);
+            }
+        }
+
         public override IntPtr 
         PyThread_allocate_lock()
         {
@@ -46,28 +70,16 @@ namespace Ironclad
         }
 
         public override IntPtr
-        PyThreadState_GetDict()
-        {
-            ThreadLocalDict threadDict = (ThreadLocalDict)Thread.GetData(this.threadDictStore);
-            if (threadDict == null)
-            {
-                threadDict = new ThreadLocalDict(this);
-                Thread.SetData(this.threadDictStore, threadDict);
-            }
-            return threadDict.Ptr;
-        }
-
-        public override IntPtr
         PyEval_SaveThread()
         {
-            ThreadLocalCounter threadGIL = (ThreadLocalCounter)Thread.GetData(this.threadGILStore);
-            if (threadGIL == null)
+            ThreadLocalCounter threadLock = (ThreadLocalCounter)Thread.GetData(this.threadLockStore);
+            if (threadLock == null)
             {
-                threadGIL = new ThreadLocalCounter();
-                Thread.SetData(this.threadGILStore, threadGIL);
+                threadLock = new ThreadLocalCounter();
+                Thread.SetData(this.threadLockStore, threadLock);
             }
-            threadGIL.Increment();
-            if (threadGIL.Count == 1)
+            threadLock.Increment();
+            if (threadLock.Count == 1)
             {
                 Monitor.Exit(this.dispatcherLock);
                 return new IntPtr(1);
@@ -79,11 +91,11 @@ namespace Ironclad
         PyEval_RestoreThread(IntPtr token)
         {
             // no check: if someone calls Restore before Save we may as well just explode
-            ThreadLocalCounter threadGIL = (ThreadLocalCounter)Thread.GetData(this.threadGILStore);
-            threadGIL.Decrement();
-            if (token != IntPtr.Zero || threadGIL.Count == 0)
+            ThreadLocalCounter threadLock = (ThreadLocalCounter)Thread.GetData(this.threadLockStore);
+            threadLock.Decrement();
+            if (token != IntPtr.Zero || threadLock.Count == 0)
             {
-                threadGIL.Reset();
+                threadLock.Reset();
                 Monitor.Enter(this.dispatcherLock);
             }
         }
