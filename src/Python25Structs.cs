@@ -39,6 +39,13 @@ namespace Ironclad
             HAVE_INDEX = 0x00020000,
         }
         
+        public enum EvalToken
+        {
+            Py_single_input = 256,
+            Py_file_input = 257,
+            Py_eval_input = 258,
+        }
+        
         public enum MemberT
         {
             SHORT = 0,

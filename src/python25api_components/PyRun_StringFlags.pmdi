@@ -1,0 +1,3 @@
+IntPtr
+string code, int mode, IntPtr globalsPtr, IntPtr localsPtr, IntPtr flagsPtr
+return IntPtr.Zero

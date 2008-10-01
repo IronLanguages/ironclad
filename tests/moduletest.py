@@ -322,8 +322,8 @@ class ImportTest(TestCase):
         deallocTypes()
 
 
+# not sure this is the right place for these tests
 class BuiltinsTest(TestCase):
-    # not sure this is the right place for this test
     
     def testPyEval_GetBuiltins(self):
         mapper = Python25Mapper()
@@ -331,6 +331,24 @@ class BuiltinsTest(TestCase):
         builtinsPtr = mapper.PyEval_GetBuiltins()
         builtins = mapper.Retrieve(builtinsPtr)
         self.assertEquals(builtins, ExecUtils.GetPythonModule(mapper.Engine, '__builtin__').__dict__)
+        
+        mapper.Dispose()
+        
+        
+        
+class SysTest(TestCase):
+    
+    def testPySys_GetObject(self):
+        mapper = Python25Mapper()
+        
+        modulesPtr = mapper.PySys_GetObject('modules')
+        modules = mapper.Retrieve(modulesPtr)
+        self.assertEquals(modules, ExecUtils.GetPythonModule(mapper.Engine, 'sys').modules)
+        
+        self.assertEquals(mapper.PySys_GetObject('not_in_sys'), IntPtr.Zero)
+        def KindaConvertError():
+            raise mapper.LastException
+        self.assertRaises(NameError, KindaConvertError)
         
         mapper.Dispose()
 
@@ -343,6 +361,7 @@ suite = makesuite(
     PyModule_AddObject_Test,
     ImportTest,
     BuiltinsTest, 
+    SysTest, 
 )
 
 if __name__ == '__main__':

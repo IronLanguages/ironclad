@@ -16,4 +16,6 @@
 #include "stringobject.c"
 #include "tupleobject.c"
 #include "ceval.c"
+#include "cobject.c"
 #include "mysnprintf.c"
+

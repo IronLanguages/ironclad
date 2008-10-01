@@ -52,6 +52,21 @@ namespace Ironclad
             Scope __builtin__ = (Scope)this.GetModule("__builtin__");
             return this.Store(__builtin__.Dict);
         }
+        
+        public override IntPtr
+        PySys_GetObject(string name)
+        {
+            try
+            {
+                ScriptScope sys = Python.GetSysModule(this.Engine);
+                return this.Store(sys.GetVariable(name));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
 
         public override IntPtr
         PyModule_GetDict(IntPtr modulePtr)
