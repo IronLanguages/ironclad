@@ -45,6 +45,13 @@ namespace Ironclad
             this.AddModule(name, module);
             return this.Store(this.GetModule(name));
         }
+        
+        public override IntPtr
+        PyEval_GetBuiltins()
+        {
+            Scope __builtin__ = (Scope)this.GetModule("__builtin__");
+            return this.Store(__builtin__.Dict);
+        }
 
         public override IntPtr
         PyModule_GetDict(IntPtr modulePtr)
