@@ -335,6 +335,10 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyEval_RestoreThread", ('IntPtr(123)',), 'None')
         self.assertFinds("PyGILState_Ensure", (), '123')
         self.assertFinds("PyGILState_Release", ('123',), 'None')
+        
+        self.assertFinds("PyRun_StringFlags", ('"blah blah"', '123', 'IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'IntPtr(999)')
+
+        self.assertFinds("PySys_GetObject", ('"something"',), 'IntPtr(999)')
 
 
     def testPython25ApiImplementationOf_PyEval_InitThreads(self):

@@ -31,6 +31,8 @@ PyObject_CheckReadBuffer
 PyObject_AsReadBuffer
 PyObject_AsWriteBuffer
 
+PyCObject_Import
+
 PyTuple_GetItem
 PyTuple_SetItem
 
