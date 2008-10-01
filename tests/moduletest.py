@@ -30,7 +30,6 @@ Null_CPythonVarargsFunction = lambda _, __: IntPtr.Zero
 Null_CPythonVarargsKwargsFunction = lambda _, __, ___: IntPtr.Zero
 
 
-
 class Py_InitModule4_SetupTest(TestCase):
         
     def testNewModuleHasDispatcher(self):
@@ -323,6 +322,19 @@ class ImportTest(TestCase):
         deallocTypes()
 
 
+class BuiltinsTest(TestCase):
+    # not sure this is the right place for this test
+    
+    def testPyEval_GetBuiltins(self):
+        mapper = Python25Mapper()
+        
+        builtinsPtr = mapper.PyEval_GetBuiltins()
+        builtins = mapper.Retrieve(builtinsPtr)
+        self.assertEquals(builtins, ExecUtils.GetPythonModule(mapper.Engine, '__builtin__').__dict__)
+        
+        mapper.Dispose()
+
+
 suite = makesuite(
     Py_InitModule4_SetupTest,
     Py_InitModule4_Test,
@@ -330,6 +342,7 @@ suite = makesuite(
     PyModule_AddConstants_Test,
     PyModule_AddObject_Test,
     ImportTest,
+    BuiltinsTest, 
 )
 
 if __name__ == '__main__':

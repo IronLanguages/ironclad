@@ -172,10 +172,10 @@ self.assertDispatches(
 FIND_TEST_CODE_NOARGS = """
 class MyPM(Python25Api):
     def %(name)s(self):
-        self.call = tuple()
+        self.call = ()
         return %(retval)s
 self.assertDispatches(
-    MyPM, "%(name)s", tuple(), %(retval)s)
+    MyPM, "%(name)s", (), %(retval)s)
 """
 
 class Python25ApiFunctionsTest(TestCase):
@@ -222,9 +222,9 @@ class Python25ApiFunctionsTest(TestCase):
         
         self.assertFinds("PyErr_SetString", ('IntPtr(98765)', '"and in the darkness bind them"'), 'None')
         self.assertFinds("PyErr_NewException", ('"foo.bar.bazerror"', 'IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
-        self.assertFinds("PyErr_Occurred", tuple(), 'IntPtr(123)')
-        self.assertFinds("PyErr_Clear", tuple(), 'None')
-        self.assertFinds("PyErr_Print", tuple(), 'None')
+        self.assertFinds("PyErr_Occurred", (), 'IntPtr(123)')
+        self.assertFinds("PyErr_Clear", (), 'None')
+        self.assertFinds("PyErr_Print", (), 'None')
         self.assertFinds("PyErr_Fetch", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'None')
         self.assertFinds("PyErr_Restore", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'None')
         
@@ -259,7 +259,7 @@ class Python25ApiFunctionsTest(TestCase):
         
         self.assertFinds("PyMapping_Check", ('IntPtr(111)',), '0')
         
-        self.assertFinds("PyDict_New", tuple(), 'IntPtr(999)')
+        self.assertFinds("PyDict_New", (), 'IntPtr(999)')
         self.assertFinds("PyDict_Size", ('IntPtr(111)',), '999')
         self.assertFinds("PyDict_GetItem", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(333)')
         self.assertFinds("PyDict_GetItemString", ('IntPtr(111)', '"boojum"'), 'IntPtr(999)')
@@ -321,17 +321,19 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyMem_Malloc", ('999',), 'IntPtr(12345)')
         self.assertFinds("PyMem_Free", ('IntPtr(999)',), 'None')
         
-        self.assertFinds("PyThread_allocate_lock", tuple(), 'IntPtr(999)')
+        self.assertFinds("PyThread_allocate_lock", (), 'IntPtr(999)')
         self.assertFinds("PyThread_free_lock", ('IntPtr(123)',), 'None')
         self.assertFinds("PyThread_acquire_lock", ('IntPtr(123)', '1'), '1')
         self.assertFinds("PyThread_release_lock", ('IntPtr(123)',), 'None')
         
-        self.assertFinds("PyThreadState_GetDict", tuple(), 'IntPtr(123)')
+        self.assertFinds("PyEval_GetBuiltins", (), 'IntPtr(999)')
         
-        self.assertFinds("PyEval_InitThreads", tuple(), 'None')
-        self.assertFinds("PyEval_SaveThread", tuple(), 'IntPtr(123)')
+        self.assertFinds("PyThreadState_GetDict", (), 'IntPtr(123)')
+        
+        self.assertFinds("PyEval_InitThreads", (), 'None')
+        self.assertFinds("PyEval_SaveThread", (), 'IntPtr(123)')
         self.assertFinds("PyEval_RestoreThread", ('IntPtr(123)',), 'None')
-        self.assertFinds("PyGILState_Ensure", tuple(), '123')
+        self.assertFinds("PyGILState_Ensure", (), '123')
         self.assertFinds("PyGILState_Release", ('123',), 'None')
 
 
