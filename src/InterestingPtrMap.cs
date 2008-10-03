@@ -41,6 +41,7 @@ namespace Ironclad
         private void UpdateStrength(IntPtr ptr, object obj)
         {
             int refcnt = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
+            int id = (int)Builtin.id(obj);
             if (refcnt > 1)
             {
                 this.Strengthen(obj);
