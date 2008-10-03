@@ -69,6 +69,16 @@ namespace Ironclad
         }
 
         public override IntPtr
+        PyModule_New(string name)
+        {
+            Scope module = new Scope();
+            ScriptScope moduleScope = this.GetModuleScriptScope(module);
+            moduleScope.SetVariable("__name__", name);
+            moduleScope.SetVariable("__doc__", "");
+            return this.Store(module);
+        }
+
+        public override IntPtr
         PyModule_GetDict(IntPtr modulePtr)
         {
             Scope module = (Scope)this.Retrieve(modulePtr);

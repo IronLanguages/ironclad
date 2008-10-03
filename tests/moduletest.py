@@ -164,7 +164,7 @@ class Py_InitModule4_Test(TestCase):
         deallocMethod()
         
         
-class PyModule_GetDict_Test(TestCase):
+class PyModule_Functions_Test(TestCase):
     
     def testGetsDict(self):
         mapper = Python25Mapper()
@@ -179,9 +179,7 @@ class PyModule_GetDict_Test(TestCase):
         
         mapper.Dispose()
         deallocTypes()
-
-
-class PyModule_AddConstants_Test(TestCase):
+        
     
     def testAddConstants(self):
         mapper = Python25Mapper()
@@ -198,9 +196,6 @@ class PyModule_AddConstants_Test(TestCase):
         mapper.Dispose()
         deallocTypes()
         
-
-
-class PyModule_AddObject_Test(TestCase):
 
     def testAddObjectToUnknownModuleFails(self):
         mapper = Python25Mapper()
@@ -268,6 +263,18 @@ class PyModule_AddObject_Test(TestCase):
             "Klass",
             "Klass is some sort of class.\nBeware, for its docstring contains '\\n's and similar trickery.",
         )
+
+
+    def testPyModule_New(self):
+        mapper = Python25Mapper()
+        
+        modulePtr = mapper.PyModule_New("forsooth")
+        module = mapper.Retrieve(modulePtr)
+        self.assertEquals(module.__name__, "forsooth")
+        self.assertEquals(module.__doc__, "")
+        
+        mapper.Dispose()
+        
 
 
 class ImportTest(TestCase):
@@ -356,9 +363,7 @@ class SysTest(TestCase):
 suite = makesuite(
     Py_InitModule4_SetupTest,
     Py_InitModule4_Test,
-    PyModule_GetDict_Test,
-    PyModule_AddConstants_Test,
-    PyModule_AddObject_Test,
+    PyModule_Functions_Test,
     ImportTest,
     BuiltinsTest, 
     SysTest, 
