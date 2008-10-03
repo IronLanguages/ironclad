@@ -29,7 +29,8 @@ namespace Ironclad
             try
             {
                 ScriptSource script = this.engine.CreateScriptSourceFromString(code, SourceCodeKind.Statements);
-                script.Execute(this.Engine.CreateScope((IAttributesCollection)this.Retrieve(globalsPtr)));
+                IAttributesCollection globals = (IAttributesCollection)this.Retrieve(globalsPtr);
+                script.Execute(this.Engine.CreateScope(globals));
                 this.IncRef(this._Py_NoneStruct);
                 return this._Py_NoneStruct;
             }
