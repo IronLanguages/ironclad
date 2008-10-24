@@ -45,7 +45,7 @@ namespace Ironclad
             this.ExecInModule(cb.code.ToString(), this.scratchModule);
 
             object klass = this.scratchModule.GetVariable<object>(cb.__name__);
-            Builtin.setattr(this.scratchContext, klass, "_typePtr", typePtr);
+            Builtin.setattr(this.scratchContext, klass, "_typePtr", typePtr); // TODO do we still need this?
             object _dispatcher = PythonCalls.Call(this.dispatcherClass, new object[] { this, cb.methodTable });
             Builtin.setattr(this.scratchContext, klass, "_dispatcher", _dispatcher);
             object typeDict = Builtin.getattr(this.scratchContext, klass, "__dict__");

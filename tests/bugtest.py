@@ -14,10 +14,9 @@ class BugTest(TestCase):
     def testDisplayhook(self):
         self.assertEquals(hasattr(sys, '__displayhook__'), False, "ironclad.py and Python25Mapper.MessWithSys may no longer need to set sys.__displayhook__ = sys.displayhook")
 
-    def testLog(self):
-        self.assertRaises(ValueError, math.log, Number())
-        self.assertRaises(ValueError, math.log10, Number())
-        # when these start failing, we should no longer need to patch math on numpy import
+    def testLogWorksNow(self):
+        math.log(Number())
+        math.log10(Number())
 
     def testIterType(self):
         class C(object):
