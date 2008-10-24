@@ -18,7 +18,7 @@ namespace Ironclad
     public partial class Python25Mapper : Python25Api
     {
         public override IntPtr 
-        Py_InitModule4(string name, IntPtr methods, string doc, IntPtr self, int apiver)
+        Py_InitModule4(string name, IntPtr methodsPtr, string doc, IntPtr self, int apiver)
         {
             if (this.importName != "")
             {
@@ -38,7 +38,7 @@ namespace Ironclad
 
             StringBuilder moduleCode = new StringBuilder();
             moduleCode.Append(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE); // eww
-            CallableBuilder.GenerateFunctions(moduleCode, methods, methodTable);
+            CallableBuilder.GenerateFunctions(moduleCode, methodsPtr, methodTable);
 
             ScriptScope module = this.engine.CreateScope(globals);
             this.ExecInModule(moduleCode.ToString(), module);

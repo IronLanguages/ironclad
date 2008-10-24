@@ -15,6 +15,10 @@ def lock(f):
 Null = object()
 NullPtr = IntPtr(0)
 
+# Note: you MUST lock around calls into C code, otherwise horrible
+# things happen at object deletion time. Bear this in mind when 
+# adding new dispatch methods.
+
 class Dispatcher(object):
     _lock = object() # this is effectively the GIL
 

@@ -33,25 +33,29 @@ class InterestingPtrMapTest(TestCase):
         return InterestingPtrMap(), ptr, obj, WeakReference(obj)
         
         
-    def testAssociateIsStrong(self):
+    def testHasGetPtrObj(self):
         map, ptr, obj, objref = self.getVars()
         map.Associate(ptr, obj)
         del obj
         gcwait()
         
-        def Crazy():
-            # trying to run all these tests in the same scope as the release/gc seems to reliably cause
-            # the gc not to happen (unless 3 or more of the assertions are commented out). Am upset by this.
-            self.assertEquals(objref.IsAlive, True, "unexpected GC")
-            self.assertEquals(map.HasObj(objref.Target), True, "wrong")
-            self.assertEquals(map.GetObj(ptr), objref.Target, "not mapped")
-            self.assertEquals(map.HasPtr(ptr), True, "wrong")
-            self.assertEquals(map.GetPtr(objref.Target), ptr, "not mapped")
-        Crazy()
+        self.assertEquals(objref.IsAlive, True, "unexpected GC")
+        self.assertEquals(map.HasObj(objref.Target), True, "wrong")
+        self.assertEquals(map.GetObj(ptr), objref.Target, "not mapped")
+        self.assertEquals(map.HasPtr(ptr), True, "wrong")
+        self.assertEquals(map.GetPtr(objref.Target), ptr, "not mapped")
         
+        
+    def testAssociateIsStrong(self):
+        map, ptr, obj, objref = self.getVars()
+        map.Associate(ptr, obj)
+        
+        del obj
         map.Release(ptr)
         gcwait()
+        
         self.assertEquals(objref.IsAlive, False, "failed to GC")
+        self.assertEquals(map.HasPtr(ptr), False)
         self.assertRaises(KeyError, map.GetObj, ptr)
         # can't really try to get the ptr, because we don't have the obj any more
     

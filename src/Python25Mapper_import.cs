@@ -110,9 +110,6 @@ namespace Ironclad
 
             ScriptScope testing = this.CreateModule("numpy.testing");
             this.ExecInModule(CodeSnippets.FAKE_numpy_testing_CODE, testing);
-
-            Console.WriteLine("  tweaking math.log, math.log10");
-            this.ExecInModule(CodeSnippets.FIX_math_log_log10_CODE, this.scratchModule);
         }
     }
 }
