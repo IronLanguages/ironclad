@@ -238,7 +238,6 @@ class PyModule_Functions_Test(TestCase):
         self.assertEquals(mappedClass, generatedClass,
                           "failed to add new type to module")
 
-        self.assertEquals(mappedClass._typePtr, typePtr, "not connected to underlying CPython type")
         self.assertEquals(mappedClass.__doc__, class__doc__, "unexpected docstring")
         self.assertEquals(mappedClass.__name__, class__name__, "unexpected __name__")
         self.assertEquals(mappedClass.__module__, class__module__, "unexpected __module__")

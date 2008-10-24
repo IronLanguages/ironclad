@@ -48,11 +48,6 @@ namespace Ironclad
         public override void 
         PyObject_Free(IntPtr ptr)
         {
-            if (this.FILEs.ContainsKey(ptr))
-            {
-                Unmanaged.fclose(this.FILEs[ptr]);
-                this.FILEs.Remove(ptr);
-            }
             this.Unmap(ptr);
             this.allocator.Free(ptr);
         }

@@ -325,10 +325,7 @@ class PyType_Ready_InheritTest(TestCase):
         
         
     def testPyType_Ready_InheritsFields(self):
-        # TODO: multiple inheritance ignored here for now; also ignored is
-        # the likelihood that some type will want to inherit tp_as_foo and
-        # overwrite some fields (ie, we need to *copy* tp_as_foo fields,
-        # and probably some others, but currently we don't)
+        # TODO: multiple inheritance ignored here for now
         for field in FIELDS:
             self.assertInherits(field)
         

@@ -5,6 +5,7 @@ BigInteger
 string
 IDictionary
 PythonType
+PythonFile
 PythonTuple
 List
 Slice
