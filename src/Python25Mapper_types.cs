@@ -98,7 +98,6 @@ namespace Ironclad
             this.InheritPtrField(typePtr, "tp_str");
             this.InheritPtrField(typePtr, "tp_doc");
             this.InheritPtrField(typePtr, "tp_call");
-            // TODO: these fields should definitely point to copies of supertype's fields
             this.InheritPtrField(typePtr, "tp_as_number");
             this.InheritPtrField(typePtr, "tp_as_sequence");
             this.InheritPtrField(typePtr, "tp_as_mapping");

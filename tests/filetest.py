@@ -10,10 +10,10 @@ import tempfile
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from Ironclad import Python25Mapper
-from Ironclad.Structs import PyStringObject, PyTypeObject
+from Ironclad import CPyMarshal, Python25Api, Python25Mapper
+from Ironclad.Structs import PyObject, PyStringObject, PyTypeObject
 
-from TestUtils.Unmanaged import fclose, fread, fwrite
+from TestUtils.Unmanaged import fread, fwrite
 
 
 READ_ARGS = (os.path.join('tests', 'data', 'text.txt'), 'r')
@@ -32,6 +32,7 @@ class PyFile_Type_Test(TestCase):
         
         mapper.SetData("PyFile_Type", typeBlock)
         self.assertEquals(mapper.PyFile_Type, typeBlock, "type address not stored")
+        self.assertEquals(CPyMarshal.ReadPtrField(mapper.PyFile_Type, PyTypeObject, 'tp_dealloc'), mapper.GetAddress('PyFile_Dealloc'))
         self.assertEquals(mapper.Retrieve(typeBlock), file, "type not mapped")
         
         mapper.Dispose()
@@ -46,6 +47,7 @@ class PyFile_Type_Test(TestCase):
         deallocTypes = CreateTypes(mapper)
         
         filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
+        self.assertEquals(CPyMarshal.ReadPtrField(filePtr, PyObject, 'ob_type'), mapper.PyFile_Type)
         f = mapper.Retrieve(filePtr)
         self.assertEquals(f.read(), TEST_TEXT, "didn't get a real file")
 
@@ -94,14 +96,27 @@ class PyFile_Type_Test(TestCase):
         filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
         f = mapper.PyFile_AsFile(filePtr)
         self.assertEquals(fwrite(testDataPtr, 1, testLength, f), testLength, "didn't work")
-        # implicit test that Dispose will close remaining file handles
-        mapper.Dispose()
-        deallocTypes()
-
+        
+        # nasty test: patch out PyObject_Free
+        # the memory will not be deallocated, but the FILE handle should be
+        
+        calls = []
+        def Free(ptr):
+            calls.append(ptr)
+        
+        freeDgt = Python25Api.PyObject_Free_Delegate(Free)
+        CPyMarshal.WriteFunctionPtrField(mapper.PyFile_Type, PyTypeObject, 'tp_free', freeDgt)
+        
+        mapper.DecRef(filePtr)
+        self.assertEquals(calls, [filePtr], 'failed to call tp_free function')
+        
         mgdF = open(path)
         result = mgdF.read()
-        self.assertEquals(result, testStr, "failed to write (got >>%s<<)" % result)
+        self.assertEquals(result, testStr, "failed to write (got >>%s<<) -- deallocing filePtr did not close FILE" % result)
         mgdF.close()
+        
+        mapper.Dispose()
+        deallocTypes()
         
         shutil.rmtree(testDir)
 
