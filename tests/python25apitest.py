@@ -255,6 +255,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PySequence_Check", ('IntPtr(111)',), '0')
         self.assertFinds("PySequence_Size", ('IntPtr(111)',), '123')
         self.assertFinds("PySequence_GetItem", ('IntPtr(111)', '123'), 'IntPtr(999)')
+        self.assertFinds("PySequence_Repeat", ('IntPtr(111)', '123'), 'IntPtr(999)')
         
         self.assertFinds("PyIter_Next", ('IntPtr(123)',), 'IntPtr(999)')
         self.assertFinds("PySeqIter_New", ('IntPtr(123)',), 'IntPtr(999)')

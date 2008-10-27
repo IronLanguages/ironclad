@@ -3,6 +3,7 @@ import sys
 
 from tests.utils.runtest import makesuite, run
 
+from tests.utils.cpython import MakeNumSeqMapMethods, MakeTypePtr
 from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase
 
@@ -10,6 +11,7 @@ from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import Python25Mapper
+from Ironclad.Structs import PyNumberMethods, PySequenceMethods
         
         
 class SequenceFunctionsTest(TestCase):
@@ -78,6 +80,68 @@ class SequenceFunctionsTest(TestCase):
         mapper.Dispose()
         deallocTypes()
         
+
+    def testPySequence_Repeat_Easy(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        for seq in ([1, 2, 3], ('a', 'b', 'c'), 'bar'):
+            seqPtr = mapper.Store(seq)
+            for i in range(3):
+                resultPtr = mapper.PySequence_Repeat(seqPtr, i)
+                self.assertEquals(mapper.Retrieve(resultPtr), seq * i)
+        
+        mapper.Dispose()
+        deallocTypes()
+        
+
+    def testPySequence_Repeat_TypeWithSequenceRepeat(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        RESULT_PTR = IntPtr(123)
+        calls = []
+        def RepeatFunc(selfPtr, count):
+            calls.append((selfPtr, count))
+            return RESULT_PTR
+        
+        def Multiply(selfPtr, otherPtr):
+            raise Exception("don't multiply if we can repeat!")
+        
+        seqPtr, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_repeat': RepeatFunc})
+        numPtr, deallocNum = MakeNumSeqMapMethods(PyNumberMethods, {'nb_multiply': Multiply})
+        typeSpec = {
+            "tp_as_sequence": seqPtr,
+            "tp_as_number": numPtr,
+        }
+        typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
+        instance = mapper.Retrieve(typePtr)()
+        instancePtr = mapper.Store(instance)
+        
+        self.assertEquals(mapper.PySequence_Repeat(instancePtr, 3), RESULT_PTR)
+        self.assertEquals(calls, [(instancePtr, 3)])
+        
+        mapper.Dispose()
+        deallocTypes()
+        deallocType()
+        deallocSeq()
+        deallocNum()
+
+
+    def testPySequence_Repeat_NumberNotSequence(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        class Number(object):
+            def __mul__(self, other):
+                raise Exception("this is a number, not a sequence")
+
+        numPtr = mapper.Store(Number())
+        self.assertEquals(mapper.PySequence_Repeat(numPtr, 123), IntPtr.Zero)
+        self.assertMapperHasError(mapper, TypeError)
+        
+        mapper.Dispose()
+        deallocTypes()
 
 
 
