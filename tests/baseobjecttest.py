@@ -4,14 +4,14 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.cpython import MakeTypePtr
 from tests.utils.gc import gcwait
-from tests.utils.memory import CreateTypes, OffsetPtr
+from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase
 from tests.utils.typetestcase import TypeTestCase
 
-from System import IntPtr, WeakReference
+from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Api, Python25Mapper
+from Ironclad import CPyMarshal, Python25Api, Python25Mapper
 from Ironclad.Structs import PyObject, PyTypeObject
 
     
@@ -33,6 +33,7 @@ class ObjectFunctionsTest(TestCase):
             
         mapper.Dispose()
         deallocTypes()
+    
     
     def testPyObject_Call_noargs(self):
         mapper = Python25Mapper()
@@ -149,9 +150,7 @@ class ObjectFunctionsTest(TestCase):
         
         objPtr = mapper.Store(object())
         self.assertEquals(mapper.PyObject_SetAttrString(objPtr, "bob", mapper.Store(123)), -1)
-        def KindaConvertError():
-            raise mapper.LastException
-        self.assertRaises(AttributeError, KindaConvertError)
+        self.assertMapperHasError(mapper, AttributeError)
             
         mapper.Dispose()
         deallocTypes()
@@ -177,9 +176,7 @@ class ObjectFunctionsTest(TestCase):
         deallocTypes = CreateTypes(mapper)
         
         self.assertEquals(mapper.PyObject_SetAttr(mapper.Store(object()), mapper.Store("bob"), mapper.Store(123)), -1)
-        def KindaConvertError():
-            raise mapper.LastException
-        self.assertRaises(AttributeError, KindaConvertError)
+        self.assertMapperHasError(mapper, AttributeError)
             
         mapper.Dispose()
         deallocTypes()
@@ -197,6 +194,40 @@ class ObjectFunctionsTest(TestCase):
         self.assertEquals(mapper.PyObject_HasAttrString(objPtr, "bob"), 1)
         self.assertEquals(mapper.PyObject_HasAttrString(objPtr, "jim"), 0)
             
+        mapper.Dispose()
+        deallocTypes()
+
+
+    def testPyObject_GetItem(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        result = object()
+        class Subscriptable(object):
+            def __getitem__(self, key):
+                return result
+        
+        objPtr = mapper.Store(Subscriptable())
+        keyPtr = mapper.Store(object())
+        resultPtr = mapper.Store(result)
+        
+        self.assertEquals(mapper.PyObject_GetItem(objPtr, keyPtr), resultPtr)
+        self.assertEquals(mapper.RefCount(resultPtr), 2, "failed to incref return value")
+        
+        mapper.Dispose()
+        deallocTypes()
+
+
+    def testPyObject_GetItem_Failure(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        
+        obj = object()
+        objPtr = mapper.Store(obj)
+        
+        self.assertEquals(mapper.PyObject_GetItem(objPtr, mapper.Store(1)), IntPtr.Zero)
+        self.assertMapperHasError(mapper, TypeError)
+        
         mapper.Dispose()
         deallocTypes()
 
@@ -222,12 +253,10 @@ class ObjectFunctionsTest(TestCase):
         class ErrorBool(object):
             def __len__(self):
                 raise MyError()
-        def KindaConvertError():
-            raise mapper.LastException
                 
         ptr = mapper.Store(ErrorBool())
         self.assertEquals(mapper.PyObject_IsTrue(ptr), -1)
-        self.assertRaises(MyError, KindaConvertError)
+        self.assertMapperHasError(mapper, MyError)
         mapper.DecRef(ptr)
         
         mapper.Dispose()
@@ -248,9 +277,7 @@ class ObjectFunctionsTest(TestCase):
             ptr = mapper.Store(badval)
             mapper.LastException = None
             self.assertEquals(mapper.PyObject_Size(ptr), -1)
-            def KindaConvertError():
-                raise mapper.LastException
-            self.assertRaises(TypeError, KindaConvertError)
+            self.assertMapperHasError(mapper, TypeError)
             mapper.DecRef(ptr)
             
         mapper.Dispose()
@@ -281,15 +308,10 @@ class ObjectFunctionsTest(TestCase):
         
         badptr = mapper.Store(BadStr())
         self.assertEquals(mapper.PyObject_Str(badptr), IntPtr.Zero)
-        def KindaConvertError():
-            raise mapper.LastException
-        self.assertRaises(TypeError, KindaConvertError)
+        self.assertMapperHasError(mapper, TypeError)
         
-        mapper.LastException = None
         self.assertEquals(mapper.PyObject_Repr(badptr), IntPtr.Zero)
-        def KindaConvertError():
-            raise mapper.LastException
-        self.assertRaises(TypeError, KindaConvertError)
+        self.assertMapperHasError(mapper, TypeError)
         mapper.DecRef(ptr)
             
         mapper.Dispose()

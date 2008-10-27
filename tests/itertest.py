@@ -43,9 +43,7 @@ class IterationTest(TestCase):
         
         classPtr = mapper.Store(iterclass)
         self.assertEquals(mapper.PyObject_GetIter(classPtr), IntPtr.Zero)
-        def KindaConvertError():
-            raise mapper.LastException
-        self.assertRaises(TypeError, KindaConvertError)
+        self.assertMapperHasError(mapper, TypeError)
         
         mapper.Dispose()
         deallocTypes()
@@ -59,11 +57,7 @@ class IterationTest(TestCase):
         objPtr = mapper.Store(testObj)
         iterPtr = mapper.PyObject_GetIter(objPtr)
         self.assertEquals(iterPtr, IntPtr.Zero, "returned iterator inappropriately")
-        self.assertNotEquals(mapper.LastException, None, "failed to set exception")
-        
-        def KindaConvertError():
-            raise mapper.LastException
-        self.assertRaises(TypeError, KindaConvertError)
+        self.assertMapperHasError(mapper, TypeError)
                 
         mapper.Dispose()
         deallocTypes()
@@ -96,11 +90,7 @@ class IterationTest(TestCase):
         
         notIterPtr = mapper.Store(object())
         self.assertEquals(mapper.PyIter_Next(notIterPtr), IntPtr.Zero, "bad return")
-        self.assertNotEquals(mapper.LastException, None, "failed to set exception")
-        
-        def KindaConvertError():
-            raise mapper.LastException
-        self.assertRaises(TypeError, KindaConvertError)
+        self.assertMapperHasError(mapper, TypeError)
             
         mapper.Dispose()
         deallocTypes()
@@ -160,9 +150,7 @@ class SequenceIterationTest(TestCase):
             notseqPtr = mapper.Store(notseq)
             mapper.LastException = None
             self.assertEquals(mapper.PySeqIter_New(notseqPtr), IntPtr.Zero)
-            def KindaConvertError():
-                raise mapper.LastException
-            self.assertRaises(TypeError, KindaConvertError)
+            self.assertMapperHasError(mapper, TypeError)
     
         mapper.Dispose()
         deallocTypes()

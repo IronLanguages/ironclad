@@ -51,9 +51,7 @@ class SequenceFunctionsTest(TestCase):
             notseqPtr = mapper.Store(notseq)
             mapper.LastException = None
             self.assertEquals(mapper.PySequence_Size(notseqPtr), -1)
-            def KindaConvertError():
-                raise mapper.LastException
-            self.assertRaises(TypeError, KindaConvertError)
+            self.assertMapperHasError(mapper, TypeError)
             mapper.DecRef(notseqPtr)
         
         mapper.Dispose()
@@ -73,9 +71,7 @@ class SequenceFunctionsTest(TestCase):
             for i in (-5, 66):
                 mapper.LastException = None
                 self.assertEquals(mapper.PySequence_GetItem(seqPtr, i), IntPtr.Zero)
-                def KindaConvertError():
-                    raise mapper.LastException
-                self.assertRaises(IndexError, KindaConvertError)
+                self.assertMapperHasError(mapper, IndexError)
             
             mapper.DecRef(seqPtr)
             

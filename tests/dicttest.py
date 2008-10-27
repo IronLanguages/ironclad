@@ -170,10 +170,7 @@ class DictTest(TestCase):
         itemPtr = mapper.Store(456)
         self.assertEquals(mapper.PyDict_SetItem(dictPtr, keyPtr, itemPtr), -1, "failed to report failure")
         self.assertEquals(_dict, {}, 'dictionary changed')
-        
-        def KindaConvertError():
-            raise mapper.LastException
-        self.assertRaises(TypeError, KindaConvertError)
+        self.assertMapperHasError(mapper, TypeError)
         
         mapper.Dispose()
         deallocTypes()

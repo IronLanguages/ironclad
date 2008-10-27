@@ -40,7 +40,7 @@ class GeneratePython25MapperTest(TestCase):
             write("exceptions", EXCEPTIONS)
             write("builtin_exceptions", BUILTIN_EXCEPTIONS)
             write("store_dispatch", STORE)
-            write("numbers_operator", NUMBERS_OPERATOR)
+            write("operator", OPERATOR)
             write("numbers_convert_c2py", NUMBERS_CONVERT_C2PY)
             write("numbers_convert_py2c", NUMBERS_CONVERT_PY2C)
             write("fill_types", FILL_TYPES)
@@ -55,7 +55,7 @@ class GeneratePython25MapperTest(TestCase):
                               "generated builtin exceptions wrong")
             self.assertEquals(read("Python25Mapper_store_dispatch.Generated.cs"), EXPECTED_STORE, 
                               "generated wrong")
-            self.assertEquals(read("Python25Mapper_numbers_operator.Generated.cs"), EXPECTED_NUMBERS_OPERATOR, 
+            self.assertEquals(read("Python25Mapper_operator.Generated.cs"), EXPECTED_OPERATOR, 
                               "generated wrong")
             self.assertEquals(read("Python25Mapper_numbers_convert_c2py.Generated.cs"), EXPECTED_NUMBERS_CONVERT_C2PY, 
                               "generated wrong")
@@ -148,12 +148,12 @@ namespace Ironclad
 }
 """
 
-NUMBERS_OPERATOR = """
+OPERATOR = """
 PyNumber_Add add
 PyNumber_Remainder mod
 """
 
-EXPECTED_NUMBERS_OPERATOR = USINGS + """
+EXPECTED_OPERATOR = USINGS + """
 namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api

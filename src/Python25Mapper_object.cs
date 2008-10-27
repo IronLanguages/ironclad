@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;

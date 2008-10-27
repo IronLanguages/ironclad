@@ -32,9 +32,7 @@ class ExecTest(TestCase):
         resultPtr = mapper.PyRun_StringFlags(
             "raise ValueError('amoral')", int(EvalToken.Py_file_input), mapper.Store({}), IntPtr.Zero, IntPtr.Zero)
         self.assertEquals(resultPtr, IntPtr.Zero)
-        def KindaConvertError():
-            raise mapper.LastException
-        self.assertRaises(ValueError, KindaConvertError)
+        self.assertMapperHasError(mapper, ValueError)
         
         mapper.Dispose()
         deallocTypes()
