@@ -1,8 +1,11 @@
 using System;
 
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
+
+using Ironclad.Structs;
 
 namespace Ironclad
 {
@@ -54,8 +57,42 @@ namespace Ironclad
                 {
                     return this.Store(PythonCalls.Call(getitem, idx));
                 }
-                throw PythonOps.TypeError("failed to convert {0} to sequence", sequence);
+                throw PythonOps.TypeError("PySequence_GetItem: failed to convert {0} to sequence", sequence);
             }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+        
+        public override IntPtr
+        PySequence_Repeat(IntPtr objPtr, int count)
+        {
+            try
+            {
+                IntPtr typePtr = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
+                IntPtr seqPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_as_sequence");
+                if (seqPtr != IntPtr.Zero)
+                {
+                    IntPtr sq_repeat = CPyMarshal.ReadPtrField(seqPtr, typeof(PySequenceMethods), "sq_repeat");
+                    if(sq_repeat != IntPtr.Zero)
+                    { 
+                        CPython_ssizeargfunc_Delegate dgt = (CPython_ssizeargfunc_Delegate) CPyMarshal.ReadFunctionPtrField(
+                            seqPtr, typeof(PySequenceMethods), "sq_repeat", typeof(CPython_ssizeargfunc_Delegate));
+                        return dgt(objPtr, count);
+                    }
+                }
+                object obj = this.Retrieve(objPtr);
+                if ((!Builtin.isinstance(obj, TypeCache.PythonType)) &&
+                     Builtin.hasattr(this.scratchContext, obj, "__len__") &&
+                     Builtin.hasattr(this.scratchContext, obj, "__getitem__"))
+                {
+                    return this.Store(PythonOperator.mul(this.scratchContext, obj, count));
+                }
+                throw PythonOps.TypeError("PySequence_Repeat: failed to convert {0} to sequence", obj);
+                
+            }                
             catch (Exception e)
             {
                 this.LastException = e;

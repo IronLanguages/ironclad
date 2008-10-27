@@ -149,6 +149,21 @@ class ExternalFunctionalityTest(TestCase):
         self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
         shutil.rmtree(testDir)
 
+    
+    def testNumPyMatrix(self):
+        # note: this will fail if you don't have numpy on your IRONPYTHONPATH
+        testDir = self.getTestDir()
+        self.write(os.path.join(testDir, 'test.py'), dedent("""\
+            import ironclad
+            import numpy as np
+            m = np.matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+            assert abs(np.linalg.det(m)) < 0.0000001
+            ironclad.shutdown()
+            """))
+            
+        self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
+        shutil.rmtree(testDir)
+
 class FunctionalityTest(TestCase):
 
     def assertRuns(self, testCode):
