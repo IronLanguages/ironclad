@@ -10,3 +10,5 @@ PyNumber_Rshift rshift
 PyNumber_And and_
 PyNumber_Or or_
 PyNumber_Xor xor
+
+PyObject_GetItem getitem

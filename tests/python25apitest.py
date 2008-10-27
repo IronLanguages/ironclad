@@ -235,6 +235,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyType_Ready", ('IntPtr(111)',), '123')
         
         self.assertFinds("PyObject_Call", ('IntPtr(123)', 'IntPtr(456)', 'IntPtr(789)'), 'IntPtr(999)')
+        self.assertFinds("PyObject_GetItem", ('IntPtr(123)', 'IntPtr(456)'), 'IntPtr(789)')
         self.assertFinds("PyObject_GetIter", ('IntPtr(123)',), 'IntPtr(999)')
         self.assertFinds("PyObject_HasAttrString", ('IntPtr(111)', '"harold"'), '999')
         self.assertFinds("PyObject_GetAttrString", ('IntPtr(111)', '"harold"'), 'IntPtr(999)')

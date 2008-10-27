@@ -308,9 +308,7 @@ class PyString_AsStringTest(TestCase):
         
         notstrPtr = mapper.Store(object())
         self.assertEquals(mapper.PyString_AsString(notstrPtr), IntPtr.Zero)
-        def KindaConvertError():
-            raise mapper.LastException
-        self.assertRaises(TypeError, KindaConvertError)
+        self.assertMapperHasError(mapper, TypeError)
         
         mapper.Dispose()
         deallocTypes()

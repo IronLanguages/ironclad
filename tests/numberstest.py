@@ -116,10 +116,7 @@ class PyInt_Test(TestCase):
             ptr = mapper.Store(value)
             mapper.LastException = None
             self.assertEquals(mapper.PyInt_AsLong(ptr), -1)
-            
-            def KindaConvertError():
-                raise mapper.LastException
-            self.assertRaises(error, KindaConvertError)
+            self.assertMapperHasError(mapper, error)
                 
         mapper.Dispose()
         deallocTypes()
@@ -205,10 +202,7 @@ class PyLong_Test(TestCase):
             ptr = mapper.Store(value)
             mapper.LastException = None
             self.assertEquals(mapper.PyLong_AsLongLong(ptr), -1)
-            
-            def KindaConvertError():
-                raise mapper.LastException
-            self.assertRaises(OverflowError, KindaConvertError)
+            self.assertMapperHasError(mapper, OverflowError)
                 
         mapper.Dispose()
         deallocTypes()
@@ -226,10 +220,7 @@ class PyLong_Test(TestCase):
             ptr = mapper.Store(long(value))
             mapper.LastException = None
             self.assertEquals(mapper.PyLong_AsLong(ptr), -1)
-            
-            def KindaConvertError():
-                raise mapper.LastException
-            self.assertRaises(OverflowError, KindaConvertError)
+            self.assertMapperHasError(mapper, OverflowError)
                 
         mapper.Dispose()
         deallocTypes()
@@ -282,10 +273,7 @@ class PyFloat_Test(TestCase):
             ptr = mapper.Store(value)
             mapper.LastException = None
             self.assertEquals(mapper.PyFloat_AsDouble(ptr), -1, "did not return expected 'error' value")
-            
-            def KindaConvertError():
-                raise mapper.LastException
-            self.assertRaises(TypeError, KindaConvertError)
+            self.assertMapperHasError(mapper, TypeError)
             
             mapper.DecRef(ptr)
             
@@ -313,9 +301,7 @@ class PyNumber_Test(TestCase):
             
             if error:
                 self.assertEquals(resultPtr, IntPtr.Zero)
-                def KindaConvertError():
-                    raise mapper.LastException
-                self.assertRaises(error, KindaConvertError)
+                self.assertMapperHasError(mapper, error)
             else:
                 self.assertEquals(mapper.Retrieve(resultPtr), result)
                 mapper.DecRef(resultPtr)
@@ -345,9 +331,7 @@ class PyNumber_Test(TestCase):
                 
                 if error:
                     self.assertEquals(resultPtr, IntPtr.Zero)
-                    def KindaConvertError():
-                        raise mapper.LastException
-                    self.assertRaises(error, KindaConvertError)
+                    self.assertMapperHasError(mapper, error)
                 else:
                     self.assertEquals(mapper.Retrieve(resultPtr), result)
                     mapper.DecRef(resultPtr)
@@ -442,10 +426,7 @@ class PyNumber_Test(TestCase):
             ptr = mapper.Store(value)
             mapper.LastException = None
             self.assertEquals(mapper.PyNumber_Long(ptr), IntPtr.Zero)
-            
-            def KindaConvertError():
-                raise mapper.LastException
-            self.assertRaises(TypeError, KindaConvertError)
+            self.assertMapperHasError(mapper, TypeError)
             
             mapper.DecRef(ptr)
         
@@ -470,10 +451,7 @@ class PyNumber_Test(TestCase):
             ptr = mapper.Store(value)
             mapper.LastException = None
             self.assertEquals(mapper.PyNumber_Float(ptr), IntPtr.Zero)
-            
-            def KindaConvertError():
-                raise mapper.LastException
-            self.assertRaises(TypeError, KindaConvertError)
+            self.assertMapperHasError(mapper, TypeError)
             
             mapper.DecRef(ptr)
         
@@ -498,10 +476,7 @@ class PyNumber_Test(TestCase):
             ptr = mapper.Store(value)
             mapper.LastException = None
             self.assertEquals(mapper.PyNumber_Int(ptr), IntPtr.Zero)
-            
-            def KindaConvertError():
-                raise mapper.LastException
-            self.assertRaises(TypeError, KindaConvertError)
+            self.assertMapperHasError(mapper, TypeError)
             
             mapper.DecRef(ptr)
         

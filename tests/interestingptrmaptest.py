@@ -4,7 +4,7 @@ from tests.utils.testcase import TestCase
 
 from tests.utils.gc import gcwait
 
-from System import IntPtr, NullReferenceException, WeakReference
+from System import NullReferenceException, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 
@@ -77,11 +77,8 @@ class InterestingPtrMapTest(TestCase):
     def testBridgeAssociateThenUpdate(self):
         map, ptr, obj, objref = self.getVars()
         map.BridgeAssociate(ptr, obj)
-        del obj
-        gcwait()
-        
-        self.assertEquals(objref.IsAlive, True, "unexpected GC")
         map.UpdateStrength(ptr)
+        del obj
         gcwait()
         
         self.assertEquals(objref.IsAlive, False, "failed to GC")

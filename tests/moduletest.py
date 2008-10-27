@@ -352,9 +352,7 @@ class SysTest(TestCase):
         self.assertEquals(modules, ExecUtils.GetPythonModule(mapper.Engine, 'sys').modules)
         
         self.assertEquals(mapper.PySys_GetObject('not_in_sys'), IntPtr.Zero)
-        def KindaConvertError():
-            raise mapper.LastException
-        self.assertRaises(NameError, KindaConvertError)
+        self.assertMapperHasError(mapper, NameError)
         
         mapper.Dispose()
 
