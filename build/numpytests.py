@@ -9,7 +9,7 @@ from unittest import TestResult
 numpy_path = r"C:\Python25\Lib\site-packages\numpy"
 dirs = ['core']
 
-blackList = ['test_mul', 'test_defchararray', 'TestPickling']
+blackList = ['test_mul', 'test_defchararray', 'test_memmap', 'TestPickling']
 
 
 for direc in dirs: 
@@ -48,7 +48,6 @@ for direc in dirs:
                     else: print 'OK'
                 except Exception, e:
                     print str(e)
-                print 'done'
 
 ironclad.shutdown()    
         

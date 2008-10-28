@@ -25,6 +25,36 @@ namespace Ironclad
             this.IncRef(ptr);
             return ptr;
         }
+        
+        public override Py_complex
+        PyComplex_AsCComplex(IntPtr objPtr)
+        {
+            double real = -1.0;
+            double imag = 0.0;
+            try
+            {
+                object obj = this.Retrieve(objPtr);
+                if (obj == null)
+                {
+                    throw PythonOps.TypeError("PyComplex_AsCComplex: None cannot be turned into a complex");
+                }
+                if (obj.GetType() == typeof(Complex64))
+                {
+                    Complex64 complex = (Complex64)obj;
+                    real = complex.Real;
+                    imag = complex.Imag;
+                }
+                else
+                {
+                    real = this.PyFloat_AsDouble(objPtr);
+                }
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+            }
+            return new Py_complex(real, imag);
+        }
 
         public override int
         PyNumber_Check(IntPtr numberPtr)

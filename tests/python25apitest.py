@@ -7,7 +7,7 @@ from tests.utils.testcase import TestCase
 from System import IntPtr, Int64, UInt32, UInt64
 from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, Python25Api
-from Ironclad.Structs import PyObject, PyTypeObject
+from Ironclad.Structs import Py_complex, PyObject, PyTypeObject
 
 TEST_NUMBER = 1359
 
@@ -293,6 +293,8 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyNumber_Absolute", ('IntPtr(111)',), 'IntPtr(999)')
         self.assertFinds("PyNumber_Check", ('IntPtr(111)',), '0')
         
+        self.assertFinds("PyComplex_AsCComplex", ('IntPtr(123)',), 'Py_complex(1, 0)')
+        
         self.assertFinds("PyString_AsString", ('IntPtr(98765)',), 'IntPtr(12345)')
         self.assertFinds("PyString_FromString", ('IntPtr(333)',), 'IntPtr(444)')
         self.assertFinds("PyString_FromStringAndSize", ('IntPtr(98765)', '33'), 'IntPtr(12345)')
@@ -322,6 +324,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyCObject_AsVoidPtr", ('IntPtr(111)',), 'IntPtr(999)')
         
         self.assertFinds("PyMem_Malloc", ('999',), 'IntPtr(12345)')
+        self.assertFinds("PyMem_Realloc", ('IntPtr(123)', '999',), 'IntPtr(456)')
         self.assertFinds("PyMem_Free", ('IntPtr(999)',), 'None')
         
         self.assertFinds("PyThread_allocate_lock", (), 'IntPtr(999)')

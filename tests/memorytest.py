@@ -37,6 +37,7 @@ class PyMem_Malloc_Test(TestCase):
         mapper = Python25Mapper()
         resultPtr = mapper.PyMem_Malloc(sys.maxint)
         self.assertEquals(resultPtr, IntPtr.Zero, "bad alloc")
+        self.assertMapperHasError(mapper, None)
         mapper.Dispose()
         
         
@@ -61,10 +62,71 @@ class PyMem_Free_Test(TestCase):
         mapper.Dispose()
         
 
+class PyMem_Realloc_Test(TestCase):
+
+    def testNullPtr(self):
+        allocs = []
+        frees = []
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+        
+        mem = mapper.PyMem_Realloc(IntPtr.Zero, 4)
+        self.assertEquals(frees, [])
+        self.assertEquals(allocs, [(mem, 4)])
+        mapper.Dispose()
+        
+        
+    def testZeroBytes(self):
+        allocs = []
+        frees = []
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+        
+        mem1 = mapper.PyMem_Malloc(4)
+        del allocs[:]
+        mem2 = mapper.PyMem_Realloc(mem1, 0)
+        
+        self.assertEquals(frees, [mem1])
+        self.assertEquals(allocs, [(mem2, 1)])
+        mapper.Dispose()
+        
+        
+    def testTooBig(self):
+        allocs = []
+        frees = []
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+        
+        mem1 = mapper.PyMem_Malloc(4)
+        del allocs[:]
+        self.assertEquals(mapper.PyMem_Realloc(mem1, sys.maxint), IntPtr.Zero)
+        self.assertMapperHasError(mapper, None)
+        
+        self.assertEquals(frees, [])
+        self.assertEquals(allocs, [])
+        mapper.Dispose()
+        
+        
+    def testEasy(self):
+        allocs = []
+        frees = []
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+        
+        mem1 = mapper.PyMem_Malloc(4)
+        del allocs[:]
+        mem2 = mapper.PyMem_Realloc(mem1, 8)
+        
+        self.assertEquals(frees, [mem1])
+        self.assertEquals(allocs, [(mem2, 8)])
+        mapper.Dispose()
+        
+        
+    
+        
+    
+
 
 suite = makesuite(
     PyMem_Malloc_Test,
     PyMem_Free_Test,
+    PyMem_Realloc_Test,
 )
 
 if __name__ == '__main__':
