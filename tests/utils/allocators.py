@@ -4,18 +4,22 @@ from Ironclad import HGlobalAllocator, IAllocator
 
 def GetAllocatingTestAllocator(allocsList, freesList):
     class TestAllocator(HGlobalAllocator):
+    
         def Alloc(self, bytes):
             ptr = HGlobalAllocator.Alloc(self, bytes)
             allocsList.append((ptr, bytes))
             return ptr
-        def Realloc(self, oldptr, bytes):
-            newptr = HGlobalAllocator.Realloc(self, oldptr, bytes)
+            
+        def Realloc(self, oldptr, bytes):        
+            newptr = HGlobalAllocator.Realloc(self, oldptr, bytes)            
             freesList.append(oldptr)
             allocsList.append((newptr, bytes))
             return newptr
+
         def Free(self, ptr):
             freesList.append(ptr)
             HGlobalAllocator.Free(self, ptr)
+            
         def Contains(self, ptr):
             return HGlobalAllocator.Contains(self, ptr)
     return TestAllocator()

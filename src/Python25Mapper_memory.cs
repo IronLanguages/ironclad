@@ -8,10 +8,7 @@ namespace Ironclad
         public override IntPtr
         PyMem_Malloc(int size)
         {
-            if (size == 0)
-            {
-                size = 1;
-            }
+            size = size == 0 ? 1 : size;
             try
             {
                 return this.allocator.Alloc(size);
@@ -28,6 +25,24 @@ namespace Ironclad
             if (ptr != IntPtr.Zero)
             {
                 this.allocator.Free(ptr);
+            }
+        }
+        
+        public override IntPtr
+        PyMem_Realloc(IntPtr oldPtr, int size)
+        {
+            size = size == 0 ? 1 : size;
+            try
+            {
+                if (oldPtr == IntPtr.Zero)
+                {
+                    return this.allocator.Alloc(size);
+                }
+                return this.allocator.Realloc(oldPtr, size);
+            }
+            catch (OutOfMemoryException)
+            {
+                return IntPtr.Zero;
             }
         }
     }

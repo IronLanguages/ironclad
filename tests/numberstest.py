@@ -10,7 +10,7 @@ from System import Int64, IntPtr, UInt32, UInt64
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, Python25Mapper
-from Ironclad.Structs import PyObject, PyIntObject, PyFloatObject
+from Ironclad.Structs import Py_complex, PyObject, PyIntObject, PyFloatObject
 
 
 class PyBool_Test(TestCase):
@@ -279,7 +279,29 @@ class PyFloat_Test(TestCase):
             
         mapper.Dispose()
         deallocTypes()
+
+
+class PyComplex_Test(TestCase):
+    
+    def testCComplex(self):
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
         
+        values = ((1.5, (1.5, 0.0, None)),
+                  (3 + 4j, (3.0, 4.0, None)),
+                  (27, (27.0, 0.0, None)),
+                  (None, (-1.0, 0.0, TypeError)),
+                  ('I am not a number! I am a free man!', (-1.0, 0, TypeError)))
+        
+        for (value, info) in values:
+            Py_complex_ = mapper.PyComplex_AsCComplex(mapper.Store(value))
+            real_, imag_, error = info
+            self.assertEquals(Py_complex_.real, real_)
+            self.assertEquals(Py_complex_.imag, imag_)
+            self.assertMapperHasError(mapper, error)
+        
+        mapper.Dispose()
+        deallocTypes()
 
 
 class PyNumber_Test(TestCase):
@@ -490,6 +512,7 @@ suite = makesuite(
     PyInt_Test,
     PyLong_Test,
     PyFloat_Test,
+    PyComplex_Test,
     PyNumber_Test,
 )
 

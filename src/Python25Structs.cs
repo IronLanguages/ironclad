@@ -123,6 +123,19 @@ namespace Ironclad
         }
         
         [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct Py_complex
+        {
+            public double real;
+            public double imag;
+
+            public Py_complex(double real_, double imag_)
+            {
+                this.real = real_;
+                this.imag = imag_;
+            }
+        }
+        
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
         public struct PyObject
         {
             public uint ob_refcnt;
