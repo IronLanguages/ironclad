@@ -4,7 +4,7 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes, OffsetPtr
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
 
 from System import IntPtr
@@ -126,15 +126,10 @@ class TupleTest(TestCase):
         self.assertPyTuple_New_Works(3)
 
 
-    def testCanSafelyFreeUninitialisedTuple(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testCanSafelyFreeUninitialisedTuple(self, mapper, _):
         markedPtr = mapper.PyTuple_New(2)
         mapper.DecRef(markedPtr)
-
-        mapper.Dispose()
-        deallocTypes()   
 
 
     def testStoreTupleCreatesTupleType(self):

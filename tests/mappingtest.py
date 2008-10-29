@@ -3,7 +3,7 @@ from tests.utils.runtest import makesuite, run
 
 from tests.utils.cpython import MakeTypePtr
 from tests.utils.memory import CreateTypes
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -14,10 +14,8 @@ from Ironclad.Structs import PyObject, PyTypeObject
 
 class MappingTest(TestCase):
 
-    def testPyMapping_Check(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testPyMapping_Check(self, mapper, _):
         class Mapping(object):
             def __getitem__(self, _):
                 return True
@@ -36,11 +34,6 @@ class MappingTest(TestCase):
             self.assertEquals(mapper.PyMapping_Check(ptr), 0)
             self.assertEquals(mapper.LastException, None)
             mapper.DecRef(ptr)
-            
-        
-        mapper.Dispose()
-        deallocTypes()
-
 
 
 suite = makesuite(

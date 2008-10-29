@@ -6,7 +6,7 @@ from tests.utils.cpython import MakeTypePtr
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
 from tests.utils.python25mapper import MakeAndAddEmptyModule
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 
 from System import Int32, IntPtr, NullReferenceException, WeakReference
 from System.Runtime.InteropServices import Marshal
@@ -16,7 +16,6 @@ from Ironclad import (
     Unmanaged, UnmanagedDataMarker
 )
 from Ironclad.Structs import PyObject, PyTypeObject
-
 
 
 class Python25Mapper_CreateDestroy_Test(TestCase):
@@ -183,31 +182,25 @@ class Python25Mapper_References_Test(TestCase):
         deallocTypes()
         
 
-    def testStoreEqualObjectStoresSeparately(self):
-        mapper = Python25Mapper()
-        
+    @WithMapper
+    def testStoreEqualObjectStoresSeparately(self, mapper, _):
         result1 = mapper.Store([1, 2, 3])
         result2 = mapper.Store([1, 2, 3])
         
         self.assertNotEquals(result1, result2, "confused separate objects")
         self.assertEquals(mapper.RefCount(result1), 1, "wrong")
         self.assertEquals(mapper.RefCount(result2), 1, "wrong")
-        
-        mapper.Dispose()
 
 
-    def testEqualFloatsIntsStoredSeparately(self):
-        mapper = Python25Mapper()
-        
+    @WithMapper
+    def testEqualFloatsIntsStoredSeparately(self, mapper, _):
         result1 = mapper.Store(0)
         result2 = mapper.Store(0.0)
         
         self.assertNotEquals(result1, result2, "confused separate objects")
         self.assertEquals(mapper.RefCount(result1), 1, "wrong")
         self.assertEquals(mapper.RefCount(result2), 1, "wrong")
-        
-        mapper.Dispose()
-        
+
 
     def testDecRefObjectWithZeroRefCountFails(self):
         allocator = HGlobalAllocator()
@@ -229,9 +222,8 @@ class Python25Mapper_References_Test(TestCase):
         deallocTypes()
 
 
-    def testFinalDecRefOfObjectWithTypeCalls_tp_dealloc(self):
-        mapper = Python25Mapper()
-        
+    @WithMapper
+    def testFinalDecRefOfObjectWithTypeCalls_tp_dealloc(self, mapper, _):
         calls = []
         def TypeDealloc(ptr):
             calls.append(ptr)
@@ -251,9 +243,8 @@ class Python25Mapper_References_Test(TestCase):
         self.assertEquals(calls, [], "called prematurely")
         mapper.DecRef(objPtr)
         self.assertEquals(calls, [objPtr], "not called when refcount hit 0")
-        mapper.Dispose()
-    
-    
+
+
     def testFinalDecRefComplainsAboutMissing_tp_dealloc(self):
         frees = []
         mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
@@ -382,13 +373,11 @@ class Python25Mapper_References_Test(TestCase):
         
 
 
-    def testCannotStoreUnmanagedDataMarker(self):
-        mapper = Python25Mapper()
-        
+    @WithMapper
+    def testCannotStoreUnmanagedDataMarker(self, mapper, _):
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyStringObject))
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyTupleObject))
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyListObject))
-        mapper.Dispose()
 
 
     def testRefCountIncRefDecRef(self):
@@ -432,9 +421,8 @@ class Python25Mapper_References_Test(TestCase):
         mapper.Dispose()
 
 
-    def testRememberAndFreeTempObjects(self):
-        mapper = Python25Mapper()
-
+    @WithMapper
+    def testRememberAndFreeTempObjects(self, mapper, _):
         tempObject1 = mapper.Store(1)
         tempObject2 = mapper.Store(2)
 
@@ -461,16 +449,10 @@ class Python25Mapper_References_Test(TestCase):
                           "FreeTemps should clear list once called")
         self.assertEquals(mapper.RefCount(tempObject2), 1,
                           "FreeTemps should clear list once called")
-                          
-        mapper.Dispose()
-    
-    
-    def testStoreRetrieveDeleteAbsurdNumbersOfObjects(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        nonePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
-        mapper.SetData("_Py_NoneStruct", nonePtr)
-        
+
+
+    @WithMapper
+    def testStoreRetrieveDeleteAbsurdNumbersOfObjects(self, mapper, _):
         def GetObject(i):
             if not i % 2:
                 return i
@@ -495,25 +477,19 @@ class Python25Mapper_References_Test(TestCase):
         for k, v in ptrs.iteritems():
             self.assertEquals(mapper.Retrieve(k), v, "failed to retrieve")
             mapper.DecRef(k)
-        
-        mapper.Dispose()
-        deallocTypes()
-        Marshal.FreeHGlobal(nonePtr)
-        
-    
+
+
 
 class Python25Mapper_GetAddress_NonApi_Test(TestCase):
     
-    def assertGetAddressWorks(self, name):
-        mapper = Python25Mapper()
-        
+    @WithMapper
+    def assertGetAddressWorks(self, name, mapper, _):
         fp1 = mapper.GetAddress(name)
         fp2 = mapper.GetAddress(name)
         self.assertNotEquals(fp1, IntPtr.Zero, "did not get address")
         self.assertEquals(fp1, fp2, "did not remember func ptrs")
-        mapper.Dispose()
-        
-    
+
+
     def testMethods(self):
         methods = (
             "PyBaseObject_Dealloc",
@@ -530,49 +506,40 @@ class Python25Mapper_GetAddress_NonApi_Test(TestCase):
 
 class Python25Mapper_NoneTest(TestCase):
     
-    def testFillNone(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testFillNone(self, mapper, _):
         nonePtr = mapper._Py_NoneStruct
         noneStruct = Marshal.PtrToStructure(nonePtr, PyObject)
         self.assertEquals(noneStruct.ob_refcnt, 1, "bad refcount")
         self.assertEquals(noneStruct.ob_type, mapper.PyNone_Type, "unexpected type")
-        
-        mapper.Dispose()
-        deallocTypes()
-    
-    
-    def testStoreNone(self):
-        mapper = Python25Mapper()
+
+
+    @WithMapper
+    def testStoreNone(self, mapper, addToCleanUp):
         nonePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        addToCleanUp(lambda: Marshal.FreeHGlobal(nonePtr))
         mapper.SetData("_Py_NoneStruct", nonePtr)
         
         resultPtr = mapper.Store(None)
         self.assertEquals(resultPtr, nonePtr, "wrong")
         self.assertEquals(mapper.RefCount(nonePtr), 2, "did not incref")
-        
         self.assertEquals(mapper.Retrieve(nonePtr), None, "not mapped properly")
-        
-        mapper.Dispose()
-        Marshal.FreeHGlobal(nonePtr)
+
 
 
 class Python25Mapper_Py_OptimizeFlag_Test(TestCase):
 
-    def testFills(self):
+    @WithMapper
+    def testFills(self, mapper, addToCleanUp):
         # TODO: if we set a lower value, numpy will crash inside arr_add_docstring
         # I consider docstrings to be low-priority-enough that it's OK to fudge this
         # for now
-        mapper = Python25Mapper()
         flagPtr = Marshal.AllocHGlobal(Marshal.SizeOf(Int32))
+        addToCleanUp(lambda: Marshal.FreeHGlobal(flagPtr))
         mapper.SetData("Py_OptimizeFlag", flagPtr)
         
         self.assertEquals(CPyMarshal.ReadInt(flagPtr), 2)
-        
-        mapper.Dispose()
-        Marshal.FreeHGlobal(flagPtr)
-    
+
 
 
 suite = makesuite(

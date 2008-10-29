@@ -1,6 +1,6 @@
 
 from tests.utils.runtest import makesuite, run
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 
 from System import IntPtr, NullReferenceException
 from System.Runtime.InteropServices import Marshal
@@ -26,11 +26,10 @@ def FuncRaising(exc, calls, identifier):
 
 class DispatcherTest(TestCase):
     
-    def testMapperCreatesModuleContainingDispatcher(self):
-        mapper = Python25Mapper()
+    @WithMapper
+    def testMapperCreatesModuleContainingDispatcher(self, mapper, _):
         Dispatcher = mapper.DispatcherModule.Dispatcher
         self.assertNotEquals(Dispatcher, None, "failed to locate Dispatcher")
-        mapper.Dispose()
         
     def testDisposeMapperPreventsDispatcherDelete(self):
         mapper = Python25Mapper()
@@ -137,15 +136,14 @@ class DispatcherTest(TestCase):
 
 class TrivialDispatchTest(TestCase):
     
-    def assertDispatcherMethodDelegates(self, methodname, args, kwargs, implname, expectedArgs):
-        mapper = Python25Mapper()
+    @WithMapper
+    def assertDispatcherMethodDelegates(self, methodname, args, kwargs, implname, expectedArgs, mapper, addToCleanUp):
         mapper.DispatcherModule.Null = NULL
         dispatcher = mapper.DispatcherModule.Dispatcher(mapper, [])
         calls = []
         setattr(dispatcher, implname, FuncReturning(OBJ, calls, implname))
         self.assertEquals(getattr(dispatcher, methodname)(*args, **kwargs), OBJ)
         self.assertEquals(calls, [(implname, expectedArgs)])
-        mapper.Dispose()
     
     def testEasyDelegations(self):
         self.assertDispatcherMethodDelegates(
@@ -200,9 +198,8 @@ class DispatchTestCase(TestCase):
         
         return dispatcher
     
-    def assertDispatcherMethod(self, methodname, args, expectedCalls):
-        mapper = Python25Mapper()
-        
+    @WithMapper
+    def assertDispatcherMethod(self, methodname, args, expectedCalls, mapper, _):
         calls = []
         dispatcher = self.getPatchedDispatcher(mapper, calls, RESULT_PTR)
         method = getattr(dispatcher, methodname)
@@ -214,11 +211,10 @@ class DispatchTestCase(TestCase):
         method = getattr(dispatcher, methodname)
         self.assertRaises(ValueError, method, *args)
         self.assertEquals(calls, expectedCalls)
-        mapper.Dispose()
-    
-    def assertDispatcherMethodWithResult(self, methodname, result, args, expectedCalls):
-        mapper = Python25Mapper()
-        
+
+
+    @WithMapper
+    def assertDispatcherMethodWithResult(self, methodname, result, args, expectedCalls, mapper, _):
         calls = []
         dispatcher = self.getPatchedDispatcher(mapper, calls, result)
         method = getattr(dispatcher, methodname)
@@ -230,8 +226,8 @@ class DispatchTestCase(TestCase):
         method = getattr(dispatcher, methodname)
         self.assertRaises(ValueError, method, *args)
         self.assertEquals(calls, expectedCalls)
-        mapper.Dispose()
-    
+
+
 class SimpleDispatchTest(DispatchTestCase):
 
     def testDispatch__call_O_OO(self):
@@ -350,8 +346,8 @@ class SimpleDispatchTest(DispatchTestCase):
              ('_cleanup', (OBJ_PTR, RESULT_PTR,))
             ])
         
-    def testDispatch_method_selfarg_errorHandler(self):
-        mapper = Python25Mapper()
+    @WithMapper
+    def testDispatch_method_selfarg_errorHandler(self, mapper, _):
         calls = []
         dispatcher = self.getPatchedDispatcher(mapper, calls, RESULT_PTR)
         self.assertEquals(
@@ -365,10 +361,9 @@ class SimpleDispatchTest(DispatchTestCase):
              ('_return_retrieve', (RESULT_PTR,)),
              ('_cleanup', (OBJ_PTR, RESULT_PTR,))
             ])
-        mapper.Dispose()
-        
-    def testDispatch_method_selfarg_errorHandlerError(self):
-        mapper = Python25Mapper()
+
+    @WithMapper
+    def testDispatch_method_selfarg_errorHandlerError(self, mapper, _):
         calls = []
         dispatcher = self.getPatchedDispatcher(mapper, calls, RESULT_PTR)
         self.assertRaises(
@@ -382,10 +377,9 @@ class SimpleDispatchTest(DispatchTestCase):
              ('ErrorHandler', (RESULT_PTR,)),
              ('_cleanup', (OBJ_PTR, RESULT_PTR,))
             ])
-        mapper.Dispose()
 
-    def testDispatch_method_setter(self):
-        mapper = Python25Mapper()
+    @WithMapper
+    def testDispatch_method_setter(self, mapper, _):
         calls = []
         dispatcher = self.getPatchedDispatcher(mapper, calls, 0)
         dispatcher.method_setter(NAME, OBJ, ARG, CLOSURE)
@@ -398,10 +392,9 @@ class SimpleDispatchTest(DispatchTestCase):
              ('_check_error', ()),
              ('_return', ()),
             ])
-        mapper.Dispose()
 
-    def testDispatch_method_setter_error(self):
-        mapper = Python25Mapper()
+    @WithMapper
+    def testDispatch_method_setter_error(self, mapper, _):
         calls = []
         dispatcher = self.getPatchedDispatcher(mapper, calls, -1)
         self.assertRaises(Exception, dispatcher.method_setter, NAME, OBJ, ARG, CLOSURE)
@@ -413,8 +406,6 @@ class SimpleDispatchTest(DispatchTestCase):
              ('_cleanup', (OBJ_PTR, ARG_PTR)),
              ('_check_error', ()),
             ])
-        mapper.Dispose()
-
 
 class IckyDispatchTest(DispatchTestCase):
     
@@ -467,9 +458,9 @@ class IckyDispatchTest(DispatchTestCase):
     
     # NOTE: a failing __new__ will leak memory. However, if __new__ fails,
     # the want of a few bytes is unlikely to be your primary concern.
-    def testDispatch_construct(self):
+    @WithMapper
+    def testDispatch_construct(self, mapper, _):
         klass, instance, storeMap = self.getVars()
-        mapper = Python25Mapper()
         calls = []
         dispatcher = self.getMapperPatchedDispatcher(mapper, calls, INSTANCE_PTR, storeMap=storeMap)
         class FakeObject(object):
@@ -494,11 +485,10 @@ class IckyDispatchTest(DispatchTestCase):
             ('StoreBridge', (INSTANCE_PTR, instance)),
             ('Strengthen', (instance,))
         ])
-        mapper.Dispose()
     
-    def testDispatch_construct_singleton(self):
+    @WithMapper
+    def testDispatch_construct_singleton(self, mapper, _):
         klass, _, storeMap = self.getVars()
-        mapper = Python25Mapper()
         calls = []
         dispatcher = self.getMapperPatchedDispatcher(
             mapper, calls, RESULT_PTR, hasPtr=True, storeMap=storeMap)
@@ -517,11 +507,11 @@ class IckyDispatchTest(DispatchTestCase):
             ('IncRef', (RESULT_PTR,)),
             ('_return_retrieve', (RESULT_PTR,)),
         ])
-        mapper.Dispose()
-    
-    def testDispatch_construct_error(self):
+
+
+    @WithMapper
+    def testDispatch_construct_error(self, mapper, _):
         klass, _, storeMap = self.getVars()
-        mapper = Python25Mapper()
         calls = []
         dispatcher = self.getMapperPatchedDispatcher(
             mapper, calls, RESULT_PTR, _checkErrorFails=True, storeMap=storeMap)
@@ -536,11 +526,10 @@ class IckyDispatchTest(DispatchTestCase):
             ('_check_error', ()),
             ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
         ])
-        mapper.Dispose()
-    
-    def testDispatch_init(self):
+
+    @WithMapper
+    def testDispatch_init(self, mapper, _):
         _, instance, storeMap = self.getVars()
-        mapper = Python25Mapper()
         calls = []
         dispatcher = self.getMapperPatchedDispatcher(mapper, calls, 0, storeMap=storeMap)
         dispatcher.init(NAME, instance, *ARGS, **KWARGS)
@@ -552,21 +541,21 @@ class IckyDispatchTest(DispatchTestCase):
             ('_cleanup', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)),
             ('_check_error', ())
         ])
-        mapper.Dispose()
-    
-    def testDispatch_init_noimplementation(self):
+
+
+    @WithMapper
+    def testDispatch_init_noimplementation(self, mapper, _):
         klass, instance, storeMap = self.getVars()
-        mapper = Python25Mapper()
         calls = []
         
         dispatcher = self.getMapperPatchedDispatcher(mapper, calls, -1, storeMap=storeMap)
         dispatcher.init('dgt_not_there', instance, *ARGS, **KWARGS)
         self.assertEquals(calls, [])
-        mapper.Dispose()
-    
-    def testDispatch_init_error(self):
+
+
+    @WithMapper
+    def testDispatch_init_error(self, mapper, _):
         klass, instance, storeMap = self.getVars()
-        mapper = Python25Mapper()
         calls = []
         
         dispatcher = self.getMapperPatchedDispatcher(mapper, calls, -1, _checkErrorFails=True, storeMap=storeMap)
@@ -579,11 +568,11 @@ class IckyDispatchTest(DispatchTestCase):
             ('_cleanup', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)),
             ('_check_error', ())
         ])
-        mapper.Dispose()
-    
-    def testDispatchDelete(self):
+
+
+    @WithMapper
+    def testDispatchDelete(self, mapper, _):
         _, instance, storeMap = self.getVars()
-        mapper = Python25Mapper()
         calls = []
         dispatcher = self.getMapperPatchedDispatcher(mapper, calls, None, storeMap=storeMap)
         dispatcher.delete(instance)
@@ -596,17 +585,17 @@ class IckyDispatchTest(DispatchTestCase):
             ('Unmap', (INSTANCE_PTR,)),
             ('_check_error', ()),
         ])
-        mapper.Dispose()
 
-    def testDispatchDontDelete(self):
+
+    @WithMapper
+    def testDispatchDontDelete(self, mapper, _):
         _, instance, storeMap = self.getVars()
-        mapper = Python25Mapper()
         calls = []
         dispatcher = self.getMapperPatchedDispatcher(mapper, calls, None)
         dispatcher.dontDelete(instance)
         self.assertEquals(calls, [])
-        mapper.Dispose()
-        
+
+
 
 class EasyMembersTest(TestCase):
     
@@ -635,9 +624,9 @@ class EasyMembersTest(TestCase):
 
 class ObjectMembersTest(TestCase):
 
-    def testDispatch_set_member_object1(self):
+    @WithMapper
+    def testDispatch_set_member_object1(self, mapper, _):
         # was null, set to non-null
-        mapper = Python25Mapper()
         dispatcher = mapper.DispatcherModule.Dispatcher(mapper, {})
         
         value = object()
@@ -653,11 +642,11 @@ class ObjectMembersTest(TestCase):
         self.assertEquals(CPyMarshal.ReadPtr(fieldPtr), valuePtr)
         self.assertEquals(mapper.RefCount(valuePtr), 2, "failed to incref")
         Marshal.FreeHGlobal(ptr)
-        mapper.Dispose()
 
-    def testDispatch_set_member_object2(self):
+
+    @WithMapper
+    def testDispatch_set_member_object2(self, mapper, addToCleanUp):
         # was non-null, set to non-null
-        mapper = Python25Mapper()
         dispatcher = mapper.DispatcherModule.Dispatcher(mapper, {})
         
         value1 = object()
@@ -677,11 +666,11 @@ class ObjectMembersTest(TestCase):
         self.assertEquals(mapper.RefCount(value1Ptr), 1, "failed to decref old object")
         self.assertEquals(mapper.RefCount(value2Ptr), 2, "failed to incref new object")
         Marshal.FreeHGlobal(ptr)
-        mapper.Dispose()
 
-    def testDispatch_get_member_object1(self):
+
+    @WithMapper
+    def testDispatch_get_member_object1(self, mapper, addToCleanUp):
         # non-null
-        mapper = Python25Mapper()
         dispatcher = mapper.DispatcherModule.Dispatcher(mapper, {})
         
         value = object()
@@ -696,11 +685,11 @@ class ObjectMembersTest(TestCase):
         self.assertEquals(dispatcher.get_member_object(OBJ, OFFSET), value)
         self.assertEquals(mapper.RefCount(valuePtr), 2, "failed to incref returned object")
         Marshal.FreeHGlobal(ptr)
-        mapper.Dispose()
 
-    def testDispatch_get_member_object2(self):
+
+    @WithMapper
+    def testDispatch_get_member_object2(self, mapper, addToCleanUp):
         # null should become None here
-        mapper = Python25Mapper()
         dispatcher = mapper.DispatcherModule.Dispatcher(mapper, {})
         
         ptr = Marshal.AllocHGlobal(SIZE)
@@ -711,7 +700,6 @@ class ObjectMembersTest(TestCase):
         
         self.assertEquals(dispatcher.get_member_object(OBJ, OFFSET), None)
         Marshal.FreeHGlobal(ptr)
-        mapper.Dispose()
         
 
 suite = makesuite(

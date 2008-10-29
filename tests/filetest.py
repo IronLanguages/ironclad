@@ -2,7 +2,7 @@
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.memory import CreateTypes, OffsetPtr
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 
 import os
 import shutil
@@ -25,41 +25,33 @@ more text
 
 class PyFile_Type_Test(TestCase):
 
-    def testPyFile_Type(self):
-        mapper = Python25Mapper()
-        
+    @WithMapper
+    def testPyFile_Type(self, mapper, addToCleanUp):
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        addToCleanUp(lambda: Marshal.FreeHGlobal(typeBlock))
         
         mapper.SetData("PyFile_Type", typeBlock)
         self.assertEquals(mapper.PyFile_Type, typeBlock, "type address not stored")
         self.assertEquals(CPyMarshal.ReadPtrField(mapper.PyFile_Type, PyTypeObject, 'tp_dealloc'), mapper.GetAddress('PyFile_Dealloc'))
         self.assertEquals(mapper.Retrieve(typeBlock), file, "type not mapped")
-        
-        mapper.Dispose()
-        Marshal.FreeHGlobal(typeBlock)
     
     
-    def testCallPyFile_Type(self):
-        mapper = Python25Mapper()
-        
+    @WithMapper
+    def testCallPyFile_Type(self, mapper, addToCleanUp):
         argsPtr = mapper.Store(READ_ARGS)
         kwargsPtr = IntPtr.Zero
         deallocTypes = CreateTypes(mapper)
+        addToCleanUp(deallocTypes)
         
         filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
         self.assertEquals(CPyMarshal.ReadPtrField(filePtr, PyObject, 'ob_type'), mapper.PyFile_Type)
         f = mapper.Retrieve(filePtr)
         self.assertEquals(f.read(), TEST_TEXT, "didn't get a real file")
 
-        mapper.Dispose()
-        deallocTypes()
     
-    
-    def testPyFile_AsFile(self):
-        mapper = Python25Mapper()
-        
+    @WithMapper
+    def testPyFile_AsFile(self, mapper, addToCleanUp):
         kwargsPtr = IntPtr.Zero
-        deallocTypes = CreateTypes(mapper)
         buflen = len(TEST_TEXT) + 10
         buf = Marshal.AllocHGlobal(buflen)
         argsPtr = mapper.Store(READ_ARGS)
@@ -74,16 +66,15 @@ class PyFile_Type_Test(TestCase):
             ptr = OffsetPtr(ptr, 1)
 
         Marshal.FreeHGlobal(buf)
-        mapper.Dispose()
-        deallocTypes()
 
 
-    def testPyFile_AsFile_Write(self):
-        mapper = Python25Mapper()
+    @WithMapper
+    def testPyFile_AsFile_Write(self, mapper, addToCleanUp):
         kwargsPtr = IntPtr.Zero
-        deallocTypes = CreateTypes(mapper)
         
         testDir = tempfile.mkdtemp()
+        addToCleanUp(lambda: shutil.rmtree(testDir))
+
         path = os.path.join(testDir, "test")
         write_args = (path, 'w')
         argsPtr = mapper.Store(write_args)
@@ -114,17 +105,10 @@ class PyFile_Type_Test(TestCase):
         result = mgdF.read()
         self.assertEquals(result, testStr, "failed to write (got >>%s<<) -- deallocing filePtr did not close FILE" % result)
         mgdF.close()
-        
-        mapper.Dispose()
-        deallocTypes()
-        
-        shutil.rmtree(testDir)
 
 
-    def testPyFile_AsFile_Exhaustion(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testPyFile_AsFile_Exhaustion(self, mapper, _):
         argsPtr = mapper.Store(READ_ARGS)
         kwargsPtr = IntPtr.Zero
         
@@ -139,10 +123,6 @@ class PyFile_Type_Test(TestCase):
             # note: we don't call fclose until the file is destroyed, rather than closed
             # we don't *think* this will be a problem in normal use
             mapper.DecRef(filePtr)
-        
-        mapper.Dispose()
-        deallocTypes()
-        
 
 
 suite = makesuite(

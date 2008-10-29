@@ -1,6 +1,6 @@
 
 from tests.utils.runtest import makesuite, run
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.gc import gcwait
 
 from System import IntPtr
@@ -11,9 +11,8 @@ from Ironclad import Python25Mapper
 
 class PyThread_functions_Test(TestCase):
 
-    def testAllocateAndFreeLocks(self):
-        mapper = Python25Mapper()
-
+    @WithMapper
+    def testAllocateAndFreeLocks(self, mapper, _):
         lockPtr1 = mapper.PyThread_allocate_lock()
         lockPtr2 = mapper.PyThread_allocate_lock()
 
@@ -26,12 +25,10 @@ class PyThread_functions_Test(TestCase):
 
         mapper.PyThread_free_lock(lockPtr1)
         mapper.PyThread_free_lock(lockPtr2)  
-        mapper.Dispose()
 
 
-    def testAcquireAndReleaseLocksWithWait(self):
-        mapper = Python25Mapper()
-
+    @WithMapper
+    def testAcquireAndReleaseLocksWithWait(self, mapper, _):
         lockPtr1 = mapper.PyThread_allocate_lock()
         lockPtr2 = mapper.PyThread_allocate_lock()
 
@@ -59,12 +56,10 @@ class PyThread_functions_Test(TestCase):
         mapper.PyThread_release_lock(lockPtr2)
         Thread.CurrentThread.Join(100)
         self.assertEquals(acquired, set([lockPtr1, lockPtr2]), "release failed")    
-        mapper.Dispose()
 
 
-    def testAcquireAndReleaseLocksWithNoWait(self):
-        mapper = Python25Mapper()
-
+    @WithMapper
+    def testAcquireAndReleaseLocksWithNoWait(self, mapper, _):
         lockPtr1 = mapper.PyThread_allocate_lock()
         lockPtr2 = mapper.PyThread_allocate_lock()
 
@@ -100,14 +95,12 @@ class PyThread_functions_Test(TestCase):
         Thread.CurrentThread.Join(100)
 
         self.assertEquals(acquired, set([lockPtr1, lockPtr2]), "acquires failed")    
-        mapper.Dispose()
 
 
 class PyThreadStateDict_Test(TestCase):
     
-    def testPyThreadState_GetDict(self):
-        mapper = Python25Mapper()
-        
+    @WithMapper
+    def testPyThreadState_GetDict(self, mapper, _):
         store = {}
         def GrabThreadDict(key):
             ptr = mapper.PyThreadState_GetDict()
@@ -130,15 +123,12 @@ class PyThreadStateDict_Test(TestCase):
         for name in ('other', 'another', 'and another'):
             self.assertEquals(store[name]['content'], name)
             self.assertEquals(mapper.RefCount(store[name + 'ptr']), 1, 'failed to dispose of thread dicts when threads ended')
-           
-        mapper.Dispose()
 
 
 class PyThreadExceptionTest(TestCase):
     
-    def testLastExceptionIsThreadLocal(self):
-        mapper = Python25Mapper()
-
+    @WithMapper
+    def testLastExceptionIsThreadLocal(self, mapper, _):
         def CheckOtherThread():
             self.assertEquals(mapper.LastException, None)
             mapper.LastException = ValueError('foo')
@@ -149,8 +139,6 @@ class PyThreadExceptionTest(TestCase):
         thread.Start()
         thread.Join()
         self.assertEquals(isinstance(mapper.LastException, TypeError), True)
-
-        mapper.Dispose()
 
 
 class PyEvalGILThreadTest(TestCase):
@@ -165,9 +153,10 @@ class PyEvalGILThreadTest(TestCase):
         t.Start()
         t.Join()
         self.assertEquals(not unlocked[0], expectLocked)
-    
-    def testMultipleSaveRestoreOneThread(self):
-        mapper = Python25Mapper()
+
+
+    @WithMapper
+    def testMultipleSaveRestoreOneThread(self, mapper, _):
         lock = mapper.DispatcherModule.Dispatcher._lock
         
         mapper.PyGILState_Ensure()
@@ -182,11 +171,10 @@ class PyEvalGILThreadTest(TestCase):
         self.assertLock(lock, True)
         self.assertRaises(Exception, mapper.PyEval_RestoreThread)
         mapper.PyGILState_Release(0)
-        
-        mapper.Dispose()
+
     
-    def testMultipleSaveRestoreMultiThread(self):       # order of execution (intended)
-        mapper = Python25Mapper()
+    @WithMapper
+    def testMultipleSaveRestoreMultiThread(self, mapper, _):       # order of execution (intended)
         lock = mapper.DispatcherModule.Dispatcher._lock
     
         oneThreadActed = AutoResetEvent(False)

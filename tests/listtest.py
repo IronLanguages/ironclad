@@ -4,7 +4,7 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes, OffsetPtr
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
 
 from System import IntPtr
@@ -93,9 +93,8 @@ class PyList_Type_Test(TypeTestCase):
         deallocTypes()
         
         
-    def testStoreList(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+    @WithMapper
+    def testStoreList(self, mapper, _):
         listPtr = mapper.Store([1, 2, 3])
         
         typePtr = CPyMarshal.ReadPtrField(listPtr, PyObject, "ob_type")
@@ -106,9 +105,6 @@ class PyList_Type_Test(TypeTestCase):
             self.assertEquals(mapper.Retrieve(CPyMarshal.ReadPtr(dataStore)), i, "contents not stored")
             self.assertEquals(mapper.RefCount(CPyMarshal.ReadPtr(dataStore)), 1, "bad refcount for items")
             dataStore = OffsetPtr(dataStore, CPyMarshal.PtrSize)
-            
-        mapper.Dispose()
-        deallocTypes()
 
 
 class ListFunctionsTest(TestCase):
@@ -209,10 +205,8 @@ class ListFunctionsTest(TestCase):
         deallocTypes()
         
         
-    def testPyList_SetItem_RefCounting(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testPyList_SetItem_RefCounting(self, mapper, _):
         listPtr = mapper.PyList_New(4)
         itemPtr1 = mapper.Store(object())
         itemPtr2 = mapper.Store(object())
@@ -228,15 +222,10 @@ class ListFunctionsTest(TestCase):
         mapper.IncRef(itemPtr2) # reference was stolen a couple of lines ago
         self.assertEquals(mapper.PyList_SetItem(listPtr, 0, IntPtr.Zero), 0, "returned error code")
         self.assertEquals(mapper.RefCount(itemPtr2), 1, "failed to decref replacee")
-        
-        mapper.Dispose()
-        deallocTypes()
-        
-        
-    def testPyList_SetItem_CompleteList(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+
+
+    @WithMapper
+    def testPyList_SetItem_CompleteList(self, mapper, _):
         listPtr = mapper.PyList_New(4)
         item1 = object()
         item2 = object()
@@ -251,15 +240,10 @@ class ListFunctionsTest(TestCase):
         mapper.PyList_SetItem(listPtr, 3, itemPtr2)
         
         self.assertEquals(mapper.Retrieve(listPtr), [item1, item2, item1, item2], "lists not synchronised")
-        
-        mapper.Dispose()
-        deallocTypes()
-    
-    
-    def testPyList_SetItem_Failures(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+
+
+    @WithMapper
+    def testPyList_SetItem_Failures(self, mapper, _):
         objPtr = mapper.Store(object())
         listPtr = mapper.PyList_New(4)
         
@@ -281,30 +265,20 @@ class ListFunctionsTest(TestCase):
     
         # list still contains uninitialised values
         self.assertRaises(ValueError, mapper.Retrieve, listPtr)
-    
-        mapper.Dispose()
-        deallocTypes()
-            
-    
-    def testPyList_SetItem_PreexistingIpyList(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+
+
+    @WithMapper
+    def testPyList_SetItem_PreexistingIpyList(self, mapper, _):
         item = object()
         itemPtr = mapper.Store(item)
         listPtr = mapper.Store([1, 2, 3])
         
         self.assertEquals(mapper.PyList_SetItem(listPtr, 1, itemPtr), 0, "did not report success")
         self.assertEquals(mapper.Retrieve(listPtr), [1, item, 3])
-        
-        mapper.Dispose()
-        deallocTypes()
-        
-    
-    def testRetrieveListContainingItself(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+
+
+    @WithMapper
+    def testRetrieveListContainingItself(self, mapper, _):
         listPtr = mapper.PyList_New(1)
         
         mapper.PyList_SetItem(listPtr, 0, listPtr)
@@ -313,15 +287,10 @@ class ListFunctionsTest(TestCase):
         self.assertEquals(len(realList), 1, "wrong size list")
         anotherReferenceToRealList = realList[0]
         self.assertEquals(realList is anotherReferenceToRealList, True, "wrong list contents")
-        
-        mapper.Dispose()
-        deallocTypes()
-        
-    
-    def testRetrieveListContainingItselfIndirectly(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+
+
+    @WithMapper
+    def testRetrieveListContainingItselfIndirectly(self, mapper, _):
         listPtr1 = mapper.PyList_New(1)
         listPtr2 = mapper.PyList_New(1)
         listPtr3 = mapper.PyList_New(1)
@@ -341,11 +310,8 @@ class ListFunctionsTest(TestCase):
         self.assertEquals(realList1 is anotherReferenceToRealList1, True, "wrong list contents")
         self.assertEquals(realList2 is anotherReferenceToRealList2, True, "wrong list contents")
         self.assertEquals(realList3 is anotherReferenceToRealList3, True, "wrong list contents")
-        
-        mapper.Dispose()
-        deallocTypes()
-    
-    
+
+
     def testDeleteList(self):
         deallocs = []
         mapper = Python25Mapper(GetAllocatingTestAllocator([], deallocs))
@@ -377,10 +343,8 @@ class ListFunctionsTest(TestCase):
         deallocTypes()
         
         
-    def testPyList_GetSlice(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testPyList_GetSlice(self, mapper, _):
         def TestSlice(originalListPtr, start, stop):
             newListPtr = mapper.PyList_GetSlice(originalListPtr, start, stop)
             self.assertEquals(mapper.Retrieve(newListPtr), mapper.Retrieve(originalListPtr)[start:stop], "bad slice")
@@ -392,11 +356,7 @@ class ListFunctionsTest(TestCase):
         )
         for (start, stop) in slices:
             TestSlice(listPtr, start, stop)
-            
-        mapper.Dispose()
-        deallocTypes()
-        
-        
+
 
 suite = makesuite(
     PyList_Type_Test,
