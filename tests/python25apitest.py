@@ -248,6 +248,8 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyObject_Size", ('IntPtr(111)',), '123')
         self.assertFinds("PyObject_Str", ('IntPtr(111)',), 'IntPtr(999)')
         self.assertFinds("PyObject_Repr", ('IntPtr(111)',), 'IntPtr(999)')
+        self.assertFinds("PyObject_Compare", ('IntPtr(111)', 'IntPtr(222)'), '3')
+        self.assertFinds("PyObject_RichCompareBool", ('IntPtr(111)', 'IntPtr(222)', '4'), '5')
         self.assertFinds("_PyObject_New", ('IntPtr(111)',), 'IntPtr(999)')
         
         self.assertFinds("PyCallable_Check", ('IntPtr(111)',), '0')
