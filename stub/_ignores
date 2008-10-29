@@ -41,6 +41,11 @@ PyEval_CallObjectWithKeywords
 
 PyOS_snprintf
 PyOS_vsnprintf
+PyOS_ascii_strtod
+PyOS_ascii_formatd
+PyOS_ascii_atof
+PyOS_strtoul
+PyOS_strtol
 
 _PyParser_TokenNames
 _Py_SwappedOp
