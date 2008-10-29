@@ -38,6 +38,16 @@ namespace Ironclad
             HAVE_GC = 0x00004000,
             HAVE_INDEX = 0x00020000,
         }
+                
+        public enum CMP : uint
+        {
+            Py_LT = 0,
+            Py_LE = 1,
+            Py_EQ = 2,
+            Py_NE = 3,
+            Py_GT = 4,
+            Py_GE = 5,
+        }
         
         public enum EvalToken
         {

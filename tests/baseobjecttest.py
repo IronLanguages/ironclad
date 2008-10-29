@@ -1,4 +1,6 @@
 
+import operator
+
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
@@ -12,9 +14,17 @@ from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, Python25Api, Python25Mapper
-from Ironclad.Structs import PyObject, PyTypeObject
+from Ironclad.Structs import CMP, PyObject, PyTypeObject
 
-    
+
+COMPARISONS = {
+    CMP.Py_LT: operator.lt,
+    CMP.Py_LE: operator.le,
+    CMP.Py_EQ: operator.eq,
+    CMP.Py_NE: operator.ne,
+    CMP.Py_GT: operator.gt,
+    CMP.Py_GE: operator.ge
+}
     
 class ObjectFunctionsTest(TestCase):
     
@@ -47,6 +57,44 @@ class ObjectFunctionsTest(TestCase):
         for x in notCallables:
             self.assertEquals(mapper.PyCallable_Check(x), 0, "reported callable")
 
+
+    @WithMapper
+    def testPyObject_Compare(self, mapper, _):
+        objects = (1, 1, 1.0, -1, 3.4e5, object, object(), 'hello', [1], (2,), {3: 'four'})
+        
+        for obj1 in objects:
+            for obj2 in objects:
+                self.assertEquals(mapper.PyObject_Compare(mapper.Store(obj1), mapper.Store(obj2)),
+                                  cmp(obj1, obj2), "%r, %r" % (obj1, obj2))
+
+
+    def assertRichCmp(self, mapper, opid, ob1, ob2):
+        op = COMPARISONS[opid]
+        expect = -1
+        error = None
+        try:
+            expect = op(ob1, ob2)
+        except Exception, e:
+            error = e.__class__
+
+        result = mapper.PyObject_RichCompareBool(mapper.Store(ob1), mapper.Store(ob2), int(opid))
+        self.assertEquals(result, expect, "%r: %r %r" % (op.__name__, ob1, ob2))
+        self.assertMapperHasError(mapper, error)
+        
+
+    @WithMapper
+    def testPyObject_RichCompareBool(self, mapper, _):
+        class BadComparer(object):
+            def borked(self, other):
+                raise Exception("no!")
+            __lt__ = __le__ = __eq__ = __ne__ = __gt__ = __ge__ = borked
+        objects = (1, 1, 1.0, -1, 3.4e5, object, object(), 'hello', [1], (2,), {3: 'four'}, BadComparer)
+        
+        for opid in COMPARISONS:
+            for ob1 in objects:
+                for ob2 in objects:
+                    self.assertRichCmp(mapper, opid, ob1, ob2)
+                       
 
     @WithMapper
     def testPyObject_GetAttrString(self, mapper, _):

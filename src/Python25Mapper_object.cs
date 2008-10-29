@@ -55,6 +55,55 @@ namespace Ironclad
         
         
         public override int
+        PyObject_Compare(IntPtr ptr1, IntPtr ptr2)
+        {
+            return Builtin.cmp(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+        }
+        
+        
+        public override int
+        PyObject_RichCompareBool(IntPtr ptr1, IntPtr ptr2, int opid)
+        {
+            try
+            {
+                bool result = true;
+                CMP op = (CMP)opid;
+                switch (op)
+                {
+                    case CMP.Py_LT:
+                        result = (bool)PythonOperator.lt(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                        break;
+                    case CMP.Py_LE:
+                        result = (bool)PythonOperator.le(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                        break;
+                    case CMP.Py_EQ:
+                        result = (bool)PythonOperator.eq(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                        break;
+                    case CMP.Py_NE:
+                        result = (bool)PythonOperator.ne(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                        break;
+                    case CMP.Py_GT:
+                        result = (bool)PythonOperator.gt(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                        break;
+                    case CMP.Py_GE:
+                        result = (bool)PythonOperator.ge(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                        break;
+                }
+                if (result)
+                {
+                    return 1;
+                }
+                return 0;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
+        }
+        
+        
+        public override int
         PyCallable_Check(IntPtr objPtr)
         {
             if (Builtin.callable(this.scratchContext, this.Retrieve(objPtr)))
