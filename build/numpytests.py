@@ -9,7 +9,21 @@ from unittest import TestResult
 numpy_path = r"C:\Python25\Lib\site-packages\numpy"
 dirs = ['core']
 
-blackList = ['test_mul', 'test_defchararray', 'test_memmap', 'TestPickling']
+mod_blacklist = ['test_defchararray', 'test_memmap']
+class_blacklist = [
+    'test_multiarray.TestStringCompare', # don't care about strings yet
+    'test_multiarray.TestPickling', # don't care about pickling yet
+    'test_multiarray.TestClip', # seems to cause problems
+    'test_multiarray.TestRecord', # record arrays
+]
+test_blacklist = [
+    'test_multiarray.TestTake.test_wrap', # hangs
+    'test_multiarray.TestTake.test_record_array', # record arrays
+    'test_defmatrix.TestCtor.test_basic', # uses getframe
+    'test_defmatrix.TestCtor.test_bmat_nondefault_str', # uses getframe
+    'test_multiarray.TestMethods.test_sort_order', # record arrays involved
+    'test_multiarray.TestPutmask.test_record_array', # record arrays involved
+]
 
 
 for direc in dirs: 
@@ -23,21 +37,20 @@ for direc in dirs:
         mod_name = filename[:-3]
         full_name = 'numpy.%s.tests.%s' % (direc, mod_name)
         
-        if mod_name in blackList:
+        if mod_name in mod_blacklist:
             continue
         
         package = __import__(full_name)
-        
         module = reduce(lambda a, name: getattr(a, name), [direc, 'tests', mod_name], package)
         
         for class_name, test_class in module.__dict__.items():
-            if class_name in blackList:
-                continue
             if not isinstance(test_class, type) or not issubclass(test_class, TestCase):
                continue
+            if '.'.join([mod_name, class_name]) in class_blacklist:
+                continue
+               
             for test_name, _ in sorted(test_class.__dict__.items()):
-                
-                if not test_name.startswith('test_') or test_name in blackList:
+                if not test_name.startswith('test_') or '.'.join([mod_name, class_name, test_name]) in test_blacklist:
                     continue
                 print "%s %s.%s.%s" % (direc, mod_name, class_name, test_name),
                 try:
