@@ -116,11 +116,6 @@ class PyMem_Realloc_Test(TestCase):
         self.assertEquals(frees, [mem1])
         self.assertEquals(allocs, [(mem2, 8)])
         mapper.Dispose()
-        
-        
-    
-        
-    
 
 
 suite = makesuite(

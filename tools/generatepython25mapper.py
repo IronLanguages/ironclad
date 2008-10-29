@@ -154,7 +154,7 @@ PY2C_TEMPLATE = """\
         {
             try
             {
-                return Converter.%(converter)s(this.Retrieve(valuePtr))%(coerce)s;
+                return this.%(converter)s(this.Retrieve(valuePtr))%(coerce)s;
             }
             catch (Exception e)
             {

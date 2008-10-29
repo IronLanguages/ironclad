@@ -219,8 +219,8 @@ namespace Ironclad
 
 NUMBERS_CONVERT_PY2C = """
 
-PyFloat_AsDouble ConvertToDouble double -1.0
-PyLong_AsLong ConvertToBigInteger int -1 .ToInt32()
+PyFoo_AsBar MakeSomething double -1.0
+PyPing_AsPong MakeSomethingElse pong bat .ToPong()
 """
 
 EXPECTED_NUMBERS_CONVERT_PY2C = USINGS + """
@@ -229,11 +229,11 @@ namespace Ironclad
     public partial class Python25Mapper : Python25Api
     {
         public override double
-        PyFloat_AsDouble(IntPtr valuePtr)
+        PyFoo_AsBar(IntPtr valuePtr)
         {
             try
             {
-                return Converter.ConvertToDouble(this.Retrieve(valuePtr));
+                return this.MakeSomething(this.Retrieve(valuePtr));
             }
             catch (Exception e)
             {
@@ -242,17 +242,17 @@ namespace Ironclad
             }
         }
 
-        public override int
-        PyLong_AsLong(IntPtr valuePtr)
+        public override pong
+        PyPing_AsPong(IntPtr valuePtr)
         {
             try
             {
-                return Converter.ConvertToBigInteger(this.Retrieve(valuePtr)).ToInt32();
+                return this.MakeSomethingElse(this.Retrieve(valuePtr)).ToPong();
             }
             catch (Exception e)
             {
                 this.LastException = e;
-                return -1;
+                return bat;
             }
         }
     }

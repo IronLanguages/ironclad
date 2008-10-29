@@ -19,6 +19,8 @@ typedef ssize_t Py_ssize_t;
 #   endif
 #endif
 
+#define SIZEOF_LONG 4
+
 #define HAVE_LONG_LONG 1
 #define PY_LONG_LONG long long
 
@@ -39,6 +41,7 @@ typedef ssize_t Py_ssize_t;
 #define INT_MAX 2147483647
 #define INT_MIN (-2147483647-1)
 #define LONG_MAX 2147483647L
+#define ULONG_MAX 4294967295UL
 #define LONG_MIN (-2147483647L-1L)
 #define SCHAR_MAX 127
 #define SCHAR_MIN (-128)
