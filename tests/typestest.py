@@ -7,7 +7,7 @@ from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.cpython import MakeTypePtr
 from tests.utils.gc import gcwait
 from tests.utils.memory import OffsetPtr, CreateTypes
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 
 from System import IntPtr, UInt32, WeakReference
 from System.Runtime.InteropServices import Marshal
@@ -42,10 +42,8 @@ BUILTIN_TYPES = {
 
 class Types_Test(TestCase):
     
-    def testTypeMappings(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testTypeMappings(self, mapper, _):
         for (k, v) in BUILTIN_TYPES.items():
             typePtr = getattr(mapper, k)
             self.assertEquals(mapper.Retrieve(typePtr), v, "failed to map " + k)
@@ -59,15 +57,10 @@ class Types_Test(TestCase):
                 self.assertEquals(basePtr, mapper.PyInt_Type)
             else:
                 self.assertEquals(basePtr, mapper.PyBaseObject_Type)
-             
-        mapper.Dispose()
-        deallocTypes()
-    
-    
-    def testPyType_IsSubtype(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+
+
+    @WithMapper
+    def testPyType_IsSubtype(self, mapper, _):
         self.assertFalse(mapper.PyType_IsSubtype(mapper.PyType_Type, IntPtr.Zero))
         self.assertFalse(mapper.PyType_IsSubtype(IntPtr.Zero, mapper.PyType_Type))
         
@@ -97,17 +90,14 @@ class Types_Test(TestCase):
         self.assertTrue(mapper.PyType_IsSubtype(Sptr, mapper.PyString_Type))
         self.assertFalse(mapper.PyType_IsSubtype(mapper.PyString_Type, Sptr))
         self.assertFalse(mapper.PyType_IsSubtype(Sptr, mapper.PyType_Type))
-        
-        mapper.Dispose()
-        deallocTypes()
-    
-    
-    def testPyType_Ready(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+
+
+    @WithMapper
+    def testPyType_Ready(self, mapper, addToCleanUp):
         typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         CPyMarshal.Zero(typePtr, Marshal.SizeOf(PyTypeObject))
+        addToCleanUp(lambda: Marshal.FreeHGlobal(typePtr))
+
         self.assertEquals(mapper.PyType_Ready(typePtr), 0, "wrong")
         self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type"), mapper.PyType_Type, "failed to fill in missing ob_type")
         self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to fill in missing tp_base")
@@ -118,15 +108,10 @@ class Types_Test(TestCase):
         CPyMarshal.WritePtrField(typePtr, PyTypeObject, "ob_type", IntPtr.Zero)
         self.assertEquals(mapper.PyType_Ready(typePtr), 0, "wrong")
         self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type"), IntPtr.Zero, "unexpectedly and unnecessarily rereadied type")        
-        
-        mapper.Dispose()
-        Marshal.FreeHGlobal(typePtr)
-        deallocTypes()
-    
-    
-    def testReadyBuiltinTypes(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper, readyTypes=False)
+
+
+    @WithMapper
+    def testReadyBuiltinTypes(self, mapper, _):
         mapper.ReadyBuiltinTypes()
         
         for _type in BUILTIN_TYPES:
@@ -139,17 +124,12 @@ class Types_Test(TestCase):
             typeTypePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type")
             if typePtr != mapper.PyType_Type:
                 self.assertEquals(typeTypePtr, mapper.PyType_Type)
-        
-        mapper.Dispose()
-        deallocTypes()
-    
-    
-    def testNotAutoActualisableTypes(self):
+
+
+    @WithMapper
+    def testNotAutoActualisableTypes(self, mapper, _):
         safeTypes = ("PyString_Type", "PyList_Type", "PyTuple_Type", "PyType_Type")
         discoveryModes = ("IncRef", "Retrieve", "DecRef", "RefCount")
-        
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
         for _type in filter(lambda s: s not in safeTypes, BUILTIN_TYPES):
             for mode in discoveryModes:
                 objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
@@ -157,15 +137,10 @@ class Types_Test(TestCase):
                 CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", getattr(mapper, _type))
                 self.assertRaises(CannotInterpretException, getattr(mapper, mode), objPtr)
                 Marshal.FreeHGlobal(objPtr)
-                
-        mapper.Dispose()
-        deallocTypes()
     
     
-    def testNumberMethods(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testNumberMethods(self, mapper, _):
         numberTypes = ("PyInt_Type", "PyLong_Type", "PyFloat_Type")
         implementedFields = {
             "nb_int": mapper.GetAddress("PyNumber_Int"),
@@ -181,11 +156,8 @@ class Types_Test(TestCase):
                 fieldPtr = CPyMarshal.ReadPtrField(nmPtr, PyNumberMethods, field)
                 self.assertNotEquals(fieldPtr, IntPtr.Zero)
                 self.assertEquals(fieldPtr, implementedFields[field])
-                
-        mapper.Dispose()
-        deallocTypes()
-    
-    
+
+
     def assertMaps(self, mapper, func, ptr, refcnt):
         func(ptr)
         obj = mapper.Retrieve(ptr)
@@ -236,10 +208,8 @@ class Types_Test(TestCase):
         deallocTypes()
 
 
-    def testStoreUnknownType(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-
+    @WithMapper
+    def testStoreUnknownType(self, mapper, _):
         class C(object):
             pass
         cPtr = mapper.Store(C)
@@ -259,9 +229,6 @@ class Types_Test(TestCase):
         self.assertEquals(isinstance(instance, C), True)
         self.assertEquals(mapper.Store(instance), instancePtr)
 
-        mapper.Dispose()
-        deallocTypes()
-  
 
 FIELDS = (
     "tp_alloc",
@@ -407,10 +374,8 @@ class PyType_GenericAlloc_Test(TestCase):
 
 class PyType_GenericNew_Test(TestCase):
 
-    def testCallsTypeAllocFunction(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-
+    @WithMapper
+    def testCallsTypeAllocFunction(self, mapper, addToCleanUp):
         calls = []
         def Alloc(typePtr, nItems):
             calls.append((typePtr, nItems))
@@ -420,15 +385,12 @@ class PyType_GenericNew_Test(TestCase):
             "tp_alloc": Alloc,
         }
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
+        addToCleanUp(deallocType)
         
         result = mapper.PyType_GenericNew(typePtr, IntPtr(222), IntPtr(333))
         self.assertEquals(result, IntPtr(999), "did not use type's tp_alloc function")
         self.assertEquals(calls, [(typePtr, 0)], "passed wrong args")
-         
-        mapper.Dispose()
-        deallocTypes()
-        deallocType()
-        
+
 
 
 suite = makesuite(

@@ -2,7 +2,7 @@
 import sys
 
 from tests.utils.runtest import makesuite, run
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 
 from tests.utils.allocators import GetAllocatingTestAllocator
 
@@ -33,14 +33,13 @@ class PyMem_Malloc_Test(TestCase):
         mapper.Dispose()
     
     
-    def testPyMem_Malloc_Failure(self):
-        mapper = Python25Mapper()
+    @WithMapper
+    def testPyMem_Malloc_Failure(self, mapper, _):
         resultPtr = mapper.PyMem_Malloc(sys.maxint)
         self.assertEquals(resultPtr, IntPtr.Zero, "bad alloc")
         self.assertMapperHasError(mapper, None)
-        mapper.Dispose()
-        
-        
+
+
 class PyMem_Free_Test(TestCase):
     
     def testPyMem_Free_NonNull(self):

@@ -4,7 +4,7 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.cpython import MakeTypePtr
 from tests.utils.memory import CreateTypes
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
@@ -37,21 +37,20 @@ class DictTest(TestCase):
         deallocTypes()
         
 
-    def testStoreDictCreatesDictType(self):
-        mapper = Python25Mapper()
+    @WithMapper
+    def testStoreDictCreatesDictType(self, mapper, addToCleanUp):
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        addToCleanUp(lambda: Marshal.FreeHGlobal(typeBlock))
         mapper.SetData("PyDict_Type", typeBlock)
         
         dictPtr = mapper.Store({0: 1, 2: 3})
         self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), typeBlock, "wrong type")
-        
-        mapper.Dispose()
-        Marshal.FreeHGlobal(typeBlock)
 
 
-    def testStoreTypeDictCreatesDictTypeWhichWorks(self):
-        mapper = Python25Mapper()
+    @WithMapper
+    def testStoreTypeDictCreatesDictTypeWhichWorks(self, mapper, addToCleanUp):
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        addToCleanUp(lambda: Marshal.FreeHGlobal(typeBlock))
         mapper.SetData("PyDict_Type", typeBlock)
         
         class klass(object):
@@ -68,22 +67,14 @@ class DictTest(TestCase):
         self.assertEquals(klass.baz, 'qux')
         self.assertEquals(mapper.PyDict_Size(dictPtr), len(klass.__dict__))
         
-        
-        mapper.Dispose()
-        Marshal.FreeHGlobal(typeBlock)
-        
 
-    def testPyDict_Size(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+    @WithMapper
+    def testPyDict_Size(self, mapper, _):
         dict0 = mapper.Store({})
         dict3 = mapper.Store({1:2, 3:4, 5:6})
         
         self.assertEquals(mapper.PyDict_Size(dict0), 0, "wrong")
         self.assertEquals(mapper.PyDict_Size(dict3), 3, "wrong")
-        
-        mapper.Dispose()
-        deallocTypes()
 
 
     def testPyDict_GetItemStringSuccess(self):
@@ -102,17 +93,13 @@ class DictTest(TestCase):
         deallocTypes()
 
 
-    def testPyDict_GetItemStringFailure(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+    @WithMapper
+    def testPyDict_GetItemStringFailure(self, mapper, _):
         dictPtr = mapper.Store({"abcde": 12345})
         
         itemPtr = mapper.PyDict_GetItemString(dictPtr, "bwahahaha!")
         self.assertEquals(itemPtr, IntPtr.Zero, "bad return for missing key")
         self.assertEquals(mapper.LastException, None, "should not set exception")
-        
-        mapper.Dispose()
-        deallocTypes()
 
 
     def testPyDict_GetItemSuccess(self):
@@ -131,23 +118,17 @@ class DictTest(TestCase):
         deallocTypes()
 
 
-    def testPyDict_GetItemFailure(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+    @WithMapper
+    def testPyDict_GetItemFailure(self, mapper, _):
         dictPtr = mapper.Store({12345: 67890})
         
         itemPtr = mapper.PyDict_GetItem(dictPtr, mapper.Store("something"))
         self.assertEquals(itemPtr, IntPtr.Zero, "bad return for missing key")
         self.assertEquals(mapper.LastException, None, "should not set exception")
-        
-        mapper.Dispose()
-        deallocTypes()
 
 
-    def testPyDict_SetItem(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testPyDict_SetItem(self, mapper, _):
         _dict = {}
         dictPtr = mapper.Store(_dict)
         keyPtr = mapper.Store(123)
@@ -155,15 +136,10 @@ class DictTest(TestCase):
         self.assertEquals(mapper.PyDict_SetItem(dictPtr, keyPtr, itemPtr), 0, "reported failure")
         self.assertEquals(mapper.RefCount(itemPtr), 1, "does not need to incref item")
         self.assertEquals(_dict, {123: 456}, "failed")
-        
-        mapper.Dispose()
-        deallocTypes()
 
 
-    def testPyDict_SetItem_Unhashable(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testPyDict_SetItem_Unhashable(self, mapper, _):
         _dict = {}
         dictPtr = mapper.Store(_dict)
         keyPtr = mapper.Store({})
@@ -171,41 +147,28 @@ class DictTest(TestCase):
         self.assertEquals(mapper.PyDict_SetItem(dictPtr, keyPtr, itemPtr), -1, "failed to report failure")
         self.assertEquals(_dict, {}, 'dictionary changed')
         self.assertMapperHasError(mapper, TypeError)
-        
-        mapper.Dispose()
-        deallocTypes()
-        
 
-    def testPyDict_SetItemString(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+
+    @WithMapper
+    def testPyDict_SetItemString(self, mapper, _):
         _dict = {}
         dictPtr = mapper.Store(_dict)
         itemPtr = mapper.Store(123)
         self.assertEquals(mapper.PyDict_SetItemString(dictPtr, 'blob', itemPtr), 0, "reported failure")
         self.assertEquals(mapper.RefCount(itemPtr), 1, "does not need to incref item")
         self.assertEquals(_dict, {'blob': 123}, "failed")
-        
-        mapper.Dispose()
-        deallocTypes()
 
 
-    def testPyDict_SetItemString_UnknownType(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+    @WithMapper
+    def testPyDict_SetItemString_UnknownType(self, mapper, addToCleanUp):
         typePtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass'})
+        addToCleanUp(deallocType)
         
         _dict = {}
         dictPtr = mapper.Store(_dict)
         self.assertEquals(mapper.PyDict_SetItemString(dictPtr, 'klass', typePtr), 0, "reported failure")
         klass = _dict['klass']
         self.assertEquals(klass.__name__, 'klass', "failed")
-        
-        mapper.Dispose()
-        deallocType()
-        deallocTypes()
-
 
 
 suite = makesuite(

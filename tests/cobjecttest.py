@@ -3,7 +3,7 @@ from tests.utils.runtest import makesuite, run
 
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
 
 from System import IntPtr
@@ -14,11 +14,11 @@ from Ironclad.Structs import PyCObject, PyObject, PyTypeObject
 
 class CObjectTest(TestCase):
     
-    def testPyCObject(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testPyCObject(self, mapper, addToCleanUp):
         cobjData = Marshal.AllocHGlobal(32)
+        addToCleanUp(lambda: Marshal.FreeHGlobal(cobjData))
+
         cobjPtr = mapper.PyCObject_FromVoidPtr(cobjData, IntPtr.Zero)
         
         self.assertEquals(CPyMarshal.ReadPtrField(cobjPtr, PyObject, 'ob_type'), mapper.PyCObject_Type, 'wrong type')
@@ -26,23 +26,18 @@ class CObjectTest(TestCase):
         self.assertEquals(mapper.PyCObject_AsVoidPtr(cobjPtr), cobjData, 'wrong pointer stored')
         
         self.assertEquals(isinstance(mapper.Retrieve(cobjPtr), OpaquePyCObject), True, "wrong")
-        
-        Marshal.FreeHGlobal(cobjData)
-        mapper.Dispose()
-        deallocTypes()
-
 
     
-    def testPyCObjectWithDestructor(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testPyCObjectWithDestructor(self, mapper, addToCleanUp):
         calls = []
         def destructor(destructee):
             calls.append(destructee)
         self.destructorDgt = CPython_destructor_Delegate(destructor)
         
         cobjData = Marshal.AllocHGlobal(32)
+        addToCleanUp(lambda: Marshal.FreeHGlobal(cobjData))
+
         cobjPtr = mapper.PyCObject_FromVoidPtr(cobjData, Marshal.GetFunctionPointerForDelegate(self.destructorDgt))
         cobj = mapper.Retrieve(cobjPtr)
         
@@ -62,12 +57,6 @@ class CObjectTest(TestCase):
         gcwait()
         self.assertEquals(calls, [cobjData], "failed to destroy")
         
-        Marshal.FreeHGlobal(cobjData)
-        mapper.Dispose()
-        deallocTypes()
-    
-
-
 
 class PyCObject_Type_Test(TypeTestCase):
         

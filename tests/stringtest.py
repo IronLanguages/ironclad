@@ -3,7 +3,7 @@ from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.memory import OffsetPtr, CreateTypes
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
 
 from System import Array, Byte, Char, IntPtr, OutOfMemoryException
@@ -102,16 +102,18 @@ class PyString_FromString_Test(PyString_TestCase):
 
 class InternTest(PyString_TestCase):
         
-    def testInternExisting(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-
+    @WithMapper
+    def testInternExisting(self, mapper, addToCleanUp):
         testString = "mars needs women" + self.getStringWithValues(1, 256)
         bytes = self.byteArrayFromString(testString)
         testData = self.ptrFromByteArray(bytes)
         
         sp1 = mapper.PyString_FromString(testData)
+        addToCleanUp(lambda: Marshal.FreeHGlobal(sp1p))
+
         sp2 = mapper.PyString_InternFromString(testData)
+        addToCleanUp(lambda: Marshal.FreeHGlobal(testData))
+
         self.assertNotEquals(sp1, sp2)
         self.assertFalse(mapper.Retrieve(sp1) is mapper.Retrieve(sp2))
         self.assertEquals(mapper.RefCount(sp1), 1)
@@ -126,11 +128,7 @@ class InternTest(PyString_TestCase):
         self.assertTrue(mapper.Retrieve(sp1i) is mapper.Retrieve(sp2))
         self.assertEquals(mapper.RefCount(sp1), 1, 'failed to decref old string')
         self.assertEquals(mapper.RefCount(sp2), 3, 'failed to incref interned string')
-        
-        mapper.Dispose()
-        Marshal.FreeHGlobal(sp1p)
-        Marshal.FreeHGlobal(testData)
-        deallocTypes()
+
 
 
 class PyString_FromStringAndSize_Test(PyString_TestCase):
@@ -282,26 +280,19 @@ class _PyString_Resize_Test(PyString_TestCase):
 
 class PyString_Size_Test(PyString_TestCase):
     
-    def testWorks(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testWorks(self, mapper, _):
         testString = "Oh, sure, Lisa -- some wonderful, magical animal." + self.getStringWithValues(0, 256)
         testLength = len(testString)
         
         strPtr = mapper.Store(testString)
         self.assertEquals(mapper.PyString_Size(strPtr), testLength)
-            
-        mapper.Dispose()
-        deallocTypes()
 
 
 class PyString_AsStringTest(TestCase):
     
-    def testWorks(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testWorks(self, mapper, _):
         strPtr = mapper.Store("You're fighting a business hippy. This is a hippy that understands the law of supply and demand.")
         strData = CPyMarshal.Offset(strPtr, Marshal.OffsetOf(PyStringObject, 'ob_sval'))
         self.assertEquals(mapper.PyString_AsString(strPtr), strData)
@@ -309,10 +300,6 @@ class PyString_AsStringTest(TestCase):
         notstrPtr = mapper.Store(object())
         self.assertEquals(mapper.PyString_AsString(notstrPtr), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
-        
-        mapper.Dispose()
-        deallocTypes()
-        
 
 
 class PyStringStoreTest(PyString_TestCase):

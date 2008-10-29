@@ -5,7 +5,7 @@ from tests.utils.cpython import MakeGetSetDef, MakeMethodDef, MakeNumSeqMapMetho
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
 from tests.utils.python25mapper import MakeAndAddEmptyModule
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 
 import System
 from System import IntPtr, WeakReference
@@ -33,18 +33,14 @@ RESULT_SSIZE = 999999
 
 class DispatchSetupTestCase(TestCase):
 
-    def assertTypeSpec(self, typeSpec, TestType):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+    @WithMapper
+    def assertTypeSpec(self, typeSpec, TestType, mapper, addToCleanUp):
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
+        addToCleanUp(deallocType)
         
         _type = mapper.Retrieve(typePtr)
         TestType(_type, mapper)
-        
-        mapper.Dispose()
-        deallocType()
-        deallocTypes()
-    
+
     def getUnaryFunc(self, result):
         calls = []
         def Unary(arg1):
@@ -957,10 +953,8 @@ class SequenceMappingInteractionTest(DispatchSetupTestCase):
 
 class NewInitDelTest(TestCase):
 
-    def testMethodTablePopulation(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testMethodTablePopulation(self, mapper, addToCleanUp):
         calls = []
         def test_tp_new(_, __, ___):
             calls.append("tp_new")
@@ -979,6 +973,7 @@ class NewInitDelTest(TestCase):
         }
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         _type = mapper.Retrieve(typePtr)
+        addToCleanUp(deallocType)
         
         table = _type._dispatcher.table
         table['klass.tp_new'](IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)
@@ -986,10 +981,6 @@ class NewInitDelTest(TestCase):
         self.assertEquals(calls, ['tp_new', 'tp_init'])
         self.assertFalse(table.has_key('klass.tp_dealloc'), 
             "tp_dealloc should be called indirectly, by the final decref of an instance")
-        
-        mapper.Dispose()
-        deallocType()
-        deallocTypes()
 
 
     def testDispatch(self):
@@ -1054,11 +1045,11 @@ class NewInitDelTest(TestCase):
         deallocTypes()
     
     
-    def testObjectSurvives(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-
+    @WithMapper
+    def testObjectSurvives(self, mapper, addToCleanUp):
         typePtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass'})
+        addToCleanUp(deallocType)
+        
         _type = mapper.Retrieve(typePtr)
         
         obj = _type()
@@ -1076,18 +1067,13 @@ class NewInitDelTest(TestCase):
         gcwait()
         self.assertEquals(objref.IsAlive, True, "object died before its time")
         self.assertEquals(mapper.Retrieve(objptr), objref.Target, "mapping broken")
-        
-        mapper.Dispose()
-        deallocType()
-        deallocTypes()
-    
-    
-    def testObjectDies(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
 
+
+    @WithMapper
+    def testObjectDies(self, mapper, addToCleanUp):
         typePtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass'})
         _type = mapper.Retrieve(typePtr)
+        addToCleanUp(deallocType)
         
         obj = _type()
         objref = WeakReference(obj, True)
@@ -1103,10 +1089,7 @@ class NewInitDelTest(TestCase):
         gcwait()
         gcwait()
         self.assertEquals(objref.IsAlive, False, "object didn't die")
-        
-        mapper.Dispose()
-        deallocType()
-        deallocTypes()
+
 
 
 class PropertiesTest(TestCase):
@@ -1247,10 +1230,8 @@ class MembersTest(TestCase):
         return deallocType
     
         
-    def testReadOnlyMember(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testReadOnlyMember(self, mapper, addToCleanUp):
         def TestType(mapper, _type):
             instance = _type()
             try:
@@ -1272,11 +1253,9 @@ class MembersTest(TestCase):
             gcwait()
             
         deallocType = self.assertMember(mapper, 'boing', MemberT.INT, OFFSET, 1, TestType)
-        mapper.Dispose()
-        deallocType()
-        deallocTypes()
-    
-    
+        addToCleanUp(deallocType)
+
+
     def getGetSetTypeTest(self, attr, suffix, offset, value, result):
         def TestType(mapper, _type):
             instance = _type()
@@ -1302,19 +1281,12 @@ class MembersTest(TestCase):
         return TestType
     
     
-    def assertTypeMember(self, name, value, result):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def assertTypeMember(self, name, value, result, mapper, addToCleanUp):
         attr = 'boing'
         TestType = self.getGetSetTypeTest(attr, name, OFFSET, value, result)
-        deallocType = self.assertMember(mapper, attr, getattr(MemberT, name.upper()), OFFSET, 0, TestType)
-    
-        mapper.Dispose()
-        deallocType()
-        deallocTypes()
-        
-        
+        addToCleanUp(self.assertMember(mapper, attr, getattr(MemberT, name.upper()), OFFSET, 0, TestType))
+
     def testReadWriteIntMember(self):
         self.assertTypeMember('int', 12345, 54321)
         
@@ -1330,12 +1302,13 @@ class MembersTest(TestCase):
 
 class InheritanceTest(TestCase):
     
-    def testBaseClass(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testBaseClass(self, mapper, addToCleanUp):
         basePtr, deallocBase = MakeTypePtr(mapper, {'tp_name': 'base', 'ob_type': mapper.PyType_Type, 'tp_base': IntPtr.Zero})
+        addToCleanUp(deallocBase)
+
         klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': basePtr})
+        addToCleanUp(deallocType)
         
         klass = mapper.Retrieve(klassPtr)
         self.assertEquals(issubclass(klass, mapper.Retrieve(basePtr)), True, "didn't notice klass's base class")
@@ -1343,40 +1316,33 @@ class InheritanceTest(TestCase):
         self.assertEquals(mapper.RefCount(basePtr), 3, "subtype did not keep reference to base")
         self.assertEquals(mapper.RefCount(mapper.PyBaseObject_Type), 2, "base type did not keep reference to its base (even if it wasn't set explicitly)")
         self.assertEquals(CPyMarshal.ReadPtrField(basePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type")
-        
-        mapper.Dispose()
-        deallocType()
-        deallocBase()
-        deallocTypes()
+
     
-    
-    def testInheritsMethodTable(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testInheritsMethodTable(self, mapper, addToCleanUp):
         basePtr, deallocBase = MakeTypePtr(mapper, {'tp_name': 'base', 'ob_type': mapper.PyType_Type})
+        addToCleanUp(deallocBase)
         klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': basePtr})
+        addToCleanUp(deallocType)
 
         klass = mapper.Retrieve(klassPtr)
         base = mapper.Retrieve(basePtr)
         for k, v in base._dispatcher.table.items():
             self.assertEquals(klass._dispatcher.table[k], v)
 
-        mapper.Dispose()
-        deallocType()
-        deallocBase()
-        deallocTypes()
     
-    
-    def testMultipleBases(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testMultipleBases(self, mapper, addToCleanUp):
         base1Ptr, deallocBase1 = MakeTypePtr(mapper, {'tp_name': 'base1', 'ob_type': mapper.PyType_Type, 'tp_base': IntPtr.Zero})
+        addToCleanUp(deallocBase1)
+
         base2Ptr, deallocBase2 = MakeTypePtr(mapper, {'tp_name': 'base2', 'ob_type': mapper.PyType_Type, 'tp_base': IntPtr.Zero})
+        addToCleanUp(deallocBase2)
+
         bases = (mapper.Retrieve(base1Ptr,), mapper.Retrieve(base2Ptr))
         basesPtr = mapper.Store(bases)
         klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': base1Ptr, 'tp_bases': basesPtr})
+        addToCleanUp(deallocType)
         
         klass = mapper.Retrieve(klassPtr)
         for base in bases:
@@ -1385,62 +1351,51 @@ class InheritanceTest(TestCase):
         self.assertEquals(mapper.RefCount(base2Ptr), 4, "subtype did not keep reference to bases")
         self.assertEquals(CPyMarshal.ReadPtrField(base1Ptr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type 1")
         self.assertEquals(CPyMarshal.ReadPtrField(base2Ptr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type 2")
-
-        mapper.Dispose()
-        deallocType()
-        deallocBase1()
-        deallocBase2()
-        deallocTypes()
     
     
-    def testInheritMethodTableFromMultipleBases(self):
+    @WithMapper
+    def testInheritMethodTableFromMultipleBases(self, mapper, addToCleanUp):
         "probably won't work quite right with identically-named base classes"
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
         base1Ptr, deallocBase1 = MakeTypePtr(mapper, {'tp_name': 'base1', 'ob_type': mapper.PyType_Type})
+        addToCleanUp(deallocBase1)
+
         base2Ptr, deallocBase2 = MakeTypePtr(mapper, {'tp_name': 'base2', 'ob_type': mapper.PyType_Type})
+        addToCleanUp(deallocBase2)
+
         bases = (mapper.Retrieve(base1Ptr,), mapper.Retrieve(base2Ptr))
         basesPtr = mapper.Store(bases)
+
         klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': base1Ptr, 'tp_bases': basesPtr})
+        addToCleanUp(deallocType)
         klass = mapper.Retrieve(klassPtr)
 
         for base in bases:
             for k, v in base._dispatcher.table.items():
                 self.assertEquals(klass._dispatcher.table[k], v)
 
-        mapper.Dispose()
-        deallocType()
-        deallocBase1()
-        deallocBase2()
-        deallocTypes()
-        
     
-    def testMultipleBasesIncludingBuiltin(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testMultipleBasesIncludingBuiltin(self, mapper, addToCleanUp):
         basePtr, deallocBase = MakeTypePtr(mapper, {'tp_name': 'base', 'ob_type': mapper.PyType_Type})
+        addToCleanUp(deallocBase)
+
         bases = (mapper.Retrieve(basePtr), int)
         basesPtr = mapper.Store(bases)
         klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': basePtr, 'tp_bases': basesPtr})
+        addToCleanUp(deallocType)
 
         klass = mapper.Retrieve(klassPtr)
         for base in bases:
             self.assertEquals(issubclass(klass, base), True)
 
         unknownInstancePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        addToCleanUp(lambda: Marshal.FreeHGlobal(unknownInstancePtr))
+
         CPyMarshal.WriteIntField(unknownInstancePtr, PyObject, "ob_refcnt", 1)
         CPyMarshal.WritePtrField(unknownInstancePtr, PyObject, "ob_type", klassPtr)
         unknownInstance = mapper.Retrieve(unknownInstancePtr)
         self.assertEquals(isinstance(unknownInstance, klass), True)
 
-        mapper.Dispose()
-        Marshal.FreeHGlobal(unknownInstancePtr)
-        deallocType()
-        deallocBase()
-        deallocTypes()
-        
     
     def testMetaclass(self):
         # this allocator is necessary because metaclass.tp_dealloc will use the mapper's allocator
@@ -1487,19 +1442,16 @@ class InheritanceTest(TestCase):
 
 class TypeDictTest(TestCase):
     
-    def testRetrieveAssignsDictTo_tp_dict(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+    @WithMapper
+    def testRetrieveAssignsDictTo_tp_dict(self, mapper, addToCleanUp):
         typePtr, deallocType = MakeTypePtr(mapper, {"tp_name": "klass"})
+        addToCleanUp(deallocType)
         
         _type = mapper.Retrieve(typePtr)
         _typeDictPtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_dict")
         self.assertEquals(mapper.Retrieve(_typeDictPtr), _type.__dict__)
-        
-        mapper.Dispose()
-        deallocType()
-        deallocTypes()
-        
+
+
 
 suite = makesuite(
     MethodsTest,

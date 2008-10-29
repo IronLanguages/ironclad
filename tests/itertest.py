@@ -1,6 +1,6 @@
 
 from tests.utils.runtest import makesuite, run
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 
 from tests.utils.cpython import MakeTypePtr, MakeNumSeqMapMethods
 from tests.utils.memory import CreateTypes
@@ -12,24 +12,17 @@ from Ironclad.Structs import Py_TPFLAGS, PySequenceMethods
 
 class IterationTest(TestCase):
     
-    def testPyObject_GetIter_Success(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testPyObject_GetIter_Success(self, mapper, _):
         testList = [1, 2, 3]
         listPtr = mapper.Store(testList)
         iterPtr = mapper.PyObject_GetIter(listPtr)
         iter = mapper.Retrieve(iterPtr)
         self.assertEquals(list(iter), testList, "bad iterator")
-            
-        mapper.Dispose()
-        deallocTypes()
-    
-    
-    def testPyObject_GetIter_NotIEnumerable(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+
+
+    @WithMapper
+    def testPyObject_GetIter_NotIEnumerable(self, mapper, _):
         class iterclass(object):
             def __iter__(self):
                 for i in range(10):
@@ -44,29 +37,19 @@ class IterationTest(TestCase):
         classPtr = mapper.Store(iterclass)
         self.assertEquals(mapper.PyObject_GetIter(classPtr), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
-        
-        mapper.Dispose()
-        deallocTypes()
-        
-    
-    def testPyObject_GetIter_Failure(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+
+
+    @WithMapper
+    def testPyObject_GetIter_Failure(self, mapper, _):
         testObj = object()
         objPtr = mapper.Store(testObj)
         iterPtr = mapper.PyObject_GetIter(objPtr)
         self.assertEquals(iterPtr, IntPtr.Zero, "returned iterator inappropriately")
         self.assertMapperHasError(mapper, TypeError)
-                
-        mapper.Dispose()
-        deallocTypes()
-    
-    
-    def testPyIter_Next_Success(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+
+
+    @WithMapper
+    def testPyIter_Next_Success(self, mapper, _):
         testList = [0, 1, 2]
         listPtr = mapper.Store(testList)
         iterPtr = mapper.PyObject_GetIter(listPtr)
@@ -79,27 +62,17 @@ class IterationTest(TestCase):
         
         noItemPtr = mapper.PyIter_Next(iterPtr)
         self.assertEquals(noItemPtr, IntPtr.Zero, "failed to stop iterating")
-            
-        mapper.Dispose()
-        deallocTypes()
-    
-    
-    def testPyIter_Next_NotAnIterator(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+
+
+    @WithMapper
+    def testPyIter_Next_NotAnIterator(self, mapper, _):
         notIterPtr = mapper.Store(object())
         self.assertEquals(mapper.PyIter_Next(notIterPtr), IntPtr.Zero, "bad return")
         self.assertMapperHasError(mapper, TypeError)
-            
-        mapper.Dispose()
-        deallocTypes()
-    
-    
-    def testPyIter_Next_ExplodingIterator(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+
+
+    @WithMapper
+    def testPyIter_Next_ExplodingIterator(self, mapper, _):
         class BorkedException(Exception):
             pass
         def GetNext():
@@ -118,16 +91,12 @@ class IterationTest(TestCase):
             self.assertEquals(str(e), "Release the hounds!", "unexpected message")
         else:
             self.fail("wrong exception")
-            
-        mapper.Dispose()
-        deallocTypes()
+
 
 class SequenceIterationTest(TestCase):
     
-    def testPySeqIter_New(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-    
+    @WithMapper
+    def testPySeqIter_New(self, mapper, _):
         class SomeSequence(object):
             def __getitem__(self, i):
                 if i < 5: return i * 10
@@ -151,18 +120,13 @@ class SequenceIterationTest(TestCase):
             mapper.LastException = None
             self.assertEquals(mapper.PySeqIter_New(notseqPtr), IntPtr.Zero)
             self.assertMapperHasError(mapper, TypeError)
-    
-        mapper.Dispose()
-        deallocTypes()
 
 
-    def testIterableClassWith__iter__whichCallsPySeqIter_New(self):
+    @WithMapper
+    def testIterableClassWith__iter__whichCallsPySeqIter_New(self, mapper, addToCleanUp):
         # original implementation used PythonOps.GetEnumerator;
         # the problem is that PythonOps.GetEnumerator will just call __iter__,
         # which will call PySeqIter_New, which will stack overflow in short order.
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
         def tp_iter(instancePtr):
             return mapper.PySeqIter_New(instancePtr)
         def sq_item(instancePtr, i):
@@ -172,7 +136,10 @@ class SequenceIterationTest(TestCase):
             return IntPtr.Zero
         def sq_length(instancePtr):
             return mapper.Store(3)
+
         seqPtr, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {"sq_item": sq_item, "sq_length": sq_length})
+        addToCleanUp(deallocSeq)
+
         typeSpec = {
             "tp_name": "klass",
             "tp_flags": Py_TPFLAGS.HAVE_CLASS | Py_TPFLAGS.HAVE_ITER,
@@ -180,18 +147,11 @@ class SequenceIterationTest(TestCase):
             "tp_as_sequence": seqPtr,
         }
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
+        addToCleanUp(deallocType)
+
         klass = mapper.Retrieve(typePtr)
         instance = klass()
-        
         self.assertEquals([x for x in instance], [0, 10, 20])
-    
-        mapper.Dispose()
-        deallocType()
-        deallocSeq()
-        deallocTypes()
-        
-        
-        
 
 
 suite = makesuite(
