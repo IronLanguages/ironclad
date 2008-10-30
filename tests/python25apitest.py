@@ -228,6 +228,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyErr_Print", (), 'None')
         self.assertFinds("PyErr_Fetch", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'None')
         self.assertFinds("PyErr_Restore", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'None')
+        self.assertFinds("PyErr_GivenExceptionMatches", ('IntPtr(111)', 'IntPtr(222)'), '3')
         
         self.assertFinds("PyType_GenericNew", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'IntPtr(999)')
         self.assertFinds("PyType_GenericAlloc", ('IntPtr(111)', '22'), 'IntPtr(999)')
@@ -298,6 +299,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyNumber_Check", ('IntPtr(111)',), '0')
         
         self.assertFinds("PyComplex_AsCComplex", ('IntPtr(123)',), 'Py_complex(1, 0)')
+        self.assertFinds("PyComplex_FromDoubles", ('1.5', '1.5'), 'IntPtr(123)')
         
         self.assertFinds("PyString_AsString", ('IntPtr(98765)',), 'IntPtr(12345)')
         self.assertFinds("PyString_FromString", ('IntPtr(333)',), 'IntPtr(444)')

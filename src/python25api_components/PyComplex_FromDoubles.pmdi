@@ -1,0 +1,3 @@
+IntPtr
+double real, double imag
+return IntPtr.Zero

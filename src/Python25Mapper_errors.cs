@@ -5,6 +5,7 @@ using Microsoft.Scripting.Runtime;
 using IronPython.Hosting;
 using IronPython.Runtime;
 using IronPython.Runtime.Operations;
+using IronPython.Runtime.Types;
 
 
 namespace Ironclad
@@ -104,6 +105,35 @@ namespace Ironclad
             this.ExecInModule(excCode, this.scratchModule);
             object newExc = this.scratchModule.GetVariable<object>(__name__);
             return this.Store(newExc);
+        }
+        
+        public override int
+        PyErr_GivenExceptionMatches(IntPtr givenPtr, IntPtr matchPtr)
+        {
+            try
+            {
+                // this could probably be implemented in C, if we had other parts of the API defined
+                if (matchPtr == givenPtr)
+                {
+                    return 1;
+                }
+                object given = this.Retrieve(givenPtr);
+                if (Builtin.isinstance(given, Builtin.BaseException))
+                {
+                    given = PythonCalls.Call(Builtin.type, new object[] {given});
+                }
+                // TODO if given is an OldClass, cast will fail and 0 will 
+                // be returned, even if it would have been a match
+                if (Builtin.issubclass((PythonType)given, this.Retrieve(matchPtr)))
+                {
+                    return 1;
+                }
+            }
+            catch
+            {
+                // something bad happened. let's say it... <coin toss> wasn't a match.
+            }
+            return 0;
         }
     }
 }

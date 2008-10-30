@@ -167,6 +167,15 @@ namespace Ironclad
             public IntPtr ob_type;
             public double ob_fval;
         }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        public struct PyComplexObject
+        {
+            public uint ob_refcnt;
+            public IntPtr ob_type;
+            public double real; // a Py_complex struct replace these fields in C,
+            public double imag; // but it's not very convenient here
+        }
         
         [StructLayout(LayoutKind.Sequential, Pack=1)]
         public struct PyTupleObject
