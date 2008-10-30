@@ -55,6 +55,12 @@ namespace Ironclad
             }
             return new Py_complex(real, imag);
         }
+        
+        public override IntPtr
+        PyComplex_FromDoubles(double real, double imag)
+        {
+            return this.Store(new Complex64(real, imag));
+        }
 
         public override int
         PyNumber_Check(IntPtr numberPtr)
@@ -185,6 +191,18 @@ namespace Ironclad
             CPyMarshal.WriteIntField(ptr, typeof(PyFloatObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyFloatObject), "ob_type", this.PyFloat_Type);
             CPyMarshal.WriteDoubleField(ptr, typeof(PyFloatObject), "ob_fval", value);
+            this.map.Associate(ptr, value);
+            return ptr;
+        }
+
+        private IntPtr
+        Store(Complex64 value)
+        {
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyComplexObject)));
+            CPyMarshal.WriteIntField(ptr, typeof(PyComplexObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyComplexObject), "ob_type", this.PyComplex_Type);
+            CPyMarshal.WriteDoubleField(ptr, typeof(PyComplexObject), "real", value.Real);
+            CPyMarshal.WriteDoubleField(ptr, typeof(PyComplexObject), "imag", value.Imag);
             this.map.Associate(ptr, value);
             return ptr;
         }

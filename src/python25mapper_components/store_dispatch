@@ -2,6 +2,7 @@ int
 bool
 double
 BigInteger
+Complex64
 string
 IDictionary
 PythonType

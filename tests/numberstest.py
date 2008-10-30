@@ -9,7 +9,7 @@ from System import Int32, Int64, IntPtr, UInt32, UInt64
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, Python25Mapper
-from Ironclad.Structs import Py_complex, PyObject, PyIntObject, PyFloatObject
+from Ironclad.Structs import Py_complex, PyObject, PyIntObject, PyFloatObject, PyComplexObject
         
 
 class PyBool_Test(TestCase):
@@ -279,8 +279,19 @@ class PyFloat_Test(TestCase):
 
 class PyComplex_Test(TestCase):
 
+    @WithMapper
+    def testStoreFloat(self, mapper, _):
+        for value in (0 + 0j, 1 + 3.3e33j, -3.3e-33 - 1j):
+            ptr = mapper.Store(value)
+            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEquals(CPyMarshal.ReadIntField(ptr, PyComplexObject, "ob_refcnt"), 1)
+            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyComplexObject, "ob_type"), mapper.PyComplex_Type)
+            self.assertEquals(CPyMarshal.ReadDoubleField(ptr, PyComplexObject, "real"), value.real)
+            self.assertEquals(CPyMarshal.ReadDoubleField(ptr, PyComplexObject, "imag"), value.imag)
+            mapper.DecRef(ptr)
+
     @WithMapper    
-    def testCComplex(self, mapper, _):
+    def testPyComplex_AsCComplex(self, mapper, _):
         values = ((1.5, (1.5, 0.0, None)),
                   (3 + 4j, (3.0, 4.0, None)),
                   (27, (27.0, 0.0, None)),
@@ -293,6 +304,11 @@ class PyComplex_Test(TestCase):
             self.assertEquals(Py_complex_.real, real_)
             self.assertEquals(Py_complex_.imag, imag_)
             self.assertMapperHasError(mapper, error)
+            
+    @WithMapper
+    def testPyComplex_FromDoubles(self, mapper, _):
+        self.assertEquals(mapper.Retrieve(mapper.PyComplex_FromDoubles(1, 2)), 1 + 2j)
+        
         
 
 class PyNumber_Test(TestCase):
