@@ -289,7 +289,7 @@ class PyString_Size_Test(PyString_TestCase):
         self.assertEquals(mapper.PyString_Size(strPtr), testLength)
 
 
-class PyString_AsStringTest(TestCase):
+class PyString_AsStringTest(PyString_TestCase):
     
     @WithMapper
     def testWorks(self, mapper, _):
@@ -301,6 +301,18 @@ class PyString_AsStringTest(TestCase):
         self.assertEquals(mapper.PyString_AsString(notstrPtr), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
 
+
+    @WithMapper
+    def testDoesNotActualiseString(self, mapper, _):
+        testString = "She's the oldest planet-cracker in existence"
+        strPtr = mapper.PyString_FromStringAndSize(IntPtr.Zero, len(testString))
+        
+        self.fillStringDataWithBytes(strPtr, self.byteArrayFromString("blah blah nonsense blah"))
+        mapper.PyString_AsString(strPtr) # this should NOT bake the string data
+        self.fillStringDataWithBytes(strPtr, self.byteArrayFromString(testString))
+        
+        self.assertEquals(mapper.Retrieve(strPtr), testString)
+        
 
 class PyStringStoreTest(PyString_TestCase):
     
