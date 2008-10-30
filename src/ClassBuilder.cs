@@ -20,7 +20,7 @@ namespace Ironclad
         public string tp_name = null;
 
         private readonly string[] EASY_TYPE_FIELDS = new string[] { "tp_call", "tp_repr", "tp_str" };
-        private readonly string[] MP_FIELDS = new string[] { "mp_subscript", "mp_ass_subscript" };
+        private readonly string[] MP_FIELDS = new string[] { "mp_subscript", "mp_ass_subscript", "mp_length" };
         private readonly string[] SQ_FIELDS = new string[] { "sq_item", "sq_ass_item", "sq_length", "sq_slice", "sq_ass_slice" };
         private readonly string[] NB_FIELDS = new string[] { 
             "nb_add", "nb_subtract", "nb_multiply", "nb_divide", "nb_true_divide", 
@@ -271,6 +271,12 @@ namespace Ironclad
                 this.methodTable.has_key(this.tablePrefix + "_setitem_mp_ass_subscript"))
             {
                 this.code.Append(CodeSnippets.SETITEM_CODE);
+            }
+
+            if (this.methodTable.has_key(this.tablePrefix + "_len_sq_length") ||
+                this.methodTable.has_key(this.tablePrefix + "_len_mp_length"))
+            {
+                this.code.Append(CodeSnippets.LEN_CODE);
             }
         }
 

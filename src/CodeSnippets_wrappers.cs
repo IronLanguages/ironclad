@@ -82,6 +82,15 @@ class {0}(_anon_superclass):
         raise IndexError('no idea how to index %s' % key)
 ";
 
+        public const string LEN_CODE = @"
+    def __len__(self):
+        if hasattr(self, '_len_sq_length'):
+            return self._len_sq_length()
+        if hasattr(self, '_len_mp_length'):
+            return self._len_mp_length()
+        raise Exception('no idea how to len() this')
+";
+
         public const string ITER_METHOD_CODE = @"
     def __iter__(self):
         return self._dispatcher.method_selfarg('{0}tp_iter', self)

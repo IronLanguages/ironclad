@@ -182,15 +182,24 @@ namespace Ironclad
             return 0;
         }
         
+        
         public override IntPtr
         PyList_GetSlice(IntPtr listPtr, int start, int stop)
         {
-            List list = (List)this.Retrieve(listPtr);
-            List sliced = (List)list[new Slice(start, stop)];
-            IntPtr result = this.Store(sliced);
-            return result;
+            try
+            {
+                List list = (List)this.Retrieve(listPtr);
+                List sliced = (List)list[new Slice(start, stop)];
+                return this.Store(sliced);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
         }
-                
+            
+            
         private void
         ActualiseList(IntPtr ptr)
         {

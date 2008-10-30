@@ -259,7 +259,7 @@ namespace Ironclad
                     dgtType = typeof(CPython_ssizessizeobjargproc_Delegate);
                     break;
                 case "sq_length":
-                    name = "__len__";
+                    name = "_len_sq_length";
                     template = CodeSnippets.LENFUNC_METHOD_CODE;
                     dgtType = typeof(CPython_lenfunc_Delegate);
                     break;
@@ -274,6 +274,11 @@ namespace Ironclad
                     name = "_setitem_mp_ass_subscript";
                     template = CodeSnippets.OBJOBJARG_METHOD_CODE;
                     dgtType = typeof(CPython_objobjargproc_Delegate);
+                    break;
+                case "mp_length":
+                    name = "_len_mp_length";
+                    template = CodeSnippets.LENFUNC_METHOD_CODE;
+                    dgtType = typeof(CPython_lenfunc_Delegate);
                     break;
                     
                 // b0rked

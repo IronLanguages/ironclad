@@ -93,9 +93,6 @@ namespace Ironclad
             this.InheritPtrField(typePtr, "tp_new");
             this.InheritPtrField(typePtr, "tp_dealloc");
             this.InheritPtrField(typePtr, "tp_free");
-            this.InheritPtrField(typePtr, "tp_print");
-            this.InheritPtrField(typePtr, "tp_repr");
-            this.InheritPtrField(typePtr, "tp_str");
             this.InheritPtrField(typePtr, "tp_doc");
             this.InheritPtrField(typePtr, "tp_call");
             this.InheritPtrField(typePtr, "tp_as_number");

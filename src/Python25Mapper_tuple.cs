@@ -46,6 +46,22 @@ namespace Ironclad
             return CPyMarshal.ReadIntField(tuplePtr, typeof(PyTupleObject), "ob_size");
         }
         
+        public override IntPtr
+        PyTuple_GetSlice(IntPtr tuplePtr, int start, int stop)
+        {
+            try
+            {
+                PythonTuple tuple = (PythonTuple)this.Retrieve(tuplePtr);
+                PythonTuple sliced = (PythonTuple)tuple[new Slice(start, stop)];
+                return this.Store(sliced);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+        
         private IntPtr
         CreateTuple(int size)
         {

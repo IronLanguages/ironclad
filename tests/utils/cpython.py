@@ -213,6 +213,7 @@ NUMSEQMAP_METHODS = {
     "sq_ass_slice": CPython_ssizessizeobjargproc_Delegate,
     "sq_length": CPython_lenfunc_Delegate,
     
+    "mp_length": CPython_lenfunc_Delegate,
     "mp_subscript": CPython_binaryfunc_Delegate,
     "mp_ass_subscript": CPython_objobjargproc_Delegate,
 }
