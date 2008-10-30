@@ -19,7 +19,7 @@ namespace Ironclad
         public string __module__ = null;
         public string tp_name = null;
 
-        private readonly string[] EASY_TYPE_FIELDS = new string[] { "tp_call", "tp_repr", "tp_str" };
+        private readonly string[] EASY_TYPE_FIELDS = new string[] { "tp_call", "tp_repr", "tp_str", "tp_compare", "tp_hash" };
         private readonly string[] MP_FIELDS = new string[] { "mp_subscript", "mp_ass_subscript", "mp_length" };
         private readonly string[] SQ_FIELDS = new string[] { "sq_item", "sq_ass_item", "sq_length", "sq_slice", "sq_ass_slice" };
         private readonly string[] NB_FIELDS = new string[] { 

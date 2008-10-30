@@ -279,6 +279,25 @@ class SimpleDispatchTest(DispatchTestCase):
              ('_cleanup', (OBJ_PTR, ARG_PTR, RESULT_PTR))
             ])
     
+    def testDispatch_method_hashfunc(self):
+        self.assertDispatcherMethodWithResult(
+            'method_hashfunc', RESULT_INT, (NAME, OBJ),
+            [('_store', (OBJ,)),
+             (NAME, (OBJ_PTR,)), 
+             ('_return', (RESULT_INT,)),
+             ('_cleanup', (OBJ_PTR,))
+            ])
+    
+    def testDispatch_method_cmpfunc(self):
+        self.assertDispatcherMethodWithResult(
+            'method_cmpfunc', RESULT_INT, (NAME, OBJ, ARG),
+            [('_store', (OBJ,)),
+             ('_store', (ARG,)),
+             (NAME, (OBJ_PTR, ARG_PTR)), 
+             ('_return', (RESULT_INT,)),
+             ('_cleanup', (OBJ_PTR, ARG_PTR))
+            ])
+    
     def testDispatch_method_ssizeobjarg(self):
         self.assertDispatcherMethodWithResult(
             'method_ssizeobjarg', RESULT_INT, (NAME, OBJ, SSIZE, ARG),

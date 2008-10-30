@@ -363,6 +363,62 @@ class RichCompareTest(DispatchSetupTestCase):
         self.assertTypeSpec(typeSpec, TestType)
 
 
+class HashTest(DispatchSetupTestCase):
+    
+    def testHash(self):
+        func, calls_cfunc = self.getUnaryFunc(RESULT_INT)
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_hash": func
+        }
+        result = object()
+        dispatch, calls_dispatch = self.getBinaryFunc(result)
+        
+        def TestType(_type, _):
+            instance = _type()
+            _type._dispatcher.method_hashfunc = dispatch
+            self.assertCalls(
+                instance.__hash__, (tuple(), {}), calls_dispatch, 
+                ("klass.__hash__", instance), result)
+            
+            cfunc = _type._dispatcher.table["klass.__hash__"]
+            self.assertCalls(
+                cfunc, ((ARG1_PTR,), {}), calls_cfunc, (ARG1_PTR,), RESULT_INT)
+            
+            del instance
+            gcwait()
+            
+        self.assertTypeSpec(typeSpec, TestType)
+
+
+class CompareTest(DispatchSetupTestCase):
+    
+    def testCmp(self):
+        func, calls_cfunc = self.getBinaryFunc(RESULT_INT)
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_compare": func
+        }
+        result = object()
+        dispatch, calls_dispatch = self.getTernaryFunc(result)
+        
+        def TestType(_type, _):
+            instance, arg = _type(), object()
+            _type._dispatcher.method_cmpfunc = dispatch
+            self.assertCalls(
+                instance.__cmp__, ((arg,), {}), calls_dispatch, 
+                ("klass.__cmp__", instance, arg), result)
+            
+            cfunc = _type._dispatcher.table["klass.__cmp__"]
+            self.assertCalls(
+                cfunc, ((ARG1_PTR, ARG2_PTR), {}), calls_cfunc, (ARG1_PTR, ARG2_PTR), RESULT_INT)
+            
+            del instance
+            gcwait()
+            
+        self.assertTypeSpec(typeSpec, TestType)
+
+
 class NumberTest(DispatchSetupTestCase):
     
     def assertUnaryNumberMethod(self, slotName, methodName):
@@ -1520,6 +1576,8 @@ suite = makesuite(
     CallTest,
     IterTest,
     RichCompareTest,
+    HashTest,
+    CompareTest,
     NumberTest,
     SequenceTest,
     MappingTest,
