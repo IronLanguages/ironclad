@@ -6,6 +6,7 @@ using Ironclad.Structs;
 
 using Microsoft.Scripting;
 
+using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
 namespace Ironclad
@@ -85,7 +86,10 @@ namespace Ironclad
         {
             try
             {
-                string s = (string)this.Retrieve(strPtr);
+                if (CPyMarshal.ReadPtrField(strPtr, typeof(PyObject), "ob_type") != this.PyString_Type)
+                {
+                    throw PythonOps.TypeError("PyString_AsString: not a string");
+                }
                 return CPyMarshal.Offset(strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
             }
             catch (Exception e)

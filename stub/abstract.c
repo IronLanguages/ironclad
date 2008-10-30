@@ -19,6 +19,22 @@ null_error(void)
 }
 
 int
+PyObject_Cmp(PyObject *o1, PyObject *o2, int *result)
+{
+	int r;
+
+	if (o1 == NULL || o2 == NULL) {
+		null_error();
+		return -1;
+	}
+	r = PyObject_Compare(o1, o2);
+	if (PyErr_Occurred())
+		return -1;
+	*result = r;
+	return 0;
+}
+
+int
 PyObject_AsCharBuffer(PyObject *obj,
 			  const char **buffer,
 			  Py_ssize_t *buffer_len)
