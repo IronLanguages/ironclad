@@ -157,6 +157,29 @@ class TupleTest(TestCase):
         Marshal.FreeHGlobal(typeBlock)
 
 
+    @WithMapper
+    def testPyTuple_GetSlice(self, mapper, _):
+        def TestSlice(originalTuplePtr, start, stop):
+            newTuplePtr = mapper.PyTuple_GetSlice(originalTuplePtr, start, stop)
+            self.assertMapperHasError(mapper, None)
+            self.assertEquals(mapper.Retrieve(newTuplePtr), mapper.Retrieve(originalTuplePtr)[start:stop], "bad slice")
+            mapper.DecRef(newTuplePtr)
+        
+        tuplePtr = mapper.Store((0, 1, 2, 3, 4, 5, 6, 7))
+        slices = (
+            (3, 4), (2, -1), (-5, -4), (5, 200), (999, 1000)
+        )
+        for (start, stop) in slices:
+            TestSlice(tuplePtr, start, stop)
+            
+         
+    @WithMapper
+    def testPyTuple_GetSlice_error(self, mapper, _):
+        self.assertEquals(mapper.PyTuple_GetSlice(mapper.Store(object()), 1, 2), IntPtr.Zero)
+        self.assertMapperHasError(mapper, TypeError)
+
+
+
 suite = makesuite(
     PyTuple_Type_Test,
     TupleTest,

@@ -347,6 +347,7 @@ class ListFunctionsTest(TestCase):
     def testPyList_GetSlice(self, mapper, _):
         def TestSlice(originalListPtr, start, stop):
             newListPtr = mapper.PyList_GetSlice(originalListPtr, start, stop)
+            self.assertMapperHasError(mapper, None)
             self.assertEquals(mapper.Retrieve(newListPtr), mapper.Retrieve(originalListPtr)[start:stop], "bad slice")
             mapper.DecRef(newListPtr)
         
@@ -356,8 +357,15 @@ class ListFunctionsTest(TestCase):
         )
         for (start, stop) in slices:
             TestSlice(listPtr, start, stop)
-
-
+            
+         
+    @WithMapper
+    def testPyList_GetSlice_error(self, mapper, _):
+        self.assertEquals(mapper.PyList_GetSlice(mapper.Store(object()), 1, 2), IntPtr.Zero)
+        self.assertMapperHasError(mapper, TypeError)
+        
+        
+        
 suite = makesuite(
     PyList_Type_Test,
     ListFunctionsTest,

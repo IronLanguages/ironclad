@@ -755,9 +755,9 @@ class SequenceTest(DispatchSetupTestCase):
             _type._dispatcher.method_lenfunc = dispatch
             self.assertCalls(
                 instance.__len__, (tuple(), {}), calls_dispatch,
-                ("klass.__len__", instance), result)
+                ("klass._len_sq_length", instance), result)
             
-            cfunc = _type._dispatcher.table["klass.__len__"]
+            cfunc = _type._dispatcher.table["klass._len_sq_length"]
             self.assertCalls(
                 cfunc, ((ARG1_PTR,), {}), calls_cfunc, (ARG1_PTR,), RESULT_SSIZE)
             
@@ -822,6 +822,34 @@ class MappingTest(DispatchSetupTestCase):
             del instance
             gcwait()
             
+        self.assertTypeSpec(typeSpec, TestType)
+        deallocMapping()
+    
+    
+    def testLen(self):
+        lenfunc, calls_cfunc = self.getUnaryFunc(RESULT_SSIZE)
+        mappingPtr, deallocMapping = MakeNumSeqMapMethods(PyMappingMethods, {"mp_length": lenfunc})
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_as_mapping": mappingPtr,
+        }
+        result = object()
+        dispatch, calls_dispatch = self.getBinaryFunc(result)
+        
+        def TestType(_type, _):
+            instance = _type()
+            _type._dispatcher.method_lenfunc = dispatch
+            self.assertCalls(
+                instance.__len__, (tuple(), {}), calls_dispatch,
+                ("klass._len_mp_length", instance), result)
+            
+            cfunc = _type._dispatcher.table["klass._len_mp_length"]
+            self.assertCalls(
+                cfunc, ((ARG1_PTR,), {}), calls_cfunc, (ARG1_PTR,), RESULT_SSIZE)
+            
+            del instance
+            gcwait()
+
         self.assertTypeSpec(typeSpec, TestType)
         deallocMapping()
 
@@ -890,6 +918,7 @@ class SequenceMappingInteractionTest(DispatchSetupTestCase):
         deallocSequences()
         deallocMapping()
     
+    
     def testAllSortsOfSubscriptAssignmentAtOnce(self):
         calls = []
         
@@ -902,7 +931,7 @@ class SequenceMappingInteractionTest(DispatchSetupTestCase):
             return 0
         
         def sq_length(_):
-            # must be defined for slicing to work; don't care about calls tho
+            # must be defined for slicing to work; don't care about calls atm
             return 10
         
         def mp_ass_subscript(instancePtr, objPtr1, objPtr2):
@@ -950,7 +979,39 @@ class SequenceMappingInteractionTest(DispatchSetupTestCase):
         deallocSequences()
         deallocMapping()
 
-
+    
+    def testPrefersSequenceLength(self):
+        calls = []
+        
+        def sq_length(instancePtr):
+            calls.append(("sq_length", instancePtr))
+            return 123
+        
+        def mp_length(instancePtr):
+            calls.append(("mp_length", instancePtr))
+            return 456
+            
+        sequencesPtr, deallocSequences = MakeNumSeqMapMethods(
+            PySequenceMethods, {"sq_length": sq_length})
+        mappingPtr, deallocMapping = MakeNumSeqMapMethods(
+            PyMappingMethods, {"mp_length": mp_length})
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_as_mapping": mappingPtr,
+            "tp_as_sequence": sequencesPtr,
+        }
+        
+        def TestType(_type, mapper):
+            instance = _type()
+            instancePtr = mapper.Store(instance)
+            self.assertEquals(len(instance), 123)
+            self.assertEquals(calls, [("sq_length", instancePtr)])
+            
+        self.assertTypeSpec(typeSpec, TestType)
+        deallocSequences()
+        deallocMapping()
+        
+        
 class NewInitDelTest(TestCase):
 
     @WithMapper

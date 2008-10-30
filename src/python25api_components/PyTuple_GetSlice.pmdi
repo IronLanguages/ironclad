@@ -1,0 +1,3 @@
+IntPtr
+IntPtr tuplePtr, int start, int stop
+return IntPtr.Zero
