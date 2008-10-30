@@ -66,4 +66,10 @@ namespace Ironclad
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int CPython_inquiry_Delegate(IntPtr self);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int CPython_hashfunc_Delegate(IntPtr self);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int CPython_cmpfunc_Delegate(IntPtr self, IntPtr other);
 }

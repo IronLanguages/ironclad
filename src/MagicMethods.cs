@@ -26,6 +26,16 @@ namespace Ironclad
                     template = CodeSnippets.VARARGS_KWARGS_METHOD_CODE;
                     dgtType = typeof(CPythonVarargsKwargsFunction_Delegate);
                     break;
+                case "tp_hash":
+                    name = "__hash__";
+                    template = CodeSnippets.HASH_METHOD_CODE;
+                    dgtType = typeof(CPython_hashfunc_Delegate);
+                    break;
+                case "tp_compare":
+                    name = "__cmp__";
+                    template = CodeSnippets.COMPARE_METHOD_CODE;
+                    dgtType = typeof(CPython_cmpfunc_Delegate);
+                    break;
 
                 // PyNumberMethods
                 case "nb_add":

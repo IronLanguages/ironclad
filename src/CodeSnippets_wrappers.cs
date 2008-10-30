@@ -210,6 +210,18 @@ class {0}(_anon_superclass):
         return self._dispatcher.method_richcmp('{0}tp_richcompare', self, other, 5)
 ";
 
+        public const string COMPARE_METHOD_CODE = @"
+    def {0}(self, other):
+        '''{1}'''
+        return self._dispatcher.method_cmpfunc('{2}{0}', self, other)
+";
+
+        public const string HASH_METHOD_CODE = @"
+    def {0}(self):
+        '''{1}'''
+        return self._dispatcher.method_hashfunc('{2}{0}', self)
+";
+
         public const string NOARGS_FUNCTION_CODE = @"
 def {0}():
     '''{1}'''
