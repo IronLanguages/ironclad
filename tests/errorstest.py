@@ -26,16 +26,6 @@ class LastExceptionTest(TestCase):
 
 class ErrFunctionsTest(TestCase):
 
-    @WithMapper
-    def testPyErr_SetString_WithNull(self, mapper, _):
-        msg = "You froze your tears and made a dagger"
-        mapper.PyErr_SetString(IntPtr.Zero, msg)
-
-        self.assertEquals(type(mapper.LastException), System.Exception,
-                          "failed to set exception")
-        self.assertEquals(mapper.LastException.Message, msg,
-                          "set wrong exception message")
-
 
     @WithMapper
     def testPyErr_Occurred(self, mapper, _):
@@ -85,6 +75,13 @@ class ErrFunctionsTest(TestCase):
 
 
     @WithMapper
+    def testPyErr_RestoreErrorNoValue(self, mapper, addToCleanUp):
+        mapper.PyErr_Restore(mapper.Store(IndexError), IntPtr.Zero, IntPtr.Zero)
+        self.assertEquals(type(mapper.LastException), IndexError)
+        self.assertEquals(mapper.LastException.args, tuple())
+
+
+    @WithMapper
     def testPyErr_FetchRestoreNoError(self, mapper, addToCleanUp):
         space = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 3)
         addToCleanUp(lambda: Marshal.FreeHGlobal(space))
@@ -105,6 +102,7 @@ class ErrFunctionsTest(TestCase):
         tbPtr = CPyMarshal.ReadPtr(tbPtrPtr)
         self.assertEquals(tbPtr, IntPtr.Zero)
         
+        mapper.LastException = Exception("make sure Restore null clears error")
         mapper.PyErr_Restore(typePtr, valuePtr, tbPtr)
         self.assertEquals(mapper.LastException, None)
 
@@ -160,13 +158,13 @@ class ErrFunctionsTest(TestCase):
         self.assertMatch(mapper, 'whatever', str, 0)
 
 
-    @WithMapper
-    def assertSetStringSetsCorrectError(self, name, mapper, _):
+    def assertRestoreSetsCorrectError(self, mapper, name):
         errorPtr = mapper.GetAddress("PyExc_" + name)
         self.assertNotEquals(errorPtr, IntPtr.Zero, "failed to find %s" % name)
 
         msg = "I can has meme?"
-        mapper.PyErr_SetString(errorPtr, msg)
+        mapper.LastException = None
+        mapper.PyErr_Restore(errorPtr, mapper.Store(msg), IntPtr.Zero)
         try:
             raise mapper.LastException
         except BaseException, e:
@@ -176,7 +174,8 @@ class ErrFunctionsTest(TestCase):
             self.fail("got no exception")
 
 
-    def testSetsMostErrors(self):
+    @WithMapper
+    def testSetsMostErrors(self, mapper, _):
         errors = (
             "BaseException",
             "Exception",
@@ -226,7 +225,7 @@ class ErrFunctionsTest(TestCase):
 
         )
         for error in errors:
-            self.assertSetStringSetsCorrectError(error)
+            self.assertRestoreSetsCorrectError(mapper, error)
         
         # TODO: the following errors are a hassle to construct, and are being ignored for now:
         #

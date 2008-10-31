@@ -12,20 +12,6 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        public override void
-        PyErr_SetString(IntPtr excTypePtr, string message)
-        {
-            if (excTypePtr == IntPtr.Zero)
-            {
-                this.LastException = new Exception(message);
-            }
-            else
-            {
-                object excType = this.Retrieve(excTypePtr);
-                this.LastException = PythonCalls.Call(excType, new object[1] { message });
-            }
-        }
-
         public override IntPtr
         PyErr_Occurred()
         {
@@ -63,11 +49,21 @@ namespace Ironclad
         public override void
         PyErr_Restore(IntPtr typePtr, IntPtr valuePtr, IntPtr tbPtr)
         {
-            if (typePtr != IntPtr.Zero && valuePtr != IntPtr.Zero)
+            if (typePtr != IntPtr.Zero)
             {
-                this.LastException = PythonCalls.Call(this.Retrieve(typePtr), new object[] { this.Retrieve(valuePtr) });
+                object[] args = new object[0];
+                if (valuePtr != IntPtr.Zero)
+                {
+                    args = new object[] { this.Retrieve(valuePtr) };
+                    this.DecRef(valuePtr);
+                }
+                
+                this.LastException = PythonCalls.Call(this.Retrieve(typePtr), args);
                 this.DecRef(typePtr);
-                this.DecRef(valuePtr);
+            }
+            else
+            {
+                this.LastException = null;
             }
         }
 
