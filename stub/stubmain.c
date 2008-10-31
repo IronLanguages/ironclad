@@ -21,4 +21,5 @@
 #include "mysnprintf.c"
 #include "mystrtoul.c"
 #include "pystrtod.c"
+#include "errors.c"
 

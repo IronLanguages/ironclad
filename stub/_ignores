@@ -7,6 +7,11 @@ Py_BuildValue
 PyString_FromFormat
 PyString_FromFormatV
 
+PyErr_Format
+PyErr_SetObject
+PyErr_SetString
+PyErr_SetNone
+
 PyArg_Parse
 _PyArg_Parse_SizeT
 PyArg_ParseTuple
