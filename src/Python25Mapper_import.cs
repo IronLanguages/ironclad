@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 using IronPython.Hosting;
 using IronPython.Runtime;
+using IronPython.Runtime.Types;
 
 using Microsoft.Scripting.Hosting;
 using Microsoft.Scripting.Hosting.Providers;
@@ -103,10 +104,20 @@ namespace Ironclad
             urllib2.SetVariable("urlopen", new Object());
             urllib2.SetVariable("URLError", new Object());
 
+	    ScriptScope nosetester = this.CreateModule("numpy.testing.nosetester");
+	    PythonDictionary NoseTesterDict = new PythonDictionary();
+	    NoseTesterDict["bench"] = NoseTesterDict["test"] = "This has been patched and broken by ironclad";
+	    PythonType NoseTesterClass = new PythonType(this.scratchContext, "NoseTester", new PythonTuple(), NoseTesterDict);
+	    nosetester.SetVariable("NoseTester", NoseTesterClass);
+	    nosetester.SetVariable("import_nose", new Object());
+	    nosetester.SetVariable("run_module_suite", new Object());
+	    nosetester.SetVariable("get_package_name", new Object());
+	      
             // ctypeslib specifically handles ctypes being None
             ScriptScope sys = Python.GetSysModule(this.Engine);
             PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
             modules["ctypes"] = null;
+
         }
     }
 }
