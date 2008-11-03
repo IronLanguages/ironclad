@@ -1,10 +1,9 @@
+Ironclad's build process deserves a brief discussion. 
 
+32-BIT WINDOWS REQUIREMENTS:
 
-Ironclad's build process deserves a brief discussion. On 32-bit Windows, it 
-requires:
-
-* IronPython 2.0B5
-* mingw (including gcc and make)
+* IronPython 2.0 release candidate 1 (2.0.0.0)
+* mingw or cygwin (including gcc and make) 
 * pexports
 * nasm
 * .NET 2.0 Service Pack 1 (csc, specifically)
@@ -12,14 +11,26 @@ requires:
 * Python 2.5
 * msvcr71.dll (distributed with Python 2.5)
 
-On 32-bit Linux, requirements are:
+If you are using cygwin you should set the environment variable IRONCLAD_USE_CYGWIN to YES.
 
-* IronPython 2.0B5
+32-BIT LINUX REQUIREMENTS:
+
+* IronPython 2.0 release candidate 1 (2.0.0.0)
 * gcc and make
 * objdump
 * nasm
 * "recent" Mono (with gmcs compiler)
 * Python 2.5, with -dev package
+
+TESTING
+
+In order for all tests to run, numpy 1.2.1 must be installed - but this is not
+otherwise necessary. To convince numpy's tests to run nose must be installed.
+
+You should also ensure that IRONPYTHONPATH is set correctly. In particular, it
+should include the directory containing .pyd files.
+
+BUILDING
 
 Ironclad's build process is configured by the file Makefile.config in the top-
 level directory. Change the value of variables NET and OS appropriately.
@@ -37,4 +48,6 @@ Running make in the top-level directory should do the following:
 
 At this point, the project is built and may even be usable. However, make will 
 also build some test data, and run several tests; we expect all these to pass.
+
+
 

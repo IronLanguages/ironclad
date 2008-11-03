@@ -1,7 +1,11 @@
 import clr
-clr.AddReferenceToFile("build/ironclad.dll")
-clr.AddReferenceToFile("tests/data/testutils.dll")
-clr.AddReferenceToFile("ironpython/Microsoft.Scripting.dll")
-clr.AddReferenceToFile("ironpython/Microsoft.Scripting.Core.dll")
-clr.AddReferenceToFile("ironpython/IronPython.dll")
-clr.AddReferenceToFile("ironpython/IronPython.Modules.dll")
+import sys
+
+clr.AddReferenceToFileAndPath("build/ironclad.dll")
+clr.AddReferenceToFileAndPath("tests/data/testutils.dll")
+
+sys.path.insert(0, "ironpython")
+clr.AddReferenceToFile("Microsoft.Scripting.dll")
+clr.AddReferenceToFile("Microsoft.Scripting.Core.dll")
+clr.AddReferenceToFile("IronPython.dll")
+clr.AddReferenceToFile("IronPython.Modules.dll")
