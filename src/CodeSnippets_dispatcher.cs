@@ -5,11 +5,11 @@ namespace Ironclad
         public const string DISPATCHER_MODULE_CODE = @"
 def lock(f):
     def locked(*args, **kwargs):
-        MonitorEnter(Dispatcher._lock)
+        EnsureGIL();
         try:
             return f(*args, **kwargs)
         finally:
-            MonitorExit(Dispatcher._lock)
+            ReleaseGIL();
     return locked
 
 Null = object()
@@ -20,7 +20,6 @@ NullPtr = IntPtr(0)
 # adding new dispatch methods.
 
 class Dispatcher(object):
-    _lock = object() # this is effectively the GIL
 
     def __init__(self, mapper, table):
         self.mapper = mapper

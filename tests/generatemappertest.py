@@ -262,7 +262,7 @@ namespace Ironclad
 FILL_TYPES = """
 
 PyFoo_Type TypeCache.Foo {"tp_init": "SomeInitMethod", "tp_iter": "SomeIterMethod"}
-PyBar_Type TypeCache.Bar {"tp_init": "SomeOtherInitMethod", "tp_as_number": True}
+PyBar_Type TypeCache.Bar {"tp_init": "SomeOtherInitMethod", "tp_as_number": "NumberSetupMethod"}
 PyBaz_Type TypeCache.Baz
 """
 
@@ -285,7 +285,7 @@ namespace Ironclad
         {
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetAddress("SomeOtherInitMethod"));
-            this.AddDefaultNumberMethods(ptr);
+            this.NumberSetupMethod(ptr);
             this.map.Associate(ptr, TypeCache.Bar);
         }
 

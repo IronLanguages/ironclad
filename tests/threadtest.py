@@ -4,9 +4,16 @@ from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.gc import gcwait
 
 from System import IntPtr
+from System.Reflection import BindingFlags
 from System.Threading import AutoResetEvent, Monitor, Thread, ThreadStart
 
 from Ironclad import Python25Mapper
+
+
+def GetGIL(mapper):    
+    _gilField = mapper.GetType().GetMember(
+        "dispatcherLock", BindingFlags.NonPublic | BindingFlags.Instance)[0];
+    return _gilField.GetValue(mapper);
 
 
 class PyThread_functions_Test(TestCase):
@@ -157,7 +164,7 @@ class PyEvalGILThreadTest(TestCase):
 
     @WithMapper
     def testMultipleSaveRestoreOneThread(self, mapper, _):
-        lock = mapper.DispatcherModule.Dispatcher._lock
+        lock = GetGIL(mapper)
         
         mapper.PyGILState_Ensure()
         self.assertLock(lock, True)
@@ -175,7 +182,7 @@ class PyEvalGILThreadTest(TestCase):
     
     @WithMapper
     def testMultipleSaveRestoreMultiThread(self, mapper, _):       # order of execution (intended)
-        lock = mapper.DispatcherModule.Dispatcher._lock
+        lock = GetGIL(mapper)
     
         oneThreadActed = AutoResetEvent(False)
         anotherThreadActed = AutoResetEvent(False)

@@ -3,9 +3,9 @@ PyType_Type TypeCache.PythonType
 PyNone_Type TypeCache.None
 PySlice_Type Builtin.slice {"tp_dealloc": "PySlice_Dealloc"}
 PyFile_Type TypeCache.PythonFile  {"tp_dealloc": "PyFile_Dealloc"}
-PyInt_Type TypeCache.Int32 {"tp_as_number": True}
-PyLong_Type TypeCache.BigInteger {"tp_as_number": True}
-PyFloat_Type TypeCache.Double {"tp_as_number": True}
+PyInt_Type TypeCache.Int32 {"tp_as_number": "AddNumberMethodsWithIndex"}
+PyLong_Type TypeCache.BigInteger {"tp_as_number": "AddNumberMethodsWithIndex"}
+PyFloat_Type TypeCache.Double {"tp_as_number": "AddNumberMethodsWithoutIndex"}
 PyComplex_Type TypeCache.Complex64
 PyCObject_Type typeof(OpaquePyCObject) {"tp_dealloc": "PyCObject_Dealloc"}
 PyDict_Type TypeCache.Dict

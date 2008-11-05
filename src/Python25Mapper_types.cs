@@ -125,7 +125,7 @@ namespace Ironclad
         }
 
         private void
-        AddDefaultNumberMethods(IntPtr typePtr)
+        AddNumberMethodsWithoutIndex(IntPtr typePtr)
         {
             int nmSize = Marshal.SizeOf(typeof(PyNumberMethods));
             IntPtr nmPtr = this.allocator.Alloc(nmSize);
@@ -136,6 +136,19 @@ namespace Ironclad
             CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_float", this.GetAddress("PyNumber_Float"));
 
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_as_number", nmPtr);
+        }
+        
+        private void
+        AddNumberMethodsWithIndex(IntPtr typePtr)
+        {
+            this.AddNumberMethodsWithoutIndex(typePtr);
+            IntPtr nmPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_as_number");
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_index", this.GetAddress("PyNumber_Index"));
+            
+            Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
+            flags |= Py_TPFLAGS.HAVE_INDEX;
+            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
+            
         }
         
         public void
