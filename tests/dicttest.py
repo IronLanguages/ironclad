@@ -171,8 +171,66 @@ class DictTest(TestCase):
         self.assertEquals(klass.__name__, 'klass', "failed")
 
 
+class PyDict_Next_Test(TestCase):
+
+    @WithMapper
+    def testEmptyDict(self, mapper, addDealloc):
+        posPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
+        addDealloc(lambda: Marshal.FreeHGlobal(posPtr))
+        CPyMarshal.WriteInt(posPtr, 0)
+        
+        self.assertEquals(mapper.PyDict_Next(mapper.Store({}), posPtr, IntPtr.Zero, IntPtr.Zero), 0)
+        self.assertMapperHasError(mapper, None)
+    
+    @WithMapper
+    def testNotADict(self, mapper, addDealloc):
+        posPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
+        addDealloc(lambda: Marshal.FreeHGlobal(posPtr))
+        CPyMarshal.WriteInt(posPtr, 0)
+        
+        self.assertEquals(mapper.PyDict_Next(mapper.Store(object()), posPtr, IntPtr.Zero, IntPtr.Zero), 0)
+        self.assertMapperHasError(mapper, TypeError)
+    
+    @WithMapper
+    def testIteratesSuccessfully(self, mapper, addDealloc):
+        posPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 3)
+        keyPtrPtr = CPyMarshal.Offset(posPtr, CPyMarshal.PtrSize)
+        valuePtrPtr = CPyMarshal.Offset(keyPtrPtr, CPyMarshal.PtrSize)
+        addDealloc(lambda: Marshal.FreeHGlobal(posPtr))
+        CPyMarshal.WriteInt(posPtr, 0)
+        
+        d = dict(a=1, b=2, c=3)
+        dPtr = mapper.Store(d)
+        result = {}
+        while mapper.PyDict_Next(dPtr, posPtr, keyPtrPtr, valuePtrPtr) != 0:
+            key = mapper.Retrieve(CPyMarshal.ReadPtr(keyPtrPtr))
+            value = mapper.Retrieve(CPyMarshal.ReadPtr(valuePtrPtr))
+            result[key] = value
+        
+        self.assertEquals(result, d)
+        
+            
+    @WithMapper
+    def testCanChangeValuesDuringIteration(self, mapper, addDealloc):
+        posPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 3)
+        keyPtrPtr = CPyMarshal.Offset(posPtr, CPyMarshal.PtrSize)
+        valuePtrPtr = CPyMarshal.Offset(keyPtrPtr, CPyMarshal.PtrSize)
+        addDealloc(lambda: Marshal.FreeHGlobal(posPtr))
+        CPyMarshal.WriteInt(posPtr, 0)
+        
+        d = dict(a=1, b=2, c=3)
+        dPtr = mapper.Store(d)
+        while mapper.PyDict_Next(dPtr, posPtr, keyPtrPtr, valuePtrPtr) != 0:
+            key = mapper.Retrieve(CPyMarshal.ReadPtr(keyPtrPtr))
+            value = mapper.Retrieve(CPyMarshal.ReadPtr(valuePtrPtr))
+            d[key] = value * 10
+        
+        self.assertEquals(d, dict(a=10, b=20, c=30))
+
+
 suite = makesuite(
     DictTest,
+    PyDict_Next_Test,
 )
 
 if __name__ == '__main__':

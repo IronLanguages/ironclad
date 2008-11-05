@@ -107,5 +107,45 @@ namespace Ironclad
         {
             return this.PyDict_Set(dictPtr, key, this.Retrieve(itemPtr));
         }
+        
+        
+        public override int
+        PyDict_Next(IntPtr dictPtr, IntPtr posPtr, IntPtr keyPtrPtr, IntPtr valuePtrPtr)
+        {
+            // note: this is not efficient, and assumes constant ordering of results from 
+            // KeyCollection.GetEnumerator. Storing an iterator would probably work,
+            // but we can't work out how to not leak it if iteration does not complete.
+            try
+            {
+                IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
+                IEnumerator keys = dict.Keys.GetEnumerator();
+                int pos = CPyMarshal.ReadInt(posPtr);
+                for (int i = 0; i <= pos; i++)
+                {
+                    if (!keys.MoveNext())
+                    {
+                        return 0;
+                    }
+                }
+
+                object key = keys.Current;
+                IntPtr keyPtr = this.Store(key);
+                this.RememberTempObject(keyPtr);
+                CPyMarshal.WritePtr(keyPtrPtr, keyPtr);
+                
+                IntPtr valuePtr = this.Store(dict[key]);
+                this.RememberTempObject(valuePtr);
+                CPyMarshal.WritePtr(valuePtrPtr, valuePtr);
+                
+                CPyMarshal.WriteInt(posPtr, pos + 1);
+                return 1;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return 0;
+            }
+        }
+        
     }
 }
