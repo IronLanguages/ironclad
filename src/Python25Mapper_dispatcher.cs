@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 
 using Microsoft.Scripting.Hosting;
@@ -19,15 +20,15 @@ namespace Ironclad
             }
         }
         
-        public delegate void SingleObjectArgDgt(object obj);
+        public delegate void VoidVoidDgt();
         
         private void CreateDispatcherModule()
-        {
+        {   
             PythonDictionary globals = new PythonDictionary();
             globals["IntPtr"] = typeof(IntPtr);
             globals["CPyMarshal"] = typeof(CPyMarshal);
-            globals["MonitorExit"] = new SingleObjectArgDgt(Monitor.Exit);
-            globals["MonitorEnter"] = new SingleObjectArgDgt(Monitor.Enter);
+            globals["EnsureGIL"] = new VoidVoidDgt(this.EnsureGIL);
+            globals["ReleaseGIL"] = new VoidVoidDgt(this.ReleaseGIL);
             globals["NullReferenceException"] = typeof(NullReferenceException);
             this.dispatcherModule = this.engine.CreateScope(globals);
             
@@ -35,7 +36,6 @@ namespace Ironclad
             this.ExecInModule(CodeSnippets.DISPATCHER_MODULE_CODE, this.dispatcherModule);
             
             this.dispatcherClass = this.dispatcherModule.GetVariable<object>("Dispatcher");
-            this.dispatcherLock = Builtin.getattr(this.scratchContext, this.dispatcherClass, "_lock");
         }
         
         private void StopDispatchingDeletes()

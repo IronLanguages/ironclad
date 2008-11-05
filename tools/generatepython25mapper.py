@@ -57,7 +57,7 @@ def run():
             _extra = eval(_input[-1])
             for (k, v) in _extra.items():
                 if k == "tp_as_number":
-                    _extra_snippets.append(FILL_TYPES_NUMBERS)
+                    _extra_snippets.append(FILL_TYPES_NUMBERS % v)
                 else:
                     _extra_snippets.append(FILL_TYPES_EXTRA_TEMPLATE % (k, v))
         _dict["extra"] = '\n'.join(_extra_snippets)
@@ -173,7 +173,7 @@ FILL_TYPES_TEMPLATE = """\
         }"""
 
 FILL_TYPES_NUMBERS = """\
-            this.AddDefaultNumberMethods(ptr);"""
+            this.%s(ptr);"""
 
 FILL_TYPES_EXTRA_TEMPLATE = """\
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "%s", this.GetAddress("%s"));"""

@@ -14,16 +14,17 @@ mod_blacklist = ['test_defchararray', 'test_memmap']
 class_blacklist = [
     'test_multiarray.TestStringCompare', # don't care about strings yet
     'test_multiarray.TestPickling', # don't care about pickling yet
-    'test_multiarray.TestClip', # seems to cause problems
     'test_multiarray.TestRecord', # record arrays
+    
 ]
 test_blacklist = [
-    'test_multiarray.TestTake.test_wrap', # hangs
-    'test_multiarray.TestTake.test_record_array', # record arrays
     'test_defmatrix.TestCtor.test_basic', # uses getframe
     'test_defmatrix.TestCtor.test_bmat_nondefault_str', # uses getframe
+    'test_multiarray.TestFromToFile.test_file', # meant to be disabled on windows
+    'test_multiarray.TestTake.test_record_array', # record arrays
     'test_multiarray.TestMethods.test_sort_order', # record arrays involved
     'test_multiarray.TestPutmask.test_record_array', # record arrays involved
+    'test_multiarray.TestResize.test_check_reference' # reference counting different in ironclad
 ]
 
 

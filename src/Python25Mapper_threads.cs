@@ -1,6 +1,8 @@
 using System;
 using System.Threading;
 
+using IronPython.Runtime;
+
 namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
@@ -81,7 +83,7 @@ namespace Ironclad
             threadLock.Increment();
             if (threadLock.Count == 1)
             {
-                Monitor.Exit(this.dispatcherLock);
+                this.ReleaseGIL();
                 return new IntPtr(1);
             }
             return IntPtr.Zero;
@@ -96,7 +98,7 @@ namespace Ironclad
             if (token != IntPtr.Zero || threadLock.Count == 0)
             {
                 threadLock.Reset();
-                Monitor.Enter(this.dispatcherLock);
+                this.EnsureGIL();
             }
         }
 
@@ -105,14 +107,45 @@ namespace Ironclad
         public override int
         PyGILState_Ensure()
         {
-            Monitor.Enter(this.dispatcherLock);
+            this.EnsureGIL();
             return 0;
         }
 
         public override void
         PyGILState_Release(int _)
         {
+            this.ReleaseGIL();
+        }
+        
+        /*
+        temporary debugging code
+        
+        public delegate int IntVoidDgt();
+        public int GetThreadId()
+        {
+            return Thread.CurrentThread.ManagedThreadId;
+        }
+        
+        public delegate void VoidStringDgt(string str);
+        public void WriteFlush(string info)
+        {
+            Console.WriteLine("{0} {1}", Stopwatch.GetTimestamp(), info);
+            Console.Out.Flush();
+        }*/
+        
+        public void
+        EnsureGIL()
+        {
+            Monitor.Enter(this.dispatcherLock);
+            //this.WriteFlush(String.Format("EnsureGIL ({1}) {0}", this.GetThreadId(), Builtin.id(this.dispatcherLock)));
+        }
+        
+        public void
+        ReleaseGIL()
+        {
+            //this.WriteFlush(String.Format("ReleaseGIL ({1}) {0}\n", this.GetThreadId(), Builtin.id(this.dispatcherLock)));
             Monitor.Exit(this.dispatcherLock);
         }
+        
     }
 }

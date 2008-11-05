@@ -156,7 +156,17 @@ class Types_Test(TestCase):
                 fieldPtr = CPyMarshal.ReadPtrField(nmPtr, PyNumberMethods, field)
                 self.assertNotEquals(fieldPtr, IntPtr.Zero)
                 self.assertEquals(fieldPtr, implementedFields[field])
-
+            
+            flags = CPyMarshal.ReadIntField(typePtr, PyTypeObject, "tp_flags")
+            hasIndex = bool(flags & int(Py_TPFLAGS.HAVE_INDEX))
+            if (_type != "PyFloat_Type"):
+                self.assertEquals(hasIndex, True)
+                fieldPtr = CPyMarshal.ReadPtrField(nmPtr, PyNumberMethods, "nb_index")
+                self.assertNotEquals(fieldPtr, IntPtr.Zero)
+                self.assertEquals(fieldPtr, mapper.GetAddress("PyNumber_Index"))
+            else:
+                self.assertEquals(hasIndex, False)
+                
 
     def assertMaps(self, mapper, func, ptr, refcnt):
         func(ptr)

@@ -53,7 +53,7 @@ namespace Ironclad
         
         private ScriptScope dispatcherModule;
         private object dispatcherClass;
-        private object dispatcherLock; // essentialy the GIL
+        private Object dispatcherLock; // essentially the GIL
 
         private bool alive = false;
         private InterestingPtrMap map = new InterestingPtrMap();
@@ -89,6 +89,8 @@ namespace Ironclad
 
         public Python25Mapper(string stubPath, ScriptEngine inEngine, IAllocator alloc)
         {
+            this.dispatcherLock = new Object();
+            
             this.engine = inEngine;
             this.allocator = alloc;
             

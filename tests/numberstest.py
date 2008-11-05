@@ -290,6 +290,7 @@ class PyComplex_Test(TestCase):
             self.assertEquals(CPyMarshal.ReadDoubleField(ptr, PyComplexObject, "imag"), value.imag)
             mapper.DecRef(ptr)
 
+
     @WithMapper    
     def testPyComplex_AsCComplex(self, mapper, _):
         values = ((1.5, (1.5, 0.0, None)),
@@ -304,7 +305,8 @@ class PyComplex_Test(TestCase):
             self.assertEquals(Py_complex_.real, real_)
             self.assertEquals(Py_complex_.imag, imag_)
             self.assertMapperHasError(mapper, error)
-            
+
+ 
     @WithMapper
     def testPyComplex_FromDoubles(self, mapper, _):
         self.assertEquals(mapper.Retrieve(mapper.PyComplex_FromDoubles(1, 2)), 1 + 2j)
@@ -335,6 +337,7 @@ class PyNumber_Test(TestCase):
             
             mapper.DecRef(valuePtr)
     
+    
     @WithMapper
     def assertBinaryOp(self, cpyName, ipyFunc, mapper, _):
         values = [-1, 4, 2, -3.5, (1, 2), [3, 4], set([-1]), 'hullo', object(), object]
@@ -360,6 +363,7 @@ class PyNumber_Test(TestCase):
                 
                 mapper.DecRef(iptr)
                 mapper.DecRef(jptr)
+    
     
     def testPyNumber_Absolute(self):
         self.assertUnaryOp("PyNumber_Absolute", abs)
