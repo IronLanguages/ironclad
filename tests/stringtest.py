@@ -295,7 +295,7 @@ class PyString_AsStringTest(PyString_TestCase):
     def testWorks(self, mapper, _):
         strPtr = mapper.Store("You're fighting a business hippy. This is a hippy that understands the law of supply and demand.")
         strData = CPyMarshal.Offset(strPtr, Marshal.OffsetOf(PyStringObject, 'ob_sval'))
-        self.assertEquals(mapper.PyString_AsString(strPtr), strData)
+        self.assertEquals(mapper.PyString_AsString(strPtr), self.dataPtrFromStrPtr(strPtr))
         
         notstrPtr = mapper.Store(object())
         self.assertEquals(mapper.PyString_AsString(notstrPtr), IntPtr.Zero)
@@ -309,6 +309,72 @@ class PyString_AsStringTest(PyString_TestCase):
         
         self.fillStringDataWithBytes(strPtr, self.byteArrayFromString("blah blah nonsense blah"))
         mapper.PyString_AsString(strPtr) # this should NOT bake the string data
+        self.fillStringDataWithBytes(strPtr, self.byteArrayFromString(testString))
+        
+        self.assertEquals(mapper.Retrieve(strPtr), testString)
+
+
+class PyString_AsStringAndSizeTest(PyString_TestCase):
+    
+    @WithMapper
+    def testWorksWithEmbeddedNulls(self, mapper, addDealloc):
+        dataPtrPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 2)
+        sizePtr = CPyMarshal.Offset(dataPtrPtr, CPyMarshal.PtrSize)
+        addDealloc(lambda: Marshal.FreeHGlobal(dataPtrPtr))
+        
+        testStr = "You're fighting a saber-toothed ferret." + self.getStringWithValues(0, 256)
+        strPtr = mapper.Store(testStr)
+        dataPtr = self.dataPtrFromStrPtr(strPtr)
+        self.assertEquals(mapper.PyString_AsStringAndSize(strPtr, dataPtrPtr, sizePtr), 0)
+        self.assertEquals(CPyMarshal.ReadPtr(dataPtrPtr), dataPtr)
+        self.assertEquals(CPyMarshal.ReadInt(sizePtr), len(testStr))
+        self.assertMapperHasError(mapper, None)
+        
+        self.assertEquals(mapper.PyString_AsStringAndSize(strPtr, dataPtrPtr, IntPtr.Zero), -1)
+        self.assertMapperHasError(mapper, TypeError)
+    
+    
+    @WithMapper
+    def testWorksWithoutEmbeddedNulls(self, mapper, addDealloc):
+        dataPtrPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 2)
+        sizePtr = CPyMarshal.Offset(dataPtrPtr, CPyMarshal.PtrSize)
+        addDealloc(lambda: Marshal.FreeHGlobal(dataPtrPtr))
+        
+        testStr = "You're fighting Ed the Undying." + self.getStringWithValues(1, 256)
+        strPtr = mapper.Store(testStr)
+        dataPtr = self.dataPtrFromStrPtr(strPtr)
+        self.assertEquals(mapper.PyString_AsStringAndSize(strPtr, dataPtrPtr, sizePtr), 0)
+        self.assertEquals(CPyMarshal.ReadPtr(dataPtrPtr), dataPtr)
+        self.assertEquals(CPyMarshal.ReadInt(sizePtr), len(testStr))
+        self.assertMapperHasError(mapper, None)
+        
+        CPyMarshal.Zero(dataPtrPtr, CPyMarshal.PtrSize * 2)
+        self.assertEquals(mapper.PyString_AsStringAndSize(strPtr, dataPtrPtr, IntPtr.Zero), 0)
+        self.assertEquals(CPyMarshal.ReadPtr(dataPtrPtr), dataPtr)
+        self.assertMapperHasError(mapper, None)
+
+        
+    @WithMapper
+    def testWorksWithNonString(self, mapper, addDealloc):
+        dataPtrPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 2)
+        sizePtr = CPyMarshal.Offset(dataPtrPtr, CPyMarshal.PtrSize)
+        addDealloc(lambda: Marshal.FreeHGlobal(dataPtrPtr))
+        
+        self.assertEquals(mapper.PyString_AsStringAndSize(mapper.Store(object()), dataPtrPtr, sizePtr), -1)
+        self.assertMapperHasError(mapper, TypeError)
+
+
+    @WithMapper
+    def testDoesNotActualiseString(self, mapper, addDealloc):
+        dataPtrPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 2)
+        sizePtr = CPyMarshal.Offset(dataPtrPtr, CPyMarshal.PtrSize)
+        addDealloc(lambda: Marshal.FreeHGlobal(dataPtrPtr))
+        
+        testString = "You find a frozen Mob Penguin."
+        strPtr = mapper.PyString_FromStringAndSize(IntPtr.Zero, len(testString))
+        
+        self.fillStringDataWithBytes(strPtr, self.byteArrayFromString("blah blah nonsense"))
+        mapper.PyString_AsStringAndSize(strPtr, dataPtrPtr, sizePtr) # this should NOT bake the string data
         self.fillStringDataWithBytes(strPtr, self.byteArrayFromString(testString))
         
         self.assertEquals(mapper.Retrieve(strPtr), testString)
@@ -353,6 +419,7 @@ suite = makesuite(
     _PyString_Resize_Test,
     PyString_Size_Test,
     PyString_AsStringTest,
+    PyString_AsStringAndSizeTest,
     PyStringStoreTest,
 )
 

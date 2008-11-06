@@ -99,6 +99,43 @@ namespace Ironclad
             }
         }
         
+        public override int
+        PyString_AsStringAndSize(IntPtr strPtr, IntPtr dataPtrPtr, IntPtr sizePtr)
+        {
+            try
+            {
+                if (CPyMarshal.ReadPtrField(strPtr, typeof(PyObject), "ob_type") != this.PyString_Type)
+                {
+                    throw PythonOps.TypeError("PyString_AsString: not a string");
+                }
+                
+                IntPtr dataPtr = CPyMarshal.Offset(strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+                CPyMarshal.WritePtr(dataPtrPtr, dataPtr);
+                
+                int length = CPyMarshal.ReadIntField(strPtr, typeof(PyStringObject), "ob_size");
+                if (sizePtr == IntPtr.Zero)
+                {
+                    for (int i = 0; i < length; ++i)
+                    {
+                        if (CPyMarshal.ReadByte(CPyMarshal.Offset(dataPtr, i)) == 0)
+                        {
+                            throw PythonOps.TypeError("PyString_AsStringAndSize: string contains embedded 0s, but sizePtr is null");
+                        }
+                    }
+                }
+                else
+                {
+                    CPyMarshal.WriteInt(sizePtr, length);
+                }
+                return 0;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
+        }
+        
         private int
         _PyString_Resize_Grow(IntPtr strPtrPtr, int newSize)
         {

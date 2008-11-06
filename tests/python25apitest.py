@@ -302,6 +302,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyComplex_FromDoubles", ('1.5', '1.5'), 'IntPtr(123)')
         
         self.assertFinds("PyString_AsString", ('IntPtr(98765)',), 'IntPtr(12345)')
+        self.assertFinds("PyString_AsStringAndSize", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)',), '123')
         self.assertFinds("PyString_FromString", ('IntPtr(333)',), 'IntPtr(444)')
         self.assertFinds("PyString_FromStringAndSize", ('IntPtr(98765)', '33'), 'IntPtr(12345)')
         self.assertFinds("PyString_Size", ('IntPtr(98765)',), '123')
