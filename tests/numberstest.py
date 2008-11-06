@@ -429,31 +429,39 @@ class PyNumber_Test(TestCase):
     
     @WithMapper
     def testPyNumber_Long(self, mapper, _):
-        values = [0, 12345, 123456789012345, 123.45]
+        values = [0, 12345, 123456789012345, 123.45, '123']
         values += map(float, values)
         for value in values:
             ptr = mapper.Store(value)
             _long = mapper.Retrieve(mapper.PyNumber_Long(ptr))
             self.assertEquals(_long, long(value), "converted wrong")
+            self.assertMapperHasError(mapper, None)
             mapper.DecRef(ptr)
         
-        badvalues = ['foo', object, object()]
+        badvalues = ['foo', object, object(), '123.4']
         for value in badvalues:
             ptr = mapper.Store(value)
             mapper.LastException = None
             self.assertEquals(mapper.PyNumber_Long(ptr), IntPtr.Zero)
-            self.assertMapperHasError(mapper, TypeError)
+            
+            error = None
+            try:
+                long(value)
+            except Exception, e:
+                error = type(e)
+            self.assertMapperHasError(mapper, error)
             mapper.DecRef(ptr)
         
     
     @WithMapper
     def testPyNumber_Float(self, mapper, _):
-        values = [0, 12345, 123456789012345, 123.45]
+        values = [0, 12345, 123456789012345, 123.45, "123.45"]
         values += map(float, values)
         for value in values:
             ptr = mapper.Store(value)
             _float = mapper.Retrieve(mapper.PyNumber_Float(ptr))
             self.assertEquals(_float, float(value), "converted wrong")
+            self.assertMapperHasError(mapper, None)
             mapper.DecRef(ptr)
         
         badvalues = ['foo', object, object()]
@@ -461,27 +469,38 @@ class PyNumber_Test(TestCase):
             ptr = mapper.Store(value)
             mapper.LastException = None
             self.assertEquals(mapper.PyNumber_Float(ptr), IntPtr.Zero)
-            self.assertMapperHasError(mapper, TypeError)
+            
+            error = None
+            try:
+                float(value)
+            except Exception, e:
+                error = type(e)
+            self.assertMapperHasError(mapper, error)
             mapper.DecRef(ptr)
     
     
     @WithMapper
     def testPyNumber_Int(self, mapper, _):        
-        values = [0, 12345, 123456789012345, 123.45]
+        values = [0, 12345, 123456789012345, 123.45, "123"]
         values += map(float, values)
         for value in values:
             ptr = mapper.Store(value)
             _int = mapper.Retrieve(mapper.PyNumber_Int(ptr))
             self.assertEquals(_int, int(value), "converted wrong")
+            self.assertMapperHasError(mapper, None)
             mapper.DecRef(ptr)
         
-        badvalues = ['foo', object, object()]
+        badvalues = ['foo', object, object(), "123.45"]
         for value in badvalues:
             ptr = mapper.Store(value)
-            mapper.LastException = None
             self.assertEquals(mapper.PyNumber_Int(ptr), IntPtr.Zero)
-            self.assertMapperHasError(mapper, TypeError)
             
+            error = None
+            try:
+                int(value)
+            except Exception, e:
+                error = type(e)
+            self.assertMapperHasError(mapper, error)
             mapper.DecRef(ptr)
         
     

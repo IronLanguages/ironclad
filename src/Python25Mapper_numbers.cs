@@ -82,12 +82,12 @@ namespace Ironclad
         {
             try
             {
-                int result = Converter.ConvertToInt32(this.Retrieve(numberPtr));
-                return this.Store(result);
+                return this.Store(PythonCalls.Call(TypeCache.Int32, new object[] {this.Retrieve(numberPtr)}));
             }
-            catch
+            catch (Exception e)
             {
-                return this.PyNumber_Long(numberPtr);
+                this.LastException = e;
+                return IntPtr.Zero;
             }
         }
 
@@ -96,8 +96,7 @@ namespace Ironclad
         {
             try
             {
-                BigInteger result = Converter.ConvertToBigInteger(this.Retrieve(numberPtr));
-                return this.Store(result);
+                return this.Store(PythonCalls.Call(TypeCache.BigInteger, new object[] {this.Retrieve(numberPtr)}));
             }
             catch (Exception e)
             {
@@ -111,8 +110,7 @@ namespace Ironclad
         {
             try
             {
-                double result = Converter.ConvertToDouble(this.Retrieve(numberPtr));
-                return this.Store(result);
+                return this.Store(PythonCalls.Call(TypeCache.Double, new object[] {this.Retrieve(numberPtr)}));
             }
             catch (Exception e)
             {
