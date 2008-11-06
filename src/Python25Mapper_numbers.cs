@@ -96,7 +96,17 @@ namespace Ironclad
         {
             try
             {
-                return this.Store(PythonCalls.Call(TypeCache.BigInteger, new object[] {this.Retrieve(numberPtr)}));
+                // see bugtest.py
+                object number = this.Retrieve(numberPtr);
+                if (number is string)
+                {
+                    string str = (string)number;
+                    if (str.Trim() == "")
+                    {
+                        throw PythonOps.ValueError("PyNumber_Long: invalid integer literal");
+                    }
+                }
+                return this.Store(PythonCalls.Call(TypeCache.BigInteger, new object[] {number}));
             }
             catch (Exception e)
             {
