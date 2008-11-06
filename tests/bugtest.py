@@ -26,6 +26,10 @@ class BugTest(TestCase):
         iter(C)
         # when this fails, fix PySeqIter_New and PyObject_GetIter
 
+    def testLongFromEmptyString(self):
+        for str_ in ('', '   '):
+            self.assertEquals(long(str_), 0, "you can fix PyNumber_Long now")
+
 
 suite = makesuite(BugTest)
 if __name__ == '__main__':

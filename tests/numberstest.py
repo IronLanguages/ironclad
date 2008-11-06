@@ -452,6 +452,14 @@ class PyNumber_Test(TestCase):
             self.assertMapperHasError(mapper, error)
             mapper.DecRef(ptr)
         
+        # work around ipy bug
+        self.assertEquals(mapper.PyNumber_Long(mapper.Store('')), IntPtr.Zero)
+        self.assertMapperHasError(mapper, ValueError)
+        
+        self.assertEquals(mapper.PyNumber_Long(mapper.Store('   ')), IntPtr.Zero)
+        self.assertMapperHasError(mapper, ValueError)
+        
+        
     
     @WithMapper
     def testPyNumber_Float(self, mapper, _):
