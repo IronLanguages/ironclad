@@ -117,33 +117,17 @@ namespace Ironclad
             this.ReleaseGIL();
         }
         
-        /*
-        temporary debugging code
-        
-        public delegate int IntVoidDgt();
-        public int GetThreadId()
-        {
-            return Thread.CurrentThread.ManagedThreadId;
-        }
-        
-        public delegate void VoidStringDgt(string str);
-        public void WriteFlush(string info)
-        {
-            Console.WriteLine("{0} {1}", Stopwatch.GetTimestamp(), info);
-            Console.Out.Flush();
-        }*/
         
         public void
         EnsureGIL()
         {
             Monitor.Enter(this.dispatcherLock);
-            //this.WriteFlush(String.Format("EnsureGIL ({1}) {0}", this.GetThreadId(), Builtin.id(this.dispatcherLock)));
+            
         }
         
         public void
         ReleaseGIL()
         {
-            //this.WriteFlush(String.Format("ReleaseGIL ({1}) {0}\n", this.GetThreadId(), Builtin.id(this.dispatcherLock)));
             Monitor.Exit(this.dispatcherLock);
         }
         
