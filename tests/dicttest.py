@@ -208,8 +208,7 @@ class PyDict_Next_Test(TestCase):
             result[key] = value
         
         self.assertEquals(result, d)
-        
-            
+          
     @WithMapper
     def testCanChangeValuesDuringIteration(self, mapper, addDealloc):
         posPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 3)
@@ -226,6 +225,34 @@ class PyDict_Next_Test(TestCase):
             d[key] = value * 10
         
         self.assertEquals(d, dict(a=10, b=20, c=30))
+          
+    @WithMapper
+    def testReferencesAreBorrowed(self, mapper, addDealloc):
+        posPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize * 3)
+        keyPtrPtr = CPyMarshal.Offset(posPtr, CPyMarshal.PtrSize)
+        valuePtrPtr = CPyMarshal.Offset(keyPtrPtr, CPyMarshal.PtrSize)
+        addDealloc(lambda: Marshal.FreeHGlobal(posPtr))
+        CPyMarshal.WriteInt(posPtr, 0)
+        
+        d = dict(a=1)
+        dPtr = mapper.Store(d)
+        mapper.PyDict_Next(dPtr, posPtr, keyPtrPtr, valuePtrPtr)
+        
+        keyPtr = CPyMarshal.ReadPtr(keyPtrPtr)
+        valuePtr = CPyMarshal.ReadPtr(valuePtrPtr)
+        
+        # grab extra references to retard spoilage
+        mapper.IncRef(keyPtr)
+        mapper.IncRef(valuePtr)
+        
+        mapper.FreeTemps()
+        
+        # check refcount has dropped back to 1
+        self.assertEquals(mapper.RefCount(keyPtr), 1)
+        self.assertEquals(mapper.RefCount(valuePtr), 1)
+
+
+
 
 
 suite = makesuite(
