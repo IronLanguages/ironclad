@@ -17,6 +17,20 @@ namespace Ironclad
         [DllImport("kernel32.dll")]
         public static extern IntPtr GetModuleHandle(string s);
         
+        
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr CreateMutex(IntPtr lpMutexAttributes, int bInitialOwner, IntPtr lpName);
+        
+        [DllImport("kernel32.dll")]
+        public static extern int WaitForSingleObject(IntPtr hHandle, int dwMilliseconds);
+        
+        [DllImport("kernel32.dll")]
+        public static extern int ReleaseMutex(IntPtr hMutex);
+        
+        [DllImport("kernel32.dll")]
+        public static extern int CloseHandle(IntPtr hObject);
+        
+        
         [DllImport("msvcr71.dll")]
         public static extern IntPtr _fdopen(int fd, string mode);
         

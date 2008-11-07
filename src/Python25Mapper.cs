@@ -53,7 +53,7 @@ namespace Ironclad
         
         private ScriptScope dispatcherModule;
         private object dispatcherClass;
-        private Object dispatcherLock; // essentially the GIL
+        private Lock GIL;
 
         private bool alive = false;
         private InterestingPtrMap map = new InterestingPtrMap();
@@ -89,7 +89,7 @@ namespace Ironclad
 
         public Python25Mapper(string stubPath, ScriptEngine inEngine, IAllocator alloc)
         {
-            this.dispatcherLock = new Object();
+            this.GIL = new Lock();
             
             this.engine = inEngine;
             this.allocator = alloc;
@@ -110,7 +110,6 @@ namespace Ironclad
             }
             this.alive = true;
         }
-        
         
         private void 
         AddPaths()
@@ -160,23 +159,20 @@ namespace Ironclad
         protected virtual void 
         Dispose(bool disposing)
         {
-            lock (this.dispatcherLock)
+            if (this.alive)
             {
-                if (this.alive)
+                this.alive = false;
+                this.StopDispatchingDeletes();
+                this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
+                this.allocator.FreeAll();
+                foreach (IntPtr FILE in this.FILEs.Values)
                 {
-                    this.alive = false;
-                    this.StopDispatchingDeletes();
-                    this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
-                    this.allocator.FreeAll();
-                    foreach (IntPtr FILE in this.FILEs.Values)
-                    {
-                        Unmanaged.fclose(FILE);
-                    }
-                    if (this.stub != null)
-                    {
-                        this.importer.Dispose();
-                        this.stub.Dispose();
-                    }
+                    Unmanaged.fclose(FILE);
+                }
+                if (this.stub != null)
+                {
+                    this.importer.Dispose();
+                    this.stub.Dispose();
                 }
             }
         }
@@ -184,8 +180,16 @@ namespace Ironclad
         public void 
         Dispose()
         {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
+            this.GIL.Acquire();
+            try
+            {
+                GC.SuppressFinalize(this);
+                this.Dispose(true);
+            }
+            finally
+            {
+                this.GIL.Release();
+            }
         }
 
         public bool
