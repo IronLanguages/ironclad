@@ -5,14 +5,12 @@ from tests.utils.gc import gcwait
 
 from System import IntPtr
 from System.Reflection import BindingFlags
-from System.Threading import AutoResetEvent, Monitor, Thread, ThreadStart
-
-from Ironclad import Python25Mapper
+from System.Threading import AutoResetEvent, Thread, ThreadStart
 
 
 def GetGIL(mapper):    
     _gilField = mapper.GetType().GetMember(
-        "dispatcherLock", BindingFlags.NonPublic | BindingFlags.Instance)[0];
+        "GIL", BindingFlags.NonPublic | BindingFlags.Instance)[0];
     return _gilField.GetValue(mapper);
 
 
@@ -103,6 +101,18 @@ class PyThread_functions_Test(TestCase):
 
         self.assertEquals(acquired, set([lockPtr1, lockPtr2]), "acquires failed")    
 
+    
+    @WithMapper
+    def testMultipleAcquireSameThread(self, mapper, _):
+        # these locks are apparently not meant to be recursive
+        lockPtr = mapper.PyThread_allocate_lock()
+        self.assertEquals(mapper.PyThread_acquire_lock(lockPtr, 1), 1, "claimed failure")
+        self.assertEquals(mapper.PyThread_acquire_lock(lockPtr, 1), 0, "claimed success")
+        mapper.PyThread_release_lock(lockPtr)
+        
+        lock = mapper.Retrieve(lockPtr)
+        self.assertEquals(lock.IsAcquired, False)
+        
 
 class PyThreadStateDict_Test(TestCase):
     
@@ -149,17 +159,6 @@ class PyThreadExceptionTest(TestCase):
 
 
 class PyEvalGILThreadTest(TestCase):
-    
-    def assertLock(self, lock, expectLocked):
-        unlocked = [False]
-        def CheckUnlocked():
-            unlocked[0] = Monitor.TryEnter(lock)
-            if unlocked[0]:
-                Monitor.Exit(lock)
-        t = Thread(ThreadStart(CheckUnlocked))
-        t.Start()
-        t.Join()
-        self.assertEquals(not unlocked[0], expectLocked)
 
 
     @WithMapper
@@ -167,15 +166,15 @@ class PyEvalGILThreadTest(TestCase):
         lock = GetGIL(mapper)
         
         mapper.PyGILState_Ensure()
-        self.assertLock(lock, True)
+        self.assertEquals(lock.IsAcquired, True)
         mapper.PyEval_SaveThread()
-        self.assertLock(lock, False)
+        self.assertEquals(lock.IsAcquired, False)
         mapper.PyEval_SaveThread()
-        self.assertLock(lock, False)
+        self.assertEquals(lock.IsAcquired, False)
         mapper.PyEval_RestoreThread(IntPtr.Zero)
-        self.assertLock(lock, False)
+        self.assertEquals(lock.IsAcquired, False)
         mapper.PyEval_RestoreThread(IntPtr.Zero)
-        self.assertLock(lock, True)
+        self.assertEquals(lock.IsAcquired, True)
         self.assertRaises(Exception, mapper.PyEval_RestoreThread)
         mapper.PyGILState_Release(0)
 
@@ -198,22 +197,22 @@ class PyEvalGILThreadTest(TestCase):
             self.assertNotEquals(pe_token, IntPtr.Zero)
             signal(); wait()
             
-            self.assertFalse(Monitor.TryEnter(lock))    # 5
+            self.assertFalse(lock.TryAcquire())         # 5
             signal(); wait()
             
-            self.assertTrue(Monitor.TryEnter(lock))     # 7
-            Monitor.Exit(lock)
+            self.assertTrue(lock.TryAcquire())          # 7
+            lock.Release()
             signal(); wait()
             
-            self.assertTrue(Monitor.TryEnter(lock))     # 9
-            Monitor.Exit(lock)
+            self.assertTrue(lock.TryAcquire())          # 9
+            lock.Release()
             signal(); wait()
             
-            self.assertTrue(Monitor.TryEnter(lock))     # 11
-            Monitor.Exit(lock)
+            self.assertTrue(lock.TryAcquire())          # 11
+            lock.Release()
             signal(); wait()
             
-            self.assertFalse(Monitor.TryEnter(lock))    # 13
+            self.assertFalse(lock.TryAcquire())         # 13
             signal(); wait()
             
             mapper.PyEval_RestoreThread(pe_token)       # 15
@@ -226,7 +225,7 @@ class PyEvalGILThreadTest(TestCase):
             signal = lambda: anotherThreadActed.Set()
             wait()
             
-            self.assertFalse(Monitor.TryEnter(lock))    # 2
+            self.assertFalse(lock.TryAcquire())         # 2
             signal(); wait()
             
             mapper.PyGILState_Ensure()                  # 4
@@ -249,7 +248,7 @@ class PyEvalGILThreadTest(TestCase):
             mapper.PyGILState_Release(0)                # 14
             signal(); wait()
             
-            self.assertFalse(Monitor.TryEnter(lock))    # 16
+            self.assertFalse(lock.TryAcquire())         # 16
             signal()
             
         t = Thread(ThreadStart(AnotherThread))

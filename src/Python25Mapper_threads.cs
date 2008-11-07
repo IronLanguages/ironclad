@@ -34,30 +34,32 @@ namespace Ironclad
         public override IntPtr 
         PyThread_allocate_lock()
         {
-            return this.Store(new Object());
+            return this.Store(new Lock());
         }
 
         public override void 
         PyThread_free_lock(IntPtr lockPtr)
         {
-            this.PyObject_Free(lockPtr);
+            this.Unmap(lockPtr);
         }
 
         public override int 
         PyThread_acquire_lock(IntPtr lockPtr, int flags)
         {
-            object lockObject = this.Retrieve(lockPtr);
+            Lock lockObject = (Lock)this.Retrieve(lockPtr);
+            if (lockObject.IsAcquired)
+            {
+                return 0;
+            }
+            
             if (flags == 1)
             {
-                // TODO: this does not precisely match spec: we still return 1 if
-                // the current thread has already acquired a lock.
-                Monitor.Enter(lockObject);
+                lockObject.Acquire();
                 return 1;
             }
             else
             {
-                bool entered = Monitor.TryEnter(lockObject);
-                if (entered)
+                if (lockObject.TryAcquire())
                 {
                     return 1;
                 }
@@ -68,7 +70,8 @@ namespace Ironclad
         public override void 
         PyThread_release_lock(IntPtr lockPtr)
         {
-            Monitor.Exit(this.Retrieve(lockPtr));
+            Lock lockObject = (Lock)this.Retrieve(lockPtr);
+            lockObject.Release();
         }
 
         public override IntPtr
@@ -121,14 +124,13 @@ namespace Ironclad
         public void
         EnsureGIL()
         {
-            Monitor.Enter(this.dispatcherLock);
-            
+            this.GIL.Acquire();
         }
         
         public void
         ReleaseGIL()
         {
-            Monitor.Exit(this.dispatcherLock);
+            this.GIL.Release();
         }
         
     }
