@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import tempfile
@@ -6,7 +5,8 @@ from tests.utils.process import spawn
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
 
-def write(name, text):
+def write(directory, name, text):
+    name = os.path.join(directory, name)
     f = open(name, 'w')
     try:
         f.write(text)
@@ -17,37 +17,37 @@ class GeneratePython25ApiTest(TestCase):
 
     def testCreatesPython25Api_cs(self):
         tempDir = tempfile.mkdtemp()
+
         testBuildDir = os.path.join(tempDir, 'generatepython25apitest')
         if os.path.exists(testBuildDir):
             shutil.rmtree(testBuildDir)
         os.mkdir(testBuildDir)
+
         testSrcDir = os.path.join(testBuildDir, 'python25api_components')
         os.mkdir(testSrcDir)
+
+        testStubDir = os.path.join(tempDir, 'stub')
+        os.mkdir(testStubDir)
 
         origCwd = os.getcwd()
         toolPath = os.path.join(origCwd, "tools/generatepython25api.py")
 
-        os.chdir(testSrcDir)
+        write(testSrcDir, "python25ApiFunctions", FUNCTIONS)
+        write(testSrcDir, "python25ApiDataItems", DATA_ITEMS)
+        write(testSrcDir, "python25ApiDataPtrItems", DATA_PTR_ITEMS)
+        write(testSrcDir, "Py_InitModule4.pmdi", PY_INITMODULE4)
+        write(testSrcDir, "PyModule_AddObject.pmdi", PYMODULE_ADDOBJECT)
+        write(testStubDir, "_ignores", PY_C_FUNCTIONS)
+
+        retVal = spawn("ipy", toolPath, cwd=testSrcDir)
+        self.assertEquals(retVal, 0, "process ended badly")
+
+        f = open(os.path.join(testBuildDir, "Python25Api.Generated.cs"), 'r')
         try:
-            write("python25ApiFunctions", FUNCTIONS)
-            write("python25ApiDataItems", DATA_ITEMS)
-            write("python25ApiDataPtrItems", DATA_PTR_ITEMS)
-            write("Py_InitModule4.pmdi", PY_INITMODULE4)
-            write("PyModule_AddObject.pmdi", PYMODULE_ADDOBJECT)
-
-            retVal = spawn("ipy", toolPath)
-            self.assertEquals(retVal, 0, "process ended badly")
-
-            os.chdir(testBuildDir)
-            f = open("Python25Api.Generated.cs", 'r')
-            try:
-                result = f.read()
-                self.assertEquals(result, EXPECTED_OUTPUT, "generated wrong")
-            finally:
-                f.close()
-
+            result = f.read()
+            self.assertEquals(result, EXPECTED_OUTPUT, "generated wrong")
         finally:
-            os.chdir(origCwd)
+            f.close()
         shutil.rmtree(tempDir)
 
 
@@ -56,6 +56,13 @@ Py_InitModule4
 Some_NotImplemented_Function
 PyModule_AddObject
 SomeOther_NotImplemented_Function
+Py_DoSomethingWithoutPointers
+Py_DoSomethingNothingToDoWithPython
+"""
+
+PY_C_FUNCTIONS = """
+Py_DoSomethingWithoutPointers
+Py_DoSomethingNothingToDoWithPython
 """
 
 PY_INITMODULE4 = """
@@ -78,7 +85,6 @@ DATA_PTR_ITEMS = """
 PyExc_SystemError
 PyExc_TypeError
 """
-
 
 EXPECTED_OUTPUT = """
 using System;

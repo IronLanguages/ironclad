@@ -9,9 +9,12 @@ def read_interesting_lines(name):
         f.close()
 
 def run():
-    not_implemented_methods_set = set(read_interesting_lines(FUNCTIONS_FILE))
-    method_files = [f for f in os.listdir(".") if f.endswith(DELEGATE_EXT)]
+    all_methods_set = set(read_interesting_lines(FUNCTIONS_FILE))
 
+    c_methods_set = set(read_interesting_lines(C_FUNCTIONS_FILE))
+    not_implemented_methods_set = all_methods_set - c_methods_set
+    
+    method_files = [f for f in os.listdir(".") if f.endswith(DELEGATE_EXT)]
     methods = []
     for f in method_files:
         return_type, arglist, code = read_interesting_lines(f)
@@ -63,6 +66,7 @@ def run():
         f.close()
 
 FUNCTIONS_FILE = "python25ApiFunctions"
+C_FUNCTIONS_FILE = "../../stub/_ignores"
 DATA_ITEMS_FILE = "python25ApiDataItems"
 DATA_PTR_ITEMS_FILE = "python25ApiDataPtrItems"
 
