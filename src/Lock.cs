@@ -19,6 +19,8 @@ namespace Ironclad
         private int owner;
         
         private const int INFINITE = -1;
+        private const int ABANDONED = 0x80;
+        private const int TIMEOUT = 0x102;
         
         public Lock()
         {
@@ -52,10 +54,11 @@ namespace Ironclad
         public int
         Acquire()
         {
-            if (Unmanaged.WaitForSingleObject(this.hMutex, INFINITE) != 0)
+            if (Unmanaged.WaitForSingleObject(this.hMutex, INFINITE) == ABANDONED)
             {
-                throw new LockException("oh dear, mutex abandoned");
+                Console.WriteLine("warning: mutex abandoned\n{0}", System.Environment.StackTrace);
             }
+            
             this.owner = Thread.CurrentThread.ManagedThreadId;
             this.count += 1;
             //Console.WriteLine(
@@ -66,10 +69,16 @@ namespace Ironclad
         public bool
         TryAcquire()
         {
-            if (Unmanaged.WaitForSingleObject(this.hMutex, 0) != 0)
+            int result = Unmanaged.WaitForSingleObject(this.hMutex, 0);
+            if (result == TIMEOUT)
             {
                 return false;
             }
+            if (result == ABANDONED)
+            {
+                Console.WriteLine("warning: mutex abandoned\n{0}", System.Environment.StackTrace);
+            }
+            
             this.owner = Thread.CurrentThread.ManagedThreadId;
             this.count += 1;
             //Console.WriteLine(
@@ -95,14 +104,14 @@ namespace Ironclad
             }
             //Console.WriteLine(
             //    "Releasing on thread id {0} (count: {1})\n", Thread.CurrentThread.ManagedThreadId, this.count);
-            if (Unmanaged.ReleaseMutex(this.hMutex) == 0)
-            {
-                throw new LockException("ReleaseMutex failed, even though we're pretty certain we do own this lock");
-            }
             this.count -= 1;
             if (this.count == 0)
             {
                 this.owner = -1;
+            }
+            if (Unmanaged.ReleaseMutex(this.hMutex) == 0)
+            {
+                throw new LockException("ReleaseMutex failed, even though we're pretty certain we do own this lock");
             }
         }
     }
