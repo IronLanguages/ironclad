@@ -7,6 +7,15 @@ import numpy
 from numpy.testing import TestCase
 from unittest import TestResult
 
+def read_into_blacklist(blacklist, filename):
+    f = file(filename)
+    try:
+        for line in f:
+            line = line.split('#')[0].strip()
+            blacklist.append(line)
+    finally:
+        f.close()
+
 numpy_path = r"C:\Python25\Lib\site-packages\numpy"
 dirs = ['core']
 
@@ -18,12 +27,12 @@ class_blacklist = [
     'test_multiarray.TestStringCompare', # don't care about strings yet
     'test_multiarray.TestPickling', # don't care about pickling yet
     'test_multiarray.TestRecord', # record arrays
-    
 ]
 test_blacklist = [
     'test_defmatrix.TestCtor.test_basic', # uses getframe
     'test_defmatrix.TestCtor.test_bmat_nondefault_str', # uses getframe
-    
+
+    'test_multiarray.TestAttributes.test_fill', # seems to intermittently kill the test run
     'test_multiarray.TestFromToFile.test_file', # meant to be disabled on windows
     'test_multiarray.TestTake.test_record_array', # record arrays
     'test_multiarray.TestMethods.test_sort_order', # record arrays involved
@@ -31,6 +40,7 @@ test_blacklist = [
     'test_multiarray.TestClip.test_record_array', # record arrays again
     'test_multiarray.TestResize.test_check_reference' # reference counting different in ironclad
 ]
+read_into_blacklist(test_blacklist, 'numpy_test_blacklist')
 
 
 def import_test_module(direc, mod_name):
@@ -39,14 +49,30 @@ def import_test_module(direc, mod_name):
     return reduce(getattr, [direc, 'tests', mod_name], package)
 
 
-def run_single_test(package_name, mod_name, class_name, test_name):
+def run_single_test(package_name, mod_name, class_name, test_name, runner=None):
     module = import_test_module(package_name, mod_name)
     klass = getattr(module, class_name)
-    run_test_case(klass(test_name))
+    test_path = (package_name, mod_name, class_name, test_name)
+    runner(klass(test_name), test_path)
 
 
-def run_test_case(test_case):
+def blacklist_on_fail(test_case, test_path):
+    catastrophe = False
     try:
+        result = TestResult()
+        test_case.run(result)
+    except:
+        catastrophe = True
+    if catastrophe or result.errors or result.failures:
+        add_to_blacklist(test_path)
+        print ".".join(test_path), " failed - adding to blacklist and stopping"
+        ironclad.shutdown()
+        sys.exit(1)
+
+
+def run_test_case(test_case, test_path):
+    try:
+        print '.'.join(test_path), '...   ',
         result = TestResult()
         test_case.run(result)
         if result.errors: print result.errors[0][1]
@@ -96,23 +122,46 @@ def get_test_names(mod_name, class_name, test_class):
     return tests
 
 
-def run_all_tests(dirs):
+def get_all_tests(dirs):
     for package_name in dirs: 
         ensure_package(package_name)
         for mod_name, module in get_modules_dict(package_name).items():
             for class_name, test_class in get_classes_dict(mod_name, module).items():
                 for test_name in get_test_names(mod_name, class_name, test_class):
-                    print "%s %s.%s.%s" % (package_name, mod_name, class_name, test_name),
-                    run_test_case(test_class(test_name))
+                    test_path = (package_name, mod_name, class_name, test_name)
+                    yield test_path, test_class(test_name)
 
 
-args = sys.argv[1:]
-if not args:
-    run_all_tests(dirs)
-else:
-    for test_path in args:
-        package_name, mod_name, class_name, test_name = test_path.split('.')
-        run_single_test(package_name, mod_name, class_name, test_name)
+def run_all_tests(dirs, runner):
+    for test_path, test_case in get_all_tests(dirs):
+        runner(test_case, test_path)
+
+
+def add_to_blacklist(test_path):
+    f = file('numpy_test_blacklist', 'a')
+    try:
+        f.write(".".join(test_path[1:]) + "\n")
+    finally:
+        f.close()
+
+
+def main():
+    args = sys.argv[1:]
+    runner = run_test_case
+    if '--blacklist-add' in args:
+        args.remove('--blacklist-add')
+        runner = blacklist_on_fail
+    
+    if not args:
+        run_all_tests(dirs, runner)
+    else:
+        for test_path in args:
+            package_name, mod_name, class_name, test_name = test_path.split('.')
+            run_single_test(package_name, mod_name, class_name, test_name, runner=runner)
+    
+
+if __name__ == "__main__":
+    main()
 
 ironclad.shutdown()    
 
