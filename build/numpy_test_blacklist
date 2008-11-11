@@ -1,0 +1,16 @@
+test_multiarray.TestFromToFile.test_filename
+test_multiarray.TestFromToFile.test_malformed
+test_multiarray.TestNewaxis.test_basic
+test_multiarray.TestTake.test_clip
+test_multiarray.TestTake.test_ip_byteorder
+test_multiarray.TestClip.test_basic
+test_multiarray.TestMethods.test_argsort
+test_multiarray.TestMethods.test_sort
+test_multiarray.TestView.test_basic
+test_multiarray.TestView.test_keywords
+test_regression.TestRegression.test_arange_endian
+test_regression.TestRegression.test_arange_non_native_dtype
+test_regression.TestRegression.test_argmax_byteorder
+test_regression.TestRegression.test_astype_copy
+test_regression.TestRegression.test_attributes
+test_regression.TestRegression.test_char_array_creation
