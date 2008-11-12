@@ -1,4 +1,5 @@
 
+from itertools import takewhile
 import os
 import os.path
 import sys
@@ -17,28 +18,31 @@ def read_into_blacklist(blacklist, filename):
         f.close()
 
 numpy_path = r"C:\Python25\Lib\site-packages\numpy"
-dirs = ['core']
+dirs = ['core', 'lib', 'linalg', 'ma', 'oldnumeric', 'random']
 
 mod_blacklist = [
-    'test_defchararray', 
-    'test_memmap',
+    'core.test_defchararray', 
+    'core.test_memmap',
+    'core.test_records',
 ]
 class_blacklist = [
-    'test_multiarray.TestStringCompare', # don't care about strings yet
-    'test_multiarray.TestPickling', # don't care about pickling yet
-    'test_multiarray.TestRecord', # record arrays
+    'core.test_multiarray.TestStringCompare', # don't care about strings yet
+    'core.test_multiarray.TestPickling', # don't care about pickling yet
+    'core.test_multiarray.TestRecord', # record arrays
+    'core.test_regression.TestRegression', # has too many errors to worry about now.
 ]
 test_blacklist = [
-    'test_defmatrix.TestCtor.test_basic', # uses getframe
-    'test_defmatrix.TestCtor.test_bmat_nondefault_str', # uses getframe
-
-    'test_multiarray.TestAttributes.test_fill', # seems to intermittently kill the test run
-    'test_multiarray.TestFromToFile.test_file', # meant to be disabled on windows
-    'test_multiarray.TestTake.test_record_array', # record arrays
-    'test_multiarray.TestMethods.test_sort_order', # record arrays involved
-    'test_multiarray.TestPutmask.test_record_array', # record arrays involved
-    'test_multiarray.TestClip.test_record_array', # record arrays again
-    'test_multiarray.TestResize.test_check_reference' # reference counting different in ironclad
+    'core.test_defmatrix.TestCtor.test_basic', # uses getframe
+    'core.test_defmatrix.TestCtor.test_bmat_nondefault_str', # uses getframe
+    'core.test_multiarray.TestAttributes.test_fill', # seems to intermittently kill the test run
+    'core.test_multiarray.TestFromToFile.test_file', # meant to be disabled on windows
+    'core.test_multiarray.TestTake.test_record_array', # record arrays
+    'core.test_multiarray.TestMethods.test_sort_order', # record arrays involved
+    'core.test_multiarray.TestPutmask.test_record_array', # record arrays involved
+    'core.test_multiarray.TestClip.test_record_array', # record arrays again
+    'core.test_multiarray.TestResize.test_check_reference', # reference counting different in ironclad
+    'core.test_scalarmath.TestRepr.test_float_repr', # takes a long time to run (may just be a large test)
+    'core.test_scalarmath.TestTypes.test_type_add', # takes a long time to run (may just be a large test)
 ]
 read_into_blacklist(test_blacklist, 'numpy_test_blacklist')
 
@@ -57,6 +61,7 @@ def run_single_test(package_name, mod_name, class_name, test_name, runner=None):
 
 
 def blacklist_on_fail(test_case, test_path):
+    print '.'.join(test_path)
     catastrophe = False
     try:
         result = TestResult()
@@ -68,11 +73,15 @@ def blacklist_on_fail(test_case, test_path):
         print ".".join(test_path), " failed - adding to blacklist and stopping"
         ironclad.shutdown()
         sys.exit(1)
+    else:
+        save_continuation_point(test_path)
+
 
 
 def run_test_case(test_case, test_path):
     try:
         print '.'.join(test_path), '...   ',
+        save_continuation_point(test_path)
         result = TestResult()
         test_case.run(result)
         if result.errors: print result.errors[0][1]
@@ -88,59 +97,80 @@ def ensure_package(package_name):
     open(init_path, 'w').close()    
 
 
-def get_modules_dict(package_name):
+def get_modules(package_name):
     tests_path = os.path.join(numpy_path, package_name, 'tests')
-    modules = {}
-    for filename in os.listdir(tests_path):
+    for filename in sorted(os.listdir(tests_path)):
         if not filename.endswith('.py') or not filename.startswith('test'):
             continue
         mod_name = filename[:-3]
-        if mod_name in mod_blacklist:
+        if '.'.join((package_name, mod_name)) in mod_blacklist:
             continue
         module = import_test_module(package_name, mod_name)
-        modules[mod_name] = module
-    return modules
-    
+        yield mod_name, module
 
-def get_classes_dict(mod_name, module):
-    classes = {}
-    for class_name, test_class in module.__dict__.items():
+
+def get_classes(module, mod_path):
+    for class_name, test_class in sorted(module.__dict__.items()):
         if not isinstance(test_class, type) or not issubclass(test_class, TestCase):
            continue
-        if '.'.join([mod_name, class_name]) in class_blacklist:
+        if '.'.join(mod_path + (class_name,)) in class_blacklist:
             continue
-        classes[class_name] = test_class
-    return classes
+        yield class_name, test_class
 
 
-def get_test_names(mod_name, class_name, test_class):
+def get_test_names(test_class, class_path):
     tests = []
     for test_name, _ in sorted(test_class.__dict__.items()):
-        if not test_name.startswith('test_') or '.'.join([mod_name, class_name, test_name]) in test_blacklist:
+        if not test_name.startswith('test_') or '.'.join(class_path +(test_name,)) in test_blacklist:
             continue    
         tests.append(test_name)
     return tests
 
 
-def get_all_tests(dirs):
+def get_all_tests(dirs, previous_test=None):
     for package_name in dirs: 
         ensure_package(package_name)
-        for mod_name, module in get_modules_dict(package_name).items():
-            for class_name, test_class in get_classes_dict(mod_name, module).items():
-                for test_name in get_test_names(mod_name, class_name, test_class):
+        for mod_name, module in get_modules(package_name):
+            for class_name, test_class in get_classes(module, (package_name, mod_name)):
+                for test_name in get_test_names(test_class, (package_name, mod_name, class_name)):
                     test_path = (package_name, mod_name, class_name, test_name)
                     yield test_path, test_class(test_name)
 
 
-def run_all_tests(dirs, runner):
-    for test_path, test_case in get_all_tests(dirs):
+def run_all_tests(dirs, runner, previous_test=None):
+    all_tests = get_all_tests(dirs)
+    if previous_test:
+        for _ in takewhile(lambda (p, _): p != previous_test, all_tests): pass
+    for test_path, test_case in all_tests:
         runner(test_case, test_path)
+    print "All tests run ?!"
 
 
-def add_to_blacklist(test_path):
+def add_to_blacklist(test_path, msg=""):
     f = file('numpy_test_blacklist', 'a')
     try:
-        f.write(".".join(test_path[1:]) + "\n")
+        if msg:
+            msg = " # " + msg
+        f.write(".".join(test_path) + msg + "\n")
+    finally:
+        f.close()
+
+
+def save_continuation_point(test_path):
+    f = file('numpy_continuation', 'w')
+    try:
+        f.write('.'.join(test_path))
+    finally:
+        f.close()
+        
+
+def get_continuation_point():
+    f = file('numpy_continuation')
+    try:
+        name = f.read().strip()
+        if name:
+            return tuple(name.split('.'))
+        return None
     finally:
         f.close()
 
@@ -148,12 +178,17 @@ def add_to_blacklist(test_path):
 def main():
     args = sys.argv[1:]
     runner = run_test_case
+    previous_test = None
     if '--blacklist-add' in args:
         args.remove('--blacklist-add')
         runner = blacklist_on_fail
+    if '--continue' in args:
+        args.remove('--continue')
+        previous_test = get_continuation_point()
+        print "Continuation point", previous_test
     
     if not args:
-        run_all_tests(dirs, runner)
+        run_all_tests(dirs, runner, previous_test=previous_test)
     else:
         for test_path in args:
             package_name, mod_name, class_name, test_name = test_path.split('.')
