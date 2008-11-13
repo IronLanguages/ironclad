@@ -27,6 +27,7 @@ typedef ssize_t Py_ssize_t;
 #define Py_GCC_ATTRIBUTE(x) __attribute__(x)
 #define Py_SAFE_DOWNCAST(VALUE, WIDE, NARROW) (NARROW)(VALUE)
 
+#define HAVE_SNPRINTF 1
 
 /* Rich comparison opcodes */
 #define Py_LT 0

@@ -4,8 +4,6 @@ core.test_multiarray.TestNewaxis.test_basic
 core.test_multiarray.TestTake.test_clip
 core.test_multiarray.TestTake.test_ip_byteorder
 core.test_multiarray.TestClip.test_basic
-core.test_multiarray.TestMethods.test_argsort
-core.test_multiarray.TestMethods.test_sort
 core.test_multiarray.TestView.test_basic
 core.test_multiarray.TestView.test_keywords
 core.test_regression.TestRegression.test_arange_endian
@@ -28,12 +26,7 @@ core.test_umath.TestSpecialMethods.test_failing_wrap
 core.test_umath.TestSpecialMethods.test_old_wrap
 core.test_umath.TestSpecialMethods.test_priority
 core.test_umath.TestSpecialMethods.test_wrap
-core.test_print.TestPrint.test_complex_double
-core.test_print.TestPrint.test_complex_float
-core.test_print.TestPrint.test_complex_longdouble
-core.test_print.TestPrint.test_double
-core.test_print.TestPrint.test_longdouble
-core.test_scalarmath.TestConversion.test_int_from_long
+core.test_scalarmath.TestConversion.test_int_from_long # will is doing this
 core.test_scalarmath.TestPower.test_large_types
 core.test_scalarmath.TestPower.test_large_types
 core.test_scalarmath.TestTypes.test_type_create
