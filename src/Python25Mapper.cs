@@ -471,22 +471,24 @@ namespace Ironclad
                 case "PyBaseObject_Init":
                     this.dgtMap[name] = new CPython_initproc_Delegate(this.PyBaseObject_Init);
                     break;
-                case "PyTuple_Dealloc":
-                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyTuple_Dealloc);
+                case "PyCObject_Dealloc":
+                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyCObject_Dealloc);
+                    break;
+	        case "PyFile_Dealloc":
+                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyFile_Dealloc);
+                    break;
+	        case "PyFloat_New":
+		    this.dgtMap[name] = new CPythonVarargsKwargsFunction_Delegate(this.PyFloat_New);
+		    break;
+                case "PyList_Dealloc":
+                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyList_Dealloc);
                     break;
                 case "PySlice_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PySlice_Dealloc);
                     break;
-                case "PyList_Dealloc":
-                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyList_Dealloc);
+                case "PyTuple_Dealloc":
+                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyTuple_Dealloc);
                     break;
-                case "PyFile_Dealloc":
-                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyFile_Dealloc);
-                    break;
-                case "PyCObject_Dealloc":
-                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyCObject_Dealloc);
-                    break;
-                
                 default:
                     this.unknownNames.Add(name);
                     return IntPtr.Zero;

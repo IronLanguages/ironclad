@@ -159,6 +159,21 @@ namespace Ironclad
             }
         }
 
+	public IntPtr
+	PyFloat_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
+	{
+	    try
+	    {
+	    PythonTuple args = (PythonTuple) this.Retrieve(argsPtr);
+	    return this.Store(PythonCalls.Call(this.scratchContext, TypeCache.Double, new object[] {args[0]}));
+	    }
+	    catch(Exception e)
+	    {
+		this.LastException = e;
+		return IntPtr.Zero;
+	    }
+	}
+
         private IntPtr
         Store(bool value)
         {

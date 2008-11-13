@@ -70,7 +70,7 @@ class Dispatcher(object):
         if self.mapper.HasPtr(instancePtr):
             self.mapper.IncRef(instancePtr)
             return self._return_retrieve(instancePtr)
-        
+
         instance = object.__new__(klass)
         self.mapper.StoreBridge(instancePtr, instance)
         self.mapper.Strengthen(instance)

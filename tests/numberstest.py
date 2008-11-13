@@ -8,8 +8,8 @@ from tests.utils.numbers import NumberI, NumberL, NumberF, NUMBER_VALUE
 from System import Int32, Int64, IntPtr, UInt32, UInt64
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, Python25Mapper
-from Ironclad.Structs import Py_complex, PyObject, PyIntObject, PyFloatObject, PyComplexObject
+from Ironclad import CPyMarshal, CPythonVarargsKwargsFunction_Delegate, Python25Mapper
+from Ironclad.Structs import Py_complex, PyObject, PyIntObject, PyFloatObject, PyComplexObject, PyTypeObject
         
 
 class PyBool_Test(TestCase):
@@ -274,6 +274,26 @@ class PyFloat_Test(TestCase):
             result = mapper.PyFloat_AsDouble(ptr)
             self.assertMapperHasError(mapper, None)
             self.assertEquals(result, NUMBER_VALUE)
+
+
+    @WithMapper
+    def testPyFloat_UnManagedNew(self, mapper, _):
+        tp_new = CPyMarshal.ReadFunctionPtrField(mapper.PyFloat_Type, PyTypeObject, "tp_new", CPythonVarargsKwargsFunction_Delegate)
+        for value in (0, 1, 1.5, "1.0"):
+            unmanged_float = tp_new(mapper.PyFloat_Type, mapper.Store((value,)), IntPtr.Zero)
+            actualType = CPyMarshal.ReadPtrField(unmanged_float, PyObject, "ob_type")
+            self.assertEquals(actualType, mapper.PyFloat_Type)
+            self.assertEquals(mapper.Retrieve(unmanged_float), float(value))
+            
+        for bad_value in ("hello", object(), object):
+            unmanaged_float = tp_new(mapper.PyFloat_Type, mapper.Store((bad_value,)), IntPtr.Zero)
+            self.assertEquals(unmanaged_float, IntPtr.Zero)
+            error = None
+            try:
+                float(bad_value)
+            except Exception, e:
+                error = type(e)
+            self.assertMapperHasError(mapper, error)
             
 
 
