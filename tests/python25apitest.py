@@ -279,6 +279,7 @@ class Python25ApiFunctionsTest(TestCase):
         
         self.assertFinds("PyTuple_New", ('33',), 'IntPtr(999)')
         self.assertFinds("PyTuple_Size", ('IntPtr(111)',), '999')
+        self.assertFinds("_PyTuple_Resize", ('IntPtr(111)', '999'), '101')
         self.assertFinds("PyTuple_GetSlice", ('IntPtr(123)', '4', '5'), 'IntPtr(789)')
 
         
