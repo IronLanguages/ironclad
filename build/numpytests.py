@@ -41,6 +41,11 @@ test_blacklist = [
     'core.test_multiarray.TestPutmask.test_record_array', # record arrays involved
     'core.test_multiarray.TestClip.test_record_array', # record arrays again
     'core.test_multiarray.TestResize.test_check_reference', # reference counting different in ironclad
+
+    # might want to extract other test cases:
+    'core.test_multiarray.TestMethods.test_sort', # fails on the creation of character arrays which we aren't worrying about 
+    'core.test_multiarray.TestMethods.test_argsort', # fails on the creation of character arrays which we aren't worrying about
+    
     'core.test_scalarmath.TestRepr.test_float_repr', # takes a long time to run (may just be a large test)
     'core.test_scalarmath.TestTypes.test_type_add', # takes a long time to run (may just be a large test)
 ]
@@ -159,7 +164,8 @@ def add_to_blacklist(test_path, msg=""):
 def save_continuation_point(test_path):
     f = file('numpy_continuation', 'w')
     try:
-        f.write('.'.join(test_path))
+        if test_path:
+            f.write('.'.join(test_path))
     finally:
         f.close()
         

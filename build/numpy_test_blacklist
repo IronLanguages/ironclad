@@ -37,8 +37,6 @@ core.test_scalarmath.TestConversion.test_int_from_long
 core.test_scalarmath.TestPower.test_large_types
 core.test_scalarmath.TestPower.test_large_types
 core.test_scalarmath.TestTypes.test_type_create
-
-
 core.test_scalarmath.TestTypes.test_types
 core.test_records.TestFromrecords.test_fromrecords
 core.test_records.TestFromrecords.test_method_array
@@ -57,3 +55,15 @@ core.test_ufunc.TestUfunc.test_generic_loops
 lib.test__datasource.TestDataSourceExists.test_InvalidHTTP
 lib.test__datasource.TestDataSourceExists.test_ValidHTTP
 lib.test__datasource.TestDataSourceOpen.test_InvalidHTTP
+lib.test__datasource.TestDataSourceOpen.test_InvalidHTTPCacheURLError
+lib.test__datasource.TestDataSourceOpen.test_ValidFile
+lib.test__datasource.TestDataSourceOpen.test_ValidGzipFile
+lib.test__datasource.TestDataSourceOpen.test_ValidHTTP
+lib.test__datasource.TestOpenFunc.test_DataSourceOpen
+lib.test__datasource.TestRepositoryExists.test_RemoveHTTPFile
+lib.test_arraysetops.TestAso.test_setdiff1d_char_array
+lib.test_financial.TestFinancial.test_fv
+lib.test_financial.TestFinancial.test_nper
+lib.test_financial.TestFinancial.test_pmt
+lib.test_financial.TestFinancial.test_pv
+
