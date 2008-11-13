@@ -3,7 +3,7 @@ PyType_Type TypeCache.PythonType
 PyNone_Type TypeCache.None
 PySlice_Type Builtin.slice {"tp_dealloc": "PySlice_Dealloc"}
 PyFile_Type TypeCache.PythonFile  {"tp_dealloc": "PyFile_Dealloc"}
-PyInt_Type TypeCache.Int32 {"tp_as_number": "AddNumberMethodsWithIndex"}
+PyInt_Type TypeCache.Int32 {"tp_as_number": "AddNumberMethodsWithIndex", "tp_new": "PyInt_New"}
 PyLong_Type TypeCache.BigInteger {"tp_as_number": "AddNumberMethodsWithIndex"}
 PyFloat_Type TypeCache.Double {"tp_as_number": "AddNumberMethodsWithoutIndex", "tp_new": "PyFloat_New"}
 PyComplex_Type TypeCache.Complex64

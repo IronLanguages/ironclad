@@ -480,6 +480,9 @@ namespace Ironclad
 	        case "PyFloat_New":
 		    this.dgtMap[name] = new CPythonVarargsKwargsFunction_Delegate(this.PyFloat_New);
 		    break;
+    	        case "PyInt_New":
+    		    this.dgtMap[name] = new CPythonVarargsKwargsFunction_Delegate(this.PyInt_New);
+    		    break;
                 case "PyList_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyList_Dealloc);
                     break;

@@ -114,7 +114,26 @@ class PyInt_Test(TestCase):
             result = mapper.PyInt_AsLong(ptr)
             self.assertMapperHasError(mapper, None)
             self.assertEquals(result, NUMBER_VALUE)
+
         
+    @WithMapper
+    def testPyInt_UnManagedNew(self, mapper, _):
+        tp_new = CPyMarshal.ReadFunctionPtrField(mapper.PyInt_Type, PyTypeObject, "tp_new", CPythonVarargsKwargsFunction_Delegate)
+        for value in (0, 1, -1, "17"):
+            unmanaged_int = tp_new(mapper.PyInt_Type, mapper.Store((value,)), IntPtr.Zero)
+            actualType = CPyMarshal.ReadPtrField(unmanaged_int, PyObject, "ob_type")
+            self.assertEquals(actualType, mapper.PyInt_Type)
+            self.assertEquals(mapper.Retrieve(unmanaged_int), int(value))
+            
+        for bad_value in ("hello", object(), object):
+            unmanaged_int = tp_new(mapper.PyInt_Type, mapper.Store((bad_value,)), IntPtr.Zero)
+            self.assertEquals(unmanaged_int, IntPtr.Zero)
+            error = None
+            try:
+                int(bad_value)
+            except Exception, e:
+                error = type(e)
+            self.assertMapperHasError(mapper, error)
     
 
 class PyLong_Test(TestCase):
@@ -280,10 +299,10 @@ class PyFloat_Test(TestCase):
     def testPyFloat_UnManagedNew(self, mapper, _):
         tp_new = CPyMarshal.ReadFunctionPtrField(mapper.PyFloat_Type, PyTypeObject, "tp_new", CPythonVarargsKwargsFunction_Delegate)
         for value in (0, 1, 1.5, "1.0"):
-            unmanged_float = tp_new(mapper.PyFloat_Type, mapper.Store((value,)), IntPtr.Zero)
-            actualType = CPyMarshal.ReadPtrField(unmanged_float, PyObject, "ob_type")
+            unmanaged_float = tp_new(mapper.PyFloat_Type, mapper.Store((value,)), IntPtr.Zero)
+            actualType = CPyMarshal.ReadPtrField(unmanaged_float, PyObject, "ob_type")
             self.assertEquals(actualType, mapper.PyFloat_Type)
-            self.assertEquals(mapper.Retrieve(unmanged_float), float(value))
+            self.assertEquals(mapper.Retrieve(unmanaged_float), float(value))
             
         for bad_value in ("hello", object(), object):
             unmanaged_float = tp_new(mapper.PyFloat_Type, mapper.Store((bad_value,)), IntPtr.Zero)
