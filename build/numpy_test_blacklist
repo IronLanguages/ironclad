@@ -26,7 +26,6 @@ core.test_umath.TestSpecialMethods.test_failing_wrap
 core.test_umath.TestSpecialMethods.test_old_wrap
 core.test_umath.TestSpecialMethods.test_priority
 core.test_umath.TestSpecialMethods.test_wrap
-core.test_scalarmath.TestConversion.test_int_from_long # will is doing this
 core.test_scalarmath.TestPower.test_large_types
 core.test_scalarmath.TestPower.test_large_types
 core.test_scalarmath.TestTypes.test_type_create

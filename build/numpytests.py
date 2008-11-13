@@ -47,6 +47,7 @@ test_blacklist = [
     'core.test_multiarray.TestMethods.test_argsort', # fails on the creation of character arrays which we aren't worrying about
 
     # Fail due to differences in str(complex) between python and ipy - not worth fixing now (similar test in functionality test)
+    'core.test_print.TestPrint.test_longdouble',
     'core.test_print.TestPrint.test_complex_double', 
     'core.test_print.TestPrint.test_complex_float', 
     'core.test_print.TestPrint.test_complex_longdouble',
