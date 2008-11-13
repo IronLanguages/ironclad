@@ -514,6 +514,7 @@ class PyNumber_Test(TestCase):
         for value in values:
             ptr = mapper.Store(value)
             _int = mapper.Retrieve(mapper.PyNumber_Int(ptr))
+            self.assertEquals(type(_int) in (int, long), True, "returned inappropriate type")
             self.assertEquals(_int, int(value), "converted wrong")
             self.assertMapperHasError(mapper, None)
             mapper.DecRef(ptr)

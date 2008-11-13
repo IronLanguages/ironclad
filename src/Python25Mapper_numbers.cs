@@ -82,7 +82,12 @@ namespace Ironclad
         {
             try
             {
-                return this.Store(PythonCalls.Call(TypeCache.Int32, new object[] {this.Retrieve(numberPtr)}));
+                object result = PythonCalls.Call(TypeCache.Int32, new object[] {this.Retrieve(numberPtr)});
+                if (!(result is Int32))
+                {
+                    result = Converter.ConvertToBigInteger(result);
+                }
+                return this.Store(result);
             }
             catch (Exception e)
             {
@@ -159,20 +164,20 @@ namespace Ironclad
             }
         }
 
-	public IntPtr
-	PyFloat_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
-	{
-	    try
-	    {
-	    PythonTuple args = (PythonTuple) this.Retrieve(argsPtr);
-	    return this.Store(PythonCalls.Call(this.scratchContext, TypeCache.Double, new object[] {args[0]}));
-	    }
-	    catch(Exception e)
-	    {
-		this.LastException = e;
-		return IntPtr.Zero;
-	    }
-	}
+    public IntPtr
+    PyFloat_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
+    {
+        try
+        {
+        PythonTuple args = (PythonTuple) this.Retrieve(argsPtr);
+        return this.Store(PythonCalls.Call(this.scratchContext, TypeCache.Double, new object[] {args[0]}));
+        }
+        catch(Exception e)
+        {
+        this.LastException = e;
+        return IntPtr.Zero;
+        }
+    }
 
         private IntPtr
         Store(bool value)
