@@ -164,6 +164,36 @@ class ExternalFunctionalityTest(TestCase):
         self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
         shutil.rmtree(testDir)
 
+    def testNumpyComplexPrinting(self):
+        # This test is a placeholder for core.test_print.TestPrint which fails since 1E20 is written as 1e20 in ipy
+        testDir = self.getTestDir()
+        self.write(os.path.join(testDir, 'test.py'), dedent("""\
+            # adapted from numpy
+            import ironclad
+            import numpy as np
+
+            def assert_equals(a, b):
+                assert a == b, '%r != %r' % (a, b)
+
+            def mangle(num):
+                return str(num).lower().replace('+0', '+')
+
+            def test_complex_type(type):
+                for x in [0, 1,-1, 1e10, 1e20] :
+            	assert_equals(mangle(type(x)), mangle(complex(x)).lower())
+            	assert_equals(mangle(type(x*1j)).lower(), mangle(complex(x*1j)).lower())
+            	assert_equals(mangle(type(x + x*1j)).lower(), mangle(complex(x + x*1j)).lower())
+	
+            test_complex_type(np.cfloat)
+            test_complex_type(np.cdouble)
+            test_complex_type(np.clongdouble)
+            ironclad.shutdown()
+            """))
+            
+        self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
+        shutil.rmtree(testDir)
+        
+
 class FunctionalityTest(TestCase):
 
     def assertRuns(self, testCode):
