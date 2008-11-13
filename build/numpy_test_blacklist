@@ -1,6 +1,5 @@
 core.test_multiarray.TestFromToFile.test_filename
 core.test_multiarray.TestFromToFile.test_malformed
-core.test_multiarray.TestNewaxis.test_basic
 core.test_multiarray.TestTake.test_clip
 core.test_multiarray.TestTake.test_ip_byteorder
 core.test_multiarray.TestClip.test_basic
@@ -42,7 +41,6 @@ core.test_numeric.TestClip.test_type_cast_07
 core.test_numeric.TestClip.test_type_cast_08
 core.test_numeric.TestClip.test_type_cast_09
 core.test_numeric.TestClip.test_type_cast_11
-core.test_numeric.TestIndex.test_boolean
 core.test_ufunc.TestUfunc.test_generic_loops
 lib.test__datasource.TestDataSourceExists.test_InvalidHTTP
 lib.test__datasource.TestDataSourceExists.test_ValidHTTP

@@ -41,6 +41,30 @@ namespace Ironclad
         }
         
         public override int
+        _PyTuple_Resize(IntPtr tuplePtrPtr, int length)
+        {
+            // note: make sure you don't actualise this
+            try
+            {
+                IntPtr tuplePtr = CPyMarshal.ReadPtr(tuplePtrPtr);
+                this.incompleteObjects.Remove(tuplePtr);
+                
+                int newSize = Marshal.SizeOf(typeof(PyTupleObject)) + (CPyMarshal.PtrSize * (length - 1));
+                tuplePtr = this.allocator.Realloc(tuplePtr, newSize);
+                CPyMarshal.WriteIntField(tuplePtr, typeof(PyTupleObject), "ob_size", length);
+                this.incompleteObjects[tuplePtr] = UnmanagedDataMarker.PyTupleObject;
+                CPyMarshal.WritePtr(tuplePtrPtr, tuplePtr);
+                return 0;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                CPyMarshal.WritePtr(tuplePtrPtr, IntPtr.Zero);
+                return -1;
+            }
+        }
+        
+        public override int
         PyTuple_Size(IntPtr tuplePtr)
         {
             return CPyMarshal.ReadIntField(tuplePtr, typeof(PyTupleObject), "ob_size");

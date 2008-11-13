@@ -1,4 +1,6 @@
 
+import sys
+
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
@@ -131,6 +133,41 @@ class TupleTest(TestCase):
         markedPtr = mapper.PyTuple_New(2)
         mapper.DecRef(markedPtr)
 
+
+    def test_PyTuple_Resize(self):
+        allocs = []
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        tuplePtrPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
+        
+        oldTuplePtr = mapper.PyTuple_New(1)
+        del allocs[:]
+        CPyMarshal.WritePtr(tuplePtrPtr, oldTuplePtr)
+        self.assertEquals(mapper._PyTuple_Resize(tuplePtrPtr, 100), 0)
+
+        newTuplePtr = CPyMarshal.ReadPtr(tuplePtrPtr)
+        expectedSize = Marshal.SizeOf(PyTupleObject) + (CPyMarshal.PtrSize * (99))
+        self.assertEquals(allocs, [(newTuplePtr, expectedSize)])
+        
+        tupleStruct = Marshal.PtrToStructure(newTuplePtr, PyTupleObject)
+        self.assertEquals(tupleStruct.ob_refcnt, 1)
+        self.assertEquals(tupleStruct.ob_type, mapper.PyTuple_Type)
+        self.assertEquals(tupleStruct.ob_size, 100)
+        
+        mapper.Dispose()
+        Marshal.FreeHGlobal(tuplePtrPtr)
+        
+
+    @WithMapper
+    def test_PyTuple_Resize_TooBig(self, mapper, addDealloc):
+        tuplePtrPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
+        addDealloc(lambda: Marshal.FreeHGlobal(tuplePtrPtr))
+        
+        tuplePtr = mapper.PyTuple_New(1)
+        CPyMarshal.WritePtr(tuplePtrPtr, tuplePtr)
+        self.assertEquals(mapper._PyTuple_Resize(tuplePtrPtr, 2000000000), -1)
+        self.assertMapperHasError(mapper, MemoryError)
+        self.assertEquals(CPyMarshal.ReadPtr(tuplePtrPtr), IntPtr.Zero)
+        
 
     def testStoreTupleCreatesTupleType(self):
         allocs = []
