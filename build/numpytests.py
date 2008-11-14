@@ -51,9 +51,6 @@ test_blacklist = [
     'core.test_print.TestPrint.test_complex_double', 
     'core.test_print.TestPrint.test_complex_float', 
     'core.test_print.TestPrint.test_complex_longdouble',
-
-    'core.test_scalarmath.TestRepr.test_float_repr', # takes a long time to run (may just be a large test)
-    'core.test_scalarmath.TestTypes.test_type_add', # takes a long time to run (may just be a large test)
 ]
 read_into_blacklist(test_blacklist, 'numpy_test_blacklist')
 
