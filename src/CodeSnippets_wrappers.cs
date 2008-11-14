@@ -91,6 +91,11 @@ class {0}(_anon_superclass):
         raise Exception('no idea how to len() this')
 ";
 
+        public const string COMPLEX_HACK_CODE = @"
+    def __complex__(self):
+        return complex(float(self.real), float(self.imag))
+";
+
         public const string ITER_METHOD_CODE = @"
     def __iter__(self):
         return self._dispatcher.method_selfarg('{0}tp_iter', self)

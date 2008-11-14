@@ -17,8 +17,6 @@ core.test_regression.TestRegression.test_complex_dtype_printing
 core.test_regression.TestRegression.test_dot_alignment_sse2
 core.test_regression.TestRegression.test_dtype_posttuple
 core.test_regression.TestRegression.test_dtype_repr
-core.test_umath.TestMaximum.test_reduce_complex
-core.test_umath.TestMinimum.test_reduce_complex
 core.test_umath.TestSpecialMethods.test_array_with_context
 core.test_umath.TestSpecialMethods.test_failing_wrap
 core.test_umath.TestSpecialMethods.test_old_wrap

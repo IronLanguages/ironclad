@@ -110,6 +110,7 @@ namespace Ironclad
             this.HandleMappingSequenceCollision();
             this.GenerateRichcmpMethods();
             this.GenerateIterMethods();
+            this.UglyComplexHack();
         }
 
         private void
@@ -277,6 +278,17 @@ namespace Ironclad
                 this.methodTable.has_key(this.tablePrefix + "_len_mp_length"))
             {
                 this.code.Append(CodeSnippets.LEN_CODE);
+            }
+        }
+        
+        
+        private void
+        UglyComplexHack()
+        {
+            if (this.methodTable.has_key(this.tablePrefix + "__get_real") &&
+                this.methodTable.has_key(this.tablePrefix + "__get_imag"))
+            {
+                this.code.Append(CodeSnippets.COMPLEX_HACK_CODE);
             }
         }
 
