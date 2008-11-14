@@ -1,6 +1,5 @@
 core.test_multiarray.TestFromToFile.test_filename
 core.test_multiarray.TestFromToFile.test_malformed
-core.test_multiarray.TestTake.test_clip
 core.test_multiarray.TestTake.test_ip_byteorder
 core.test_multiarray.TestClip.test_basic
 core.test_multiarray.TestView.test_basic
@@ -25,10 +24,7 @@ core.test_umath.TestSpecialMethods.test_failing_wrap
 core.test_umath.TestSpecialMethods.test_old_wrap
 core.test_umath.TestSpecialMethods.test_priority
 core.test_umath.TestSpecialMethods.test_wrap
-core.test_scalarmath.TestPower.test_large_types
-core.test_scalarmath.TestPower.test_large_types
 core.test_scalarmath.TestTypes.test_type_create
-core.test_scalarmath.TestTypes.test_types
 core.test_records.TestFromrecords.test_fromrecords
 core.test_records.TestFromrecords.test_method_array
 core.test_records.TestFromrecords.test_method_array2
