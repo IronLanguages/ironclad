@@ -24,12 +24,14 @@ mod_blacklist = [
     'core.test_defchararray', 
     'core.test_memmap',
     'core.test_records',
+    'lib.test_format',
 ]
 class_blacklist = [
     'core.test_multiarray.TestStringCompare', # don't care about strings yet
     'core.test_multiarray.TestPickling', # don't care about pickling yet
     'core.test_multiarray.TestRecord', # record arrays
     'core.test_regression.TestRegression', # has too many errors to worry about now.
+    
 ]
 test_blacklist = [
     'core.test_defmatrix.TestCtor.test_basic', # uses getframe
@@ -41,6 +43,10 @@ test_blacklist = [
     'core.test_multiarray.TestPutmask.test_record_array', # record arrays involved
     'core.test_multiarray.TestClip.test_record_array', # record arrays again
     'core.test_multiarray.TestResize.test_check_reference', # reference counting different in ironclad
+    
+     # cannot call import_nose
+    'lib.test_function_base.TestCheckFinite.test_simple',
+    'lib.test_function_base.TestGradient.test_badargs',
 
     # might want to extract other test cases:
     'core.test_multiarray.TestMethods.test_sort', # fails on the creation of character arrays which we aren't worrying about 
@@ -51,6 +57,9 @@ test_blacklist = [
     'core.test_print.TestPrint.test_complex_double', 
     'core.test_print.TestPrint.test_complex_float', 
     'core.test_print.TestPrint.test_complex_longdouble',
+    
+    # takes *forever*
+    'core.test_scalarmath.TestRepr.test_float_repr'
 ]
 read_into_blacklist(test_blacklist, 'numpy_test_blacklist')
 

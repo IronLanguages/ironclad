@@ -207,7 +207,7 @@ namespace Ironclad
 
             this.scratchModule.SetVariable("_ironclad_superclass", _type);
             this.ExecInModule(CodeSnippets.ACTUALISER_CODE, this.scratchModule);
-            this.actualiseHelpers[typePtr] = this.scratchModule.GetVariable<object>("anon_actualiser");
+            this.actualiseHelpers[typePtr] = this.scratchModule.GetVariable<object>("_ironclad_actualiser");
             this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
 
             this.PyType_Ready(typePtr);
@@ -228,7 +228,15 @@ namespace Ironclad
         {
             IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
             object actualiser = this.actualiseHelpers[typePtr];
-            object obj = PythonCalls.Call(actualiser);
+            object[] args = new object[]{};
+            
+            PythonType type_ = (PythonType)this.Retrieve(typePtr);
+            if (Builtin.issubclass(type_, TypeCache.Int32))
+            {
+                args = new object[] { CPyMarshal.ReadIntField(ptr, typeof(PyIntObject), "ob_ival") };
+            }
+            
+            object obj = PythonCalls.Call(actualiser, args);
             Builtin.setattr(this.scratchContext, obj, "__class__", this.Retrieve(typePtr));
             this.StoreBridge(ptr, obj);
             this.IncRef(ptr);
