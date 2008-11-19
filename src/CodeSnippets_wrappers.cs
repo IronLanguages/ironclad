@@ -8,8 +8,10 @@ class {0}(Exception):
 ";
 
         public const string ACTUALISER_CODE = @"
-class anon_actualiser(_ironclad_superclass):
+class _ironclad_actualiser(_ironclad_superclass):
     def __new__(cls, *args, **kwargs):
+        if issubclass(cls, int):
+            return int.__new__(cls, args[0])
         return object.__new__(cls)
     def __init__(self, *args, **kwargs):
         pass
@@ -18,16 +20,9 @@ class anon_actualiser(_ironclad_superclass):
 ";
 
         public const string CLASS_CODE = @"
-_anon_superclass = _ironclad_metaclass('anon', _ironclad_bases, dict())
-class {0}_actualiser(_anon_superclass):
-    def __new__(cls, *args, **kwargs):
-        return object.__new__(cls)
-    def __init__(self, *args, **kwargs):
-        pass
-    def __del__(self):
-        pass
+_ironclad_superclass = _ironclad_metaclass('anon', _ironclad_bases, dict())
     
-class {0}(_anon_superclass):
+class {0}(_ironclad_superclass):
     '''{2}'''
     __module__ = '{1}'
     def __new__(cls, *args, **kwargs):

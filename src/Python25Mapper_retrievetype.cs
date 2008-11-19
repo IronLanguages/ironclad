@@ -50,7 +50,7 @@ namespace Ironclad
             object typeDict = Builtin.getattr(this.scratchContext, klass, "__dict__");
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_dict", this.Store(typeDict));
 
-            object klass_actualiser = this.scratchModule.GetVariable<object>(cb.__name__ + "_actualiser");
+            object klass_actualiser = this.scratchModule.GetVariable<object>("_ironclad_actualiser");
             this.actualiseHelpers[typePtr] = klass_actualiser;
             
             this.map.Associate(typePtr, klass);

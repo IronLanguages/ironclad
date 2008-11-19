@@ -48,6 +48,7 @@ namespace Ironclad
             this.GenerateProperties();
             this.GenerateMethods();
             this.GenerateMagicMethods();
+            this.GenerateActualiser();
         }
 
         private void
@@ -111,6 +112,12 @@ namespace Ironclad
             this.GenerateRichcmpMethods();
             this.GenerateIterMethods();
             this.UglyComplexHack();
+        }
+        
+        private void
+        GenerateActualiser()
+        {
+            this.code.Append(CodeSnippets.ACTUALISER_CODE);
         }
 
         private void

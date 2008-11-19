@@ -474,36 +474,7 @@ class IckyDispatchTest(DispatchTestCase):
         if _checkErrorFails:
             dispatcher._check_error = FuncRaising(ValueError, calls, '_check_error')
         return dispatcher
-    
-    # NOTE: a failing __new__ will leak memory. However, if __new__ fails,
-    # the want of a few bytes is unlikely to be your primary concern.
-    @WithMapper
-    def testDispatch_construct(self, mapper, _):
-        klass, instance, storeMap = self.getVars()
-        calls = []
-        dispatcher = self.getMapperPatchedDispatcher(mapper, calls, INSTANCE_PTR, storeMap=storeMap)
-        class FakeObject(object):
-            def __new__(cls):
-                calls.append(('__new__', (cls,)))
-                return instance
-        mapper.DispatcherModule.object = FakeObject
-        try:
-            self.assertEquals(dispatcher.construct(NAME, klass, *ARGS, **KWARGS), instance)
-        finally:
-            mapper.DispatcherModule.object = object
         
-        self.assertEquals(calls, [
-            ('_store', (klass,)),
-            ('_store', (ARGS,)),
-            ('_store', (KWARGS,)),
-            (NAME, (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
-            ('_check_error', ()),
-            ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
-            ('HasPtr', (INSTANCE_PTR,)),
-            ('__new__', (klass,)),
-            ('StoreBridge', (INSTANCE_PTR, instance)),
-            ('Strengthen', (instance,))
-        ])
     
     @WithMapper
     def testDispatch_construct_singleton(self, mapper, _):
@@ -521,10 +492,8 @@ class IckyDispatchTest(DispatchTestCase):
             ('_store', (KWARGS,)),
             (NAME, (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_check_error', ()),
-            ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
-            ('HasPtr', (RESULT_PTR,)),
-            ('IncRef', (RESULT_PTR,)),
             ('_return_retrieve', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR, ARGS_PTR, KWARGS_PTR)),
         ])
 
 
@@ -543,7 +512,7 @@ class IckyDispatchTest(DispatchTestCase):
             ('_store', (KWARGS,)),
             (NAME, (TYPE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_check_error', ()),
-            ('_cleanup', (ARGS_PTR, KWARGS_PTR)),
+            ('_cleanup', (RESULT_PTR, ARGS_PTR, KWARGS_PTR)),
         ])
 
     @WithMapper

@@ -15,8 +15,10 @@ from Ironclad import (
     CPyMarshal, CPython_destructor_Delegate, CPython_initproc_Delegate, HGlobalAllocator,
     Python25Api, Python25Mapper
 )
-from Ironclad.Structs import MemberT, METH, Py_TPFLAGS, PyMemberDef, PyNumberMethods, PyObject, PyMappingMethods, PySequenceMethods, PyTypeObject
-
+from Ironclad.Structs import (
+    MemberT, METH, Py_TPFLAGS, PyMemberDef, PyNumberMethods, 
+    PyIntObject, PyObject, PyMappingMethods, PySequenceMethods, PyTypeObject
+)
 
 class BorkedException(System.Exception):
     pass
@@ -1498,18 +1500,25 @@ class InheritanceTest(TestCase):
 
         bases = (mapper.Retrieve(basePtr), int)
         basesPtr = mapper.Store(bases)
-        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': mapper.PyType_Type, 'tp_base': basePtr, 'tp_bases': basesPtr})
+        typeSpec = {
+            'tp_name': 'klass',
+            'ob_type': mapper.PyType_Type,
+            'tp_base': basePtr,
+            'tp_bases': basesPtr
+        }
+        klassPtr, deallocType = MakeTypePtr(mapper, typeSpec)
         addToCleanUp(deallocType)
 
         klass = mapper.Retrieve(klassPtr)
         for base in bases:
             self.assertEquals(issubclass(klass, base), True)
 
-        unknownInstancePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        unknownInstancePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
         addToCleanUp(lambda: Marshal.FreeHGlobal(unknownInstancePtr))
 
         CPyMarshal.WriteIntField(unknownInstancePtr, PyObject, "ob_refcnt", 1)
         CPyMarshal.WritePtrField(unknownInstancePtr, PyObject, "ob_type", klassPtr)
+        CPyMarshal.WriteIntField(unknownInstancePtr, PyIntObject, "ob_ival", 123)
         unknownInstance = mapper.Retrieve(unknownInstancePtr)
         self.assertEquals(isinstance(unknownInstance, klass), True)
 
@@ -1557,6 +1566,49 @@ class InheritanceTest(TestCase):
         deallocTypes()
 
 
+class IntSubclassHorrorTest(TestCase):
+    
+    @WithMapper
+    def testRetrievedIntsHaveCorrectValue(self, mapper, deallocLater):
+        # this is the only way I can tell what the underlying 'int' value is
+        # (as opposed to the value returned from __int__, which does not get called
+        # when passed into __getslice__)
+        calls = []
+        class SequenceLike(object):
+            def __getslice__(self, i, j):
+                calls.append(('__getslice__', i, j))
+                return []
+
+        typeSpec = {
+            'tp_name': 'klass',
+            'tp_base': mapper.PyInt_Type,
+            'tp_basicsize': Marshal.SizeOf(PyIntObject)
+        }
+
+        klassPtr, deallocType = MakeTypePtr(mapper, typeSpec)
+        deallocLater(deallocType)
+        
+        _12Ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
+        deallocLater(lambda: Marshal.FreeHGlobal(_12Ptr))
+        CPyMarshal.WriteIntField(_12Ptr, PyIntObject, "ob_refcnt", 1)
+        CPyMarshal.WritePtrField(_12Ptr, PyIntObject, "ob_type", klassPtr)
+        CPyMarshal.WriteIntField(_12Ptr, PyIntObject, "ob_ival", 12)
+        
+        _44Ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
+        deallocLater(lambda: Marshal.FreeHGlobal(_44Ptr))
+        CPyMarshal.WriteIntField(_44Ptr, PyIntObject, "ob_refcnt", 1)
+        CPyMarshal.WritePtrField(_44Ptr, PyIntObject, "ob_type", klassPtr)
+        CPyMarshal.WriteIntField(_44Ptr, PyIntObject, "ob_ival", 44)
+        
+        SequenceLike()[mapper.Retrieve(_12Ptr):mapper.Retrieve(_44Ptr)]
+        self.assertEquals(calls, [('__getslice__', 12, 44)])
+        self.assertEquals(map(type, calls[0]), [str, int, int])
+        
+        
+        
+    
+
+
 class TypeDictTest(TestCase):
     
     @WithMapper
@@ -1567,7 +1619,6 @@ class TypeDictTest(TestCase):
         _type = mapper.Retrieve(typePtr)
         _typeDictPtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_dict")
         self.assertEquals(mapper.Retrieve(_typeDictPtr), _type.__dict__)
-
 
 
 suite = makesuite(
@@ -1586,6 +1637,7 @@ suite = makesuite(
     PropertiesTest,
     MembersTest,
     InheritanceTest,
+    IntSubclassHorrorTest,
     TypeDictTest,
 )
 if __name__ == '__main__':

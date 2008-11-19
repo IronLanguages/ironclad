@@ -64,17 +64,10 @@ class Dispatcher(object):
         instancePtr = self.table[name](klassPtr, argsPtr, kwargsPtr)
         try:
             self._check_error()
-        finally:
-            self._cleanup(argsPtr, kwargsPtr)
-        
-        if self.mapper.HasPtr(instancePtr):
-            self.mapper.IncRef(instancePtr)
             return self._return_retrieve(instancePtr)
-
-        instance = object.__new__(klass)
-        self.mapper.StoreBridge(instancePtr, instance)
-        self.mapper.Strengthen(instance)
-        return instance
+        finally:
+            self._cleanup(instancePtr, argsPtr, kwargsPtr)
+        
 
     @lock
     def init(self, name, instance, *args, **kwargs):
