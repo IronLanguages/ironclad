@@ -117,6 +117,26 @@ class SequenceFunctionsTest(TestCase):
         self.assertMapperHasError(mapper, TypeError)
 
 
+    @WithMapper
+    def testPySequence_Tuple_withTuple(self, mapper, _):
+        tuplePtr = mapper.Store((1, 2, 3))
+        self.assertEquals(mapper.PySequence_Tuple(tuplePtr), tuplePtr)
+        self.assertEquals(mapper.RefCount(tuplePtr), 2)
+        
+    
+    @WithMapper
+    def testPySequence_Tuple_notTuple(self, mapper, _):
+        listPtr = mapper.Store([4, 5, 6])
+        tuplePtr = mapper.PySequence_Tuple(listPtr)
+        self.assertEquals(mapper.Retrieve(tuplePtr), (4, 5, 6))
+    
+    
+    @WithMapper
+    def testPySequence_Tuple_notSequence(self, mapper, _):
+        self.assertEquals(mapper.PySequence_Tuple(mapper.Store(123)), IntPtr.Zero)
+        self.assertMapperHasError(mapper, TypeError)
+
+
 suite = makesuite(
     SequenceFunctionsTest,
 )

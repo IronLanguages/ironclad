@@ -60,8 +60,9 @@ test_blacklist = [
     'core.test_print.TestPrint.test_complex_float', 
     'core.test_print.TestPrint.test_complex_longdouble',
     
-    # takes *forever*
-    'core.test_scalarmath.TestRepr.test_float_repr'
+    # these take *forever*
+    'core.test_scalarmath.TestRepr.test_float_repr',
+    'core.test_scalarmath.TestTypes.test_type_add',
 ]
 read_into_blacklist(test_blacklist, 'numpy_test_blacklist')
 
