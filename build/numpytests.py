@@ -9,6 +9,8 @@ from numpy.testing import TestCase
 from unittest import TestResult
 
 def read_into_blacklist(blacklist, filename):
+    if not os.path.isfile(filename):
+        return
     f = file(filename)
     try:
         for line in f:
@@ -52,7 +54,7 @@ test_blacklist = [
     'core.test_multiarray.TestMethods.test_sort', # fails on the creation of character arrays which we aren't worrying about 
     'core.test_multiarray.TestMethods.test_argsort', # fails on the creation of character arrays which we aren't worrying about
 
-    # Fail due to differences in str(complex) between python and ipy - not worth fixing now (similar test in functionality test)
+    # Fail due to differences in str(complex) between python and ipy - not worth fixing now (similar test in functionalitytest)
     'core.test_print.TestPrint.test_longdouble',
     'core.test_print.TestPrint.test_complex_double', 
     'core.test_print.TestPrint.test_complex_float', 
@@ -70,12 +72,14 @@ def import_test_module(direc, mod_name):
     return reduce(getattr, [direc, 'tests', mod_name], package)
 
 
-def run_single_test(package_name, mod_name, class_name, test_name, runner=None):
+def run_single_test(test_path, runner=None):
+    package_name, mod_name, class_name, test_name = test_path
     module = import_test_module(package_name, mod_name)
     klass = getattr(module, class_name)
     test_path = (package_name, mod_name, class_name, test_name)
-    runner(klass(test_name), test_path)
-
+    if not runner(klass(test_name), test_path):
+        ironclad.shutdown()
+        sys.exit(1)
 
 def blacklist_on_fail(test_case, test_path):
     print '.'.join(test_path)
@@ -101,16 +105,24 @@ def run_test_case(test_case, test_path):
         save_continuation_point(test_path)
         result = TestResult()
         test_case.run(result)
-        if result.errors: print result.errors[0][1]
-        elif result.failures: print result.failures[0][1]
-        else: print 'OK'
+        if result.errors:
+            print result.errors[0][1]
+            return False
+        elif result.failures:
+            print result.failures[0][1]
+            return False
+        else:
+            print 'OK'
+            return True
     except Exception, e:
         print str(e)
+        return False
 
 
 def ensure_package(package_name):
     tests_path = os.path.join(numpy_path, package_name, 'tests')
     init_path = os.path.join(tests_path, '__init__.py')
+    print "Attempting to open", init_path
     open(init_path, 'w').close()    
 
 
@@ -144,18 +156,35 @@ def get_test_names(test_class, class_path):
     return tests
 
 
-def get_all_tests(dirs, previous_test=None):
-    for package_name in dirs: 
+def get_all_tests():
+    return get_matching_tests(())
+
+
+def get_matching_tests(path):
+    package_names, mod_names, class_names, input_test_names = (tuple([comp] for comp in path) + ([], [], [], []))[0:4] # who needs to be able to READ code
+    for package_name in package_names or dirs:
         ensure_package(package_name)
-        for mod_name, module in get_modules(package_name):
-            for class_name, test_class in get_classes(module, (package_name, mod_name)):
-                for test_name in get_test_names(test_class, (package_name, mod_name, class_name)):
+        
+        mod_pairs = [(name, import_test_module(package_name, name)) for name in mod_names]
+        mod_pairs = mod_pairs or get_modules(package_name)
+
+        for mod_name, module in mod_pairs:
+            class_pairs = [(name, getattr(module, name)) for name in class_names]
+            class_pairs = class_pairs or get_classes(module, (package_name, mod_name))
+                
+            for class_name, test_class in class_pairs:
+                test_names = input_test_names or get_test_names(test_class, (package_name, mod_name, class_name))
+
+                for test_name in test_names:
                     test_path = (package_name, mod_name, class_name, test_name)
-                    yield test_path, test_class(test_name)
+                    
+                    pair = test_path, test_class(test_name)
+                    yield pair
+                    
 
 
-def run_all_tests(dirs, runner, previous_test=None):
-    all_tests = get_all_tests(dirs)
+def run_all_tests(runner, previous_test=None):
+    all_tests = get_all_tests()
     if previous_test:
         for _ in takewhile(lambda (p, _): p != previous_test, all_tests): pass
     for test_path, test_case in all_tests:
@@ -163,6 +192,15 @@ def run_all_tests(dirs, runner, previous_test=None):
     print "All tests run ?!"
 
 
+def run_paths(paths, runner):
+    success = True
+    for path in paths:
+        for test_path, test in get_matching_tests(path):
+            success = success and runner(test, test_path)
+    if not success:
+        ironclad.shutdown()
+        sys.exit(1)
+        
 def add_to_blacklist(test_path, msg=""):
     f = file('numpy_test_blacklist', 'a')
     try:
@@ -208,12 +246,10 @@ def main():
         print "Continuation point", previous_test
     
     if not args:
-        run_all_tests(dirs, runner, previous_test=previous_test)
+        run_all_tests(runner, previous_test=previous_test)
     else:
-        for test_path in args:
-            package_name, mod_name, class_name, test_name = test_path.split('.')
-            run_single_test(package_name, mod_name, class_name, test_name, runner=runner)
-    
+        paths = (path_string.split('.') for path_string in args)
+        run_paths(paths, runner)
 
 if __name__ == "__main__":
     main()
