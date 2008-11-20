@@ -1,21 +1,26 @@
 from System.Diagnostics import Process
-from numpytests import get_continuation_point, add_to_blacklist, save_continuation_point
+from numpytests import get_all_tests, add_to_blacklist
 
-def run_blacklister_robustly():
+for test_path, _ in  get_all_tests(['core', 'lib']):
     p = Process()
+    print "Running", ".".join(test_path)
     p.StartInfo.FileName = 'ipy'
-    p.StartInfo.Arguments = 'numpytests.py --blacklist-add --continue'
+    p.StartInfo.Arguments = 'numpytests.py %s' % '.'.join(test_path)
+    p.StartInfo.CreateNoWindow = True
+    p.StartInfo.UseShellExecute = False
     p.Start()
-    if not p.WaitForExit(120000):
-	add_to_blacklist(get_continuation_point(), msg='Took too long (probably)')
-	save_continuation_point(None)
-	p.Kill()
-	p.WaitForExit()
-	return False
-    return p.ExitCode == 0
+    if not p.WaitForExit(300000):
+        add_to_blacklist(test_path)
+        p.Kill()
+        p.WaitForExit()
+    if p.ExitCode != 0:
+        add_to_blacklist(test_path)
 
-while not run_blacklister_robustly():
-    pass
+
+    
+
+
+
     
     
     
