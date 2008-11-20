@@ -1,0 +1,3 @@
+IntPtr
+IntPtr seqPtr
+return IntPtr.Zero

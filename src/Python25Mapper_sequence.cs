@@ -99,5 +99,25 @@ namespace Ironclad
                 return IntPtr.Zero;
             }
         }
+        
+        public override IntPtr
+        PySequence_Tuple(IntPtr seqPtr)
+        {
+            try
+            {
+                if (CPyMarshal.ReadPtrField(seqPtr, typeof(PyObject), "ob_type") == this.PyTuple_Type)
+                {
+                    this.IncRef(seqPtr);
+                    return seqPtr;
+                }
+                object seq = this.Retrieve(seqPtr);
+                return this.Store(PythonCalls.Call(TypeCache.PythonTuple, new object[] { seq }));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
     }
 }
