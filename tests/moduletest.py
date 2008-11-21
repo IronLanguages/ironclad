@@ -4,14 +4,12 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.cpython import MakeItemsTablePtr, MakeMethodDef, MakeTypePtr
 from tests.utils.memory import CreateTypes
 from tests.utils.python25mapper import TempPtrCheckingPython25Mapper, MakeAndAddEmptyModule
-from tests.utils.testcase import TestCase
+from tests.utils.testcase import TestCase, WithMapper
 
 from System import IntPtr
 
 from Ironclad import Python25Mapper
 from Ironclad.Structs import METH
-
-from TestUtils import ExecUtils
 
 
 class BorkedException(Exception):
@@ -57,7 +55,7 @@ class Py_InitModule4_Test(TestCase):
             12345)
             
         module = mapper.Retrieve(modulePtr)
-        test_module = ExecUtils.GetPythonModule(mapper.Engine, 'test_module')
+        test_module = sys.modules['test_module']
         
         for item in dir(test_module):
             self.assertEquals(getattr(module, item) is getattr(test_module, item),
@@ -331,30 +329,21 @@ class ImportTest(TestCase):
 # not sure this is the right place for these tests
 class BuiltinsTest(TestCase):
     
-    def testPyEval_GetBuiltins(self):
-        mapper = Python25Mapper()
-        
+    @WithMapper
+    def testPyEval_GetBuiltins(self, mapper, _):
         builtinsPtr = mapper.PyEval_GetBuiltins()
-        builtins = mapper.Retrieve(builtinsPtr)
-        self.assertEquals(builtins, ExecUtils.GetPythonModule(mapper.Engine, '__builtin__').__dict__)
-        
-        mapper.Dispose()
+        import __builtin__
+        self.assertEquals(mapper.Retrieve(builtinsPtr), __builtin__.__dict__)
         
         
         
 class SysTest(TestCase):
     
-    def testPySys_GetObject(self):
-        mapper = Python25Mapper()
-        
+    @WithMapper
+    def testPySys_GetObject(self, mapper, _):
         modulesPtr = mapper.PySys_GetObject('modules')
         modules = mapper.Retrieve(modulesPtr)
-        self.assertEquals(modules, ExecUtils.GetPythonModule(mapper.Engine, 'sys').modules)
-        
-        self.assertEquals(mapper.PySys_GetObject('not_in_sys'), IntPtr.Zero)
-        self.assertMapperHasError(mapper, NameError)
-        
-        mapper.Dispose()
+        self.assertEquals(modules is sys.modules, True)
 
 
 suite = makesuite(

@@ -1,4 +1,4 @@
-
+import sys
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.memory import CreateTypes
@@ -110,20 +110,26 @@ class ErrFunctionsTest(TestCase):
     @WithMapper
     def testPyErr_Print(self, mapper, _):
         mapper.LastException = None
-        self.assertRaises(Exception, mapper.PyErr_Occurred())
+        self.assertRaises(Exception, mapper.PyErr_Print)
         
         somethingToWrite = "yes, I know this isn't an exception; no, I don't want to test precise traceback printing."
         mapper.LastException = somethingToWrite
-        stderr = MemoryStream()
-        mapper.Engine.Runtime.IO.SetErrorOutput(stderr, Encoding.UTF8)
-        mapper.PyErr_Print()
         
-        stderr.Flush()
-        stderr.Position = 0
-        printed = StreamReader(stderr, True).ReadToEnd()
-        self.assertEquals(printed, somethingToWrite + '\r\n')
-        self.assertEquals(mapper.LastException, None)
-
+        calls = []
+        class stderr(object):
+            def write(self, *args):
+                calls.append(args)
+        old = sys.stderr
+        sys.stderr = stderr()
+        try:
+            mapper.PyErr_Print()
+        finally:
+            sys.stderr = old
+        
+        self.assertEquals(calls, [(somethingToWrite,), ('\n',)])
+        
+        
+        
 
     @WithMapper
     def testPyErr_NewException(self, mapper, _):

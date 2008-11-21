@@ -40,17 +40,17 @@ namespace Ironclad
                 tp_bases = new PythonTuple(new object[] { tp_base });
             }
 
-            this.scratchModule.SetVariable("_ironclad_metaclass", ob_type);
-            this.scratchModule.SetVariable("_ironclad_bases", tp_bases);
+            ScopeOps.__setattr__(this.scratchModule, "_ironclad_metaclass", ob_type);
+            ScopeOps.__setattr__(this.scratchModule, "_ironclad_bases", tp_bases);
             this.ExecInModule(cb.code.ToString(), this.scratchModule);
 
-            object klass = this.scratchModule.GetVariable<object>(cb.__name__);
+            object klass = ScopeOps.__getattribute__(this.scratchModule, cb.__name__);
             object _dispatcher = PythonCalls.Call(this.dispatcherClass, new object[] { this, cb.methodTable });
             Builtin.setattr(this.scratchContext, klass, "_dispatcher", _dispatcher);
             object typeDict = Builtin.getattr(this.scratchContext, klass, "__dict__");
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_dict", this.Store(typeDict));
 
-            object klass_actualiser = this.scratchModule.GetVariable<object>("_ironclad_actualiser");
+            object klass_actualiser = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_actualiser");
             this.actualiseHelpers[typePtr] = klass_actualiser;
             
             this.map.Associate(typePtr, klass);

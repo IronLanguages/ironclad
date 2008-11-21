@@ -51,11 +51,6 @@ namespace Ironclad
                 return module;
             }
             
-            if (name == "numpy")
-            {
-                this.PerpetrateNumpyFixes();
-            }
-            
             this.importName = name;
             this.ExecInModule(String.Format("import {0}", name), this.scratchModule);
             this.importName = "";
@@ -63,14 +58,14 @@ namespace Ironclad
             return this.GetModule(name);
         }
         
-        private ScriptScope
+        private Scope
         CreateModule(string name)
         {
             if (this.GetModule(name) == null)
             {
                 PythonDictionary __dict__ = new PythonDictionary();
                 __dict__["__name__"] = name;
-                ScriptScope module = this.engine.CreateScope(__dict__);
+                Scope module = new Scope(__dict__);
                 this.AddModule(name, module);
                 return module;
             }
@@ -87,37 +82,46 @@ namespace Ironclad
             if (lastDot != -1)
             {
                 this.CreateModulesContaining(name.Substring(0, lastDot));
-                ScriptScope outerScope = this.GetModuleScriptScope((Scope)this.GetModule(name.Substring(0, lastDot)));
-                outerScope.SetVariable(name.Substring(lastDot + 1), innerScope);
+                Scope outerScope = (Scope)this.GetModule(name.Substring(0, lastDot));
+                ScopeOps.__setattr__(outerScope, name.Substring(lastDot + 1), innerScope);
             }
         }
 
-        private void
+        public void
         PerpetrateNumpyFixes()
         {
+            if (this.appliedNumpyHack)
+            {
+                return;
+            }
+            this.appliedNumpyHack = true;
+            
             Console.WriteLine("Detected numpy import");
-            Console.WriteLine("  faking out modules: parser, mmap, urllib2, ctypes");
+            Console.WriteLine("  faking out modules: nosetester, parser, mmap, urllib2, ctypes");
             this.CreateModule("parser");
             this.CreateModule("mmap");
 
-            ScriptScope urllib2 = this.CreateModule("urllib2");
-            urllib2.SetVariable("urlopen", new Object());
-            urllib2.SetVariable("URLError", new Object());
+            Scope urllib2 = this.CreateModule("urllib2");
+            ScopeOps.__setattr__(urllib2, "urlopen", new Object());
+            ScopeOps.__setattr__(urllib2, "URLError", new Object());
 
-	    ScriptScope nosetester = this.CreateModule("numpy.testing.nosetester");
-	    PythonDictionary NoseTesterDict = new PythonDictionary();
-	    NoseTesterDict["bench"] = NoseTesterDict["test"] = "This has been patched and broken by ironclad";
-	    PythonType NoseTesterClass = new PythonType(this.scratchContext, "NoseTester", new PythonTuple(), NoseTesterDict);
-	    nosetester.SetVariable("NoseTester", NoseTesterClass);
-	    nosetester.SetVariable("import_nose", new Object());
-	    nosetester.SetVariable("run_module_suite", new Object());
-	    nosetester.SetVariable("get_package_name", new Object());
-	      
+            Scope nosetester = this.CreateModule("numpy.testing.nosetester");
+            PythonDictionary NoseTesterDict = new PythonDictionary();
+            NoseTesterDict["bench"] = NoseTesterDict["test"] = "This has been patched and broken by ironclad";
+            PythonType NoseTesterClass = new PythonType(this.scratchContext, "NoseTester", new PythonTuple(), NoseTesterDict);
+            ScopeOps.__setattr__(nosetester, "NoseTester", NoseTesterClass);
+            ScopeOps.__setattr__(nosetester, "import_nose", new Object());
+            ScopeOps.__setattr__(nosetester, "run_module_suite", new Object());
+            ScopeOps.__setattr__(nosetester, "get_package_name", new Object());
+          
             // ctypeslib specifically handles ctypes being None
-            ScriptScope sys = Python.GetSysModule(this.Engine);
-            PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
+            Scope sys = this.python.SystemState;
+            PythonDictionary modules = (PythonDictionary)ScopeOps.__getattribute__(sys, "modules");
             modules["ctypes"] = null;
 
+            // this should be fixed in ipy at some point
+            ScopeOps.__setattr__(sys, "__displayhook__",
+                ScopeOps.__getattribute__(sys, "displayhook"));
         }
     }
 }

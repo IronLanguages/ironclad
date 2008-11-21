@@ -2,6 +2,7 @@ using System;
 
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
+using Microsoft.Scripting.Runtime;
 
 using Ironclad.Structs;
 
@@ -28,9 +29,9 @@ namespace Ironclad
             
             try
             {
-                ScriptSource script = this.engine.CreateScriptSourceFromString(code, SourceCodeKind.Statements);
+                SourceUnit script = this.python.CreateSnippet(code, SourceCodeKind.Statements);
                 IAttributesCollection globals = (IAttributesCollection)this.Retrieve(globalsPtr);
-                script.Execute(this.Engine.CreateScope(globals));
+                script.Execute(new Scope(globals));
                 this.IncRef(this._Py_NoneStruct);
                 return this._Py_NoneStruct;
             }

@@ -205,9 +205,9 @@ namespace Ironclad
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.Store(ob_type));
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", this.Store(tp_base));
 
-            this.scratchModule.SetVariable("_ironclad_superclass", _type);
+            ScopeOps.__setattr__(this.scratchModule, "_ironclad_superclass", _type);
             this.ExecInModule(CodeSnippets.ACTUALISER_CODE, this.scratchModule);
-            this.actualiseHelpers[typePtr] = this.scratchModule.GetVariable<object>("_ironclad_actualiser");
+            this.actualiseHelpers[typePtr] = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_actualiser");
             this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
 
             this.PyType_Ready(typePtr);
