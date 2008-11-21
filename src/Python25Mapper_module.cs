@@ -40,7 +40,7 @@ namespace Ironclad
             moduleCode.Append(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE); // eww
             CallableBuilder.GenerateFunctions(moduleCode, methodsPtr, methodTable);
 
-            ScriptScope module = this.engine.CreateScope(globals);
+            Scope module = new Scope(globals);
             this.ExecInModule(moduleCode.ToString(), module);
             this.AddModule(name, module);
             return this.Store(this.GetModule(name));
@@ -58,8 +58,8 @@ namespace Ironclad
         {
             try
             {
-                ScriptScope sys = Python.GetSysModule(this.Engine);
-                return this.Store(sys.GetVariable(name));
+                Scope sys = this.python.SystemState;
+                return this.Store(ScopeOps.__getattribute__(sys, name));
             }
             catch (Exception e)
             {
@@ -72,9 +72,8 @@ namespace Ironclad
         PyModule_New(string name)
         {
             Scope module = new Scope();
-            ScriptScope moduleScope = this.GetModuleScriptScope(module);
-            moduleScope.SetVariable("__name__", name);
-            moduleScope.SetVariable("__doc__", "");
+            ScopeOps.__setattr__(module, "__name__", name);
+            ScopeOps.__setattr__(module, "__doc__", "");
             return this.Store(module);
         }
 
@@ -91,8 +90,8 @@ namespace Ironclad
             {
                 return -1;
             }
-            ScriptScope moduleScope = this.GetModuleScriptScope((Scope)this.Retrieve(modulePtr));
-            moduleScope.SetVariable(name, value);
+            Scope moduleScope = (Scope)this.Retrieve(modulePtr);
+            ScopeOps.__setattr__(moduleScope, name, value);
             return 0;
         }
         
@@ -121,36 +120,30 @@ namespace Ironclad
         }
 
         private void
-        ExecInModule(string code, ScriptScope module)
+        ExecInModule(string code, Scope module)
         {
-            ScriptSource script = this.engine.CreateScriptSourceFromString(code, SourceCodeKind.Statements);
+            SourceUnit script = this.python.CreateSnippet(code, SourceCodeKind.Statements);
             script.Execute(module);
         }
         
         public void
-        AddModule(string name, ScriptScope module)
+        AddModule(string name, Scope module)
         {
-            ScriptScope sys = Python.GetSysModule(this.Engine);
-            PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
-            modules[name] = HostingHelpers.GetScope(module);
+            Scope sys = this.python.SystemState;
+            PythonDictionary modules = (PythonDictionary)ScopeOps.__getattribute__(sys, "modules");
+            modules[name] = module;
         }
 
         public object 
         GetModule(string name)
         {
-            ScriptScope sys = Python.GetSysModule(this.Engine);
-            PythonDictionary modules = (PythonDictionary)sys.GetVariable("modules");
+            Scope sys = this.python.SystemState;
+            PythonDictionary modules = (PythonDictionary)ScopeOps.__getattribute__(sys, "modules");
             if (modules.has_key(name))
             {
                 return modules[name];
             }
             return null;
-        }
-
-        public ScriptScope 
-        GetModuleScriptScope(Scope module)
-        {
-            return this.Engine.CreateScope(module.Dict);
         }
         
         private void
@@ -160,11 +153,10 @@ namespace Ironclad
             globals["IntPtr"] = typeof(IntPtr);
             globals["CPyMarshal"] = typeof(CPyMarshal);
             globals["_mapper"] = this;
-            this.scratchModule = this.engine.CreateScope(globals);
-            this.ExecInModule(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE, this.scratchModule);
             
-            Scope scratchScope = HostingHelpers.GetScope(this.scratchModule);
-            this.scratchContext = new CodeContext(scratchScope, HostingHelpers.GetLanguageContext(this.engine));
+            this.scratchModule = new Scope(globals);
+            this.ExecInModule(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE, this.scratchModule);
+            this.scratchContext = new CodeContext(this.scratchModule, this.python);
         }
     }
 }

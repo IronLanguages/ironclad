@@ -70,7 +70,7 @@ namespace Ironclad
         private void
         PrintToStdErr(object obj)
         {
-            object stderr = Python.GetSysModule(this.Engine).GetVariable("__stderr__");
+            object stderr = ScopeOps.__getattribute__(this.python.SystemState, "stderr");
             PythonOps.PrintWithDest(this.scratchContext, stderr, obj);
         }
 
@@ -99,7 +99,7 @@ namespace Ironclad
 
             string excCode = String.Format(CodeSnippets.NEW_EXCEPTION, __name__, __module__);
             this.ExecInModule(excCode, this.scratchModule);
-            object newExc = this.scratchModule.GetVariable<object>(__name__);
+            object newExc = ScopeOps.__getattribute__(this.scratchModule, __name__);
             return this.Store(newExc);
         }
         

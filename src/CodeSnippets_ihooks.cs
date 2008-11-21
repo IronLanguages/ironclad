@@ -20,6 +20,14 @@ class _IroncladHooks(ihooks.Hooks):
         return module
 
 
+class _IroncladModuleLoader(ihooks.ModuleLoader):
+    
+    def find_module(self, name, path=None):
+        if name == 'numpy' or name.startswith('numpy.'):
+            _mapper.PerpetrateNumpyFixes()
+        return ihooks.ModuleLoader.find_module(self, name, path)
+
+
 class _IroncladModuleImporter(ihooks.ModuleImporter):
 
     # copied from ihooks.py
@@ -30,9 +38,7 @@ class _IroncladModuleImporter(ihooks.ModuleImporter):
         if '__path__' in globals:
             parent = self.modules[pname]
             # 'assert globals is parent.__dict__' always fails --
-            # I think an ipy module dict is some sort of funky 
-            # wrapper around a Scope, so the underlying data store
-            # actually is the same.
+            # but the underlying data store is actually the same
             assert len(globals) == len(parent.__dict__)
             for (k, v) in globals.iteritems():
                 assert parent.__dict__[k] is v
@@ -45,7 +51,7 @@ class _IroncladModuleImporter(ihooks.ModuleImporter):
             return parent
         return None
 
-_importer = _IroncladModuleImporter()
+_importer = _IroncladModuleImporter(_IroncladModuleLoader())
 _importer.set_hooks(_IroncladHooks())
 _importer.install()
 ";

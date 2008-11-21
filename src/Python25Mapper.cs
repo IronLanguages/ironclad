@@ -43,19 +43,21 @@ namespace Ironclad
 
     public partial class Python25Mapper : Python25Api, IDisposable
     {
-        private ScriptEngine engine;
+        private PythonContext python;
         private StubReference stub;
         private PydImporter importer;
         private IAllocator allocator;
 
-        private ScriptScope scratchModule;
+        private Scope scratchModule;
         private CodeContext scratchContext;
         
-        private ScriptScope dispatcherModule;
+        private Scope dispatcherModule;
         private object dispatcherClass;
         private Lock GIL;
 
         private bool alive = false;
+        private bool appliedNumpyHack = false;
+        
         private InterestingPtrMap map = new InterestingPtrMap();
         private Dictionary<IntPtr, ActualiseDelegate> actualisableTypes = new Dictionary<IntPtr, ActualiseDelegate>();
         private Dictionary<IntPtr, object> actualiseHelpers = new Dictionary<IntPtr, object>();
@@ -75,26 +77,32 @@ namespace Ironclad
         // TODO: must be a better way to handle imports...
         private string importName = "";
         
-        public Python25Mapper() : this(null, Python.CreateEngine(), new HGlobalAllocator())
+        public Python25Mapper(CodeContext context)
         {
+            this.Init(PythonContext.GetContext(context), null, new HGlobalAllocator());
+        }
+        
+        public Python25Mapper(CodeContext context, string stubPath)
+        {
+            this.Init(PythonContext.GetContext(context), stubPath, new HGlobalAllocator());
+        }
+        
+        public Python25Mapper(CodeContext context, IAllocator allocator)
+        {
+            this.Init(PythonContext.GetContext(context), null, allocator);
         }
 
-        public Python25Mapper(string stubPath) : this(stubPath, Python.CreateEngine(), new HGlobalAllocator())
+        public Python25Mapper(PythonContext python, string stubPath, IAllocator allocator)
         {
+            this.Init(python, stubPath, allocator);
         }
 
-        public Python25Mapper(IAllocator alloc) : this(null, Python.CreateEngine(), alloc)
-        {
-        }
-
-        public Python25Mapper(string stubPath, ScriptEngine inEngine, IAllocator alloc)
+        private void Init(PythonContext inPython, string stubPath, IAllocator inAllocator)
         {
             this.GIL = new Lock();
+            this.python = inPython;
+            this.allocator = inAllocator;
             
-            this.engine = inEngine;
-            this.allocator = alloc;
-            
-            this.AddPaths();
             this.CreateScratchModule();
             this.CreateDispatcherModule();
             
@@ -110,27 +118,6 @@ namespace Ironclad
             }
             this.alive = true;
         }
-        
-        private void 
-        AddPaths()
-        {
-            List<string> paths = new List<string>();
-            string rootPath = Assembly.GetExecutingAssembly().Location;
-            paths.Add(Directory.GetParent(rootPath).FullName);
-
-            string ipyPath = Environment.GetEnvironmentVariable("IRONPYTHONPATH");
-            if (ipyPath != null && ipyPath.Length > 0)
-            {
-                string[] ipyPaths = ipyPath.Split(Path.PathSeparator);
-                foreach (string p in ipyPaths) 
-                {
-                    paths.Add(p);
-                }
-            }
-            
-            this.engine.SetSearchPaths(paths.ToArray());
-        }
-        
         
         private void 
         DumpPtr(IntPtr ptr)
@@ -196,15 +183,6 @@ namespace Ironclad
         Alive
         {
             get { return this.alive; }
-        }
-
-        public ScriptEngine
-        Engine
-        {
-            get
-            {
-                return this.engine;
-            }
         }
         
         public IntPtr 
@@ -474,15 +452,15 @@ namespace Ironclad
                 case "PyCObject_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyCObject_Dealloc);
                     break;
-	        case "PyFile_Dealloc":
+            case "PyFile_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyFile_Dealloc);
                     break;
-	        case "PyFloat_New":
-		    this.dgtMap[name] = new CPythonVarargsKwargsFunction_Delegate(this.PyFloat_New);
-		    break;
-    	        case "PyInt_New":
-    		    this.dgtMap[name] = new CPythonVarargsKwargsFunction_Delegate(this.PyInt_New);
-    		    break;
+            case "PyFloat_New":
+            this.dgtMap[name] = new CPythonVarargsKwargsFunction_Delegate(this.PyFloat_New);
+            break;
+                case "PyInt_New":
+                this.dgtMap[name] = new CPythonVarargsKwargsFunction_Delegate(this.PyInt_New);
+                break;
                 case "PyList_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyList_Dealloc);
                     break;
