@@ -11,15 +11,16 @@
 
 #include "stub.generated.c"
 
-#include "getargs.c"
-#include "modsupport.c"
 #include "abstract.c"
-#include "stringobject.c"
-#include "tupleobject.c"
 #include "ceval.c"
 #include "cobject.c"
+#include "errors.c"
+#include "getargs.c"
+#include "modsupport.c"
 #include "mysnprintf.c"
 #include "mystrtoul.c"
+#include "object.c"
 #include "pystrtod.c"
-#include "errors.c"
+#include "stringobject.c"
+#include "tupleobject.c"
 
