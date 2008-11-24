@@ -46,8 +46,5 @@ lib.test__datasource.TestDataSourceOpen.test_ValidHTTP
 lib.test__datasource.TestOpenFunc.test_DataSourceOpen
 lib.test__datasource.TestRepositoryExists.test_RemoveHTTPFile
 lib.test_arraysetops.TestAso.test_setdiff1d_char_array
-lib.test_financial.TestFinancial.test_fv
-lib.test_financial.TestFinancial.test_nper
-lib.test_financial.TestFinancial.test_pmt
-lib.test_financial.TestFinancial.test_pv
+
 

@@ -26,7 +26,7 @@ mod_blacklist = [
     'core.test_defchararray', 
     'core.test_memmap',
     'core.test_records',
-    'lib.test_format',
+    'lib.test_format', # litte-endian array construction
 ]
 class_blacklist = [
     'core.test_multiarray.TestStringCompare', # don't care about strings yet
