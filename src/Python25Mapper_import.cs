@@ -6,6 +6,7 @@ using IronPython.Hosting;
 using IronPython.Runtime;
 using IronPython.Runtime.Types;
 
+using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
 using Microsoft.Scripting.Hosting.Providers;
 using Microsoft.Scripting.Runtime;
@@ -38,8 +39,14 @@ namespace Ironclad
         LoadModule(string path, string name)
         {
             this.importName = name;
-            this.importer.Load(path);
-            this.importName = "";
+            try
+            {
+                this.importer.Load(path);
+            }
+            finally
+            {
+                this.importName = "";
+            }
         }
 
         public object
@@ -52,8 +59,14 @@ namespace Ironclad
             }
             
             this.importName = name;
-            this.ExecInModule(String.Format("import {0}", name), this.scratchModule);
-            this.importName = "";
+            try
+            {
+                this.ExecInModule(String.Format("import {0}", name), this.scratchModule);
+            }
+            finally
+            {
+                this.importName = "";
+            }
     
             return this.GetModule(name);
         }
@@ -85,6 +98,24 @@ namespace Ironclad
                 Scope outerScope = (Scope)this.GetModule(name.Substring(0, lastDot));
                 ScopeOps.__setattr__(outerScope, name.Substring(lastDot + 1), innerScope);
             }
+        }
+        
+        public bool
+        IsClrModule(CodeContext ctx, string name)
+        {
+            object result;
+            PythonContext pc = PythonContext.GetContext(ctx);
+            if (pc.DomainManager.Globals.TryGetName(SymbolTable.StringToId(name), out result))
+            {
+                return true;
+            }
+            return false;
+        }
+        
+        public object
+        LoadClrModule(CodeContext ctx, string name)
+        {
+            return InappropriateReflection.ImportReflected(ctx, name);
         }
 
         public void

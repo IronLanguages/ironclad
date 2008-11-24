@@ -6,6 +6,8 @@ namespace Ironclad
 import ihooks
 import imp
 
+CLR_MODULE = object()
+
 class _IroncladHooks(ihooks.Hooks):
 
     def get_suffixes(self):
@@ -25,8 +27,17 @@ class _IroncladModuleLoader(ihooks.ModuleLoader):
     def find_module(self, name, path=None):
         if name == 'numpy' or name.startswith('numpy.'):
             _mapper.PerpetrateNumpyFixes()
+        if _mapper.IsClrModule(name):
+            return None, None, CLR_MODULE
         return ihooks.ModuleLoader.find_module(self, name, path)
 
+
+    def load_module(self, name, stuff):
+        file, filename, info = stuff
+        if info is CLR_MODULE:
+            return _mapper.LoadClrModule(name)
+        return ihooks.ModuleLoader.load_module(self, name, stuff)
+        
 
 class _IroncladModuleImporter(ihooks.ModuleImporter):
 
