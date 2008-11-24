@@ -60,7 +60,12 @@ class Dispatcher(object):
         # TODO: yes, I do leak a reference to klass here. proper reference counting 
         # for types will be implemented as soon as it actually breaks something; for
         # now, laziness and short-term sanity-preservation win the day.
-        klassPtr, argsPtr, kwargsPtr = map(self._store, [klass, args, kwargs])
+        klassPtr, argsPtr = map(self._store, [klass, args])
+        if kwargs:
+            kwargsPtr = self._store(kwargs)
+        else:
+            kwargsPtr = NullPtr
+
         instancePtr = self.table[name](klassPtr, argsPtr, kwargsPtr)
         try:
             self._check_error()
@@ -68,7 +73,6 @@ class Dispatcher(object):
         finally:
             self._cleanup(instancePtr, argsPtr, kwargsPtr)
         
-
     @lock
     def init(self, name, instance, *args, **kwargs):
         if not self.table.has_key(name):

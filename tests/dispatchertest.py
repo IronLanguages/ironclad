@@ -498,6 +498,26 @@ class IckyDispatchTest(DispatchTestCase):
 
 
     @WithMapper
+    def testDispatch_construct_nokwargs(self, mapper, _):
+        klass, _, storeMap = self.getVars()
+        calls = []
+        dispatcher = self.getMapperPatchedDispatcher(
+            mapper, calls, RESULT_PTR, hasPtr=True, storeMap=storeMap)
+        
+        self.assertEquals(
+            dispatcher.construct(NAME, klass, *ARGS),
+            RESULT)
+        self.assertEquals(calls, [
+            ('_store', (klass,)),
+            ('_store', (ARGS,)),
+            (NAME, (TYPE_PTR, ARGS_PTR, NULL_PTR)), 
+            ('_check_error', ()),
+            ('_return_retrieve', (RESULT_PTR,)),
+            ('_cleanup', (RESULT_PTR, ARGS_PTR, NULL_PTR)),
+        ])
+
+
+    @WithMapper
     def testDispatch_construct_error(self, mapper, _):
         klass, _, storeMap = self.getVars()
         calls = []
