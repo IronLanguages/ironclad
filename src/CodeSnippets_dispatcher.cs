@@ -34,6 +34,7 @@ class Dispatcher(object):
         for arg in args:
             if arg != NullPtr:
                 self.mapper.DecRef(arg)
+        self.mapper.CheckBridgePtrs()
 
     def _check_error(self):
         error = self.mapper.LastException
@@ -90,7 +91,6 @@ class Dispatcher(object):
             print 'eek! deleting object with bad refcount. id: %d, ptr: %s, refcnt: %d' % (
                 id(instance), instancePtr.ToString('x'), refcnt)
 
-        self.mapper.CheckBridgePtrs()
         self.mapper.DecRef(instancePtr)
         self.mapper.DecRef(instancePtr)
         self.mapper.Unmap(instancePtr)

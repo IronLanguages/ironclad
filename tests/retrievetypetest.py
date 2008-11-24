@@ -1154,7 +1154,8 @@ class NewInitDelTest(TestCase):
         mapper.DecRef(instancePtr)
         self.assertEquals(calls, ['tp_new', 'tp_init'])
         
-        mapper.CheckBridgePtrs()
+        for _ in range(50):
+            mapper.CheckBridgePtrs()
         del instance
         gcwait()
         self.assertEquals(calls, ['tp_new', 'tp_init', 'tp_dealloc'])
