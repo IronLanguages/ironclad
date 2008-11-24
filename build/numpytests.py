@@ -37,6 +37,7 @@ class_blacklist = [
 ]
 test_blacklist = [
     'core.test_defmatrix.TestCtor.test_basic', # uses getframe
+    
     'core.test_defmatrix.TestCtor.test_bmat_nondefault_str', # uses getframe
     'core.test_multiarray.TestAttributes.test_fill', # seems to intermittently kill the test run
     'core.test_multiarray.TestFromToFile.test_file', # meant to be disabled on windows
@@ -46,9 +47,11 @@ test_blacklist = [
     'core.test_multiarray.TestClip.test_record_array', # record arrays again
     'core.test_multiarray.TestResize.test_check_reference', # reference counting different in ironclad
     
-     # cannot call import_nose
+    # cannot call import_nose
     'lib.test_function_base.TestCheckFinite.test_simple',
     'lib.test_function_base.TestGradient.test_badargs',
+
+    'lib.test_polynomial.TestDocs.test_doctests', # uses getframe to run docstring tests, equivalent tests might like to be added to the functionality tests
 
     # might want to extract other test cases:
     'core.test_multiarray.TestMethods.test_sort', # fails on the creation of character arrays which we aren't worrying about 

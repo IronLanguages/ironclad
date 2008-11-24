@@ -467,7 +467,10 @@ class IckyDispatchTest(DispatchTestCase):
             calls.append(('_store', (item,)))
             if isinstance(item, dict):
                 item = EvilHackDict(item)
+            if item is NULL:
+                return NULL_PTR
             return _ptrmap[item]
+
         
         dispatcher = self.getPatchedDispatcher(realMapper, calls, dgtResult, mockMapper=MockMapper())
         dispatcher._store = _store
@@ -486,6 +489,7 @@ class IckyDispatchTest(DispatchTestCase):
         self.assertEquals(
             dispatcher.construct(NAME, klass, *ARGS, **KWARGS),
             RESULT)
+
         self.assertEquals(calls, [
             ('_store', (klass,)),
             ('_store', (ARGS,)),
@@ -503,13 +507,15 @@ class IckyDispatchTest(DispatchTestCase):
         calls = []
         dispatcher = self.getMapperPatchedDispatcher(
             mapper, calls, RESULT_PTR, hasPtr=True, storeMap=storeMap)
-        
+        mapper.DispatcherModule.Null = NULL
         self.assertEquals(
             dispatcher.construct(NAME, klass, *ARGS),
             RESULT)
+
         self.assertEquals(calls, [
             ('_store', (klass,)),
             ('_store', (ARGS,)),
+            ('_store', (NULL,)),
             (NAME, (TYPE_PTR, ARGS_PTR, NULL_PTR)), 
             ('_check_error', ()),
             ('_return_retrieve', (RESULT_PTR,)),
@@ -541,12 +547,30 @@ class IckyDispatchTest(DispatchTestCase):
         calls = []
         dispatcher = self.getMapperPatchedDispatcher(mapper, calls, 0, storeMap=storeMap)
         dispatcher.init(NAME, instance, *ARGS, **KWARGS)
+        mapper.DispatcherModule.Null = NULL
         self.assertEquals(calls, [
             ('_store', (instance,)),
             ('_store', (ARGS,)),
             ('_store', (KWARGS,)),
             (NAME, (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)), 
             ('_cleanup', (INSTANCE_PTR, ARGS_PTR, KWARGS_PTR)),
+            ('_check_error', ())
+        ])
+
+
+    @WithMapper
+    def testDispatch_init_nokwargs(self, mapper, _):
+        _, instance, storeMap = self.getVars()
+        calls = []
+        dispatcher = self.getMapperPatchedDispatcher(mapper, calls, 0, storeMap=storeMap)
+        dispatcher.init(NAME, instance, *ARGS)
+        mapper.DispatcherModule.Null = NULL
+        self.assertEquals(calls, [
+            ('_store', (instance,)),
+            ('_store', (ARGS,)),
+            ('_store', (NULL,)),
+            (NAME, (INSTANCE_PTR, ARGS_PTR, NULL_PTR)), 
+            ('_cleanup', (INSTANCE_PTR, ARGS_PTR, NULL_PTR)),
             ('_check_error', ())
         ])
 

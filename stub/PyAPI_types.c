@@ -20,6 +20,7 @@ typedef ssize_t Py_ssize_t;
 #endif
 
 #define SIZEOF_LONG 4
+#define SIZEOF_VOID_P 4
 
 #define HAVE_LONG_LONG 1
 #define PY_LONG_LONG long long
