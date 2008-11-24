@@ -83,6 +83,11 @@ class ExternalFunctionalityTest(TestCase):
             import bz2
             assert bz2.compress(%(uncompressed)r) == %(compressed)r
             assert bz2.decompress(%(compressed)r) == %(uncompressed)r
+            
+            # check that clr imports still work
+            import clr
+            import System
+            
             ironclad.shutdown()
             """) % {
             "compressed": bz2_test_data,
@@ -498,5 +503,5 @@ suite = makesuite(
 )
 
 if __name__ == '__main__':
-    run(suite, 2)
+    run(suite)
 
