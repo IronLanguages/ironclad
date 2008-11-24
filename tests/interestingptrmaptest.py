@@ -8,7 +8,7 @@ from System import NullReferenceException, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 
-from Ironclad import CPyMarshal, InterestingPtrMap, PtrFunc
+from Ironclad import BadMappingException, CPyMarshal, InterestingPtrMap, PtrFunc
 from Ironclad.Structs import PyObject
 
 
@@ -56,7 +56,7 @@ class InterestingPtrMapTest(TestCase):
         
         self.assertEquals(objref.IsAlive, False, "failed to GC")
         self.assertEquals(map.HasPtr(ptr), False)
-        self.assertRaises(KeyError, map.GetObj, ptr)
+        self.assertRaises(BadMappingException, map.GetObj, ptr)
         # can't really try to get the ptr, because we don't have the obj any more
     
     
@@ -112,7 +112,9 @@ class InterestingPtrMapTest(TestCase):
         CPyMarshal.WriteIntField(ptr1, PyObject, 'ob_refcnt', 1)
         CPyMarshal.WriteIntField(ptr2, PyObject, 'ob_refcnt', 1)
         
-        map.CheckBridgePtrs()
+        for _ in range(50):
+            # throttled
+            map.CheckBridgePtrs()
         del obj1
         del obj2
         gcwait()
@@ -142,7 +144,7 @@ class InterestingPtrMapTest(TestCase):
         del obj
         gcwait()
         self.assertEquals(objref.IsAlive, False, "failed to GC")
-        self.assertRaises(KeyError, map.GetObj, ptr)
+        self.assertRaises(BadMappingException, map.GetObj, ptr)
         self.assertEquals(map.HasPtr(ptr), False, "wrong")
         
         

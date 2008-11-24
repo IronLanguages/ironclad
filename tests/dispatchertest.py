@@ -61,6 +61,9 @@ class DispatcherTest(TestCase):
             def Retrieve(_, ptr):
                 outer.calls.append(('Retrieve', ptr))
                 return result
+            def CheckBridgePtrs(_):
+                outer.calls.append('CheckBridgePtrs')
+                
         
         mockMapper = MockMapper()
         dispatcher = Dispatcher(mockMapper, {})
@@ -86,10 +89,10 @@ class DispatcherTest(TestCase):
     def testCleanup(self):
         error = ValueError('huh?')
         self.assertDispatcherUtilityMethod(
-            '_cleanup', (), ['FreeTemps'])
+            '_cleanup', (), ['FreeTemps', 'CheckBridgePtrs'])
         self.assertDispatcherUtilityMethod(
             '_cleanup', (OBJ_PTR, NULL_PTR, OBJ_PTR), 
-            ['FreeTemps', ('DecRef', OBJ_PTR), ('DecRef', OBJ_PTR)])
+            ['FreeTemps', ('DecRef', OBJ_PTR), ('DecRef', OBJ_PTR), 'CheckBridgePtrs'])
     
     def testCheckError(self):
         self.assertDispatcherUtilityMethod(
@@ -457,8 +460,6 @@ class IckyDispatchTest(DispatchTestCase):
                 return 2
             def Unmap(self, ptr):
                 calls.append(('Unmap', (ptr,)))
-            def CheckBridgePtrs(self):
-                calls.append(('CheckBridgePtrs', ()))
                 
         _ptrmap = dict(PTRMAP)
         if storeMap:
@@ -611,7 +612,6 @@ class IckyDispatchTest(DispatchTestCase):
         self.assertEquals(calls, [
             ('_store', (instance,)),
             ('RefCount', (INSTANCE_PTR,)),
-            ('CheckBridgePtrs', ()),
             ('DecRef', (INSTANCE_PTR,)),
             ('DecRef', (INSTANCE_PTR,)),
             ('Unmap', (INSTANCE_PTR,)),

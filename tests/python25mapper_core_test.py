@@ -337,6 +337,7 @@ class Python25Mapper_References_Test(TestCase):
 
 
     def testCheckBridgePtrs(self):
+        # note: CheckBridgePtrs is now throttled, so we call it many times
         frees = []
         allocator = GetAllocatingTestAllocator([], frees)
         mapper = Python25Mapper(allocator)
@@ -349,7 +350,8 @@ class Python25Mapper_References_Test(TestCase):
         CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 2)
         CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
         mapper.StoreBridge(ptr, obj)
-        mapper.CheckBridgePtrs()
+        for _ in range(50):
+            mapper.CheckBridgePtrs()
         
         # refcount > 1 means ref should have been strengthened
         del obj
@@ -357,7 +359,8 @@ class Python25Mapper_References_Test(TestCase):
         self.assertEquals(objref.IsAlive, True, "was reaped unexpectedly (refcount was 2)")
         
         CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
-        mapper.CheckBridgePtrs()
+        for _ in range(50):
+            mapper.CheckBridgePtrs()
         
         # refcount < 2 should have been weakened
         obj = objref.Target
