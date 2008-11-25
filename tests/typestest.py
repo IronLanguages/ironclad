@@ -141,11 +141,12 @@ class Types_Test(TestCase):
     
     @WithMapper
     def testNumberMethods(self, mapper, _):
-        numberTypes = ("PyInt_Type", "PyLong_Type", "PyFloat_Type")
+        numberTypes = ("PyInt_Type", "PyLong_Type", "PyFloat_Type", "PyComplex_Type")
         implementedFields = {
             "nb_int": mapper.GetAddress("PyNumber_Int"),
             "nb_long": mapper.GetAddress("PyNumber_Long"),
             "nb_float": mapper.GetAddress("PyNumber_Float"),
+            "nb_multiply": mapper.GetAddress("PyNumber_Multiply")
         }
         
         for _type in numberTypes:
@@ -159,8 +160,8 @@ class Types_Test(TestCase):
             
             flags = CPyMarshal.ReadIntField(typePtr, PyTypeObject, "tp_flags")
             hasIndex = bool(flags & int(Py_TPFLAGS.HAVE_INDEX))
-            if (_type != "PyFloat_Type"):
-                self.assertEquals(hasIndex, True)
+            if (not _type in ("PyFloat_Type", "PyComplex_Type")):
+                self.assertEquals(hasIndex, True, _type)
                 fieldPtr = CPyMarshal.ReadPtrField(nmPtr, PyNumberMethods, "nb_index")
                 self.assertNotEquals(fieldPtr, IntPtr.Zero)
                 self.assertEquals(fieldPtr, mapper.GetAddress("PyNumber_Index"))

@@ -50,8 +50,13 @@ test_blacklist = [
     # cannot call import_nose
     'lib.test_function_base.TestCheckFinite.test_simple',
     'lib.test_function_base.TestGradient.test_badargs',
+    'linalg.test_linalg.TestEigh.test_empty', # used by assertRaises
 
-    'lib.test_polynomial.TestDocs.test_doctests', # uses getframe to run docstring tests, equivalent tests might like to be added to the functionality tests
+    # uses getframe to run docstring tests, equivalent tests might like to be added to the functionality tests
+    'lib.test_polynomial.TestDocs.test_doctests',
+
+    # kills the test runner
+    "linalg.test_linalg.TestEigh.test_single",
 
     # might want to extract other test cases:
     'core.test_multiarray.TestMethods.test_sort', # fails on the creation of character arrays which we aren't worrying about 
@@ -126,7 +131,6 @@ def run_test_case(test_case, test_path):
 def ensure_package(package_name):
     tests_path = os.path.join(numpy_path, package_name, 'tests')
     init_path = os.path.join(tests_path, '__init__.py')
-    print "Attempting to open", init_path
     open(init_path, 'w').close()    
 
 
@@ -153,11 +157,11 @@ def get_classes(module, mod_path):
 
 def get_test_names(test_class, class_path):
     tests = []
-    for test_name, _ in sorted(test_class.__dict__.items()):
+    for test_name in dir(test_class):
         if not test_name.startswith('test_') or '.'.join(class_path +(test_name,)) in test_blacklist:
             continue    
         tests.append(test_name)
-    return tests
+    return sorted(tests)
 
 
 def get_all_tests():
@@ -196,11 +200,16 @@ def run_all_tests(runner, previous_test=None):
     print "All tests run ?!"
 
 
-def run_paths(paths, runner):
+def run_paths(paths, runner, previous_test=None):
     success = True
     for path in paths:
-        for test_path, test in get_matching_tests(path):
-            success = success and runner(test, test_path)
+        all_tests = get_matching_tests(path)
+        if previous_test:
+            for _ in takewhile(lambda (p, _): p != previous_test, all_tests): pass
+
+        for test_path, test in all_tests:
+            result = runner(test, test_path)
+            success = success and result
     if not success:
         ironclad.shutdown()
         sys.exit(1)
@@ -253,7 +262,7 @@ def main():
         run_all_tests(runner, previous_test=previous_test)
     else:
         paths = (path_string.split('.') for path_string in args)
-        run_paths(paths, runner)
+        run_paths(paths, runner, previous_test=previous_test)
 
 if __name__ == "__main__":
     main()
