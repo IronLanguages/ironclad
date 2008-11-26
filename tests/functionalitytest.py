@@ -58,15 +58,20 @@ class ExternalFunctionalityTest(TestCase):
         return testDir
 
 
-    def runInDir(self, testDir, name):
+    def assertRunsInDir(self, testDir, name):
         process = Process()
         process.StartInfo.FileName = "ipy.exe"
         process.StartInfo.Arguments = name
         process.StartInfo.WorkingDirectory = testDir
-        process.StartInfo.UseShellExecute = True
+        process.StartInfo.UseShellExecute = False
+        process.StartInfo.RedirectStandardOutput = process.StartInfo.RedirectStandardError = True
+
         process.Start()
+        output = process.StandardOutput.ReadToEnd()
+        error = process.StandardError.ReadToEnd()
         process.WaitForExit()
-        return process.ExitCode
+        if process.ExitCode != 0:
+            self.fail("Execution failed: stdout: >>>%s<<<\n stderr: >>>%s<<<\n" % (output, error))
 
 
     def write(self, name, code):
@@ -92,8 +97,8 @@ class ExternalFunctionalityTest(TestCase):
             """) % {
             "compressed": bz2_test_data,
             "uncompressed": bz2_test_text})
-        
-        self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
+
+        self.assertRunsInDir(testDir, 'test.py')
         shutil.rmtree(testDir)
         
 
@@ -115,8 +120,8 @@ class ExternalFunctionalityTest(TestCase):
             ironclad.shutdown()
             """) % (bz2i__file__end, bz2ii__file__end)
         )
-        
-        self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
+
+        self.assertRunsInDir(testDir, 'test.py') 
 
     
     def testImportNumPy(self):
@@ -134,8 +139,8 @@ class ExternalFunctionalityTest(TestCase):
             assert not r1 is r2
             ironclad.shutdown()
             """))
-            
-        self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
+
+        self.assertRunsInDir(testDir, 'test.py')
         shutil.rmtree(testDir)
 
     
@@ -150,8 +155,9 @@ class ExternalFunctionalityTest(TestCase):
             ironclad.shutdown()
             """))
             
-        self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
+        self.assertRunsInDir(testDir, 'test.py')
         shutil.rmtree(testDir)
+
 
     def testNumpyComplexPrinting(self):
         # This test is a placeholder for core.test_print.TestPrint which fails since 1E20 is written as 1e20 in ipy
@@ -179,8 +185,9 @@ class ExternalFunctionalityTest(TestCase):
             ironclad.shutdown()
             """))
             
-        self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
+        self.assertRunsInDir(testDir, 'test.py')
         shutil.rmtree(testDir)
+
 
     def testNumpyComplexConversion(self):
         # trying to unit-test this made my brain melt; this will have to do
@@ -192,7 +199,7 @@ class ExternalFunctionalityTest(TestCase):
             ironclad.shutdown()
             """))
             
-        self.assertEquals(self.runInDir(testDir, 'test.py'), 0, "did not run cleanly")
+        self.assertRunsInDir(testDir, 'test.py')
         shutil.rmtree(testDir)
         
         
