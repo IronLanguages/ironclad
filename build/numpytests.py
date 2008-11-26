@@ -3,7 +3,15 @@ from itertools import takewhile
 import os
 import os.path
 import sys
-import ironclad
+
+if sys.platform == 'cli':
+    import ironclad
+else:
+    class Scope(object):
+        pass
+    ironclad = Scope()
+    ironclad.shutdown = lambda : None
+
 import numpy
 from numpy.testing import TestCase
 from unittest import TestResult
@@ -32,8 +40,6 @@ class_blacklist = [
     'core.test_multiarray.TestStringCompare', # don't care about strings yet
     'core.test_multiarray.TestPickling', # don't care about pickling yet
     'core.test_multiarray.TestRecord', # record arrays
-    'core.test_regression.TestRegression', # has too many errors to worry about now.
-    
 ]
 test_blacklist = [
     'core.test_defmatrix.TestCtor.test_basic', # uses getframe
@@ -51,6 +57,7 @@ test_blacklist = [
     'lib.test_function_base.TestCheckFinite.test_simple',
     'lib.test_function_base.TestGradient.test_badargs',
     'linalg.test_linalg.TestEigh.test_empty', # used by assertRaises
+    'linalg.test_linalg.TestEigvalsh.test_empty',
 
     # uses getframe to run docstring tests, equivalent tests might like to be added to the functionality tests
     'lib.test_polynomial.TestDocs.test_doctests',
@@ -69,8 +76,10 @@ test_blacklist = [
     'core.test_print.TestPrint.test_complex_longdouble',
     
     # these take *forever*
+    'lib.test_function_base.TestHistogramdd.test_shape_4d',
     'core.test_scalarmath.TestRepr.test_float_repr',
     'core.test_scalarmath.TestTypes.test_type_add',
+    'core.test_numerictypes.test_create_values_nested_single.test_list_of_list_of_tuple',
 ]
 read_into_blacklist(test_blacklist, 'numpy_test_blacklist')
 
