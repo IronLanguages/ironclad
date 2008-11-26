@@ -1,8 +1,4 @@
-namespace Ironclad
-{
-    internal partial class CodeSnippets
-    {
-        public const string INSTALL_IMPORT_HOOK_CODE = @"
+
 import ihooks
 import imp
 
@@ -65,6 +61,3 @@ class _IroncladModuleImporter(ihooks.ModuleImporter):
 _importer = _IroncladModuleImporter(_IroncladModuleLoader())
 _importer.set_hooks(_IroncladHooks())
 _importer.install()
-";
-    }
-}

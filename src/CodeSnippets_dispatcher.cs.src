@@ -1,0 +1,8 @@
+namespace Ironclad
+{
+    internal partial class CodeSnippets
+    {
+        // dispatcher.py is inserted here
+        public const string DISPATCHER_MODULE_CODE = @"%s";
+    }
+}

@@ -1,8 +1,4 @@
-namespace Ironclad
-{
-    internal partial class CodeSnippets
-    {
-        public const string DISPATCHER_MODULE_CODE = @"
+
 def lock(f):
     def locked(*args, **kwargs):
         EnsureGIL();
@@ -321,6 +317,3 @@ class Dispatcher(object):
         finally:
             self._cleanup(instancePtr)
 
-";
-    }
-}
