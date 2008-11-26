@@ -43,23 +43,31 @@ namespace Ironclad
         private void
         Build()
         {
-            this.BeginClass();
+            this.InitialiseScope();
             this.GenerateMembers();
             this.GenerateProperties();
             this.GenerateMethods();
             this.GenerateMagicMethods();
+            this.GenerateClass();
             this.GenerateActualiser();
         }
 
         private void
-        BeginClass()
+        InitialiseScope()
         {
             this.tp_name = CPyMarshal.ReadCStringField(this.ptr, typeof(PyTypeObject), "tp_name");
             CallableBuilder.ExtractNameModule(this.tp_name, ref this.__name__, ref this.__module__);
+            this.tablePrefix = this.__name__ + ".";
+
+
+            this.code.Append("_ironclad_class_attrs = dict()");
+        }
+
+        private void
+        GenerateClass()
+        {
             string __doc__ = CPyMarshal.ReadCStringField(this.ptr, typeof(PyTypeObject), "tp_doc").Replace("\\", "\\\\");
             this.code.Append(String.Format(CodeSnippets.CLASS_CODE, this.__name__, this.__module__, __doc__));
-
-            this.tablePrefix = this.__name__ + ".";
             this.ConnectTypeField("tp_new", typeof(Python25Api.PyType_GenericNew_Delegate));
             this.ConnectTypeField("tp_init", typeof(CPython_initproc_Delegate));
         }
@@ -125,8 +133,9 @@ namespace Ironclad
         {
             string getname = "None";
             string setname = "None";
+	    this.code.Append(CodeSnippets.CLEAR_GETTER_SETTER_CODE);
             PyGetSetDef getset = (PyGetSetDef)Marshal.PtrToStructure(getsetPtr, typeof(PyGetSetDef));
-
+	    
             if (getset.get != IntPtr.Zero)
             {
                 getname = String.Format("__get_{0}", getset.name);
@@ -149,7 +158,7 @@ namespace Ironclad
                 this.methodTable[this.tablePrefix + setname] = dgt;
             }
 
-            this.code.Append(String.Format(CodeSnippets.PROPERTY_CODE, getset.name, getname, setname, getset.doc));
+            this.code.Append(String.Format(CodeSnippets.PROPERTY_CODE, getset.name, getset.doc));
         }
 
         private static bool
@@ -180,6 +189,8 @@ namespace Ironclad
             PyMemberDef member = (PyMemberDef)Marshal.PtrToStructure(
                 memberPtr, typeof(PyMemberDef));
 
+	    this.code.Append(CodeSnippets.CLEAR_GETTER_SETTER_CODE);
+
             string suffix = null;
             if (TryGetMemberMethodSuffix(member.type, ref suffix))
             {
@@ -192,7 +203,7 @@ namespace Ironclad
                     setname = String.Format("__set_{0}", member.name);
                     this.code.Append(String.Format(CodeSnippets.MEMBER_SETTER_CODE, setname, member.offset, suffix));
                 }
-                this.code.Append(String.Format(CodeSnippets.PROPERTY_CODE, member.name, getname, setname, member.doc));
+                this.code.Append(String.Format(CodeSnippets.PROPERTY_CODE, member.name, member.doc));
             }
             else
             {
