@@ -10,7 +10,7 @@ generatePython25Mapper:
 	cd python25mapper_components && $(MAKE)
 
 CodeSnippets_dispatcher.Generated.cs: CodeSnippets_dispatcher.cs.src dispatcher.py
-	python ../tools/insertfiles.py CodeSnippets_dispatcher.cs.src dispatcher.py > $@
+	python ../tools/insertfiles.py CodeSnippets_dispatcher.cs.src dispatcher.py > CodeSnippets_dispatcher.Generated.cs
 
 CodeSnippets_ihooks.Generated.cs: CodeSnippets_ihooks.cs.src import_code.py
-	python ../tools/insertfiles.py CodeSnippets_ihooks.cs.src import_code.py > $@
+	python ../tools/insertfiles.py CodeSnippets_ihooks.cs.src import_code.py > CodeSnippets_ihooks.Generated.cs
