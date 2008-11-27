@@ -119,6 +119,18 @@ class MethodsTest(DispatchSetupTestCase):
         }
         self.assertTypeSpec(typeSpec, TestType)
 
+
+    @WithMapper
+    def testSpecialNames(self, mapper, addToCleanUp):
+        typePtr, deallocType = MakeTypePtr(mapper, {"tp_name": "klass"})
+        addToCleanUp(deallocType)
+        _type = mapper.Retrieve(typePtr)
+        self.assertEquals(_type.__new__.__name__, '__new__')
+        self.assertEquals(_type.__init__.__name__, '__init__')
+        self.assertEquals(_type.__del__.__name__, '__del__')
+        
+
+
     def testNoArgsMethod(self):
         NoArgs, calls_cfunc = self.getBinaryPtrFunc()
         method, deallocMethod = MakeMethodDef("method", NoArgs, METH.NOARGS)
@@ -128,9 +140,12 @@ class MethodsTest(DispatchSetupTestCase):
         def TestType(_type, _):
             instance = _type()
             _type._dispatcher.method_noargs = dispatch
+            
+            self.assertEquals(instance.method.__name__, "method")
             self.assertCalls(
                 instance.method, (tuple(), {}), calls_dispatch, 
                 ("klass.method", instance), result)
+
             
             cfunc = _type._dispatcher.table["klass.method"]
             self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
@@ -151,6 +166,7 @@ class MethodsTest(DispatchSetupTestCase):
         def TestType(_type, _):
             instance, arg = _type(), object()
             _type._dispatcher.method_objarg = dispatch
+            self.assertEquals(instance.method.__name__, "method")
             self.assertCalls(
                 instance.method, ((arg,), {}), calls_dispatch, 
                 ("klass.method", instance, arg), result)
@@ -174,6 +190,8 @@ class MethodsTest(DispatchSetupTestCase):
         def TestType(_type, _):
             instance, args = _type(), ("for", "the", "horde")
             _type._dispatcher.method_varargs = dispatch
+            
+            self.assertEquals(instance.method.__name__, "method")
             self.assertCalls(
                 instance.method, (args, {}), calls_dispatch, 
                 (("klass.method", instance) + args, {}), result)
@@ -197,6 +215,7 @@ class MethodsTest(DispatchSetupTestCase):
         def TestType(_type, _):
             instance, args, kwargs = _type(), ("for", "the", "horde"), {"g1": "LM", "g2": "BS", "g3": "GM"}
             _type._dispatcher.method_kwargs = dispatch
+            self.assertEquals(instance.method.__name__, "method")
             self.assertCalls(
                 instance.method, (args, kwargs), calls_dispatch,
                 (("klass.method", instance) + args, kwargs), result)
@@ -305,7 +324,7 @@ class IterTest(DispatchSetupTestCase):
 
 
     def test_tp_iter_MethodDispatch(self):
-        def TestErrorHandler(errorHandler, _): 
+        def TestErrorHandler(errorHandler, _):
             self.assertEquals(errorHandler, None, "no special error handling required")
 
         self.assertSelfTypeMethod(
@@ -1250,7 +1269,7 @@ class PropertiesTest(TestCase):
                 calls.append(('Getter', (name, instancePtr, closurePtr)))
                 return result
             _type._dispatcher.method_getter = Getter
-            
+
             self.assertEquals(instance.boing, result, "bad result")
             self.assertEquals(calls, [('Getter', ('klass.__get_boing', instance, IntPtr.Zero))])
             
@@ -1604,10 +1623,6 @@ class IntSubclassHorrorTest(TestCase):
         SequenceLike()[mapper.Retrieve(_12Ptr):mapper.Retrieve(_44Ptr)]
         self.assertEquals(calls, [('__getslice__', 12, 44)])
         self.assertEquals(map(type, calls[0]), [str, int, int])
-        
-        
-        
-    
 
 
 class TypeDictTest(TestCase):
