@@ -64,6 +64,26 @@ class SequenceFunctionsTest(TestCase):
                 self.assertMapperHasError(mapper, IndexError)
             
             mapper.DecRef(seqPtr)
+        
+        for notseq in (object, object(), 37):
+            notseqPtr = mapper.Store(notseq)
+            self.assertEquals(mapper.PySequence_GetItem(notseqPtr, 0), IntPtr.Zero)
+            self.assertMapperHasError(mapper, TypeError)
+            
+
+    @WithMapper
+    def testPySequence_GetSlice(self, mapper, _):
+        for seq in ([1, 2, 3], ('a', 'b', 'c'), 'bar'):
+            seqPtr = mapper.Store(seq)
+            for i, j in ((0, 2), (1, 4), (22, 347)):
+                resultPtr = mapper.PySequence_GetSlice(seqPtr, i, j)
+                self.assertEquals(mapper.Retrieve(resultPtr), seq[i:j])
+            mapper.DecRef(seqPtr)
+        
+        for notseq in (object, object(), 37):
+            notseqPtr = mapper.Store(notseq)
+            self.assertEquals(mapper.PySequence_GetSlice(notseqPtr, 0, 1), IntPtr.Zero)
+            self.assertMapperHasError(mapper, TypeError)
 
 
     @WithMapper

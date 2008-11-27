@@ -1,0 +1,3 @@
+IntPtr
+IntPtr seqPtr, uint i, uint j
+return IntPtr.Zero

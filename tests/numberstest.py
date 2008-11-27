@@ -114,6 +114,28 @@ class PyInt_Test(TestCase):
             result = mapper.PyInt_AsLong(ptr)
             self.assertMapperHasError(mapper, None)
             self.assertEquals(result, NUMBER_VALUE)
+        
+        
+    @WithMapper
+    def testPyInt_AsUnsignedLongMask(self, mapper, _):
+        for value in (0, UInt32.MaxValue):
+            ptr = mapper.Store(value)
+            self.assertEquals(mapper.PyInt_AsUnsignedLongMask(ptr), value)
+            self.assertMapperHasError(mapper, None)
+            
+        for (value, result) in ((UInt32.MaxValue + 1, 0), (-1, UInt32.MaxValue)):
+            ptr = mapper.Store(value)
+            self.assertEquals(mapper.PyInt_AsUnsignedLongMask(ptr), result)
+            self.assertMapperHasError(mapper, None)
+
+        for cls in (NumberI, NumberL, NumberF):
+            ptr = mapper.Store(cls())
+            result = mapper.PyInt_AsUnsignedLongMask(ptr)
+            self.assertMapperHasError(mapper, None)
+            self.assertEquals(result, NUMBER_VALUE)
+
+        self.assertEquals(mapper.PyInt_AsUnsignedLongMask(mapper.Store(object())), UInt32.MaxValue)
+        self.assertMapperHasError(mapper, TypeError)
 
         
     @WithMapper

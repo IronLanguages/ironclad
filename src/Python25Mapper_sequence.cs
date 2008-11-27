@@ -5,6 +5,8 @@ using IronPython.Runtime;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
+using Microsoft.Scripting.Math;
+
 using Ironclad.Structs;
 
 namespace Ironclad
@@ -52,10 +54,29 @@ namespace Ironclad
             {
                 object sequence = this.Retrieve(objPtr);
                 object getitem;
-
                 if (PythonOps.TryGetBoundAttr(sequence, Symbols.GetItem, out getitem))
                 {
                     return this.Store(PythonCalls.Call(getitem, idx));
+                }
+                throw PythonOps.TypeError("PySequence_GetItem: failed to convert {0} to sequence", sequence);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+        
+        public override IntPtr
+        PySequence_GetSlice(IntPtr objPtr, uint i, uint j)
+        {
+            try
+            {
+                object sequence = this.Retrieve(objPtr);
+                object getitem;
+                if (PythonOps.TryGetBoundAttr(sequence, Symbols.GetItem, out getitem))
+                {
+                    return this.Store(PythonCalls.Call(getitem, new Slice(new BigInteger(i), new BigInteger(j))));
                 }
                 throw PythonOps.TypeError("PySequence_GetItem: failed to convert {0} to sequence", sequence);
             }

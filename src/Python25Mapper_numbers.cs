@@ -61,6 +61,27 @@ namespace Ironclad
         {
             return this.Store(new Complex64(real, imag));
         }
+        
+        public override uint
+        PyInt_AsUnsignedLongMask(IntPtr valuePtr)
+        {
+            try
+            {
+                BigInteger unmasked = this.MakeBigInteger(this.Retrieve(valuePtr));
+                BigInteger mask = new BigInteger(UInt32.MaxValue) + 1;
+                BigInteger masked = BigInteger.Mod(unmasked, mask);
+                if (masked < 0)
+                {
+                    masked += mask;
+                }
+                return masked.ToUInt32();
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return 0xFFFFFFFF;
+            }
+        }
 
         public override int
         PyNumber_Check(IntPtr numberPtr)
@@ -179,20 +200,20 @@ namespace Ironclad
         }
     }
 
-	public IntPtr
-	PyInt_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
-	{
-	    try
-	    {
-	    PythonTuple args = (PythonTuple) this.Retrieve(argsPtr);
-	    return this.Store(PythonCalls.Call(this.scratchContext, TypeCache.Int32, new object[] {args[0]}));
-	    }
-	    catch(Exception e)
-	    {
-		this.LastException = e;
-		return IntPtr.Zero;
-	    }
-	}
+    public IntPtr
+    PyInt_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
+    {
+        try
+        {
+        PythonTuple args = (PythonTuple) this.Retrieve(argsPtr);
+        return this.Store(PythonCalls.Call(this.scratchContext, TypeCache.Int32, new object[] {args[0]}));
+        }
+        catch(Exception e)
+        {
+        this.LastException = e;
+        return IntPtr.Zero;
+        }
+    }
 
         private IntPtr
         Store(bool value)
