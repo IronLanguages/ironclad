@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 
 using IronPython.Runtime;
@@ -24,7 +25,9 @@ namespace Ironclad
         private Dictionary<IntPtr, object> ptr2id = new Dictionary<IntPtr, object>();
         private Dictionary<object, IntPtr> id2ptr = new Dictionary<object, IntPtr>();
         private Dictionary<object, object> id2obj = new Dictionary<object, object>();
+        
         private Dictionary<object, WeakReference> id2ref = new Dictionary<object, WeakReference>();
+        private Dictionary<object, bool> id2reffed = new Dictionary<object, bool>();
         private StupidSet strongrefs = new StupidSet();
         private int cbpThrottle = 0;
     
@@ -43,15 +46,22 @@ namespace Ironclad
             this.ptr2id[ptr] = id;
             this.id2ptr[id] = ptr;
             
-            WeakReference wref = new WeakReference(obj, true);
+            WeakReference wref = new WeakReference(obj);
             this.id2ref[id] = wref;
+            this.id2reffed[id] = true;
             this.strongrefs.Add(obj);
         }
         
         public void UpdateStrength(IntPtr ptr)
         {
-            object obj = this.GetObj(ptr);
-            int refcnt = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
+            object id = this.ptr2id[ptr];
+            if (!this.id2ref.ContainsKey(id))
+            {
+                return;
+            }
+            
+            object obj = this.id2ref[id].Target;
+            int refcnt = CPyMarshal.ReadInt(ptr);
             if (refcnt > 1)
             {
                 this.Strengthen(obj);
@@ -75,19 +85,13 @@ namespace Ironclad
         
         public void MapOverBridgePtrs(PtrFunc f)
         {
-            Dictionary<IntPtr, object>.KeyCollection keys = this.ptr2id.Keys;
-            IntPtr[] keysCopy = new IntPtr[keys.Count];
-            keys.CopyTo(keysCopy, 0);
-            foreach (IntPtr ptr in keysCopy)
+            object[] keys = new object[this.id2ref.Count];
+            this.id2ref.Keys.CopyTo(keys, 0);
+            foreach (object id in keys)
             {
-                if (this.ptr2id.ContainsKey(ptr))
-                {
-                    if (this.id2ref.ContainsKey(this.ptr2id[ptr]))
-                    {
-                        f(ptr);
-                    }
-                }
+                f(this.id2ptr[id]);
             }
+            return;
         }
         
         public void Strengthen(object obj)
@@ -95,7 +99,16 @@ namespace Ironclad
             object id = Builtin.id(obj);
             if (this.id2ref.ContainsKey(id))
             {
+                if (this.id2reffed.ContainsKey(id))
+                {
+                    if (this.id2reffed[id] == true)
+                    {
+                        // already strongly reffed
+                        return; 
+                    }
+                }
                 this.strongrefs.Add(obj);
+                this.id2reffed[id] = true;
             }
         }
         
@@ -104,7 +117,16 @@ namespace Ironclad
             object id = Builtin.id(obj);
             if (this.id2ref.ContainsKey(id))
             {
+                if (this.id2reffed.ContainsKey(id))
+                {
+                    if (this.id2reffed[id] == false)
+                    {
+                        // already weakly reffed
+                        return; 
+                    }
+                }
                 this.strongrefs.RemoveIfPresent(obj);
+                this.id2reffed[id] = false;
             }
         }
         
@@ -127,9 +149,21 @@ namespace Ironclad
             {
                 WeakReference wref = this.id2ref[id];
                 this.id2ref.Remove(id);
-                if (wref.IsAlive)
+                
+                bool needsRemove = this.id2reffed[id];
+                this.id2ref.Remove(id);
+                if (needsRemove)
                 {
-                    this.strongrefs.RemoveIfPresent(wref.Target);
+                    object obj = wref.Target;
+                    if (obj == null)
+                    {
+                        throw new NullReferenceException(String.Format(
+                            "Release: object for ptr {0} was GCed early (in an 'impossible' way)", ptr.ToString("x")));
+                    }
+                    else
+                    {
+                        this.strongrefs.SetRemove(obj);
+                    }
                 }
             }
             else
@@ -185,7 +219,8 @@ namespace Ironclad
                 {
                     return wref.Target;
                 }
-                throw new NullReferenceException(String.Format("Weakly mapped object for ptr {0} was apparently GCed too soon", ptr.ToString("x")));
+                throw new NullReferenceException(
+                    String.Format("GetObj: Weakly mapped object for ptr {0} was GCed too soon", ptr.ToString("x")));
             }
             else
             {
