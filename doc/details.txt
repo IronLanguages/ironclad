@@ -61,7 +61,7 @@ InterestingPtrMap
 Stores the various kinds of managed and unmanaged data, and is responsible for
 managing the lifetimes of 'bridge' objects (basically, any object whose 
 unmanaged representation contains important state; specifically, objects with
-unmanaged types and PyCObjects). It does this by reading the ob_refcnt field
+unmanaged types, and PyCObjects). It does this by reading the ob_refcnt field
 and maintaining either weak or strong references to the objects; if ob_refcnt
 is greater than one, then some unmanaged code has a reference to the object and
 we need to keep the managed object alive by keeping a strong reference to it in
@@ -116,6 +116,12 @@ MagicMethods
 
 Hardcoded method name mappings, used by ClassBuilder.
 
+Lock
+
+It appears that System.Threading.Monitor has some problems when trying to lock on 
+the same object from STA and MTA threads (see IronPython-users list, early Nov 2008). 
+Win32 mutexen appear to have no such problem, so we use them instead.
+
 StupidSet
 
 Essentially, a Dictionary<object, string> whose values are always "stupid"; much
@@ -132,6 +138,11 @@ Definite candidates for refactoring. Names describe intended use, but nothing
 they do is specifically thread local; really, the thread-locality should be h
 handled inside these classes instead of by the client, and then they'd (1) be 
 useful and (2) do what they say on the tin.
+
+Unmanaged
+
+Static utility class, with DllImports of various useful functions from 
+kernel32.dll and msvcr71.dll.
 
 
 Other things

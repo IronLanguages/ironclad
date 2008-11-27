@@ -2,7 +2,7 @@ Ironclad's build process deserves a brief discussion.
 
 32-BIT WINDOWS REQUIREMENTS:
 
-* IronPython 2.0 release candidate 1 (2.0.0.0)
+* IronPython 2.0 release candidate 2 (2.0.0.0)
 * mingw or cygwin (including gcc and make) 
 * pexports
 * nasm
@@ -11,11 +11,12 @@ Ironclad's build process deserves a brief discussion.
 * Python 2.5
 * msvcr71.dll (distributed with Python 2.5)
 
-If you are using cygwin you should set the environment variable IRONCLAD_USE_CYGWIN to YES.
+If you are using cygwin you should set the environment variable 
+IRONCLAD_USE_CYGWIN to YES.
 
 32-BIT LINUX REQUIREMENTS:
 
-* IronPython 2.0 release candidate 1 (2.0.0.0)
+* IronPython 2.0 release candidate 2 (2.0.0.0)
 * gcc and make
 * objdump
 * nasm
@@ -25,7 +26,7 @@ If you are using cygwin you should set the environment variable IRONCLAD_USE_CYG
 TESTING
 
 In order for all tests to run, numpy 1.2.1 must be installed - but this is not
-otherwise necessary. To convince numpy's tests to run nose must be installed.
+otherwise necessary. To convince numpy's tests to run, nose must be installed.
 
 You should also ensure that IRONPYTHONPATH is set correctly. In particular, it
 should include the directory containing .pyd files.

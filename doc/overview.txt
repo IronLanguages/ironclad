@@ -13,38 +13,7 @@ Status
 
 * Once bz2.pyd has been loaded, it is possible to import the Python 2.5 'bz2' module; all its functions, types, and strings are accessible from IronPython. See 'functionalitytest.py' (all of which should pass) for examples.
 
-* It is *almost* possible to import numpy without errors: you need to comment out line 532 of numpy.core.numerictypes (reading "_unicodesize = array('u','U1').itemsize"). We don't know exactly why this line fails, but it doesn't appear to be referenced anywhere else, so we don't consider it to be an especially big deal. (The approximate reason for failure is that we don't handle anything unicode-related.) When numpy has been imported, parts of it work correctly:
--------------------------------------------------------------
-C:\dev\ironclad\build>ipy
-IronPython 2.0 Beta (2.0.0.2000) on .NET 2.0.50727.312
-Copyright (c) Microsoft Corporation. All rights reserved.
->>> import ironclad
->>> from numpy import *
-Detected numpy import; faking out modules:
-  parser
-  pydoc
-  mmap
-  urllib2
-  ctypes
-  numpy.ma
-numpy.core.numerictypes SKIPPING _unicodesize
->>> a = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
->>> b = array([10, 20, 30])
->>> a*2+b*3
-array([[32, 64, 96],
-       [38, 70, 102],
-       [44, 76, 108]])
->>> _ ** 2
-array([[1024, 4096, 9216],
-       [1444, 4900, 10404],
-       [1936, 5776, 11664]])
->>> ironclad.shutdown()
->>> ^Z
-
-C:\dev\ironclad\build>
--------------------------------------------------------------
-
-* Numpy is not complete by any means; one numpy subpackage, and several CPython modules, are stubbed out when Ironclad notices that numpy is being imported. Also, arrays of floating point numbers appear to be thoroughly broken.
+* It is possible to import numpy without errors, and to use quite a lot of it; several dependencies are stubbed out, but the majority of tests in the core, fft, lib, linalg and random subpackages should pass.
 
 * It may be possible to import some other CPython extensions without crashing.
 
@@ -55,7 +24,7 @@ C:\dev\ironclad\build>
 
 Immediate next steps
 
-* Try to get numpy actually *working*.
+* Find out which broken parts of numpy are "important", and fix those.
 
 * Move these notes into something resembling a real issue tracking system.
 
