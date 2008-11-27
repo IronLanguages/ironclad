@@ -1,5 +1,5 @@
 
-from tests.utils.runtest import makesuite, run
+from tests.utils.runtest import automakesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.memory import OffsetPtr, CreateTypes
@@ -67,7 +67,7 @@ class PyString_TestCase(TestCase):
             self.assertEquals(actual, expected, "failed to copy string data correctly")
 
 
-class PyString_Type_test(TypeTestCase):
+class PyString_Type_Test(TypeTestCase):
     
     def testString_tp_free(self):
         self.assertUsual_tp_free("PyString_Type")
@@ -98,6 +98,92 @@ class PyString_FromString_Test(PyString_TestCase):
         mapper.Dispose()
         Marshal.FreeHGlobal(testData)
         deallocTypes()
+
+
+class PyString_Concat_Test(PyString_TestCase):
+
+    @WithMapper
+    def testBasic(self, mapper, addToCleanup):
+        part1Ptr = mapper.Store("one two")
+        mapper.IncRef(part1Ptr) # avoid garbage collection
+        part2Ptr = mapper.Store(" three")
+        startingRefCnt = mapper.RefCount(part1Ptr)
+        
+        stringPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        addToCleanup(lambda: Marshal.FreeHGlobal(stringPtrPtr))
+        
+        Marshal.WriteIntPtr(stringPtrPtr, part1Ptr)
+        mapper.PyString_Concat(stringPtrPtr, part2Ptr)
+        self.assertMapperHasError(mapper, None)
+        
+
+        newStringPtr = Marshal.ReadIntPtr(stringPtrPtr)
+        self.assertEquals(mapper.Retrieve(newStringPtr), "one two three")
+
+        self.assertEquals(startingRefCnt - mapper.RefCount(part1Ptr), 1)
+
+
+    @WithMapper
+    def testErrorCaseSecondArg(self, mapper, addToCleanup):
+        part1Ptr = mapper.Store("one two")
+        mapper.IncRef(part1Ptr) # avoid garbage collection
+        startingRefCnt = mapper.RefCount(part1Ptr)
+        
+        part2Ptr = mapper.Store(3)
+        stringPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        addToCleanup(lambda: Marshal.FreeHGlobal(stringPtrPtr))
+        
+        Marshal.WriteIntPtr(stringPtrPtr, part1Ptr)
+        mapper.PyString_Concat(stringPtrPtr, part2Ptr)
+        self.assertMapperHasError(mapper, TypeError)
+
+        self.assertEquals(Marshal.ReadIntPtr(stringPtrPtr), IntPtr(0))
+        self.assertEquals(startingRefCnt - mapper.RefCount(part1Ptr), 1)
+
+
+    @WithMapper
+    def testErrorCaseSecondArg(self, mapper, addToCleanup):
+        part1Ptr = mapper.Store(17)
+        mapper.IncRef(part1Ptr) # avoid garbage collection
+        startingRefCnt = mapper.RefCount(part1Ptr)
+
+        part2Ptr = mapper.Store("three")
+        stringPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        addToCleanup(lambda: Marshal.FreeHGlobal(stringPtrPtr))
+        
+        Marshal.WriteIntPtr(stringPtrPtr, part1Ptr)
+        mapper.PyString_Concat(stringPtrPtr, part2Ptr)
+        self.assertMapperHasError(mapper, TypeError)
+
+        self.assertEquals(Marshal.ReadIntPtr(stringPtrPtr), IntPtr(0))
+        self.assertEquals(startingRefCnt - mapper.RefCount(part1Ptr), 1)
+
+
+class PyString_ConcatAndDel_Test(PyString_TestCase):
+
+    @WithMapper
+    def testBasic(self, mapper, addToCleanup):
+        part1Ptr = mapper.Store("one two")
+        mapper.IncRef(part1Ptr) # avoid garbage collection
+        startingPart1RefCnt = mapper.RefCount(part1Ptr)
+        
+        part2Ptr = mapper.Store(" three")
+        mapper.IncRef(part2Ptr) # avoid garbage collection
+        startingPart2RefCnt = mapper.RefCount(part2Ptr)
+
+        stringPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        addToCleanup(lambda: Marshal.FreeHGlobal(stringPtrPtr))
+        
+        Marshal.WriteIntPtr(stringPtrPtr, part1Ptr)
+        mapper.PyString_ConcatAndDel(stringPtrPtr, part2Ptr)
+        self.assertMapperHasError(mapper, None)
+
+        newStringPtr = Marshal.ReadIntPtr(stringPtrPtr)
+        self.assertEquals(mapper.Retrieve(newStringPtr), "one two three")
+
+        self.assertEquals(startingPart1RefCnt - mapper.RefCount(part1Ptr), 1)
+        self.assertEquals(startingPart2RefCnt - mapper.RefCount(part2Ptr), 1)
+    
 
 
 class InternTest(PyString_TestCase):
@@ -409,19 +495,7 @@ class PyStringStoreTest(PyString_TestCase):
         mapper.Dispose()
         deallocTypes()
 
-
-
-suite = makesuite(
-    PyString_Type_test,
-    PyString_FromString_Test,
-    InternTest,
-    PyString_FromStringAndSize_Test,
-    _PyString_Resize_Test,
-    PyString_Size_Test,
-    PyString_AsStringTest,
-    PyString_AsStringAndSizeTest,
-    PyStringStoreTest,
-)
+suite = automakesuite(locals())
 
 if __name__ == '__main__':
     run(suite)
