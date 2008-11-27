@@ -257,6 +257,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PySequence_Check", ('IntPtr(111)',), '0')
         self.assertFinds("PySequence_Size", ('IntPtr(111)',), '123')
         self.assertFinds("PySequence_GetItem", ('IntPtr(111)', '123'), 'IntPtr(999)')
+        self.assertFinds("PySequence_GetSlice", ('IntPtr(111)', '123', '456'), 'IntPtr(999)')
         self.assertFinds("PySequence_Repeat", ('IntPtr(111)', '123'), 'IntPtr(999)')
         self.assertFinds("PySequence_Tuple", ('IntPtr(111)',), 'IntPtr(999)')
         
@@ -315,6 +316,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyInt_FromLong", ('33',), 'IntPtr(999)')
         self.assertFinds("PyInt_FromSsize_t", ('33',), 'IntPtr(999)')
         self.assertFinds("PyInt_AsLong", ('IntPtr(123)',), '999')
+        self.assertFinds("PyInt_AsUnsignedLongMask", ('IntPtr(123)',), 'UInt32(3555555555)')
         self.assertFinds("PyInt_AsSsize_t", ('IntPtr(123)',), '999')
         
         self.assertFinds("PyBool_FromLong", ('33',), 'IntPtr(999)')
