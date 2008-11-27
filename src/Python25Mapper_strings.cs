@@ -13,6 +13,44 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
+
+        public override void
+	PyString_Concat(IntPtr str1PtrPtr, IntPtr str2Ptr)
+	{
+	    
+	    string str1, str2;
+	    IntPtr str1Ptr = Marshal.ReadIntPtr(str1PtrPtr);
+	    if (str1Ptr == new IntPtr(0))
+	    {
+		return;
+	    }
+	    try
+	    {
+		str1 = (string) this.Retrieve(str1Ptr);
+		str2 = (string) this.Retrieve(str2Ptr);
+	    }
+	    catch (Exception e)
+	    {
+		this.LastException = e;
+		Marshal.WriteIntPtr(str1PtrPtr, new IntPtr(0));
+		this.DecRef(str1Ptr);
+		return;
+	    }
+	    string str3 = str1 + str2;
+	    IntPtr str3Ptr = this.Store(str3);
+		
+	    Marshal.WriteIntPtr(str1PtrPtr, str3Ptr);
+	    this.DecRef(str1Ptr);
+	}
+
+	public override void
+	PyString_ConcatAndDel(IntPtr str1PtrPtr, IntPtr str2Ptr)
+	{
+	    this.PyString_Concat(str1PtrPtr, str2Ptr);
+	    this.DecRef(str2Ptr);
+	}
+
+
         public override IntPtr 
         PyString_FromString(IntPtr stringData)
         {
