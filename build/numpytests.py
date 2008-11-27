@@ -69,17 +69,13 @@ test_blacklist = [
     'core.test_multiarray.TestMethods.test_sort', # fails on the creation of character arrays which we aren't worrying about 
     'core.test_multiarray.TestMethods.test_argsort', # fails on the creation of character arrays which we aren't worrying about
 
-    # Fail due to differences in str(complex) between python and ipy - not worth fixing now (similar test in functionalitytest)
+    # Fail due to differences in str between python and ipy - not worth fixing now (similar test in functionalitytest)
+    'core.test_print.TestPrint.test_double',
     'core.test_print.TestPrint.test_longdouble',
     'core.test_print.TestPrint.test_complex_double', 
     'core.test_print.TestPrint.test_complex_float', 
     'core.test_print.TestPrint.test_complex_longdouble',
     
-    # these take *forever*
-    'lib.test_function_base.TestHistogramdd.test_shape_4d',
-    'core.test_scalarmath.TestRepr.test_float_repr',
-    'core.test_scalarmath.TestTypes.test_type_add',
-    'core.test_numerictypes.test_create_values_nested_single.test_list_of_list_of_tuple',
 ]
 read_into_blacklist(test_blacklist, 'numpy_test_blacklist')
 

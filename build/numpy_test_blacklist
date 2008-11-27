@@ -117,6 +117,7 @@ core.test_regression.TestRegression.test_void_copyswap
 core.test_regression.TestRegression.test_zeros_order
 core.test_scalarmath.TestTypes.test_type_create
 core.test_ufunc.TestUfunc.test_generic_loops
+core.test_umath.TestAttributes.test_attributes
 core.test_umath.TestSpecialMethods.test_array_with_context
 core.test_umath.TestSpecialMethods.test_failing_wrap
 core.test_umath.TestSpecialMethods.test_old_wrap
@@ -195,3 +196,4 @@ lib.test__datasource.TestDataSourceOpen.test_ValidHTTP
 lib.test__datasource.TestOpenFunc.test_DataSourceOpen
 lib.test__datasource.TestRepositoryExists.test_RemoveHTTPFile
 lib.test_arraysetops.TestAso.test_setdiff1d_char_array
+lib.test_function_base.TestUnique.test_simple
