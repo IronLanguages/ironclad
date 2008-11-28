@@ -71,7 +71,7 @@ class ExternalFunctionalityTest(TestCase):
         error = process.StandardError.ReadToEnd()
         process.WaitForExit()
         if process.ExitCode != 0:
-            self.fail("Execution failed: stdout: >>>%s<<<\n stderr: >>>%s<<<\n" % (output, error))
+            self.fail("Execution failed: stdout: >>>%s<<<\nstderr: >>>%s<<<\n" % (output, error))
 
 
     def write(self, name, code):
