@@ -76,6 +76,11 @@ test_blacklist = [
     'core.test_print.TestPrint.test_complex_float', 
     'core.test_print.TestPrint.test_complex_longdouble',
     
+    # stupid tedious shutil.rmtree problems (sometimes, they work...)
+    'lib.test__datasource.TestDataSourceOpen.test_ValidFile',
+    'lib.test__datasource.TestDataSourceOpen.test_ValidGzipFile',
+    'lib.test__datasource.TestDataSourceOpen.test_ValidHTTP',
+    'lib.test__datasource.TestOpenFunc.test_DataSourceOpen',
 ]
 read_into_blacklist(test_blacklist, 'numpy_test_blacklist')
 
