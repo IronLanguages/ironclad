@@ -23,6 +23,10 @@ class _IroncladModuleLoader(ihooks.ModuleLoader):
     def find_module(self, name, path=None):
         if name == 'numpy' or name.startswith('numpy.'):
             _mapper.PerpetrateNumpyFixes()
+        if name == '_hashlib':
+            # _hashlib has strange problems, but hashlib can handle 
+            # an ImportError on _hashlib import
+            raise ImportError()
         if _mapper.IsClrModule(name):
             return None, None, CLR_MODULE
         return ihooks.ModuleLoader.find_module(self, name, path)
