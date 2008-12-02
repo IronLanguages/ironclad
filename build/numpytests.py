@@ -1,8 +1,9 @@
 
-from itertools import takewhile
+from itertools import chain, takewhile
 import os
 import os.path
 import sys
+import types
 
 if sys.platform == 'cli':
     import ironclad
@@ -40,10 +41,11 @@ class_blacklist = [
     'core.test_multiarray.TestStringCompare', # don't care about strings yet
     'core.test_multiarray.TestPickling', # don't care about pickling yet
     'core.test_multiarray.TestRecord', # record arrays
+    'core.test_numerictypes.test_create_zeros_nested', # no idea why
+    'core.test_numerictypes.test_create_zeros_plain',
 ]
 test_blacklist = [
     'core.test_defmatrix.TestCtor.test_basic', # uses getframe
-    
     'core.test_defmatrix.TestCtor.test_bmat_nondefault_str', # uses getframe
     'core.test_multiarray.TestAttributes.test_fill', # seems to intermittently kill the test run
     'core.test_multiarray.TestFromToFile.test_file', # meant to be disabled on windows
@@ -61,9 +63,6 @@ test_blacklist = [
 
     # uses getframe to run docstring tests, equivalent tests might like to be added to the functionality tests
     'lib.test_polynomial.TestDocs.test_doctests',
-
-    # kills the test runner
-    "linalg.test_linalg.TestEigh.test_single",
 
     # might want to extract other test cases:
     'core.test_multiarray.TestMethods.test_sort', # fails on the creation of character arrays which we aren't worrying about 
@@ -158,8 +157,8 @@ def get_modules(package_name):
 
 def get_classes(module, mod_path):
     for class_name, test_class in sorted(module.__dict__.items()):
-        if not isinstance(test_class, type) or not issubclass(test_class, TestCase):
-           continue
+        if not isinstance(test_class, (type, types.ClassType)) or not issubclass(test_class, TestCase):
+            continue
         if '.'.join(mod_path + (class_name,)) in class_blacklist:
             continue
         yield class_name, test_class
@@ -167,10 +166,11 @@ def get_classes(module, mod_path):
 
 def get_test_names(test_class, class_path):
     tests = []
-    for test_name in dir(test_class):
-        if not test_name.startswith('test_') or '.'.join(class_path +(test_name,)) in test_blacklist:
-            continue    
-        tests.append(test_name)
+    for cls in (test_class,) + test_class.__bases__: 
+        for test_name in dir(cls):
+            if not test_name.startswith('test_') or '.'.join(class_path +(test_name,)) in test_blacklist:
+                continue    
+            tests.append(test_name)
     return sorted(tests)
 
 
