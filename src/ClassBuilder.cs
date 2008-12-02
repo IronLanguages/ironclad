@@ -58,8 +58,6 @@ namespace Ironclad
             this.tp_name = CPyMarshal.ReadCStringField(this.ptr, typeof(PyTypeObject), "tp_name");
             CallableBuilder.ExtractNameModule(this.tp_name, ref this.__name__, ref this.__module__);
             this.tablePrefix = this.__name__ + ".";
-
-
             this.code.Append("_ironclad_class_attrs = dict()");
         }
 
@@ -133,9 +131,9 @@ namespace Ironclad
         {
             string getname = "None";
             string setname = "None";
-	    this.code.Append(CodeSnippets.CLEAR_GETTER_SETTER_CODE);
+            this.code.Append(CodeSnippets.CLEAR_GETTER_SETTER_CODE);
             PyGetSetDef getset = (PyGetSetDef)Marshal.PtrToStructure(getsetPtr, typeof(PyGetSetDef));
-	    
+        
             if (getset.get != IntPtr.Zero)
             {
                 getname = String.Format("__get_{0}", getset.name);
@@ -189,7 +187,7 @@ namespace Ironclad
             PyMemberDef member = (PyMemberDef)Marshal.PtrToStructure(
                 memberPtr, typeof(PyMemberDef));
 
-	    this.code.Append(CodeSnippets.CLEAR_GETTER_SETTER_CODE);
+            this.code.Append(CodeSnippets.CLEAR_GETTER_SETTER_CODE);
 
             string suffix = null;
             if (TryGetMemberMethodSuffix(member.type, ref suffix))
