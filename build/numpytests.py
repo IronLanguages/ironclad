@@ -17,6 +17,16 @@ import numpy
 from numpy.testing import TestCase
 from unittest import TestResult
 
+
+def my_assert_raises(exc, call, *args, **kwargs):
+    try:
+        call(*args, **kwargs)
+    except exc:
+        pass
+    else:
+        raise AssertionError("wrong exception, or no exception")
+numpy.testing.assert_raises = my_assert_raises
+
 def read_into_blacklist(blacklist, filename):
     if not os.path.isfile(filename):
         return
@@ -54,12 +64,7 @@ test_blacklist = [
     'core.test_multiarray.TestPutmask.test_record_array', # record arrays involved
     'core.test_multiarray.TestClip.test_record_array', # record arrays again
     'core.test_multiarray.TestResize.test_check_reference', # reference counting different in ironclad
-    
-    # cannot call import_nose
-    'lib.test_function_base.TestCheckFinite.test_simple',
-    'lib.test_function_base.TestGradient.test_badargs',
-    'linalg.test_linalg.TestEigh.test_empty', # used by assertRaises
-    'linalg.test_linalg.TestEigvalsh.test_empty',
+    'lib.test_io.TestLoadTxt.test_record', # record arrays
 
     # uses getframe to run docstring tests, equivalent tests might like to be added to the functionality tests
     'lib.test_polynomial.TestDocs.test_doctests',
@@ -80,6 +85,7 @@ test_blacklist = [
     'lib.test__datasource.TestDataSourceOpen.test_ValidGzipFile',
     'lib.test__datasource.TestDataSourceOpen.test_ValidHTTP',
     'lib.test__datasource.TestOpenFunc.test_DataSourceOpen',
+    
 ]
 read_into_blacklist(test_blacklist, 'numpy_test_blacklist')
 
