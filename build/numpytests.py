@@ -39,7 +39,7 @@ def read_into_blacklist(blacklist, filename):
         f.close()
 
 numpy_path = r"C:\Python25\Lib\site-packages\numpy"
-dirs = ['core', 'lib', 'linalg', 'ma', 'oldnumeric', 'random']
+dirs = ['core', 'lib', 'linalg', 'random']
 
 mod_blacklist = [
     'core.test_defchararray', 
