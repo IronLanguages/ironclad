@@ -1,0 +1,8 @@
+namespace Ironclad
+{
+    internal partial class CodeSnippets
+    {
+        // kindadictproxy.py is inserted here
+        public const string KINDA_DICT_PROXY_CODE = @"%s";
+    }
+}
