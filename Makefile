@@ -13,3 +13,9 @@ stubdll :
 
 testdata : 
 	cd tests/data/src && $(MAKE)
+
+clean :
+	cd src && $(MAKE) clean
+	cd stub && $(MAKE) clean
+	cd tests/data/src && $(MAKE) clean
+	

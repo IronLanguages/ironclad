@@ -67,9 +67,11 @@ class ExternalFunctionalityTest(TestCase):
         process.StartInfo.RedirectStandardOutput = process.StartInfo.RedirectStandardError = True
 
         process.Start()
+        process.WaitForExit(60000)
+        if not process.HasExited:
+            process.Kill
         output = process.StandardOutput.ReadToEnd()
         error = process.StandardError.ReadToEnd()
-        process.WaitForExit()
         if process.ExitCode != 0:
             self.fail("Execution failed: stdout: >>>%s<<<\nstderr: >>>%s<<<\n" % (output, error))
 
@@ -164,25 +166,27 @@ class ExternalFunctionalityTest(TestCase):
         testDir = self.getTestDir()
         self.write(os.path.join(testDir, 'test.py'), dedent("""\
             # adapted from numpy
-            import ironclad
-            import numpy as np
+            try:
+                import ironclad
+                import numpy as np
 
-            def assert_equals(a, b):
-                assert a == b, '%r != %r' % (a, b)
+                def assert_equals(a, b):
+                    assert a == b, '%r != %r' % (a, b)
 
-            def mangle(num):
-                return str(num).lower().replace('+0', '+')
+                def mangle(num):
+                    return str(num).lower().replace('+0', '+')
 
-            def test_complex_type(type):
-                for x in [0, 1,-1, 1e10, 1e20]:
-                    assert_equals(mangle(type(x)), mangle(complex(x)).lower())
-                    assert_equals(mangle(type(x*1j)).lower(), mangle(complex(x*1j)).lower())
-                    assert_equals(mangle(type(x + x*1j)).lower(), mangle(complex(x + x*1j)).lower())
-    
-            test_complex_type(np.cfloat)
-            test_complex_type(np.cdouble)
-            test_complex_type(np.clongdouble)
-            ironclad.shutdown()
+                def test_complex_type(type):
+                    for x in [0, 1,-1, 1e10, 1e20]:
+                        assert_equals(mangle(type(x)), mangle(complex(x)).lower())
+                        assert_equals(mangle(type(x*1j)).lower(), mangle(complex(x*1j)).lower())
+                        assert_equals(mangle(type(x + x*1j)).lower(), mangle(complex(x + x*1j)).lower())
+        
+                test_complex_type(np.cfloat)
+                test_complex_type(np.cdouble)
+                test_complex_type(np.clongdouble)
+            finally:
+                ironclad.shutdown()
             """))
             
         self.assertRunsInDir(testDir, 'test.py')
