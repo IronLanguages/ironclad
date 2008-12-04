@@ -115,6 +115,7 @@ core.test_regression.TestRegression.test_unpickle_dtype_with_object_unique_zero_
 core.test_regression.TestRegression.test_void_coercion
 core.test_regression.TestRegression.test_void_copyswap
 core.test_regression.TestRegression.test_zeros_order
+core.test_scalarmath.TestRepr.test_float_repr
 core.test_scalarmath.TestTypes.test_type_create
 core.test_ufunc.TestUfunc.test_generic_loops
 core.test_umath.TestAttributes.test_attributes
@@ -188,3 +189,17 @@ core.test_unicode.test_create_zeros_2.test_zerosMD
 core.test_unicode.test_create_zeros_2.test_zerosSD
 lib.test_arraysetops.TestAso.test_setdiff1d_char_array
 lib.test_function_base.TestUnique.test_simple
+lib.test_io.TestLoadTxt.test_fancy_dtype
+lib.test_io.TestLoadTxt.test_usecols
+lib.test_io.TestSaveLoad.test_1D
+lib.test_io.TestSaveLoad.test_array
+lib.test_io.TestSaveLoad.test_record
+lib.test_io.TestSaveTxt.test_record
+lib.test_io.TestSavezLoad.test_1D
+lib.test_io.TestSavezLoad.test_array
+lib.test_io.TestSavezLoad.test_multiple_arrays
+lib.test_io.TestSavezLoad.test_named_arrays
+lib.test_io.TestSavezLoad.test_record
+lib.test_io.Testfromregex.test_record
+lib.test_io.Testfromregex.test_record_3
+lib.test_io.Testfromregex.test_record_2
