@@ -2,7 +2,7 @@ include ../../../Makefile.config
 
 all : ../testutils.dll ../setvalue.pyd ../exportsymbols.dll
 
-../testutils.dll : unmanaged.cs ../../../ironpython/Microsoft.Scripting.dll ../../../ironpython/Microsoft.Scripting.Core.dll ../../../ironpython/IronPython.dll
+../testutils.dll : unmanaged.cs ../../../ironpython/*.dll
 	$(CSC) /out:../testutils.dll /t:library /nologo /r:../../../ironpython/Microsoft.Scripting.dll /r:../../../ironpython/Microsoft.Scripting.Core.dll /r:../../../ironpython/IronPython.dll unmanaged.cs
 
 ../setvalue.pyd : setvalue.o
@@ -16,3 +16,9 @@ setvalue.o : setvalue.c
 
 exportsymbols.o : exportsymbols.c
 	gcc $(CFLAGS) -o exportsymbols.o -c exportsymbols.c
+
+clean :
+	del *.o
+	del ..\testutils.dll
+	del ..\setvalue.pyd
+	del ..\exportsymbols.dll

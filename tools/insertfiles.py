@@ -4,9 +4,9 @@ args = sys.argv[1:]
 def read(filename):
     stream = file(filename)
     try:
-	return stream.read()
+        return stream.read()
     finally:
-	stream.close()
+        stream.close()
 
 if len(args) != 2:
     print >>sys.stderr, "usage: tools/insertfiles template inserted-file"
