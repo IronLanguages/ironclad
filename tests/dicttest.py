@@ -13,8 +13,6 @@ from Ironclad import CPyMarshal, Python25Mapper
 from Ironclad.Structs import PyObject, PyTypeObject
 
 
-
-
 class DictTest(TestCase):
 
     def testPyDict_New(self):
@@ -66,7 +64,21 @@ class DictTest(TestCase):
         self.assertEquals(klass.foo, 'bar')
         self.assertEquals(klass.baz, 'qux')
         self.assertEquals(mapper.PyDict_Size(dictPtr), len(klass.__dict__))
+    
+    
+    @WithMapper
+    def testPyDictProxy_New(self, mapper, _):
+        d = {1: 2, 3: 4}
+        dp = mapper.Retrieve(mapper.PyDictProxy_New(mapper.Store(d)))
         
+        def Set(k, v):
+            dp[k] = v
+        self.assertRaises(TypeError, Set, 1, 5)
+        self.assertRaises(TypeError, Set, 'foo', 'bar')
+        
+        self.assertEquals(dp[1], 2)
+        self.assertEquals(dp[3], 4)
+    
 
     @WithMapper
     def testPyDict_Size(self, mapper, _):

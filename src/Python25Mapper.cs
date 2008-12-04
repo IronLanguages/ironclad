@@ -53,6 +53,7 @@ namespace Ironclad
         
         private Scope dispatcherModule;
         private object dispatcherClass;
+        private object kindaDictProxyClass;
         private Lock GIL;
 
         private bool alive = false;
@@ -104,6 +105,7 @@ namespace Ironclad
             this.allocator = inAllocator;
             
             this.CreateScratchModule();
+            this.CreateKindaDictProxy();
             this.CreateDispatcherModule();
             
             if (stubPath != null)

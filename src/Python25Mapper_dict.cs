@@ -3,6 +3,7 @@ using System.Collections;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
+using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
 using Ironclad.Structs;
@@ -11,6 +12,13 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
+        
+        private void CreateKindaDictProxy()
+        {
+            // can't contruct types.DictProxy, and ipy DictProxy class wraps a type, not a dict
+            this.ExecInModule(CodeSnippets.KINDA_DICT_PROXY_CODE, this.scratchModule);
+            this.kindaDictProxyClass = ScopeOps.__getattribute__(this.scratchModule, "KindaDictProxy");
+        }
         
         public override IntPtr
         PyDict_New()
@@ -40,6 +48,13 @@ namespace Ironclad
                 return proxy.__len__(this.scratchContext);
             }
             return dict.Keys.Count;
+        }
+        
+        
+        public override IntPtr
+        PyDictProxy_New(IntPtr mappingPtr)
+        {
+            return this.Store(PythonCalls.Call(this.kindaDictProxyClass, this.Retrieve(mappingPtr)));
         }
         
         

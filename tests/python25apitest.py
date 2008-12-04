@@ -274,6 +274,8 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyDict_SetItem", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), '123')
         self.assertFinds("PyDict_SetItemString", ('IntPtr(111)', '"boojum"', 'IntPtr(999)'), '123')
         
+        self.assertFinds("PyDictProxy_New", ('IntPtr(111)',), 'IntPtr(999)')
+        
         self.assertFinds("PyList_New", ('33',), 'IntPtr(999)')
         self.assertFinds("PyList_Append", ('IntPtr(123)', 'IntPtr(456)'), '789')
         self.assertFinds("PyList_SetItem", ('IntPtr(123)', '4', 'IntPtr(567)'), '999')

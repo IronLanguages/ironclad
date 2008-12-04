@@ -57,7 +57,6 @@ class_blacklist = [
 test_blacklist = [
     'core.test_defmatrix.TestCtor.test_basic', # uses getframe
     'core.test_defmatrix.TestCtor.test_bmat_nondefault_str', # uses getframe
-    'core.test_multiarray.TestAttributes.test_fill', # seems to intermittently kill the test run
     'core.test_multiarray.TestFromToFile.test_file', # meant to be disabled on windows
     'core.test_multiarray.TestTake.test_record_array', # record arrays
     'core.test_multiarray.TestMethods.test_sort_order', # record arrays involved
