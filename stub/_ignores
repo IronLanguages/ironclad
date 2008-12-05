@@ -36,6 +36,12 @@ PyObject_CheckReadBuffer
 PyObject_AsReadBuffer
 PyObject_AsWriteBuffer
 
+PyBuffer_FromObject
+PyBuffer_FromReadWriteObject
+PyBuffer_FromMemory
+PyBuffer_FromReadWriteMemory
+PyBuffer_New
+
 PyObject_Cmp
 
 PyCObject_Import

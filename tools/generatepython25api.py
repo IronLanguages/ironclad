@@ -184,7 +184,6 @@ DATA_ITEM_TEMPLATE = """\
 
 DATA_ITEM_CASE = """\
                 case "%(symbol)s":
-                    CPyMarshal.Zero(address, Marshal.SizeOf(typeof(%(type)s)));
                     this.Fill_%(symbol)s(address);
                     this.dataMap["%(symbol)s"] = address;
                     break;"""

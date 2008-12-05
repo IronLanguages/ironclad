@@ -229,17 +229,14 @@ namespace Ironclad
             switch (name)
             {
                 case "PyString_Type":
-                    CPyMarshal.Zero(address, Marshal.SizeOf(typeof(PyTypeObject)));
                     this.Fill_PyString_Type(address);
                     this.dataMap["PyString_Type"] = address;
                     break;
                 case "PyType_Type":
-                    CPyMarshal.Zero(address, Marshal.SizeOf(typeof(PyTypeObject)));
                     this.Fill_PyType_Type(address);
                     this.dataMap["PyType_Type"] = address;
                     break;
                 case "Py_Something":
-                    CPyMarshal.Zero(address, Marshal.SizeOf(typeof(int)));
                     this.Fill_Py_Something(address);
                     this.dataMap["Py_Something"] = address;
                     break;

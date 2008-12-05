@@ -40,6 +40,33 @@ class PyMem_Malloc_Test(TestCase):
         self.assertMapperHasError(mapper, None)
 
 
+class PyObject_Malloc_Test(TestCase):
+    
+    def testPyObject_Malloc_NonZero(self):
+        allocs = []
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        
+        resultPtr = mapper.PyObject_Malloc(123)
+        self.assertEquals(allocs, [(resultPtr, 123)], "bad alloc")
+        mapper.Dispose()
+    
+    
+    def testPyObject_Malloc_Zero(self):
+        allocs = []
+        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        
+        resultPtr = mapper.PyObject_Malloc(0)
+        self.assertEquals(allocs, [(resultPtr, 1)], "bad alloc")
+        mapper.Dispose()
+    
+    
+    @WithMapper
+    def testPyObject_Malloc_Failure(self, mapper, _):
+        resultPtr = mapper.PyObject_Malloc(sys.maxint)
+        self.assertEquals(resultPtr, IntPtr.Zero, "bad alloc")
+        self.assertMapperHasError(mapper, None)
+
+
 class PyMem_Free_Test(TestCase):
     
     def testPyMem_Free_NonNull(self):
@@ -119,6 +146,7 @@ class PyMem_Realloc_Test(TestCase):
 
 suite = makesuite(
     PyMem_Malloc_Test,
+    PyObject_Malloc_Test,
     PyMem_Free_Test,
     PyMem_Realloc_Test,
 )

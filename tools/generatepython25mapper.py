@@ -87,6 +87,7 @@ FILL_TYPES_OUTFILE = "../Python25mapper_fill_types.Generated.cs"
 FILE_TEMPLATE = """
 using System;
 using System.Collections;
+using System.Runtime.InteropServices;
 using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
@@ -168,6 +169,7 @@ FILL_TYPES_TEMPLATE = """\
         public override void
         Fill_%(name)s(IntPtr ptr)
         {
+            CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
 %(extra)s
             this.map.Associate(ptr, %(type)s);

@@ -327,6 +327,7 @@ class PyBaseObject_Type_Test(TypeTestCase):
         mapper.PyBaseObject_Dealloc(objPtr)
         self.assertEquals(calls, [objPtr], "wrong calls")
 
+
 class NewInitFunctionsTest(TestCase):
     
     @WithMapper

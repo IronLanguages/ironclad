@@ -23,4 +23,5 @@
 #include "pystrtod.c"
 #include "stringobject.c"
 #include "tupleobject.c"
+#include "bufferobject.c"
 

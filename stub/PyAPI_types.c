@@ -349,6 +349,8 @@ typedef struct _typeobject {
 #define PyLong_Check(op) PyObject_TypeCheck(op, &PyLong_Type)
 #define PyDict_Check(op) PyObject_TypeCheck(op, &PyDict_Type)
 #define PyDict_CheckExact(op) ((op)->ob_type == &PyDict_Type)
+#define PyBuffer_Check(op) ((op)->ob_type == &PyBuffer_Type)
+#define Py_END_OF_BUFFER	(-1)
 
 
 typedef PyObject *(*PyCFunction)(PyObject *, PyObject *);
@@ -371,8 +373,6 @@ typedef
         PyGILState_STATE;
 
 typedef void (*PyOS_sighandler_t)(int);
-
-
 
 // Faked declarations for things we hope never to use, ever:
 
