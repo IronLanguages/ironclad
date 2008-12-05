@@ -110,6 +110,7 @@ namespace Ironclad
         {
             // not quite trivial to autogenerate
             // (but surely there's a better way to get the Ellipsis object...)
+            CPyMarshal.Zero(address, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             object ellipsisType = PythonCalls.Call(Builtin.type, new object[] { PythonOps.Ellipsis });
             this.map.Associate(address, ellipsisType);
@@ -119,9 +120,17 @@ namespace Ironclad
         Fill_PyBool_Type(IntPtr address)
         {
             // not quite trivial to autogenerate
+            CPyMarshal.Zero(address, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_base", this.PyInt_Type);
             this.map.Associate(address, TypeCache.Boolean);
+        }
+
+        public override void
+        Fill_PyBuffer_Type(IntPtr ptr)
+        {
+            // this does nothing: when we encounter a buffer, we interpret it like any 
+            // c extension type. 
         }
 
         private void
@@ -134,7 +143,7 @@ namespace Ironclad
             CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_int", this.GetAddress("PyNumber_Int"));
             CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_long", this.GetAddress("PyNumber_Long"));
             CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_float", this.GetAddress("PyNumber_Float"));
-	    CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_multiply", this.GetAddress("PyNumber_Multiply"));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_multiply", this.GetAddress("PyNumber_Multiply"));
 
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_as_number", nmPtr);
         }
@@ -149,7 +158,6 @@ namespace Ironclad
             Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
             flags |= Py_TPFLAGS.HAVE_INDEX;
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
-            
         }
         
         public void

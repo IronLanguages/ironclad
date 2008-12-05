@@ -19,6 +19,12 @@ namespace Ironclad
             }
         }
         
+        public override IntPtr
+        PyObject_Malloc(int size)
+        {
+            return this.PyMem_Malloc(size);
+        }
+        
         public override void
         PyMem_Free(IntPtr ptr)
         {
