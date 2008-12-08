@@ -212,10 +212,15 @@ def get_matching_tests(path):
 def run_all_tests(runner, previous_test=None):
     all_tests = get_all_tests()
     if previous_test:
-        for _ in takewhile(lambda (p, _): p != previous_test, all_tests): pass
+        for _ in takewhile(lambda (p, _): p != previous_test, all_tests):
+            pass
+    run_count = 0
+    pass_count = 0
     for test_path, test_case in all_tests:
-        runner(test_case, test_path)
-    print "All tests run ?!"
+        run_count += 1
+        if runner(test_case, test_path):
+            pass_count += 1
+    print "run complete; %d/%d passes" % (pass_count, run_count)
 
 
 def run_paths(paths, runner, previous_test=None):
@@ -223,7 +228,8 @@ def run_paths(paths, runner, previous_test=None):
     for path in paths:
         all_tests = get_matching_tests(path)
         if previous_test:
-            for _ in takewhile(lambda (p, _): p != previous_test, all_tests): pass
+            for _ in takewhile(lambda (p, _): p != previous_test, all_tests):
+                pass
 
         for test_path, test in all_tests:
             result = runner(test, test_path)
@@ -285,5 +291,6 @@ def main():
 if __name__ == "__main__":
     main()
 
-ironclad.shutdown()    
+
+ironclad.shutdown()
 
