@@ -38,6 +38,15 @@ class ObjectFunctionsTest(TestCase):
         kwargsPtr = mapper.Store({'y': 4})
         resultPtr = mapper.PyObject_Call(kallablePtr, argsPtr, kwargsPtr)
         self.assertEquals(mapper.Retrieve(resultPtr), 16, "didn't call with kwargs")
+    
+    @WithMapper
+    def testPyObject_Call_Error(self, mapper, _):
+        def Blam(*_, **__):
+            raise ValueError('arrgh!')
+        kallablePtr = mapper.Store(Blam)
+        
+        self.assertEquals(mapper.PyObject_Call(kallablePtr, IntPtr.Zero, IntPtr.Zero), IntPtr.Zero)
+        self.assertMapperHasError(mapper, ValueError)
 
 
     @WithMapper

@@ -72,6 +72,9 @@ test_blacklist = [
     'core.test_multiarray.TestMethods.test_sort', # fails on the creation of character arrays which we aren't worrying about 
     'core.test_multiarray.TestMethods.test_argsort', # fails on the creation of character arrays which we aren't worrying about
 
+    # _compiled_base.add_docstring doesn't work
+    'core.test_umath.TestAttributes.test_attributes',
+
     # Fail due to differences in str between python and ipy - not worth fixing now (similar test in functionalitytest)
     'core.test_print.TestPrint.test_double',
     'core.test_print.TestPrint.test_longdouble',

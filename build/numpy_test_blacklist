@@ -107,12 +107,6 @@ core.test_regression.TestRegression.test_void_copyswap
 core.test_regression.TestRegression.test_zeros_order
 core.test_scalarmath.TestRepr.test_float_repr
 core.test_scalarmath.TestTypes.test_type_create
-core.test_umath.TestAttributes.test_attributes
-core.test_umath.TestSpecialMethods.test_array_with_context
-core.test_umath.TestSpecialMethods.test_failing_wrap
-core.test_umath.TestSpecialMethods.test_old_wrap
-core.test_umath.TestSpecialMethods.test_priority
-core.test_umath.TestSpecialMethods.test_wrap
 core.test_unicode.test_assign_values_1009_ucs2.test_values0D
 core.test_unicode.test_assign_values_1009_ucs2.test_valuesMD
 core.test_unicode.test_assign_values_1009_ucs2.test_valuesSD

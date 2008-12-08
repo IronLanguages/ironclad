@@ -40,3 +40,10 @@ PyErr_Format(PyObject *exception, const char *format, ...)
 	va_end(vargs);
 	return NULL;
 }
+
+
+int
+PyErr_ExceptionMatches(PyObject *exc)
+{
+	return PyErr_GivenExceptionMatches(PyErr_Occurred(), exc);
+}

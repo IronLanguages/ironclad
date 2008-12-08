@@ -116,31 +116,39 @@ namespace Ironclad
         public override IntPtr
         PyObject_Call(IntPtr objPtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
-            object obj = this.Retrieve(objPtr);
-            object[] argsArray = null;
+            try
+            {
+                object obj = this.Retrieve(objPtr);
+                object[] argsArray = null;
 
-            if (argsPtr == IntPtr.Zero)
-            {
-                argsArray = new object[0];
-            }
-            else
-            {
-                ICollection args = (ICollection)this.Retrieve(argsPtr);
-                argsArray = new object[args.Count];
-                args.CopyTo(argsArray, 0);
-            }
+                if (argsPtr == IntPtr.Zero)
+                {
+                    argsArray = new object[0];
+                }
+                else
+                {
+                    ICollection args = (ICollection)this.Retrieve(argsPtr);
+                    argsArray = new object[args.Count];
+                    args.CopyTo(argsArray, 0);
+                }
 
-            object result = null;
-            if (kwargsPtr == IntPtr.Zero)
-            {
-               result = PythonCalls.Call(obj, argsArray);
+                object result = null;
+                if (kwargsPtr == IntPtr.Zero)
+                {
+                   result = PythonCalls.Call(obj, argsArray);
+                }
+                else
+                {
+                    IAttributesCollection kwargs = (IAttributesCollection)this.Retrieve(kwargsPtr);
+                    result = PythonCalls.CallWithKeywordArgs(this.scratchContext, obj, argsArray, kwargs);
+                }
+                return this.Store(result);
             }
-            else
+            catch (Exception e)
             {
-                IAttributesCollection kwargs = (IAttributesCollection)this.Retrieve(kwargsPtr);
-                result = PythonCalls.CallWithKeywordArgs(this.scratchContext, obj, argsArray, kwargs);
+                this.LastException = e;
+                return IntPtr.Zero;
             }
-            return this.Store(result);
         }
         
         public override int

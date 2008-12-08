@@ -10,6 +10,11 @@ from System.Runtime.InteropServices import Marshal
 from System.Text import Encoding
 from Ironclad import CPyMarshal, Python25Mapper
 
+class my_stderr(object):
+    def __init__(self, calls):
+        self.calls = calls
+    def write(self, *args):
+        self.calls.append(args)
 
 class LastExceptionTest(TestCase):
 
@@ -18,9 +23,9 @@ class LastExceptionTest(TestCase):
         self.assertEquals(mapper.LastException, None, "exception should default to nothing")
 
         mapper.LastException = System.Exception("doozy")
-        self.assertEquals(type(mapper.LastException), System.Exception,
+        self.assertEquals(type(mapper.LastException), Exception,
                           "get should retrieve last set exception")
-        self.assertEquals(mapper.LastException.Message, "doozy",
+        self.assertEquals(str(mapper.LastException), "doozy",
                           "get should retrieve last set exception")
 
 
@@ -30,10 +35,11 @@ class ErrFunctionsTest(TestCase):
     @WithMapper
     def testPyErr_Occurred(self, mapper, _):
         mapper.LastException = Exception("borked")
-        errorPtr = mapper.Store(mapper.LastException)
-        self.assertEquals(mapper.PyErr_Occurred(), errorPtr)
+        errorPtr = mapper.PyErr_Occurred()
+        self.assertEquals(mapper.Retrieve(errorPtr), Exception)
+        refcnt = mapper.RefCount(errorPtr)
         mapper.FreeTemps()
-        self.assertEquals(mapper.RefCount(errorPtr), 1, 'was not a temp object')
+        self.assertEquals(mapper.RefCount(errorPtr), refcnt - 1, 'was not a temp object')
         
         mapper.LastException = None
         self.assertEquals(mapper.PyErr_Occurred(), IntPtr.Zero)
@@ -116,19 +122,14 @@ class ErrFunctionsTest(TestCase):
         mapper.LastException = somethingToWrite
         
         calls = []
-        class stderr(object):
-            def write(self, *args):
-                calls.append(args)
         old = sys.stderr
-        sys.stderr = stderr()
+        sys.stderr = my_stderr(calls)
         try:
             mapper.PyErr_Print()
         finally:
             sys.stderr = old
         
         self.assertEquals(calls, [(somethingToWrite,), ('\n',)])
-        
-        
         
 
     @WithMapper
@@ -161,7 +162,20 @@ class ErrFunctionsTest(TestCase):
         specificInstance = TypeError('yes, this specific TypeError')
         self.assertMatch(mapper, specificInstance, specificInstance, 1)
         
-        self.assertMatch(mapper, 'whatever', str, 0)
+        
+        calls = []
+        old = sys.stderr
+        sys.stderr = my_stderr(calls)
+        try:
+            self.assertMatch(mapper, 'whatever', str, 0)
+        finally:
+            sys.stderr = old
+        
+        expectedCalls = [
+            ('PyErr_GivenExceptionMatches: something went wrong. Assuming exception does not match.',), 
+            ('\n',)
+        ]
+        self.assertEquals(calls, expectedCalls)
 
 
     def assertRestoreSetsCorrectError(self, mapper, name):

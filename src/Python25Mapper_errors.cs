@@ -19,7 +19,8 @@ namespace Ironclad
             {
                 return IntPtr.Zero;
             }
-            IntPtr errorPtr = this.Store(this.LastException);
+            object errorType = PythonCalls.Call(Builtin.type, new object[] { this.LastException });
+            IntPtr errorPtr = this.Store(errorType);
             this.RememberTempObject(errorPtr);
             return errorPtr;
         }
@@ -127,6 +128,7 @@ namespace Ironclad
             }
             catch
             {
+                this.PrintToStdErr("PyErr_GivenExceptionMatches: something went wrong. Assuming exception does not match.");
                 // something bad happened. let's say it... <coin toss> wasn't a match.
             }
             return 0;

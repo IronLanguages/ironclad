@@ -27,6 +27,14 @@ namespace Ironclad
             }
             set
             {
+                if (value != null)
+                {
+                    Exception clrException = value as Exception;
+                    if (clrException != null)
+                    {
+                        value = InappropriateReflection.GetPythonException(clrException);
+                    }
+                }
                 Thread.SetData(this.threadErrorStore, value);
             }
         }

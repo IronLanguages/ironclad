@@ -8,6 +8,7 @@ using Microsoft.Scripting.Hosting;
 using Microsoft.Scripting.Runtime;
 
 using IronPython.Runtime;
+using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Types;
 
 namespace Ironclad
@@ -58,6 +59,14 @@ namespace Ironclad
             {
                 throw e.GetBaseException();
             }
+        }
+        
+        public static object
+        GetPythonException(System.Exception clrException)
+        {
+            MethodInfo _toPythonMethod = typeof(PythonExceptions).GetMethod(
+                "ToPython", BindingFlags.NonPublic | BindingFlags.Static);
+            return _toPythonMethod.Invoke(null, new object[] { clrException });
         }
     }
 }
