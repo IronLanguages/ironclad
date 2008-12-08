@@ -46,14 +46,13 @@ core.test_regression.TestRegression.test_arange_non_native_dtype
 core.test_regression.TestRegression.test_argmax_byteorder
 core.test_regression.TestRegression.test_astype_copy
 core.test_regression.TestRegression.test_attributes
-core.test_regression.TestRegression.test_broadcast_flat_assignment # Appeared to block
 core.test_regression.TestRegression.test_char_array_creation
 core.test_regression.TestRegression.test_char_dump
 core.test_regression.TestRegression.test_character_array_strip
 core.test_regression.TestRegression.test_chararray_rstrip
 core.test_regression.TestRegression.test_complex_dtype_printing
 core.test_regression.TestRegression.test_dot_alignment_sse2
-core.test_regression.TestRegression.test_dtype_names # Appeared to block
+core.test_regression.TestRegression.test_dtype_names # sometimes passes, but not reliably; creates tricksy dtype
 core.test_regression.TestRegression.test_dtype_posttuple
 core.test_regression.TestRegression.test_dtype_repr
 core.test_regression.TestRegression.test_endian_bool_indexing
@@ -62,7 +61,6 @@ core.test_regression.TestRegression.test_flat_index_byteswap
 core.test_regression.TestRegression.test_for_equal_names
 core.test_regression.TestRegression.test_for_object_scalar_creation
 core.test_regression.TestRegression.test_frompyfunc_endian
-core.test_regression.TestRegression.test_hstack_invalid_dims # Appeared to block
 core.test_regression.TestRegression.test_indexing1
 core.test_regression.TestRegression.test_indexing2
 core.test_regression.TestRegression.test_junk_in_string_fields_of_recarray
@@ -74,17 +72,12 @@ core.test_regression.TestRegression.test_mem_lexsort_strings
 core.test_regression.TestRegression.test_mem_string_arr
 core.test_regression.TestRegression.test_mem_string_concat
 core.test_regression.TestRegression.test_multidim_byteswap
-core.test_regression.TestRegression.test_noncontiguous_fill # Appeared to block
 core.test_regression.TestRegression.test_nonnative_endian_fill
 core.test_regression.TestRegression.test_numeric_carray_compare
 core.test_regression.TestRegression.test_numeric_random
-core.test_regression.TestRegression.test_object_array_fill # Appeared to block
 core.test_regression.TestRegression.test_object_array_from_list
 core.test_regression.TestRegression.test_pickle_transposed
-core.test_regression.TestRegression.test_poly1d_nan_roots # Appeared to block
-core.test_regression.TestRegression.test_poly_div # Appeared to block
 core.test_regression.TestRegression.test_poly_eq
-core.test_regression.TestRegression.test_rand_seed
 core.test_regression.TestRegression.test_random_shuffle
 core.test_regression.TestRegression.test_rec_fromarray
 core.test_regression.TestRegression.test_rec_iterate

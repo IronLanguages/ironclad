@@ -253,7 +253,7 @@ class ObjectFunctionsTest(TestCase):
 
 
     @WithMapper
-    def testPyObject_StrRepr(self, mapper, addToCleanUp):
+    def testPyObject_StrRepr(self, mapper, _):
         for okval in ("hullo", [0, 3, 5], (0,), {1:2}, set([1, 2])):
             ptr = mapper.Store(okval)
             strptr = mapper.PyObject_Str(ptr)
@@ -280,6 +280,42 @@ class ObjectFunctionsTest(TestCase):
         self.assertMapperHasError(mapper, TypeError)
         mapper.DecRef(ptr)
 
+
+    @WithMapper
+    def testPyObject_IsInstance(self, mapper, _):
+        class Custom(object):
+            pass
+        
+        data = (
+            (object(), object), # true
+            ('hello', str),
+            (123, (str, object)),
+            (Custom(), Custom),
+            (Custom, type),
+            
+            (123, str), # false
+            ('foo', list),
+            (Custom, Custom),
+            
+            ('foo', 'bar'), # error
+            (Custom, Custom()),
+        )
+        
+        for (inst, cls) in data:
+            expectResult = -1
+            expectException = None
+            try:
+                expectResult = int(isinstance(inst, cls))
+            except Exception, e:
+                expectException = type(e)
+            
+            instPtr = mapper.Store(inst)
+            clsPtr = mapper.Store(cls)
+            self.assertEquals(mapper.PyObject_IsInstance(instPtr, clsPtr), expectResult)
+            self.assertMapperHasError(mapper, expectException)
+            mapper.DecRef(instPtr)
+            mapper.DecRef(clsPtr)
+        
 
     
 class PyBaseObject_Type_Test(TypeTestCase):

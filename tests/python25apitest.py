@@ -245,6 +245,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyObject_Free", ('IntPtr(111)',), 'None')
         self.assertFinds("PyObject_Init", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
         self.assertFinds("PyObject_IsTrue", ('IntPtr(111)',), '123')
+        self.assertFinds("PyObject_IsInstance", ('IntPtr(111)', 'IntPtr(222)'), '-123')
         self.assertFinds("PyObject_Size", ('IntPtr(111)',), '123')
         self.assertFinds("PyObject_Str", ('IntPtr(111)',), 'IntPtr(999)')
         self.assertFinds("PyObject_Repr", ('IntPtr(111)',), 'IntPtr(999)')
