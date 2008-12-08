@@ -66,30 +66,30 @@ namespace Ironclad
         {
             try
             {
-                bool result = true;
+                object objResult = true;
                 CMP op = (CMP)opid;
                 switch (op)
                 {
                     case CMP.Py_LT:
-                        result = (bool)PythonOperator.lt(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                        objResult = PythonOperator.lt(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
                         break;
                     case CMP.Py_LE:
-                        result = (bool)PythonOperator.le(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                        objResult = PythonOperator.le(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
                         break;
                     case CMP.Py_EQ:
-                        result = (bool)PythonOperator.eq(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                        objResult = PythonOperator.eq(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
                         break;
                     case CMP.Py_NE:
-                        result = (bool)PythonOperator.ne(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                        objResult = PythonOperator.ne(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
                         break;
                     case CMP.Py_GT:
-                        result = (bool)PythonOperator.gt(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                        objResult = PythonOperator.gt(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
                         break;
                     case CMP.Py_GE:
-                        result = (bool)PythonOperator.ge(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                        objResult = PythonOperator.ge(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
                         break;
                 }
-                if (result)
+                if (Converter.ConvertToBoolean(objResult))
                 {
                     return 1;
                 }
