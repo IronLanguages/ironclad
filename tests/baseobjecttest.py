@@ -88,13 +88,31 @@ class ObjectFunctionsTest(TestCase):
             def borked(self, other):
                 raise Exception("no!")
             __lt__ = __le__ = __eq__ = __ne__ = __gt__ = __ge__ = borked
-        objects = (1, 1, 1.0, -1, 3.4e5, object, object(), 'hello', [1], (2,), {3: 'four'}, BadComparer)
+        objects = (1, 1, 1.0, -1, 3.4e5, object, object(), 'hello', [1], (2,), {3: 'four'}, BadComparer, BadComparer())
         
         for opid in COMPARISONS:
             for ob1 in objects:
                 for ob2 in objects:
                     self.assertRichCmp(mapper, opid, ob1, ob2)
-                       
+
+
+    @WithMapper
+    def testPyObject_RichCompareBool_StrangeReturnValue(self, mapper, _):
+        class StrangeComparer(object):
+            def returnSomethingFalse(self, _):
+                return []
+            def returnSomethingTrue(self, _):
+                return [False]
+            __lt__ = __le__ = __eq__ = returnSomethingFalse
+            __ne__ = __gt__ = __ge__ = returnSomethingTrue
+        
+        obj = StrangeComparer()
+        objPtr = mapper.Store(obj)
+        for opid in COMPARISONS:
+            expect = int(bool(COMPARISONS[opid](obj, obj)))
+            self.assertEquals(mapper.PyObject_RichCompareBool(objPtr, objPtr, int(opid)), expect)
+        
+ 
 
     @WithMapper
     def testPyObject_GetAttrString(self, mapper, _):
@@ -278,7 +296,7 @@ class ObjectFunctionsTest(TestCase):
         
         self.assertEquals(mapper.PyObject_Repr(badptr), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
-        mapper.DecRef(ptr)
+        mapper.DecRef(badptr)
 
 
     @WithMapper

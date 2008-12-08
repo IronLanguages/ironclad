@@ -87,10 +87,8 @@ core.test_regression.TestRegression.test_recarray_single_element
 core.test_regression.TestRegression.test_recarray_tolist
 core.test_regression.TestRegression.test_refcount_vdot
 core.test_regression.TestRegression.test_refcount_vectorize
-core.test_regression.TestRegression.test_round # Appeared to block
 core.test_regression.TestRegression.test_scalar_compare
 core.test_regression.TestRegression.test_searchsorted_variable_length
-core.test_regression.TestRegression.test_squeeze_type # Appeared to block
 core.test_regression.TestRegression.test_startswith
 core.test_regression.TestRegression.test_string_NULL
 core.test_regression.TestRegression.test_string_argsort_with_zeros
@@ -98,7 +96,6 @@ core.test_regression.TestRegression.test_string_array_size
 core.test_regression.TestRegression.test_string_mergesort
 core.test_regression.TestRegression.test_string_sort_with_zeros
 core.test_regression.TestRegression.test_swap_real
-core.test_regression.TestRegression.test_uint64_from_negative # Appeared to block
 core.test_regression.TestRegression.test_unaligned_unicode_access
 core.test_regression.TestRegression.test_unicode_scalar
 core.test_regression.TestRegression.test_unicode_string_comparison
@@ -110,7 +107,6 @@ core.test_regression.TestRegression.test_void_copyswap
 core.test_regression.TestRegression.test_zeros_order
 core.test_scalarmath.TestRepr.test_float_repr
 core.test_scalarmath.TestTypes.test_type_create
-core.test_ufunc.TestUfunc.test_generic_loops
 core.test_umath.TestAttributes.test_attributes
 core.test_umath.TestSpecialMethods.test_array_with_context
 core.test_umath.TestSpecialMethods.test_failing_wrap
