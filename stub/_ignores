@@ -11,6 +11,7 @@ PyErr_Format
 PyErr_SetObject
 PyErr_SetString
 PyErr_SetNone
+PyErr_ExceptionMatches
 
 PyArg_Parse
 _PyArg_Parse_SizeT
@@ -28,8 +29,10 @@ _PyArg_NoKeywords
 PyObject_CallObject
 PyObject_CallFunction
 _PyObject_CallFunction_SizeT
+PyObject_CallFunctionObjArgs
 PyObject_CallMethod
 _PyObject_CallMethod_SizeT
+PyObject_CallMethodObjArgs
 
 PyObject_AsCharBuffer
 PyObject_CheckReadBuffer

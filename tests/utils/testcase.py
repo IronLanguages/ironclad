@@ -31,10 +31,7 @@ class TestCase(unittest.TestCase):
         
     def assertMapperHasError(self, mapper, error):
         if error:
-            self.assertNotEquals(mapper.LastException, None, "no error set on mapper")
-            def KindaConvertError():
-                raise mapper.LastException
-            self.assertRaises(error, KindaConvertError)
+            self.assertEquals(isinstance(mapper.LastException, error), True, "wrong error set on mapper")
             mapper.LastException = None
         else:
             self.assertEquals(mapper.LastException, None)
