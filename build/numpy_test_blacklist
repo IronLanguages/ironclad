@@ -2,7 +2,6 @@ core.test_defmatrix.TestMatrixReturn.test_instance_methods
 core.test_multiarray.TestClip.test_basic
 core.test_multiarray.TestFromToFile.test_filename
 core.test_multiarray.TestFromToFile.test_malformed
-core.test_multiarray.TestTake.test_ip_byteorder
 core.test_multiarray.TestView.test_basic
 core.test_multiarray.TestView.test_keywords
 core.test_numeric.TestClip.test_simple_nonnative
@@ -105,8 +104,6 @@ core.test_regression.TestRegression.test_unpickle_dtype_with_object_unique_zero_
 core.test_regression.TestRegression.test_void_coercion
 core.test_regression.TestRegression.test_void_copyswap
 core.test_regression.TestRegression.test_zeros_order
-core.test_scalarmath.TestRepr.test_float_repr
-core.test_scalarmath.TestTypes.test_type_create
 core.test_unicode.test_assign_values_1009_ucs2.test_values0D
 core.test_unicode.test_assign_values_1009_ucs2.test_valuesMD
 core.test_unicode.test_assign_values_1009_ucs2.test_valuesSD
