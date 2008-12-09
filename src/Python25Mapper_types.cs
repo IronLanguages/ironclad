@@ -89,7 +89,6 @@ namespace Ironclad
             PyType_Ready(typeBasePtr);
             
             this.InheritPtrField(typePtr, "tp_alloc");
-            this.InheritPtrField(typePtr, "tp_init");
             this.InheritPtrField(typePtr, "tp_new");
             this.InheritPtrField(typePtr, "tp_dealloc");
             this.InheritPtrField(typePtr, "tp_free");

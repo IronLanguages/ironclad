@@ -68,8 +68,7 @@ class Dispatcher(object):
         
     @lock
     def init(self, name, instance, *args, **kwargs):
-        if not self.table.has_key(name):
-            return
+        if not self.table.has_key(name): return
         if not kwargs: kwargs = Null
         instancePtr, argsPtr, kwargsPtr = map(self._store, [instance, args, kwargs])
         result = self.table[name](instancePtr, argsPtr, kwargsPtr)

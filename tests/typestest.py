@@ -243,7 +243,6 @@ class Types_Test(TestCase):
 
 INHERIT_FIELDS = (
     "tp_alloc",
-    "tp_init",
     "tp_new",
     "tp_dealloc",
     "tp_free",
@@ -255,6 +254,7 @@ INHERIT_FIELDS = (
     "tp_as_buffer"
 )
 DONT_INHERIT_FIELDS = (
+    "tp_init",
     "tp_repr",
     "tp_str",
 )
