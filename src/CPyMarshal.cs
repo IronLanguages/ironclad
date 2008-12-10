@@ -29,6 +29,20 @@ namespace Ironclad
             }
         }
 
+        public static void Log(IntPtr start, Int32 bytes)
+        {
+            for (int i = 0; i < bytes/CPyMarshal.IntSize; i++)
+            {
+                if (i % 4 == 0)
+                {
+                    Console.WriteLine();
+                }
+                Console.Write("{0} ", CPyMarshal.ReadPtr(start).ToString("x8"));
+                start = CPyMarshal.Offset(start, CPyMarshal.IntSize);
+            }
+            Console.WriteLine();
+        }
+
         private static IntPtr GetField(IntPtr addr, Type type, string field)
         {
             return CPyMarshal.Offset(addr, Marshal.OffsetOf(type, field));
