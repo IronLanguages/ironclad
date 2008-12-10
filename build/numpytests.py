@@ -39,7 +39,7 @@ def read_into_blacklist(blacklist, filename):
         f.close()
 
 numpy_path = r"C:\Python25\Lib\site-packages\numpy"
-dirs = ['core', 'fft', 'lib', 'linalg', 'random']
+dirs = ['core', 'fft', 'lib', 'linalg', 'ma', 'oldnumeric', 'random']
 
 mod_blacklist = [
     'core.test_defchararray', 
@@ -47,6 +47,7 @@ mod_blacklist = [
     'core.test_records',
     'core.test_unicode',
     'lib.test_format', # PyObject_Unicode
+    'ma.test_mrecords', 
 ]
 class_blacklist = [
     'core.test_multiarray.TestStringCompare', # don't care about strings yet
@@ -62,6 +63,7 @@ class_blacklist = [
     'core.test_numerictypes.test_read_values_nested_single',
     'core.test_numerictypes.test_read_values_plain_multiple',
     'core.test_numerictypes.test_read_values_plain_single',
+    
 ]
 test_blacklist = [
     'core.test_defmatrix.TestCtor.test_basic', # uses getframe
