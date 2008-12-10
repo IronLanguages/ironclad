@@ -1,9 +1,8 @@
-core.test_defchararray.TestOperations.test_add # PyObject_SelfIter
-core.test_defchararray.TestOperations.test_radd # PyObject_SelfIter
+core.test_defchararray.TestOperations.test_add
+core.test_defchararray.TestOperations.test_radd
 core.test_multiarray.TestMethods.test_sort_order
 core.test_multiarray.TestPickling.test_version0_object
 core.test_multiarray.TestPickling.test_version1_object
-core.test_multiarray.TestRecord.test_field_rename # PyDict_DelItem
 core.test_regression.TestRegression.test_astype_copy
 core.test_regression.TestRegression.test_char_array_creation
 core.test_regression.TestRegression.test_character_array_strip

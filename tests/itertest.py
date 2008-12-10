@@ -13,6 +13,14 @@ from Ironclad.Structs import Py_TPFLAGS, PySequenceMethods
 class IterationTest(TestCase):
     
     @WithMapper
+    def testPyObject_SelfIter(self, mapper, _):
+        objPtr = mapper.Store(object())
+        resultPtr = mapper.PyObject_SelfIter(objPtr)
+        self.assertEquals(resultPtr, objPtr)
+        self.assertEquals(mapper.RefCount(objPtr), 2)
+    
+    
+    @WithMapper
     def testPyObject_GetIter_Success(self, mapper, _):
         testList = [1, 2, 3]
         listPtr = mapper.Store(testList)
