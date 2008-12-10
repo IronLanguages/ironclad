@@ -183,6 +183,34 @@ class DictTest(TestCase):
         self.assertEquals(klass.__name__, 'klass', "failed")
 
 
+    @WithMapper
+    def testPyDict_DelItem_Exists(self, mapper, _):
+        key = object()
+        _dict = {key: 1}
+        dictPtr = mapper.Store(_dict)
+        self.assertEquals(mapper.PyDict_DelItem(dictPtr, mapper.Store(key)), 0)
+        self.assertMapperHasError(mapper, None)
+        self.assertEquals(_dict, {})
+
+
+    @WithMapper
+    def testPyDict_DelItem_ExistsNot(self, mapper, _):
+        _dict = {}
+        dictPtr = mapper.Store(_dict)
+        self.assertEquals(mapper.PyDict_DelItem(dictPtr, mapper.Store(object())), -1)
+        self.assertMapperHasError(mapper, None)
+        self.assertEquals(_dict, {})
+
+
+    @WithMapper
+    def testPyDict_DelItem_Unhashable(self, mapper, _):
+        _dict = {}
+        dictPtr = mapper.Store(_dict)
+        self.assertEquals(mapper.PyDict_DelItem(dictPtr, mapper.Store({})), -1)
+        self.assertMapperHasError(mapper, TypeError)
+        self.assertEquals(_dict, {})
+
+
 class PyDict_Next_Test(TestCase):
 
     @WithMapper

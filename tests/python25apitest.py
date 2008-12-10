@@ -237,6 +237,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyObject_Call", ('IntPtr(123)', 'IntPtr(456)', 'IntPtr(789)'), 'IntPtr(999)')
         self.assertFinds("PyObject_GetItem", ('IntPtr(123)', 'IntPtr(456)'), 'IntPtr(789)')
         self.assertFinds("PyObject_GetIter", ('IntPtr(123)',), 'IntPtr(999)')
+        self.assertFinds("PyObject_SelfIter", ('IntPtr(123)',), 'IntPtr(999)')
         self.assertFinds("PyObject_HasAttrString", ('IntPtr(111)', '"harold"'), '999')
         self.assertFinds("PyObject_GetAttrString", ('IntPtr(111)', '"harold"'), 'IntPtr(999)')
         self.assertFinds("PyObject_GetAttr", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
@@ -275,6 +276,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyDict_GetItemString", ('IntPtr(111)', '"boojum"'), 'IntPtr(999)')
         self.assertFinds("PyDict_SetItem", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), '123')
         self.assertFinds("PyDict_SetItemString", ('IntPtr(111)', '"boojum"', 'IntPtr(999)'), '123')
+        self.assertFinds("PyDict_DelItem", ('IntPtr(111)', 'IntPtr(222)'), '123')
         
         self.assertFinds("PyDictProxy_New", ('IntPtr(111)',), 'IntPtr(999)')
         

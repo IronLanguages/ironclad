@@ -43,6 +43,14 @@ namespace Ironclad
 
 
         public override IntPtr
+        PyObject_SelfIter(IntPtr objPtr)
+        {
+            this.IncRef(objPtr);
+            return objPtr;
+        }
+
+
+        public override IntPtr
         PyObject_GetIter(IntPtr objPtr)
         {
             try
