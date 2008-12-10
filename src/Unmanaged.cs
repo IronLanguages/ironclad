@@ -30,6 +30,9 @@ namespace Ironclad
         [DllImport("kernel32.dll")]
         public static extern int CloseHandle(IntPtr hObject);
         
+        [DllImport("kernel32.dll")]
+        public static extern void DebugBreak();
+        
         
         [DllImport("msvcr71.dll")]
         public static extern IntPtr _fdopen(int fd, string mode);

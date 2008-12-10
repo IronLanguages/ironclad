@@ -66,7 +66,14 @@ namespace Ironclad
         {
             MethodInfo _toPythonMethod = typeof(PythonExceptions).GetMethod(
                 "ToPython", BindingFlags.NonPublic | BindingFlags.Static);
-            return _toPythonMethod.Invoke(null, new object[] { clrException });
+            try
+            {
+                return _toPythonMethod.Invoke(null, new object[] { clrException });
+            }
+            catch (Exception e)
+            {
+                throw e.GetBaseException();
+            }
         }
     }
 }

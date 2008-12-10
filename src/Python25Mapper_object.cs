@@ -18,8 +18,8 @@ namespace Ironclad
         public override IntPtr
         _PyObject_New(IntPtr typePtr)
         {
-            int ob_size = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "ob_size");
-            IntPtr objPtr = this.allocator.Alloc(ob_size);
+            int tp_basicsize = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
+            IntPtr objPtr = this.allocator.Alloc(tp_basicsize);
             return this.PyObject_Init(objPtr, typePtr);
         }
         

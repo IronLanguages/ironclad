@@ -39,31 +39,35 @@ def read_into_blacklist(blacklist, filename):
         f.close()
 
 numpy_path = r"C:\Python25\Lib\site-packages\numpy"
-dirs = ['core', 'lib', 'linalg', 'random']
+dirs = ['core', 'fft', 'lib', 'linalg', 'random']
 
 mod_blacklist = [
     'core.test_defchararray', 
     'core.test_memmap',
     'core.test_records',
-    'lib.test_format', # litte-endian array construction
+    'core.test_unicode',
+    'lib.test_format', # PyObject_Unicode
 ]
 class_blacklist = [
     'core.test_multiarray.TestStringCompare', # don't care about strings yet
-    'core.test_multiarray.TestPickling', # don't care about pickling yet
-    'core.test_multiarray.TestRecord', # record arrays
-    'core.test_numerictypes.test_create_zeros_nested', # no idea why
+    
+    # all have unicode fields; worry about those later
+    'core.test_numerictypes.test_create_zeros_nested',
     'core.test_numerictypes.test_create_zeros_plain',
+    'core.test_numerictypes.test_create_values_nested_multiple',
+    'core.test_numerictypes.test_create_values_nested_single',
+    'core.test_numerictypes.test_create_values_plain_multiple',
+    'core.test_numerictypes.test_create_values_plain_single',
+    'core.test_numerictypes.test_read_values_nested_multiple',
+    'core.test_numerictypes.test_read_values_nested_single',
+    'core.test_numerictypes.test_read_values_plain_multiple',
+    'core.test_numerictypes.test_read_values_plain_single',
 ]
 test_blacklist = [
     'core.test_defmatrix.TestCtor.test_basic', # uses getframe
     'core.test_defmatrix.TestCtor.test_bmat_nondefault_str', # uses getframe
     'core.test_multiarray.TestFromToFile.test_file', # meant to be disabled on windows
-    'core.test_multiarray.TestTake.test_record_array', # record arrays
-    'core.test_multiarray.TestMethods.test_sort_order', # record arrays involved
-    'core.test_multiarray.TestPutmask.test_record_array', # record arrays involved
-    'core.test_multiarray.TestClip.test_record_array', # record arrays again
     'core.test_multiarray.TestResize.test_check_reference', # reference counting different in ironclad
-    'lib.test_io.TestLoadTxt.test_record', # record arrays
 
     # uses getframe to run docstring tests, equivalent tests might like to be added to the functionality tests
     'lib.test_polynomial.TestDocs.test_doctests',

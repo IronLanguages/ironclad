@@ -425,7 +425,7 @@ class NewInitFunctionsTest(TestCase):
         typeObjSize = Marshal.SizeOf(PyTypeObject)
         typePtr = Marshal.AllocHGlobal(typeObjSize)
         CPyMarshal.Zero(typePtr, typeObjSize)
-        CPyMarshal.WriteIntField(typePtr, PyTypeObject, "ob_size", 31337)
+        CPyMarshal.WriteIntField(typePtr, PyTypeObject, "tp_basicsize", 31337)
         
         del allocs[:]
         objPtr = mapper._PyObject_New(typePtr)
