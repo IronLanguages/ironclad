@@ -429,6 +429,17 @@ class SimpleDispatchTest(DispatchTestCase):
              ('_check_error', ()),
             ])
 
+
+    def testDispatch_method_getattr(self):
+        self.assertDispatcherMethod(
+            'method_getattr', (NAME, OBJ, STRING),
+            [('_store', (OBJ,)),
+             (NAME, (OBJ_PTR, STRING)), 
+             ('_return_retrieve', (RESULT_PTR,)),
+             ('_cleanup', (OBJ_PTR, RESULT_PTR,))
+            ])
+
+
 class IckyDispatchTest(DispatchTestCase):
     
     def getVars(self):

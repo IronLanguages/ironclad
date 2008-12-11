@@ -10,7 +10,7 @@ from Ironclad import (
     CPython_ssizeobjargproc_Delegate, CPython_ssizessizeobjargproc_Delegate, CPython_objobjargproc_Delegate,
     CPython_reprfunc_Delegate, CPython_lenfunc_Delegate, CPython_richcmpfunc_Delegate, CPython_inquiry_Delegate,
     CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate, 
-    CPython_cmpfunc_Delegate, CPython_hashfunc_Delegate
+    CPython_cmpfunc_Delegate, CPython_getattr_Delegate, CPython_hashfunc_Delegate
 )
 from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMethodDef, PyTypeObject
 
@@ -90,6 +90,7 @@ FUNC_ARGS = {
     "tp_init": CPython_initproc_Delegate,
     "tp_dealloc": CPython_destructor_Delegate,
     "tp_free": Python25Api.PyObject_Free_Delegate,
+    "tp_getattr": CPython_getattr_Delegate,
     "tp_iter": Python25Api.PyObject_GetIter_Delegate,
     "tp_iternext": Python25Api.PyIter_Next_Delegate,
     "tp_call": CPythonVarargsKwargsFunction_Delegate,

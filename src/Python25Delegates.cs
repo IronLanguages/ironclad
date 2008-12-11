@@ -72,4 +72,7 @@ namespace Ironclad
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int CPython_cmpfunc_Delegate(IntPtr self, IntPtr other);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate IntPtr CPython_getattr_Delegate(IntPtr self, string str);
 }

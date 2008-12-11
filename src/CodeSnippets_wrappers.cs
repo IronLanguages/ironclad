@@ -75,6 +75,13 @@ _ironclad_class_attrs['{0}'] = _ironclad_setter
 _ironclad_class_attrs['{0}'] = property(_ironclad_getter, _ironclad_setter, None, '''{1}''')
 ";
 
+	public const string GETATTR_CODE = @"
+def _getattr(self, attr):
+    return self._dispatcher.method_getattr('{2}{0}', self, attr)
+
+_ironclad_class_attrs['{0}'] = _getattr
+";
+
         public const string GETITEM_CODE = @"
 def __getitem__(self, key):
     if hasattr(self, '_getitem_sq_item') and isinstance(key, int):
