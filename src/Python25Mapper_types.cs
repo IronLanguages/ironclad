@@ -99,6 +99,9 @@ namespace Ironclad
             this.InheritPtrField(typePtr, "tp_as_mapping");
             this.InheritPtrField(typePtr, "tp_as_buffer");
             
+            this.InheritIntField(typePtr, "tp_basicsize");
+            this.InheritIntField(typePtr, "tp_itemsize");
+            
             flags |= Py_TPFLAGS.READY;
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
             return 0;
@@ -194,6 +197,21 @@ namespace Ironclad
                 {
                     CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), name,
                         CPyMarshal.ReadPtrField(basePtr, typeof(PyTypeObject), name));
+                }
+            }
+        }
+                
+        private void
+        InheritIntField(IntPtr typePtr, string name)
+        {
+            int fieldVal = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), name);
+            if (fieldVal == 0)
+            {
+                IntPtr basePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
+                if (basePtr != IntPtr.Zero)
+                {
+                    CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), name,
+                        CPyMarshal.ReadIntField(basePtr, typeof(PyTypeObject), name));
                 }
             }
         }

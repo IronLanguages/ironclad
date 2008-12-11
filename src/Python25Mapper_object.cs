@@ -20,6 +20,7 @@ namespace Ironclad
         {
             int tp_basicsize = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
             IntPtr objPtr = this.allocator.Alloc(tp_basicsize);
+            CPyMarshal.Zero(objPtr, tp_basicsize);
             return this.PyObject_Init(objPtr, typePtr);
         }
         

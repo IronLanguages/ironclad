@@ -42,12 +42,9 @@ numpy_path = r"C:\Python25\Lib\site-packages\numpy"
 dirs = ['core', 'fft', 'lib', 'linalg', 'ma', 'oldnumeric', 'random']
 
 mod_blacklist = [
-    'core.test_defchararray', 
     'core.test_memmap',
-    'core.test_records',
     'core.test_unicode',
     'lib.test_format', # PyObject_Unicode
-    'ma.test_mrecords', 
 ]
 class_blacklist = [
     'core.test_multiarray.TestStringCompare', # don't care about strings yet
@@ -73,10 +70,6 @@ test_blacklist = [
 
     # uses getframe to run docstring tests, equivalent tests might like to be added to the functionality tests
     'lib.test_polynomial.TestDocs.test_doctests',
-
-    # might want to extract other test cases:
-    'core.test_multiarray.TestMethods.test_sort', # fails on the creation of character arrays which we aren't worrying about 
-    'core.test_multiarray.TestMethods.test_argsort', # fails on the creation of character arrays which we aren't worrying about
 
     # _compiled_base.add_docstring doesn't work
     'core.test_umath.TestAttributes.test_attributes',

@@ -1,9 +1,20 @@
 core.test_defchararray.TestOperations.test_add
 core.test_defchararray.TestOperations.test_radd
+
+core.test_multiarray.TestMethods.test_argsort
 core.test_multiarray.TestMethods.test_sort_order
+core.test_multiarray.TestMethods.test_sort
 core.test_multiarray.TestPickling.test_version0_object
 core.test_multiarray.TestPickling.test_version1_object
-core.test_regression.TestRegression.test_astype_copy
+
+core.test_records.TestFromrecords.test_method_array # eval-related strangeness
+core.test_records.TestFromrecords.test_method_array2 # eval-related strangeness
+core.test_records.TestFromrecords.test_recarray_conflict_fields
+core.test_records.TestFromrecords.test_recarray_from_repr
+core.test_records.TestFromrecords.test_recarray_fromfile # eval-related strangeness
+core.test_records.TestFromrecords.test_recarray_slices # eval-related strangeness
+
+core.test_regression.TestRegression.test_astype_copy # PyLong_FromVoidPtr
 core.test_regression.TestRegression.test_char_array_creation
 core.test_regression.TestRegression.test_character_array_strip
 core.test_regression.TestRegression.test_chararray_rstrip
@@ -13,13 +24,8 @@ core.test_regression.TestRegression.test_junk_in_string_fields_of_recarray
 core.test_regression.TestRegression.test_mem_custom_float_to_array
 core.test_regression.TestRegression.test_multidim_byteswap
 core.test_regression.TestRegression.test_numeric_carray_compare
-core.test_regression.TestRegression.test_random_shuffle
-core.test_regression.TestRegression.test_rec_fromarray
-core.test_regression.TestRegression.test_rec_iterate
-core.test_regression.TestRegression.test_recarray_copy
-core.test_regression.TestRegression.test_recarray_fields
-core.test_regression.TestRegression.test_recarray_single_element
-core.test_regression.TestRegression.test_recarray_tolist
+core.test_regression.TestRegression.test_random_shuffle # PyObject_HasAttr
+core.test_regression.TestRegression.test_rec_fromarray # eval-related strangeness
 core.test_regression.TestRegression.test_refcount_vdot
 core.test_regression.TestRegression.test_refcount_vectorize
 core.test_regression.TestRegression.test_scalar_compare
@@ -29,10 +35,11 @@ core.test_regression.TestRegression.test_unaligned_unicode_access
 core.test_regression.TestRegression.test_unicode_scalar
 core.test_regression.TestRegression.test_unicode_string_comparison
 core.test_regression.TestRegression.test_unicode_swapping
-core.test_unicode.test_create_zeros_2.test_zerosMD
-core.test_unicode.test_create_zeros_2.test_zerosSD
+
 lib.test_arraysetops.TestAso.test_setdiff1d_char_array
+
 lib.test_function_base.TestUnique.test_simple
+
 lib.test_io.TestLoadTxt.test_fancy_dtype
 lib.test_io.TestLoadTxt.test_record
 lib.test_io.TestLoadTxt.test_usecols
@@ -46,6 +53,7 @@ lib.test_io.TestSavezLoad.test_named_arrays
 lib.test_io.TestSavezLoad.test_record
 lib.test_io.Testfromregex.test_record
 lib.test_io.Testfromregex.test_record_3
+
 ma.test_core.TestFillingValues.test_check_on_fields
 ma.test_core.TestFillingValues.test_fillvalue
 ma.test_core.TestFillingValues.test_fillvalue_conversion
@@ -59,6 +67,13 @@ ma.test_core.TestMaskedArrayFunctions.test_choose_with_out
 ma.test_core.TestMaskedArrayInPlaceArithmetics.test_inplace_addition_scalar # PyLong_FromVoidPtr
 ma.test_core.TestMaskedArrayMethods.test_empty
 ma.test_core.TestMaskedArrayMethods.test_tolist
+
 ma.test_extras.TestMedian.test_2d # PyCode_New
 ma.test_extras.TestMedian.test_3d
 ma.test_extras.TestNotMasked.test_contiguous
+
+ma.test_mrecords.TestMRecords.test_filled
+ma.test_mrecords.TestMRecords.test_set_fields
+ma.test_mrecords.TestMRecordsImport.test_fromarrays
+ma.test_mrecords.TestMRecordsImport.test_fromrecords
+ma.test_mrecords.TestMRecordsImport.test_fromtextfile
