@@ -278,6 +278,16 @@ class PyType_Ready_InheritTest(TestCase):
         self.deallocTypes()
         TestCase.tearDown(self)
         
+    
+    def testPyType_Ready_MissingBaseType(self):
+        self.mapper.PyType_Ready(self.mapper.PyBaseObject_Type)
+        self.assertEquals(CPyMarshal.ReadPtrField(self.mapper.PyBaseObject_Type, PyTypeObject, "tp_base"), IntPtr.Zero)
+        
+        typePtr, deallocType = MakeTypePtr(self.mapper, {})
+        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_base", IntPtr.Zero)
+        self.mapper.PyType_Ready(typePtr)
+        self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), self.mapper.PyBaseObject_Type)
+        
 
     def assertInherits(self, field):
         # clear base READY flag
@@ -328,17 +338,32 @@ class PyType_Ready_InheritTest(TestCase):
         for field in DONT_INHERIT_FIELDS:
             self.assertDoesNotInherit(field)
         
-    
-    def testPyType_Ready_MissingBaseType(self):
-        self.mapper.PyType_Ready(self.mapper.PyBaseObject_Type)
-        self.assertEquals(CPyMarshal.ReadPtrField(self.mapper.PyBaseObject_Type, PyTypeObject, "tp_base"), IntPtr.Zero)
+    def testPyType_Ready_InheritsSizes(self):
+        CPyMarshal.WriteIntField(self.baseTypePtr, PyTypeObject, "tp_basicsize", 123)
+        CPyMarshal.WriteIntField(self.baseTypePtr, PyTypeObject, "tp_itemsize", 456)
         
-        typePtr, deallocType = MakeTypePtr(self.mapper, {})
-        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_base", IntPtr.Zero)
-        self.mapper.PyType_Ready(typePtr)
-        self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), self.mapper.PyBaseObject_Type)
+        noSpec = {
+            "tp_base": self.baseTypePtr,
+            "tp_basicsize": 1234,
+            "tp_itemsize": 5678,
+        }
+        noTypePtr, deallocNoType = MakeTypePtr(self.mapper, noSpec)
+        self.assertEquals(self.mapper.PyType_Ready(noTypePtr), 0)
+        self.assertEquals(CPyMarshal.ReadIntField(noTypePtr, PyTypeObject, "tp_basicsize"), 1234)
+        self.assertEquals(CPyMarshal.ReadIntField(noTypePtr, PyTypeObject, "tp_itemsize"), 5678)
+        deallocNoType()
         
-    
+        yesSpec = {
+            "tp_base": self.baseTypePtr,
+            "tp_basicsize": 0,
+            "tp_itemsize": 0,
+        }
+        yesTypePtr, deallocYesType = MakeTypePtr(self.mapper, yesSpec)
+        self.assertEquals(self.mapper.PyType_Ready(yesTypePtr), 0)
+        self.assertEquals(CPyMarshal.ReadIntField(yesTypePtr, PyTypeObject, "tp_basicsize"), 123)
+        self.assertEquals(CPyMarshal.ReadIntField(yesTypePtr, PyTypeObject, "tp_itemsize"), 456)
+        deallocYesType()
+        
         
 class PyType_GenericAlloc_Test(TestCase):
 

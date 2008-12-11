@@ -17,6 +17,10 @@ class _ironclad_actualiser(_ironclad_class):
         pass
     def __del__(self):
         pass
+    def __setattr__(self, name, value):
+        # not directly tested: if you can work out how to, be my guest
+        # numpy fromrecords test will overflow stack if this breaks
+        object.__setattr__(self, name, value)
 ";
 
         public const string CLASS_CODE = @"
@@ -84,7 +88,7 @@ _ironclad_class_attrs['{0}'] = _getattr
 
         public const string GETITEM_CODE = @"
 def __getitem__(self, key):
-    if hasattr(self, '_getitem_sq_item') and isinstance(key, int):
+    if isinstance(key, int) and hasattr(self, '_getitem_sq_item'):
         return self._getitem_sq_item(key)
     if hasattr(self, '_getitem_mp_subscript'):
         return self._getitem_mp_subscript(key)
@@ -95,7 +99,7 @@ _ironclad_class_attrs['__getitem__'] = __getitem__
 
         public const string SETITEM_CODE = @"
 def __setitem__(self, key, item):
-    if hasattr(self, '_setitem_sq_ass_item') and isinstance(key, int):
+    if isinstance(key, int) and hasattr(self, '_setitem_sq_ass_item'):
         return self._setitem_sq_ass_item(key, item)
     if hasattr(self, '_setitem_mp_ass_subscript'):
         return self._setitem_mp_ass_subscript(key, item)

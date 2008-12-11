@@ -78,6 +78,7 @@ class DictTest(TestCase):
         
         self.assertEquals(dp[1], 2)
         self.assertEquals(dp[3], 4)
+        self.assertEquals(len(dp), 2)
     
 
     @WithMapper
