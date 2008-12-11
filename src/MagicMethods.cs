@@ -36,6 +36,11 @@ namespace Ironclad
                     template = CodeSnippets.COMPARE_METHOD_CODE;
                     dgtType = typeof(CPython_cmpfunc_Delegate);
                     break;
+	        case "tp_getattr":
+		    name = "__getattr__";
+		    template = CodeSnippets.GETATTR_CODE;
+		    dgtType = typeof(CPython_getattr_Delegate);
+		    break;
 
                 // PyNumberMethods
                 case "nb_add":

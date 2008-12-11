@@ -1,5 +1,5 @@
 
-from tests.utils.runtest import makesuite, run
+from tests.utils.runtest import automakesuite, run
     
 from tests.utils.cpython import MakeGetSetDef, MakeMethodDef, MakeNumSeqMapMethods, MakeTypePtr
 from tests.utils.gc import gcwait
@@ -12,7 +12,7 @@ from System import IntPtr, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import (
-    CPyMarshal, CPython_destructor_Delegate, CPython_initproc_Delegate, HGlobalAllocator,
+    CPyMarshal, CPython_destructor_Delegate, CPython_getattr_Delegate, CPython_initproc_Delegate, HGlobalAllocator,
     Python25Api, Python25Mapper
 )
 from Ironclad.Structs import (
@@ -77,7 +77,13 @@ class DispatchSetupTestCase(TestCase):
             calls.append((args, kwargs))
             return result
         return Nary, calls
-        
+
+    def getPtrAndCStringFunc(self):
+        calls = []
+        def func(ptr, string):
+            calls.append((ptr, string))
+            return RESULT_PTR
+        return func, calls
 
     def getUnaryPtrFunc(self):
         return self.getUnaryFunc(RESULT_PTR)
@@ -109,6 +115,9 @@ class DispatchSetupTestCase(TestCase):
     def assertCallsSsizessizeargPtrFunc(self, dgt, calls):
         self.assertCalls(dgt, ((ARG1_PTR, ARG1_SSIZE, ARG2_SSIZE), {}), calls, (ARG1_PTR, ARG1_SSIZE, ARG2_SSIZE), RESULT_PTR)
 
+    def assertCallsPtrAndCStringFunc(self, dgt, calls):
+        self.assertCalls(dgt, ((ARG1_PTR, "SomeString"), {}), calls, (ARG1_PTR, "SomeString"), RESULT_PTR)
+
 
 class MethodsTest(DispatchSetupTestCase):
 
@@ -129,7 +138,6 @@ class MethodsTest(DispatchSetupTestCase):
         self.assertEquals(_type.__init__.__name__, '__init__')
         self.assertEquals(_type.__del__.__name__, '__del__')
         
-
 
     def testNoArgsMethod(self):
         NoArgs, calls_cfunc = self.getBinaryPtrFunc()
@@ -289,6 +297,36 @@ class CallTest(DispatchSetupTestCase):
             "tp_call": Call,
         }
         self.assertTypeSpec(typeSpec, TestType)
+
+
+
+class GetAttrTest(DispatchSetupTestCase):
+    def testGetAttr(self):
+        GetAttr, calls_cfunc = self.getPtrAndCStringFunc()
+        result = object()
+        dispatch, calls_dispatch = self.getNaryFunc(result)
+
+        def TestType(_type, _):
+            instance = _type()
+            _type._dispatcher.method_getattr = dispatch
+            actual = instance.randomName
+
+            self.assertEquals(calls_dispatch, [(("klass.__getattr__", instance, "randomName"), {})])
+            self.assertEquals(actual, result)
+
+            GetAttr2 = _type._dispatcher.table["klass.__getattr__"]
+            self.assertCallsPtrAndCStringFunc(GetAttr2, calls_cfunc)
+            
+            del instance
+            gcwait()
+
+
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_getattr": GetAttr,
+        }
+        self.assertTypeSpec(typeSpec, TestType)
+    
 
 
 class IterTest(DispatchSetupTestCase):
@@ -1637,24 +1675,6 @@ class TypeDictTest(TestCase):
         self.assertEquals(mapper.Retrieve(_typeDictPtr), _type.__dict__)
 
 
-suite = makesuite(
-    MethodsTest,
-    StrReprTest,
-    CallTest,
-    IterTest,
-    RichCompareTest,
-    HashTest,
-    CompareTest,
-    NumberTest,
-    SequenceTest,
-    MappingTest,
-    SequenceMappingInteractionTest,
-    NewInitDelTest,
-    PropertiesTest,
-    MembersTest,
-    InheritanceTest,
-    IntSubclassHorrorTest,
-    TypeDictTest,
-)
+suite = automakesuite(locals())
 if __name__ == '__main__':
     run(suite)

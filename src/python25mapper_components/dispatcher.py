@@ -113,6 +113,15 @@ class Dispatcher(object):
         self._check_error()
         return self._return()
 
+    @lock
+    def method_getattr(self, name, instance, attrName):
+        instancePtr = self._store(instance)
+        resultPtr = self.table[name](instancePtr, attrName)
+        try:
+            return self._return_retrieve(resultPtr)
+        finally:
+            self._cleanup(instancePtr, resultPtr)
+
     def get_member_int(self, instance, offset):
         return self._get_member(instance, offset, 'ReadInt')
 
