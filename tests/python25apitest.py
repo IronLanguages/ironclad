@@ -106,7 +106,14 @@ class Python25ApiTest(TestCase):
         class MyPM(Python25Api):
             def Fill__Py_NoneStruct(self, address):
                 WritePyObject(address)
-        self.assertDataSetterSetsAndRemembers(MyPM, "_Py_NoneStruct", Marshal.SizeOf(PyTypeObject), TestWrotePyObject)
+        self.assertDataSetterSetsAndRemembers(MyPM, "_Py_NoneStruct", Marshal.SizeOf(PyObject), TestWrotePyObject)
+
+
+    def testFinds_Py_NotImplementedStruct(self):
+        class MyPM(Python25Api):
+            def Fill__Py_NotImplementedStruct(self, address):
+                WritePyObject(address)
+        self.assertDataSetterSetsAndRemembers(MyPM, "_Py_NotImplementedStruct", Marshal.SizeOf(PyObject), TestWrotePyObject)
         
 
     def assertFindsType(self, name):
