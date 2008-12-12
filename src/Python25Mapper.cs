@@ -520,6 +520,16 @@ namespace Ironclad
             Marshal.StructureToPtr(ellipsis, address, false);
             this.map.Associate(address, Builtin.Ellipsis);
         }
+
+        public override void
+        Fill__Py_NotImplementedStruct(IntPtr address)
+        {
+            PyObject notimpl = new PyObject();
+            notimpl.ob_refcnt = 1;
+            notimpl.ob_type = this.PyNotImplemented_Type;
+            Marshal.StructureToPtr(notimpl, address, false);
+            this.map.Associate(address, PythonOps.NotImplemented);
+        }
         
         public override void
         Fill_Py_OptimizeFlag(IntPtr address)

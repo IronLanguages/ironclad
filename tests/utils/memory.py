@@ -57,12 +57,14 @@ _types = (
     "PyUnicode_Type",
     "PyNone_Type", # not exported, for some reason
     "PyEllipsis_Type", # not exported, for some reason
+    "PyNotImplemented_Type", # not exported, for some reason
     "_PyWeakref_RefType",
     "_PyWeakref_ProxyType",
     "_PyWeakref_CallableProxyType"
 )
 _others = {
     "_Py_NoneStruct": Marshal.SizeOf(PyObject),
+    "_Py_NotImplementedStruct": Marshal.SizeOf(PyObject),
     "_Py_EllipsisObject": Marshal.SizeOf(PyObject),
     "_Py_ZeroStruct": Marshal.SizeOf(PyIntObject),
     "_Py_TrueStruct": Marshal.SizeOf(PyIntObject),

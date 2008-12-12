@@ -519,15 +519,29 @@ class Python25Mapper_NoneTest(TestCase):
 
 
     @WithMapper
-    def testStoreNone(self, mapper, addToCleanUp):
-        nonePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
-        addToCleanUp(lambda: Marshal.FreeHGlobal(nonePtr))
-        mapper.SetData("_Py_NoneStruct", nonePtr)
-        
+    def testStoreNone(self, mapper, _):
         resultPtr = mapper.Store(None)
-        self.assertEquals(resultPtr, nonePtr, "wrong")
-        self.assertEquals(mapper.RefCount(nonePtr), 2, "did not incref")
-        self.assertEquals(mapper.Retrieve(nonePtr), None, "not mapped properly")
+        self.assertEquals(resultPtr, mapper._Py_NoneStruct, "wrong")
+        self.assertEquals(mapper.RefCount(resultPtr), 2, "did not incref")
+        self.assertEquals(mapper.Retrieve(resultPtr), None, "not mapped properly")
+
+
+class Python25Mapper_NotImplementedTest(TestCase):
+    
+    @WithMapper
+    def testFillNotImplemented(self, mapper, _):
+        niPtr = mapper._Py_NotImplementedStruct
+        niStruct = Marshal.PtrToStructure(niPtr, PyObject)
+        self.assertEquals(niStruct.ob_refcnt, 1, "bad refcount")
+        self.assertEquals(niStruct.ob_type, mapper.PyNotImplemented_Type, "unexpected type")
+
+
+    @WithMapper
+    def testStoreNotImplemented(self, mapper, _):
+        resultPtr = mapper.Store(NotImplemented)
+        self.assertEquals(resultPtr, mapper._Py_NotImplementedStruct, "wrong")
+        self.assertEquals(mapper.RefCount(resultPtr), 2, "did not incref")
+        self.assertEquals(mapper.Retrieve(resultPtr), NotImplemented, "not mapped properly")
 
 
 
@@ -551,6 +565,7 @@ suite = makesuite(
     Python25Mapper_References_Test,
     Python25Mapper_GetAddress_NonApi_Test,
     Python25Mapper_NoneTest,
+    Python25Mapper_NotImplementedTest,
     Python25Mapper_Py_OptimizeFlag_Test,
 )
 

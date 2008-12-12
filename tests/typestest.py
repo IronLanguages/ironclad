@@ -37,6 +37,7 @@ BUILTIN_TYPES = {
     "PyCObject_Type": OpaquePyCObject,
     "PyEllipsis_Type": types.EllipsisType,
     "PyNone_Type": types.NoneType,
+    "PyNotImplemented_Type": types.NotImplementedType,
     "PySeqIter_Type": ItemEnumeratorType,
 }
 

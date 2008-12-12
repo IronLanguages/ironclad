@@ -117,6 +117,17 @@ namespace Ironclad
             object ellipsisType = PythonCalls.Call(Builtin.type, new object[] { PythonOps.Ellipsis });
             this.map.Associate(address, ellipsisType);
         }
+        
+        public override void
+        Fill_PyNotImplemented_Type(IntPtr address)
+        {
+            // not quite trivial to autogenerate
+            // (but surely there's a better way to get the NotImplemented object...)
+            CPyMarshal.Zero(address, Marshal.SizeOf(typeof(PyTypeObject)));
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            object notImplementedType = PythonCalls.Call(Builtin.type, new object[] { PythonOps.NotImplemented });
+            this.map.Associate(address, notImplementedType);
+        }
 
         public override void
         Fill_PyBool_Type(IntPtr address)
@@ -188,6 +199,7 @@ namespace Ironclad
             this.PyType_Ready(this.PyNone_Type);
             this.PyType_Ready(this.PySlice_Type);
             this.PyType_Ready(this.PyEllipsis_Type);
+            this.PyType_Ready(this.PyNotImplemented_Type);
             this.PyType_Ready(this.PySeqIter_Type);
 
             this.actualisableTypes[this.PyType_Type] = new ActualiseDelegate(this.ActualiseType);

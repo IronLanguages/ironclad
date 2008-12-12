@@ -49,6 +49,9 @@ mod_blacklist = [
 class_blacklist = [
     # don't care about strings yet
     'core.test_multiarray.TestStringCompare', 
+
+    # zipfile: binascii.crc32 not implemented
+    'lib.test_io.TestSavezLoad',
     
     # all have unicode fields; worry about those later
     'core.test_numerictypes.test_create_zeros_nested',
