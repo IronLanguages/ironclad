@@ -67,6 +67,7 @@ test_blacklist = [
      # sys.getframe
     'core.test_defmatrix.TestCtor.test_basic',
     'core.test_defmatrix.TestCtor.test_bmat_nondefault_str',
+    'lib.test_polynomial.TestDocs.test_doctests',
     
     # meant to be disabled on windows
     'core.test_multiarray.TestFromToFile.test_file', 
@@ -75,9 +76,6 @@ test_blacklist = [
     'core.test_multiarray.TestResize.test_check_reference', 
     'core.test_regression.TestRegression.test_refcount_vdot',
     'core.test_regression.TestRegression.test_refcount_vectorize',
-
-    # uses getframe to run docstring tests, equivalent tests might like to be added to the functionality tests
-    'lib.test_polynomial.TestDocs.test_doctests',
 
     # _compiled_base.add_docstring doesn't work
     'core.test_umath.TestAttributes.test_attributes',
