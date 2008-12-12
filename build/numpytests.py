@@ -47,7 +47,8 @@ mod_blacklist = [
     'lib.test_format', # PyObject_Unicode
 ]
 class_blacklist = [
-    'core.test_multiarray.TestStringCompare', # don't care about strings yet
+    # don't care about strings yet
+    'core.test_multiarray.TestStringCompare', 
     
     # all have unicode fields; worry about those later
     'core.test_numerictypes.test_create_zeros_nested',
@@ -63,10 +64,17 @@ class_blacklist = [
     
 ]
 test_blacklist = [
-    'core.test_defmatrix.TestCtor.test_basic', # uses getframe
-    'core.test_defmatrix.TestCtor.test_bmat_nondefault_str', # uses getframe
-    'core.test_multiarray.TestFromToFile.test_file', # meant to be disabled on windows
-    'core.test_multiarray.TestResize.test_check_reference', # reference counting different in ironclad
+     # sys.getframe
+    'core.test_defmatrix.TestCtor.test_basic',
+    'core.test_defmatrix.TestCtor.test_bmat_nondefault_str',
+    
+    # meant to be disabled on windows
+    'core.test_multiarray.TestFromToFile.test_file', 
+    
+    # reference counting different in ironclad
+    'core.test_multiarray.TestResize.test_check_reference', 
+    'core.test_regression.TestRegression.test_refcount_vdot',
+    'core.test_regression.TestRegression.test_refcount_vectorize',
 
     # uses getframe to run docstring tests, equivalent tests might like to be added to the functionality tests
     'lib.test_polynomial.TestDocs.test_doctests',
@@ -74,12 +82,19 @@ test_blacklist = [
     # _compiled_base.add_docstring doesn't work
     'core.test_umath.TestAttributes.test_attributes',
 
-    # Fail due to differences in str between python and ipy - not worth fixing now (similar test in functionalitytest)
+    # fail due to differences in str between python and ipy - not worth fixing now (similar test in functionalitytest)
     'core.test_print.TestPrint.test_double',
     'core.test_print.TestPrint.test_longdouble',
     'core.test_print.TestPrint.test_complex_double', 
     'core.test_print.TestPrint.test_complex_float', 
     'core.test_print.TestPrint.test_complex_longdouble',
+    
+    # fail due to CodePlex work item #20191
+    'core.test_records.TestFromrecords.test_method_array',
+    'core.test_records.TestFromrecords.test_method_array2',
+    'core.test_records.TestFromrecords.test_recarray_fromfile',
+    'core.test_records.TestFromrecords.test_recarray_slices',
+    'core.test_regression.TestRegression.test_rec_fromarray',
     
     # stupid tedious shutil.rmtree problems (sometimes, they work...)
     'lib.test__datasource.TestDataSourceOpen.test_ValidFile',
