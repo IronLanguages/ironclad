@@ -1,0 +1,3 @@
+int
+IntPtr obj, IntPtr key, IntPtr value
+return -1
