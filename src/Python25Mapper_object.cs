@@ -202,6 +202,13 @@ namespace Ironclad
         }
 
         public override int
+        PyObject_HasAttr(IntPtr objPtr, IntPtr namePtr)
+        {
+            string name = (string)this.Retrieve(namePtr);
+            return this.PyObject_HasAttrString(objPtr, name);
+        }
+
+        public override int
         PyObject_SetAttrString(IntPtr objPtr, string name, IntPtr valuePtr)
         {
             object obj = this.Retrieve(objPtr);
@@ -223,6 +230,21 @@ namespace Ironclad
         {
             string name = (string)this.Retrieve(namePtr);
             return this.PyObject_SetAttrString(objPtr, name, valuePtr);
+        }
+
+        public override int
+        PyObject_SetItem(IntPtr objPtr, IntPtr keyPtr, IntPtr valuePtr)
+        {
+            try
+            {
+                PythonOperator.setitem(this.scratchContext, this.Retrieve(objPtr), this.Retrieve(keyPtr), this.Retrieve(valuePtr));
+                return 0;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
         }
 
         public override int

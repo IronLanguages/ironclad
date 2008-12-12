@@ -6,12 +6,12 @@ core.test_multiarray.TestMethods.test_sort
 core.test_multiarray.TestPickling.test_version0_object
 core.test_multiarray.TestPickling.test_version1_object
 
-core.test_records.TestFromrecords.test_method_array # eval-related strangeness
-core.test_records.TestFromrecords.test_method_array2 # eval-related strangeness
+core.test_records.TestFromrecords.test_method_array # regex problem?
+core.test_records.TestFromrecords.test_method_array2 # regex problem?
 core.test_records.TestFromrecords.test_recarray_conflict_fields
 core.test_records.TestFromrecords.test_recarray_from_repr
-core.test_records.TestFromrecords.test_recarray_fromfile # eval-related strangeness
-core.test_records.TestFromrecords.test_recarray_slices # eval-related strangeness
+core.test_records.TestFromrecords.test_recarray_fromfile # regex problem?
+core.test_records.TestFromrecords.test_recarray_slices # regex problem?
 
 core.test_regression.TestRegression.test_char_array_creation
 core.test_regression.TestRegression.test_character_array_strip
@@ -22,8 +22,7 @@ core.test_regression.TestRegression.test_junk_in_string_fields_of_recarray
 core.test_regression.TestRegression.test_mem_custom_float_to_array
 core.test_regression.TestRegression.test_multidim_byteswap
 core.test_regression.TestRegression.test_numeric_carray_compare
-core.test_regression.TestRegression.test_random_shuffle # PyObject_HasAttr
-core.test_regression.TestRegression.test_rec_fromarray # eval-related strangeness
+core.test_regression.TestRegression.test_rec_fromarray # regex problem?
 core.test_regression.TestRegression.test_refcount_vdot
 core.test_regression.TestRegression.test_refcount_vectorize
 core.test_regression.TestRegression.test_scalar_compare

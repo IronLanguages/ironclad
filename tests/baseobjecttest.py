@@ -203,14 +203,16 @@ class ObjectFunctionsTest(TestCase):
 
 
     @WithMapper
-    def testPyObject_HasAttrString(self, mapper, _):
+    def testPyObject_HasAttr_HasAttrString(self, mapper, _):
         class Thingum(object):
             def __init__(self, bob):
                 self.bob = bob
                 
         objPtr = mapper.Store(Thingum("Poe"))
         self.assertEquals(mapper.PyObject_HasAttrString(objPtr, "bob"), 1)
+        self.assertEquals(mapper.PyObject_HasAttr(objPtr, mapper.Store("bob")), 1)
         self.assertEquals(mapper.PyObject_HasAttrString(objPtr, "jim"), 0)
+        self.assertEquals(mapper.PyObject_HasAttr(objPtr, mapper.Store("jim")), 0)
 
 
     @WithMapper
@@ -234,6 +236,32 @@ class ObjectFunctionsTest(TestCase):
         objPtr = mapper.Store(obj)
         
         self.assertEquals(mapper.PyObject_GetItem(objPtr, mapper.Store(1)), IntPtr.Zero)
+        self.assertMapperHasError(mapper, TypeError)
+
+
+    @WithMapper
+    def testPyObject_SetItem(self, mapper, _):
+        result = object()
+        sets = {}
+        class Subscriptable(object):
+            def __setitem__(self, key, value):
+                sets[key] = value
+        
+        objPtr = mapper.Store(Subscriptable())
+        key, value = object(), object()
+        keyPtr = mapper.Store(key)
+        valuePtr = mapper.Store(value)
+        
+        self.assertEquals(mapper.PyObject_SetItem(objPtr, keyPtr, valuePtr), 0)
+        self.assertEquals(sets, {key: value})
+
+
+    @WithMapper
+    def testPyObject_SetItem_Failure(self, mapper, _):
+        obj = object()
+        objPtr = mapper.Store(obj)
+        
+        self.assertEquals(mapper.PyObject_SetItem(objPtr, mapper.Store(1), mapper.Store(2)), -1)
         self.assertMapperHasError(mapper, TypeError)
 
 
