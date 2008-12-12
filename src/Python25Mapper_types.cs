@@ -135,6 +135,13 @@ namespace Ironclad
             // c extension type. 
         }
 
+	public override void
+	Fill_PyCFunction_Type(IntPtr ptr)
+	{
+	    // this does nothing: when we encounter a cfunction, we interpret it like any 
+	    // c extension
+	}
+
         private void
         AddNumberMethodsWithoutIndex(IntPtr typePtr)
         {

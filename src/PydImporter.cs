@@ -12,16 +12,29 @@ namespace Ironclad
 
 
     public class PydImporter : IDisposable
-    {
+     {
         private List<IntPtr> handles = new List<IntPtr>();
         private bool alive = true;
         
         public void Load(string path)
         {
             IntPtr l = Unmanaged.LoadLibrary(path);
+	    if (l == IntPtr.Zero)
+	    {
+		throw new Exception(
+		    String.Format("Could not load library {0}. Error code:{1}", path, Unmanaged.GetLastError()));
+	    }
+
             this.handles.Add(l);
-            string funcName = "init" + Path.GetFileNameWithoutExtension(path);
-            IntPtr funcPtr = Unmanaged.GetProcAddress(l, funcName);
+	    string funcName = "init" + Path.GetFileNameWithoutExtension(path);
+
+	    IntPtr funcPtr = Unmanaged.GetProcAddress(l, funcName);
+	    if (funcPtr == IntPtr.Zero)
+	    {
+		throw new Exception( 
+		    String.Format("Could not find module init function {0} in dll {1}", funcName, path));
+	    }
+
             PydInit_Delegate initmodule = (PydInit_Delegate)Marshal.GetDelegateForFunctionPointer(funcPtr, typeof(PydInit_Delegate));
             initmodule();
         }

@@ -9,8 +9,8 @@ def OffsetPtr(ptr, offset):
         offset = offset.ToInt32()
     return IntPtr(ptr.ToInt32() + offset)
 
-# note: PyBuffer_Type is not included, because it's implemented in pure C.
-# this means that, should an extension end up actually using a buffer type
+# note: PyBuffer_Type and PyCFunction_Type are not included, because they are implemented in pure C.
+# This means that, should an extension end up actually using a buffer type
 # and passing it up to IronPython, it will be treated like any other type 
 # defined in a C extension.
 _types = (
@@ -87,3 +87,4 @@ def CreateTypes(mapper, readyTypes=True):
             Marshal.FreeHGlobal(block)
     
     return DestroyTypes
+

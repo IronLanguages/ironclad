@@ -63,3 +63,4 @@ PyLong_AsVoidPtr(PyObject *vv)
 		return NULL;
 	return (void *)x;
 }
+
