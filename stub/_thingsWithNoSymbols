@@ -1,0 +1,16 @@
+# The following symbols probably aren't defined anywhere. Someone might like to fix this.
+
+PyStructSequence_UnnamedField
+Py_abstract_hack
+PyParser_Grammar
+PyGC_generation0
+PyImport_Filetab
+Py_cobject_hack 
+PyImport_Inittab
+
+PyDictIterItem_Type
+PyDictIterKey_Type
+PyDictIterValue_Type
+PyListIter_Type
+PyListRevIter_Type
+PyTupleIter_Type

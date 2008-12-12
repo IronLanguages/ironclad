@@ -354,19 +354,19 @@ typedef struct _typeobject {
 #define Py_END_OF_BUFFER	(-1)
 
 
-typedef PyObject *(*PyCFunction)(PyObject *, PyObject *);
-typedef PyObject *(*PyCFunctionWithKeywords)(PyObject *, PyObject *,
-					     PyObject *);
-typedef PyObject *(*PyNoArgsFunction)(PyObject *);
+//typedef PyObject *(*PyCFunction)(PyObject *, PyObject *);
+//typedef PyObject *(*PyCFunctionWithKeywords)(PyObject *, PyObject *,
+//					     PyObject *);
+//typedef PyObject *(*PyNoArgsFunction)(PyObject *);
 
-struct PyMethodDef {
-    const char	*ml_name;	/* The name of the built-in function/method */
-    PyCFunction  ml_meth;	/* The C function that implements it */
-    int		 ml_flags;	/* Combination of METH_xxx flags, which mostly
-				   describe the args expected by the C func */
-    const char	*ml_doc;	/* The __doc__ attribute, or NULL */
-};
-typedef struct PyMethodDef PyMethodDef;
+//struct PyMethodDef {
+//    const char	*ml_name;	/* The name of the built-in function/method */
+//    PyCFunction  ml_meth;	/* The C function that implements it */
+//    int		 ml_flags;	/* Combination of METH_xxx flags, which mostly
+//				   describe the args expected by the C func */
+//    const char	*ml_doc;	/* The __doc__ attribute, or NULL */
+//};
+//typedef struct PyMethodDef PyMethodDef;
 
 
 typedef
@@ -386,7 +386,7 @@ typedef void PyAddrPair;
 typedef void PyFutureFeatures;
 typedef void PyTryBlock;
 typedef void PyGenObject;
-typedef void PyMethodChain;
+//typedef void PyMethodChain;
 typedef void PyInterpreterState;
 typedef void PySliceObject;
 typedef void PyStructSequence_Desc;
@@ -406,3 +406,48 @@ typedef int (*Py_tracefunc)(PyObject *, void *, int, PyObject *);
 
 // typedef struct _frame *(*PyThreadFrameGetter)(PyThreadState *self_);
 typedef void *(*PyThreadFrameGetter)(PyThreadState *self_);
+
+
+// These functions differ from the Python implementation - They use the 'faucet model of cycle detection'.
+#define PyObject_GC_New(type, typeobj) \
+		( (type *) _PyObject_New(typeobj) )
+#define _PyObject_GC_TRACK(op)
+#define _PyObject_GC_UNTRACK
+// end difference
+
+
+#define _PyObject_HEAD_EXTRA
+#define PyObject_HEAD			\
+	_PyObject_HEAD_EXTRA		\
+	Py_ssize_t ob_refcnt;		\
+	struct _typeobject *ob_type;
+
+#define T_OBJECT	6
+#define WRITE_RESTRICTED 4
+
+
+typedef struct PyMemberDef {
+	/* Current version, use this */
+	char *name;
+	int type;
+	Py_ssize_t offset;
+	int flags;
+	char *doc;
+} PyMemberDef;
+
+#define offsetof(type, member) ( (int) & ((type*)0) -> member )
+
+
+/* Utility macro to help write tp_traverse functions.
+ * To use this macro, the tp_traverse function must name its arguments
+ * "visit" and "arg".  This is intended to keep tp_traverse functions
+ * looking as much alike as possible.
+ */
+#define Py_VISIT(op)							\
+        do { 								\
+                if (op) {						\
+                        int vret = visit((PyObject *)(op), arg);	\
+                        if (vret)					\
+                                return vret;				\
+                }							\
+        } while (0)

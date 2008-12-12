@@ -78,12 +78,6 @@
 	(PyObject *) PyObject_MALLOC( _PyObject_SIZE(typeobj) ), (typeobj)) )
 
 
-#define _PyObject_HEAD_EXTRA
-#define PyObject_HEAD			\
-	_PyObject_HEAD_EXTRA		\
-	Py_ssize_t ob_refcnt;		\
-	struct _typeobject *ob_type;
-
 /* does not precisely match CPython -- removed expand-to-nothing macros */
 #define _Py_NewReference(op) (				\
 	(op)->ob_refcnt = 1)
