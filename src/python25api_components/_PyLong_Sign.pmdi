@@ -1,0 +1,3 @@
+int
+IntPtr longPtr
+return 0

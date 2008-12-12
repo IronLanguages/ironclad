@@ -24,4 +24,5 @@
 #include "stringobject.c"
 #include "tupleobject.c"
 #include "bufferobject.c"
+#include "longobject.c"
 

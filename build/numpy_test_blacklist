@@ -1,7 +1,6 @@
 core.test_defchararray.TestOperations.test_add
 core.test_defchararray.TestOperations.test_radd
 
-core.test_multiarray.TestMethods.test_argsort
 core.test_multiarray.TestMethods.test_sort_order
 core.test_multiarray.TestMethods.test_sort
 core.test_multiarray.TestPickling.test_version0_object
@@ -14,7 +13,6 @@ core.test_records.TestFromrecords.test_recarray_from_repr
 core.test_records.TestFromrecords.test_recarray_fromfile # eval-related strangeness
 core.test_records.TestFromrecords.test_recarray_slices # eval-related strangeness
 
-core.test_regression.TestRegression.test_astype_copy # PyLong_FromVoidPtr
 core.test_regression.TestRegression.test_char_array_creation
 core.test_regression.TestRegression.test_character_array_strip
 core.test_regression.TestRegression.test_chararray_rstrip
@@ -58,13 +56,10 @@ ma.test_core.TestFillingValues.test_check_on_fields
 ma.test_core.TestFillingValues.test_fillvalue
 ma.test_core.TestFillingValues.test_fillvalue_conversion
 ma.test_core.TestFillingValues.test_fillvalue_exotic_dtype
-ma.test_core.TestMaskedArray.test_copy # PyLong_FromVoidPtr
 ma.test_core.TestMaskedArray.test_filled_w_flexible_dtype
 ma.test_core.TestMaskedArrayArithmetic.test_methods_with_output
 ma.test_core.TestMaskedArrayArithmetic.test_minmax_funcs_with_output
-ma.test_core.TestMaskedArrayArithmetic.test_scalar_arithmetic # PyLong_FromVoidPtr
 ma.test_core.TestMaskedArrayFunctions.test_choose_with_out
-ma.test_core.TestMaskedArrayInPlaceArithmetics.test_inplace_addition_scalar # PyLong_FromVoidPtr
 ma.test_core.TestMaskedArrayMethods.test_empty
 ma.test_core.TestMaskedArrayMethods.test_tolist
 
