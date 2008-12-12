@@ -170,6 +170,14 @@ class PyLong_Test(TestCase):
                 
     
     @WithMapper
+    def testPyLong_FromDouble(self, mapper, _):
+        for value in (0.0, 1.0, 12345678.9, -123456.789):
+            ptr = mapper.PyLong_FromDouble(value)
+            self.assertEquals(mapper.Retrieve(ptr), long(value), "stored/retrieved wrong")
+            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
+                
+    
+    @WithMapper
     def testPyLong_FromLongLong(self, mapper, _):
         for value in map(Int64, (5555555555, -5555555555, 0)):
             ptr = mapper.PyLong_FromLongLong(value)
@@ -270,6 +278,17 @@ class PyLong_Test(TestCase):
             result = mapper.PyLong_AsUnsignedLong(ptr)
             self.assertMapperHasError(mapper, None)
             self.assertEquals(result, NUMBER_VALUE)
+
+
+    @WithMapper
+    def test_PyLong_Sign(self, mapper, _):
+        def GetSign(x):
+            return mapper._PyLong_Sign(mapper.Store(long(x)))
+        self.assertEquals(GetSign(0), 0)
+        self.assertEquals(GetSign(1), 1)
+        self.assertEquals(GetSign(2147483648), 1)
+        self.assertEquals(GetSign(-1), -1)
+        self.assertEquals(GetSign(-2147483649), -1)
 
 
 class PyFloat_Test(TestCase):

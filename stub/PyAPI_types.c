@@ -107,6 +107,7 @@ typedef struct {
 	struct _typeobject *ob_type;
     long ob_ival;
 } PyIntObject;
+#define PyInt_AS_LONG(op) (((PyIntObject *)(op))->ob_ival)
 
 typedef struct {
 	Py_ssize_t ob_refcnt;

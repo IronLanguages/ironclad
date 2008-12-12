@@ -82,6 +82,21 @@ namespace Ironclad
                 return 0xFFFFFFFF;
             }
         }
+        
+        public override int
+        _PyLong_Sign(IntPtr valuePtr)
+        {
+            BigInteger value = this.MakeBigInteger(this.Retrieve(valuePtr));
+            if (value > 0)
+            {
+                return 1;
+            }
+            else if (value < 0)
+            {
+                return -1;
+            }
+            return 0;
+        }
 
         public override int
         PyNumber_Check(IntPtr numberPtr)
@@ -185,35 +200,35 @@ namespace Ironclad
             }
         }
 
-    public IntPtr
-    PyFloat_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
-    {
-        try
+        public IntPtr
+        PyFloat_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
-        PythonTuple args = (PythonTuple) this.Retrieve(argsPtr);
-        return this.Store(PythonCalls.Call(this.scratchContext, TypeCache.Double, new object[] {args[0]}));
+            try
+            {
+                PythonTuple args = (PythonTuple) this.Retrieve(argsPtr);
+                return this.Store(PythonCalls.Call(this.scratchContext, TypeCache.Double, new object[] {args[0]}));
+            }
+            catch(Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
         }
-        catch(Exception e)
-        {
-        this.LastException = e;
-        return IntPtr.Zero;
-        }
-    }
 
-    public IntPtr
-    PyInt_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
-    {
-        try
+        public IntPtr
+        PyInt_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
-        PythonTuple args = (PythonTuple) this.Retrieve(argsPtr);
-        return this.Store(PythonCalls.Call(this.scratchContext, TypeCache.Int32, new object[] {args[0]}));
+            try
+            {
+                PythonTuple args = (PythonTuple) this.Retrieve(argsPtr);
+                return this.Store(PythonCalls.Call(this.scratchContext, TypeCache.Int32, new object[] {args[0]}));
+            }
+            catch(Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
         }
-        catch(Exception e)
-        {
-        this.LastException = e;
-        return IntPtr.Zero;
-        }
-    }
 
         private IntPtr
         Store(bool value)

@@ -327,10 +327,12 @@ class Python25ApiFunctionsTest(TestCase):
         
         self.assertFinds("PyBool_FromLong", ('33',), 'IntPtr(999)')
         
+        self.assertFinds("_PyLong_Sign", ('IntPtr(999)',), '1')
         self.assertFinds("PyLong_AsLong", ('IntPtr(999)',), '2000000000')
         self.assertFinds("PyLong_AsLongLong", ('IntPtr(999)',), 'Int64(5555555555)')
         self.assertFinds("PyLong_AsUnsignedLong", ('IntPtr(999)',), 'UInt32(3555555555)')
         self.assertFinds("PyLong_AsUnsignedLongLong", ('IntPtr(999)',), 'UInt64(18000000000000000000)')
+        self.assertFinds("PyLong_FromDouble", ('123.456',), 'IntPtr(999)')
         self.assertFinds("PyLong_FromLongLong", ('Int64(5555555555)',), 'IntPtr(999)')
         self.assertFinds("PyLong_FromUnsignedLong", ('UInt32(4000000000)',), 'IntPtr(999)')
         self.assertFinds("PyLong_FromUnsignedLongLong", ('UInt64(18000000000000000000)',), 'IntPtr(999)')
