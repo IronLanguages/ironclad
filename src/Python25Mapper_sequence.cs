@@ -66,6 +66,44 @@ namespace Ironclad
                 return IntPtr.Zero;
             }
         }
+
+        public override int
+        PySequence_SetItem(IntPtr objPtr, int idx, IntPtr valuePtr)
+        {
+            try
+            {
+                IntPtr typePtr = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
+                if (typePtr == this.PyList_Type)
+                {
+                    int newIdx = idx;
+                    int length = CPyMarshal.ReadIntField(objPtr, typeof(PyListObject), "ob_size");
+                    if (newIdx < 0)
+                    {
+                        newIdx += length;
+                    }
+                    if (newIdx >= 0 && newIdx < length)
+                    {
+                        this.IncRef(valuePtr);
+                        return this.PyList_SetItem(objPtr, newIdx, valuePtr);
+                    }
+                    // otherwise, fall through and allow normal exception to occur
+                }
+
+                object sequence = this.Retrieve(objPtr);
+                object setitem;
+                if (PythonOps.TryGetBoundAttr(sequence, Symbols.SetItem, out setitem))
+                {
+                    PythonCalls.Call(setitem, idx, this.Retrieve(valuePtr));
+                    return 0;
+                }
+                throw PythonOps.TypeError("PySequence_SetItem: failed to convert {0} to sequence", sequence);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
+        }
         
         public override IntPtr
         PySequence_GetSlice(IntPtr objPtr, uint i, uint j)

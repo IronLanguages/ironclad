@@ -269,6 +269,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PySequence_Check", ('IntPtr(111)',), '0')
         self.assertFinds("PySequence_Size", ('IntPtr(111)',), '123')
         self.assertFinds("PySequence_GetItem", ('IntPtr(111)', '123'), 'IntPtr(999)')
+        self.assertFinds("PySequence_SetItem", ('IntPtr(111)', '123', 'IntPtr(222)'), '123')
         self.assertFinds("PySequence_GetSlice", ('IntPtr(111)', '123', '456'), 'IntPtr(999)')
         self.assertFinds("PySequence_Repeat", ('IntPtr(111)', '123'), 'IntPtr(999)')
         self.assertFinds("PySequence_Tuple", ('IntPtr(111)',), 'IntPtr(999)')

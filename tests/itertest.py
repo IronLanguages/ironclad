@@ -58,18 +58,18 @@ class IterationTest(TestCase):
 
     @WithMapper
     def testPyIter_Next_Success(self, mapper, _):
-        testList = [0, 1, 2]
+        testList = [object(), object(), object()]
         listPtr = mapper.Store(testList)
         iterPtr = mapper.PyObject_GetIter(listPtr)
         
         for i in range(3):
             itemPtr = mapper.PyIter_Next(iterPtr)
-            self.assertEquals(mapper.Retrieve(itemPtr), i, "got wrong object back")
-            self.assertEquals(mapper.RefCount(itemPtr), 2, "failed to incref")
+            self.assertEquals(mapper.Retrieve(itemPtr), testList[i])
+            self.assertEquals(mapper.RefCount(itemPtr), 2)
             mapper.DecRef(itemPtr)
         
         noItemPtr = mapper.PyIter_Next(iterPtr)
-        self.assertEquals(noItemPtr, IntPtr.Zero, "failed to stop iterating")
+        self.assertEquals(noItemPtr, IntPtr.Zero)
 
 
     @WithMapper
@@ -167,4 +167,4 @@ suite = makesuite(
     SequenceIterationTest,
 )
 if __name__ == '__main__':
-    run(suite, 2)
+    run(suite)
