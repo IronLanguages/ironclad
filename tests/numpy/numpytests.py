@@ -1,11 +1,16 @@
 
 from itertools import chain, takewhile
 import os
-import os.path
 import sys
 import types
 
+_dirname = os.path.dirname(__file__)
+BLACKLIST_PATH = os.path.join(_dirname, 'numpy_test_blacklist')
+CONTINUATION_PATH = os.path.join(_dirname, 'numpy_continuation')
+
 if sys.platform == 'cli':
+    # we expect this to be run from project root
+    sys.path.insert(0, "build")
     import ironclad
 else:
     class Scope(object):
@@ -41,70 +46,9 @@ def read_into_blacklist(blacklist, filename):
 numpy_path = r"C:\Python25\Lib\site-packages\numpy"
 dirs = ['core', 'fft', 'lib', 'linalg', 'ma', 'oldnumeric', 'random']
 
-mod_blacklist = [
-    'core.test_memmap',
-    'core.test_unicode',
-    'lib.test_format', # PyObject_Unicode
-]
-class_blacklist = [
-    # don't care about strings yet
-    'core.test_multiarray.TestStringCompare', 
 
-    # zipfile: binascii.crc32 not implemented
-    'lib.test_io.TestSavezLoad',
-    
-    # all have unicode fields; worry about those later
-    'core.test_numerictypes.test_create_zeros_nested',
-    'core.test_numerictypes.test_create_zeros_plain',
-    'core.test_numerictypes.test_create_values_nested_multiple',
-    'core.test_numerictypes.test_create_values_nested_single',
-    'core.test_numerictypes.test_create_values_plain_multiple',
-    'core.test_numerictypes.test_create_values_plain_single',
-    'core.test_numerictypes.test_read_values_nested_multiple',
-    'core.test_numerictypes.test_read_values_nested_single',
-    'core.test_numerictypes.test_read_values_plain_multiple',
-    'core.test_numerictypes.test_read_values_plain_single',
-    
-]
-test_blacklist = [
-     # sys.getframe
-    'core.test_defmatrix.TestCtor.test_basic',
-    'core.test_defmatrix.TestCtor.test_bmat_nondefault_str',
-    'lib.test_polynomial.TestDocs.test_doctests',
-    
-    # meant to be disabled on windows
-    'core.test_multiarray.TestFromToFile.test_file', 
-    
-    # reference counting different in ironclad
-    'core.test_multiarray.TestResize.test_check_reference', 
-    'core.test_regression.TestRegression.test_refcount_vdot',
-    'core.test_regression.TestRegression.test_refcount_vectorize',
-
-    # _compiled_base.add_docstring doesn't work
-    'core.test_umath.TestAttributes.test_attributes',
-
-    # fail due to differences in str between python and ipy - not worth fixing now (similar test in functionalitytest)
-    'core.test_print.TestPrint.test_double',
-    'core.test_print.TestPrint.test_longdouble',
-    'core.test_print.TestPrint.test_complex_double', 
-    'core.test_print.TestPrint.test_complex_float', 
-    'core.test_print.TestPrint.test_complex_longdouble',
-    
-    # fail due to CodePlex work item #20191
-    'core.test_records.TestFromrecords.test_method_array',
-    'core.test_records.TestFromrecords.test_method_array2',
-    'core.test_records.TestFromrecords.test_recarray_fromfile',
-    'core.test_records.TestFromrecords.test_recarray_slices',
-    'core.test_regression.TestRegression.test_rec_fromarray',
-    
-    # stupid tedious shutil.rmtree problems (sometimes, they work...)
-    'lib.test__datasource.TestDataSourceOpen.test_ValidFile',
-    'lib.test__datasource.TestDataSourceOpen.test_ValidGzipFile',
-    'lib.test__datasource.TestDataSourceOpen.test_ValidHTTP',
-    'lib.test__datasource.TestOpenFunc.test_DataSourceOpen',
-    
-]
-read_into_blacklist(test_blacklist, 'numpy_test_blacklist')
+test_blacklist = []
+read_into_blacklist(test_blacklist, BLACKLIST_PATH)
 
 
 def import_test_module(direc, mod_name):
@@ -172,7 +116,7 @@ def get_modules(package_name):
         if not filename.endswith('.py') or not filename.startswith('test'):
             continue
         mod_name = filename[:-3]
-        if '.'.join((package_name, mod_name)) in mod_blacklist:
+        if '.'.join((package_name, mod_name)) in test_blacklist:
             continue
         module = import_test_module(package_name, mod_name)
         yield mod_name, module
@@ -182,7 +126,7 @@ def get_classes(module, mod_path):
     for class_name, test_class in sorted(module.__dict__.items()):
         if not isinstance(test_class, (type, types.ClassType)) or not issubclass(test_class, TestCase):
             continue
-        if '.'.join(mod_path + (class_name,)) in class_blacklist:
+        if '.'.join(mod_path + (class_name,)) in test_blacklist:
             continue
         yield class_name, test_class
 
@@ -254,7 +198,7 @@ def run_paths(paths, runner, previous_test=None):
         sys.exit(1)
         
 def add_to_blacklist(test_path, msg=""):
-    f = file('numpy_test_blacklist', 'a')
+    f = file(BLACKLIST_PATH, 'a')
     try:
         if msg:
             msg = " # " + msg
@@ -264,7 +208,7 @@ def add_to_blacklist(test_path, msg=""):
 
 
 def save_continuation_point(test_path):
-    f = file('numpy_continuation', 'w')
+    f = file(CONTINUATION_PATH, 'w')
     try:
         if test_path:
             f.write('.'.join(test_path))
@@ -273,9 +217,9 @@ def save_continuation_point(test_path):
         
 
 def get_continuation_point():
-    if not os.path.isfile('numpy_continuation'):
+    if not os.path.isfile(CONTINUATION_PATH):
         return None
-    f = file('numpy_continuation')
+    f = file(CONTINUATION_PATH)
     try:
         name = f.read().strip()
         if name:

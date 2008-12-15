@@ -15,7 +15,7 @@ class StubReferenceTest(TestCase):
         self.assertEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library already mapped")
 
-        sr = StubReference(os.path.join("build", "python25.dll"))
+        sr = StubReference(os.path.join("build", "ironclad", "python25.dll"))
         self.assertNotEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library not mapped by construction")
 
@@ -41,7 +41,7 @@ class StubReferenceTest(TestCase):
         
         
     def testUnampsAutomagically(self):
-        sr = StubReference(os.path.join("build", "python25.dll"))
+        sr = StubReference(os.path.join("build", "ironclad", "python25.dll"))
         self.assertNotEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library not mapped by construction")
         del sr

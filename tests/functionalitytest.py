@@ -44,25 +44,41 @@ bz2_test_data = 'BZh91AY&SYM\xf6FM\x00!\xd9\x95\x80@\x01\x00 \x06A\x90\xa0 \x00\
 bz2_test_line = "I wonder why. I wonder why. I wonder why I wonder why.\n"
 bz2_test_text_lines = bz2_test_line * 1000
 
+DLL_PATH = os.path.join("build", "ironclad", "python25.dll")
+
+TEMPLATE = dedent("""\
+    import sys
+    sys.path.insert(0, %r)
+    import ironclad
+    try:
+        %%s
+    finally:
+        ironclad.shutdown()
+    """) % os.path.abspath("build")
 
 class ExternalFunctionalityTest(TestCase):
 
-    def getTestDir(self):
-        testDir = tempfile.mkdtemp()
-        os.listdir(testDir)
-        def copybuilt(name):
-            shutil.copyfile(os.path.join('build', name), os.path.join(testDir, name))
-        copybuilt('ironclad.dll')
-        copybuilt('python25.dll')
-        copybuilt('ironclad.py')
-        return testDir
+    def setUp(self, *_, **__):
+        TestCase.setUp(self, *_, **__)
+        self.testDir = tempfile.mkdtemp()
 
+    def tearDown(self, *_, **__):
+        TestCase.tearDown(self, *_, **__)
+        shutil.rmtree(self.testDir)
 
-    def assertRunsInDir(self, testDir, name):
+    def write(self, name, code):
+        testFile = open(os.path.join(self.testDir, name), 'w')
+        testFile.write(code)
+        testFile.close()
+
+    def assertRuns(self, code):
+        code = TEMPLATE % code.replace('\n', '\n    ')
+        self.write("test.py", code)
+        
         process = Process()
         process.StartInfo.FileName = "ipy.exe"
-        process.StartInfo.Arguments = name
-        process.StartInfo.WorkingDirectory = testDir
+        process.StartInfo.Arguments = "test.py"
+        process.StartInfo.WorkingDirectory = self.testDir
         process.StartInfo.UseShellExecute = False
         process.StartInfo.RedirectStandardOutput = process.StartInfo.RedirectStandardError = True
 
@@ -75,62 +91,39 @@ class ExternalFunctionalityTest(TestCase):
         if process.ExitCode != 0:
             self.fail("Execution failed: stdout: >>>%s<<<\nstderr: >>>%s<<<\n" % (output, error))
 
-
-    def write(self, name, code):
-        testFile = open(name, 'w')
-        testFile.write(code)
-        testFile.close()
-
-
     def testImportHookSimple(self):
-        testDir = self.getTestDir()
-        self.write(os.path.join(testDir, 'test.py'), dedent("""\
-            import sys
-            import ironclad
+        self.assertRuns(dedent("""\
             import bz2
             assert bz2.compress(%(uncompressed)r) == %(compressed)r
             assert bz2.decompress(%(compressed)r) == %(uncompressed)r
-            
             # check that clr imports still work
             import clr
             import System
-            
-            ironclad.shutdown()
             """) % {
             "compressed": bz2_test_data,
             "uncompressed": bz2_test_text})
-
-        self.assertRunsInDir(testDir, 'test.py')
-        shutil.rmtree(testDir)
         
 
     def testImportHookPackage(self):
-        testDir = self.getTestDir()
-        testPkgDir = os.path.join(testDir, 'nastypackage')
-        shutil.copytree(os.path.join('tests', 'data', 'nastypackage'), testPkgDir)
+        location = os.path.abspath(os.path.join('tests', 'data'))
+        location = location.replace('\\', '\\\\')
         
         # we test .endswith, rather than the full path, because, on WinXP,  the __file__ 
         # contains annoying stuff like 'docume~1' instead of 'Documents and Settings'.
         bz2i__file__end = os.path.join('nastypackage', 'bz2.pyd')
         bz2ii__file__end = os.path.join('nastypackage', 'another', 'bz2.pyd')
-        self.write(os.path.join(testDir, 'test.py'), dedent("""\
-            import ironclad
+        self.assertRuns(dedent("""\
+            sys.path.insert(0, %r)
             import nastypackage.bz2 as testbz2i
             import nastypackage.another.bz2 as testbz2ii
             assert testbz2i.__file__.endswith(%r)
             assert testbz2ii.__file__.endswith(%r)
-            ironclad.shutdown()
-            """) % (bz2i__file__end, bz2ii__file__end)
-        )
-
-        self.assertRunsInDir(testDir, 'test.py') 
+            """) % (location, bz2i__file__end, bz2ii__file__end))
 
     
     def testImportNumPy(self):
         # note: this will fail if you don't have numpy on your IRONPYTHONPATH
-        testDir = self.getTestDir()
-        self.write(os.path.join(testDir, 'test.py'), dedent("""\
-            import ironclad
+        self.assertRuns(dedent("""\
             import numpy as np
             # check sys.modules is fully populated
             import sys
@@ -139,79 +132,54 @@ class ExternalFunctionalityTest(TestCase):
             r2 = np.arange(20)
             assert np.all(r1 == r2)
             assert not r1 is r2
-            ironclad.shutdown()
             """))
-
-        self.assertRunsInDir(testDir, 'test.py')
-        shutil.rmtree(testDir)
 
     
     def testNumPyMatrix(self):
         # note: this will fail if you don't have numpy on your IRONPYTHONPATH
-        testDir = self.getTestDir()
-        self.write(os.path.join(testDir, 'test.py'), dedent("""\
-            import ironclad
+        self.assertRuns(dedent("""\
             import numpy as np
             m = np.matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
             assert abs(np.linalg.det(m)) < 0.0000001
-            ironclad.shutdown()
             """))
-            
-        self.assertRunsInDir(testDir, 'test.py')
-        shutil.rmtree(testDir)
 
 
     def testNumpyComplexPrinting(self):
         # This test is a placeholder for core.test_print.TestPrint which fails since 1E20 is written as 1e20 in ipy
-        testDir = self.getTestDir()
-        self.write(os.path.join(testDir, 'test.py'), dedent("""\
+        self.assertRuns(dedent("""\
             # adapted from numpy
-            try:
-                import ironclad
-                import numpy as np
+            import numpy as np
 
-                def assert_equals(a, b):
-                    assert a == b, '%r != %r' % (a, b)
+            def assert_equals(a, b):
+                assert a == b, '%r != %r' % (a, b)
 
-                def mangle(num):
-                    return str(num).lower().replace('+0', '+')
+            def mangle(num):
+                return str(num).lower().replace('+0', '+')
 
-                def test_complex_type(type):
-                    for x in [0, 1,-1, 1e10, 1e20]:
-                        assert_equals(mangle(type(x)), mangle(complex(x)).lower())
-                        assert_equals(mangle(type(x*1j)).lower(), mangle(complex(x*1j)).lower())
-                        assert_equals(mangle(type(x + x*1j)).lower(), mangle(complex(x + x*1j)).lower())
-        
-                test_complex_type(np.cfloat)
-                test_complex_type(np.cdouble)
-                test_complex_type(np.clongdouble)
-            finally:
-                ironclad.shutdown()
+            def test_complex_type(type):
+                for x in [0, 1,-1, 1e10, 1e20]:
+                    assert_equals(mangle(type(x)), mangle(complex(x)).lower())
+                    assert_equals(mangle(type(x*1j)).lower(), mangle(complex(x*1j)).lower())
+                    assert_equals(mangle(type(x + x*1j)).lower(), mangle(complex(x + x*1j)).lower())
+    
+            test_complex_type(np.cfloat)
+            test_complex_type(np.cdouble)
+            test_complex_type(np.clongdouble)
             """))
-            
-        self.assertRunsInDir(testDir, 'test.py')
-        shutil.rmtree(testDir)
 
 
     def testNumpyComplexConversion(self):
         # trying to unit-test this made my brain melt; this will have to do
-        testDir = self.getTestDir()
-        self.write(os.path.join(testDir, 'test.py'), dedent("""\
-            import ironclad
+        self.assertRuns(dedent("""\
             import numpy
             assert (1+3j) == numpy.complex128(1+3j)
-            ironclad.shutdown()
             """))
-            
-        self.assertRunsInDir(testDir, 'test.py')
-        shutil.rmtree(testDir)
-        
         
 
 class BZ2Test(TestCase):
 
     def assertRuns(self, testCode):
-        mapper = Python25Mapper(os.path.join("build", "python25.dll"))
+        mapper = Python25Mapper(DLL_PATH)
         try:
             exec(testCode)
         finally:

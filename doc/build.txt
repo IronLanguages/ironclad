@@ -42,9 +42,9 @@ Running make in the top-level directory should do the following:
   contents of 'src/python25apicomponents/'
 * Run 'tools/generatepython25mapper.py' to create various files in 'src' from 
   the contents of 'src/python25mappercomponents/'
-* Compile the contents of 'src/' to create 'build/ironclad.dll'
+* Compile the contents of 'src/' to create 'build/ironclad/ironclad.dll'
 * Run 'tools/buildstub.py' to (eventually) create the stub library 
-  'build/python25.dll' from an existing (real) python25.dll and the contents of
+  'build/ironclad/python25.dll' from an existing (real) python25.dll and the contents of
   'stub/'
 
 At this point, the project is built and may even be usable. However, make will 
