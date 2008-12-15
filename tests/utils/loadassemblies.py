@@ -1,7 +1,7 @@
 import clr
 import sys
 
-clr.AddReferenceToFileAndPath("build/ironclad.dll")
+clr.AddReferenceToFileAndPath("build/ironclad/ironclad.dll")
 clr.AddReferenceToFileAndPath("tests/data/testutils.dll")
 
 sys.path.insert(0, "ironpython")

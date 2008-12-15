@@ -60,7 +60,7 @@ class Python25StubTest(TestCase):
             f.close()
 
         python25exports |= set(["init", "jumptable DATA"])
-        generatedExports = GetPexportsLines("build/python25.dll")
+        generatedExports = GetPexportsLines("build/ironclad/python25.dll")
 
         self.assertEquals(generatedExports.issuperset(python25exports), True,
                           "build product wrong")

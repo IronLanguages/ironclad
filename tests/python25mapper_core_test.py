@@ -30,7 +30,7 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
         
     
     def testLoadsStubWhenPassedPathAndUnloadsOnDispose(self):
-        mapper = Python25Mapper(os.path.join("build", "python25.dll"))
+        mapper = Python25Mapper(os.path.join("build", "ironclad", "python25.dll"))
         self.assertNotEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
                              "library not mapped by construction")
         self.assertNotEquals(Python25Mapper._Py_NoneStruct, IntPtr.Zero,
@@ -45,7 +45,7 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
         
     
     def testLoadsModuleAndUnloadsOnDispose(self):
-        mapper = Python25Mapper(os.path.join("build", "python25.dll"))
+        mapper = Python25Mapper(os.path.join("build", "ironclad", "python25.dll"))
         mapper.LoadModule(os.path.join("tests", "data", "setvalue.pyd"), "some.module")
         self.assertNotEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                              "library not mapped by construction")

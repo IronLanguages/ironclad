@@ -6,6 +6,8 @@ source.
 
 Build products
 
+A folder called 'ironclad', containing:
+
 python25.dll
 
 This dll is built from the contents of the stub directory; it's written in C
@@ -14,12 +16,12 @@ functions are copied directly from CPython itself. When it's loaded into a
 process' address space it impersonates the real python25.dll and redirects
 (most) CPython API calls into managed code.
 
-Ironclad.dll
+ironclad.dll
 
 This managed assembly contains "everything else" -- all the logic that isn't
 already implemented in the redirection dll.
 
-ironclad.py
+__init__.py
 
 Importing this module will install import hooks which allow you to
 transparently import CPython extensions; when you've finished with them, you
