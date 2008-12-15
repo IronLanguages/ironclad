@@ -42,14 +42,27 @@ namespace Ironclad
         private IntPtr
         Store(List list)
         {
-            IntPtr listPtr = this.PyList_New(0);
-            for (int i = 0; i < list.__len__(); i++)
+            int length = list.__len__();
+            PyListObject listStruct = new PyListObject();
+            listStruct.ob_refcnt = 1;
+            listStruct.ob_type = this.PyList_Type;
+            listStruct.ob_size = (uint)length;
+            listStruct.allocated = (uint)length;
+
+            int bytes = length * CPyMarshal.PtrSize;
+            IntPtr data = this.allocator.Alloc(bytes);
+            listStruct.ob_item = data;
+            for (int i = 0; i < length; i++)
             {
-                IntPtr itemPtr = this.Store(list[i]);
-                this.PyList_Append(listPtr, itemPtr);
-                this.DecRef(itemPtr);
+                CPyMarshal.WritePtr(data, this.Store(list[i]));
+                data = CPyMarshal.Offset(data, CPyMarshal.PtrSize);
             }
+
+            IntPtr listPtr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyListObject)));
+            Marshal.StructureToPtr(listStruct, listPtr, false);
+            this.map.Associate(listPtr, list);
             return listPtr;
+
         }
 
         private IntPtr

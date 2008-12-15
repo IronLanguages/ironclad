@@ -10,8 +10,8 @@ from tests.utils.testcase import TestCase, WithMapper
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import Python25Mapper
-from Ironclad.Structs import PyNumberMethods, PySequenceMethods
+from Ironclad import Python25Mapper, CPyMarshal
+from Ironclad.Structs import PyListObject, PyNumberMethods, PySequenceMethods
         
         
 class SequenceFunctionsTest(TestCase):
@@ -69,8 +69,50 @@ class SequenceFunctionsTest(TestCase):
             notseqPtr = mapper.Store(notseq)
             self.assertEquals(mapper.PySequence_GetItem(notseqPtr, 0), IntPtr.Zero)
             self.assertMapperHasError(mapper, TypeError)
-            
 
+
+    @WithMapper
+    def testPySequence_SetItem_List(self, mapper, _):
+        seq = [1, 2, 3]
+        seqPtr = mapper.Store(seq)
+        seqData = CPyMarshal.ReadPtrField(seqPtr, PyListObject, "ob_item")
+        for i in range(-3, 3):
+            itemPtr = mapper.Store(i)
+            self.assertEquals(mapper.PySequence_SetItem(seqPtr, i, itemPtr), 0)
+            self.assertEquals(mapper.RefCount(itemPtr), 2)
+            index = i
+            if index < 0:
+                index += 3
+            valData = CPyMarshal.Offset(seqData, index * CPyMarshal.PtrSize)
+            self.assertEquals(CPyMarshal.ReadPtr(valData), itemPtr)
+            self.assertEquals(seq[i], i)
+
+        for i in (-5, 66):
+            mapper.LastException = None
+            self.assertEquals(mapper.PySequence_SetItem(seqPtr, i, mapper.Store(i)), -1)
+            self.assertMapperHasError(mapper, IndexError)
+        
+    @WithMapper
+    def testPySequence_SetItem_Other(self, mapper, _):
+        calls = []
+        class Seq(object):
+            def __setitem__(self, index, value):
+                calls.append((index, value))
+        seq = Seq()
+        seqPtr = mapper.Store(seq)
+        for (i, item) in ((3, 'abc'), (-123, 999)):
+            itemPtr = mapper.Store(item)
+            self.assertEquals(mapper.PySequence_SetItem(seqPtr, i, itemPtr), 0)
+            self.assertEquals(mapper.RefCount(itemPtr), 1)
+            self.assertEquals(calls[-1], (i, item))
+        
+    @WithMapper
+    def testPySequence_SetItem_Failure(self, mapper, _):
+        for bad in (object, object(), 37, 'foo', (1, 2, 3)):
+            badPtr = mapper.Store(bad)
+            self.assertEquals(mapper.PySequence_SetItem(badPtr, 0, mapper.Store(123)), -1)
+            self.assertMapperHasError(mapper, TypeError)
+        
     @WithMapper
     def testPySequence_GetSlice(self, mapper, _):
         for seq in ([1, 2, 3], ('a', 'b', 'c'), 'bar'):

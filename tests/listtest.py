@@ -95,7 +95,9 @@ class PyList_Type_Test(TypeTestCase):
         
     @WithMapper
     def testStoreList(self, mapper, _):
-        listPtr = mapper.Store([1, 2, 3])
+        list_ = [1, 2, 3]
+        listPtr = mapper.Store(list_)
+        self.assertEquals(id(mapper.Retrieve(listPtr)), id(list_))
         
         typePtr = CPyMarshal.ReadPtrField(listPtr, PyObject, "ob_type")
         self.assertEquals(typePtr, mapper.PyList_Type, "wrong type")
