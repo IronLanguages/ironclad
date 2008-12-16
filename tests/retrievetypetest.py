@@ -370,11 +370,18 @@ class IterTest(DispatchSetupTestCase):
 
 
     def test_tp_iternext_MethodDispatch(self):
-        def TestErrorHandler(errorHandler, mapper): 
+        def TestErrorHandler(errorHandler, mapper):
+            mapper.LastException = None
             errorHandler(IntPtr(12345))
-            self.assertRaises(StopIteration, errorHandler, IntPtr.Zero)
+            self.assertMapperHasError(mapper, None)
+            
+            mapper.LastException = None
+            errorHandler(IntPtr.Zero)
+            self.assertMapperHasError(mapper, StopIteration)
+            
             mapper.LastException = ValueError()
             errorHandler(IntPtr.Zero)
+            self.assertMapperHasError(mapper, ValueError)
         
         self.assertSelfTypeMethod(
             Py_TPFLAGS.HAVE_ITER, "tp_iternext", "next", TestErrorHandler)

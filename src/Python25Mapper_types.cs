@@ -37,7 +37,12 @@ namespace Ironclad
             CPyMarshal.Zero(newInstance, size);
             CPyMarshal.WriteIntField(newInstance, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(newInstance, typeof(PyObject), "ob_type", typePtr);
-            
+
+            if (nItems > 0)
+            {
+                CPyMarshal.WriteIntField(newInstance, typeof(PyVarObject), "ob_size", nItems);
+            }
+
             return newInstance;
         }
         
@@ -140,18 +145,31 @@ namespace Ironclad
         }
 
         public override void
+        Fill_PyString_Type(IntPtr address)
+        {
+            // not quite trivial to autogenerate
+            CPyMarshal.Zero(address, Marshal.SizeOf(typeof(PyTypeObject)));
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "tp_basicsize", Marshal.SizeOf(typeof(PyStringObject)) - 1);
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "tp_itemsize", 1);
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_str", this.GetAddress("PyString_Str"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_repr", this.GetAddress("PyString_Repr"));
+            this.map.Associate(address, TypeCache.String);
+        }
+
+        public override void
         Fill_PyBuffer_Type(IntPtr ptr)
         {
             // this does nothing: when we encounter a buffer, we interpret it like any 
             // c extension type. 
         }
 
-	public override void
-	Fill_PyCFunction_Type(IntPtr ptr)
-	{
-	    // this does nothing: when we encounter a cfunction, we interpret it like any 
-	    // c extension
-	}
+	    public override void
+	    Fill_PyCFunction_Type(IntPtr ptr)
+	    {
+	        // this does nothing: when we encounter a cfunction, we interpret it like any 
+	        // c extension
+	    }
 
         private void
         AddNumberMethodsWithoutIndex(IntPtr typePtr)

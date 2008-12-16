@@ -13,7 +13,7 @@ from System import IntPtr, UInt32, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CannotInterpretException, CPyMarshal, HGlobalAllocator, OpaquePyCObject, Python25Mapper
-from Ironclad.Structs import PyObject, PyNumberMethods, PyTypeObject, Py_TPFLAGS
+from Ironclad.Structs import PyObject, PyNumberMethods, PyTypeObject, PyVarObject, Py_TPFLAGS
 
 class ItemEnumeratorThing(object):
     def __getitem__(self):
@@ -382,10 +382,10 @@ class PyType_GenericAlloc_Test(TestCase):
         result = mapper.PyType_GenericAlloc(typePtr, 0)
         self.assertEquals(allocs, [(result, 32)], "allocated wrong")
 
-        refcount = CPyMarshal.ReadInt(result)
+        refcount = CPyMarshal.ReadIntField(result, PyObject, "ob_refcnt")
         self.assertEquals(refcount, 1, "bad initialisation")
 
-        instanceType = CPyMarshal.ReadPtr(OffsetPtr(result, Marshal.OffsetOf(PyObject, "ob_type")))
+        instanceType = CPyMarshal.ReadPtrField(result, PyObject, "ob_type")
         self.assertEquals(instanceType, typePtr, "bad type ptr")
         
         headerSize = Marshal.SizeOf(PyObject)
@@ -413,13 +413,16 @@ class PyType_GenericAlloc_Test(TestCase):
         result = mapper.PyType_GenericAlloc(typePtr, 3)
         self.assertEquals(allocs, [(result, 224)], "allocated wrong")
 
-        refcount = CPyMarshal.ReadInt(result)
+        refcount = CPyMarshal.ReadIntField(result, PyObject, "ob_refcnt")
         self.assertEquals(refcount, 1, "bad initialisation")
 
-        instanceType = CPyMarshal.ReadPtr(OffsetPtr(result, Marshal.OffsetOf(PyObject, "ob_type")))
+        instanceType = CPyMarshal.ReadPtrField(result, PyObject, "ob_type")
         self.assertEquals(instanceType, typePtr, "bad type ptr")
+
+        size = CPyMarshal.ReadIntField(result, PyVarObject, "ob_size")
+        self.assertEquals(size, 3, "bad ob_size")
         
-        headerSize = Marshal.SizeOf(PyObject)
+        headerSize = Marshal.SizeOf(PyVarObject)
         zerosPtr = OffsetPtr(result, headerSize)
         for i in range(224 - headerSize):
             self.assertEquals(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")

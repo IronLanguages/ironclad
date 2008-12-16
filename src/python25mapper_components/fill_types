@@ -10,6 +10,5 @@ PyComplex_Type TypeCache.Complex64 {"tp_as_number": "AddNumberMethodsWithoutInde
 PyCObject_Type typeof(OpaquePyCObject) {"tp_dealloc": "PyCObject_Dealloc"}
 PyDict_Type TypeCache.Dict
 PyList_Type TypeCache.List {"tp_dealloc": "PyList_Dealloc"}
-PyString_Type TypeCache.String
 PyTuple_Type TypeCache.PythonTuple {"tp_dealloc": "PyTuple_Dealloc"}
 PySeqIter_Type typeof(ItemEnumerator)

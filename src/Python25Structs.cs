@@ -153,6 +153,14 @@ namespace Ironclad
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        public struct PyVarObject
+        {
+            public uint ob_refcnt;
+            public IntPtr ob_type;
+            public uint ob_size;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public struct PyIntObject
         {
             public uint ob_refcnt;
