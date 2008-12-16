@@ -408,7 +408,7 @@ namespace Ironclad
 
         public void Unmap(IntPtr ptr)
         {
-            // TODO: very badly tested (nothing works if this isn't here, but...)
+            // TODO: very badly tested (things break fast if this isn't here, but...)
             if (this.map.HasPtr(ptr))
             {
                 this.map.Release(ptr);
@@ -454,15 +454,15 @@ namespace Ironclad
                 case "PyCObject_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyCObject_Dealloc);
                     break;
-            case "PyFile_Dealloc":
+                case "PyFile_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyFile_Dealloc);
                     break;
-            case "PyFloat_New":
-            this.dgtMap[name] = new CPythonVarargsKwargsFunction_Delegate(this.PyFloat_New);
-            break;
+                case "PyFloat_New":
+                    this.dgtMap[name] = new CPythonVarargsKwargsFunction_Delegate(this.PyFloat_New);
+                    break;
                 case "PyInt_New":
-                this.dgtMap[name] = new CPythonVarargsKwargsFunction_Delegate(this.PyInt_New);
-                break;
+                    this.dgtMap[name] = new CPythonVarargsKwargsFunction_Delegate(this.PyInt_New);
+                    break;
                 case "PyList_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyList_Dealloc);
                     break;
@@ -471,6 +471,9 @@ namespace Ironclad
                     break;
                 case "PyTuple_Dealloc":
                     this.dgtMap[name] = new CPython_destructor_Delegate(this.PyTuple_Dealloc);
+                    break;
+                case "PyString_Str":
+                    this.dgtMap[name] = new CPythonSelfFunction_Delegate(this.PyString_Str);
                     break;
                 default:
                     this.unknownNames.Add(name);

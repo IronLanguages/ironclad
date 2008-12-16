@@ -134,7 +134,7 @@ _ironclad_class_attrs['__iter__'] = __iter__
         public const string ITERNEXT_METHOD_CODE = @"
 def __raise_stop(self, resultPtr):
     if resultPtr == IntPtr(0) and self._dispatcher.mapper.LastException == None:
-        raise StopIteration()
+        self._dispatcher.mapper.LastException = StopIteration()
 
 _ironclad_class_attrs['__raise_stop'] = __raise_stop
 

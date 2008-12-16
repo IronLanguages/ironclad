@@ -75,6 +75,22 @@ class PyString_Type_Test(TypeTestCase):
     def testString_tp_dealloc(self):
         self.assertUsual_tp_dealloc("PyString_Type")
 
+    @WithMapper
+    def testSizes(self, mapper, _):
+        tp_basicsize = CPyMarshal.ReadIntField(mapper.PyString_Type, PyTypeObject, 'tp_basicsize')
+        self.assertNotEquals(tp_basicsize, 0)
+        tp_itemsize = CPyMarshal.ReadIntField(mapper.PyString_Type, PyTypeObject, 'tp_itemsize')
+        self.assertNotEquals(tp_itemsize, 0)
+
+    @WithMapper
+    def testStringifiers(self, mapper, _):
+        PyString_Str = mapper.GetAddress("PyString_Str")
+        tp_str = CPyMarshal.ReadPtrField(mapper.PyString_Type, PyTypeObject, "tp_str")
+        self.assertEquals(tp_str, PyString_Str)
+        
+        PyString_Repr = mapper.GetAddress("PyString_Repr")
+        tp_repr = CPyMarshal.ReadPtrField(mapper.PyString_Type, PyTypeObject, "tp_repr")
+        self.assertEquals(tp_repr, PyString_Repr)
 
 class PyString_FromString_Test(PyString_TestCase):
 
@@ -373,6 +389,21 @@ class PyString_Size_Test(PyString_TestCase):
         
         strPtr = mapper.Store(testString)
         self.assertEquals(mapper.PyString_Size(strPtr), testLength)
+
+
+class PyString_StringifiersTest(TestCase):
+    
+    @WithMapper
+    def testWorks(self, mapper, _):
+        src = 'foo \0 bar supercalifragilisticexpialidocious'
+        srcPtr = mapper.Store(src)
+        
+        str_ = mapper.Retrieve(mapper.PyString_Str(srcPtr))
+        self.assertEquals(str_, src)
+        
+        repr_ = mapper.Retrieve(mapper.PyString_Repr(srcPtr))
+        self.assertEquals(repr_, repr(src))
+        
 
 
 class PyString_AsStringTest(PyString_TestCase):

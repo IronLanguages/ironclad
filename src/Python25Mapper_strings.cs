@@ -6,6 +6,7 @@ using Ironclad.Structs;
 
 using Microsoft.Scripting;
 
+using IronPython.Runtime;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
@@ -15,40 +16,39 @@ namespace Ironclad
     {
 
         public override void
-	PyString_Concat(IntPtr str1PtrPtr, IntPtr str2Ptr)
-	{
-	    
-	    string str1, str2;
-	    IntPtr str1Ptr = Marshal.ReadIntPtr(str1PtrPtr);
-	    if (str1Ptr == new IntPtr(0))
-	    {
-		return;
+	    PyString_Concat(IntPtr str1PtrPtr, IntPtr str2Ptr)
+        {
+	        string str1, str2;
+	        IntPtr str1Ptr = Marshal.ReadIntPtr(str1PtrPtr);
+	        if (str1Ptr == IntPtr.Zero)
+	        {
+		        return;
+	        }
+	        try
+	        {
+		        str1 = (string) this.Retrieve(str1Ptr);
+		        str2 = (string) this.Retrieve(str2Ptr);
+	        }
+	        catch (Exception e)
+	        {
+		        this.LastException = e;
+		        Marshal.WriteIntPtr(str1PtrPtr, new IntPtr(0));
+		        this.DecRef(str1Ptr);
+		        return;
+	        }
+	        string str3 = str1 + str2;
+	        IntPtr str3Ptr = this.Store(str3);
+    		
+	        Marshal.WriteIntPtr(str1PtrPtr, str3Ptr);
+	        this.DecRef(str1Ptr);
 	    }
-	    try
-	    {
-		str1 = (string) this.Retrieve(str1Ptr);
-		str2 = (string) this.Retrieve(str2Ptr);
-	    }
-	    catch (Exception e)
-	    {
-		this.LastException = e;
-		Marshal.WriteIntPtr(str1PtrPtr, new IntPtr(0));
-		this.DecRef(str1Ptr);
-		return;
-	    }
-	    string str3 = str1 + str2;
-	    IntPtr str3Ptr = this.Store(str3);
-		
-	    Marshal.WriteIntPtr(str1PtrPtr, str3Ptr);
-	    this.DecRef(str1Ptr);
-	}
 
-	public override void
-	PyString_ConcatAndDel(IntPtr str1PtrPtr, IntPtr str2Ptr)
-	{
-	    this.PyString_Concat(str1PtrPtr, str2Ptr);
-	    this.DecRef(str2Ptr);
-	}
+	    public override void
+	    PyString_ConcatAndDel(IntPtr str1PtrPtr, IntPtr str2Ptr)
+	    {
+	        this.PyString_Concat(str1PtrPtr, str2Ptr);
+	        this.DecRef(str2Ptr);
+	    }
 
 
         public override IntPtr 
@@ -144,7 +144,7 @@ namespace Ironclad
             {
                 if (CPyMarshal.ReadPtrField(strPtr, typeof(PyObject), "ob_type") != this.PyString_Type)
                 {
-                    throw PythonOps.TypeError("PyString_AsString: not a string");
+                    throw PythonOps.TypeError("PyString_AsStringAndSize: not a string");
                 }
                 
                 IntPtr dataPtr = CPyMarshal.Offset(strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
@@ -293,20 +293,37 @@ namespace Ironclad
             this.map.Associate(strPtr, str);
             return strPtr;
         }
-        
-        private void
-        ActualiseString(IntPtr ptr)
+
+        private string
+        ReadPyString(IntPtr ptr)
         {
             IntPtr buffer = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
-            IntPtr lengthPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
-            int length = CPyMarshal.ReadInt(lengthPtr);
-
+            int length = CPyMarshal.ReadIntField(ptr, typeof(PyStringObject), "ob_size");
             byte[] bytes = new byte[length];
             Marshal.Copy(buffer, bytes, 0, length);
             char[] chars = Array.ConvertAll<byte, char>(
                 bytes, new Converter<byte, char>(CharFromByte));
+            return new string(chars);
+        }
+        
+        private void
+        ActualiseString(IntPtr ptr)
+        {
+            string str = this.ReadPyString(ptr);
             this.incompleteObjects.Remove(ptr);
-            this.map.Associate(ptr, new string(chars));
+            this.map.Associate(ptr, str);
+        }
+
+        public IntPtr
+        PyString_Str(IntPtr ptr)
+        {
+            return this.Store(this.ReadPyString(ptr));
+        }
+
+        public override IntPtr
+        PyString_Repr(IntPtr ptr)
+        {
+            return this.Store(Builtin.repr(this.scratchContext, this.ReadPyString(ptr)));
         }
     }
 }

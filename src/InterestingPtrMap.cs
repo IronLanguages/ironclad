@@ -134,7 +134,7 @@ namespace Ironclad
         {
             if (!this.ptr2id.ContainsKey(ptr))
             {
-                throw new BadMappingException(String.Format("tried to release unmapped ptr {0}", ptr.ToString("x")));
+                throw new BadMappingException(String.Format("Release: tried to release unmapped ptr {0}", ptr.ToString("x")));
             }
             
             object id = this.ptr2id[ptr];
@@ -168,7 +168,7 @@ namespace Ironclad
             }
             else
             {
-                throw new BadMappingException(String.Format("mapping corrupt (ptr {0})", ptr.ToString("x")));
+                throw new BadMappingException(String.Format("Release: mapping corrupt (ptr {0})", ptr.ToString("x")));
             }
         }
         
@@ -186,7 +186,7 @@ namespace Ironclad
             object id = Builtin.id(obj);
             if (!this.id2ptr.ContainsKey(id))
             {
-                throw new BadMappingException(String.Format("No obj-to-ptr mapping for {0}", obj));
+                throw new BadMappingException(String.Format("GetPtr: No obj-to-ptr mapping for {0}", obj));
             }
             return this.id2ptr[id];
         }
@@ -204,7 +204,7 @@ namespace Ironclad
         {
             if (!this.ptr2id.ContainsKey(ptr))
             {
-                throw new BadMappingException(String.Format("No ptr-to-obj mapping for {0}", ptr.ToString("x")));
+                throw new BadMappingException(String.Format("GetObj: No ptr-to-obj mapping for {0}", ptr.ToString("x")));
             }
             
             object id = this.ptr2id[ptr];
@@ -224,7 +224,7 @@ namespace Ironclad
             }
             else
             {
-                throw new BadMappingException(String.Format("mapping corrupt (ptr {0})", ptr.ToString("x")));
+                throw new BadMappingException(String.Format("GetObj: mapping corrupt (ptr {0})", ptr.ToString("x")));
             }
         }
     }
