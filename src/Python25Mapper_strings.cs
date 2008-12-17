@@ -33,28 +33,28 @@ namespace Ironclad
 
 
         public override void
-	    PyString_Concat(IntPtr str1PtrPtr, IntPtr str2Ptr)
+        PyString_Concat(IntPtr str1PtrPtr, IntPtr str2Ptr)
         {
-	        IntPtr str1Ptr = Marshal.ReadIntPtr(str1PtrPtr);
-	        if (str1Ptr == IntPtr.Zero)
-	        {
-		        return;
+            IntPtr str1Ptr = Marshal.ReadIntPtr(str1PtrPtr);
+            if (str1Ptr == IntPtr.Zero)
+            {
+                return;
             }
             IntPtr str3Ptr = IntPtr.Zero;
             if (str2Ptr != IntPtr.Zero)
             {
                 str3Ptr = this.PyString_Concat_Core(str1Ptr, str2Ptr);
             }
-	        Marshal.WriteIntPtr(str1PtrPtr, str3Ptr);
-	        this.DecRef(str1Ptr);
-	    }
+            Marshal.WriteIntPtr(str1PtrPtr, str3Ptr);
+            this.DecRef(str1Ptr);
+        }
 
-	    public override void
-	    PyString_ConcatAndDel(IntPtr str1PtrPtr, IntPtr str2Ptr)
-	    {
-	        this.PyString_Concat(str1PtrPtr, str2Ptr);
-	        this.DecRef(str2Ptr);
-	    }
+        public override void
+        PyString_ConcatAndDel(IntPtr str1PtrPtr, IntPtr str2Ptr)
+        {
+            this.PyString_Concat(str1PtrPtr, str2Ptr);
+            this.DecRef(str2Ptr);
+        }
 
 
         public override IntPtr 

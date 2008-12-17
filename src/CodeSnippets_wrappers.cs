@@ -12,6 +12,8 @@ class _ironclad_actualiser(_ironclad_class):
     def __new__(cls, *args, **kwargs):
         if issubclass(cls, int):
             return int.__new__(cls, args[0])
+        if issubclass(cls, str):
+            return str.__new__(cls, args[0])
         return object.__new__(cls)
     def __init__(self, *args, **kwargs):
         pass
@@ -79,7 +81,7 @@ _ironclad_class_attrs['{0}'] = _ironclad_setter
 _ironclad_class_attrs['{0}'] = property(_ironclad_getter, _ironclad_setter, None, '''{1}''')
 ";
 
-	public const string GETATTR_CODE = @"
+    public const string GETATTR_CODE = @"
 def _getattr(self, attr):
     return self._dispatcher.method_getattr('{2}{0}', self, attr)
 
