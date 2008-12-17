@@ -259,7 +259,11 @@ namespace Ironclad
                     template = CodeSnippets.LENFUNC_METHOD_CODE;
                     dgtType = typeof(CPython_lenfunc_Delegate);
                     break;
-                // sq_concat
+                case "sq_concat":
+                    name = "__add__";
+                    template = CodeSnippets.OBJARG_METHOD_CODE;
+                    dgtType = typeof(CPython_binaryfunc_Delegate);
+                    break;
                 // sq_repeat
                 case "sq_item":
                     name = "_getitem_sq_item";

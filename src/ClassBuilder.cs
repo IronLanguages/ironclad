@@ -22,7 +22,7 @@ namespace Ironclad
         private readonly string[] EASY_TYPE_FIELDS = new string[] { 
 	    "tp_call", "tp_repr", "tp_str", "tp_compare", "tp_hash", "tp_getattr"};
         private readonly string[] MP_FIELDS = new string[] { "mp_subscript", "mp_ass_subscript", "mp_length" };
-        private readonly string[] SQ_FIELDS = new string[] { "sq_item", "sq_ass_item", "sq_length", "sq_slice", "sq_ass_slice" };
+        private readonly string[] SQ_FIELDS = new string[] { "sq_item", "sq_concat", "sq_ass_item", "sq_length", "sq_slice", "sq_ass_slice" };
         private readonly string[] NB_FIELDS = new string[] { 
             "nb_add", "nb_subtract", "nb_multiply", "nb_divide", "nb_true_divide", 
               "nb_floor_divide", "nb_remainder", "nb_divmod", 

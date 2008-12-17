@@ -39,11 +39,7 @@ core.test_numerictypes.test_read_values_plain_single
 core.test_umath.TestAttributes.test_attributes
 
 # meant to be disabled on windows
-core.test_multiarray.TestFromToFile.test_file 
-
-# something wrong with iteration -- FIXME
-core.test_defchararray.TestOperations.test_add
-core.test_defchararray.TestOperations.test_radd
+core.test_multiarray.TestFromToFile.test_file
 
 # fail due to differences in str between python and ipy
 core.test_print.TestPrint.test_double

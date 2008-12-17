@@ -211,6 +211,7 @@ NUMSEQMAP_METHODS = {
     "nb_inplace_power": CPython_ternaryfunc_Delegate, 
     
     "sq_item": CPython_ssizeargfunc_Delegate,
+    "sq_concat": CPython_binaryfunc_Delegate,
     "sq_repeat": CPython_ssizeargfunc_Delegate,
     "sq_slice": CPython_ssizessizeargfunc_Delegate,
     "sq_ass_item": CPython_ssizeobjargproc_Delegate,

@@ -14,31 +14,37 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
+        private IntPtr
+        PyString_Concat_Core(IntPtr str1Ptr, IntPtr str2Ptr)
+        {
+            try
+            {
+                // why read them, not retrieve them? can't cast string subtypes to string.
+                string str1 = this.ReadPyString(str1Ptr);
+                string str2 = this.ReadPyString(str2Ptr);
+                return this.Store(str1 + str2);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
 
         public override void
 	    PyString_Concat(IntPtr str1PtrPtr, IntPtr str2Ptr)
         {
-	        string str1, str2;
 	        IntPtr str1Ptr = Marshal.ReadIntPtr(str1PtrPtr);
 	        if (str1Ptr == IntPtr.Zero)
 	        {
 		        return;
-	        }
-	        try
-	        {
-		        str1 = (string) this.Retrieve(str1Ptr);
-		        str2 = (string) this.Retrieve(str2Ptr);
-	        }
-	        catch (Exception e)
-	        {
-		        this.LastException = e;
-		        Marshal.WriteIntPtr(str1PtrPtr, new IntPtr(0));
-		        this.DecRef(str1Ptr);
-		        return;
-	        }
-	        string str3 = str1 + str2;
-	        IntPtr str3Ptr = this.Store(str3);
-    		
+            }
+            IntPtr str3Ptr = IntPtr.Zero;
+            if (str2Ptr != IntPtr.Zero)
+            {
+                str3Ptr = this.PyString_Concat_Core(str1Ptr, str2Ptr);
+            }
 	        Marshal.WriteIntPtr(str1PtrPtr, str3Ptr);
 	        this.DecRef(str1Ptr);
 	    }
@@ -297,6 +303,11 @@ namespace Ironclad
         private string
         ReadPyString(IntPtr ptr)
         {
+            IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
+            if (PyType_IsSubtype(typePtr, this.PyString_Type) == 0)
+            {
+                throw new ArgumentTypeException("ReadPyString: Expected a str, or subclass thereof");
+            }
             IntPtr buffer = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
             int length = CPyMarshal.ReadIntField(ptr, typeof(PyStringObject), "ob_size");
             byte[] bytes = new byte[length];
@@ -317,13 +328,29 @@ namespace Ironclad
         public IntPtr
         PyString_Str(IntPtr ptr)
         {
-            return this.Store(this.ReadPyString(ptr));
+            try
+            {
+                return this.Store(this.ReadPyString(ptr));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
         }
 
         public override IntPtr
         PyString_Repr(IntPtr ptr)
         {
-            return this.Store(Builtin.repr(this.scratchContext, this.ReadPyString(ptr)));
+            try
+            {
+                return this.Store(Builtin.repr(this.scratchContext, this.ReadPyString(ptr)));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
         }
     }
 }

@@ -504,6 +504,7 @@ class Python25Mapper_GetAddress_NonApi_Test(TestCase):
             "PyFile_Dealloc",
             "PyFloat_New",
             "PyString_Str",
+            "PyString_Concat_Core",
         )
         for method in methods:
             self.assertGetAddressWorks(method)

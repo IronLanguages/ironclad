@@ -820,7 +820,7 @@ class SequenceTest(DispatchSetupTestCase):
             instance, arg1, arg2 = _type(), 123, 456
             _type._dispatcher.method_ssizessizearg = dispatch
             self.assertCalls(
-                getattr(instance, "__getslice__"), ((arg1, arg2), {}), calls_dispatch, 
+                instance.__getslice__, ((arg1, arg2), {}), calls_dispatch, 
                 ("klass.__getslice__", instance, arg1, arg2), result)
             
             cfunc = _type._dispatcher.table["klass.__getslice__"]
@@ -888,6 +888,33 @@ class SequenceTest(DispatchSetupTestCase):
 
         self.assertTypeSpec(typeSpec, TestType)
         deallocSequences()
+    
+    def testConcat(self):
+        func, calls_cfunc = self.getBinaryPtrFunc()
+        sequencesPtr, deallocSequences = MakeNumSeqMapMethods(PySequenceMethods, {"sq_concat": func})
+        typeSpec = {
+            "tp_name": "klass",
+            "tp_as_sequence": sequencesPtr,
+        }
+        result = object()
+        dispatch, calls_dispatch = self.getTernaryFunc(result)
+        
+        def TestType(_type, _):
+            instance, arg = _type(), object()
+            _type._dispatcher.method_objarg = dispatch
+            self.assertCalls(
+                instance.__add__, ((arg,), {}), calls_dispatch, 
+                ("klass.__add__", instance, arg), result)
+                
+            cfunc = _type._dispatcher.table["klass.__add__"]
+            self.assertCallsBinaryPtrFunc(cfunc, calls_cfunc)
+            
+            del instance
+            gcwait()
+            
+        self.assertTypeSpec(typeSpec, TestType)
+        deallocSequences()
+        
 
 
 class MappingTest(DispatchSetupTestCase):
