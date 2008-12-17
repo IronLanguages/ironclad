@@ -8,8 +8,8 @@ from tests.utils.typetestcase import TypeTestCase
 
 from System import Array, Byte, Char, IntPtr, OutOfMemoryException
 from System.Runtime.InteropServices import Marshal
-from Ironclad import CPyMarshal, Python25Mapper
-from Ironclad.Structs import PyStringObject, PyTypeObject
+from Ironclad import CPyMarshal, CPython_binaryfunc_Delegate, Python25Mapper
+from Ironclad.Structs import PyStringObject, PyTypeObject, PySequenceMethods
 
 
 class PyString_TestCase(TestCase):
@@ -391,19 +391,32 @@ class PyString_Size_Test(PyString_TestCase):
         self.assertEquals(mapper.PyString_Size(strPtr), testLength)
 
 
-class PyString_StringifiersTest(TestCase):
+class PyString_OtherMethodsTest(TestCase):
     
     @WithMapper
-    def testWorks(self, mapper, _):
+    def testStringifiers(self, mapper, _):
         src = 'foo \0 bar supercalifragilisticexpialidocious'
         srcPtr = mapper.Store(src)
         
         str_ = mapper.Retrieve(mapper.PyString_Str(srcPtr))
         self.assertEquals(str_, src)
+        self.assertEquals(mapper.PyString_Str(mapper.Store(object())), IntPtr.Zero)
+        self.assertMapperHasError(mapper, TypeError)
         
         repr_ = mapper.Retrieve(mapper.PyString_Repr(srcPtr))
         self.assertEquals(repr_, repr(src))
-        
+        self.assertEquals(mapper.PyString_Repr(mapper.Store(object())), IntPtr.Zero)
+        self.assertMapperHasError(mapper, TypeError)
+    
+    @WithMapper
+    def testConcat(self, mapper, _):
+        sqPtr = CPyMarshal.ReadPtrField(mapper.PyString_Type, PyTypeObject, "tp_as_sequence")
+        concat = CPyMarshal.ReadFunctionPtrField(sqPtr, PySequenceMethods, "sq_concat", CPython_binaryfunc_Delegate)
+        strs = ('', 'abc', '\0xo')
+        for s1 in strs:
+            for s2 in strs:
+                s3ptr = concat(mapper.Store(s1), mapper.Store(s2))
+                self.assertEquals(mapper.Retrieve(s3ptr), s1 + s2)
 
 
 class PyString_AsStringTest(PyString_TestCase):

@@ -475,6 +475,9 @@ namespace Ironclad
                 case "PyString_Str":
                     this.dgtMap[name] = new CPythonSelfFunction_Delegate(this.PyString_Str);
                     break;
+                case "PyString_Concat_Core":
+                    this.dgtMap[name] = new CPython_binaryfunc_Delegate(this.PyString_Concat_Core);
+                    break;
                 default:
                     this.unknownNames.Add(name);
                     return IntPtr.Zero;
