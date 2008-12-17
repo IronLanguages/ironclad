@@ -16,7 +16,7 @@ from Ironclad import (
     Python25Api, Python25Mapper
 )
 from Ironclad.Structs import (
-    MemberT, METH, Py_TPFLAGS, PyMemberDef, PyNumberMethods, 
+    MemberT, METH, Py_TPFLAGS, PyMemberDef, PyNumberMethods, PyStringObject, 
     PyIntObject, PyObject, PyMappingMethods, PySequenceMethods, PyTypeObject
 )
 
@@ -1658,7 +1658,7 @@ class InheritanceTest(TestCase):
         deallocTypes()
 
 
-class IntSubclassHorrorTest(TestCase):
+class BuiltinSubclassHorrorTest(TestCase):
     
     @WithMapper
     def testRetrievedIntsHaveCorrectValue(self, mapper, deallocLater):
@@ -1676,7 +1676,6 @@ class IntSubclassHorrorTest(TestCase):
             'tp_base': mapper.PyInt_Type,
             'tp_basicsize': Marshal.SizeOf(PyIntObject)
         }
-
         klassPtr, deallocType = MakeTypePtr(mapper, typeSpec)
         deallocLater(deallocType)
         
@@ -1695,6 +1694,35 @@ class IntSubclassHorrorTest(TestCase):
         SequenceLike()[mapper.Retrieve(_12Ptr):mapper.Retrieve(_44Ptr)]
         self.assertEquals(calls, [('__getslice__', 12, 44)])
         self.assertEquals(map(type, calls[0]), [str, int, int])
+    
+    @WithMapper
+    def testRetrievedStringsHaveCorrectValue(self, mapper, deallocLater):
+
+        typeSpec = {
+            'tp_name': 'klass',
+            'tp_base': mapper.PyString_Type,
+            'tp_basicsize': Marshal.SizeOf(PyStringObject) - 1,
+            'tp_itemsize': 1,
+        }
+        klassPtr, deallocType = MakeTypePtr(mapper, typeSpec)
+        deallocLater(deallocType)
+        
+        _f0oSize = Marshal.SizeOf(PyStringObject) + 3
+        _f0oPtr = Marshal.AllocHGlobal(_f0oSize)
+        CPyMarshal.Zero(_f0oPtr, _f0oSize)
+        deallocLater(lambda: Marshal.FreeHGlobal(_f0oPtr))
+        CPyMarshal.WriteIntField(_f0oPtr, PyStringObject, "ob_refcnt", 1)
+        CPyMarshal.WritePtrField(_f0oPtr, PyStringObject, "ob_type", klassPtr)
+        CPyMarshal.WriteIntField(_f0oPtr, PyStringObject, "ob_size", 3)
+        dataPtr = CPyMarshal.Offset(_f0oPtr, Marshal.OffsetOf(PyStringObject, "ob_sval"))
+        for char in 'f\0o\0':
+            CPyMarshal.WriteByte(dataPtr, ord(char))
+            dataPtr = CPyMarshal.Offset(dataPtr, 1)
+            
+        _f0o = mapper.Retrieve(_f0oPtr)
+        self.assertEquals(_f0o == 'f\0o', True)
+        self.assertEquals('f\0o' == _f0o, True)
+        
 
 
 class TypeDictTest(TestCase):

@@ -263,15 +263,6 @@ class Dispatcher(object):
             self._cleanup(instancePtr, argPtr, resultPtr)
 
     @lock
-    def method_hashfunc(self, name, instance):
-        instancePtr = self._store(instance)
-        result = self.table[name](instancePtr)
-        try:
-            return self._return(result)
-        finally:
-            self._cleanup(instancePtr)
-
-    @lock
     def method_cmpfunc(self, name, instance, arg):
         instancePtr, argPtr = map(self._store, [instance, arg])
         result = self.table[name](instancePtr, argPtr)
@@ -279,6 +270,15 @@ class Dispatcher(object):
             return self._return(result)
         finally:
             self._cleanup(instancePtr, argPtr)
+
+    @lock
+    def method_hashfunc(self, name, instance):
+        instancePtr = self._store(instance)
+        result = self.table[name](instancePtr)
+        try:
+            return self._return(result)
+        finally:
+            self._cleanup(instancePtr)
 
     @lock
     def method_ssizeobjarg(self, name, instance, i, arg):

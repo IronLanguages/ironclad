@@ -171,12 +171,12 @@ namespace Ironclad
             // c extension type. 
         }
 
-	    public override void
-	    Fill_PyCFunction_Type(IntPtr ptr)
-	    {
-	        // this does nothing: when we encounter a cfunction, we interpret it like any 
-	        // c extension
-	    }
+        public override void
+        Fill_PyCFunction_Type(IntPtr ptr)
+        {
+            // this does nothing: when we encounter a cfunction, we interpret it like any 
+            // c extension
+        }
 
         private void
         AddNumberMethodsWithoutIndex(IntPtr typePtr)
@@ -304,6 +304,11 @@ namespace Ironclad
             if (Builtin.issubclass(type_, TypeCache.Int32))
             {
                 args = new object[] { CPyMarshal.ReadIntField(ptr, typeof(PyIntObject), "ob_ival") };
+            }
+            if (Builtin.issubclass(type_, TypeCache.String))
+            {
+                string strval = this.ReadPyString(ptr);
+                args = new object[] { strval };
             }
             
             object obj = PythonCalls.Call(actualiser, args);
