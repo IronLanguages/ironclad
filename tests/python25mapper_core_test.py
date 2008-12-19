@@ -78,7 +78,7 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
         
         calls = []
         def Del(instancePtr):
-            calls.append("del")
+            calls.append(("del", instancePtr))
             mapper.PyObject_Free(instancePtr)
         typeSpec = {
             'tp_name': 'klass',
@@ -88,12 +88,15 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
         mapper.PyModule_AddObject(modulePtr, 'klass', typePtr)
         
         easyptr = mapper.Store(123)
-        instance = module.klass()
-        hardptr = mapper.Store(instance)
+        instance1 = module.klass()
+        hardptr = mapper.Store(instance1)
+        instance2 = module.klass()
+        brokenptr = mapper.Store(instance2)
+        CPyMarshal.WritePtrField(brokenptr, PyObject, 'ob_type', IntPtr.Zero)
         
         mapper.Dispose()
         self.assertEquals(frees.index(hardptr) < frees.index(easyptr), True, "failed to dealloc in correct order")
-        self.assertEquals(calls, ['del'], "failed to clean up klass instance")
+        self.assertEquals(calls, [('del', hardptr)], "failed to clean up klass instance")
         
         deallocType()
         deallocTypes()
