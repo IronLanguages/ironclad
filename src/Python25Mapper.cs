@@ -134,6 +134,10 @@ namespace Ironclad
                 // note: SuppressFinalize won't work on ipy objects, but is required for OpaquePyCObjects.
                 GC.SuppressFinalize(this.Retrieve(ptr));
                 IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
+                if (typePtr == IntPtr.Zero)
+                {
+                    return;
+                }
                 CPython_destructor_Delegate dealloc = (CPython_destructor_Delegate)
                     CPyMarshal.ReadFunctionPtrField(
                         typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(CPython_destructor_Delegate));
