@@ -46,20 +46,6 @@ namespace Ironclad
             }
         }
         
-        public static object
-        ImportReflected(CodeContext ctx, string name)
-        {
-            MethodInfo _importMethod = typeof(Importer).GetMethod(
-                "ImportReflected", BindingFlags.NonPublic | BindingFlags.Static);
-            try
-            {
-                return _importMethod.Invoke(null, new object[] { ctx, name });
-            }
-            catch (Exception e)
-            {
-                throw e.GetBaseException();
-            }
-        }
         
         public static object
         GetPythonException(System.Exception clrException)

@@ -1,67 +1,36 @@
+import sys
+import os
 
-import ihooks
-import imp
+def loader(path):
+    class Loader(object):
+        def load_module(self, name):
+            if name not in sys.modules:
+                _mapper.LoadModule(path, name)
+                module = _mapper.GetModule(name)
+                module.__file__ = path
+                sys.modules[name] = module
+                if '.' in name:
+                    parent_name, child_name = name.rsplit('.', 1)
+                    setattr(sys.modules[parent_name], child_name, module)
+            return sys.modules[name]
+    return Loader()
 
-CLR_MODULE = object()
-
-class _IroncladHooks(ihooks.Hooks):
-
-    def get_suffixes(self):
-        suffixes = [('.pyd', 'rb', imp.C_EXTENSION)]
-        suffixes.extend(imp.get_suffixes())
-        return suffixes
-
-    def load_dynamic(self, name, filename, file):
-        _mapper.LoadModule(filename, name)
-        module = _mapper.GetModule(name)
-        self.modules_dict()[name] = module
-        return module
-
-
-class _IroncladModuleLoader(ihooks.ModuleLoader):
-    
-    def find_module(self, name, path=None):
-        if name == 'numpy' or name.startswith('numpy.'):
+class MetaImporter(object):
+    def find_module(self, fullname, path=None):
+        if fullname == 'numpy' or fullname.startswith('numpy.'):
             _mapper.PerpetrateNumpyFixes()
-        if name == '_hashlib':
-            # _hashlib has strange problems, but hashlib can handle 
-            # an ImportError on _hashlib import
-            raise ImportError()
-        if _mapper.IsClrModule(name):
-            return None, None, CLR_MODULE
-        return ihooks.ModuleLoader.find_module(self, name, path)
+        if fullname in ('_hashlib', 'ctypes'):
+            raise ImportError('%s is not available in ironclad yet' % fullname)
 
+        lastname = fullname.rsplit('.', 1)[-1]
+        for d in (path or sys.path):
+            pyd = os.path.join(d, lastname + '.pyd')
+            if os.path.exists(pyd):
+                return loader(pyd)
 
-    def load_module(self, name, stuff):
-        file, filename, info = stuff
-        if info is CLR_MODULE:
-            return _mapper.LoadClrModule(name)
-        return ihooks.ModuleLoader.load_module(self, name, stuff)
-        
-
-class _IroncladModuleImporter(ihooks.ModuleImporter):
-
-    # copied from ihooks.py
-    def determine_parent(self, globals):
-        if not globals or not '__name__' in globals:
-            return None
-        pname = globals['__name__']
-        if '__path__' in globals:
-            parent = self.modules[pname]
-            # 'assert globals is parent.__dict__' always fails --
-            # but the underlying data store is actually the same
-            assert len(globals) == len(parent.__dict__)
-            for (k, v) in globals.iteritems():
-                assert parent.__dict__[k] is v
-            return parent
-        if '.' in pname:
-            i = pname.rfind('.')
-            pname = pname[:i]
-            parent = self.modules[pname]
-            assert parent.__name__ == pname
-            return parent
         return None
 
-_importer = _IroncladModuleImporter(_IroncladModuleLoader())
-_importer.set_hooks(_IroncladHooks())
-_importer.install()
+
+sys.meta_path = [MetaImporter()]
+
+

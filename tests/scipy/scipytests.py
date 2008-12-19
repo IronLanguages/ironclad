@@ -25,10 +25,8 @@ def fake__init__(self):
     sys._getframe = original
 PackageLoader.__init__ = fake__init__
 
-print "importing scipy"
-import scipy
-print "finished import"
 
+import scipy
 numpy_path = r"C:\Python25\Lib\site-packages\scipy"
 dirs = ['linalg']
 
