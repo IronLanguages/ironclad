@@ -15,9 +15,9 @@ using Microsoft.Scripting.Runtime;
 
 using Ironclad.Structs;
 
+
 namespace Ironclad
 {
-
     public enum UnmanagedDataMarker
     {
         PyStringObject,
@@ -185,6 +185,16 @@ namespace Ironclad
         Alive
         {
             get { return this.alive; }
+        }
+        
+        public int GCThreshold
+        {
+            get {
+                return this.map.GCThreshold;
+            }
+            set {
+                this.map.GCThreshold = value;
+            }
         }
         
         public IntPtr 

@@ -343,6 +343,9 @@ class Python25Mapper_References_Test(TestCase):
         mapper = Python25Mapper(allocator)
         deallocTypes = CreateTypes(mapper)
 
+        # force no throttling of cleanup
+        mapper.GCThreshold = 0
+        
         obj = object()
         objref = WeakReference(obj)
         # need to use same allocator as mapper, otherwise it gets upset on shutdown
@@ -350,8 +353,6 @@ class Python25Mapper_References_Test(TestCase):
         CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 2)
         CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
         mapper.StoreBridge(ptr, obj)
-        for _ in range(50):
-            mapper.CheckBridgePtrs()
         
         # refcount > 1 means ref should have been strengthened
         del obj
@@ -359,8 +360,7 @@ class Python25Mapper_References_Test(TestCase):
         self.assertEquals(objref.IsAlive, True, "was reaped unexpectedly (refcount was 2)")
         
         CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
-        for _ in range(50):
-            mapper.CheckBridgePtrs()
+        mapper.CheckBridgePtrs()
         
         # refcount < 2 should have been weakened
         obj = objref.Target

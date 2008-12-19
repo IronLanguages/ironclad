@@ -29,14 +29,15 @@ namespace Ironclad
         private Dictionary<object, WeakReference> id2ref = new Dictionary<object, WeakReference>();
         private Dictionary<object, bool> id2reffed = new Dictionary<object, bool>();
         private StupidSet strongrefs = new StupidSet();
-        private int cbpThrottle = 0;
+        
+        private int cbpCount = 0;
+        private int cbpRegulator = 500;
     
         public void Associate(IntPtr ptr, object obj)
         {
             object id = Builtin.id(obj);
             this.ptr2id[ptr] = id;
             this.id2ptr[id] = ptr;
-            
             this.id2obj[id] = obj;
         }
         
@@ -72,15 +73,27 @@ namespace Ironclad
             }
         }
         
+        public int GCThreshold
+        {
+            get {
+                return this.cbpRegulator;
+            }
+            set {
+                this.cbpRegulator = value;
+            }
+        }
+        
         public void CheckBridgePtrs()
         {
-            this.cbpThrottle += 1;
-            if (this.cbpThrottle < 50)
+            // throttling and forced GC not tested; couldn't work out how
+            this.cbpCount += 1;
+            if (this.cbpCount < this.cbpRegulator)
             {
                 return;
             }
-            this.cbpThrottle = 0;
+            this.cbpCount = 0;
             this.MapOverBridgePtrs(new PtrFunc(this.UpdateStrength));
+            GC.Collect();
         }
         
         public void MapOverBridgePtrs(PtrFunc f)
