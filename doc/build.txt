@@ -2,7 +2,7 @@ Ironclad's build process deserves a brief discussion.
 
 32-BIT WINDOWS REQUIREMENTS:
 
-* IronPython 2.0 release candidate 2 (2.0.0.0)
+* IronPython 2.0 final (2.0.0.0)
 * mingw or cygwin (including gcc and make) 
 * pexports
 * nasm

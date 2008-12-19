@@ -77,6 +77,12 @@ equality: this may occasionally lead to us storing more objects than we strictly
 need to, but it also prevents potentially costly code being executed in the course 
 of what should be simple bookkeeping.
 
+The GCThreshold setting controls how frequently we update objects' reference
+strengths and force garbage collection; it's accessible via the ironclad module's
+set_gc_threshold function. Low values cause aggressive cleanup, and hence slower
+execution; high values lead to faster execution, but may cause out-of-memory errors
+if lots of short-lived objects are being created.
+
 ClassBuilder/CallableBuilder
 
 Generates IronPython code to create a class from a PyTypeObject pointer (and an

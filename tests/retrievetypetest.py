@@ -1197,6 +1197,9 @@ class NewInitDelTest(TestCase):
         allocator = HGlobalAllocator()
         mapper = Python25Mapper(allocator)
         deallocTypes = CreateTypes(mapper)
+
+        # force no throttling of cleanup
+        mapper.GCThreshold = 0
         
         def tp_dealloc(instancePtr_dealloc):
             calls.append("tp_dealloc")
@@ -1245,8 +1248,7 @@ class NewInitDelTest(TestCase):
         mapper.DecRef(instancePtr)
         self.assertEquals(calls, ['tp_new', 'tp_init'])
         
-        for _ in range(50):
-            mapper.CheckBridgePtrs()
+        mapper.CheckBridgePtrs()
         del instance
         gcwait()
         self.assertEquals(calls, ['tp_new', 'tp_init', 'tp_dealloc'])
