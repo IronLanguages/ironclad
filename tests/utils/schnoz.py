@@ -8,21 +8,19 @@ from unittest import TestCase, TestResult
 
 class Schnoz(object):
     def __init__(self, name, lib_path, data_dir):
-	self.dirname = []
-	self.name = name
-	self.path = lib_path
-	self.blacklist_path = os.path.join(data_dir, '%s_test_blacklist' % name)
-	self.continuation_path = os.path.join(data_dir, '%s_continuation' % name)
-	self.test_blacklist = []
-	self.read_into_blacklist(self.test_blacklist, self.blacklist_path)
+        self.dirname = []
+        self.name = name
+        self.path = lib_path
+        self.blacklist_path = os.path.join(data_dir, '%s_test_blacklist' % name)
+        self.continuation_path = os.path.join(data_dir, '%s_continuation' % name)
+        self.test_blacklist = []
+        self.read_into_blacklist(self.test_blacklist, self.blacklist_path)
 
 
     def import_test_module(self, direc, mod_name):
-	full_name = '%s.%s.tests.%s' % (self.name, direc, mod_name)
-	print "importing", full_name
-	package = __import__(full_name)
-	print "finished importing"
-	return reduce(getattr, [direc, 'tests', mod_name], package)
+        full_name = '%s.%s.tests.%s' % (self.name, direc, mod_name)
+        package = __import__(full_name)
+        return reduce(getattr, [direc, 'tests', mod_name], package)
 
 
     def read_into_blacklist(self, blacklist, filename):
@@ -32,21 +30,21 @@ class Schnoz(object):
         try:
             for line in f:
                 line = line.split('#')[0].strip()
-		if not line:
-		    continue
+                if not line:
+                    continue
                 blacklist.append(line)
         finally:
             f.close()
 
 
     def run_single_test(self, test_path, runner=None):
-	package_name, mod_name, class_name, test_name = test_path
-	module = import_test_module(package_name, mod_name)
-	klass = getattr(module, class_name)
-	test_path = (package_name, mod_name, class_name, test_name)
-	if not runner(klass(test_name), test_path):
-	    ironclad.shutdown()
-	    sys.exit(1)
+        package_name, mod_name, class_name, test_name = test_path
+        module = import_test_module(package_name, mod_name)
+        klass = getattr(module, class_name)
+        test_path = (package_name, mod_name, class_name, test_name)
+        if not runner(klass(test_name), test_path):
+            ironclad.shutdown()
+            sys.exit(1)
 
 
     def blacklist_on_fail(self, test_case, test_path):
@@ -67,9 +65,9 @@ class Schnoz(object):
 
 
     def run_test_case(self, test_case, test_path):
-	print '.'.join(test_path), '...   ',
-	self.save_continuation_point(test_path)
-	try:
+        print '.'.join(test_path), '...   ',
+        self.save_continuation_point(test_path)
+        try:
             result = TestResult()
             test_case.run(result)
             if result.errors:
@@ -124,7 +122,7 @@ class Schnoz(object):
 
 
     def get_all_tests(self):
-	return self.get_matching_tests(())
+        return self.get_matching_tests(())
 
     def get_matching_tests(self, path):
         package_names, mod_names, class_names, input_test_names = (tuple([comp] for comp in path) + ([], [], [], []))[0:4]
@@ -210,7 +208,7 @@ class Schnoz(object):
             f.close()
     
     def main(self, dirs):
-	self.dirs = dirs
+        self.dirs = dirs
         args = sys.argv[1:]
         runner = self.run_test_case
         previous_test = None

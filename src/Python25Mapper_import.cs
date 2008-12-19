@@ -100,24 +100,6 @@ namespace Ironclad
             }
         }
         
-        public bool
-        IsClrModule(CodeContext ctx, string name)
-        {
-            object result;
-            PythonContext pc = PythonContext.GetContext(ctx);
-            if (pc.DomainManager.Globals.TryGetName(SymbolTable.StringToId(name), out result))
-            {
-                return true;
-            }
-            return false;
-        }
-        
-        public object
-        LoadClrModule(CodeContext ctx, string name)
-        {
-            return InappropriateReflection.ImportReflected(ctx, name);
-        }
-
         public void
         PerpetrateNumpyFixes()
         {
@@ -128,7 +110,7 @@ namespace Ironclad
             this.appliedNumpyHack = true;
             
             Console.WriteLine("Detected numpy import");
-            Console.WriteLine("  faking out modules: ctypes, mmap, nosetester, parser");
+            Console.WriteLine("  faking out modules: mmap, nosetester, parser");
             this.CreateModule("parser");
             this.CreateModule("mmap");
 
@@ -141,11 +123,7 @@ namespace Ironclad
             ScopeOps.__setattr__(nosetester, "run_module_suite", new Object());
             ScopeOps.__setattr__(nosetester, "get_package_name", new Object());
           
-            // ctypeslib specifically handles ctypes being None
             Scope sys = this.python.SystemState;
-            PythonDictionary modules = (PythonDictionary)ScopeOps.__getattribute__(sys, "modules");
-            modules["ctypes"] = null;
-
             // this should be fixed in ipy at some point
             ScopeOps.__setattr__(sys, "__displayhook__",
                 ScopeOps.__getattribute__(sys, "displayhook"));
