@@ -16,6 +16,9 @@ _mapper = Python25Mapper(os.path.join(_dirname, "python25.dll"))
 
 def shutdown():
     _mapper.Dispose()
+    from System import GC
+    GC.Collect()
+    GC.WaitForPendingFinalizers()
 
 
 # various useful functions
