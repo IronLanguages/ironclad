@@ -16,9 +16,7 @@ _mapper = Python25Mapper(os.path.join(_dirname, "python25.dll"))
 
 def shutdown():
     _mapper.Dispose()
-    from System import GC
-    GC.Collect()
-    GC.WaitForPendingFinalizers()
+    gcwait()
 
 
 # various useful functions
@@ -41,5 +39,10 @@ def dump(obj, size=None):
 def set_gc_threshold(value):
     _mapper.GCThreshold = value
 
-def get_gc_threshold(value):
+def get_gc_threshold():
     return _mapper.GCThreshold
+
+def gcwait():
+    from System import GC
+    GC.Collect()
+    GC.WaitForPendingFinalizers()
