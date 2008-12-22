@@ -19,21 +19,20 @@ namespace Ironclad
         public void Load(string path)
         {
             IntPtr l = Unmanaged.LoadLibrary(path);
-	    if (l == IntPtr.Zero)
-	    {
-		throw new Exception(
-		    String.Format("Could not load library {0}. Error code:{1}", path, Unmanaged.GetLastError()));
-	    }
+            if (l == IntPtr.Zero)
+            {
+                throw new Exception(
+                    String.Format("Could not load library '{0}' . Error code:{1}", path, Unmanaged.GetLastError()));
+            }
 
             this.handles.Add(l);
-	    string funcName = "init" + Path.GetFileNameWithoutExtension(path);
-
-	    IntPtr funcPtr = Unmanaged.GetProcAddress(l, funcName);
-	    if (funcPtr == IntPtr.Zero)
-	    {
-		throw new Exception( 
-		    String.Format("Could not find module init function {0} in dll {1}", funcName, path));
-	    }
+            string funcName = "init" + Path.GetFileNameWithoutExtension(path);
+            IntPtr funcPtr = Unmanaged.GetProcAddress(l, funcName);
+            if (funcPtr == IntPtr.Zero)
+            {
+                throw new Exception( 
+                    String.Format("Could not find module init function {0} in dll {1}", funcName, path));
+            }
 
             PydInit_Delegate initmodule = (PydInit_Delegate)Marshal.GetDelegateForFunctionPointer(funcPtr, typeof(PydInit_Delegate));
             initmodule();
@@ -48,12 +47,12 @@ namespace Ironclad
         {
             if (this.alive)
             {
+                this.alive = false;
                 foreach (IntPtr l in this.handles)
                 {
                     Unmanaged.FreeLibrary(l);
                 }
                 this.handles.Clear();
-                this.alive = false;
             }
         }
         
