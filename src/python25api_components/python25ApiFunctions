@@ -441,8 +441,6 @@ PyParser_ParseStringFlags
 PyParser_ParseFileFlags
 PyParser_ParseStringFlagsFilename
 PyParser_SetError
-Py_GCC_ATTRIBUTE
-Py_GCC_ATTRIBUTE
 PyArena_New
 PyArena_Free
 PyArena_Malloc
@@ -464,7 +462,6 @@ PyErr_SetFromErrno
 PyErr_SetFromErrnoWithFilenameObject
 PyErr_SetFromErrnoWithFilename
 PyErr_SetFromErrnoWithUnicodeFilename
-Py_GCC_ATTRIBUTE
 PyErr_SetFromWindowsErrWithFilenameObject
 PyErr_SetFromWindowsErrWithFilename
 PyErr_SetFromWindowsErrWithUnicodeFilename
@@ -509,8 +506,6 @@ PyUnicodeTranslateError_GetReason
 PyUnicodeEncodeError_SetReason
 PyUnicodeDecodeError_SetReason
 PyUnicodeTranslateError_SetReason
-Py_GCC_ATTRIBUTE
-Py_GCC_ATTRIBUTE
 _PyOS_GetOpt
 PyMem_Malloc
 PyMem_Realloc
@@ -679,8 +674,6 @@ PySys_SetObject
 PySys_GetFile
 PySys_SetArgv
 PySys_SetPath
-Py_GCC_ATTRIBUTE
-Py_GCC_ATTRIBUTE
 PySys_ResetWarnOptions
 PySys_AddWarnOption
 _PyTime_DoubleToTimet
