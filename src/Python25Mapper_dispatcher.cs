@@ -27,14 +27,11 @@ namespace Ironclad
         private void CreateDispatcherModule()
         {   
             PythonDictionary globals = new PythonDictionary();
-            globals["IntPtr"] = typeof(IntPtr);
-            globals["CPyMarshal"] = typeof(CPyMarshal);
             globals["EnsureGIL"] = new VoidVoidDgt(this.EnsureGIL);
             globals["ReleaseGIL"] = new VoidVoidDgt(this.ReleaseGIL);
-            globals["NullReferenceException"] = typeof(NullReferenceException);
             
             this.dispatcherModule = new Scope(globals);
-            this.ExecInModule(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE, this.dispatcherModule);
+            this.ExecInModule(CodeSnippets.USEFUL_IMPORTS, this.dispatcherModule);
             this.ExecInModule(CodeSnippets.DISPATCHER_MODULE_CODE, this.dispatcherModule);
             this.dispatcherClass = ScopeOps.__getattribute__(this.dispatcherModule, "Dispatcher");
         }
