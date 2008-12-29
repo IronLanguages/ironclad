@@ -32,12 +32,9 @@ namespace Ironclad
             globals["__doc__"] = doc;
             globals["__name__"] = name;
             globals["_dispatcher"] = moduleDispatcher;
-            globals["IntPtr"] = typeof(IntPtr);
-            globals["CPyMarshal"] = typeof(CPyMarshal);
-            globals["NullReferenceException"] = typeof(NullReferenceException);
 
             StringBuilder moduleCode = new StringBuilder();
-            moduleCode.Append(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE); // eww
+            moduleCode.Append(CodeSnippets.USEFUL_IMPORTS);
             CallableBuilder.GenerateFunctions(moduleCode, methodsPtr, methodTable);
 
             Scope module = new Scope(globals);
@@ -150,12 +147,10 @@ namespace Ironclad
         CreateScratchModule()
         {
             PythonDictionary globals = new PythonDictionary();
-            globals["IntPtr"] = typeof(IntPtr);
-            globals["CPyMarshal"] = typeof(CPyMarshal);
             globals["_mapper"] = this;
             
             this.scratchModule = new Scope(globals);
-            this.ExecInModule(CodeSnippets.FIX_CPyMarshal_RuntimeType_CODE, this.scratchModule);
+            this.ExecInModule(CodeSnippets.USEFUL_IMPORTS, this.scratchModule);
             this.scratchContext = new CodeContext(this.scratchModule, this.python);
         }
     }
