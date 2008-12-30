@@ -10,10 +10,17 @@ Software is furnished to do so, subject to the following
 conditions:
 
 Portions Copyright (c)
-2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Python Software Foundation; 
+2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Python Software 
+Foundation; 
 All Rights Reserved
 
-Some of the contents of some C files from the Python 2.5.2 source release are included herein; in all cases, the parts copied are either Python C API functions (and associated helper functions), or declarations and defines necessary to compile the aforementioned functions. The functions' implementations have not been changed, and the intent of all supporting changes is to preserve apparent behaviour while removing currently-irrelevant information.
+Some of the contents of some C files from the Python 2.5.2 source 
+release are included herein; in all cases, the parts copied are 
+either Python C API functions (and associated helper functions), 
+or declarations and defines necessary to compile the aforementioned 
+functions. The functions' implementations have not been changed, 
+and the intent of all supporting changes is to preserve apparent 
+behaviour while removing currently-irrelevant information.
 
 Portions Copyright (c) Microsoft Corporation. All Rights Reserved.
 

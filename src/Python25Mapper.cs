@@ -8,6 +8,7 @@ using System.Threading;
 using IronPython.Hosting;
 using IronPython.Runtime;
 using IronPython.Runtime.Operations;
+using IronPython.Runtime.Types;
 
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
@@ -50,6 +51,8 @@ namespace Ironclad
 
         private Scope scratchModule;
         private CodeContext scratchContext;
+        
+        private object removeMetaImporter;
         
         private Scope dispatcherModule;
         private object dispatcherClass;
@@ -117,6 +120,7 @@ namespace Ironclad
                 
                 // TODO: work out why this line causes leakage
                 this.ExecInModule(CodeSnippets.INSTALL_IMPORT_HOOK_CODE, this.scratchModule);
+                this.removeMetaImporter = ScopeOps.__getattribute__(this.scratchModule, "remove_meta_importer");
             }
             this.alive = true;
         }
@@ -164,6 +168,7 @@ namespace Ironclad
                 }
                 if (this.stub != null)
                 {
+                    PythonCalls.Call(this.removeMetaImporter);
                     this.importer.Dispose();
                     this.stub.Dispose();
                 }
