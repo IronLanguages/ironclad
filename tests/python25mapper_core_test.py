@@ -386,6 +386,11 @@ class Python25Mapper_References_Test(TestCase):
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyListObject))
 
 
+    @WithMapper
+    def testStoreNullObject(self, mapper, _):
+        self.assertEquals(mapper.Store(mapper.NullObject), IntPtr.Zero)
+
+
     def testRefCountIncRefDecRef(self):
         frees = []
         allocator = GetAllocatingTestAllocator([], frees)
