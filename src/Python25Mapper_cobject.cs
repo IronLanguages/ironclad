@@ -56,8 +56,8 @@ namespace Ironclad
         {
             if (CPyMarshal.ReadPtrField(cobjPtr, typeof(PyCObject), "destructor") != IntPtr.Zero)
             {
-                CPython_destructor_Delegate destructor = (CPython_destructor_Delegate)
-                    CPyMarshal.ReadFunctionPtrField(cobjPtr, typeof(PyCObject), "destructor", typeof(CPython_destructor_Delegate));
+                dgt_void_ptr destructor = (dgt_void_ptr)
+                    CPyMarshal.ReadFunctionPtrField(cobjPtr, typeof(PyCObject), "destructor", typeof(dgt_void_ptr));
                 destructor(CPyMarshal.ReadPtrField(cobjPtr, typeof(PyCObject), "cobject"));
             }
             PyObject_Free_Delegate free = (PyObject_Free_Delegate)

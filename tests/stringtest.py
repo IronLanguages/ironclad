@@ -8,7 +8,7 @@ from tests.utils.typetestcase import TypeTestCase
 
 from System import Array, Byte, Char, IntPtr, OutOfMemoryException
 from System.Runtime.InteropServices import Marshal
-from Ironclad import CPyMarshal, CPython_binaryfunc_Delegate, Python25Mapper
+from Ironclad import CPyMarshal, dgt_ptr_ptrptr, Python25Mapper
 from Ironclad.Structs import PyStringObject, PyTypeObject, PySequenceMethods
 
 
@@ -411,7 +411,7 @@ class PyString_OtherMethodsTest(TestCase):
     @WithMapper
     def testConcat(self, mapper, _):
         sqPtr = CPyMarshal.ReadPtrField(mapper.PyString_Type, PyTypeObject, "tp_as_sequence")
-        concat = CPyMarshal.ReadFunctionPtrField(sqPtr, PySequenceMethods, "sq_concat", CPython_binaryfunc_Delegate)
+        concat = CPyMarshal.ReadFunctionPtrField(sqPtr, PySequenceMethods, "sq_concat", dgt_ptr_ptrptr)
         strs = ('', 'abc', '\0xo')
         for s1 in strs:
             for s2 in strs:

@@ -12,12 +12,3 @@ def MakeAndAddEmptyModule(mapper):
         12345
     )
     return modulePtr
-        
-
-class TempPtrCheckingPython25Mapper(Python25Mapper):
-    def __init__(self, *args):
-        Python25Mapper.__init__(self, *args)
-        self.tempPtrsFreed = False
-    def FreeTemps(self):
-        Python25Mapper.FreeTemps(self)
-        self.tempPtrsFreed = True

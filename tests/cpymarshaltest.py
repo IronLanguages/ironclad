@@ -7,7 +7,7 @@ from tests.utils.testcase import TestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, CPython_initproc_Delegate, DoubleStruct
+from Ironclad import CPyMarshal, dgt_int_ptrptrptr, DoubleStruct
 from Ironclad.Structs import PyObject, PyFloatObject, PyTypeObject
 
 class CPyMarshalTest_32(TestCase):
@@ -139,11 +139,11 @@ class CPyMarshalTest_32(TestCase):
         def TestFunc(selfPtr, argsPtr, kwargsPtr):
             calls.append((selfPtr, argsPtr, kwargsPtr))
             return 123
-        self.testDgt = CPython_initproc_Delegate(TestFunc)
+        self.testDgt = dgt_int_ptrptrptr(TestFunc)
         CPyMarshal.WriteFunctionPtrField(data, PyTypeObject, "tp_init", self.testDgt)
         
         writtenFP = CPyMarshal.ReadPtrField(data, PyTypeObject, "tp_init")
-        writtenDgt = Marshal.GetDelegateForFunctionPointer(writtenFP, CPython_initproc_Delegate)
+        writtenDgt = Marshal.GetDelegateForFunctionPointer(writtenFP, dgt_int_ptrptrptr)
         
         args = (IntPtr(111), IntPtr(222), IntPtr(333))
         self.assertEquals(writtenDgt(*args), 123, "not hooked up")
@@ -158,10 +158,10 @@ class CPyMarshalTest_32(TestCase):
         def TestFunc(selfPtr, argsPtr, kwargsPtr):
             calls.append((selfPtr, argsPtr, kwargsPtr))
             return 123
-        self.testDgt = CPython_initproc_Delegate(TestFunc)
+        self.testDgt = dgt_int_ptrptrptr(TestFunc)
         CPyMarshal.WriteFunctionPtrField(data, PyTypeObject, "tp_init", self.testDgt)
         
-        readDgt = CPyMarshal.ReadFunctionPtrField(data, PyTypeObject, "tp_init", CPython_initproc_Delegate)
+        readDgt = CPyMarshal.ReadFunctionPtrField(data, PyTypeObject, "tp_init", dgt_int_ptrptrptr)
         
         args = (IntPtr(111), IntPtr(222), IntPtr(333))
         self.assertEquals(readDgt(*args), 123, "not hooked up")

@@ -143,7 +143,7 @@ class SequenceIterationTest(TestCase):
             mapper.LastException = IndexError("no. not yours.")
             return IntPtr.Zero
         def sq_length(instancePtr):
-            return mapper.Store(3)
+            return 3
 
         seqPtr, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {"sq_item": sq_item, "sq_length": sq_length})
         addToCleanUp(deallocSeq)

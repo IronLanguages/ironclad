@@ -52,8 +52,6 @@ namespace Ironclad
         private Scope scratchModule;
         private CodeContext scratchContext;
         private object removeMetaImporter;
-        private Scope dispatcherModule;
-        private object dispatcherClass;
         private object kindaDictProxyClass;
         private Lock GIL;
 
@@ -68,7 +66,6 @@ namespace Ironclad
         private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();
         private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
         private List<IntPtr> tempObjects = new List<IntPtr>();
-        private object nullObject = new object();
 
         private LocalDataStoreSlot threadDictStore = Thread.AllocateDataSlot();
         private LocalDataStoreSlot threadLockStore = Thread.AllocateDataSlot();
@@ -108,7 +105,6 @@ namespace Ironclad
             
             this.CreateScratchModule();
             this.CreateKindaDictProxy();
-            this.CreateDispatcherModule();
             
             if (stubPath != null)
             {
@@ -141,9 +137,9 @@ namespace Ironclad
                 {
                     return;
                 }
-                CPython_destructor_Delegate dealloc = (CPython_destructor_Delegate)
+                dgt_void_ptr dealloc = (dgt_void_ptr)
                     CPyMarshal.ReadFunctionPtrField(
-                        typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(CPython_destructor_Delegate));
+                        typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(dgt_void_ptr));
                 dealloc(ptr);
             }
             catch
@@ -158,7 +154,6 @@ namespace Ironclad
             if (this.alive)
             {
                 this.alive = false;
-                this.StopDispatchingDeletes();
                 this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
                 this.allocator.FreeAll();
                 foreach (IntPtr FILE in this.FILEs.Values)
@@ -194,12 +189,6 @@ namespace Ironclad
         {
             get { return this.alive; }
         }
-
-        public object
-        NullObject
-        {
-            get { return this.nullObject; }
-        }
         
         public int GCThreshold
         {
@@ -222,10 +211,6 @@ namespace Ironclad
             {
                 this.IncRef(this._Py_NoneStruct);
                 return this._Py_NoneStruct;
-            }
-            if (obj == this.NullObject)
-            {
-                return IntPtr.Zero;
             }
             if (this.map.HasObj(obj))
             {
@@ -388,9 +373,9 @@ namespace Ironclad
                     {
                         if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_dealloc") != IntPtr.Zero)
                         {
-                            CPython_destructor_Delegate deallocDgt = (CPython_destructor_Delegate)
+                            dgt_void_ptr deallocDgt = (dgt_void_ptr)
                                 CPyMarshal.ReadFunctionPtrField(
-                                    typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(CPython_destructor_Delegate));
+                                    typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(dgt_void_ptr));
                             deallocDgt(ptr);
                             return;
                         }
@@ -474,37 +459,37 @@ namespace Ironclad
             switch (name)
             {
                 case "PyBaseObject_Dealloc":
-                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyBaseObject_Dealloc);
+                    this.dgtMap[name] = new dgt_void_ptr(this.PyBaseObject_Dealloc);
                     break;
                 case "PyBaseObject_Init":
-                    this.dgtMap[name] = new CPython_initproc_Delegate(this.PyBaseObject_Init);
+                    this.dgtMap[name] = new dgt_int_ptrptrptr(this.PyBaseObject_Init);
                     break;
                 case "PyCObject_Dealloc":
-                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyCObject_Dealloc);
+                    this.dgtMap[name] = new dgt_void_ptr(this.PyCObject_Dealloc);
                     break;
                 case "PyFile_Dealloc":
-                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyFile_Dealloc);
+                    this.dgtMap[name] = new dgt_void_ptr(this.PyFile_Dealloc);
                     break;
                 case "PyFloat_New":
-                    this.dgtMap[name] = new CPythonVarargsKwargsFunction_Delegate(this.PyFloat_New);
+                    this.dgtMap[name] = new dgt_ptr_ptrptrptr(this.PyFloat_New);
                     break;
                 case "PyInt_New":
-                    this.dgtMap[name] = new CPythonVarargsKwargsFunction_Delegate(this.PyInt_New);
+                    this.dgtMap[name] = new dgt_ptr_ptrptrptr(this.PyInt_New);
                     break;
                 case "PyList_Dealloc":
-                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyList_Dealloc);
+                    this.dgtMap[name] = new dgt_void_ptr(this.PyList_Dealloc);
                     break;
                 case "PySlice_Dealloc":
-                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PySlice_Dealloc);
+                    this.dgtMap[name] = new dgt_void_ptr(this.PySlice_Dealloc);
                     break;
                 case "PyTuple_Dealloc":
-                    this.dgtMap[name] = new CPython_destructor_Delegate(this.PyTuple_Dealloc);
+                    this.dgtMap[name] = new dgt_void_ptr(this.PyTuple_Dealloc);
                     break;
                 case "PyString_Str":
-                    this.dgtMap[name] = new CPythonSelfFunction_Delegate(this.PyString_Str);
+                    this.dgtMap[name] = new dgt_ptr_ptr(this.PyString_Str);
                     break;
                 case "PyString_Concat_Core":
-                    this.dgtMap[name] = new CPython_binaryfunc_Delegate(this.PyString_Concat_Core);
+                    this.dgtMap[name] = new dgt_ptr_ptrptr(this.PyString_Concat_Core);
                     break;
                 default:
                     this.unknownNames.Add(name);

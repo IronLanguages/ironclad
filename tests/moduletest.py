@@ -3,29 +3,13 @@ from tests.utils.runtest import makesuite, run
 
 from tests.utils.cpython import MakeItemsTablePtr, MakeMethodDef, MakeTypePtr
 from tests.utils.memory import CreateTypes
-from tests.utils.python25mapper import TempPtrCheckingPython25Mapper, MakeAndAddEmptyModule
+from tests.utils.python25mapper import MakeAndAddEmptyModule
 from tests.utils.testcase import TestCase, WithMapper
 
 from System import IntPtr
 
-from Ironclad import Python25Mapper
+from Ironclad import Dispatcher, Python25Mapper
 from Ironclad.Structs import METH
-
-
-class BorkedException(Exception):
-    pass
-
-
-INSTANCE_PTR = IntPtr(111)
-ARGS_PTR = IntPtr(222)
-KWARGS_PTR = IntPtr(333)
-EMPTY_KWARGS_PTR = IntPtr.Zero
-RESULT_PTR = IntPtr(999)
-ERROR_RESULT_PTR = IntPtr.Zero
-
-
-Null_CPythonVarargsFunction = lambda _, __: IntPtr.Zero
-Null_CPythonVarargsKwargsFunction = lambda _, __, ___: IntPtr.Zero
 
 
 class Py_InitModule4_SetupTest(TestCase):
@@ -34,8 +18,6 @@ class Py_InitModule4_SetupTest(TestCase):
         mapper = Python25Mapper()
         modulePtr = MakeAndAddEmptyModule(mapper)
         module = mapper.Retrieve(modulePtr)
-        
-        Dispatcher = mapper.DispatcherModule.Dispatcher
         _dispatcher = module._dispatcher
         
         self.assertEquals(isinstance(_dispatcher, Dispatcher), True, "wrong dispatcher class")
@@ -88,78 +70,92 @@ class Py_InitModule4_Test(TestCase):
 
     def test_Py_InitModule4_NoArgsFunction(self):
         mapper = Python25Mapper()
-        method, deallocMethod = MakeMethodDef("func", Null_CPythonVarargsFunction, METH.NOARGS)
+        result = object()
+        resultPtr = mapper.Store(result)
+        mapper.IncRef(resultPtr)
+        
+        def func(_, __):
+            self.assertEquals((_, __), (IntPtr.Zero, IntPtr.Zero))
+            return resultPtr
+        method, deallocMethod = MakeMethodDef("func", func, METH.NOARGS)
         
         def testModule(module, mapper):
-            result = object()
-            def dispatch(name):
-                self.assertEquals(name, "func", "called wrong function")
-                return result
-            module._dispatcher.function_noargs = dispatch
-            self.assertEquals(module.func(), result, "didn't use correct _dispatcher method")
-        
+            self.assertEquals(module.func(), result, "not hooked up")
+            
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
         mapper.Dispose()
         deallocMethod()
 
 
     def test_Py_InitModule4_ObjargFunction(self):
-        mapper = TempPtrCheckingPython25Mapper()
-        method, deallocMethod = MakeMethodDef("func", Null_CPythonVarargsFunction, METH.O)
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        arg = object()
+        result = object()
+        resultPtr = mapper.Store(result)
+        mapper.IncRef(resultPtr)
+        
+        def func(_, argPtr):
+            self.assertEquals(_, IntPtr.Zero)
+            self.assertEquals(mapper.Retrieve(argPtr), arg)
+            return resultPtr
+        method, deallocMethod = MakeMethodDef("func", func, METH.O)
         
         def testModule(module, mapper):
-            result = object()
-            actualArg = object()
-            def dispatch(name, arg):
-                self.assertEquals(name, "func", "called wrong function")
-                self.assertEquals(arg, actualArg, "didn't pass arg")
-                return result
-            module._dispatcher.function_objarg = dispatch
-            self.assertEquals(module.func(actualArg), result, "didn't use correct _dispatcher method")
-        
+            self.assertEquals(module.func(arg), result, "not hooked up")
+            
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
         mapper.Dispose()
         deallocMethod()
+        deallocTypes()
 
 
     def test_Py_InitModule4_VarargsFunction(self):
-        mapper = TempPtrCheckingPython25Mapper()
-        method, deallocMethod = MakeMethodDef("func", Null_CPythonVarargsFunction, METH.VARARGS)
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        args = (object(), object())
+        result = object()
+        resultPtr = mapper.Store(result)
+        mapper.IncRef(resultPtr)
+        
+        def func(_, argsPtr):
+            self.assertEquals(_, IntPtr.Zero)
+            self.assertEquals(mapper.Retrieve(argsPtr), args)
+            return resultPtr
+        method, deallocMethod = MakeMethodDef("func", func, METH.VARARGS)
         
         def testModule(module, mapper):
-            result = object()
-            actualArgs = (1, "2", "buckle")
-            def dispatch(name, *args):
-                self.assertEquals(name, "func", "called wrong function")
-                self.assertEquals(args, actualArgs, "didn't pass args")
-                return result
-            module._dispatcher.function_varargs = dispatch
-            self.assertEquals(module.func(*actualArgs), result, "didn't use correct _dispatcher method")
-        
+            self.assertEquals(module.func(*args), result, "not hooked up")
+            
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
         mapper.Dispose()
         deallocMethod()
+        deallocTypes()
 
 
     def test_Py_InitModule4_VarargsKwargsFunction(self):
-        mapper = TempPtrCheckingPython25Mapper()
-        method, deallocMethod = MakeMethodDef("func", Null_CPythonVarargsKwargsFunction, METH.VARARGS | METH.KEYWORDS)
+        mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
+        args = (object(), object())
+        kwargs = {'a': object(), 'b': object()}
+        result = object()
+        resultPtr = mapper.Store(result)
+        mapper.IncRef(resultPtr)
+        
+        def func(_, argsPtr, kwargsPtr):
+            self.assertEquals(_, IntPtr.Zero)
+            self.assertEquals(mapper.Retrieve(argsPtr), args)
+            self.assertEquals(mapper.Retrieve(kwargsPtr), kwargs)
+            return resultPtr
+        method, deallocMethod = MakeMethodDef("func", func, METH.VARARGS | METH.KEYWORDS)
         
         def testModule(module, mapper):
-            result = object()
-            actualArgs = (1, "2", "buckle")
-            actualKwargs = {"my": "shoe"}
-            def dispatch_kwargs(name, *args, **kwargs):
-                self.assertEquals(name, "func", "called wrong function")
-                self.assertEquals(args, actualArgs, "didn't pass args")
-                self.assertEquals(kwargs, actualKwargs, "didn't pass kwargs")
-                return result
-            module._dispatcher.function_kwargs = dispatch_kwargs
-            self.assertEquals(module.func(*actualArgs, **actualKwargs), result, "didn't use _ironclad_dispatch_kwargs")
-        
+            self.assertEquals(module.func(*args, **kwargs), result, "not hooked up")
+            
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
         mapper.Dispose()
         deallocMethod()
+        deallocTypes()
         
         
 class PyModule_Functions_Test(TestCase):

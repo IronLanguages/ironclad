@@ -20,7 +20,7 @@ namespace Ironclad
         public string tp_name = null;
 
         private readonly string[] EASY_TYPE_FIELDS = new string[] { 
-	    "tp_call", "tp_repr", "tp_str", "tp_compare", "tp_hash", "tp_getattr"};
+	    "tp_init", "tp_call", "tp_repr", "tp_str", "tp_compare", "tp_hash", "tp_getattr", "tp_iter", "tp_iternext"};
         private readonly string[] MP_FIELDS = new string[] { "mp_subscript", "mp_ass_subscript", "mp_length" };
         private readonly string[] SQ_FIELDS = new string[] { "sq_item", "sq_concat", "sq_ass_item", "sq_length", "sq_slice", "sq_ass_slice" };
         private readonly string[] NB_FIELDS = new string[] { 
@@ -67,8 +67,7 @@ namespace Ironclad
         {
             string __doc__ = CPyMarshal.ReadCStringField(this.ptr, typeof(PyTypeObject), "tp_doc").Replace("\\", "\\\\");
             this.code.Append(String.Format(CodeSnippets.CLASS_CODE, this.__name__, this.__module__, __doc__));
-            this.ConnectTypeField("tp_new", typeof(Python25Api.PyType_GenericNew_Delegate));
-            this.ConnectTypeField("tp_init", typeof(CPython_initproc_Delegate));
+            this.ConnectTypeField("tp_new", typeof(dgt_ptr_ptrptrptr));
         }
 
         private void
@@ -113,11 +112,9 @@ namespace Ironclad
         {
             this.GenerateProtocolMagicMethods(this.ptr, typeof(PyTypeObject), EASY_TYPE_FIELDS);
             this.GenerateNamedProtocolMagicMethods("tp_as_number", typeof(PyNumberMethods), NB_FIELDS);
-            this.GenerateNamedProtocolMagicMethods("tp_as_mapping", typeof(PyMappingMethods), MP_FIELDS);
             this.GenerateNamedProtocolMagicMethods("tp_as_sequence", typeof(PySequenceMethods), SQ_FIELDS);
-            this.HandleMappingSequenceCollision();
+            this.GenerateNamedProtocolMagicMethods("tp_as_mapping", typeof(PyMappingMethods), MP_FIELDS);
             this.GenerateRichcmpMethods();
-            this.GenerateIterMethods();
             this.UglyComplexHack();
         }
         
@@ -140,9 +137,9 @@ namespace Ironclad
                 getname = String.Format("__get_{0}", getset.name);
                 this.code.Append(String.Format(CodeSnippets.GETTER_METHOD_CODE, getname, this.tablePrefix, getset.closure));
 
-                CPython_getter_Delegate dgt = (CPython_getter_Delegate)
+                dgt_ptr_ptrptr dgt = (dgt_ptr_ptrptr)
                     Marshal.GetDelegateForFunctionPointer(
-                        getset.get, typeof(CPython_getter_Delegate));
+                        getset.get, typeof(dgt_ptr_ptrptr));
                 this.methodTable[this.tablePrefix + getname] = dgt;
             }
 
@@ -151,9 +148,9 @@ namespace Ironclad
                 setname = String.Format("__set_{0}", getset.name);
                 this.code.Append(String.Format(CodeSnippets.SETTER_METHOD_CODE, setname, this.tablePrefix, getset.closure));
 
-                CPython_setter_Delegate dgt = (CPython_setter_Delegate)
+                dgt_int_ptrptrptr dgt = (dgt_int_ptrptrptr)
                     Marshal.GetDelegateForFunctionPointer(
-                        getset.set, typeof(CPython_setter_Delegate));
+                        getset.set, typeof(dgt_int_ptrptrptr));
                 this.methodTable[this.tablePrefix + setname] = dgt;
             }
 
@@ -247,54 +244,12 @@ namespace Ironclad
         }
 
         private void
-        GenerateIterMethods()
-        {
-            Py_TPFLAGS tp_flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(this.ptr, typeof(PyTypeObject), "tp_flags");
-            if ((tp_flags & Py_TPFLAGS.HAVE_ITER) == 0)
-            {
-                return;
-            }
-            if (CPyMarshal.ReadPtrField(this.ptr, typeof(PyTypeObject), "tp_iter") != IntPtr.Zero)
-            {
-                this.code.Append(String.Format(CodeSnippets.ITER_METHOD_CODE, this.tablePrefix));
-                this.ConnectTypeField("tp_iter", typeof(CPythonSelfFunction_Delegate));
-            }
-            if (CPyMarshal.ReadPtrField(this.ptr, typeof(PyTypeObject), "tp_iternext") != IntPtr.Zero)
-            {
-                this.code.Append(String.Format(CodeSnippets.ITERNEXT_METHOD_CODE, this.tablePrefix));
-                this.ConnectTypeField("tp_iternext", typeof(CPythonSelfFunction_Delegate));
-            }
-        }
-
-        private void
         GenerateRichcmpMethods()
         {
             if (CPyMarshal.ReadPtrField(this.ptr, typeof(PyTypeObject), "tp_richcompare") != IntPtr.Zero)
             {
                 this.code.Append(String.Format(CodeSnippets.RICHCMP_METHOD_CODE, tablePrefix));
-                this.ConnectTypeField("tp_richcompare", typeof(CPython_richcmpfunc_Delegate));
-            }
-        }
-
-        private void
-        HandleMappingSequenceCollision()
-        {
-            if (this.methodTable.has_key(this.tablePrefix + "_getitem_sq_item") ||
-                this.methodTable.has_key(this.tablePrefix + "_getitem_mp_subscript"))
-            {
-                this.code.Append(CodeSnippets.GETITEM_CODE);
-            }
-
-            if (this.methodTable.has_key(this.tablePrefix + "_setitem_sq_ass_item") ||
-                this.methodTable.has_key(this.tablePrefix + "_setitem_mp_ass_subscript"))
-            {
-                this.code.Append(CodeSnippets.SETITEM_CODE);
-            }
-
-            if (this.methodTable.has_key(this.tablePrefix + "_len_sq_length") ||
-                this.methodTable.has_key(this.tablePrefix + "_len_mp_length"))
-            {
-                this.code.Append(CodeSnippets.LEN_CODE);
+                this.ConnectTypeField("tp_richcompare", typeof(dgt_ptr_ptrptrint));
             }
         }
         

@@ -271,8 +271,7 @@ namespace Ironclad
         {
             try
             {
-                int length = PythonOps.Length(this.Retrieve(objPtr));
-                return length;
+                return PythonOps.Length(this.Retrieve(objPtr));
             }
             catch (Exception e)
             {

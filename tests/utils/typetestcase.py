@@ -2,7 +2,7 @@
 from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase
 
-from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Api, Python25Mapper
+from Ironclad import CPyMarshal, dgt_void_ptr, Python25Api, Python25Mapper
 from Ironclad.Structs import PyTypeObject
 
 
@@ -20,7 +20,7 @@ class TypeTestCase(TestCase):
 
         objPtr = CreateInstance(mapper, calls)
         deallocDgt = CPyMarshal.ReadFunctionPtrField(
-            getattr(mapper, typename), PyTypeObject, "tp_dealloc", CPython_destructor_Delegate)
+            getattr(mapper, typename), PyTypeObject, "tp_dealloc", dgt_void_ptr)
         deallocDgt(objPtr)
 
         TestConsequences(mapper, objPtr, calls)
