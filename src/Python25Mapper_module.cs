@@ -27,7 +27,7 @@ namespace Ironclad
             
             PythonDictionary methodTable = new PythonDictionary();
             PythonDictionary globals = new PythonDictionary();
-            object moduleDispatcher = PythonCalls.Call(this.dispatcherClass, new object[] { this, methodTable });
+            Dispatcher moduleDispatcher = new Dispatcher(this, methodTable);
 
             globals["__doc__"] = doc;
             globals["__name__"] = name;

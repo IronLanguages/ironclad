@@ -12,7 +12,7 @@ from System import Int32, IntPtr, NullReferenceException, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import (
-    BadRefCountException, CannotInterpretException, CPyMarshal, CPython_destructor_Delegate, HGlobalAllocator, Python25Mapper, 
+    BadRefCountException, CannotInterpretException, CPyMarshal, dgt_void_ptr, HGlobalAllocator, Python25Mapper, 
     Unmanaged, UnmanagedDataMarker
 )
 from Ironclad.Structs import PyObject, PyTypeObject
@@ -230,7 +230,7 @@ class Python25Mapper_References_Test(TestCase):
         calls = []
         def TypeDealloc(ptr):
             calls.append(ptr)
-        deallocDgt = CPython_destructor_Delegate(TypeDealloc)
+        deallocDgt = dgt_void_ptr(TypeDealloc)
         deallocFP = Marshal.GetFunctionPointerForDelegate(deallocDgt)
         
         typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
@@ -376,7 +376,6 @@ class Python25Mapper_References_Test(TestCase):
         mapper.PyBaseObject_Dealloc(ptr)
         mapper.Dispose()
         deallocTypes()
-        
 
 
     @WithMapper
@@ -384,11 +383,6 @@ class Python25Mapper_References_Test(TestCase):
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyStringObject))
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyTupleObject))
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyListObject))
-
-
-    @WithMapper
-    def testStoreNullObject(self, mapper, _):
-        self.assertEquals(mapper.Store(mapper.NullObject), IntPtr.Zero)
 
 
     def testRefCountIncRefDecRef(self):

@@ -12,7 +12,7 @@ from tests.utils.typetestcase import TypeTestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Api, Python25Mapper
+from Ironclad import CPyMarshal, Python25Api, Python25Mapper
 from Ironclad.Structs import PyTupleObject, PyTypeObject
 
 

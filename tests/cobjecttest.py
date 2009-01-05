@@ -9,7 +9,7 @@ from tests.utils.typetestcase import TypeTestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, CPython_destructor_Delegate, OpaquePyCObject, Python25Api, Python25Mapper
+from Ironclad import CPyMarshal, dgt_void_ptr, OpaquePyCObject, Python25Api, Python25Mapper
 from Ironclad.Structs import PyCObject, PyObject, PyTypeObject
 
 class CObjectTest(TestCase):
@@ -33,7 +33,7 @@ class CObjectTest(TestCase):
         calls = []
         def destructor(destructee):
             calls.append(destructee)
-        self.destructorDgt = CPython_destructor_Delegate(destructor)
+        self.destructorDgt = dgt_void_ptr(destructor)
         
         cobjData = Marshal.AllocHGlobal(32)
         addToCleanUp(lambda: Marshal.FreeHGlobal(cobjData))
@@ -66,7 +66,7 @@ class PyCObject_Type_Test(TypeTestCase):
         def CreateInstance(mapper, calls):
             def destroy(cobj):
                 calls.append(("destroy", cobj))
-            self.destroyDgt = CPython_destructor_Delegate(destroy)
+            self.destroyDgt = dgt_void_ptr(destroy)
             cobjPtr = mapper.PyCObject_FromVoidPtr(VOID_PTR, Marshal.GetFunctionPointerForDelegate(self.destroyDgt))
             return cobjPtr
         

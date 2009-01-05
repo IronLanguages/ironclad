@@ -10,7 +10,7 @@ from tests.utils.typetestcase import TypeTestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, CPython_destructor_Delegate, Python25Mapper, Python25Api
+from Ironclad import CPyMarshal, dgt_void_ptr, Python25Mapper, Python25Api
 from Ironclad.Structs import PyObject, PyListObject, PyTypeObject
 
 
@@ -29,7 +29,7 @@ class PyList_Type_Test(TypeTestCase):
         mapper.SetData("PyList_Type", typeBlock)
         gcwait() # this will make the function pointers invalid if we forgot to store references to the delegates
 
-        deallocDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_dealloc", CPython_destructor_Delegate)
+        deallocDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_dealloc", dgt_void_ptr)
         deallocDgt(IntPtr(12345))
         self.assertEquals(calls, [IntPtr(12345)], "wrong calls")
         

@@ -8,7 +8,7 @@ from tests.utils.numbers import NumberI, NumberL, NumberF, NUMBER_VALUE
 from System import Int32, Int64, IntPtr, UInt32, UInt64
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, CPythonVarargsKwargsFunction_Delegate, Python25Mapper
+from Ironclad import CPyMarshal, dgt_ptr_ptrptrptr, Python25Mapper
 from Ironclad.Structs import Py_complex, PyObject, PyIntObject, PyFloatObject, PyComplexObject, PyTypeObject
         
 
@@ -140,7 +140,7 @@ class PyInt_Test(TestCase):
         
     @WithMapper
     def testPyInt_UnManagedNew(self, mapper, _):
-        tp_new = CPyMarshal.ReadFunctionPtrField(mapper.PyInt_Type, PyTypeObject, "tp_new", CPythonVarargsKwargsFunction_Delegate)
+        tp_new = CPyMarshal.ReadFunctionPtrField(mapper.PyInt_Type, PyTypeObject, "tp_new", dgt_ptr_ptrptrptr)
         for value in (0, 1, -1, "17"):
             unmanaged_int = tp_new(mapper.PyInt_Type, mapper.Store((value,)), IntPtr.Zero)
             actualType = CPyMarshal.ReadPtrField(unmanaged_int, PyObject, "ob_type")
@@ -338,7 +338,7 @@ class PyFloat_Test(TestCase):
 
     @WithMapper
     def testPyFloat_UnManagedNew(self, mapper, _):
-        tp_new = CPyMarshal.ReadFunctionPtrField(mapper.PyFloat_Type, PyTypeObject, "tp_new", CPythonVarargsKwargsFunction_Delegate)
+        tp_new = CPyMarshal.ReadFunctionPtrField(mapper.PyFloat_Type, PyTypeObject, "tp_new", dgt_ptr_ptrptrptr)
         for value in (0, 1, 1.5, "1.0"):
             unmanaged_float = tp_new(mapper.PyFloat_Type, mapper.Store((value,)), IntPtr.Zero)
             actualType = CPyMarshal.ReadPtrField(unmanaged_float, PyObject, "ob_type")

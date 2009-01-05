@@ -235,8 +235,7 @@ namespace Ironclad
         public override int
         PyString_Size(IntPtr strPtr)
         {
-            PyStringObject str = (PyStringObject)Marshal.PtrToStructure(strPtr, typeof(PyStringObject));
-            return (int)str.ob_size;
+            return CPyMarshal.ReadIntField(strPtr, typeof(PyStringObject), "ob_size");
         }
         
         private IntPtr 

@@ -45,7 +45,7 @@ namespace Ironclad
             this.ExecInModule(cb.code.ToString(), this.scratchModule);
 
             object klass = ScopeOps.__getattribute__(this.scratchModule, cb.__name__);
-            object _dispatcher = PythonCalls.Call(this.dispatcherClass, new object[] { this, cb.methodTable });
+            Dispatcher _dispatcher = new Dispatcher(this, cb.methodTable);
             Builtin.setattr(this.scratchContext, klass, "_dispatcher", _dispatcher);
             object typeDict = Builtin.getattr(this.scratchContext, klass, "__dict__");
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_dict", this.Store(typeDict));

@@ -84,28 +84,28 @@ namespace Ironclad
                         template = noargsTemplate;
                         dgt = Marshal.GetDelegateForFunctionPointer(
                             thisMethod.ml_meth,
-                            typeof(CPythonVarargsFunction_Delegate));
+                            typeof(dgt_ptr_ptrptr));
                         break;
 
                     case METH.O:
                         template = objargTemplate;
                         dgt = Marshal.GetDelegateForFunctionPointer(
                             thisMethod.ml_meth,
-                            typeof(CPythonVarargsFunction_Delegate));
+                            typeof(dgt_ptr_ptrptr));
                         break;
 
                     case METH.VARARGS:
                         template = varargsTemplate;
                         dgt = Marshal.GetDelegateForFunctionPointer(
                             thisMethod.ml_meth,
-                            typeof(CPythonVarargsFunction_Delegate));
+                            typeof(dgt_ptr_ptrptr));
                         break;
 
                     case METH.VARARGS | METH.KEYWORDS:
                         template = varargsKwargsTemplate;
                         dgt = Marshal.GetDelegateForFunctionPointer(
                             thisMethod.ml_meth,
-                            typeof(CPythonVarargsKwargsFunction_Delegate));
+                            typeof(dgt_ptr_ptrptrptr));
                         break;
 
                     default:

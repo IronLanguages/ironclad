@@ -136,9 +136,9 @@ namespace Ironclad
                 {
                     IntPtr sq_repeat = CPyMarshal.ReadPtrField(seqPtr, typeof(PySequenceMethods), "sq_repeat");
                     if(sq_repeat != IntPtr.Zero)
-                    { 
-                        CPython_ssizeargfunc_Delegate dgt = (CPython_ssizeargfunc_Delegate) CPyMarshal.ReadFunctionPtrField(
-                            seqPtr, typeof(PySequenceMethods), "sq_repeat", typeof(CPython_ssizeargfunc_Delegate));
+                    {
+                        dgt_ptr_ptrsize dgt = (dgt_ptr_ptrsize)CPyMarshal.ReadFunctionPtrField(
+                            seqPtr, typeof(PySequenceMethods), "sq_repeat", typeof(dgt_ptr_ptrsize));
                         return dgt(objPtr, count);
                     }
                 }

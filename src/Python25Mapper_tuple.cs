@@ -67,7 +67,7 @@ namespace Ironclad
         public override int
         PyTuple_Size(IntPtr tuplePtr)
         {
-            return CPyMarshal.ReadIntField(tuplePtr, typeof(PyTupleObject), "ob_size");
+            return (int)CPyMarshal.ReadIntField(tuplePtr, typeof(PyTupleObject), "ob_size");
         }
         
         public override IntPtr

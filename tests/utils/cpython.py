@@ -1,17 +1,9 @@
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from Ironclad import (
-    CPyMarshal, Python25Api, 
-    CPython_initproc_Delegate, CPython_destructor_Delegate, 
-    CPython_getter_Delegate, CPython_setter_Delegate,
-    CPython_unaryfunc_Delegate, CPython_binaryfunc_Delegate, CPython_ternaryfunc_Delegate, 
-    CPython_ssizeargfunc_Delegate, CPython_ssizessizeargfunc_Delegate,
-    CPython_ssizeobjargproc_Delegate, CPython_ssizessizeobjargproc_Delegate, CPython_objobjargproc_Delegate,
-    CPython_reprfunc_Delegate, CPython_lenfunc_Delegate, CPython_richcmpfunc_Delegate, CPython_inquiry_Delegate,
-    CPythonVarargsFunction_Delegate, CPythonVarargsKwargsFunction_Delegate, 
-    CPython_cmpfunc_Delegate, CPython_getattr_Delegate, CPython_hashfunc_Delegate
-)
+
+import Ironclad
+from Ironclad import CPyMarshal, Python25Api
 from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMethodDef, PyTypeObject
 
 from tests.utils.memory import OffsetPtr
@@ -24,10 +16,10 @@ def GC_NotYet(dgt):
     return GC_Soon
 
 DELEGATE_TYPES = {
-    METH.O: CPythonVarargsFunction_Delegate,
-    METH.NOARGS: CPythonVarargsFunction_Delegate,
-    METH.VARARGS: CPythonVarargsFunction_Delegate,
-    METH.VARARGS | METH.KEYWORDS: CPythonVarargsKwargsFunction_Delegate
+    METH.O: Ironclad.dgt_ptr_ptrptr,
+    METH.NOARGS: Ironclad.dgt_ptr_ptrptr,
+    METH.VARARGS: Ironclad.dgt_ptr_ptrptr,
+    METH.VARARGS | METH.KEYWORDS: Ironclad.dgt_ptr_ptrptrptr
 }
 def MakeMethodDef(name, implementation, flags, doc="doc"):
     dgt = DELEGATE_TYPES[flags](implementation)
@@ -38,12 +30,12 @@ def MakeGetSetDef(name, get, set, doc, closure=IntPtr.Zero):
     deallocs = []
     _get = IntPtr.Zero
     if get:
-        getdgt = CPython_getter_Delegate(get)
+        getdgt = Ironclad.dgt_ptr_ptrptr(get)
         _get = Marshal.GetFunctionPointerForDelegate(getdgt)
         deallocs.append(GC_NotYet(getdgt))
     _set = IntPtr.Zero
     if set:
-        setdgt = CPython_setter_Delegate(set)
+        setdgt = Ironclad.dgt_int_ptrptrptr(set)
         _set = Marshal.GetFunctionPointerForDelegate(setdgt)
         deallocs.append(GC_NotYet(setdgt))
     return PyGetSetDef(name, _get, _set, doc, closure), lambda: map(apply, deallocs)
@@ -86,19 +78,19 @@ STRING_ARGS = ("tp_name", "tp_doc")
 TABLE_ARGS = ("tp_methods", "tp_members", "tp_getset")
 FUNC_ARGS = {
     "tp_alloc": Python25Api.PyType_GenericAlloc_Delegate,
-    "tp_new": Python25Api.PyType_GenericNew_Delegate,
-    "tp_init": CPython_initproc_Delegate,
-    "tp_dealloc": CPython_destructor_Delegate,
+    "tp_new": Ironclad.dgt_ptr_ptrptrptr,
+    "tp_init": Ironclad.dgt_int_ptrptrptr,
+    "tp_dealloc": Ironclad.dgt_void_ptr,
     "tp_free": Python25Api.PyObject_Free_Delegate,
-    "tp_getattr": CPython_getattr_Delegate,
-    "tp_iter": Python25Api.PyObject_GetIter_Delegate,
-    "tp_iternext": Python25Api.PyIter_Next_Delegate,
-    "tp_call": CPythonVarargsKwargsFunction_Delegate,
-    "tp_str": CPython_reprfunc_Delegate,
-    "tp_repr": CPython_reprfunc_Delegate,
-    "tp_richcompare": CPython_richcmpfunc_Delegate,
-    "tp_compare": CPython_cmpfunc_Delegate,
-    "tp_hash": CPython_hashfunc_Delegate,
+    "tp_getattr": Ironclad.dgt_ptr_ptrstr,
+    "tp_iter": Ironclad.dgt_ptr_ptr,
+    "tp_iternext": Ironclad.dgt_ptr_ptrptr,
+    "tp_call": Ironclad.dgt_ptr_ptrptrptr,
+    "tp_str": Ironclad.dgt_ptr_ptr,
+    "tp_repr": Ironclad.dgt_ptr_ptr,
+    "tp_richcompare": Ironclad.dgt_ptr_ptrptrint,
+    "tp_compare": Ironclad.dgt_int_ptrptr,
+    "tp_hash": Ironclad.dgt_long_ptr,
 }
 
 def WriteTypeField(typePtr, name, value):
@@ -168,59 +160,59 @@ def MakeItemsTablePtr(items):
     return tablePtr, dealloc
 
 NUMSEQMAP_METHODS = {
-    "nb_negative": CPython_unaryfunc_Delegate, 
-    "nb_positive": CPython_unaryfunc_Delegate, 
-    "nb_absolute": CPython_unaryfunc_Delegate, 
-    "nb_invert": CPython_unaryfunc_Delegate, 
-    "nb_int": CPython_unaryfunc_Delegate, 
-    "nb_long": CPython_unaryfunc_Delegate, 
-    "nb_float": CPython_unaryfunc_Delegate, 
-    "nb_oct": CPython_unaryfunc_Delegate, 
-    "nb_hex": CPython_unaryfunc_Delegate, 
-    "nb_index": CPython_unaryfunc_Delegate, 
+    "nb_negative": Ironclad.dgt_ptr_ptr, 
+    "nb_positive": Ironclad.dgt_ptr_ptr, 
+    "nb_absolute": Ironclad.dgt_ptr_ptr, 
+    "nb_invert": Ironclad.dgt_ptr_ptr, 
+    "nb_int": Ironclad.dgt_ptr_ptr, 
+    "nb_long": Ironclad.dgt_ptr_ptr, 
+    "nb_float": Ironclad.dgt_ptr_ptr, 
+    "nb_oct": Ironclad.dgt_ptr_ptr, 
+    "nb_hex": Ironclad.dgt_ptr_ptr, 
+    "nb_index": Ironclad.dgt_ptr_ptr, 
     
-    "nb_add": CPython_binaryfunc_Delegate, 
-    "nb_subtract": CPython_binaryfunc_Delegate, 
-    "nb_multiply": CPython_binaryfunc_Delegate, 
-    "nb_divide": CPython_binaryfunc_Delegate, 
-    "nb_floor_divide": CPython_binaryfunc_Delegate, 
-    "nb_true_divide": CPython_binaryfunc_Delegate, 
-    "nb_remainder": CPython_binaryfunc_Delegate, 
-    "nb_divmod": CPython_binaryfunc_Delegate, 
-    "nb_lshift": CPython_binaryfunc_Delegate, 
-    "nb_rshift": CPython_binaryfunc_Delegate, 
-    "nb_and": CPython_binaryfunc_Delegate, 
-    "nb_xor": CPython_binaryfunc_Delegate, 
-    "nb_or": CPython_binaryfunc_Delegate, 
+    "nb_add": Ironclad.dgt_ptr_ptrptr, 
+    "nb_subtract": Ironclad.dgt_ptr_ptrptr, 
+    "nb_multiply": Ironclad.dgt_ptr_ptrptr, 
+    "nb_divide": Ironclad.dgt_ptr_ptrptr, 
+    "nb_floor_divide": Ironclad.dgt_ptr_ptrptr, 
+    "nb_true_divide": Ironclad.dgt_ptr_ptrptr, 
+    "nb_remainder": Ironclad.dgt_ptr_ptrptr, 
+    "nb_divmod": Ironclad.dgt_ptr_ptrptr, 
+    "nb_lshift": Ironclad.dgt_ptr_ptrptr, 
+    "nb_rshift": Ironclad.dgt_ptr_ptrptr, 
+    "nb_and": Ironclad.dgt_ptr_ptrptr, 
+    "nb_xor": Ironclad.dgt_ptr_ptrptr, 
+    "nb_or": Ironclad.dgt_ptr_ptrptr, 
     
-    "nb_inplace_add": CPython_binaryfunc_Delegate, 
-    "nb_inplace_subtract": CPython_binaryfunc_Delegate, 
-    "nb_inplace_multiply": CPython_binaryfunc_Delegate, 
-    "nb_inplace_divide": CPython_binaryfunc_Delegate, 
-    "nb_inplace_floor_divide": CPython_binaryfunc_Delegate, 
-    "nb_inplace_true_divide": CPython_binaryfunc_Delegate, 
-    "nb_inplace_remainder": CPython_binaryfunc_Delegate, 
-    "nb_inplace_lshift": CPython_binaryfunc_Delegate, 
-    "nb_inplace_rshift": CPython_binaryfunc_Delegate, 
-    "nb_inplace_and": CPython_binaryfunc_Delegate, 
-    "nb_inplace_xor": CPython_binaryfunc_Delegate, 
-    "nb_inplace_or": CPython_binaryfunc_Delegate, 
+    "nb_inplace_add": Ironclad.dgt_ptr_ptrptr, 
+    "nb_inplace_subtract": Ironclad.dgt_ptr_ptrptr, 
+    "nb_inplace_multiply": Ironclad.dgt_ptr_ptrptr, 
+    "nb_inplace_divide": Ironclad.dgt_ptr_ptrptr, 
+    "nb_inplace_floor_divide": Ironclad.dgt_ptr_ptrptr, 
+    "nb_inplace_true_divide": Ironclad.dgt_ptr_ptrptr, 
+    "nb_inplace_remainder": Ironclad.dgt_ptr_ptrptr, 
+    "nb_inplace_lshift": Ironclad.dgt_ptr_ptrptr, 
+    "nb_inplace_rshift": Ironclad.dgt_ptr_ptrptr, 
+    "nb_inplace_and": Ironclad.dgt_ptr_ptrptr, 
+    "nb_inplace_xor": Ironclad.dgt_ptr_ptrptr, 
+    "nb_inplace_or": Ironclad.dgt_ptr_ptrptr, 
     
-    "nb_nonzero": CPython_inquiry_Delegate,
-    "nb_power": CPython_ternaryfunc_Delegate, 
-    "nb_inplace_power": CPython_ternaryfunc_Delegate, 
+    "nb_nonzero": Ironclad.dgt_int_ptr,
+    "nb_power": Ironclad.dgt_ptr_ptrptrptr, 
+    "nb_inplace_power": Ironclad.dgt_ptr_ptrptrptr, 
     
-    "sq_item": CPython_ssizeargfunc_Delegate,
-    "sq_concat": CPython_binaryfunc_Delegate,
-    "sq_repeat": CPython_ssizeargfunc_Delegate,
-    "sq_slice": CPython_ssizessizeargfunc_Delegate,
-    "sq_ass_item": CPython_ssizeobjargproc_Delegate,
-    "sq_ass_slice": CPython_ssizessizeobjargproc_Delegate,
-    "sq_length": CPython_lenfunc_Delegate,
+    "sq_item": Ironclad.dgt_ptr_ptrsize,
+    "sq_concat": Ironclad.dgt_ptr_ptrptr,
+    "sq_repeat": Ironclad.dgt_ptr_ptrsize,
+    "sq_slice": Ironclad.dgt_ptr_ptrsizesize,
+    "sq_ass_item": Ironclad.dgt_int_ptrsizeptr,
+    "sq_ass_slice": Ironclad.dgt_int_ptrsizesizeptr,
+    "sq_length": Ironclad.dgt_size_ptr,
     
-    "mp_length": CPython_lenfunc_Delegate,
-    "mp_subscript": CPython_binaryfunc_Delegate,
-    "mp_ass_subscript": CPython_objobjargproc_Delegate,
+    "mp_length": Ironclad.dgt_size_ptr,
+    "mp_subscript": Ironclad.dgt_ptr_ptrptr,
+    "mp_ass_subscript": Ironclad.dgt_int_ptrptrptr,
 }
 
 def MakeNumSeqMapMethods(_type, slots):

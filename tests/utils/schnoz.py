@@ -37,16 +37,6 @@ class Schnoz(object):
             f.close()
 
 
-    def run_single_test(self, test_path, runner=None):
-        package_name, mod_name, class_name, test_name = test_path
-        module = import_test_module(package_name, mod_name)
-        klass = getattr(module, class_name)
-        test_path = (package_name, mod_name, class_name, test_name)
-        if not runner(klass(test_name), test_path):
-            ironclad.shutdown()
-            sys.exit(1)
-
-
     def blacklist_on_fail(self, test_case, test_path):
         print '.'.join(test_path)
         catastrophe = False
@@ -129,7 +119,7 @@ class Schnoz(object):
         for package_name in package_names or self.dirs:
             self.ensure_package(package_name)
             
-            mod_pairs = [(name, import_test_module(package_name, name)) for name in mod_names]
+            mod_pairs = [(name, self.import_test_module(package_name, name)) for name in mod_names]
             mod_pairs = mod_pairs or self.get_modules(package_name)
     
             for mod_name, module in mod_pairs:
@@ -163,7 +153,7 @@ class Schnoz(object):
     def run_paths(self, paths, runner, previous_test=None):
         success = True
         for path in paths:
-            all_tests = get_matching_tests(path)
+            all_tests = self.get_matching_tests(path)
             if previous_test:
                 for _ in takewhile(lambda (p, _): p != previous_test, all_tests):
                     pass
@@ -171,9 +161,7 @@ class Schnoz(object):
             for test_path, test in all_tests:
                 result = runner(test, test_path)
                 success = success and result
-        if not success:
-            ironclad.shutdown()
-            sys.exit(1)
+        return success
 
         
     def add_to_blacklist(self, test_path, msg=""):
@@ -224,5 +212,5 @@ class Schnoz(object):
             self.run_all_tests(runner, previous_test=previous_test)
         else:
             paths = (path_string.split('.') for path_string in args)
-            run_paths(paths, runner, previous_test=previous_test)
+            self.run_paths(paths, runner, previous_test=previous_test)
     
