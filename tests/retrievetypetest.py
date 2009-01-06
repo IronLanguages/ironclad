@@ -571,6 +571,47 @@ class TypeMethodsTest(MethodConnectionTestCase):
         typeSpec = {"tp_call": Call}
         self.assertTypeMethodCall(typeSpec, "__call__", args, kwargs, result)
 
+    def testInit(self):
+        args = (object(), object(), object())
+        kwargs = {'x': object(), 'y': object()}
+        def Init(p1, p2, p3):
+            if self.firstCall:
+                self.firstCall = False
+                return 0
+            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEquals(self.mapper.Retrieve(p2), args)
+            self.assertEquals(self.mapper.Retrieve(p3), kwargs)
+            return 0
+        
+        typeSpec = {"tp_init": Init}
+        self.firstCall = True
+        self.assertTypeMethodCall(typeSpec, "__init__", args, kwargs, 0)
+
+    def testInitUnknownError(self):
+        def Init(p1, p2, p3):
+            if self.firstCall:
+                self.firstCall = False
+                return 0
+            return -1
+        
+        typeSpec = {"tp_init": Init}
+        self.firstCall = True
+        self.assertTypeMethodRaises(typeSpec, "__init__", (), {}, Exception)
+
+    def testInitSpecificError(self):
+        class BorkedException(Exception):
+            pass
+        def Init(p1, p2, p3):
+            if self.firstCall:
+                self.firstCall = False
+                return 0
+            self.mapper.LastException = BorkedException('omgwtfbbq')
+            return -1
+        
+        typeSpec = {"tp_init": Init}
+        self.firstCall = True
+        self.assertTypeMethodRaises(typeSpec, "__init__", (), {}, BorkedException)
+        
     def testStr(self):
         result = object()
         def Call(p1):
@@ -1017,12 +1058,6 @@ class CollisionsTest(TestCase):
         # real tests start here
         instance + object()
         # wrong connections would have called Raise
-        
-        
-
-class NewInitDelTest(TestCase):
-    def testFails(self):
-        self.fail("test param passing, error handling, rather than lifetime")
 
 
 suite = automakesuite(locals())
