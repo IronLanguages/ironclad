@@ -10,7 +10,6 @@ from tests.utils.testcase import TestCase
 from Ironclad import Python25Mapper
 
 from System.Diagnostics import Process
-from System.Threading import Thread
 
 
 bz2_doc = """The python bz2 module provides a comprehensive interface for

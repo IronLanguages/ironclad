@@ -20,9 +20,15 @@ namespace Ironclad
         public string tp_name = null;
 
         private readonly string[] EASY_TYPE_FIELDS = new string[] { 
-	    "tp_init", "tp_call", "tp_repr", "tp_str", "tp_compare", "tp_hash", "tp_getattr", "tp_iter", "tp_iternext"};
-        private readonly string[] MP_FIELDS = new string[] { "mp_subscript", "mp_ass_subscript", "mp_length" };
-        private readonly string[] SQ_FIELDS = new string[] { "sq_item", "sq_concat", "sq_ass_item", "sq_length", "sq_slice", "sq_ass_slice" };
+            "tp_init", "tp_call", "tp_repr", "tp_str", "tp_compare", "tp_hash", 
+            "tp_getattr", "tp_iter", "tp_iternext"
+        };
+        private readonly string[] MP_FIELDS = new string[] { 
+            "mp_subscript", "mp_ass_subscript", "mp_length" 
+        };
+        private readonly string[] SQ_FIELDS = new string[] { 
+            "sq_item", "sq_concat", "sq_ass_item", "sq_length", "sq_slice", "sq_ass_slice" 
+        };
         private readonly string[] NB_FIELDS = new string[] { 
             "nb_add", "nb_subtract", "nb_multiply", "nb_divide", "nb_true_divide", 
               "nb_floor_divide", "nb_remainder", "nb_divmod", 
@@ -33,7 +39,8 @@ namespace Ironclad
             "nb_negative", "nb_positive", "nb_absolute", "nb_invert", "nb_int", "nb_long", "nb_float", 
               "nb_oct", "nb_hex", "nb_index", 
             "nb_nonzero",
-            "nb_power", "nb_inplace_power",};
+            "nb_power", "nb_inplace_power",
+        };
 
         public ClassBuilder(IntPtr typePtr)
         {
@@ -111,9 +118,9 @@ namespace Ironclad
         GenerateMagicMethods()
         {
             this.GenerateProtocolMagicMethods(this.ptr, typeof(PyTypeObject), EASY_TYPE_FIELDS);
-            this.GenerateNamedProtocolMagicMethods("tp_as_number", typeof(PyNumberMethods), NB_FIELDS);
             this.GenerateNamedProtocolMagicMethods("tp_as_sequence", typeof(PySequenceMethods), SQ_FIELDS);
             this.GenerateNamedProtocolMagicMethods("tp_as_mapping", typeof(PyMappingMethods), MP_FIELDS);
+            this.GenerateNamedProtocolMagicMethods("tp_as_number", typeof(PyNumberMethods), NB_FIELDS);
             this.GenerateRichcmpMethods();
             this.UglyComplexHack();
         }
