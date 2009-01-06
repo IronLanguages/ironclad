@@ -84,7 +84,7 @@ FUNC_ARGS = {
     "tp_free": Python25Api.PyObject_Free_Delegate,
     "tp_getattr": Ironclad.dgt_ptr_ptrstr,
     "tp_iter": Ironclad.dgt_ptr_ptr,
-    "tp_iternext": Ironclad.dgt_ptr_ptrptr,
+    "tp_iternext": Ironclad.dgt_ptr_ptr,
     "tp_call": Ironclad.dgt_ptr_ptrptrptr,
     "tp_str": Ironclad.dgt_ptr_ptr,
     "tp_repr": Ironclad.dgt_ptr_ptr,

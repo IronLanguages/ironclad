@@ -340,7 +340,6 @@ class Python25Mapper_References_Test(TestCase):
 
 
     def testCheckBridgePtrs(self):
-        # note: CheckBridgePtrs is now throttled, so we call it many times
         frees = []
         allocator = GetAllocatingTestAllocator([], frees)
         mapper = Python25Mapper(allocator)

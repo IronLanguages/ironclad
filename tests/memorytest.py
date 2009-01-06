@@ -7,7 +7,6 @@ from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.allocators import GetAllocatingTestAllocator
 
 from System import IntPtr
-from System.Runtime.InteropServices import Marshal
 
 from Ironclad import Python25Mapper
 

@@ -10,7 +10,7 @@ import tempfile
 
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
-from Ironclad import CPyMarshal, Python25Api, Python25Mapper
+from Ironclad import CPyMarshal, Python25Api
 from Ironclad.Structs import PyObject, PyStringObject, PyTypeObject
 
 from TestUtils.Unmanaged import fread, fwrite

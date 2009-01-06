@@ -24,6 +24,7 @@ dispatcher_PyCFunc_convenience_methods = (
 )
 
 # args for generate_dispatcher_method
+# not all of these are necessarily used
 dispatcher_header_functypes = (
     # object.h
     (('unaryfunc', 'obj_obj'), {}),
@@ -38,9 +39,9 @@ dispatcher_header_functypes = (
     (('ssizessizeargfunc', 'obj_objsizesize'), {}),
     (('intobjargproc', 'int_objintobj'), {}),
     (('intintobjargproc', 'int_objintintobj'), {}),
-    (('ssizeobjargproc', 'int_objsizeobj'), {}),
-    (('ssizessizeobjargproc', 'int_objsizesizeobj'), {}),
-    (('objobjargproc', 'int_objobjobj'), {}),
+    (('ssizeobjargproc', 'int_objsizeobj'), {'rettweak': THROW_RET_NEGATIVE}),
+    (('ssizessizeobjargproc', 'int_objsizesizeobj'), {'rettweak': THROW_RET_NEGATIVE}),
+    (('objobjargproc', 'int_objobjobj'), {'rettweak': THROW_RET_NEGATIVE}),
 
     (('getreadbufferproc', 'int_objintptr'), {}),
     (('getwritebufferproc', 'int_objintptr'), {}),
@@ -99,7 +100,6 @@ protocol_field_types = (
     (('tp_getattr', 'getattrfunc', '__getattr__'), {}), # tweaks needed eventually? (getattro)
     
     # PyNumberMethods
-    # pow, ipow are tricky and need special handling
     (('nb_add', 'binaryfunc', '__add__'), {'swapped': '__radd__'}),
     (('nb_subtract', 'binaryfunc', '__sub__'), {'swapped': '__rsub__'}),
     (('nb_multiply', 'binaryfunc', '__mul__'), {'swapped': '__rmul__'}),

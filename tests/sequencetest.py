@@ -1,16 +1,12 @@
 
-import sys
-
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.cpython import MakeNumSeqMapMethods, MakeTypePtr
-from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase, WithMapper
 
 from System import IntPtr
-from System.Runtime.InteropServices import Marshal
 
-from Ironclad import Python25Mapper, CPyMarshal
+from Ironclad import CPyMarshal
 from Ironclad.Structs import PyListObject, PyNumberMethods, PySequenceMethods
         
         

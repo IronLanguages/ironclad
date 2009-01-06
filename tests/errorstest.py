@@ -1,14 +1,11 @@
 import sys
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase, WithMapper
-from tests.utils.memory import CreateTypes
 
 import System
 from System import IntPtr
-from System.IO import MemoryStream, StreamReader
 from System.Runtime.InteropServices import Marshal
-from System.Text import Encoding
-from Ironclad import CPyMarshal, Python25Mapper
+from Ironclad import CPyMarshal
 
 class my_stderr(object):
     def __init__(self, calls):

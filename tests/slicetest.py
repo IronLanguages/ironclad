@@ -1,6 +1,4 @@
 
-import types
-
 from tests.utils.runtest import makesuite, run
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.memory import CreateTypes

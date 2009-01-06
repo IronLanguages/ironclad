@@ -58,8 +58,8 @@ namespace Ironclad
         
         public void Dispose()
         {
-            this.Dispose(true);
             GC.SuppressFinalize(this);
+            this.Dispose(true);
         }
     }
 }

@@ -17,8 +17,9 @@ _mapper = Python25Mapper(os.path.join(_dirname, "python25.dll"))
 def shutdown():
     try:
         _mapper.Dispose()
-    finally:
-        gcwait()
+    except:
+        pass
+    gcwait()
 
 
 # various useful functions

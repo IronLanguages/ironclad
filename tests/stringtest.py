@@ -6,7 +6,7 @@ from tests.utils.memory import OffsetPtr, CreateTypes
 from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
 
-from System import Array, Byte, Char, IntPtr, OutOfMemoryException
+from System import Array, Byte, Char, IntPtr
 from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, dgt_ptr_ptrptr, Python25Mapper
 from Ironclad.Structs import PyStringObject, PyTypeObject, PySequenceMethods

@@ -27,7 +27,7 @@ DISPATCHER_TEMPLATE = """
             this.table = inTable;
         }
         
-        // not amenable to autogeneration
+        // not really amenable to autogeneration
         public object get_object_field(object instance, int offset)
         {
             this.mapper.EnsureGIL();
@@ -39,7 +39,6 @@ DISPATCHER_TEMPLATE = """
                 object ret = null;
                 if (retptr != IntPtr.Zero)
                 {
-                    //this.mapper.IncRef(retptr); XXX should this be here? who knows?
                     ret = this.mapper.Retrieve(retptr);
                 }
                 this.mapper.DecRef(instancePtr);
@@ -56,7 +55,7 @@ DISPATCHER_TEMPLATE = """
             try
             {
                 IntPtr instancePtr = this.mapper.Store(instance);
-                IntPtr valuePtr = this.mapper.Store(instance);
+                IntPtr valuePtr = this.mapper.Store(value);
                 IntPtr address = CPyMarshal.Offset(instancePtr, offset);
                 IntPtr oldValuePtr = CPyMarshal.ReadPtr(address);
                 CPyMarshal.WritePtr(address, valuePtr);

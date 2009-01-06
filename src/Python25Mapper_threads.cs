@@ -138,6 +138,9 @@ namespace Ironclad
         public void
         ReleaseGIL()
         {
+            // CheckBridgePtrs call not explicitly tested; however, if it's not here,
+            // you'll run out of memory before too long. Improvements gratefully received.
+            this.map.CheckBridgePtrs();
             this.GIL.Release();
         }
         
