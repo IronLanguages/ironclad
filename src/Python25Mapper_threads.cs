@@ -138,8 +138,11 @@ namespace Ironclad
         public void
         ReleaseGIL()
         {
-            // CheckBridgePtrs call not explicitly tested; however, if it's not here,
-            // you'll run out of memory before too long. Improvements gratefully received.
+            foreach (IntPtr ptr in this.tempObjects)
+            {
+                this.DecRef(ptr);
+            }
+            this.tempObjects.Clear();
             this.map.CheckBridgePtrs();
             this.GIL.Release();
         }

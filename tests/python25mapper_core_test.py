@@ -339,7 +339,7 @@ class Python25Mapper_References_Test(TestCase):
         deallocTypes()
 
 
-    def testCheckBridgePtrs(self):
+    def testReleaseGILChecksBridgePtrs(self):
         frees = []
         allocator = GetAllocatingTestAllocator([], frees)
         mapper = Python25Mapper(allocator)
@@ -362,7 +362,8 @@ class Python25Mapper_References_Test(TestCase):
         self.assertEquals(objref.IsAlive, True, "was reaped unexpectedly (refcount was 2)")
         
         CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
-        mapper.CheckBridgePtrs()
+        mapper.EnsureGIL()
+        mapper.ReleaseGIL()
         
         # refcount < 2 should have been weakened
         obj = objref.Target
@@ -441,18 +442,19 @@ class Python25Mapper_References_Test(TestCase):
         mapper.IncRef(tempObject1)
         mapper.IncRef(tempObject2)
 
-        mapper.FreeTemps()
-
+        mapper.EnsureGIL()
+        mapper.ReleaseGIL()
         self.assertEquals(mapper.RefCount(tempObject1), 1,
-                          "FreeTemps should decref objects rather than freeing them")
+                          "ReleaseGIL should decref temp objects rather than freeing them")
         self.assertEquals(mapper.RefCount(tempObject2), 1,
-                          "FreeTemps should decref objects rather than freeing them")
-
-        mapper.FreeTemps()
+                          "ReleaseGIL should decref temp objects rather than freeing them")
+                          
+        mapper.EnsureGIL()
+        mapper.ReleaseGIL()
         self.assertEquals(mapper.RefCount(tempObject1), 1,
-                          "FreeTemps should clear list once called")
+                          "ReleaseGIL should clear list once called")
         self.assertEquals(mapper.RefCount(tempObject2), 1,
-                          "FreeTemps should clear list once called")
+                          "ReleaseGIL should clear list once called")
 
 
     @WithMapper

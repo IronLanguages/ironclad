@@ -29,7 +29,7 @@ class PyThread_functions_Test(TestCase):
         self.assertNotEquals(lockObject1, lockObject2, "bad, wrong")
 
         mapper.PyThread_free_lock(lockPtr1)
-        mapper.PyThread_free_lock(lockPtr2)  
+        mapper.PyThread_free_lock(lockPtr2)
 
 
     @WithMapper
@@ -257,6 +257,7 @@ class PyEvalGILThreadTest(TestCase):
         t.Join()
     
         mapper.Dispose()
+
 
 
 suite = makesuite(

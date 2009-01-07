@@ -413,12 +413,6 @@ namespace Ironclad
             this.map.Weaken(obj);
         }
 
-        public void
-        CheckBridgePtrs()
-        {
-            this.map.CheckBridgePtrs();
-        }
-
         public void Unmap(IntPtr ptr)
         {
             // TODO: very badly tested (things break fast if this isn't here, but...)
@@ -436,16 +430,6 @@ namespace Ironclad
         {
             this.tempObjects.Add(ptr);
         }
-
-        public void FreeTemps()
-        {
-            foreach (IntPtr ptr in this.tempObjects)
-            {
-                this.DecRef(ptr);
-            }
-            this.tempObjects.Clear();
-        }
-        
         
         public override IntPtr 
         GetAddress(string name)
