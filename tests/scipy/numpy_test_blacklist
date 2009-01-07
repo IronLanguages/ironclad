@@ -21,11 +21,6 @@ core.test_multiarray.TestResize.test_check_reference
 core.test_regression.TestRegression.test_refcount_vdot
 core.test_regression.TestRegression.test_refcount_vectorize
 
-# error handling changes?
-core.test_errstate.TestErrstate.test_divide
-core.test_errstate.TestErrstate.test_invalid
-core.test_numeric.TestSeterr.test_divide_err
-
 # no unicode support (mostly call PyObject_Unicode)
 core.test_unicode
 core.test_numerictypes.test_create_values_nested_multiple

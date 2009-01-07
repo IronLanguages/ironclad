@@ -35,7 +35,9 @@ class ErrFunctionsTest(TestCase):
         errorPtr = mapper.PyErr_Occurred()
         self.assertEquals(mapper.Retrieve(errorPtr), Exception)
         refcnt = mapper.RefCount(errorPtr)
-        mapper.FreeTemps()
+        
+        mapper.EnsureGIL()
+        mapper.ReleaseGIL()
         self.assertEquals(mapper.RefCount(errorPtr), refcnt - 1, 'was not a temp object')
         
         mapper.LastException = None

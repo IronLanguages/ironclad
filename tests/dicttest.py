@@ -99,7 +99,8 @@ class DictTest(TestCase):
         itemPtr = mapper.PyDict_GetItemString(dictPtr, "abcde")
         self.assertEquals(mapper.Retrieve(itemPtr), 12345, "failed to get item")
         self.assertEquals(mapper.RefCount(itemPtr), 1, "something is wrong")
-        mapper.FreeTemps()
+        mapper.EnsureGIL()
+        mapper.ReleaseGIL()
         self.assertEquals(itemPtr in frees, True)
         
         mapper.Dispose()
@@ -124,7 +125,8 @@ class DictTest(TestCase):
         itemPtr = mapper.PyDict_GetItem(dictPtr, mapper.Store(12345))
         self.assertEquals(mapper.Retrieve(itemPtr), 67890, "failed to get item")
         self.assertEquals(mapper.RefCount(itemPtr), 1, "something is wrong")
-        mapper.FreeTemps()
+        mapper.EnsureGIL()
+        mapper.ReleaseGIL()
         self.assertEquals(itemPtr in frees, True)
         
         mapper.Dispose()
@@ -286,7 +288,8 @@ class PyDict_Next_Test(TestCase):
         mapper.IncRef(keyPtr)
         mapper.IncRef(valuePtr)
         
-        mapper.FreeTemps()
+        mapper.EnsureGIL()
+        mapper.ReleaseGIL()
         
         # check refcount has dropped back to 1
         self.assertEquals(mapper.RefCount(keyPtr), 1)
