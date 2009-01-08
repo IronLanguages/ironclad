@@ -113,7 +113,7 @@ namespace Ironclad
             Console.WriteLine("  faking out modules: mmap, nosetester, parser");
             this.CreateModule("parser");
             this.CreateModule("mmap");
-
+            
             Scope nosetester = this.CreateModule("numpy.testing.nosetester");
             PythonDictionary NoseTesterDict = new PythonDictionary();
             NoseTesterDict["bench"] = NoseTesterDict["test"] = "This has been patched and broken by ironclad";
@@ -122,11 +122,7 @@ namespace Ironclad
             ScopeOps.__setattr__(nosetester, "import_nose", new Object());
             ScopeOps.__setattr__(nosetester, "run_module_suite", new Object());
             ScopeOps.__setattr__(nosetester, "get_package_name", new Object());
-          
-            Scope sys = this.python.SystemState;
-            // this should be fixed in ipy at some point
-            ScopeOps.__setattr__(sys, "__displayhook__",
-                ScopeOps.__getattribute__(sys, "displayhook"));
+
         }
     }
 }
