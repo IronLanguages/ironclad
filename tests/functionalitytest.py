@@ -6,10 +6,9 @@ import tempfile
 from textwrap import dedent
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
+from tests.utils.functionaltestcase import FunctionalTestCase
 
 from Ironclad import Python25Mapper
-
-from System.Diagnostics import Process
 
 
 bz2_doc = """The python bz2 module provides a comprehensive interface for
@@ -45,51 +44,8 @@ bz2_test_text_lines = bz2_test_line * 1000
 
 DLL_PATH = os.path.join("build", "ironclad", "python25.dll")
 
-TEMPLATE = dedent("""\
-    import sys
-    sys.path.insert(0, %r)
-    import ironclad
-    try:
-        %%s
-    finally:
-        ironclad.shutdown()
-    """) % os.path.abspath("build")
 
-class ExternalFunctionalityTest(TestCase):
-
-    def setUp(self, *_, **__):
-        TestCase.setUp(self, *_, **__)
-        self.testDir = tempfile.mkdtemp()
-
-    def tearDown(self, *_, **__):
-        TestCase.tearDown(self, *_, **__)
-        shutil.rmtree(self.testDir)
-
-    def write(self, name, code):
-        testFile = open(os.path.join(self.testDir, name), 'w')
-        testFile.write(code)
-        testFile.close()
-
-    def assertRuns(self, code):
-        code = TEMPLATE % code.replace('\n', '\n    ')
-        self.write("test.py", code)
-        
-        process = Process()
-        process.StartInfo.FileName = "ipy.exe"
-        process.StartInfo.Arguments = "test.py"
-        process.StartInfo.WorkingDirectory = self.testDir
-        process.StartInfo.UseShellExecute = False
-        process.StartInfo.RedirectStandardOutput = process.StartInfo.RedirectStandardError = True
-
-        process.Start()
-        process.WaitForExit(60000)
-        if not process.HasExited:
-            process.Kill
-        output = process.StandardOutput.ReadToEnd()
-        error = process.StandardError.ReadToEnd()
-        if process.ExitCode != 0:
-            self.fail("Execution failed: stdout: >>>%s<<<\nstderr: >>>%s<<<\n" % (output, error))
-
+class ExternalFunctionalityTest(FunctionalTestCase):
     def testImportHookSimple(self):
         self.assertRuns(dedent("""\
             import bz2

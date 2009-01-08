@@ -42,6 +42,9 @@ namespace Ironclad
         
         [DllImport("msvcr71.dll")]
         public static extern int _open_osfhandle(IntPtr f, int flags);
+
+        [DllImport("msvcr71.dll")]
+        public static extern long _get_osfhandle(int fd);
         
         [DllImport("msvcr71.dll")]
         public static extern int fclose(IntPtr FILE);

@@ -13,5 +13,5 @@ Dispatcher.Generated.cs : ../tools/generatedispatcher.py ../tools/dispatcherinpu
 	cd .. && ipy tools/generatedispatcher.py  src
 
 clean :
-	del *.Generated.cs
-	del ..\build\ironclad\ironclad.dll
+	$(RM) *.Generated.cs
+	$(RM) ..\build\ironclad\ironclad.dll

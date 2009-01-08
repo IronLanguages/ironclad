@@ -13,5 +13,11 @@ namespace TestUtils
 
         [DllImport("msvcr71.dll")]
         public static extern int fclose(IntPtr file);
+
+        [DllImport("msvcr71.dll")]
+        public static extern int fflush(IntPtr file);
+
+        [DllImport("msvcr71.dll")]
+        public static extern long _get_osfhandle(int fd);
     }
 }

@@ -16,6 +16,7 @@ from Ironclad.Structs import PyObject, PyVarObject, PyTypeObject
 _mapper = Python25Mapper(os.path.join(_dirname, "python25.dll"))
 
 def shutdown():
+    gcwait()
     try:
         _mapper.Dispose()
     except Exception, e:
