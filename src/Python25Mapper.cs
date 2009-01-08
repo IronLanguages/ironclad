@@ -51,7 +51,7 @@ namespace Ironclad
 
         private Scope scratchModule;
         private CodeContext scratchContext;
-        private object removeMetaImporter;
+        private object removeSysHacks;
         private object kindaDictProxyClass;
         private Lock GIL;
 
@@ -115,7 +115,7 @@ namespace Ironclad
                 
                 // TODO: work out why this line causes leakage
                 this.ExecInModule(CodeSnippets.INSTALL_IMPORT_HOOK_CODE, this.scratchModule);
-                this.removeMetaImporter = ScopeOps.__getattribute__(this.scratchModule, "remove_meta_importer");
+                this.removeSysHacks = ScopeOps.__getattribute__(this.scratchModule, "remove_sys_hacks");
             }
             this.alive = true;
         }
@@ -142,9 +142,13 @@ namespace Ironclad
                         typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(dgt_void_ptr));
                 dealloc(ptr);
             }
-            catch
+            catch (BadMappingException e)
             {
                 // meh, we're probably deallocing things out of order. tough.
+            }
+            catch (Exception e)
+            {            
+                Console.WriteLine("unexpected error during DumpPtr:\n{0}", e);
             }
         }
         
@@ -162,10 +166,12 @@ namespace Ironclad
                 }
                 if (this.stub != null)
                 {
-                    PythonCalls.Call(this.removeMetaImporter);
+                    PythonCalls.Call(this.removeSysHacks);
                     this.importer.Dispose();
                     this.stub.Dispose();
                 }
+                this.scratchModule.Clear();
+                
             }
         }
         

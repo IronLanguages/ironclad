@@ -1,12 +1,13 @@
-import os
+
 import sys
 if sys.platform != 'cli':
     raise ImportError("If you're running CPython, you don't need ironclad. If you're running Jython, ironclad won't work.")
 
-import clr
-
+import os
 _dirname = os.path.dirname(__file__)
 
+import clr
+from System import GC
 from System.Reflection import Assembly
 clr.AddReference(Assembly.LoadFile(os.path.join(_dirname, "ironclad.dll")))
 
@@ -17,8 +18,9 @@ _mapper = Python25Mapper(os.path.join(_dirname, "python25.dll"))
 def shutdown():
     try:
         _mapper.Dispose()
-    except:
-        pass
+    except Exception, e:
+        print 'error on mapper Dispose:'
+        print e
     gcwait()
 
 
@@ -46,6 +48,6 @@ def get_gc_threshold():
     return _mapper.GCThreshold
 
 def gcwait():
-    from System import GC
     GC.Collect()
     GC.WaitForPendingFinalizers()
+    

@@ -35,6 +35,8 @@ class MetaImporter(object):
 
 meta_importer = MetaImporter()
 sys.meta_path.append(meta_importer)
+sys.__displayhook__ = sys.displayhook
 
-def remove_meta_importer():
+def remove_sys_hacks():
     sys.meta_path.remove(meta_importer)
+    del sys.__displayhook__
