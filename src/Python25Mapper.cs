@@ -142,7 +142,7 @@ namespace Ironclad
                         typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(dgt_void_ptr));
                 dealloc(ptr);
             }
-            catch (BadMappingException e)
+            catch (BadMappingException)
             {
                 // meh, we're probably deallocing things out of order. tough.
             }

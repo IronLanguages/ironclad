@@ -18,7 +18,7 @@ exportsymbols.o : exportsymbols.c
 	gcc $(CFLAGS) -o exportsymbols.o -c exportsymbols.c
 
 clean :
-	del *.o
-	del ..\testutils.dll
-	del ..\setvalue.pyd
-	del ..\exportsymbols.dll
+	$(RM) *.o
+	$(RM) ..\testutils.dll
+	$(RM) ..\setvalue.pyd
+	$(RM) ..\exportsymbols.dll

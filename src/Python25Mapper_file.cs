@@ -21,8 +21,8 @@ namespace Ironclad
             FileStream stream = InappropriateReflection.StreamFromPythonFile(pyFile);
             SafeHandle safeHandle = stream.SafeFileHandle;
             IntPtr handle = safeHandle.DangerousGetHandle();
-            
-            int fd = Unmanaged._open_osfhandle(handle, 0);
+	    int fd = Unmanaged._open_osfhandle(handle, 0);
+
             IntPtr FILE = IntPtr.Zero;
             if (stream.CanWrite)
             {
@@ -34,9 +34,17 @@ namespace Ironclad
             }
             this.FILEs[pyFilePtr] = FILE;
             return FILE;
-        }    
-        
-        
+        }
+
+	// TODO: maybe remove repetition
+	public int ConvertPyFileToDescriptor(PythonFile pyFile)
+	{
+	    FileStream stream = InappropriateReflection.StreamFromPythonFile(pyFile);
+	    SafeHandle safeHandle = stream.SafeFileHandle;
+            IntPtr handle = safeHandle.DangerousGetHandle();
+	    return Unmanaged._open_osfhandle(handle, 0);
+	}
+
         private IntPtr
         Store(PythonFile obj)
         {

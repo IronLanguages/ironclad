@@ -9,8 +9,8 @@ stub.c.o: generated
 generated: stubmain.c PyAPI_DATAs.c PyAPI_FUNCs.c PyAPI_types.c *.c
 	ipy ../tools/buildstub.py $(PYTHON_DLL) . .
 clean:
-	del *.o stub.generated.*
-	del ..\build\ironclad\python25.dll
+	$(RM) *.o stub.generated.*
+	$(RM) ..\build\ironclad\python25.dll
 
 stubandtest: stub.c.o
 	python ../tools/stubchecker.py stub.c.o _ignores
