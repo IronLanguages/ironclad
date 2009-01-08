@@ -187,7 +187,7 @@ class ErrFunctionsTest(TestCase):
         try:
             raise mapper.LastException
         except BaseException, e:
-            self.assertEquals(isinstance(e, eval(name)), True, "error was not a %s" % name)
+            self.assertEquals(type(e), eval(name), "error was not a %s" % name)
             self.assertEquals(str(e), msg, "wrong message")
         else:
             self.fail("got no exception")

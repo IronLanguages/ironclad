@@ -4,6 +4,7 @@ using Microsoft.Scripting.Runtime;
 
 using IronPython.Hosting;
 using IronPython.Runtime;
+using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
@@ -12,6 +13,13 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
+        public override IntPtr
+        Make_PyExc_BaseException()
+        {
+            // all the others autogenerate nicely
+            return this.Store(Builtin.BaseException);
+        }
+        
         public override IntPtr
         PyErr_Occurred()
         {

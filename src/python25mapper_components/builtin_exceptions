@@ -1,6 +1,0 @@
-BaseException
-EnvironmentError
-SyntaxError
-WindowsError
-SystemExit
-UnicodeTranslateError
