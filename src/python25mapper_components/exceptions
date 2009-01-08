@@ -1,4 +1,10 @@
 
+EnvironmentError
+SyntaxError
+WindowsError
+SystemExit
+UnicodeTranslateError
+
 Exception
 StopIteration
 GeneratorExit

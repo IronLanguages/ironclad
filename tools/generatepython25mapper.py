@@ -27,13 +27,8 @@ def mapstrings(names, infile, template):
     return map(extract, read_interesting_lines(infile))
 
 def run():
-    exception_kinds = (
-        (EXCEPTIONS_INFILE, EXCEPTION_TEMPLATE, EXCEPTIONS_OUTFILE),
-        (BUILTIN_EXCEPTIONS_INFILE, BUILTIN_EXCEPTION_TEMPLATE, BUILTIN_EXCEPTIONS_OUTFILE),
-    )
-    for (infile, template, outfile) in exception_kinds:
-        snippets = mapstrings(("name",), infile, template)
-        writefile(outfile, "\n\n".join(snippets))
+    exc_snippets = mapstrings(("name",), EXCEPTIONS_INFILE, EXCEPTION_TEMPLATE)
+    writefile(EXCEPTIONS_OUTFILE, "\n\n".join(exc_snippets))
     
     store_snippets = mapstrings(("type",), STORE_INFILE, STORE_TYPE_TEMPLATE)
     store_code = STORE_METHOD_TEMPLATE % "\n".join(store_snippets)
@@ -71,8 +66,6 @@ def run():
 
 EXCEPTIONS_INFILE = "exceptions"
 EXCEPTIONS_OUTFILE = "../Python25Mapper_exceptions.Generated.cs"
-BUILTIN_EXCEPTIONS_INFILE = "builtin_exceptions"
-BUILTIN_EXCEPTIONS_OUTFILE = "../Python25Mapper_builtin_exceptions.Generated.cs"
 STORE_INFILE = "store_dispatch"
 STORE_OUTFILE = "../Python25Mapper_store_dispatch.Generated.cs"
 OPERATOR_INFILE = "operator"
@@ -109,12 +102,6 @@ EXCEPTION_TEMPLATE = """\
         public override IntPtr Make_PyExc_%(name)s()
         {
             return this.Store(PythonExceptions.%(name)s);
-        }"""
-
-BUILTIN_EXCEPTION_TEMPLATE = """\
-        public override IntPtr Make_PyExc_%(name)s()
-        {
-            return this.Store(Builtin.%(name)s);
         }"""
 
 STORE_METHOD_TEMPLATE = """\

@@ -38,7 +38,6 @@ class GeneratePython25MapperTest(TestCase):
         os.chdir(testSrcDir)
         try:
             write("exceptions", EXCEPTIONS)
-            write("builtin_exceptions", BUILTIN_EXCEPTIONS)
             write("store_dispatch", STORE)
             write("operator", OPERATOR)
             write("numbers_convert_c2py", NUMBERS_CONVERT_C2PY)
@@ -51,8 +50,6 @@ class GeneratePython25MapperTest(TestCase):
             os.chdir(testBuildDir)
             self.assertEquals(read("Python25Mapper_exceptions.Generated.cs"), EXPECTED_EXCEPTIONS, 
                               "generated exceptions wrong")
-            self.assertEquals(read("Python25Mapper_builtin_exceptions.Generated.cs"), EXPECTED_BUILTIN_EXCEPTIONS, 
-                              "generated builtin exceptions wrong")
             self.assertEquals(read("Python25Mapper_store_dispatch.Generated.cs"), EXPECTED_STORE, 
                               "generated wrong")
             self.assertEquals(read("Python25Mapper_operator.Generated.cs"), EXPECTED_OPERATOR, 
@@ -100,29 +97,6 @@ namespace Ironclad
         public override IntPtr Make_PyExc_OverflowError()
         {
             return this.Store(PythonExceptions.OverflowError);
-        }
-    }
-}
-"""
-
-BUILTIN_EXCEPTIONS = """
-BaseException
-WindowsError
-"""
-
-EXPECTED_BUILTIN_EXCEPTIONS = USINGS + """
-namespace Ironclad
-{
-    public partial class Python25Mapper : Python25Api
-    {
-        public override IntPtr Make_PyExc_BaseException()
-        {
-            return this.Store(Builtin.BaseException);
-        }
-
-        public override IntPtr Make_PyExc_WindowsError()
-        {
-            return this.Store(Builtin.WindowsError);
         }
     }
 }
