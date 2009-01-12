@@ -22,7 +22,8 @@ class SequenceFunctionsTest(TestCase):
             def __mul__(self, _): raise Exception("fooled you!")
             def __rmul__(self, _): raise Exception("fooled you!")
         
-        sequences = map(mapper.Store, [(1, 2, 3), ['a'], Sequence(), "foo"])
+        # yes, an xrange object really should be treated as a sequence here.
+        sequences = map(mapper.Store, [(1, 2, 3), ['a'], Sequence(), "foo", xrange(5)])
         notSequences = map(mapper.Store, [tuple, list, object(), {'foo': 'bar'}])
         
         for x in sequences:

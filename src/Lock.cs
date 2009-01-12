@@ -36,8 +36,8 @@ namespace Ironclad
         public void 
         Dispose()
         {
-            this.Dispose(true);
             GC.SuppressFinalize(this);
+            this.Dispose(true);
         }
         
         protected virtual void 
@@ -61,8 +61,6 @@ namespace Ironclad
             
             this.owner = Thread.CurrentThread.ManagedThreadId;
             this.count += 1;
-            //Console.WriteLine(
-            //    "Acquired on thread id {0} (count: {1})", Thread.CurrentThread.ManagedThreadId, this.count);
             return this.count;
         }
         
@@ -81,8 +79,6 @@ namespace Ironclad
             
             this.owner = Thread.CurrentThread.ManagedThreadId;
             this.count += 1;
-            //Console.WriteLine(
-            //    "Acquired on thread id {0} (count: {1})", Thread.CurrentThread.ManagedThreadId, this.count);
             return true;
         }
         
@@ -102,8 +98,6 @@ namespace Ironclad
             {
                 throw new LockException("you can't release a lock you don't own");
             }
-            //Console.WriteLine(
-            //    "Releasing on thread id {0} (count: {1})\n", Thread.CurrentThread.ManagedThreadId, this.count);
             this.count -= 1;
             if (this.count == 0)
             {
