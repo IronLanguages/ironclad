@@ -2,6 +2,11 @@ namespace Ironclad
 {
     internal partial class CodeSnippets
     {
+        public const string USEFUL_IMPORTS = @"
+from System import IntPtr, NullReferenceException
+from Ironclad import CPyMarshal
+";
+
         public const string NEW_EXCEPTION = @"
 class {0}(Exception):
     __module__ = '{1}'
@@ -71,12 +76,6 @@ _ironclad_class_attrs['{0}'] = _ironclad_setter
 
         public const string PROPERTY_CODE = @"
 _ironclad_class_attrs['{0}'] = property(_ironclad_getter, _ironclad_setter, None, '''{1}''')
-";
-
-    public const string GETATTR_CODE = @"
-def _getattr(self, attr):
-    return self._dispatcher.getattrfunc('{2}{0}', self, attr)
-_ironclad_class_attrs['{0}'] = _getattr
 ";
 
         public const string COMPLEX_HACK_CODE = @"

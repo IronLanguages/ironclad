@@ -16,9 +16,14 @@ namespace Ironclad
         public override int
         PySequence_Check(IntPtr objPtr)
         {
+            object obj = this.Retrieve(objPtr);
+            if (Builtin.isinstance(obj, typeof(XRange)))
+            {
+                return 1;
+            }
+
             // I don't *think* a type's attributes can meaningfully count...
             // TODO: regardless, there must be a better way to do this
-            object obj = this.Retrieve(objPtr);
             if ((!Builtin.isinstance(obj, TypeCache.PythonType)) &&
                 Builtin.hasattr(this.scratchContext, obj, "__len__") &&
                 Builtin.hasattr(this.scratchContext, obj, "__getitem__") &&

@@ -81,7 +81,8 @@ namespace Ironclad
             return this.Store(ScopeOps.Get__dict__(module));
         }
 
-        private int PyModule_Add(IntPtr modulePtr, string name, object value)
+        private int 
+        PyModule_Add(IntPtr modulePtr, string name, object value)
         {
             if (!this.map.HasPtr(modulePtr))
             {
