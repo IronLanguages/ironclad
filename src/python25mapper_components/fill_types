@@ -1,14 +1,14 @@
-PyBaseObject_Type TypeCache.Object {"tp_alloc": "PyType_GenericAlloc", "tp_new": "PyType_GenericNew", "tp_init": "PyBaseObject_Init", "tp_dealloc": "PyBaseObject_Dealloc", "tp_free": "PyObject_Free", "tp_str": "PyObject_Str", "tp_repr": "PyObject_Repr"}
+PyBaseObject_Type TypeCache.Object {"tp_alloc": "PyType_GenericAlloc", "tp_new": "PyType_GenericNew", "tp_init": "IC_PyBaseObject_Init", "tp_dealloc": "IC_PyBaseObject_Dealloc", "tp_free": "PyObject_Free", "tp_str": "PyObject_Str", "tp_repr": "PyObject_Repr"}
 PyType_Type TypeCache.PythonType
 PyNone_Type TypeCache.None
-PySlice_Type Builtin.slice {"tp_dealloc": "PySlice_Dealloc"}
-PyFile_Type TypeCache.PythonFile  {"tp_dealloc": "PyFile_Dealloc"}
-PyInt_Type TypeCache.Int32 {"tp_as_number": "AddNumberMethodsWithIndex", "tp_new": "PyInt_New"}
+PySlice_Type Builtin.slice {"tp_dealloc": "IC_PySlice_Dealloc"}
+PyFile_Type TypeCache.PythonFile  {"tp_dealloc": "IC_PyFile_Dealloc"}
+PyInt_Type TypeCache.Int32 {"tp_as_number": "AddNumberMethodsWithIndex", "tp_new": "IC_PyInt_New"}
 PyLong_Type TypeCache.BigInteger {"tp_as_number": "AddNumberMethodsWithIndex"}
-PyFloat_Type TypeCache.Double {"tp_as_number": "AddNumberMethodsWithoutIndex", "tp_new": "PyFloat_New"}
+PyFloat_Type TypeCache.Double {"tp_as_number": "AddNumberMethodsWithoutIndex", "tp_new": "IC_PyFloat_New"}
 PyComplex_Type TypeCache.Complex64 {"tp_as_number": "AddNumberMethodsWithoutIndex"}
-PyCObject_Type typeof(OpaquePyCObject) {"tp_dealloc": "PyCObject_Dealloc"}
+PyCObject_Type typeof(OpaquePyCObject) {"tp_dealloc": "IC_PyCObject_Dealloc"}
 PyDict_Type TypeCache.Dict
-PyList_Type TypeCache.List {"tp_dealloc": "PyList_Dealloc"}
-PyTuple_Type TypeCache.PythonTuple {"tp_dealloc": "PyTuple_Dealloc"}
+PyList_Type TypeCache.List {"tp_dealloc": "IC_PyList_Dealloc"}
+PyTuple_Type TypeCache.PythonTuple {"tp_dealloc": "IC_PyTuple_Dealloc"}
 PySeqIter_Type typeof(ItemEnumerator)

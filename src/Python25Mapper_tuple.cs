@@ -19,7 +19,7 @@ namespace Ironclad
         }
         
         public virtual void 
-        PyTuple_Dealloc(IntPtr tuplePtr)
+        IC_PyTuple_Dealloc(IntPtr tuplePtr)
         {
             int length = CPyMarshal.ReadIntField(tuplePtr, typeof(PyTupleObject), "ob_size");
             IntPtr itemsPtr = CPyMarshal.Offset(

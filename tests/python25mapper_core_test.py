@@ -220,7 +220,7 @@ class Python25Mapper_References_Test(TestCase):
         
         # need to dealloc ptr ourselves, it doesn't hapen automatically
         # except for objects with Dispatchers
-        mapper.PyBaseObject_Dealloc(objPtr)
+        mapper.IC_PyBaseObject_Dealloc(objPtr)
         mapper.Dispose()
         deallocTypes()
 
@@ -303,7 +303,7 @@ class Python25Mapper_References_Test(TestCase):
         
         # need to dealloc ptr ourselves, it doesn't hapen automatically
         # except for objects with Dispatchers
-        mapper.PyBaseObject_Dealloc(ptr)
+        mapper.IC_PyBaseObject_Dealloc(ptr)
         mapper.Dispose()
         deallocTypes()
     
@@ -334,7 +334,7 @@ class Python25Mapper_References_Test(TestCase):
         
         # need to dealloc ptr ourselves, it doesn't hapen automatically
         # except for objects with Dispatchers
-        mapper.PyBaseObject_Dealloc(ptr)
+        mapper.IC_PyBaseObject_Dealloc(ptr)
         mapper.Dispose()
         deallocTypes()
 
@@ -373,7 +373,7 @@ class Python25Mapper_References_Test(TestCase):
         
         # need to dealloc ptr ourselves, it doesn't hapen automatically
         # except for objects with Dispatchers
-        mapper.PyBaseObject_Dealloc(ptr)
+        mapper.IC_PyBaseObject_Dealloc(ptr)
         mapper.Dispose()
         deallocTypes()
 
@@ -498,16 +498,20 @@ class Python25Mapper_GetAddress_NonApi_Test(TestCase):
 
     def testMethods(self):
         methods = (
-            "PyBaseObject_Dealloc",
-            "PyBaseObject_Init",
-            "PyCObject_Dealloc",
-            "PyTuple_Dealloc",
-            "PySlice_Dealloc",
-            "PyList_Dealloc",
-            "PyFile_Dealloc",
-            "PyFloat_New",
-            "PyString_Str",
-            "PyString_Concat_Core",
+            "IC_PyFloat_New",
+            "IC_PyInt_New",
+            
+            "IC_PyBaseObject_Init",
+            
+            "IC_PyString_Str",
+            "IC_PyString_Concat_Core",
+            
+            "IC_PyBaseObject_Dealloc",
+            "IC_PyCObject_Dealloc",
+            "IC_PyFile_Dealloc",
+            "IC_PyList_Dealloc",
+            "IC_PySlice_Dealloc",
+            "IC_PyTuple_Dealloc",
         )
         for method in methods:
             self.assertGetAddressWorks(method)

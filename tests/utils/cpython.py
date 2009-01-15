@@ -68,7 +68,7 @@ def GetMapperTypePtrDefaults(mapper):
         "ob_type": mapper.PyType_Type,
         "tp_alloc": mapper.PyType_GenericAlloc,
         "tp_new": mapper.PyType_GenericNew,
-        "tp_dealloc": mapper.PyBaseObject_Dealloc,
+        "tp_dealloc": mapper.IC_PyBaseObject_Dealloc,
         "tp_free": mapper.PyObject_Free,
     }
 

@@ -201,7 +201,7 @@ namespace Ironclad
         }
 
         public IntPtr
-        PyFloat_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
+        IC_PyFloat_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
             try
             {
@@ -216,7 +216,7 @@ namespace Ironclad
         }
 
         public IntPtr
-        PyInt_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
+        IC_PyInt_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
             try
             {

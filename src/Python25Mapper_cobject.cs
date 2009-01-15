@@ -52,7 +52,7 @@ namespace Ironclad
         }
     
         public void
-        PyCObject_Dealloc(IntPtr cobjPtr)
+        IC_PyCObject_Dealloc(IntPtr cobjPtr)
         {
             if (CPyMarshal.ReadPtrField(cobjPtr, typeof(PyCObject), "destructor") != IntPtr.Zero)
             {

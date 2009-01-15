@@ -20,7 +20,7 @@ class PyList_Type_Test(TypeTestCase):
     def testPyListTypeField_tp_dealloc(self):
         calls = []
         class MyPM(Python25Mapper):
-            def PyList_Dealloc(self, listPtr):
+            def IC_PyList_Dealloc(self, listPtr):
                 calls.append(listPtr)
         
         mapper = MyPM()
@@ -83,7 +83,7 @@ class PyList_Type_Test(TypeTestCase):
             itemPtrs.append(CPyMarshal.ReadPtr(dataStore))
             dataStore = OffsetPtr(dataStore, CPyMarshal.PtrSize)
         
-        mapper.PyList_Dealloc(listPtr)
+        mapper.IC_PyList_Dealloc(listPtr)
         
         for itemPtr in itemPtrs:
             self.assertEquals(itemPtr in frees, True, "did not decref item")

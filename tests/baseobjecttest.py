@@ -384,8 +384,8 @@ class PyBaseObject_Type_Test(TypeTestCase):
         
         AssertPtrField("tp_new", mapper.GetAddress("PyType_GenericNew"))
         AssertPtrField("tp_alloc", mapper.GetAddress("PyType_GenericAlloc"))
-        AssertPtrField("tp_init", mapper.GetAddress("PyBaseObject_Init"))
-        AssertPtrField("tp_dealloc", mapper.GetAddress("PyBaseObject_Dealloc"))
+        AssertPtrField("tp_init", mapper.GetAddress("IC_PyBaseObject_Init"))
+        AssertPtrField("tp_dealloc", mapper.GetAddress("IC_PyBaseObject_Dealloc"))
         AssertPtrField("tp_free", mapper.GetAddress("PyObject_Free"))
         
         AssertPtrField("tp_str", mapper.GetAddress("PyObject_Str"))
@@ -415,7 +415,7 @@ class PyBaseObject_Type_Test(TypeTestCase):
         CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", objTypeBlock)
         gcwait() # this should make the function pointers invalid if we forgot to store references to the delegates
 
-        mapper.PyBaseObject_Dealloc(objPtr)
+        mapper.IC_PyBaseObject_Dealloc(objPtr)
         self.assertEquals(calls, [objPtr], "wrong calls")
 
 
@@ -436,12 +436,12 @@ class NewInitFunctionsTest(TestCase):
         
 
     @WithMapper
-    def testPyBaseObject_Init(self, mapper, _):
+    def testIC_PyBaseObject_Init(self, mapper, _):
         "this function shouldn't do anything..."
         mapper = Python25Mapper()
         deallocTypes = CreateTypes(mapper)
         
-        self.assertEquals(mapper.PyBaseObject_Init(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero), 0)
+        self.assertEquals(mapper.IC_PyBaseObject_Init(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero), 0)
 
     
     def test_PyObject_New(self):

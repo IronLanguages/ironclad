@@ -15,7 +15,7 @@ namespace Ironclad
     public partial class Python25Mapper : Python25Api
     {
         private IntPtr
-        PyString_Concat_Core(IntPtr str1Ptr, IntPtr str2Ptr)
+        IC_PyString_Concat_Core(IntPtr str1Ptr, IntPtr str2Ptr)
         {
             try
             {
@@ -43,7 +43,7 @@ namespace Ironclad
             IntPtr str3Ptr = IntPtr.Zero;
             if (str2Ptr != IntPtr.Zero)
             {
-                str3Ptr = this.PyString_Concat_Core(str1Ptr, str2Ptr);
+                str3Ptr = this.IC_PyString_Concat_Core(str1Ptr, str2Ptr);
             }
             Marshal.WriteIntPtr(str1PtrPtr, str3Ptr);
             this.DecRef(str1Ptr);
@@ -325,7 +325,7 @@ namespace Ironclad
         }
 
         public IntPtr
-        PyString_Str(IntPtr ptr)
+        IC_PyString_Str(IntPtr ptr)
         {
             try
             {

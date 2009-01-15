@@ -37,7 +37,7 @@ class PyFile_Type_Test(TestCase):
         
         mapper.SetData("PyFile_Type", typeBlock)
         self.assertEquals(mapper.PyFile_Type, typeBlock, "type address not stored")
-        self.assertEquals(CPyMarshal.ReadPtrField(mapper.PyFile_Type, PyTypeObject, 'tp_dealloc'), mapper.GetAddress('PyFile_Dealloc'))
+        self.assertEquals(CPyMarshal.ReadPtrField(mapper.PyFile_Type, PyTypeObject, 'tp_dealloc'), mapper.GetAddress('IC_PyFile_Dealloc'))
         self.assertEquals(mapper.Retrieve(typeBlock), file, "type not mapped")
     
     

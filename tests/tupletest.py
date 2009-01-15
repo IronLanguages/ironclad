@@ -75,7 +75,7 @@ class PyTuple_Type_Test(TypeTestCase):
         CPyMarshal.WriteFunctionPtrField(mapper.PyTuple_Type, PyTypeObject, "tp_free", freeDgt)
         tuplePtr, itemPtrs = MakeTuple(mapper, (1, 2, 3))
 
-        mapper.PyTuple_Dealloc(tuplePtr)
+        mapper.IC_PyTuple_Dealloc(tuplePtr)
 
         for itemPtr in itemPtrs:
             self.assertEquals(itemPtr in frees, True, "did not decref item")

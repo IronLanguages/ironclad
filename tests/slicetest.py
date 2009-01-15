@@ -52,7 +52,7 @@ class SliceTest(TestCase):
         slicePtr = mapper.Store(slice(1, 2, 3))
         
         del frees[:]
-        mapper.PySlice_Dealloc(slicePtr)
+        mapper.IC_PySlice_Dealloc(slicePtr)
         self.assertEquals(len(frees), 3, "did not dealloc each item")
         self.assertEquals(calls, [slicePtr], "did not call type's free function")
         mapper.PyObject_Free(slicePtr)

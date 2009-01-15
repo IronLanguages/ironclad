@@ -152,13 +152,13 @@ namespace Ironclad
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "tp_basicsize", Marshal.SizeOf(typeof(PyStringObject)) - 1);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "tp_itemsize", 1);
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_str", this.GetAddress("PyString_Str"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_str", this.GetAddress("IC_PyString_Str"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_repr", this.GetAddress("PyString_Repr"));
 
             int sqSize = Marshal.SizeOf(typeof(PySequenceMethods));
             IntPtr sqPtr = this.allocator.Alloc(sqSize);
             CPyMarshal.Zero(sqPtr, sqSize);
-            CPyMarshal.WritePtrField(sqPtr, typeof(PySequenceMethods), "sq_concat", this.GetAddress("PyString_Concat_Core"));
+            CPyMarshal.WritePtrField(sqPtr, typeof(PySequenceMethods), "sq_concat", this.GetAddress("IC_PyString_Concat_Core"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_as_sequence", sqPtr);
 
             this.map.Associate(address, TypeCache.String);

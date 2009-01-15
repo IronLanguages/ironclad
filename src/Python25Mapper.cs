@@ -465,38 +465,38 @@ namespace Ironclad
 
             switch (name)
             {
-                case "PyBaseObject_Dealloc":
-                    this.dgtMap[name] = new dgt_void_ptr(this.PyBaseObject_Dealloc);
+                case "IC_PyBaseObject_Dealloc":
+                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PyBaseObject_Dealloc);
                     break;
-                case "PyBaseObject_Init":
-                    this.dgtMap[name] = new dgt_int_ptrptrptr(this.PyBaseObject_Init);
+                case "IC_PyBaseObject_Init":
+                    this.dgtMap[name] = new dgt_int_ptrptrptr(this.IC_PyBaseObject_Init);
                     break;
-                case "PyCObject_Dealloc":
-                    this.dgtMap[name] = new dgt_void_ptr(this.PyCObject_Dealloc);
+                case "IC_PyCObject_Dealloc":
+                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PyCObject_Dealloc);
                     break;
-                case "PyFile_Dealloc":
-                    this.dgtMap[name] = new dgt_void_ptr(this.PyFile_Dealloc);
+                case "IC_PyFile_Dealloc":
+                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PyFile_Dealloc);
                     break;
-                case "PyFloat_New":
-                    this.dgtMap[name] = new dgt_ptr_ptrptrptr(this.PyFloat_New);
+                case "IC_PyFloat_New":
+                    this.dgtMap[name] = new dgt_ptr_ptrptrptr(this.IC_PyFloat_New);
                     break;
-                case "PyInt_New":
-                    this.dgtMap[name] = new dgt_ptr_ptrptrptr(this.PyInt_New);
+                case "IC_PyInt_New":
+                    this.dgtMap[name] = new dgt_ptr_ptrptrptr(this.IC_PyInt_New);
                     break;
-                case "PyList_Dealloc":
-                    this.dgtMap[name] = new dgt_void_ptr(this.PyList_Dealloc);
+                case "IC_PyList_Dealloc":
+                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PyList_Dealloc);
                     break;
-                case "PySlice_Dealloc":
-                    this.dgtMap[name] = new dgt_void_ptr(this.PySlice_Dealloc);
+                case "IC_PySlice_Dealloc":
+                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PySlice_Dealloc);
                     break;
-                case "PyTuple_Dealloc":
-                    this.dgtMap[name] = new dgt_void_ptr(this.PyTuple_Dealloc);
+                case "IC_PyTuple_Dealloc":
+                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PyTuple_Dealloc);
                     break;
-                case "PyString_Str":
-                    this.dgtMap[name] = new dgt_ptr_ptr(this.PyString_Str);
+                case "IC_PyString_Str":
+                    this.dgtMap[name] = new dgt_ptr_ptr(this.IC_PyString_Str);
                     break;
-                case "PyString_Concat_Core":
-                    this.dgtMap[name] = new dgt_ptr_ptrptr(this.PyString_Concat_Core);
+                case "IC_PyString_Concat_Core":
+                    this.dgtMap[name] = new dgt_ptr_ptrptr(this.IC_PyString_Concat_Core);
                     break;
                 default:
                     this.unknownNames.Add(name);
