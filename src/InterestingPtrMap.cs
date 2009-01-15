@@ -83,15 +83,19 @@ namespace Ironclad
             }
         }
         
-        public void CheckBridgePtrs()
+        
+        public void CheckBridgePtrs(bool force)
         {
-            // throttling and forced GC not tested; couldn't work out how
-            this.cbpCount += 1;
-            if (this.cbpCount < this.cbpRegulator)
+            if (!force)
             {
-                return;
+                // throttling and forced GC not tested; couldn't work out how
+                this.cbpCount += 1;
+                if (this.cbpCount < this.cbpRegulator)
+                {
+                    return;
+                }
+                this.cbpCount = 0;
             }
-            this.cbpCount = 0;
             this.MapOverBridgePtrs(new PtrFunc(this.UpdateStrength));
             GC.Collect();
         }
@@ -164,7 +168,7 @@ namespace Ironclad
                 this.id2ref.Remove(id);
                 
                 bool needsRemove = this.id2reffed[id];
-                this.id2ref.Remove(id);
+                this.id2reffed.Remove(id);
                 if (needsRemove)
                 {
                     object obj = wref.Target;

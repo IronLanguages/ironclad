@@ -143,7 +143,7 @@ namespace Ironclad
                 this.DecRef(ptr);
             }
             this.tempObjects.Clear();
-            this.map.CheckBridgePtrs();
+            this.map.CheckBridgePtrs(false);
             this.GIL.Release();
         }
         

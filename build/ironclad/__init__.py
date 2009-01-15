@@ -49,6 +49,6 @@ def get_gc_threshold():
     return _mapper.GCThreshold
 
 def gcwait():
-    GC.Collect()
+    _mapper.ForceCleanup()
     GC.WaitForPendingFinalizers()
     

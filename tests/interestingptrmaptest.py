@@ -112,10 +112,7 @@ class InterestingPtrMapTest(TestCase):
         CPyMarshal.WriteIntField(ptr1, PyObject, 'ob_refcnt', 1)
         CPyMarshal.WriteIntField(ptr2, PyObject, 'ob_refcnt', 1)
         
-        # force no throttling of cleanup
-        map.GCThreshold = 0
-        
-        map.CheckBridgePtrs()
+        map.CheckBridgePtrs(True)
         del obj1
         del obj2
         gcwait()
