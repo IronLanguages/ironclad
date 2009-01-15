@@ -122,7 +122,6 @@ namespace Ironclad
             ScopeOps.__setattr__(nosetester, "import_nose", new Object());
             ScopeOps.__setattr__(nosetester, "run_module_suite", new Object());
             ScopeOps.__setattr__(nosetester, "get_package_name", new Object());
-
         }
     }
 }

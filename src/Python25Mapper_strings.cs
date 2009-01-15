@@ -179,9 +179,23 @@ namespace Ironclad
                 return -1;
             }
         }
+
+        public override IntPtr
+        PyString_Repr(IntPtr ptr)
+        {
+            try
+            {
+                return this.Store(Builtin.repr(this.scratchContext, this.ReadPyString(ptr)));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
         
         private int
-        _PyString_Resize_Grow(IntPtr strPtrPtr, int newSize)
+        IC__PyString_Resize_Grow(IntPtr strPtrPtr, int newSize)
         {
             IntPtr oldStr = CPyMarshal.ReadPtr(strPtrPtr);
             IntPtr newStr = IntPtr.Zero;
@@ -199,11 +213,11 @@ namespace Ironclad
             CPyMarshal.WritePtr(strPtrPtr, newStr);
             this.incompleteObjects.Remove(oldStr);
             this.incompleteObjects[newStr] = UnmanagedDataMarker.PyStringObject;
-            return this._PyString_Resize_NoGrow(newStr, newSize);
+            return this.IC__PyString_Resize_NoGrow(newStr, newSize);
         }
         
         private int
-        _PyString_Resize_NoGrow(IntPtr strPtr, int newSize)
+        IC__PyString_Resize_NoGrow(IntPtr strPtr, int newSize)
         {
             IntPtr ob_sizePtr = CPyMarshal.Offset(
                 strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
@@ -224,11 +238,11 @@ namespace Ironclad
             PyStringObject str = (PyStringObject)Marshal.PtrToStructure(strPtr, typeof(PyStringObject));
             if (str.ob_size < newSize)
             {
-                return this._PyString_Resize_Grow(strPtrPtr, newSize);
+                return this.IC__PyString_Resize_Grow(strPtrPtr, newSize);
             }
             else
             {
-                return this._PyString_Resize_NoGrow(strPtr, newSize);
+                return this.IC__PyString_Resize_NoGrow(strPtr, newSize);
             }
         }
         
@@ -330,20 +344,6 @@ namespace Ironclad
             try
             {
                 return this.Store(this.ReadPyString(ptr));
-            }
-            catch (Exception e)
-            {
-                this.LastException = e;
-                return IntPtr.Zero;
-            }
-        }
-
-        public override IntPtr
-        PyString_Repr(IntPtr ptr)
-        {
-            try
-            {
-                return this.Store(Builtin.repr(this.scratchContext, this.ReadPyString(ptr)));
             }
             catch (Exception e)
             {
