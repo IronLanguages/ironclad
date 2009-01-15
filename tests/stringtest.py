@@ -84,9 +84,9 @@ class PyString_Type_Test(TypeTestCase):
 
     @WithMapper
     def testStringifiers(self, mapper, _):
-        PyString_Str = mapper.GetAddress("PyString_Str")
+        IC_PyString_Str = mapper.GetAddress("IC_PyString_Str")
         tp_str = CPyMarshal.ReadPtrField(mapper.PyString_Type, PyTypeObject, "tp_str")
-        self.assertEquals(tp_str, PyString_Str)
+        self.assertEquals(tp_str, IC_PyString_Str)
         
         PyString_Repr = mapper.GetAddress("PyString_Repr")
         tp_repr = CPyMarshal.ReadPtrField(mapper.PyString_Type, PyTypeObject, "tp_repr")
@@ -398,9 +398,9 @@ class PyString_OtherMethodsTest(TestCase):
         src = 'foo \0 bar supercalifragilisticexpialidocious'
         srcPtr = mapper.Store(src)
         
-        str_ = mapper.Retrieve(mapper.PyString_Str(srcPtr))
+        str_ = mapper.Retrieve(mapper.IC_PyString_Str(srcPtr))
         self.assertEquals(str_, src)
-        self.assertEquals(mapper.PyString_Str(mapper.Store(object())), IntPtr.Zero)
+        self.assertEquals(mapper.IC_PyString_Str(mapper.Store(object())), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
         
         repr_ = mapper.Retrieve(mapper.PyString_Repr(srcPtr))

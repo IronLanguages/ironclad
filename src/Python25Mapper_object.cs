@@ -32,13 +32,13 @@ namespace Ironclad
             return objPtr;
         }
         
-        public int PyBaseObject_Init(IntPtr self, IntPtr args, IntPtr kwargs)
+        public int IC_PyBaseObject_Init(IntPtr self, IntPtr args, IntPtr kwargs)
         {
             return 0;
         }
         
         public virtual void 
-        PyBaseObject_Dealloc(IntPtr objPtr)
+        IC_PyBaseObject_Dealloc(IntPtr objPtr)
         {
             IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
             PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)

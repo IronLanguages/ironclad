@@ -46,7 +46,7 @@ class TypeTestCase(TestCase):
         
         tp_deallocPtr = CPyMarshal.ReadPtrField(
             getattr(mapper, typename), PyTypeObject, "tp_dealloc")
-        self.assertEquals(tp_deallocPtr, mapper.GetAddress("PyBaseObject_Dealloc"), "wrong tp_dealloc for " + typename)
+        self.assertEquals(tp_deallocPtr, mapper.GetAddress("IC_PyBaseObject_Dealloc"), "wrong tp_dealloc for " + typename)
         
         mapper.Dispose()
         deallocTypes()

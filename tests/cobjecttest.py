@@ -60,7 +60,7 @@ class CObjectTest(TestCase):
 
 class PyCObject_Type_Test(TypeTestCase):
         
-    def testPyCObject_Dealloc(self):
+    def testIC_PyCObject_Dealloc(self):
         VOID_PTR = IntPtr(12345)
         
         def CreateInstance(mapper, calls):

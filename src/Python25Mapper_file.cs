@@ -10,7 +10,8 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        public override IntPtr PyFile_AsFile(IntPtr pyFilePtr)
+        public override IntPtr
+        PyFile_AsFile(IntPtr pyFilePtr)
         {
             if (this.FILEs.ContainsKey(pyFilePtr))
             {
@@ -18,13 +19,9 @@ namespace Ironclad
             }
             
             PythonFile pyFile = (PythonFile)this.Retrieve(pyFilePtr);
-            FileStream stream = InappropriateReflection.StreamFromPythonFile(pyFile);
-            SafeHandle safeHandle = stream.SafeFileHandle;
-            IntPtr handle = safeHandle.DangerousGetHandle();
-	    int fd = Unmanaged._open_osfhandle(handle, 0);
-
+            int fd = this.ConvertPyFileToDescriptor(pyFile);
             IntPtr FILE = IntPtr.Zero;
-            if (stream.CanWrite)
+            if (InappropriateReflection.StreamFromPythonFile(pyFile).CanWrite)
             {
                 FILE = Unmanaged._fdopen(fd, "w");
             }
@@ -36,14 +33,14 @@ namespace Ironclad
             return FILE;
         }
 
-	// TODO: maybe remove repetition
-	public int ConvertPyFileToDescriptor(PythonFile pyFile)
-	{
-	    FileStream stream = InappropriateReflection.StreamFromPythonFile(pyFile);
-	    SafeHandle safeHandle = stream.SafeFileHandle;
+        public int
+        ConvertPyFileToDescriptor(PythonFile pyFile)
+        {
+            FileStream stream = InappropriateReflection.StreamFromPythonFile(pyFile);
+            SafeHandle safeHandle = stream.SafeFileHandle;
             IntPtr handle = safeHandle.DangerousGetHandle();
-	    return Unmanaged._open_osfhandle(handle, 0);
-	}
+            return Unmanaged._open_osfhandle(handle, 0);
+        }
 
         private IntPtr
         Store(PythonFile obj)
@@ -57,7 +54,7 @@ namespace Ironclad
 
         
         public virtual void 
-        PyFile_Dealloc(IntPtr ptr)
+        IC_PyFile_Dealloc(IntPtr ptr)
         {
             if (this.FILEs.ContainsKey(ptr))
             {
