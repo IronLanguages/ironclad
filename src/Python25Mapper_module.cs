@@ -82,7 +82,7 @@ namespace Ironclad
         }
 
         private int 
-        PyModule_Add(IntPtr modulePtr, string name, object value)
+        IC_PyModule_Add(IntPtr modulePtr, string name, object value)
         {
             if (!this.map.HasPtr(modulePtr))
             {
@@ -102,19 +102,19 @@ namespace Ironclad
             }
             object value = this.Retrieve(valuePtr);
             this.DecRef(valuePtr);
-            return this.PyModule_Add(modulePtr, name, value);
+            return this.IC_PyModule_Add(modulePtr, name, value);
         }
         
         public override int
         PyModule_AddIntConstant(IntPtr modulePtr, string name, int value)
         {
-            return this.PyModule_Add(modulePtr, name, value);
+            return this.IC_PyModule_Add(modulePtr, name, value);
         }
         
         public override int
         PyModule_AddStringConstant(IntPtr modulePtr, string name, string value)
         {
-            return this.PyModule_Add(modulePtr, name, value);
+            return this.IC_PyModule_Add(modulePtr, name, value);
         }
 
         private void

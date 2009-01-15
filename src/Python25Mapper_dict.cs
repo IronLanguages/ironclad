@@ -59,7 +59,7 @@ namespace Ironclad
         
         
         private IntPtr
-        PyDict_Get(IntPtr dictPtr, object key)
+        IC_PyDict_Get(IntPtr dictPtr, object key)
         {
             IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
             if (dict.Contains(key))
@@ -75,19 +75,19 @@ namespace Ironclad
         public override IntPtr
         PyDict_GetItem(IntPtr dictPtr, IntPtr keyPtr)
         {
-            return PyDict_Get(dictPtr, this.Retrieve(keyPtr));
+            return this.IC_PyDict_Get(dictPtr, this.Retrieve(keyPtr));
         }
         
         
         public override IntPtr
         PyDict_GetItemString(IntPtr dictPtr, string key)
         {
-            return PyDict_Get(dictPtr, key);
+            return this.IC_PyDict_Get(dictPtr, key);
         }
 
 
         private int 
-        PyDict_Set(IntPtr dictPtr, object key, object item)
+        IC_PyDict_Set(IntPtr dictPtr, object key, object item)
         {
             IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
             if (dict is DictProxy)
@@ -108,7 +108,7 @@ namespace Ironclad
         {
             try
             {
-                return this.PyDict_Set(dictPtr, this.Retrieve(keyPtr), this.Retrieve(itemPtr));
+                return this.IC_PyDict_Set(dictPtr, this.Retrieve(keyPtr), this.Retrieve(itemPtr));
             }
             catch (Exception e)
             {
@@ -120,7 +120,7 @@ namespace Ironclad
         public override int
         PyDict_SetItemString(IntPtr dictPtr, string key, IntPtr itemPtr)
         {
-            return this.PyDict_Set(dictPtr, key, this.Retrieve(itemPtr));
+            return this.IC_PyDict_Set(dictPtr, key, this.Retrieve(itemPtr));
         }
         
         public override int

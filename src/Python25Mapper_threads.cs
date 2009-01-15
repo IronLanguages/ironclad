@@ -113,7 +113,8 @@ namespace Ironclad
             }
         }
 
-        // I can only assume that an enum is near-enough the same as an int :)
+        // I can only assume that an enum is near-enough the same as an int, and I choose
+        // to assume that nobody ever does anything interesting with the return value.
         // I also assume nobody will call Ensure twice without an intervening Release
         public override int
         PyGILState_Ensure()

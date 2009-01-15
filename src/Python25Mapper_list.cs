@@ -66,7 +66,7 @@ namespace Ironclad
         }
 
         private IntPtr
-        PyList_New_Zero()
+        IC_PyList_New_Zero()
         {
             PyListObject list = new PyListObject();
             list.ob_refcnt = 1;
@@ -86,7 +86,7 @@ namespace Ironclad
         {
             if (length == 0)
             {
-                return this.PyList_New_Zero();
+                return this.IC_PyList_New_Zero();
             }
 
             PyListObject list = new PyListObject();
@@ -107,7 +107,7 @@ namespace Ironclad
         
         
         private void 
-        PyList_Append_Empty(IntPtr listPtr, ref PyListObject listStruct, IntPtr itemPtr)
+        IC_PyList_Append_Empty(IntPtr listPtr, ref PyListObject listStruct, IntPtr itemPtr)
         {
             listStruct.ob_size = 1;
             listStruct.allocated = 1;
@@ -118,7 +118,7 @@ namespace Ironclad
         
         
         private void 
-        PyList_Append_NonEmpty(IntPtr listPtr, ref PyListObject listStruct, IntPtr itemPtr)
+        IC_PyList_Append_NonEmpty(IntPtr listPtr, ref PyListObject listStruct, IntPtr itemPtr)
         {
             uint oldAllocated = listStruct.allocated;
             int oldAllocatedBytes = (int)oldAllocated * CPyMarshal.PtrSize;
@@ -141,11 +141,11 @@ namespace Ironclad
             PyListObject listStruct = (PyListObject)Marshal.PtrToStructure(listPtr, typeof(PyListObject));
             if (listStruct.ob_item == IntPtr.Zero)
             {
-                this.PyList_Append_Empty(listPtr, ref listStruct, itemPtr);
+                this.IC_PyList_Append_Empty(listPtr, ref listStruct, itemPtr);
             }
             else
             {
-                this.PyList_Append_NonEmpty(listPtr, ref listStruct, itemPtr);
+                this.IC_PyList_Append_NonEmpty(listPtr, ref listStruct, itemPtr);
             }
             
             List list = (List)this.Retrieve(listPtr);

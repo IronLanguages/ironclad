@@ -315,7 +315,7 @@ namespace Ironclad
             Builtin.setattr(this.scratchContext, obj, "__class__", this.Retrieve(typePtr));
             this.StoreBridge(ptr, obj);
             this.IncRef(ptr);
-            GC.KeepAlive(obj); // please test me, if you can work out how to
+            GC.KeepAlive(obj); // TODO: please test me, if you can work out how to
         }
     }
 }
