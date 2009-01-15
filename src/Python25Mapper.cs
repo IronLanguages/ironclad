@@ -418,6 +418,23 @@ namespace Ironclad
         {
             this.map.Weaken(obj);
         }
+        
+        public void
+        ForceCleanup()
+        {
+            if (this.alive)
+            {
+                this.GIL.Acquire();
+                try
+                {
+                    this.map.CheckBridgePtrs(true);
+                }
+                finally
+                {
+                    this.GIL.Release();
+                }
+            }
+        }
 
         public void Unmap(IntPtr ptr)
         {

@@ -69,28 +69,25 @@ namespace Ironclad
             this.mapper.EnsureGIL();
             try
             {
-                try
+                IntPtr ptr0 = this.mapper.Store(arg0);
+                int refcnt = this.mapper.RefCount(ptr0);
+                if (refcnt != 2)
                 {
-                    IntPtr ptr0 = this.mapper.Store(arg0);
-                    int refcnt = this.mapper.RefCount(ptr0);
-                    if (refcnt != 2)
-                    {
-                        Console.WriteLine("unexpected refcount {0} when deleting object at {1}", refcnt, ptr0.ToString("x"));
-                    }
-                    this.mapper.DecRef(ptr0);
-                    this.mapper.DecRef(ptr0);
-                    this.mapper.Unmap(ptr0);
-                    PythonExceptions.BaseException error = (PythonExceptions.BaseException)this.mapper.LastException;
-                    if (error != null)
-                    {
-                        this.mapper.LastException = null;
-                        throw error.clsException;
-                    }
+                    Console.WriteLine("unexpected refcount {0} when deleting object at {1}", refcnt, ptr0.ToString("x"));
                 }
-                catch (Exception e)
+                this.mapper.DecRef(ptr0);
+                this.mapper.DecRef(ptr0);
+                this.mapper.Unmap(ptr0);
+                PythonExceptions.BaseException error = (PythonExceptions.BaseException)this.mapper.LastException;
+                if (error != null)
                 {
-                    Console.WriteLine("Error on dispose: {0}", e);
+                    this.mapper.LastException = null;
+                    throw error.clsException;
                 }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error on dispose: {0}", e);
             }
             finally
             {
