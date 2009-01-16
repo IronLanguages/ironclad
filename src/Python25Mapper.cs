@@ -171,7 +171,6 @@ namespace Ironclad
                     this.stub.Dispose();
                 }
                 this.scratchModule.Clear();
-                
             }
         }
         
@@ -204,6 +203,11 @@ namespace Ironclad
             set {
                 this.map.GCThreshold = value;
             }
+        }
+        
+        public void DumpMappingInfo(object id)
+        {
+            this.map.DumpMappingInfo(id);
         }
         
         public IntPtr 

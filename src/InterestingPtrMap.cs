@@ -73,6 +73,53 @@ namespace Ironclad
             }
         }
         
+        
+        public void DumpMappingInfo(object id)
+        {
+            if (this.id2ptr.ContainsKey(id))
+            {
+                IntPtr ptr = this.id2ptr[id];
+                Console.WriteLine("object for id {0} is stored at {1}; refcount is {2}", 
+                    id, ptr.ToString("x"), CPyMarshal.ReadInt(ptr));
+                if (this.id2obj.ContainsKey(id))
+                {
+                    Console.WriteLine("object is simply mapped");
+                    Console.WriteLine(PythonCalls.Call(Builtin.str, new object[] { this.id2obj[id] }));
+                }
+                else if (this.id2ref.ContainsKey(id))
+                {
+                    this.UpdateStrength(ptr);
+                    Console.WriteLine("object is cleverly mapped");
+                    if (this.id2reffed.ContainsKey(id))
+                    {
+                        if (this.id2reffed[id])
+                        {
+                            Console.WriteLine("object is being kept alive");
+                        }
+                        else
+                        {
+                            Console.WriteLine("object is at GC's mercy");
+                        }
+                    }
+                    else
+                    {   
+                        Console.WriteLine("object is confused");
+                    }
+                    WeakReference wref = this.id2ref[id];
+                    Console.WriteLine(PythonCalls.Call(Builtin.str, new object[] { wref.Target }));
+                }
+                else
+                {
+                    Console.WriteLine("hm, object has been lost somewhere");
+                }
+            }
+            else
+            {
+                Console.WriteLine("{0} is not mapped", id);
+            }
+        }
+        
+        
         public int GCThreshold
         {
             get {
