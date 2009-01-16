@@ -27,7 +27,11 @@ def shutdown():
 
 # various useful functions
 
-def dump(obj, size=None):
+def dump_info(obj, size=None):
+    print 
+    print 'before storing:'
+    _mapper.DumpMappingInfo(id(obj))
+
     objPtr = _mapper.Store(obj)
     if size is None:
         typePtr = CPyMarshal.ReadPtrField(objPtr, PyObject, "ob_type")
@@ -37,6 +41,7 @@ def dump(obj, size=None):
             itemcount = CPyMarshal.ReadIntField(objPtr, PyVarObject, "ob_size")
             size += itemcount * itemsize
     print 
+    print 'after storing:'
     print 'dumping %d bytes of object at %x' % (size, objPtr)
     CPyMarshal.Log(objPtr, size)
     print
