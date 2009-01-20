@@ -8,17 +8,14 @@ import os
 import shutil
 import tempfile
 
-from Microsoft.Win32.SafeHandles import SafeFileHandle
 from System import IntPtr
 from System.IO import FileStream
 from System.Runtime.InteropServices import Marshal
 
-
-
 from Ironclad import CPyMarshal, Python25Api, Python25Mapper, Unmanaged
 from Ironclad.Structs import PyObject, PyStringObject, PyTypeObject
 
-from TestUtils.Unmanaged import fflush, fread, fwrite, _get_osfhandle
+from TestUtils.Unmanaged import fflush, fread, fwrite
 
 
 READ_ARGS = (os.path.join('tests', 'data', 'text.txt'), 'r')

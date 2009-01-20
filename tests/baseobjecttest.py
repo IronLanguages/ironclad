@@ -442,6 +442,9 @@ class NewInitFunctionsTest(TestCase):
         deallocTypes = CreateTypes(mapper)
         
         self.assertEquals(mapper.IC_PyBaseObject_Init(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero), 0)
+        
+        mapper.Dispose()
+        deallocTypes()
 
     
     def test_PyObject_New(self):
