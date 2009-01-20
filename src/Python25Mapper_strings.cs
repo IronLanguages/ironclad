@@ -97,10 +97,12 @@ namespace Ironclad
         PyString_InternFromString(IntPtr stringData)
         {
             IntPtr newStrPtr = PyString_FromString(stringData);
-            IntPtr newStrPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(IntPtr)));
+            IntPtr newStrPtrPtr = this.allocator.Alloc(Marshal.SizeOf(typeof(IntPtr)));
             CPyMarshal.WritePtr(newStrPtrPtr, newStrPtr);
             this.PyString_InternInPlace(newStrPtrPtr);
-            return CPyMarshal.ReadPtr(newStrPtrPtr);
+            IntPtr newNewStrPtr = CPyMarshal.ReadPtr(newStrPtrPtr);
+            this.allocator.Free(newStrPtrPtr);
+            return newNewStrPtr;
         }
 
         public override void
