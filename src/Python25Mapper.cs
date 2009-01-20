@@ -96,6 +96,11 @@ namespace Ironclad
         {
             this.Init(python, stubPath, allocator);
         }
+        
+        ~Python25Mapper()
+        {
+            throw new Exception("Python25Mapper needs to be Disposed manually. Please don't just leave them lying around.");
+        }
 
         private void Init(PythonContext inPython, string stubPath, IAllocator inAllocator)
         {
@@ -170,7 +175,6 @@ namespace Ironclad
                     this.importer.Dispose();
                     this.stub.Dispose();
                 }
-                this.scratchModule.Clear();
             }
         }
         
