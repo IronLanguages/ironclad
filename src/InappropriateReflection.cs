@@ -46,7 +46,6 @@ namespace Ironclad
             }
         }
         
-        
         public static object
         GetPythonException(System.Exception clrException)
         {

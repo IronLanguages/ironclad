@@ -73,7 +73,7 @@ namespace Ironclad
                 int refcnt = this.mapper.RefCount(ptr0);
                 if (refcnt != 2)
                 {
-                    Console.WriteLine("unexpected refcount {0} when deleting object at {1}", refcnt, ptr0.ToString("x"));
+                    Console.WriteLine("unexpected refcount {0} when deleting object id {1} at {2}", refcnt, Builtin.id(arg0), ptr0.ToString("x"));
                 }
                 this.mapper.DecRef(ptr0);
                 this.mapper.DecRef(ptr0);

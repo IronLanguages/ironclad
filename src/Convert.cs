@@ -32,12 +32,14 @@ namespace Ironclad
                 object probablyInt = PythonCalls.Call(TypeCache.Int32, new object[] {obj});
                 return this.MakeBigInteger(probablyInt);
             }
+            
             if ((!Builtin.isinstance(obj, TypeCache.PythonType)) &&
                 Builtin.hasattr(this.scratchContext, obj, "__float__"))
             {
                 object probablyFloat = PythonCalls.Call(TypeCache.Double, new object[] {obj});
                 return this.MakeBigInteger(probablyFloat);
             }
+            
             throw PythonOps.TypeError("could not make number sufficiently integeresque");
         }
         
@@ -45,10 +47,12 @@ namespace Ironclad
         MakeUnsignedBigInteger(object obj)
         {
             BigInteger result = this.MakeBigInteger(obj);
+            
             if (result < 0)
             {
                 throw PythonOps.TypeError("cannot make {0} unsigned", result);
             }
+            
             return result;
         }
         
@@ -71,12 +75,14 @@ namespace Ironclad
                 object probablyInt = PythonCalls.Call(TypeCache.Int32, new object[] {obj});
                 return this.MakeFloat(probablyInt);
             }
+            
             if ((!Builtin.isinstance(obj, TypeCache.PythonType)) &&
                 Builtin.hasattr(this.scratchContext, obj, "__long__"))
             {
                 object probablyLong = PythonCalls.Call(TypeCache.BigInteger, new object[] {obj});
                 return this.MakeFloat(probablyLong);
             }
+            
             throw PythonOps.TypeError("could not make number sufficiently floatesque");
         }
     }

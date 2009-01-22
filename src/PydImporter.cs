@@ -16,7 +16,8 @@ namespace Ironclad
         private List<IntPtr> handles = new List<IntPtr>();
         private bool alive = true;
         
-        public void Load(string path)
+        public void
+        Load(string path)
         {
             IntPtr l = Unmanaged.LoadLibrary(path);
             if (l == IntPtr.Zero)
@@ -34,7 +35,8 @@ namespace Ironclad
                     String.Format("Could not find module init function {0} in dll {1}", funcName, path));
             }
 
-            PydInit_Delegate initmodule = (PydInit_Delegate)Marshal.GetDelegateForFunctionPointer(funcPtr, typeof(PydInit_Delegate));
+            PydInit_Delegate initmodule = (PydInit_Delegate)Marshal.GetDelegateForFunctionPointer(
+                funcPtr, typeof(PydInit_Delegate));
             initmodule();
         }
         
@@ -43,7 +45,8 @@ namespace Ironclad
             this.Dispose(false);
         }
         
-        protected virtual void Dispose(bool disposing)
+        protected virtual void
+        Dispose(bool disposing)
         {
             if (this.alive)
             {
@@ -56,7 +59,8 @@ namespace Ironclad
             }
         }
         
-        public void Dispose()
+        public void
+        Dispose()
         {
             GC.SuppressFinalize(this);
             this.Dispose(true);

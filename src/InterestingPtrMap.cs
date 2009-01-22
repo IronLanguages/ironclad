@@ -33,7 +33,8 @@ namespace Ironclad
         private int cbpCount = 0;
         private int cbpRegulator = 500;
     
-        public void Associate(IntPtr ptr, object obj)
+        public void
+        Associate(IntPtr ptr, object obj)
         {
             object id = Builtin.id(obj);
             this.ptr2id[ptr] = id;
@@ -41,7 +42,8 @@ namespace Ironclad
             this.id2obj[id] = obj;
         }
         
-        public void BridgeAssociate(IntPtr ptr, object obj)
+        public void
+        BridgeAssociate(IntPtr ptr, object obj)
         {
             object id = Builtin.id(obj);
             this.ptr2id[ptr] = id;
@@ -53,7 +55,8 @@ namespace Ironclad
             this.strongrefs.Add(obj);
         }
         
-        public void UpdateStrength(IntPtr ptr)
+        public void
+        UpdateStrength(IntPtr ptr)
         {
             object id = this.ptr2id[ptr];
             if (!this.id2ref.ContainsKey(id))
@@ -74,7 +77,8 @@ namespace Ironclad
         }
         
         
-        public void DumpMappingInfo(object id)
+        public void
+        DumpMappingInfo(object id)
         {
             if (this.id2ptr.ContainsKey(id))
             {
@@ -120,18 +124,16 @@ namespace Ironclad
         }
         
         
-        public int GCThreshold
+        public int
+        GCThreshold
         {
-            get {
-                return this.cbpRegulator;
-            }
-            set {
-                this.cbpRegulator = value;
-            }
+            get { return this.cbpRegulator; }
+            set { this.cbpRegulator = value; }
         }
         
         
-        public void CheckBridgePtrs(bool force)
+        public void
+        CheckBridgePtrs(bool force)
         {
             if (!force)
             {
@@ -143,11 +145,13 @@ namespace Ironclad
                 }
                 this.cbpCount = 0;
             }
+            
             this.MapOverBridgePtrs(new PtrFunc(this.UpdateStrength));
             GC.Collect();
         }
         
-        public void MapOverBridgePtrs(PtrFunc f)
+        public void
+        MapOverBridgePtrs(PtrFunc f)
         {
             object[] keys = new object[this.id2ref.Count];
             this.id2ref.Keys.CopyTo(keys, 0);
@@ -158,7 +162,8 @@ namespace Ironclad
             return;
         }
         
-        public void Strengthen(object obj)
+        public void
+        Strengthen(object obj)
         {
             object id = Builtin.id(obj);
             if (this.id2ref.ContainsKey(id))
@@ -176,7 +181,8 @@ namespace Ironclad
             }
         }
         
-        public void Weaken(object obj)
+        public void
+        Weaken(object obj)
         {
             object id = Builtin.id(obj);
             if (this.id2ref.ContainsKey(id))
@@ -194,7 +200,8 @@ namespace Ironclad
             }
         }
         
-        public void Release(IntPtr ptr)
+        public void
+        Release(IntPtr ptr)
         {
             if (!this.ptr2id.ContainsKey(ptr))
             {
@@ -236,7 +243,8 @@ namespace Ironclad
             }
         }
         
-        public bool HasObj(object obj)
+        public bool
+        HasObj(object obj)
         {
             if (this.id2ptr.ContainsKey(Builtin.id(obj)))
             {
@@ -245,7 +253,8 @@ namespace Ironclad
             return false;
         }
         
-        public IntPtr GetPtr(object obj)
+        public IntPtr
+        GetPtr(object obj)
         {
             object id = Builtin.id(obj);
             if (!this.id2ptr.ContainsKey(id))
@@ -255,7 +264,8 @@ namespace Ironclad
             return this.id2ptr[id];
         }
         
-        public bool HasPtr(IntPtr ptr)
+        public bool
+        HasPtr(IntPtr ptr)
         {
             if (this.ptr2id.ContainsKey(ptr))
             {
@@ -264,7 +274,8 @@ namespace Ironclad
             return false;
         }
         
-        public object GetObj(IntPtr ptr)
+        public object
+        GetObj(IntPtr ptr)
         {
             if (!this.ptr2id.ContainsKey(ptr))
             {

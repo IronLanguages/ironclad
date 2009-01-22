@@ -69,6 +69,7 @@ namespace Ironclad
             {
                 return;
             }
+            
             while (CPyMarshal.ReadInt(methodPtr) != 0)
             {
                 PyMethodDef thisMethod = (PyMethodDef)Marshal.PtrToStructure(

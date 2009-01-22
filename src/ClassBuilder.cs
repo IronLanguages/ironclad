@@ -85,6 +85,7 @@ namespace Ironclad
             {
                 return;
             }
+            
             while (CPyMarshal.ReadInt(getsetPtr) != 0)
             {
                 this.GenerateProperty(getsetPtr);
@@ -100,6 +101,7 @@ namespace Ironclad
             {
                 return;
             }
+            
             while (CPyMarshal.ReadInt(memberPtr) != 0)
             {
                 this.GenerateMember(memberPtr);
@@ -228,6 +230,7 @@ namespace Ironclad
             {
                 return;
             }
+            
             foreach (string field in fields)
             {
                 if (CPyMarshal.ReadPtrField(protocolPtr, protocol, field) != IntPtr.Zero)
