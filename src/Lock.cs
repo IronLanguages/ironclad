@@ -26,6 +26,7 @@ namespace Ironclad
         {
             this.hMutex = Unmanaged.CreateMutex(IntPtr.Zero, 0, IntPtr.Zero);
             this.count = 0;
+            this.owner = -1;
         }
         
         ~Lock()
@@ -43,11 +44,18 @@ namespace Ironclad
         protected virtual void 
         Dispose(bool disposing)
         {
+            if (this.hMutex == IntPtr.Zero)
+            {
+                return;
+            }
+            
             while (this.count > 0)
             {
                 this.Release();
             }
             Unmanaged.CloseHandle(this.hMutex);
+            
+            this.hMutex = IntPtr.Zero;
         }
         
     
