@@ -133,6 +133,7 @@ namespace Ironclad
                 // we don't own this memory; not our problem.
                 return;
             }
+            
             try
             {
                 // note: SuppressFinalize won't work on ipy objects, but is required for OpaquePyCObjects.
@@ -160,21 +161,23 @@ namespace Ironclad
         protected virtual void 
         Dispose(bool disposing)
         {
-            if (this.alive)
+            if (!this.alive)
             {
-                this.alive = false;
-                this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
-                this.allocator.FreeAll();
-                foreach (IntPtr FILE in this.FILEs.Values)
-                {
-                    Unmanaged.fclose(FILE);
-                }
-                if (this.stub != null)
-                {
-                    PythonCalls.Call(this.removeSysHacks);
-                    this.importer.Dispose();
-                    this.stub.Dispose();
-                }
+                return;
+            }
+            
+            this.alive = false;
+            this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
+            this.allocator.FreeAll();
+            foreach (IntPtr FILE in this.FILEs.Values)
+            {
+                Unmanaged.fclose(FILE);
+            }
+            if (this.stub != null)
+            {
+                PythonCalls.Call(this.removeSysHacks);
+                this.importer.Dispose();
+                this.stub.Dispose();
             }
         }
         
@@ -190,6 +193,7 @@ namespace Ironclad
             finally
             {
                 this.GIL.Dispose();
+                this.GIL.Dispose();
             }
         }
 
@@ -201,12 +205,8 @@ namespace Ironclad
         
         public int GCThreshold
         {
-            get {
-                return this.map.GCThreshold;
-            }
-            set {
-                this.map.GCThreshold = value;
-            }
+            get { return this.map.GCThreshold; }
+            set { this.map.GCThreshold = value; }
         }
         
         public void DumpMappingInfo(object id)
@@ -221,11 +221,13 @@ namespace Ironclad
             {
                 throw new ArgumentTypeException("UnmanagedDataMarkers should not be Store()d.");
             }
+            
             if (obj == null)
             {
                 this.IncRef(this._Py_NoneStruct);
                 return this._Py_NoneStruct;
             }
+            
             if (this.map.HasObj(obj))
             {
                 IntPtr ptr = this.map.GetPtr(obj);
@@ -233,6 +235,7 @@ namespace Ironclad
                 GC.KeepAlive(obj); // please test me, if you can work out how to
                 return ptr;
             }
+            
             return this.StoreDispatch(obj);
         }
         
@@ -262,10 +265,12 @@ namespace Ironclad
             {
                 return false;
             }
+            
             if (ptr == this._Py_NoneStruct)
             {
                 return true;
             }
+            
             return (this.map.HasPtr(ptr) || this.incompleteObjects.ContainsKey(ptr));
         }
         
@@ -280,8 +285,7 @@ namespace Ironclad
 
             if (ptr == IntPtr.Zero)
             {
-                throw new CannotInterpretException(
-                    String.Format("cannot map IntPtr.Zero"));
+                throw new CannotInterpretException("cannot map IntPtr.Zero");
             }
 
             IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyTypeObject), "ob_type");
@@ -292,6 +296,7 @@ namespace Ironclad
                 throw new CannotInterpretException(
                     String.Format("cannot map object at {0} with type at {1}", ptr.ToString("x"), typePtr.ToString("x")));
             }
+            
             this.actualisableTypes[typePtr](ptr);
         }
 
@@ -300,6 +305,7 @@ namespace Ironclad
         Retrieve(IntPtr ptr)
         {
             this.AttemptToMap(ptr);
+            
             if (ptr == this._Py_NoneStruct)
             {
                 return null;
@@ -325,6 +331,7 @@ namespace Ironclad
                         throw new Exception(String.Format("{0} pointed to unknown UDM", ptr.ToString("x")));
                 }
             }
+            
             return this.map.GetObj(ptr);
         }
 
@@ -332,38 +339,38 @@ namespace Ironclad
         RefCount(IntPtr ptr)
         {
             this.AttemptToMap(ptr);
-            if (this.HasPtr(ptr))
-            {
-                if (this.map.HasPtr(ptr))
-                {
-                    this.map.UpdateStrength(ptr);
-                }
-                return CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
-            }
-            else
+            
+            if (!this.HasPtr(ptr))
             {
                 throw new KeyNotFoundException(String.Format(
                     "RefCount: missing key in pointer map: {0}", ptr.ToString("x")));
             }
+            
+            if (this.map.HasPtr(ptr))
+            {
+                this.map.UpdateStrength(ptr);
+            }
+            
+            return CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
         }
         
         public void 
         IncRef(IntPtr ptr)
         {
             this.AttemptToMap(ptr);
-            if (this.HasPtr(ptr))
-            {
-                int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
-                CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count + 1);
-                if (this.map.HasPtr(ptr))
-                {
-                    this.map.UpdateStrength(ptr);
-                }
-            }
-            else
+            
+            if (!this.HasPtr(ptr))
             {
                 throw new KeyNotFoundException(String.Format(
                     "IncRef: missing key in pointer map: {0}", ptr.ToString("x")));
+            }
+            
+            int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
+            CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count + 1);
+            
+            if (this.map.HasPtr(ptr))
+            {
+                this.map.UpdateStrength(ptr);
             }
         }
         
@@ -371,47 +378,44 @@ namespace Ironclad
         DecRef(IntPtr ptr)
         {
             this.AttemptToMap(ptr);
-            if (this.HasPtr(ptr))
-            {
-                int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
-                if (count == 0)
-                {
-                    throw new BadRefCountException("Trying to DecRef an object with ref count 0");
-                }
-
-                if (count == 1)
-                {
-                    IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
-
-                    if (typePtr != IntPtr.Zero)
-                    {
-                        if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_dealloc") != IntPtr.Zero)
-                        {
-                            dgt_void_ptr deallocDgt = (dgt_void_ptr)
-                                CPyMarshal.ReadFunctionPtrField(
-                                    typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(dgt_void_ptr));
-                            deallocDgt(ptr);
-                            return;
-                        }
-                        throw new CannotInterpretException(String.Format(
-                            "Cannot destroy object at {0} with type at {1}: no dealloc function", ptr.ToString("x"), typePtr.ToString("x")));
-                    }
-                    throw new CannotInterpretException(String.Format(
-                        "Cannot destroy object at {0}: null type", ptr.ToString("x")));
-                }
-                else
-                {
-                    CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count - 1);
-                    if (this.map.HasPtr(ptr))
-                    {
-                        this.map.UpdateStrength(ptr);
-                    }
-                }
-            }
-            else
+            
+            if (!this.HasPtr(ptr))
             {
                 throw new KeyNotFoundException(String.Format(
                     "DecRef: missing key in pointer map: {0}", ptr.ToString("x")));
+            }
+            
+            int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
+            if (count == 0)
+            {
+                throw new BadRefCountException("Trying to DecRef an object with ref count 0");
+            }
+            else if (count == 1)
+            {
+                IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
+                if (typePtr == IntPtr.Zero)
+                {
+                    throw new CannotInterpretException(String.Format(
+                        "Cannot destroy object at {0}: null type", ptr.ToString("x")));
+                }
+                
+                if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_dealloc") == IntPtr.Zero)
+                {
+                    throw new CannotInterpretException(String.Format(
+                        "Cannot destroy object at {0} with type at {1}: no dealloc function", ptr.ToString("x"), typePtr.ToString("x")));
+                }
+                
+                dgt_void_ptr deallocDgt = (dgt_void_ptr)CPyMarshal.ReadFunctionPtrField(
+                    typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(dgt_void_ptr));
+                deallocDgt(ptr);
+            }
+            else
+            {
+                CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count - 1);
+                if (this.map.HasPtr(ptr))
+                {
+                    this.map.UpdateStrength(ptr);
+                }
             }
         }
         
@@ -430,17 +434,19 @@ namespace Ironclad
         public void
         ForceCleanup()
         {
-            if (this.alive)
+            if (!this.alive)
             {
-                this.GIL.Acquire();
-                try
-                {
-                    this.map.CheckBridgePtrs(true);
-                }
-                finally
-                {
-                    this.GIL.Release();
-                }
+                return;
+            }
+            
+            this.GIL.Acquire();
+            try
+            {
+                this.map.CheckBridgePtrs(true);
+            }
+            finally
+            {
+                this.GIL.Release();
             }
         }
 
