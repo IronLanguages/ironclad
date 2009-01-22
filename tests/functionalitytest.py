@@ -437,5 +437,6 @@ suite = makesuite(
 )
 
 if __name__ == '__main__':
-    run(suite)
+  while 1:
+    run(suite,2)
 

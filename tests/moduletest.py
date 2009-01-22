@@ -64,7 +64,6 @@ class Py_InitModule4_Test(TestCase):
                               'function docstring not remembered')
 
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
-        mapper.Dispose()
         deallocMethod()
         
 
@@ -83,7 +82,6 @@ class Py_InitModule4_Test(TestCase):
             self.assertEquals(module.func(), result, "not hooked up")
             
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
-        mapper.Dispose()
         deallocMethod()
 
 
@@ -105,7 +103,6 @@ class Py_InitModule4_Test(TestCase):
             self.assertEquals(module.func(arg), result, "not hooked up")
             
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
-        mapper.Dispose()
         deallocMethod()
         deallocTypes()
 
@@ -128,7 +125,6 @@ class Py_InitModule4_Test(TestCase):
             self.assertEquals(module.func(*args), result, "not hooked up")
             
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
-        mapper.Dispose()
         deallocMethod()
         deallocTypes()
 
@@ -153,7 +149,6 @@ class Py_InitModule4_Test(TestCase):
             self.assertEquals(module.func(*args, **kwargs), result, "not hooked up")
             
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
-        mapper.Dispose()
         deallocMethod()
         deallocTypes()
         

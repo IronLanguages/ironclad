@@ -189,7 +189,7 @@ namespace Ironclad
             }
             finally
             {
-                this.GIL.Release();
+                this.GIL.Dispose();
             }
         }
 

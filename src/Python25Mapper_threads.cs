@@ -48,6 +48,8 @@ namespace Ironclad
         public override void 
         PyThread_free_lock(IntPtr lockPtr)
         {
+            Lock lock_ = (Lock)this.Retrieve(lockPtr);
+            lock_.Dispose();
             this.Unmap(lockPtr);
         }
 
