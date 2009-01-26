@@ -141,8 +141,16 @@ namespace Ironclad
                 IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
                 if (typePtr == IntPtr.Zero)
                 {
+                    // no type
                     return;
                 }
+                
+                if (CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_dealloc") == IntPtr.Zero)
+                {
+                    // no dealloc function
+                    return;
+                }
+                
                 dgt_void_ptr dealloc = (dgt_void_ptr)
                     CPyMarshal.ReadFunctionPtrField(
                         typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(dgt_void_ptr));
@@ -192,7 +200,6 @@ namespace Ironclad
             }
             finally
             {
-                this.GIL.Dispose();
                 this.GIL.Dispose();
             }
         }
