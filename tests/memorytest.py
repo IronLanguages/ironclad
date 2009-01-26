@@ -10,60 +10,93 @@ from System import IntPtr
 
 from Ironclad import Python25Mapper
 
+def GetMallocTest(MALLOC_NAME):
+    class MallocTest(TestCase):
+        __name__ = MALLOC_NAME + '_Test'
+        
+        def testNonZero(self):
+            allocs = []
+            mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+            
+            resultPtr = getattr(mapper, MALLOC_NAME)(123)
+            self.assertEquals(allocs, [(resultPtr, 123)], "bad alloc")
+            mapper.Dispose()
+        
+        
+        def testZero(self):
+            allocs = []
+            mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+            
+            resultPtr = getattr(mapper, MALLOC_NAME)(0)
+            self.assertEquals(allocs, [(resultPtr, 1)], "bad alloc")
+            mapper.Dispose()
+        
+        
+        @WithMapper
+        def testFailure(self, mapper, _):
+            resultPtr = getattr(mapper, MALLOC_NAME)(sys.maxint)
+            self.assertEquals(resultPtr, IntPtr.Zero, "bad alloc")
+            self.assertMapperHasError(mapper, None)
+    return MallocTest
 
 
-class PyMem_Malloc_Test(TestCase):
-    
-    def testPyMem_Malloc_NonZero(self):
-        allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
-        
-        resultPtr = mapper.PyMem_Malloc(123)
-        self.assertEquals(allocs, [(resultPtr, 123)], "bad alloc")
-        mapper.Dispose()
-    
-    
-    def testPyMem_Malloc_Zero(self):
-        allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
-        
-        resultPtr = mapper.PyMem_Malloc(0)
-        self.assertEquals(allocs, [(resultPtr, 1)], "bad alloc")
-        mapper.Dispose()
-    
-    
-    @WithMapper
-    def testPyMem_Malloc_Failure(self, mapper, _):
-        resultPtr = mapper.PyMem_Malloc(sys.maxint)
-        self.assertEquals(resultPtr, IntPtr.Zero, "bad alloc")
-        self.assertMapperHasError(mapper, None)
+def GetReallocTest(MALLOC_NAME, REALLOC_NAME):
+    class ReallocTest(TestCase):
+        __name__ = REALLOC_NAME + '_Test'
 
-
-class PyObject_Malloc_Test(TestCase):
-    
-    def testPyObject_Malloc_NonZero(self):
-        allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
-        
-        resultPtr = mapper.PyObject_Malloc(123)
-        self.assertEquals(allocs, [(resultPtr, 123)], "bad alloc")
-        mapper.Dispose()
-    
-    
-    def testPyObject_Malloc_Zero(self):
-        allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
-        
-        resultPtr = mapper.PyObject_Malloc(0)
-        self.assertEquals(allocs, [(resultPtr, 1)], "bad alloc")
-        mapper.Dispose()
-    
-    
-    @WithMapper
-    def testPyObject_Malloc_Failure(self, mapper, _):
-        resultPtr = mapper.PyObject_Malloc(sys.maxint)
-        self.assertEquals(resultPtr, IntPtr.Zero, "bad alloc")
-        self.assertMapperHasError(mapper, None)
+        def testNullPtr(self):
+            allocs = []
+            frees = []
+            mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+            
+            mem = getattr(mapper, REALLOC_NAME)(IntPtr.Zero, 4)
+            self.assertEquals(frees, [])
+            self.assertEquals(allocs, [(mem, 4)])
+            mapper.Dispose()
+            
+            
+        def testZeroBytes(self):
+            allocs = []
+            frees = []
+            mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+            
+            mem1 = getattr(mapper, MALLOC_NAME)(4)
+            del allocs[:]
+            mem2 = getattr(mapper, REALLOC_NAME)(mem1, 0)
+            
+            self.assertEquals(frees, [mem1])
+            self.assertEquals(allocs, [(mem2, 1)])
+            mapper.Dispose()
+            
+            
+        def testTooBig(self):
+            allocs = []
+            frees = []
+            mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+            
+            mem1 = getattr(mapper, MALLOC_NAME)(4)
+            del allocs[:]
+            self.assertEquals(getattr(mapper, REALLOC_NAME)(mem1, sys.maxint), IntPtr.Zero)
+            self.assertMapperHasError(mapper, None)
+            
+            self.assertEquals(frees, [])
+            self.assertEquals(allocs, [])
+            mapper.Dispose()
+            
+            
+        def testEasy(self):
+            allocs = []
+            frees = []
+            mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+            
+            mem1 = getattr(mapper, MALLOC_NAME)(4)
+            del allocs[:]
+            mem2 = getattr(mapper, REALLOC_NAME)(mem1, 8)
+            
+            self.assertEquals(frees, [mem1])
+            self.assertEquals(allocs, [(mem2, 8)])
+            mapper.Dispose()
+    return ReallocTest
 
 
 class PyMem_Free_Test(TestCase):
@@ -85,69 +118,14 @@ class PyMem_Free_Test(TestCase):
         mapper.PyMem_Free(IntPtr.Zero)
         self.assertEquals(frees, [], "freed inappropriately")
         mapper.Dispose()
-        
-
-class PyMem_Realloc_Test(TestCase):
-
-    def testNullPtr(self):
-        allocs = []
-        frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
-        
-        mem = mapper.PyMem_Realloc(IntPtr.Zero, 4)
-        self.assertEquals(frees, [])
-        self.assertEquals(allocs, [(mem, 4)])
-        mapper.Dispose()
-        
-        
-    def testZeroBytes(self):
-        allocs = []
-        frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
-        
-        mem1 = mapper.PyMem_Malloc(4)
-        del allocs[:]
-        mem2 = mapper.PyMem_Realloc(mem1, 0)
-        
-        self.assertEquals(frees, [mem1])
-        self.assertEquals(allocs, [(mem2, 1)])
-        mapper.Dispose()
-        
-        
-    def testTooBig(self):
-        allocs = []
-        frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
-        
-        mem1 = mapper.PyMem_Malloc(4)
-        del allocs[:]
-        self.assertEquals(mapper.PyMem_Realloc(mem1, sys.maxint), IntPtr.Zero)
-        self.assertMapperHasError(mapper, None)
-        
-        self.assertEquals(frees, [])
-        self.assertEquals(allocs, [])
-        mapper.Dispose()
-        
-        
-    def testEasy(self):
-        allocs = []
-        frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
-        
-        mem1 = mapper.PyMem_Malloc(4)
-        del allocs[:]
-        mem2 = mapper.PyMem_Realloc(mem1, 8)
-        
-        self.assertEquals(frees, [mem1])
-        self.assertEquals(allocs, [(mem2, 8)])
-        mapper.Dispose()
 
 
 suite = makesuite(
-    PyMem_Malloc_Test,
-    PyObject_Malloc_Test,
-    PyMem_Free_Test,
-    PyMem_Realloc_Test,
+    GetMallocTest('PyMem_Malloc'),
+    GetMallocTest('PyObject_Malloc'),
+    GetReallocTest('PyMem_Malloc', 'PyMem_Realloc'),
+    GetReallocTest('PyObject_Malloc', 'PyObject_Realloc'),
+    PyMem_Free_Test, # PyObject_Free is a different matter
 )
 
 if __name__ == '__main__':

@@ -51,5 +51,11 @@ namespace Ironclad
                 return IntPtr.Zero;
             }
         }
+
+        public override IntPtr
+        PyObject_Realloc(IntPtr oldPtr, int size)
+        {
+            return this.PyMem_Realloc(oldPtr, size);
+        }
     }
 }
