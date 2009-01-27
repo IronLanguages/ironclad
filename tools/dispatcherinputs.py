@@ -78,6 +78,10 @@ dispatcher_header_functypes = (
     # desrcobject.h
     (('getter', 'obj_objptr'), {}),
     (('setter', 'int_objobjptr'), {}),
+    
+    # cobject.c (note: destructor already defined above; 
+    # destructor2 only ever used internally, while destroying PyCObjects)
+    (('destructor2', 'void_objptr'), {}),
 )
 
 dispatcher_methods = dispatcher_PyCFunc_convenience_methods + dispatcher_header_functypes

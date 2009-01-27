@@ -44,6 +44,15 @@ namespace Ironclad
             this.IncRef(cobjPtr);
             return cobjPtr;
         }
+
+        public override IntPtr
+        PyCObject_FromVoidPtrAndDesc(IntPtr cobjData, IntPtr desc, IntPtr destructor)
+        {
+            IntPtr cobjPtr = this.PyCObject_FromVoidPtr(cobjData, destructor);
+            CPyMarshal.WritePtrField(cobjPtr, typeof(PyCObject), "desc", desc);
+            return cobjPtr;
+        }
+
         
         public override IntPtr
         PyCObject_AsVoidPtr(IntPtr cobjPtr)
@@ -56,9 +65,19 @@ namespace Ironclad
         {
             if (CPyMarshal.ReadPtrField(cobjPtr, typeof(PyCObject), "destructor") != IntPtr.Zero)
             {
-                dgt_void_ptr destructor = (dgt_void_ptr)
-                    CPyMarshal.ReadFunctionPtrField(cobjPtr, typeof(PyCObject), "destructor", typeof(dgt_void_ptr));
-                destructor(CPyMarshal.ReadPtrField(cobjPtr, typeof(PyCObject), "cobject"));
+                IntPtr desc = CPyMarshal.ReadPtrField(cobjPtr, typeof(PyCObject), "desc");
+                if (desc == IntPtr.Zero)
+                {
+                    dgt_void_ptr destructor = (dgt_void_ptr)
+                        CPyMarshal.ReadFunctionPtrField(cobjPtr, typeof(PyCObject), "destructor", typeof(dgt_void_ptr));
+                    destructor(CPyMarshal.ReadPtrField(cobjPtr, typeof(PyCObject), "cobject"));
+                }
+                else
+                {
+                    dgt_void_ptrptr destructor2 = (dgt_void_ptrptr)
+                        CPyMarshal.ReadFunctionPtrField(cobjPtr, typeof(PyCObject), "destructor", typeof(dgt_void_ptrptr));
+                    destructor2(CPyMarshal.ReadPtrField(cobjPtr, typeof(PyCObject), "cobject"), desc);
+                }
             }
             PyObject_Free_Delegate free = (PyObject_Free_Delegate)
                 CPyMarshal.ReadFunctionPtrField(this.PyCObject_Type, typeof(PyTypeObject), "tp_free", typeof(PyObject_Free_Delegate));

@@ -355,6 +355,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyFile_AsFile", ('IntPtr(111)',), 'IntPtr(999)')
         
         self.assertFinds("PyCObject_FromVoidPtr", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
+        self.assertFinds("PyCObject_FromVoidPtrAndDesc", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'IntPtr(999)')
         self.assertFinds("PyCObject_AsVoidPtr", ('IntPtr(111)',), 'IntPtr(999)')
         
         self.assertFinds("PyMem_Malloc", ('999',), 'IntPtr(12345)')

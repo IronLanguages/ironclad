@@ -9,7 +9,7 @@ from tests.utils.typetestcase import TypeTestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, dgt_void_ptr, OpaquePyCObject, Python25Api, Python25Mapper
+from Ironclad import CPyMarshal, dgt_void_ptr, dgt_void_ptrptr, OpaquePyCObject, Python25Api, Python25Mapper
 from Ironclad.Structs import PyCObject, PyObject, PyTypeObject
 
 class CObjectTest(TestCase):
@@ -56,6 +56,37 @@ class CObjectTest(TestCase):
         del cobj
         gcwait()
         self.assertEquals(calls, [cobjData], "failed to destroy")
+
+    
+    @WithMapper
+    def testPyCObjectWithDescAndDestructor(self, mapper, addToCleanUp):
+        calls = []
+        def destructor(destructee, data):
+            calls.append((destructee, data))
+        self.destructorDgt = dgt_void_ptrptr(destructor)
+        
+        cobjData = Marshal.AllocHGlobal(32)
+        addToCleanUp(lambda: Marshal.FreeHGlobal(cobjData))
+
+        desc = IntPtr(123)
+        cobjPtr = mapper.PyCObject_FromVoidPtrAndDesc(cobjData, desc, Marshal.GetFunctionPointerForDelegate(self.destructorDgt))
+        cobj = mapper.Retrieve(cobjPtr)
+        
+        self.assertEquals(CPyMarshal.ReadPtrField(cobjPtr, PyObject, 'ob_type'), mapper.PyCObject_Type, 'wrong type')
+        self.assertEquals(mapper.RefCount(cobjPtr), 2, 'wrong refcount')
+        self.assertEquals(mapper.PyCObject_AsVoidPtr(cobjPtr), cobjData, 'wrong pointer stored')
+        
+        del cobj
+        gcwait()
+        self.assertEquals(calls, [], "destroyed early")
+        
+        cobj = mapper.Retrieve(cobjPtr)
+        mapper.DecRef(cobjPtr)
+        self.assertEquals(calls, [], "destroyed early")
+        
+        del cobj
+        gcwait()
+        self.assertEquals(calls, [(cobjData, desc)], "failed to destroy")
         
 
 class PyCObject_Type_Test(TypeTestCase):
