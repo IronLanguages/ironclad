@@ -160,6 +160,10 @@ namespace Ironclad
             {
                 // meh, we're probably deallocing things out of order. tough.
             }
+            catch (NullReferenceException)
+            {
+                // meh, mapping broken, no great surprise at this point
+            }
             catch (Exception e)
             {            
                 Console.WriteLine("unexpected error during DumpPtr:\n{0}", e);
@@ -173,7 +177,7 @@ namespace Ironclad
             {
                 return;
             }
-            
+
             this.alive = false;
             this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
             this.allocator.FreeAll();
