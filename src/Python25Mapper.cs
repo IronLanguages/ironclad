@@ -219,13 +219,15 @@ namespace Ironclad
             get { return this.alive; }
         }
         
-        public int GCThreshold
+        public int
+        GCThreshold
         {
             get { return this.map.GCThreshold; }
             set { this.map.GCThreshold = value; }
         }
         
-        public void DumpMappingInfo(object id)
+        public void
+        DumpMappingInfo(object id)
         {
             this.map.DumpMappingInfo(id);
         }
@@ -479,7 +481,8 @@ namespace Ironclad
             }
         }
 
-        public void RememberTempObject(IntPtr ptr)
+        public void
+        RememberTempObject(IntPtr ptr)
         {
             this.tempObjects.Add(ptr);
         }
