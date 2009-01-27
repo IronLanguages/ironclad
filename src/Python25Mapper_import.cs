@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
 
@@ -39,12 +40,16 @@ namespace Ironclad
         LoadModule(string path, string name)
         {
             this.importName = name;
+            string dir = Path.GetDirectoryName(path);
+            string searchpath = Environment.GetEnvironmentVariable("PATH");
+            Environment.SetEnvironmentVariable("PATH", dir + ";" + searchpath);
             try
             {
                 this.importer.Load(path);
             }
             finally
             {
+                Environment.SetEnvironmentVariable("PATH", searchpath);
                 this.importName = "";
             }
         }

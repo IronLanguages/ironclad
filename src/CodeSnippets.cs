@@ -8,7 +8,7 @@ from Ironclad import CPyMarshal
 ";
 
         public const string NEW_EXCEPTION = @"
-class {0}(Exception):
+class {0}(_ironclad_base):
     __module__ = '{1}'
 ";
 

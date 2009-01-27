@@ -96,17 +96,25 @@ namespace Ironclad
         }
 
         public override IntPtr
-        PyErr_NewException(string name, IntPtr _base, IntPtr dict)
+        PyErr_NewException(string name, IntPtr basePtr, IntPtr dictPtr)
         {
-            if (_base != IntPtr.Zero || dict != IntPtr.Zero)
+            object _base = PythonExceptions.Exception;
+            if (basePtr != IntPtr.Zero)
             {
-                throw new NotImplementedException("PyErr_NewException called with non-null base or dict");
+                _base = this.Retrieve(basePtr);
             }
+            
+            if (dictPtr != IntPtr.Zero)
+            {
+                throw new NotImplementedException("Warning: PyErr_NewException called with non-null dictPtr");
+            }
+            
             string __name__ = null;
             string __module__ = null;
             CallableBuilder.ExtractNameModule(name, ref __name__, ref __module__);
-
             string excCode = String.Format(CodeSnippets.NEW_EXCEPTION, __name__, __module__);
+            ScopeOps.__setattr__(this.scratchModule, "_ironclad_base", _base);
+            
             this.ExecInModule(excCode, this.scratchModule);
             object newExc = ScopeOps.__getattribute__(this.scratchModule, __name__);
             return this.Store(newExc);
