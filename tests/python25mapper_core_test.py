@@ -46,7 +46,9 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
     
     def testLoadsModuleAndUnloadsOnDispose(self):
         mapper = Python25Mapper(os.path.join("build", "ironclad", "python25.dll"))
+        origpath = os.getenv("PATH")
         mapper.LoadModule(os.path.join("tests", "data", "setvalue.pyd"), "some.module")
+        self.assertEquals(os.getenv("PATH"), origpath, "failed to restore PATH")
         self.assertNotEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                              "library not mapped by construction")
         
@@ -560,7 +562,7 @@ class Python25Mapper_Py_OptimizeFlag_Test(TestCase):
     def testFills(self, mapper, addToCleanUp):
         # TODO: if we set a lower value, numpy will crash inside arr_add_docstring
         # I consider docstrings to be low-priority-enough that it's OK to fudge this
-        # for now
+        # for now. also, fixing it would be hard ;).
         flagPtr = Marshal.AllocHGlobal(Marshal.SizeOf(Int32))
         addToCleanUp(lambda: Marshal.FreeHGlobal(flagPtr))
         mapper.SetData("Py_OptimizeFlag", flagPtr)

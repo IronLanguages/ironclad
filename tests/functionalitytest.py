@@ -429,11 +429,33 @@ class BZ2Test(TestCase):
 
     def testFileWriteLines_Tuple(self):
         self.assertFileWriteLines(tuple([bz2_test_str] * 1000))
+        
+
+class Sqlite3Test(TestCase):
+
+    def assertRuns(self, testCode):
+        mapper = Python25Mapper(DLL_PATH)
+        try:
+            exec(testCode)
+        finally:
+            mapper.Dispose()
+            del sys.modules['sqlite3']
+
+    def testCanImport(self):
+        # this is *all* I care about at the moment; what it proves is
+        # that the PATH-fiddling in P25M.LoadModule is working as expected,
+        # and that the dll (not pyd) is being successfully loaded.
+        # I have no idea whether sqlite3 actually works at all.
+        self.assertRuns(dedent("""
+            import sqlite3
+            """)
+        )
 
 
 suite = makesuite(
     BZ2Test,
-    ExternalFunctionalityTest
+    Sqlite3Test,
+    ExternalFunctionalityTest,
 )
 
 if __name__ == '__main__':

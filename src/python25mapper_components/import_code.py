@@ -1,5 +1,6 @@
-import sys
+
 import os
+import sys
 
 class Loader(object):
 
@@ -33,10 +34,17 @@ class MetaImporter(object):
 
         return None
 
-meta_importer = MetaImporter()
-sys.meta_path.append(meta_importer)
-sys.__displayhook__ = sys.displayhook
+# this should ensure that remove_sys_hacks is
+# independent of what happens in this scope
+class Lifetime(object):
+    
+    def __init__(self):
+        self.meta_importer = MetaImporter()
+        sys.meta_path.append(self.meta_importer)
+        sys.__displayhook__ = sys.displayhook
 
-def remove_sys_hacks():
-    sys.meta_path.remove(meta_importer)
-    del sys.__displayhook__
+    def remove_sys_hacks(self):
+        sys.meta_path.remove(self.meta_importer)
+        del sys.__displayhook__
+
+remove_sys_hacks = Lifetime().remove_sys_hacks

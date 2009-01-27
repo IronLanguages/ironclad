@@ -140,6 +140,18 @@ class ErrFunctionsTest(TestCase):
         self.assertEquals(newExc.__name__, 'bazerror')
         self.assertEquals(newExc.__module__, 'foo.bar')
         self.assertEquals(issubclass(newExc, Exception), True)
+        
+
+    @WithMapper
+    def testPyErr_NewException_WithBase(self, mapper, _):
+        basePtr = mapper.Store(ValueError)
+        newExcPtr = mapper.PyErr_NewException("foo.bar.bazerror", basePtr, IntPtr.Zero)
+        self.assertEquals(mapper.RefCount(newExcPtr), 2)
+        
+        newExc = mapper.Retrieve(newExcPtr)
+        self.assertEquals(newExc.__name__, 'bazerror')
+        self.assertEquals(newExc.__module__, 'foo.bar')
+        self.assertEquals(issubclass(newExc, ValueError), True)
 
 
     def assertMatch(self, mapper, given, exc, expected):

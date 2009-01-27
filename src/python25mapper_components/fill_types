@@ -12,3 +12,4 @@ PyDict_Type TypeCache.Dict
 PyList_Type TypeCache.List {"tp_dealloc": "IC_PyList_Dealloc"}
 PyTuple_Type TypeCache.PythonTuple {"tp_dealloc": "IC_PyTuple_Dealloc"}
 PySeqIter_Type typeof(ItemEnumerator)
+PyCell_Type typeof(OpaquePyCell)
