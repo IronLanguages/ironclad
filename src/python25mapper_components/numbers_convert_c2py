@@ -1,6 +1,7 @@
 PyInt_FromLong int 
 PyInt_FromSsize_t int
 PyLong_FromDouble double (BigInteger)
+PyLong_FromLong int (BigInteger)
 PyLong_FromLongLong long (BigInteger)
 PyLong_FromUnsignedLong uint (BigInteger)
 PyLong_FromUnsignedLongLong ulong (BigInteger)
