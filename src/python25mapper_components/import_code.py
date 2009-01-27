@@ -23,7 +23,7 @@ class MetaImporter(object):
     def find_module(self, fullname, path=None):
         if fullname == 'numpy' or fullname.startswith('numpy.'):
             _mapper.PerpetrateNumpyFixes()
-        if fullname in ('_hashlib', 'ctypes'):
+        if fullname == 'ctypes':
             raise ImportError('%s is not available in ironclad yet' % fullname)
 
         lastname = fullname.rsplit('.', 1)[-1]
