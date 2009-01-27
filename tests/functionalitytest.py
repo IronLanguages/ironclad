@@ -129,21 +129,26 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             import numpy
             assert (1+3j) == numpy.complex128(1+3j)
             """))
-        
+ 
 
-class BZ2Test(TestCase):
+def ModuleTestCase(module):
+    import_code = 'import ' + module
+    locals_ = locals()
+    class _ModuleTestCase(TestCase):
+        def assertRuns(self, test_code=''): 
+            mapper = Python25Mapper(DLL_PATH)
+            try:
+                exec '\n'.join([import_code, test_code]) in globals(), locals_
+            finally:
+                mapper.Dispose()
+                del sys.modules[module]
+    return _ModuleTestCase
 
-    def assertRuns(self, testCode):
-        mapper = Python25Mapper(DLL_PATH)
-        try:
-            exec(testCode)
-        finally:
-            mapper.Dispose()
-            del sys.modules['bz2']
+
+class BZ2Test(ModuleTestCase('bz2')):
 
     def testFunctionsAndDocstringsExist(self):
         self.assertRuns(dedent("""
-            import bz2
             assert bz2.__doc__ == %r
             assert bz2.__author__ == %r
             assert callable(bz2.compress)
@@ -158,7 +163,6 @@ class BZ2Test(TestCase):
 
     def testFunctionsWork(self):
         self.assertRuns(dedent("""
-            import bz2
             assert bz2.compress(%(uncompressed)r) == %(compressed)r
             assert bz2.decompress(%(compressed)r) == %(uncompressed)r
             """) % {"compressed": bz2_test_data,
@@ -168,7 +172,6 @@ class BZ2Test(TestCase):
 
     def testTypesExist(self):
         self.assertRuns(dedent("""
-            import bz2
             assert bz2.BZ2File.__name__ == 'BZ2File'
             assert bz2.BZ2File.__module__ == 'bz2'
             assert bz2.BZ2Compressor.__name__ == 'BZ2Compressor'
@@ -180,7 +183,6 @@ class BZ2Test(TestCase):
 
     def testCompressor(self):
         self.assertRuns(dedent("""
-            import bz2
             # adapted from test_bz2.py
             compressor = bz2.BZ2Compressor()
             text = %r
@@ -200,7 +202,6 @@ class BZ2Test(TestCase):
 
     def testDecompressor(self):
         self.assertRuns(dedent("""
-            import bz2
             # adapted from test_bz2.py
             decompressor = bz2.BZ2Decompressor()
             data = %r
@@ -221,7 +222,6 @@ class BZ2Test(TestCase):
     def testFileRead(self):
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
         self.assertRuns(dedent("""
-            import bz2
             f = bz2.BZ2File(%r)
             try:
                 assert f.read() == %r
@@ -233,7 +233,6 @@ class BZ2Test(TestCase):
     def testFileReadLine(self):
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
         self.assertRuns(dedent("""
-            import bz2
             f = bz2.BZ2File(%r)
             try:
                 assert f.readline() == %r
@@ -247,7 +246,6 @@ class BZ2Test(TestCase):
     def testFileReadLines_Short(self):
         testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
         self.assertRuns(dedent("""
-            import bz2
             f = bz2.BZ2File(%r)
             try:
                 lines = f.readlines()
@@ -262,7 +260,6 @@ class BZ2Test(TestCase):
     def testFileReadLines_Long(self):
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
         self.assertRuns(dedent("""
-            import bz2
             f = bz2.BZ2File(%r)
             try:
                 lines = f.readlines()
@@ -276,7 +273,6 @@ class BZ2Test(TestCase):
     def testFileIterate(self):
         testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
         self.assertRuns(dedent("""
-            import bz2
             f = bz2.BZ2File(%r)
             try:
                 assert f.xreadlines() is f
@@ -298,7 +294,6 @@ class BZ2Test(TestCase):
     def testFileSeekTell(self):
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
         self.assertRuns(dedent("""
-            import bz2
             def assertSeeksTo(f, seekargs, expectedPosition):
                 f.seek(*seekargs)
                 assert f.tell() == expectedPosition
@@ -324,7 +319,6 @@ class BZ2Test(TestCase):
         testDir = tempfile.mkdtemp()
         path = os.path.join(testDir, "test.bz2")
         self.assertRuns(dedent("""
-            import bz2
             w = bz2.BZ2File(%r, 'w')
             try:
                 w.write(%r)
@@ -342,7 +336,6 @@ class BZ2Test(TestCase):
 
     def testHeavyUse(self):
         self.assertRuns(dedent("""
-            import bz2
             COUNT = 100
             compressors = [bz2.BZ2Compressor() for _ in range(COUNT)]
             decompressors = [bz2.BZ2Decompressor() for _ in range(COUNT)]
@@ -362,7 +355,6 @@ class BZ2Test(TestCase):
     def testFileProperties(self):
         testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
         self.assertRuns(dedent("""
-            import bz2
             f = bz2.BZ2File(%r, 'U')
             try:
                 #assert f.mode == 'r' # IP2 bug -- no file.mode
@@ -390,7 +382,6 @@ class BZ2Test(TestCase):
     def testFileMember(self):
         testPath = os.path.join("tests", "data", "bz2", "compressedlines.bz2")
         self.assertRuns(dedent("""
-            import bz2
             f = bz2.BZ2File(%r)
             try:
                 assert f.softspace == 0
@@ -407,7 +398,6 @@ class BZ2Test(TestCase):
         testDir = tempfile.mkdtemp()
         path = os.path.join(testDir, "test.bz2")
         self.assertRuns(dedent("""
-            import bz2
             w = bz2.BZ2File(%r, 'w')
             try:
                 w.writelines(%r)
@@ -431,15 +421,17 @@ class BZ2Test(TestCase):
         self.assertFileWriteLines(tuple([bz2_test_str] * 1000))
         
 
-class Sqlite3Test(TestCase):
+class Sqlite3Test(ModuleTestCase('sqlite3')):
 
-    def assertRuns(self, testCode):
-        mapper = Python25Mapper(DLL_PATH)
-        try:
-            exec(testCode)
-        finally:
-            mapper.Dispose()
-            del sys.modules['sqlite3']
+    def testCanImport(self):
+        # this is *all* I care about at the moment; what it proves is
+        # that the PATH-fiddling in P25M.LoadModule is working as expected,
+        # and that the dll (not pyd) is being successfully loaded.
+        # I have no idea whether sqlite3 actually works at all.
+        self.assertRuns()
+        
+
+class HashlibTest(ModuleTestCase('_hashlib')):
 
     def testCanImport(self):
         # this is *all* I care about at the moment; what it proves is
@@ -447,7 +439,7 @@ class Sqlite3Test(TestCase):
         # and that the dll (not pyd) is being successfully loaded.
         # I have no idea whether sqlite3 actually works at all.
         self.assertRuns(dedent("""
-            import sqlite3
+            assert _hashlib.openssl_md5('foobarbaz').digest() == u'm\xf2=\xc0?\x9bT\xcc8\xa0\xfc\x14\x83\xdfn!'
             """)
         )
 
@@ -455,10 +447,10 @@ class Sqlite3Test(TestCase):
 suite = makesuite(
     BZ2Test,
     Sqlite3Test,
+    HashlibTest,
     ExternalFunctionalityTest,
 )
 
 if __name__ == '__main__':
-  while 1:
-    run(suite,2)
+    run(suite)
 

@@ -78,22 +78,22 @@ namespace Ironclad
         private string importName = "";
         
         public Python25Mapper(CodeContext context): 
-	  this(context, null, new HGlobalAllocator())
+          this(context, null, new HGlobalAllocator())
         {
         }
         
         public Python25Mapper(CodeContext context, string stubPath): 
-	  this(context, stubPath, new HGlobalAllocator())
+          this(context, stubPath, new HGlobalAllocator())
         {
         }
         
         public Python25Mapper(CodeContext context, IAllocator allocator):
-	  this(context, null, allocator)
+          this(context, null, allocator)
         {
         }
 
         public Python25Mapper(CodeContext context, string stubPath, IAllocator allocator):
-	  this(PythonContext.GetContext(context), stubPath, allocator)
+          this(PythonContext.GetContext(context), stubPath, allocator)
         {
         }
 
@@ -104,7 +104,7 @@ namespace Ironclad
         
         ~Python25Mapper()
         {
-            throw new Exception("Python25Mapper needs to be Disposed manually. Please don't just leave them lying around.");
+            throw new Exception("Python25Mappers need to be Disposed manually. Please don't just leave them lying around.");
         }
 
         private void Init(PythonContext inPython, string stubPath, IAllocator inAllocator)
