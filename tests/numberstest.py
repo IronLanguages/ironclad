@@ -178,6 +178,14 @@ class PyLong_Test(TestCase):
                 
     
     @WithMapper
+    def testPyLong_FromLong(self, mapper, _):
+        for value in (1555555555, -1555555555, 0):
+            ptr = mapper.PyLong_FromLong(value)
+            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
+                
+    
+    @WithMapper
     def testPyLong_FromLongLong(self, mapper, _):
         for value in map(Int64, (5555555555, -5555555555, 0)):
             ptr = mapper.PyLong_FromLongLong(value)
