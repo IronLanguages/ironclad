@@ -77,19 +77,24 @@ namespace Ironclad
         // TODO: must be a better way to handle imports...
         private string importName = "";
         
-        public Python25Mapper(CodeContext context)
+        public Python25Mapper(CodeContext context): 
+	  this(context, null, new HGlobalAllocator())
         {
-            this.Init(PythonContext.GetContext(context), null, new HGlobalAllocator());
         }
         
-        public Python25Mapper(CodeContext context, string stubPath)
+        public Python25Mapper(CodeContext context, string stubPath): 
+	  this(context, stubPath, new HGlobalAllocator())
         {
-            this.Init(PythonContext.GetContext(context), stubPath, new HGlobalAllocator());
         }
         
-        public Python25Mapper(CodeContext context, IAllocator allocator)
+        public Python25Mapper(CodeContext context, IAllocator allocator):
+	  this(context, null, allocator)
         {
-            this.Init(PythonContext.GetContext(context), null, allocator);
+        }
+
+        public Python25Mapper(CodeContext context, string stubPath, IAllocator allocator):
+	  this(PythonContext.GetContext(context), stubPath, allocator)
+        {
         }
 
         public Python25Mapper(PythonContext python, string stubPath, IAllocator allocator)
