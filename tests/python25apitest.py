@@ -381,6 +381,8 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyRun_StringFlags", ('"blah blah"', '123', 'IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'IntPtr(999)')
 
         self.assertFinds("PySys_GetObject", ('"something"',), 'IntPtr(999)')
+        
+        self.assertFinds("Py_AtExit", ('IntPtr(111)',), '1')
 
 
     def testPython25ApiImplementationOf_PyEval_InitThreads(self):

@@ -82,6 +82,10 @@ dispatcher_header_functypes = (
     # cobject.c (note: destructor already defined above; 
     # destructor2 only ever used internally, while destroying PyCObjects)
     (('destructor2', 'void_objptr'), {}),
+    
+    # apparently not worth giving this one a formal identifier
+    # but you're expected to pass them to Py_AtExit
+    (('unnamed', 'void_void'), {}),
 )
 
 dispatcher_methods = dispatcher_PyCFunc_convenience_methods + dispatcher_header_functypes
