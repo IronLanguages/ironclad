@@ -66,6 +66,7 @@ namespace Ironclad
         private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();
         private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
         private List<IntPtr> tempObjects = new List<IntPtr>();
+        private Stack<dgt_void_void> exitfuncs = new Stack<dgt_void_void>();
 
         private LocalDataStoreSlot threadDictStore = Thread.AllocateDataSlot();
         private LocalDataStoreSlot threadLockStore = Thread.AllocateDataSlot();
@@ -189,6 +190,10 @@ namespace Ironclad
             foreach (IntPtr FILE in this.FILEs.Values)
             {
                 Unmanaged.fclose(FILE);
+            }
+            while (this.exitfuncs.Count > 0)
+            {
+                this.exitfuncs.Pop()();
             }
             if (this.stub != null)
             {
@@ -485,6 +490,15 @@ namespace Ironclad
         RememberTempObject(IntPtr ptr)
         {
             this.tempObjects.Add(ptr);
+        }
+
+        public override int
+        Py_AtExit(IntPtr exitfuncPtr)
+        {
+            dgt_void_void exitfunc = (dgt_void_void)Marshal.GetDelegateForFunctionPointer(
+                exitfuncPtr, typeof(dgt_void_void));
+            this.exitfuncs.Push(exitfunc);
+            return 0;
         }
         
         public override IntPtr 

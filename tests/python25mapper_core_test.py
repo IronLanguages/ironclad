@@ -12,8 +12,8 @@ from System import Int32, IntPtr, NullReferenceException, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import (
-    BadRefCountException, CannotInterpretException, CPyMarshal, dgt_void_ptr, HGlobalAllocator, Python25Mapper, 
-    Unmanaged, UnmanagedDataMarker
+    BadRefCountException, CannotInterpretException, CPyMarshal, dgt_void_ptr, dgt_void_void,
+    HGlobalAllocator, Python25Mapper, Unmanaged, UnmanagedDataMarker
 )
 from Ironclad.Structs import PyObject, PyTypeObject
 
@@ -69,7 +69,21 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
         mapper.Dispose()
         for ptr in ptrs:
             self.assertTrue(ptr in frees, "ptr not freed")
+    
+    
+    def testCallsAtExitFunctionsOnDispose(self):
+        calls = []
+        def MangleCall(arg):
+            return Marshal.GetFunctionPointerForDelegate(
+                dgt_void_void(lambda: calls.append(arg)))
         
+        mapper = Python25Mapper()
+        self.assertEquals(mapper.Py_AtExit(MangleCall('foo')), 0)
+        self.assertEquals(mapper.Py_AtExit(MangleCall('bar')), 0)
+        self.assertEquals(calls, [])
+        mapper.Dispose()
+        self.assertEquals(calls, ['bar', 'foo'])
+    
     
     def testDestroysObjectsOfUnmanagedTypesFirst(self):
         frees = []
