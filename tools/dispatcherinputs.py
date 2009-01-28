@@ -4,6 +4,7 @@ from tools.dispatchersnippets import *
 # args for generate_dispatcher_field
 dispatcher_field_types = (
     (('int', 'int', 'Int'), {}),
+    (('double', 'double', 'Double'), {}),
     (('ubyte', 'byte', 'Byte'), {}),
     (('char', 'string', 'Byte'), {'gettweak': 'Builtin.chr', 'settweak': '(byte)Builtin.ord'}),
 )

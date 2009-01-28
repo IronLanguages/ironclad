@@ -330,6 +330,26 @@ class FieldsTest(TestCase):
         CPyMarshal.WriteInt(fieldPtr, -54321)
         self.assertEquals(instance.attr, -54321)
     
+    @WithMapper
+    def testDoubleFieldReadOnly(self, mapper, addToCleanUp):
+        instance, fieldPtr = MakeInstanceWithField(MemberT.DOUBLE, 1, mapper, addToCleanUp)
+        
+        def Set():
+            instance.attr = 1234.567
+        self.assertRaises(AttributeError, Set)
+        
+        CPyMarshal.WriteDouble(fieldPtr, -54.321)
+        self.assertEquals(instance.attr, -54.321)
+        
+    @WithMapper
+    def testIntFieldReadWrite(self, mapper, addToCleanUp):
+        instance, fieldPtr = MakeInstanceWithField(MemberT.DOUBLE, 0, mapper, addToCleanUp)
+        
+        instance.attr = 1234.567
+        self.assertEquals(CPyMarshal.ReadDouble(fieldPtr), 1234.567)
+        
+        CPyMarshal.WriteDouble(fieldPtr, -54.321)
+        self.assertEquals(instance.attr, -54.321)
     
     @WithMapper
     def testCharFieldReadOnly(self, mapper, addToCleanUp):

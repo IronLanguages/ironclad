@@ -174,6 +174,9 @@ namespace Ironclad
                 case MemberT.INT:
                     suffix = "int";
                     return true;
+                case MemberT.DOUBLE:
+                    suffix = "double";
+                    return true;
                 case MemberT.CHAR:
                     suffix = "char";
                     return true;
