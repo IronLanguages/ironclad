@@ -23,32 +23,39 @@ IRONCLAD_USE_CYGWIN to YES.
 * "recent" Mono (with gmcs compiler)
 * Python 2.5, with -dev package
 
-TESTING
-
-In order for all tests to run, numpy 1.2.1 must be installed - but this is not
-otherwise necessary. To convince numpy's tests to run, nose must be installed.
-
-You should also ensure that IRONPYTHONPATH is set correctly. In particular, it
-should include the directory containing .pyd files.
-
 BUILDING
 
-Ironclad's build process is configured by the file Makefile.config in the top-
+Ironclad's build process is configured by 'Makefile.config' in the top-
 level directory. Change the value of variables NET and OS appropriately.
 
 Running make in the top-level directory should do the following:
 
+* Run 'tools/generatepython25mapper.py' to create various files in 'src/' from 
+  the contents of 'src/python25mappercomponents/'
 * Run 'tools/generatepython25api.py' to create 'src/Python25Api.cs' from the 
   contents of 'src/python25apicomponents/'
-* Run 'tools/generatepython25mapper.py' to create various files in 'src' from 
-  the contents of 'src/python25mappercomponents/'
+* Run 'tools/generatedispatcher.py' to create various files in 'src/' from 
+  various files in 'tools/'
 * Compile the contents of 'src/' to create 'build/ironclad/ironclad.dll'
 * Run 'tools/buildstub.py' to (eventually) create the stub library 
-  'build/ironclad/python25.dll' from an existing (real) python25.dll and the contents of
-  'stub/'
+  'build/ironclad/python25.dll' from an existing (real) python25.dll and the 
+  contents of 'stub/'
 
 At this point, the project is built and may even be usable. However, make will 
 also build some test data, and run several tests; we expect all these to pass.
+
+TESTING
+
+You should ensure that IRONPYTHONPATH is set correctly. In particular, it
+should include the directory containing .pyd files.
+
+In order for all tests to run, numpy 1.2.1 must be installed - but this is not
+otherwise necessary. To convince numpy's tests to run, nose must be installed.
+
+If the directory containing your numpy installation is on your sys.path, it
+should be possible to run 'ipy tests\scipy\numpytests.py' from the top-level
+directory, which will test numpy far more comprehensively than 
+'tests/functionalitytest.py' can.
 
 
 

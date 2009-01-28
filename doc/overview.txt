@@ -26,13 +26,12 @@ module; all its functions, types, and strings are accessible from IronPython.
 See 'functionalitytest.py' (all of which should pass) for examples.
 
 * It is possible to import numpy without errors, and to use quite a lot of it;
-several dependencies are stubbed out, but the majority of tests in the core,
+a few dependencies are stubbed out, but the majority of tests in the core,
 fft, lib, linalg, ma, oldnumeric and random subpackages should pass.
 
-* It may be possible to import some other CPython extensions without crashing.
-
-* If you're exceptionally lucky, it may be possible to actually use parts of
-other CPython extensions.
+* More than half the .pyds shipped with Python25 import without errors;
+cElementTree appears to work, and winsound.MessageBeep works, but we haven't 
+tested any of them extensively.
 
 * Is is not possible to use more than one StubReference in a given process,
 and we see no way around this limitation; since modules can be shared between
@@ -44,7 +43,11 @@ Immediate next steps
 
 * Find out which broken parts of numpy are "important", and fix those.
 
-* Move these notes into something resembling a real issue tracking system.
+* Find out what other extensions people are interested in (please let us know!):
+
+** h5py?
+** scipy?
+** pylab?
 
 
 Notable bugs/issues/deficiencies
@@ -53,8 +56,6 @@ Notable bugs/issues/deficiencies
 unmanaged code; *most* changes made by unmanaged code will be visible in
 managed code. This is perfectly fixable, but hard to do with decent
 performance, so we're ignoring the issue for now.
-
-* Lists use perhaps the stupidest allocation strategy known to mankind.
 
 * Reflection is used in several places to get at data we think we need; this
 ugliness is localised in the InappropriateReflection class.
