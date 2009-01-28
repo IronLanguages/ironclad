@@ -185,7 +185,20 @@ namespace Ironclad
             }
 
             this.alive = false;
-            this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
+
+            if (!this.appliedNumpyHack)
+            {
+                // FIXME?
+                // I don't know what it is about numpy, but using it heavily
+                // makes this step extremely flaky: that's, like, BSOD flaky.
+                // OTOH, even attempting this operation is very optimistic
+                // indeed, and it's only really here so that I can repeatedly
+                // construct/destroy mappers -- without leaking *too* much --
+                // during test runs. In the wild, all this will be reclaimed
+                // by the operating system at process shutdown time anyway.
+                this.map.MapOverBridgePtrs(new PtrFunc(this.DumpPtr));
+            }
+            
             this.allocator.FreeAll();
             foreach (IntPtr FILE in this.FILEs.Values)
             {
