@@ -1,3 +1,3 @@
 IntPtr
-IntPtr strPtr
+IntPtr strPtr, int smartquotes
 return IntPtr.Zero

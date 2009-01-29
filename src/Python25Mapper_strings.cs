@@ -183,8 +183,9 @@ namespace Ironclad
         }
 
         public override IntPtr
-        PyString_Repr(IntPtr ptr)
+        PyString_Repr(IntPtr ptr, int smartquotes)
         {
+            // smartquotes ignored for now
             try
             {
                 return this.Store(Builtin.repr(this.scratchContext, this.ReadPyString(ptr)));

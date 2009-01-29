@@ -12,6 +12,8 @@ type_codes = {
         'string',
     'obj': # PyFoo*s; needs to be stored/retrieved/cleaned up
         'object',
+    'cpx': # Py_complex, defined in Python25Structs.cs
+        'Py_complex',
     
     # platform-specific C types
     'ptr': # unknown ptr types; not translated
