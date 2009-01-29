@@ -1,4 +1,6 @@
 
+__version__ = '0.8'
+
 import sys
 if sys.platform != 'cli':
     raise ImportError("If you're running CPython, you don't need ironclad. If you're running Jython, ironclad won't work.")
