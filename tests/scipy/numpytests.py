@@ -22,10 +22,6 @@ numpy_path = r"C:\Python25\Lib\site-packages\numpy"
 dirs = ['core', 'fft', 'lib', 'linalg', 'ma', 'oldnumeric', 'random']
 
 if __name__ == "__main__":
-    try:
-        numpytester = Schnoz(name="numpy", lib_path=numpy_path, data_dir=os.path.dirname(__file__))
-        numpytester.main(dirs)
-    finally:
-        if sys.platform == 'cli':
-            ironclad.shutdown()
+    numpytester = Schnoz(name="numpy", lib_path=numpy_path, data_dir=os.path.dirname(__file__))
+    numpytester.main(dirs)
 
