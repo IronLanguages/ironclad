@@ -48,7 +48,6 @@ class Schnoz(object):
         if catastrophe or result.errors or result.failures:
             add_to_blacklist(test_path)
             print ".".join(test_path), " failed - adding to blacklist and stopping"
-            ironclad.shutdown()
             sys.exit(1)
         else:
             self.save_continuation_point(test_path)

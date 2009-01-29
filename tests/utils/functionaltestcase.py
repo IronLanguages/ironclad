@@ -12,10 +12,7 @@ TEMPLATE = dedent("""\
     import sys
     sys.path.insert(0, %r)
     import ironclad
-    try:
-        %%s
-    finally:
-        ironclad.shutdown()
+    %%s
     """) % os.path.abspath("build")
 
 
@@ -54,7 +51,7 @@ class FunctionalTestCase(TestCase):
 
     def runCode(self, code, interpreter="ipy.exe"):
         if interpreter == "ipy.exe":
-            code = TEMPLATE % code.replace('\n', '\n    ')
+            code = TEMPLATE % code
         self.write("test.py", code)
         
         process = Process()

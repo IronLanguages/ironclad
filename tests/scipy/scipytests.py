@@ -34,6 +34,3 @@ if __name__ == "__main__":
     numpytester = Schnoz(name="scipy", lib_path=numpy_path, data_dir=os.path.dirname(__file__))
     numpytester.main(dirs)
 
-if sys.platform == 'cli':
-    ironclad.shutdown()
-
