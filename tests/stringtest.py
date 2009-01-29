@@ -395,7 +395,7 @@ class PyString_OtherMethodsTest(TestCase):
     
     @WithMapper
     def testStringifiers(self, mapper, _):
-        src = 'foo \0 bar supercalifragilisticexpialidocious'
+        src = 'foo \0 bar " \' " \' supercalifragilisticexpialidocious'
         srcPtr = mapper.Store(src)
         
         str_ = mapper.Retrieve(mapper.IC_PyString_Str(srcPtr))
@@ -403,10 +403,12 @@ class PyString_OtherMethodsTest(TestCase):
         self.assertEquals(mapper.IC_PyString_Str(mapper.Store(object())), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
         
-        repr_ = mapper.Retrieve(mapper.PyString_Repr(srcPtr))
-        self.assertEquals(repr_, repr(src))
-        self.assertEquals(mapper.PyString_Repr(mapper.Store(object())), IntPtr.Zero)
-        self.assertMapperHasError(mapper, TypeError)
+        for smartquotes in (0, 1):
+            # smartquotes is ignored for now
+            repr_ = mapper.Retrieve(mapper.PyString_Repr(srcPtr, smartquotes))
+            self.assertEquals(repr_, repr(src))
+            self.assertEquals(mapper.PyString_Repr(mapper.Store(object()), smartquotes), IntPtr.Zero)
+            self.assertMapperHasError(mapper, TypeError)
     
     @WithMapper
     def testConcat(self, mapper, _):
