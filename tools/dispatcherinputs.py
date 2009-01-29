@@ -304,12 +304,15 @@ api_functions = (
     ('PySeqIter_New', 'ptr_ptr'),
     
     ('PySequence_Check', 'int_ptr'),
+    ('PySequence_Concat', 'ptr_ptrptr'),
     ('PySequence_GetItem', 'ptr_ptrsize'),
     ('PySequence_GetSlice', 'ptr_ptrsizesize'),
     ('PySequence_Repeat', 'ptr_ptrsize'),
     ('PySequence_SetItem', 'int_ptrsizeptr'),
     ('PySequence_Size', 'size_ptr'),
     ('PySequence_Tuple', 'ptr_ptr'),
+    
+    ('PySlice_New', 'ptr_ptrptrptr'),
     
     # the use of ptrs instead of strs is entirely deliberate
     ('PyString_AsString', 'ptr_ptr'),

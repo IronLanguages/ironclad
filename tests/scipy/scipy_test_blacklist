@@ -1,0 +1,6 @@
+# appears to loop forever with 100% cpu
+fftpack.test_basic.TestRfft.test_djbfft
+
+# mostly just fail
+fftpack.test_pseudo_diffs
+

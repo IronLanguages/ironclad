@@ -34,5 +34,26 @@ namespace Ironclad
                     this.PySlice_Type, typeof(PyTypeObject), "tp_free", typeof(PyObject_Free_Delegate));
             freeDgt(slicePtr);
         }
+
+        public override IntPtr
+        PySlice_New(IntPtr startPtr, IntPtr stopPtr, IntPtr stepPtr)
+        {
+            object start = null;
+            if (startPtr != IntPtr.Zero)
+            {
+                start = this.Retrieve(startPtr);
+            }
+            object stop = null;
+            if (stopPtr != IntPtr.Zero)
+            {
+                stop = this.Retrieve(stopPtr);
+            }
+            object step = null;
+            if (stepPtr != IntPtr.Zero)
+            {
+                step = this.Retrieve(stepPtr);
+            }
+            return this.Store(new Slice(start, stop, step));
+        }
     }
 }

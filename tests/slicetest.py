@@ -4,6 +4,7 @@ from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase, WithMapper
 
+from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, Python25Api, Python25Mapper
@@ -59,6 +60,16 @@ class SliceTest(TestCase):
 
         mapper.Dispose()
         deallocTypes()
+
+
+    @WithMapper
+    def testPySlice_New(self, mapper, _):
+        slicePtr = mapper.PySlice_New(
+            mapper.Store('x'), mapper.Store('y'), mapper.Store('z'))
+        self.assertEquals(mapper.Retrieve(slicePtr), slice('x', 'y', 'z'))
+
+        slicePtr = mapper.PySlice_New(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)
+        self.assertEquals(mapper.Retrieve(slicePtr), slice(None, None, None))
 
 
     @WithMapper
