@@ -177,6 +177,23 @@ class SequenceFunctionsTest(TestCase):
 
 
     @WithMapper
+    def testPySequence_Concat(self, mapper, _):
+        seqs = ('foo', [1, 2, 3], (4, 5, 6))
+        for seq1 in seqs:
+            for seq2 in seqs:
+                call = lambda: mapper.PySequence_Concat(
+                    mapper.Store(seq1), mapper.Store(seq2))
+                try:
+                    result = seq1 + seq2
+                except Exception, e:
+                    self.assertEquals(call(), IntPtr.Zero)
+                    self.assertMapperHasError(mapper, type(e))
+                else:
+                    resultPtr = call()
+                    self.assertEquals(mapper.Retrieve(resultPtr), result)
+
+
+    @WithMapper
     def testPySequence_Tuple_withTuple(self, mapper, _):
         tuplePtr = mapper.Store((1, 2, 3))
         self.assertEquals(mapper.PySequence_Tuple(tuplePtr), tuplePtr)

@@ -155,8 +155,22 @@ namespace Ironclad
                     return this.Store(PythonOperator.mul(this.scratchContext, obj, count));
                 }
                 throw PythonOps.TypeError("PySequence_Repeat: failed to convert {0} to sequence", obj);
-                
             }                
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
+        public override IntPtr
+        PySequence_Concat(IntPtr seq1Ptr, IntPtr seq2Ptr)
+        {
+            try
+            {
+                return this.Store(PythonOperator.add(
+                    this.scratchContext, this.Retrieve(seq1Ptr), this.Retrieve(seq2Ptr)));
+            }
             catch (Exception e)
             {
                 this.LastException = e;
