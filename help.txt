@@ -9,10 +9,6 @@ any compiled CPython extensions accessible from your sys.path.
 If you have any problems, please ask for help at
 http://groups.google.com/group/c-extensions-for-ironpython
 
-It is preferable to call the ironclad's shutdown function just before you exit;
-shutdown is not always entirely clean, but it is much rarer to see a crash
-when the module is explicitly shut down.
-
 Notably, it should be possible to import and use most of NumPy 1.2; it's not as
 fast as it is on CPython, but the benefits are still noticeable when working
 with sufficiently large datasets.
