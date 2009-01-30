@@ -36,6 +36,15 @@ namespace Ironclad
             return this.Store(this.GetModule(name));
         }
 
+        public override IntPtr
+        PyImport_GetModuleDict()
+        {
+            Scope sys = this.python.SystemState;
+            IntPtr modulesPtr = this.Store(ScopeOps.__getattribute__(sys, "modules"));
+            this.RememberTempObject(modulesPtr);
+            return modulesPtr;
+        }
+
         public void 
         LoadModule(string path, string name)
         {

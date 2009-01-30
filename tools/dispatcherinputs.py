@@ -195,6 +195,7 @@ api_functions = (
     ('PyDict_SetItem', 'int_ptrptrptr'),
     ('PyDict_SetItem', 'int_ptrstrptr'),
     ('PyDict_Size', 'size_ptr'),
+    ('PyDict_Values', 'ptr_ptr'),
     
     ('PyDictProxy_New', 'ptr_ptr'),
     
@@ -220,6 +221,7 @@ api_functions = (
     ('PyGILState_Release', 'void_int'), # warning, not really int
     
     ('PyImport_AddModule', 'ptr_str'),
+    ('PyImport_GetModuleDict', 'ptr_void'),
     ('PyImport_Import', 'ptr_str'),
     ('PyImport_ImportModule', 'ptr_str'),
     

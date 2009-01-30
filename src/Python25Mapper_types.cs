@@ -153,7 +153,7 @@ namespace Ironclad
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "tp_basicsize", Marshal.SizeOf(typeof(PyStringObject)) - 1);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "tp_itemsize", 1);
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_str", this.GetAddress("IC_PyString_Str"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_repr", this.GetAddress("PyString_Repr"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_repr", this.GetAddress("PyObject_Repr"));
 
             int sqSize = Marshal.SizeOf(typeof(PySequenceMethods));
             IntPtr sqPtr = this.allocator.Alloc(sqSize);

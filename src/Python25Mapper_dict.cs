@@ -157,7 +157,15 @@ namespace Ironclad
         {
             return this.IC_PyDict_Del(dictPtr, key);
         }
-        
+
+        public override IntPtr
+        PyDict_Values(IntPtr dictPtr)
+        {
+            IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
+            List values = new List();
+            values.__init__(dict.Values);
+            return this.Store(values);
+        }
         
         public override int
         PyDict_Next(IntPtr dictPtr, IntPtr posPtr, IntPtr keyPtrPtr, IntPtr valuePtrPtr)
