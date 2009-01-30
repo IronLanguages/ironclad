@@ -44,7 +44,7 @@ namespace Ironclad
             ScopeOps.__setattr__(this.scratchModule, "_ironclad_bases", tp_bases);
             this.ExecInModule(cb.code.ToString(), this.scratchModule);
 
-            object klass = ScopeOps.__getattribute__(this.scratchModule, cb.__name__);
+            object klass = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_class");
             Dispatcher _dispatcher = new Dispatcher(this, cb.methodTable);
             Builtin.setattr(this.scratchContext, klass, "_dispatcher", _dispatcher);
             object typeDict = Builtin.getattr(this.scratchContext, klass, "__dict__");
