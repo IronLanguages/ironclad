@@ -22,7 +22,7 @@ class LifetimeTest(TestCase):
     
     @WithMapper
     def testObjectSurvives(self, mapper, addToCleanUp):
-        typePtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass'})
+        typePtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass with stupid name'})
         addToCleanUp(deallocType)
         
         _type = mapper.Retrieve(typePtr)
