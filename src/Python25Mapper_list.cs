@@ -11,8 +11,6 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        
-        
         public virtual void 
         IC_PyList_Dealloc(IntPtr listPtr)
         {
@@ -204,6 +202,22 @@ namespace Ironclad
                 List list = (List)this.Retrieve(listPtr);
                 List sliced = (List)list[new Slice(start, stop)];
                 return this.Store(sliced);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
+
+        public override IntPtr
+        PyList_GetItem(IntPtr listPtr, int idx)
+        {
+            try
+            {
+                List list = (List)this.Retrieve(listPtr);
+                return this.Store(list[idx]);
             }
             catch (Exception e)
             {

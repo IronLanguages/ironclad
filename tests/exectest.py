@@ -19,6 +19,17 @@ class ExecTest(TestCase):
         self.assertEquals(globals_['foo'], 'bar')
         self.assertEquals(globals_['baz'], 123)
         self.assertEquals(globals_['qux'], 'bar')
+    
+    @WithMapper
+    def testPyRun_StringFlags_Locals(self, mapper, _):
+        globals_ = {'foo': 'bar'}
+        locals_ = {'baz': 'qux'}
+        resultPtr = mapper.PyRun_StringFlags(
+            "baz = 123\nqux = foo", int(EvalToken.Py_file_input), mapper.Store(globals_), mapper.Store(locals_), IntPtr.Zero)
+        self.assertEquals(resultPtr, mapper._Py_NoneStruct)
+        self.assertEquals(globals_['foo'], 'bar')
+        self.assertEquals(locals_['baz'], 123)
+        self.assertEquals(locals_['qux'], 'bar')
 
 
     @WithMapper

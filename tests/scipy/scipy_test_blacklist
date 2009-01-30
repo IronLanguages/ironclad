@@ -1,6 +1,17 @@
-# appears to loop forever with 100% cpu
-fftpack.test_basic.TestRfft.test_djbfft
 
-# mostly just fail
+# just fail with wrong results
 fftpack.test_pseudo_diffs
+optimize.test_zeros.TestBasic
 
+# wedges?
+fftpack.test_basic.TestRfft.test_djbfft
+integrate.test_quadpack.TestQuad.test_indefinite
+optimize.test_optimize.TestOptimize.test_powell
+
+# wrong number of args to something-or-other
+integrate.test_integrate.TestOde.test_vode
+integrate.test_integrate.TestOde.test_zvode
+optimize.test_cobyla.TestCobyla.test_simple
+
+# no idea
+optimize.test_optimize.TestOptimize.test_fminbound

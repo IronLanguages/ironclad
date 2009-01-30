@@ -214,6 +214,24 @@ class DictTest(TestCase):
         self.assertEquals(_dict, {})
 
 
+    @WithMapper
+    def testPyDict_DelItemString_Exists(self, mapper, _):
+        _dict = {'clef': 1}
+        dictPtr = mapper.Store(_dict)
+        self.assertEquals(mapper.PyDict_DelItemString(dictPtr, 'clef'), 0)
+        self.assertMapperHasError(mapper, None)
+        self.assertEquals(_dict, {})
+
+
+    @WithMapper
+    def testPyDict_DelItemString_ExistsNot(self, mapper, _):
+        _dict = {}
+        dictPtr = mapper.Store(_dict)
+        self.assertEquals(mapper.PyDict_DelItemString(dictPtr, 'clef'), -1)
+        self.assertMapperHasError(mapper, None)
+        self.assertEquals(_dict, {})
+
+
 class PyDict_Next_Test(TestCase):
 
     @WithMapper
