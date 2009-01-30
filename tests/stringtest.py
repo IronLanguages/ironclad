@@ -88,9 +88,9 @@ class PyString_Type_Test(TypeTestCase):
         tp_str = CPyMarshal.ReadPtrField(mapper.PyString_Type, PyTypeObject, "tp_str")
         self.assertEquals(tp_str, IC_PyString_Str)
         
-        PyString_Repr = mapper.GetAddress("PyString_Repr")
+        PyObject_Repr = mapper.GetAddress("PyObject_Repr")
         tp_repr = CPyMarshal.ReadPtrField(mapper.PyString_Type, PyTypeObject, "tp_repr")
-        self.assertEquals(tp_repr, PyString_Repr)
+        self.assertEquals(tp_repr, PyObject_Repr)
 
 class PyString_FromString_Test(PyString_TestCase):
 

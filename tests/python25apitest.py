@@ -227,6 +227,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyImport_ImportModule", ('"name"', ), 'IntPtr(123)')
         self.assertFinds("PyImport_AddModule", ('"name"', ), 'IntPtr(123)')
         self.assertFinds("PyImport_Import", ('IntPtr(111)', ), 'IntPtr(123)')
+        self.assertFinds("PyImport_GetModuleDict", (), 'IntPtr(123)')
         
         self.assertFinds("PyErr_NewException", ('"foo.bar.bazerror"', 'IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
         self.assertFinds("PyErr_Occurred", (), 'IntPtr(123)')
@@ -283,6 +284,7 @@ class Python25ApiFunctionsTest(TestCase):
         
         self.assertFinds("PyDict_New", (), 'IntPtr(999)')
         self.assertFinds("PyDict_Size", ('IntPtr(111)',), '999')
+        self.assertFinds("PyDict_Values", ('IntPtr(111)',), 'IntPtr(999)')
         self.assertFinds("PyDict_Next", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)', 'IntPtr(444)',), '999')
         self.assertFinds("PyDict_GetItem", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(333)')
         self.assertFinds("PyDict_GetItemString", ('IntPtr(111)', '"boojum"'), 'IntPtr(999)')

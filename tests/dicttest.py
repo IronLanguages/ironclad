@@ -232,6 +232,14 @@ class DictTest(TestCase):
         self.assertEquals(_dict, {})
 
 
+    @WithMapper
+    def testPyDict_Values(self, mapper, _):
+        _dict = {1: 2, 3: 4, 5: 6}
+        dictPtr = mapper.Store(_dict)
+        listPtr = mapper.PyDict_Values(dictPtr)
+        self.assertEquals(set(mapper.Retrieve(listPtr)), set(_dict.values()))
+
+
 class PyDict_Next_Test(TestCase):
 
     @WithMapper

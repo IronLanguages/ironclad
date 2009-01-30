@@ -13,16 +13,15 @@ from Ironclad.Structs import METH
 
 
 class Py_InitModule4_SetupTest(TestCase):
-        
-    def testNewModuleHasDispatcher(self):
-        mapper = Python25Mapper()
+    
+    @WithMapper
+    def testNewModuleHasDispatcher(self, mapper, _):
         modulePtr = MakeAndAddEmptyModule(mapper)
         module = mapper.Retrieve(modulePtr)
         _dispatcher = module._dispatcher
         
         self.assertEquals(isinstance(_dispatcher, Dispatcher), True, "wrong dispatcher class")
         self.assertEquals(_dispatcher.mapper, mapper, "dispatcher had wrong mapper")
-        mapper.Dispose()
         
 
 class Py_InitModule4_Test(TestCase):
@@ -155,9 +154,8 @@ class Py_InitModule4_Test(TestCase):
         
 class PyModule_Functions_Test(TestCase):
     
-    def testGetsDict(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+    @WithMapper
+    def testGetsDict(self, mapper, _):
         modulePtr = MakeAndAddEmptyModule(mapper)
         module = mapper.Retrieve(modulePtr)
         
@@ -166,13 +164,9 @@ class PyModule_Functions_Test(TestCase):
         
         self.assertEquals(module.random, 4, 'modified wrong dict')
         
-        mapper.Dispose()
-        deallocTypes()
-        
     
-    def testAddConstants(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+    @WithMapper
+    def testAddConstants(self, mapper, _):
         modulePtr = MakeAndAddEmptyModule(mapper)
         module = mapper.Retrieve(modulePtr)
         
@@ -182,19 +176,15 @@ class PyModule_Functions_Test(TestCase):
         self.assertEquals(mapper.PyModule_AddStringConstant(modulePtr, "i_am_a_string", "how_long"), 0, "reported failure")
         self.assertEquals(module.i_am_a_string, "how_long")
         
-        mapper.Dispose()
-        deallocTypes()
-        
 
-    def testAddObjectToUnknownModuleFails(self):
-        mapper = Python25Mapper()
+    @WithMapper
+    def testAddObjectToUnknownModuleFails(self, mapper, _):
         self.assertEquals(mapper.PyModule_AddObject(IntPtr.Zero, "zorro", IntPtr.Zero), -1,
                           "bad return on failure")
-        mapper.Dispose()
 
 
-    def testAddObjectWithExistingReferenceAddsMappedObjectAndDecRefsPointer(self):
-        mapper = Python25Mapper()
+    @WithMapper
+    def testAddObjectWithExistingReferenceAddsMappedObjectAndDecRefsPointer(self, mapper, _):
         testObject = object()
         testPtr = mapper.Store(testObject)
         mapper.IncRef(testPtr)
@@ -205,12 +195,10 @@ class PyModule_Functions_Test(TestCase):
         self.assertEquals(result, 0, "bad value for success")
         self.assertEquals(mapper.RefCount(testPtr), 1)
         self.assertEquals(module.testObject, testObject, "did not store real object")
-        mapper.Dispose()
 
 
-    def assertAddsTypeWithData(self, tp_name, itemName, class__module__, class__name__, class__doc__):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+    @WithMapper
+    def assertAddsTypeWithData(self, tp_name, itemName, class__module__, class__name__, class__doc__, mapper, addDealloc):
         modulePtr = MakeAndAddEmptyModule(mapper)
         module = mapper.Retrieve(modulePtr)
         
@@ -219,6 +207,7 @@ class PyModule_Functions_Test(TestCase):
             "tp_doc": class__doc__
         }
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
+        addDealloc(deallocType)
         result = mapper.PyModule_AddObject(modulePtr, itemName, typePtr)
         self.assertEquals(result, 0, "reported failure")
 
@@ -230,10 +219,6 @@ class PyModule_Functions_Test(TestCase):
         self.assertEquals(mappedClass.__doc__, class__doc__, "unexpected docstring")
         self.assertEquals(mappedClass.__name__, class__name__, "unexpected __name__")
         self.assertEquals(mappedClass.__module__, class__module__, "unexpected __module__")
-        
-        mapper.Dispose()
-        deallocType()
-        deallocTypes()
 
 
     def testAddModule(self):
@@ -253,23 +238,19 @@ class PyModule_Functions_Test(TestCase):
         )
 
 
-    def testPyModule_New(self):
-        mapper = Python25Mapper()
-        
+    @WithMapper
+    def testPyModule_New(self, mapper, _):
         modulePtr = mapper.PyModule_New("forsooth")
         module = mapper.Retrieve(modulePtr)
         self.assertEquals(module.__name__, "forsooth")
         self.assertEquals(module.__doc__, "")
         
-        mapper.Dispose()
-        
 
 
 class ImportTest(TestCase):
     
-    def testPyImport_ImportModule(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+    @WithMapper
+    def testPyImport_ImportModule(self, mapper, _):
         modulePtr = mapper.Py_InitModule4(
             "test_module",
             IntPtr.Zero,
@@ -279,13 +260,9 @@ class ImportTest(TestCase):
         
         self.assertEquals(mapper.PyImport_ImportModule("test_module"), modulePtr)
         self.assertEquals(mapper.RefCount(modulePtr), 2, "did not incref")
-        
-        mapper.Dispose()
-        deallocTypes()
     
-    def testPyImport_Import(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
+    @WithMapper
+    def testPyImport_Import(self, mapper, _):
         modulePtr = mapper.Py_InitModule4(
             "test_module",
             IntPtr.Zero,
@@ -295,14 +272,9 @@ class ImportTest(TestCase):
         
         self.assertEquals(mapper.PyImport_Import(mapper.Store("test_module")), modulePtr)
         self.assertEquals(mapper.RefCount(modulePtr), 2, "did not incref")
-        
-        mapper.Dispose()
-        deallocTypes()
     
-    def testPyImport_AddModule(self):
-        mapper = Python25Mapper()
-        deallocTypes = CreateTypes(mapper)
-        
+    @WithMapper
+    def testPyImport_AddModule(self, mapper, _):
         sysPtr = mapper.PyImport_ImportModule("sys")
         modules = mapper.Retrieve(sysPtr).modules
         
@@ -312,9 +284,19 @@ class ImportTest(TestCase):
         self.assertEquals(modules['foo.bar'].baz, modules['foo.bar.baz'])
         self.assertEquals('foo' in modules, True)
         self.assertEquals(modules['foo'].bar, modules['foo.bar'])
+
+    
+    @WithMapper
+    def testPyImport_GetModuleDict(self, mapper, _):
+        modulesPtr = mapper.PyImport_GetModuleDict()
+        modules = mapper.Retrieve(modulesPtr)
+        self.assertEquals(modules is sys.modules, True)
         
-        mapper.Dispose()
-        deallocTypes()
+        mapper.IncRef(modulesPtr)
+        mapper.EnsureGIL()
+        mapper.ReleaseGIL()
+        self.assertEquals(mapper.RefCount(modulesPtr), 1, 'borrowed reference not cleaned up')
+
 
 
 # not sure this is the right place for these tests
