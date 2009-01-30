@@ -4,6 +4,8 @@ using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
 using Microsoft.Scripting.Runtime;
 
+using IronPython.Runtime.Operations;
+
 using Ironclad.Structs;
 
 
@@ -14,9 +16,9 @@ namespace Ironclad
         public override IntPtr
         PyRun_StringFlags(string code, int mode, IntPtr globalsPtr, IntPtr localsPtr, IntPtr flagsPtr)
         {
-            if (localsPtr != IntPtr.Zero || flagsPtr != IntPtr.Zero)
+            if (flagsPtr != IntPtr.Zero)
             {
-                throw new NotImplementedException("PyRun_StringFlags: locals and flags are not currently handled");
+                throw new NotImplementedException("PyRun_StringFlags: flags are not currently handled");
             }
             if (globalsPtr == IntPtr.Zero)
             {
@@ -29,9 +31,13 @@ namespace Ironclad
             
             try
             {
-                SourceUnit script = this.python.CreateSnippet(code, SourceCodeKind.Statements);
                 IAttributesCollection globals = (IAttributesCollection)this.Retrieve(globalsPtr);
-                script.Execute(new Scope(globals));
+                object locals = null;
+                if (localsPtr != IntPtr.Zero)
+                {
+                    locals = this.Retrieve(localsPtr);
+                }
+                PythonOps.QualifiedExec(this.scratchContext, code, globals, locals);
                 this.IncRef(this._Py_NoneStruct);
                 return this._Py_NoneStruct;
             }

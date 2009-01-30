@@ -55,6 +55,8 @@ PyTuple_SetItem
 PyLong_FromVoidPtr
 PyLong_AsVoidPtr
 
+PyList_Size
+
 PyEval_CallObject
 PyEval_CallObjectWithKeywords
 

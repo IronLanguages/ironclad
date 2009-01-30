@@ -140,6 +140,8 @@ typedef struct {
 #define PyList_SET_ITEM(op, i, v) (((PyListObject *)(op))->ob_item[i] = (v))
 #define PyList_GET_SIZE(op)    (((PyListObject *)(op))->ob_size)
 
+#define PyList_Check(op) PyObject_TypeCheck(op, &PyList_Type)
+
 typedef struct {
 	Py_ssize_t ob_refcnt;
 	struct _typeobject *ob_type;

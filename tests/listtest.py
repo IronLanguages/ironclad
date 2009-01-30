@@ -347,6 +347,7 @@ class ListFunctionsTest(TestCase):
         
     @WithMapper
     def testPyList_GetSlice(self, mapper, _):
+        # this will fail badly when we fix API signednesses
         def TestSlice(originalListPtr, start, stop):
             newListPtr = mapper.PyList_GetSlice(originalListPtr, start, stop)
             self.assertMapperHasError(mapper, None)
@@ -364,6 +365,18 @@ class ListFunctionsTest(TestCase):
     @WithMapper
     def testPyList_GetSlice_error(self, mapper, _):
         self.assertEquals(mapper.PyList_GetSlice(mapper.Store(object()), 1, 2), IntPtr.Zero)
+        self.assertMapperHasError(mapper, TypeError)
+        
+        
+    @WithMapper
+    def testPyList_GetItem(self, mapper, _):
+        listPtr = mapper.Store([1, 2, 3])
+        for i in range(3):
+            result = mapper.Retrieve(mapper.PyList_GetItem(listPtr, i))
+            self.assertEquals(result, i + 1)
+        
+        notListPtr = mapper.Store(object())
+        self.assertEquals(mapper.PyList_GetItem(notListPtr, 0), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
         
         

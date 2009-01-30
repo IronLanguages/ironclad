@@ -28,7 +28,7 @@ PackageLoader.__init__ = fake__init__
 
 import scipy
 numpy_path = r"C:\Python25\Lib\site-packages\scipy"
-dirs = ['fftpack', 'ndimage', 'special']
+dirs = ['fftpack', 'integrate', 'optimize', 'ndimage', 'special']
 
 if __name__ == "__main__":
     numpytester = Schnoz(name="scipy", lib_path=numpy_path, data_dir=os.path.dirname(__file__))

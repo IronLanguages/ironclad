@@ -123,28 +123,39 @@ namespace Ironclad
             return this.IC_PyDict_Set(dictPtr, key, this.Retrieve(itemPtr));
         }
         
+        private int
+        IC_PyDict_Del(IntPtr dictPtr, object key)
+        {
+            IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
+            // induce a TypeError, in case key is unhashable
+            PythonOps.Hash(this.scratchContext, key);
+            if (dict.Contains(key))
+            {
+                dict.Remove(key);
+                return 0;
+            }
+            return -1;
+        }
+
         public override int
         PyDict_DelItem(IntPtr dictPtr, IntPtr keyPtr)
         {
             try
             {
-                IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
                 object key = this.Retrieve(keyPtr);
-                
-                // induce a TypeError, in case key is unhashable
-                PythonOps.Hash(this.scratchContext, key);
-                
-                if (dict.Contains(key))
-                {
-                    dict.Remove(key);
-                    return 0;
-                }
+                return this.IC_PyDict_Del(dictPtr, key);
             }
             catch (Exception e)
             {
                 this.LastException = e;
+                return -1;
             }
-            return -1;
+        }
+
+        public override int
+        PyDict_DelItemString(IntPtr dictPtr, string key)
+        {
+            return this.IC_PyDict_Del(dictPtr, key);
         }
         
         

@@ -187,6 +187,7 @@ api_functions = (
     ('PyComplex_FromDoubles', 'ptr_doubledouble'),
     
     ('PyDict_DelItem', 'int_ptrptr'),
+    ('PyDict_DelItemString', 'int_ptrstr'),
     ('PyDict_GetItem', 'ptr_ptrptr'),
     ('PyDict_GetItemString', 'ptr_ptrstr'),
     ('PyDict_New', 'ptr_void'),
@@ -231,6 +232,7 @@ api_functions = (
     ('PyIter_Next', 'ptr_ptr'),
     
     ('PyList_Append', 'int_ptrptr'),
+    ('PyList_GetItem', 'ptr_ptrsize'),
     ('PyList_GetSlice', 'ptr_ptrsizesize'),
     ('PyList_New', 'ptr_size'),
     ('PyList_SetItem', 'int_ptrsizeptr'),

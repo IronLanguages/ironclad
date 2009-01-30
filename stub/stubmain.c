@@ -30,3 +30,4 @@
 #include "bufferobject.c"
 #include "methodobject.c"
 #include "longobject.c"
+#include "listobject.c"
