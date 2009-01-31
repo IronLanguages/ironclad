@@ -1,3 +1,0 @@
-int
-IntPtr the_lock, int flags
-return 0

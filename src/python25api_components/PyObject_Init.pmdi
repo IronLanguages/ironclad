@@ -1,3 +1,0 @@
-IntPtr
-IntPtr obj, IntPtr type
-return IntPtr.Zero

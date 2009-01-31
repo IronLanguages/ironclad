@@ -34,9 +34,9 @@ namespace Ironclad
                     this.DecRef(itemPtr);
                 }
             }
-            PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)
+            dgt_void_ptr freeDgt = (dgt_void_ptr)
                 CPyMarshal.ReadFunctionPtrField(
-                    this.PyTuple_Type, typeof(PyTypeObject), "tp_free", typeof(PyObject_Free_Delegate));
+                    this.PyTuple_Type, typeof(PyTypeObject), "tp_free", typeof(dgt_void_ptr));
             freeDgt(tuplePtr);
         }
         

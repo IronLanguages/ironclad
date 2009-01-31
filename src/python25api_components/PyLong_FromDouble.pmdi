@@ -1,3 +1,0 @@
-IntPtr
-double value
-return IntPtr.Zero

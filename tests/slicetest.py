@@ -7,7 +7,7 @@ from tests.utils.testcase import TestCase, WithMapper
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, Python25Api, Python25Mapper
+from Ironclad import CPyMarshal, dgt_void_ptr, Python25Mapper
 from Ironclad.Structs import PyObject, PySliceObject, PyTypeObject
 
         
@@ -47,7 +47,7 @@ class SliceTest(TestCase):
         calls = []
         def CustomFree(ptr):
             calls.append(ptr)
-        freeDgt = Python25Api.PyObject_Free_Delegate(CustomFree)
+        freeDgt = dgt_void_ptr(CustomFree)
         
         CPyMarshal.WriteFunctionPtrField(mapper.PySlice_Type, PyTypeObject, "tp_free", freeDgt)
         slicePtr = mapper.Store(slice(1, 2, 3))

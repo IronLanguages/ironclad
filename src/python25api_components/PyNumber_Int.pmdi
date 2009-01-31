@@ -1,3 +1,0 @@
-IntPtr
-IntPtr numberPtr
-return IntPtr.Zero

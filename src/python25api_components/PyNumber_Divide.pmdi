@@ -1,3 +1,0 @@
-IntPtr
-IntPtr arg1ptr, IntPtr arg2ptr
-return IntPtr.Zero

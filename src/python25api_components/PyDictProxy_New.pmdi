@@ -1,3 +1,0 @@
-IntPtr
-IntPtr mappingPtr
-return IntPtr.Zero

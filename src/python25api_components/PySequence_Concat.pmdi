@@ -1,3 +1,0 @@
-IntPtr
-IntPtr seq1Ptr, IntPtr seq2Ptr
-return IntPtr.Zero

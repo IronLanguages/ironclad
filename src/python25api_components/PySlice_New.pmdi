@@ -1,3 +1,0 @@
-IntPtr
-IntPtr startPtr, IntPtr stopPtr, IntPtr stepPtr
-return IntPtr.Zero

@@ -84,6 +84,11 @@ namespace Ironclad
             lockObject.Release();
         }
 
+        public override void
+        PyEval_InitThreads()
+        {
+        }
+
         public override IntPtr
         PyEval_SaveThread()
         {

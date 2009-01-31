@@ -1,3 +1,0 @@
-IntPtr
-int value
-return IntPtr.Zero

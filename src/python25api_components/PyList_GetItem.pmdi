@@ -1,3 +1,0 @@
-IntPtr
-IntPtr listPtr, int idx
-return IntPtr.Zero

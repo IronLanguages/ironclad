@@ -155,6 +155,32 @@ def generate_magicmethod_swapped_template(functype, inargs, template):
     }
     return template % info
 
+def read_interesting_lines(name):
+    f = open(name)
+    try:
+        return [l.rstrip() for l in f.readlines() if l.rstrip()]
+    finally:
+        f.close()
+
+def unpack_apifunc(name, dgt_type):
+    _, ret, args = unpack_spec(dgt_type)
+    return {
+        "symbol": name,
+        "dgt_type": dgt_type,
+        "return_type": type_codes[ret],
+        "arglist": generate_arglist(args)
+    }
+
+def glom_templates(joiner, *args):
+    output = []
+    for (template, infos) in args:
+        for info in infos:
+            output.append(template % info)
+    return joiner.join(output)
+        
+
+#=============================================================================================
+
 def generate_dispatcher(field_types, method_types):
     dispatcher_fields = '\n'.join(starstarmap(generate_dispatcher_field, field_types))
     dispatcher_methods = '\n'.join(starstarmap(generate_dispatcher_method, method_types))
@@ -181,13 +207,49 @@ def generate_magic_methods(protocol_field_types):
     
     return FILE_TEMPLATE % MAGICMETHODS_TEMPLATE % ('\n'.join(normal_magic_methods), '\n'.join(swapped_magic_methods))
 
+def generate_python25api(known_functions, all_functions_file, c_functions_file, data_ptr_items_file, data_items_file):
+    all_methods_set = set(read_interesting_lines(all_functions_file))
+    c_methods_set = set(read_interesting_lines(c_functions_file))
+    not_implemented_methods_set = all_methods_set - c_methods_set
+    
+    methods = []
+    for (name, dgt_type) in known_functions:
+        not_implemented_methods_set.remove(name)
+        methods.append(unpack_apifunc(name, dgt_type))
+    not_implemented_methods = [{"symbol": s} for s in not_implemented_methods_set]
+    methods_code = glom_templates('\n\n',
+        (PYTHON25API_METHOD_TEMPLATE, methods), 
+        (PYTHON25API_NOT_IMPLEMENTED_METHOD_TEMPLATE, not_implemented_methods),
+    )
+    methods_switch = glom_templates('\n',
+        (PYTHON25API_METHOD_CASE, methods),
+        (PYTHON25API_NOT_IMPLEMENTED_METHOD_CASE, not_implemented_methods),
+    )
+
+    ptr_data_items = [dict([("symbol", p)]) for p in read_interesting_lines(data_ptr_items_file)]
+    ptr_data_items_code = glom_templates("\n\n", (PYTHON25API_PTR_DATA_ITEM_TEMPLATE, ptr_data_items))
+    ptr_data_items_switch = glom_templates("\n", (PYTHON25API_PTR_DATA_ITEM_CASE, ptr_data_items))
+
+    data_items = []
+    for p in read_interesting_lines(data_items_file):
+        symbol, _type = p.split(" ")
+        data_items.append({"symbol": symbol, "type": _type})
+    data_items_code = glom_templates("\n\n", (PYTHON25API_DATA_ITEM_TEMPLATE, data_items))
+    data_items_switch = glom_templates("\n", (PYTHON25API_DATA_ITEM_CASE, data_items))
+
+    return FILE_TEMPLATE % PYTHON25API_TEMPLATE % (
+        methods_code, ptr_data_items_code,
+        methods_switch, ptr_data_items_switch,
+        data_items_code,
+        data_items_switch)
+        
+
 def generate_dgts():
     # this depends on sideeffect_dgttypes having been populated (by dispatcher and python25api construction)
     return FILE_TEMPLATE % '\n'.join(map(generate_dgttype, sorted(sideeffect_dgttypes)))
 
 #===============================================================================================================
-
-# WARNING: the order of the following calls is important; notice the sideeffect_* variables above
+# WARNING: the call to generate_dgts must come last; notice the sideeffect_* variables above
 
 from tools.dispatcherinputs import dispatcher_field_types, dispatcher_methods
 dispatcher_code = generate_dispatcher(dispatcher_field_types, dispatcher_methods)
@@ -195,9 +257,14 @@ dispatcher_code = generate_dispatcher(dispatcher_field_types, dispatcher_methods
 from tools.dispatcherinputs import protocol_field_types
 magicmethods_code = generate_magic_methods(protocol_field_types)
 
-# not implemented yet: would be nice, though
-# from tools.typesysteminputs import python25api_functions
-# python25api_code = generate_python25api(python25api_functions)
+
+ALL_FUNCTIONS_FILE = "tools/python25ApiFunctions"
+C_FUNCTIONS_FILE = "stub/_ignores"
+DATA_ITEMS_FILE = "tools/python25ApiDataItems"
+DATA_PTR_ITEMS_FILE = "tools/python25ApiDataPtrItems"
+from tools.dispatcherinputs import known_python25api_signatures
+python25api_code = generate_python25api(
+    known_python25api_signatures, ALL_FUNCTIONS_FILE, C_FUNCTIONS_FILE, DATA_PTR_ITEMS_FILE, DATA_ITEMS_FILE)
 
 dgttype_code = generate_dgts()
 
@@ -213,5 +280,6 @@ if __name__ == '__main__':
 
     write(dispatcher_code, 'Dispatcher')
     write(magicmethods_code, 'MagicMethods')
+    write(python25api_code, 'Python25Api')
     write(dgttype_code, 'Delegates')
 

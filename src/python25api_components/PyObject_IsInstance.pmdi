@@ -1,3 +1,0 @@
-int
-IntPtr instPtr, IntPtr clsPtr
-return -1

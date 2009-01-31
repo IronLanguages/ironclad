@@ -1,3 +1,0 @@
-int
-IntPtr module, string name, int value
-return -1

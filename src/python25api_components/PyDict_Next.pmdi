@@ -1,3 +1,0 @@
-int
-IntPtr dictPtr, IntPtr counterPtr, IntPtr keyPtrPtr, IntPtr valuePtrPtr
-return 0
