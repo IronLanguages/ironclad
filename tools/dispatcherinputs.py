@@ -213,6 +213,7 @@ api_functions = (
     ('PyEval_SaveThread', 'ptr_void'),
     
     ('PyFile_AsFile', 'ptr_ptr'),
+    ('PyFile_Name', 'ptr_ptr'),
     
     ('PyFloat_AsDouble', 'double_ptr'),
     ('PyFloat_FromDouble', 'ptr_double'),
