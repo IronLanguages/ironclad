@@ -13,24 +13,47 @@ namespace Ironclad
         public override IntPtr
         PyFile_AsFile(IntPtr pyFilePtr)
         {
-            if (this.FILEs.ContainsKey(pyFilePtr))
+            try
             {
-                return this.FILEs[pyFilePtr];
+                if (this.FILEs.ContainsKey(pyFilePtr))
+                {
+                    return this.FILEs[pyFilePtr];
+                }
+
+                PythonFile pyFile = (PythonFile)this.Retrieve(pyFilePtr);
+                int fd = this.ConvertPyFileToDescriptor(pyFile);
+                IntPtr FILE = IntPtr.Zero;
+                if (InappropriateReflection.StreamFromPythonFile(pyFile).CanWrite)
+                {
+                    FILE = Unmanaged._fdopen(fd, "w");
+                }
+                else
+                {
+                    FILE = Unmanaged._fdopen(fd, "r");
+                }
+                this.FILEs[pyFilePtr] = FILE;
+                return FILE;
             }
-            
-            PythonFile pyFile = (PythonFile)this.Retrieve(pyFilePtr);
-            int fd = this.ConvertPyFileToDescriptor(pyFile);
-            IntPtr FILE = IntPtr.Zero;
-            if (InappropriateReflection.StreamFromPythonFile(pyFile).CanWrite)
+            catch (Exception e)
             {
-                FILE = Unmanaged._fdopen(fd, "w");
+                this.LastException = e;
+                return IntPtr.Zero;
             }
-            else
+        }
+
+        public override IntPtr
+        PyFile_Name(IntPtr filePtr)
+        {
+            try
             {
-                FILE = Unmanaged._fdopen(fd, "r");
+                PythonFile file = (PythonFile)this.Retrieve(filePtr);
+                return this.Store(file.name);
             }
-            this.FILEs[pyFilePtr] = FILE;
-            return FILE;
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
         }
 
         public int

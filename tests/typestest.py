@@ -95,6 +95,17 @@ class Types_Test(TestCase):
 
 
     @WithMapper
+    def testPyType_IsSubtype_NullPtrs(self, mapper, CallLater):
+        type_size = Marshal.SizeOf(PyTypeObject)
+        ptr = Marshal.AllocHGlobal(type_size)
+        CallLater(lambda: Marshal.FreeHGlobal(ptr))
+        CPyMarshal.Zero(ptr, type_size)
+        
+        self.assertTrue(mapper.PyType_IsSubtype(ptr, mapper.PyBaseObject_Type))
+        self.assertTrue(mapper.PyType_IsSubtype(ptr, ptr))
+
+
+    @WithMapper
     def testPyType_Ready(self, mapper, addToCleanUp):
         typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         CPyMarshal.Zero(typePtr, Marshal.SizeOf(PyTypeObject))

@@ -75,7 +75,9 @@ class PyFile_Type_Test(TestCase):
         stream.close()
         self.assertEquals(output, "I love streams and file descriptors!")
 
-    
+
+class PyFileAPIFunctions(TestCase):
+
     @WithMapper
     def testPyFile_AsFile(self, mapper, addToCleanUp):
         kwargsPtr = IntPtr.Zero
@@ -152,8 +154,27 @@ class PyFile_Type_Test(TestCase):
             mapper.DecRef(filePtr)
 
 
+    @WithMapper
+    def testPyFile_Name(self, mapper, CallLater):
+        f = open(__file__)
+        CallLater(f.close)
+        fptr = mapper.Store(f)
+        strptr = mapper.PyFile_Name(fptr)
+        self.assertEquals(mapper.Retrieve(strptr), __file__)
+
+
+    @WithMapper
+    def testPyFileFunctionErrors(self, mapper, _):
+        ptr = mapper.Store(object())
+        self.assertEquals(mapper.PyFile_AsFile(ptr), IntPtr.Zero)
+        self.assertMapperHasError(mapper, TypeError)
+        self.assertEquals(mapper.PyFile_Name(ptr), IntPtr.Zero)
+        self.assertMapperHasError(mapper, TypeError)
+
+
 suite = makesuite(
     PyFile_Type_Test,
+    PyFileAPIFunctions,
 )
 
 if __name__ == '__main__':
