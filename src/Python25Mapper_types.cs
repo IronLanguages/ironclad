@@ -53,8 +53,16 @@ namespace Ironclad
             {
                 return 0;
             }
-            PythonType _type = this.Retrieve(typePtr) as PythonType;
+            if (subtypePtr == typePtr || typePtr == PyBaseObject_Type)
+            {
+                return 1;
+            }
             PythonType subtype = this.Retrieve(subtypePtr) as PythonType;
+            if (!this.HasPtr(typePtr))
+            {
+                return 0;
+            }
+            PythonType _type = this.Retrieve(typePtr) as PythonType;
             if (subtype == null || _type == null)
             {
                 return 0;

@@ -359,6 +359,7 @@ class Python25ApiFunctionsTest(TestCase):
         self.assertFinds("PyFloat_AsDouble", ('IntPtr(111)',), '123.45')
         
         self.assertFinds("PyFile_AsFile", ('IntPtr(111)',), 'IntPtr(999)')
+        self.assertFinds("PyFile_Name", ('IntPtr(111)',), 'IntPtr(999)')
         
         self.assertFinds("PyCObject_FromVoidPtr", ('IntPtr(111)', 'IntPtr(222)'), 'IntPtr(999)')
         self.assertFinds("PyCObject_FromVoidPtrAndDesc", ('IntPtr(111)', 'IntPtr(222)', 'IntPtr(333)'), 'IntPtr(999)')
