@@ -2,17 +2,29 @@
 
 FILE_TEMPLATE = """\
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
 
+using Ironclad.Structs;
+
 namespace Ironclad
 {
 %s
 }
 """
+
+#================================================================================================
+
+DGTTYPE_TEMPLATE = """\
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate %(rettype)s dgt_%(name)s(%(arglist)s);
+"""
+
+#================================================================================================
 
 DISPATCHER_TEMPLATE = """
     public partial class Dispatcher
@@ -96,12 +108,6 @@ FIELD_TEMPLATE = """\
         }
 """
 
-DGTTYPE_TEMPLATE = """\
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate %(rettype)s dgt_%(name)s(%(arglist)s);
-"""
-
-
 HANDLE_RET_NULL = """object ret = null;
                 if (retptr == IntPtr.Zero)
                 {
@@ -130,7 +136,7 @@ THROW_RET_NEGATIVE = """if (ret < 0)
 HANDLE_RET_DESTRUCTOR = """this.mapper.DecRef(ptr0);
                 this.mapper.Unmap(ptr0);"""
 
-
+#================================================================================================
 
 MAGICMETHODS_TEMPLATE = """\
     public class MagicMethods
@@ -159,7 +165,6 @@ MAGICMETHODS_TEMPLATE = """\
         }
     }
 """
-
 
 MAGIC_METHOD_CASE = """\
                 case "%s":
@@ -192,3 +197,106 @@ def {0}(self, *args, **kwargs):
     '''{1}'''
     return self._dispatcher.%(functype)s('{2}{0}', self, args, kwargs)
 _ironclad_class_attrs['{0}'] = {0}"""
+
+#================================================================================================
+
+PYTHON25API_TEMPLATE = """
+    public class Python25Api
+    {
+        protected Dictionary<string, Delegate> dgtMap = new Dictionary<string, Delegate>();
+        private Dictionary<string, IntPtr> dataMap = new Dictionary<string, IntPtr>();
+
+%s
+
+%s
+
+        public virtual IntPtr GetAddress(string name)
+        {
+            if (this.dgtMap.ContainsKey(name))
+            {
+                return Marshal.GetFunctionPointerForDelegate(this.dgtMap[name]);
+            }
+
+            switch (name)
+            {
+%s
+%s
+
+                default:
+                    return IntPtr.Zero;
+            }
+            return Marshal.GetFunctionPointerForDelegate(this.dgtMap[name]);
+        }
+
+
+%s
+
+        public void SetData(string name, IntPtr address)
+        {
+            switch (name)
+            {
+%s
+            }
+        }
+    }
+"""
+
+PYTHON25API_METHOD_TEMPLATE = """\
+        public virtual %(return_type)s %(symbol)s(%(arglist)s)
+        {
+            throw new NotImplementedException("called %(symbol)s");
+        }"""
+        
+PYTHON25API_NOT_IMPLEMENTED_METHOD_TEMPLATE = """\
+        public void %(symbol)s()
+        {
+            throw new NotImplementedException("called %(symbol)s -- stack is probably corrupt now");
+        }"""
+        
+PYTHON25API_METHOD_CASE = """\
+                case "%(symbol)s":
+                    this.dgtMap[name] = new dgt_%(dgt_type)s(this.%(symbol)s);
+                    break;"""
+                    
+PYTHON25API_NOT_IMPLEMENTED_METHOD_CASE = """\
+                case "%(symbol)s":
+                    this.dgtMap[name] = new dgt_void_void(this.%(symbol)s);
+                    break;"""
+
+PYTHON25API_PTR_DATA_ITEM_TEMPLATE = """\
+        public virtual IntPtr Make_%(symbol)s() { return IntPtr.Zero; }
+        public IntPtr %(symbol)s
+        {
+            get
+            {
+                return this.dataMap["%(symbol)s"];
+            }
+        }"""
+
+PYTHON25API_PTR_DATA_ITEM_CASE = """\
+                case "%(symbol)s":
+                    this.dataMap[name] = this.Make_%(symbol)s();
+                    return this.dataMap[name];"""
+
+PYTHON25API_DATA_ITEM_TEMPLATE = """\
+        public virtual void Fill_%(symbol)s(IntPtr address) { ; }
+        public IntPtr %(symbol)s
+        {
+            get
+            {
+                IntPtr address;
+                if (this.dataMap.TryGetValue("%(symbol)s", out address))
+                {
+                    return address;
+                }
+                return IntPtr.Zero;
+            }
+        }"""
+
+PYTHON25API_DATA_ITEM_CASE = """\
+                case "%(symbol)s":
+                    this.Fill_%(symbol)s(address);
+                    this.dataMap["%(symbol)s"] = address;
+                    break;"""
+
+#================================================================================================

@@ -1,3 +1,0 @@
-IntPtr
-/* no args */
-return IntPtr.Zero

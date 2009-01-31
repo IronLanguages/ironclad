@@ -12,7 +12,7 @@ from System import IntPtr
 from System.IO import FileStream
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, Python25Api, Python25Mapper, Unmanaged
+from Ironclad import CPyMarshal, dgt_void_ptr, Python25Api, Python25Mapper, Unmanaged
 from Ironclad.Structs import PyObject, PyStringObject, PyTypeObject
 
 from TestUtils.Unmanaged import fflush, fread, fwrite
@@ -124,7 +124,7 @@ class PyFileAPIFunctions(TestCase):
         def Free(ptr):
             calls.append(ptr)
         
-        freeDgt = Python25Api.PyObject_Free_Delegate(Free)
+        freeDgt = dgt_void_ptr(Free)
         CPyMarshal.WriteFunctionPtrField(mapper.PyFile_Type, PyTypeObject, 'tp_free', freeDgt)
         
         mapper.DecRef(filePtr)

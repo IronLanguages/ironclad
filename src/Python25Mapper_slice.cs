@@ -29,9 +29,9 @@ namespace Ironclad
             this.DecRef(CPyMarshal.ReadPtrField(slicePtr, typeof(PySliceObject), "stop"));
             this.DecRef(CPyMarshal.ReadPtrField(slicePtr, typeof(PySliceObject), "step"));
 
-            PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)
+            dgt_void_ptr freeDgt = (dgt_void_ptr)
                 CPyMarshal.ReadFunctionPtrField(
-                    this.PySlice_Type, typeof(PyTypeObject), "tp_free", typeof(PyObject_Free_Delegate));
+                    this.PySlice_Type, typeof(PyTypeObject), "tp_free", typeof(dgt_void_ptr));
             freeDgt(slicePtr);
         }
 

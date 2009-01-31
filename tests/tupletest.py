@@ -12,7 +12,7 @@ from tests.utils.typetestcase import TypeTestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, Python25Api, Python25Mapper
+from Ironclad import CPyMarshal, dgt_void_ptr, Python25Mapper
 from Ironclad.Structs import PyTupleObject, PyTypeObject
 
 
@@ -70,7 +70,7 @@ class PyTuple_Type_Test(TypeTestCase):
         calls = []
         def CustomFree(ptr):
             calls.append(ptr)
-        freeDgt = Python25Api.PyObject_Free_Delegate(CustomFree)
+        freeDgt = dgt_void_ptr(CustomFree)
         
         CPyMarshal.WriteFunctionPtrField(mapper.PyTuple_Type, PyTypeObject, "tp_free", freeDgt)
         tuplePtr, itemPtrs = MakeTuple(mapper, (1, 2, 3))

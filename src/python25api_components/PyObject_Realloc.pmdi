@@ -1,3 +1,0 @@
-IntPtr
-IntPtr ptr, int size
-return IntPtr.Zero

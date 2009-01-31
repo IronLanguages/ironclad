@@ -84,6 +84,29 @@ namespace Ironclad
         }
         
         public override int
+        PyInt_AsSsize_t(IntPtr valuePtr)
+        {
+            try
+            {
+                BigInteger value = this.MakeBigInteger(this.Retrieve(valuePtr));
+                if ((value >= 0) && (value <= Int32.MaxValue))
+                {
+                    return value.ToInt32();
+                }
+                if (value <= UInt32.MaxValue)
+                {
+                    value -= UInt32.MaxValue;
+                }
+                return value.ToInt32();
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
+        }
+        
+        public override int
         _PyLong_Sign(IntPtr valuePtr)
         {
             BigInteger value = this.MakeBigInteger(this.Retrieve(valuePtr));

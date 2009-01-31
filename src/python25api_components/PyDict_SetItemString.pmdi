@@ -1,3 +1,0 @@
-int
-IntPtr dict, string key, IntPtr item
-return -1

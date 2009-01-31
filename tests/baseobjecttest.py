@@ -13,7 +13,7 @@ from tests.utils.typetestcase import TypeTestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, Python25Api, Python25Mapper
+from Ironclad import CPyMarshal, dgt_void_ptr, Python25Api, Python25Mapper
 from Ironclad.Structs import CMP, PyObject, PyTypeObject
 
 
@@ -404,7 +404,7 @@ class PyBaseObject_Type_Test(TypeTestCase):
         calls = []
         def Some_FreeFunc(objPtr):
             calls.append(objPtr)
-        self.freeDgt = Python25Api.PyObject_Free_Delegate(Some_FreeFunc)
+        self.freeDgt = dgt_void_ptr(Some_FreeFunc)
         
         baseObjTypeBlock = mapper.PyBaseObject_Type
         objTypeBlock = mapper.PyDict_Type # type not actually important

@@ -1,3 +1,0 @@
-IntPtr
-IntPtr cobj, IntPtr destr
-return IntPtr.Zero

@@ -1,3 +1,0 @@
-IntPtr
-IntPtr listPtr, int start, int stop
-return IntPtr.Zero

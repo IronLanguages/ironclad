@@ -41,9 +41,9 @@ namespace Ironclad
         IC_PyBaseObject_Dealloc(IntPtr objPtr)
         {
             IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
-            PyObject_Free_Delegate freeDgt = (PyObject_Free_Delegate)
+            dgt_void_ptr freeDgt = (dgt_void_ptr)
                 CPyMarshal.ReadFunctionPtrField(
-                    objType, typeof(PyTypeObject), "tp_free", typeof(PyObject_Free_Delegate));
+                    objType, typeof(PyTypeObject), "tp_free", typeof(dgt_void_ptr));
             freeDgt(objPtr);
         }
         

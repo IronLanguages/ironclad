@@ -80,14 +80,16 @@ class PyInt_Test(TestCase):
 
     @WithMapper
     def testPyInt_AsSsize_t(self, mapper, _):
-        for value in (0, UInt32.MaxValue):
-            ptr = mapper.Store(value)
-            self.assertEquals(mapper.PyInt_AsSsize_t(ptr), value, "failed to map back")
+        # because I haven't yet fixed the signedness of managed Ssize_t equivalent,
+        # do it by magic bit-patterns
+        for (value, expected) in ((0, 0), (Int32.MaxValue + 11, Int32.MinValue + 11)):
+            result = mapper.PyInt_AsSsize_t(mapper.Store(value))
+            self.assertEquals(result, expected, "failed to map back")
             self.assertMapperHasError(mapper, None)
             
         for (value, error) in ((UInt32.MaxValue + 1, OverflowError), (-1, OverflowError), (object(), TypeError)):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.PyInt_AsSsize_t(ptr), UInt32.MaxValue)
+            self.assertEquals(mapper.PyInt_AsSsize_t(ptr), -1)
             self.assertMapperHasError(mapper, error)
 
         for cls in (NumberI, NumberL, NumberF):

@@ -1,3 +1,0 @@
-IntPtr
-IntPtr dict, string key
-return IntPtr.Zero

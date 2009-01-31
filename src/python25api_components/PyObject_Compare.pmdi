@@ -1,3 +1,0 @@
-int
-IntPtr ptr1, IntPtr ptr2
-return 0

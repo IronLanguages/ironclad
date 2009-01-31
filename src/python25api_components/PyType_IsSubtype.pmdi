@@ -1,3 +1,0 @@
-int
-IntPtr subtypePtr, IntPtr typePtr
-return 0

@@ -17,8 +17,8 @@ namespace Ironclad
         public override IntPtr 
         PyType_GenericNew(IntPtr typePtr, IntPtr args, IntPtr kwargs)
         {
-            PyType_GenericAlloc_Delegate dgt = (PyType_GenericAlloc_Delegate)CPyMarshal.ReadFunctionPtrField(
-                typePtr, typeof(PyTypeObject), "tp_alloc", typeof(PyType_GenericAlloc_Delegate));
+            dgt_ptr_ptrsize dgt = (dgt_ptr_ptrsize)CPyMarshal.ReadFunctionPtrField(
+                typePtr, typeof(PyTypeObject), "tp_alloc", typeof(dgt_ptr_ptrsize));
             return dgt(typePtr, 0);
         }
         

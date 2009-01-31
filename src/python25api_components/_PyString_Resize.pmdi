@@ -1,3 +1,0 @@
-int
-IntPtr stringPtrPtr, int size
-return -1

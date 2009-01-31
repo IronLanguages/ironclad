@@ -1,3 +1,0 @@
-IntPtr
-IntPtr typePtr, IntPtr args, IntPtr kwargs
-return IntPtr.Zero

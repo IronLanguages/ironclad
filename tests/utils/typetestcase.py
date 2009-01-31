@@ -2,7 +2,7 @@
 from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase
 
-from Ironclad import CPyMarshal, dgt_void_ptr, Python25Api, Python25Mapper
+from Ironclad import CPyMarshal, dgt_void_ptr, Python25Mapper
 from Ironclad.Structs import PyTypeObject
 
 
@@ -15,7 +15,7 @@ class TypeTestCase(TestCase):
         calls = []
         def tp_free(ptr):
             calls.append(("tp_free", ptr))
-        self.tp_freeDgt = Python25Api.PyObject_Free_Delegate(tp_free)
+        self.tp_freeDgt = dgt_void_ptr(tp_free)
         CPyMarshal.WriteFunctionPtrField(getattr(mapper, typename), PyTypeObject, "tp_free", self.tp_freeDgt)
 
         objPtr = CreateInstance(mapper, calls)

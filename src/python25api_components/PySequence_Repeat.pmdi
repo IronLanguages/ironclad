@@ -1,3 +1,0 @@
-IntPtr
-IntPtr seqPtr, int count
-return IntPtr.Zero

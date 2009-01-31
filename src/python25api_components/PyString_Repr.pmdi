@@ -1,3 +1,0 @@
-IntPtr
-IntPtr strPtr, int smartquotes
-return IntPtr.Zero

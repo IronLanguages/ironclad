@@ -3,7 +3,7 @@ from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
 import Ironclad
-from Ironclad import CPyMarshal, Python25Api
+from Ironclad import CPyMarshal
 from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMethodDef, PyTypeObject
 
 from tests.utils.memory import OffsetPtr
@@ -77,11 +77,11 @@ INT_ARGS = ("ob_refcnt", "tp_basicsize", "tp_itemsize", "tp_flags")
 STRING_ARGS = ("tp_name", "tp_doc")
 TABLE_ARGS = ("tp_methods", "tp_members", "tp_getset")
 FUNC_ARGS = {
-    "tp_alloc": Python25Api.PyType_GenericAlloc_Delegate,
+    "tp_alloc": Ironclad.dgt_ptr_ptrsize,
     "tp_new": Ironclad.dgt_ptr_ptrptrptr,
     "tp_init": Ironclad.dgt_int_ptrptrptr,
     "tp_dealloc": Ironclad.dgt_void_ptr,
-    "tp_free": Python25Api.PyObject_Free_Delegate,
+    "tp_free": Ironclad.dgt_void_ptr,
     "tp_getattr": Ironclad.dgt_ptr_ptrstr,
     "tp_iter": Ironclad.dgt_ptr_ptr,
     "tp_iternext": Ironclad.dgt_ptr_ptr,

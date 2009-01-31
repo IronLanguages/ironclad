@@ -1,3 +1,0 @@
-IntPtr
-IntPtr typePtr, int nItems
-return IntPtr.Zero

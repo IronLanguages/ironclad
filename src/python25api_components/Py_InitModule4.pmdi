@@ -1,3 +1,0 @@
-IntPtr
-string name, IntPtr methods, string doc, IntPtr self, int apiver
-return IntPtr.Zero

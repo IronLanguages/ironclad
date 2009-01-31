@@ -1,3 +1,0 @@
-int
-IntPtr obj, IntPtr name, IntPtr value
-return -1

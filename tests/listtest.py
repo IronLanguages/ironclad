@@ -10,7 +10,7 @@ from tests.utils.typetestcase import TypeTestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, dgt_void_ptr, Python25Mapper, Python25Api
+from Ironclad import CPyMarshal, dgt_void_ptr, Python25Mapper
 from Ironclad.Structs import PyObject, PyListObject, PyTypeObject
 
 
@@ -72,7 +72,7 @@ class PyList_Type_Test(TypeTestCase):
         def CustomFree(ptr):
             calls.append(ptr)
             mapper.PyObject_Free(listPtr)
-        self.freeDgt = Python25Api.PyObject_Free_Delegate(CustomFree)
+        self.freeDgt = dgt_void_ptr(CustomFree)
         
         CPyMarshal.WriteFunctionPtrField(mapper.PyList_Type, PyTypeObject, "tp_free", self.freeDgt)
         

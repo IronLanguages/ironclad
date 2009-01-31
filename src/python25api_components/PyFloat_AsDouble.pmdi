@@ -1,3 +1,0 @@
-double
-IntPtr value
-return System.Double.NaN

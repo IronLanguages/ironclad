@@ -111,7 +111,7 @@ namespace Ironclad
         }
         
         public override IntPtr
-        PySequence_GetSlice(IntPtr objPtr, uint i, uint j)
+        PySequence_GetSlice(IntPtr objPtr, int i, int j)
         {
             try
             {
@@ -119,7 +119,7 @@ namespace Ironclad
                 object getitem;
                 if (PythonOps.TryGetBoundAttr(sequence, Symbols.GetItem, out getitem))
                 {
-                    return this.Store(PythonCalls.Call(getitem, new Slice(new BigInteger(i), new BigInteger(j))));
+                    return this.Store(PythonCalls.Call(getitem, new Slice(i, j)));
                 }
                 throw PythonOps.TypeError("PySequence_GetItem: failed to convert {0} to sequence", sequence);
             }

@@ -1,3 +1,0 @@
-IntPtr
-IntPtr modulePtr
-return IntPtr.Zero

@@ -1,3 +1,0 @@
-IntPtr
-IntPtr objPtr, IntPtr keyPtr
-return IntPtr.Zero

@@ -1,3 +1,0 @@
-int
-IntPtr strPtr, IntPtr charPtrPtr, IntPtr sizePtr
-return -1
