@@ -60,37 +60,42 @@ namespace Ironclad
         {
             return Builtin.cmp(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
         }
-        
+
+
+        private object RichCompare(IntPtr ptr1, IntPtr ptr2, int opid)
+        {
+            object objResult = true;
+            CMP op = (CMP)opid;
+            switch (op)
+            {
+                case CMP.Py_LT:
+                    objResult = PythonOperator.lt(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                    break;
+                case CMP.Py_LE:
+                    objResult = PythonOperator.le(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                    break;
+                case CMP.Py_EQ:
+                    objResult = PythonOperator.eq(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                    break;
+                case CMP.Py_NE:
+                    objResult = PythonOperator.ne(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                    break;
+                case CMP.Py_GT:
+                    objResult = PythonOperator.gt(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                    break;
+                case CMP.Py_GE:
+                    objResult = PythonOperator.ge(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
+                    break;
+            }
+            return objResult;
+        }
         
         public override int
         PyObject_RichCompareBool(IntPtr ptr1, IntPtr ptr2, int opid)
         {
             try
             {
-                object objResult = true;
-                CMP op = (CMP)opid;
-                switch (op)
-                {
-                    case CMP.Py_LT:
-                        objResult = PythonOperator.lt(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
-                        break;
-                    case CMP.Py_LE:
-                        objResult = PythonOperator.le(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
-                        break;
-                    case CMP.Py_EQ:
-                        objResult = PythonOperator.eq(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
-                        break;
-                    case CMP.Py_NE:
-                        objResult = PythonOperator.ne(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
-                        break;
-                    case CMP.Py_GT:
-                        objResult = PythonOperator.gt(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
-                        break;
-                    case CMP.Py_GE:
-                        objResult = PythonOperator.ge(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
-                        break;
-                }
-                if (Converter.ConvertToBoolean(objResult))
+                if (Converter.ConvertToBoolean(this.RichCompare(ptr1, ptr2, opid)))
                 {
                     return 1;
                 }
@@ -100,6 +105,20 @@ namespace Ironclad
             {
                 this.LastException = e;
                 return -1;
+            }
+        }
+
+        public override IntPtr
+        PyObject_RichCompare(IntPtr ptr1, IntPtr ptr2, int opid)
+        {
+            try
+            {
+                return this.Store((this.RichCompare(ptr1, ptr2, opid)));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
             }
         }
         

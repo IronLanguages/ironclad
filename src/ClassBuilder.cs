@@ -54,8 +54,8 @@ namespace Ironclad
             this.InitialiseScope();
             this.GenerateMembers();
             this.GenerateProperties();
-            this.GenerateMethods();
-            this.GenerateMagicMethods();
+            this.GenerateMagicMethods(); // } This order of calls effectively treats all methods as having the
+            this.GenerateMethods();      // } COEXIST flag set; swap would be equivalent to it never being set.
             this.GenerateClass();
             this.GenerateActualiser();
         }

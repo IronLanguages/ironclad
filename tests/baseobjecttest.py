@@ -79,20 +79,26 @@ class ObjectFunctionsTest(TestCase):
 
     def assertRichCmp(self, mapper, opid, ob1, ob2):
         op = COMPARISONS[opid]
-        expect = -1
+        expectint = -1
         error = None
         try:
-            expect = op(ob1, ob2)
+            expectint = op(ob1, ob2)
         except Exception, e:
             error = e.__class__
 
-        result = mapper.PyObject_RichCompareBool(mapper.Store(ob1), mapper.Store(ob2), int(opid))
-        self.assertEquals(result, expect, "%r: %r %r" % (op.__name__, ob1, ob2))
+        resultint = mapper.PyObject_RichCompareBool(mapper.Store(ob1), mapper.Store(ob2), int(opid))
+        self.assertEquals(resultint, expectint, "%r: %r %r" % (op.__name__, ob1, ob2))
         self.assertMapperHasError(mapper, error)
-        
+
+        resultptr = mapper.PyObject_RichCompare(mapper.Store(ob1), mapper.Store(ob2), int(opid))
+        self.assertMapperHasError(mapper, error)
+        if error:
+            self.assertEquals(resultptr, IntPtr.Zero)
+        else:
+            self.assertEquals(mapper.Retrieve(resultptr), expectint, "%r: %r %r" % (op.__name__, ob1, ob2))
 
     @WithMapper
-    def testPyObject_RichCompareBool(self, mapper, _):
+    def testPyObject_RichCompare(self, mapper, _):
         class BadComparer(object):
             def borked(self, other):
                 raise Exception("no!")
@@ -106,7 +112,7 @@ class ObjectFunctionsTest(TestCase):
 
 
     @WithMapper
-    def testPyObject_RichCompareBool_StrangeReturnValue(self, mapper, _):
+    def testPyObject_RichCompare_StrangeReturnValue(self, mapper, _):
         class StrangeComparer(object):
             def returnSomethingFalse(self, _):
                 return []
@@ -118,8 +124,10 @@ class ObjectFunctionsTest(TestCase):
         obj = StrangeComparer()
         objPtr = mapper.Store(obj)
         for opid in COMPARISONS:
-            expect = int(bool(COMPARISONS[opid](obj, obj)))
-            self.assertEquals(mapper.PyObject_RichCompareBool(objPtr, objPtr, int(opid)), expect)
+            expectobj = COMPARISONS[opid](obj, obj)
+            expectint = int(bool(expectobj))
+            self.assertEquals(mapper.PyObject_RichCompareBool(objPtr, objPtr, int(opid)), expectint)
+            self.assertEquals(mapper.Retrieve(mapper.PyObject_RichCompare(objPtr, objPtr, int(opid))), expectobj)
         
  
 

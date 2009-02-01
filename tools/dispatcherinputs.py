@@ -298,6 +298,7 @@ known_python25api_signatures = (
     ('PyObject_Malloc', 'ptr_size'),
     ('PyObject_Realloc', 'ptr_ptrsize'),
     ('PyObject_Repr', 'ptr_ptr'),
+    ('PyObject_RichCompare', 'ptr_ptrptrint'),
     ('PyObject_RichCompareBool', 'int_ptrptrint'),
     ('PyObject_SelfIter', 'ptr_ptr'),
     ('PyObject_SetAttr', 'int_ptrptrptr'),
