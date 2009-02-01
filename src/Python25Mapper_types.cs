@@ -127,6 +127,26 @@ namespace Ironclad
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
             return 0;
         }
+
+        public override IntPtr
+        PyClass_New(IntPtr basesPtr, IntPtr dictPtr, IntPtr namePtr)
+        {
+            try
+            {
+                object bases = new PythonTuple();
+                if (basesPtr != IntPtr.Zero)
+                {
+                    bases = this.Retrieve(basesPtr);
+                }
+                return this.Store(PythonCalls.Call(this.scratchContext, 
+                    Builtin.type, new object[] { this.Retrieve(namePtr), bases, this.Retrieve(dictPtr) }));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
         
         public override void
         Fill_PyEllipsis_Type(IntPtr address)

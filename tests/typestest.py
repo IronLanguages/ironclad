@@ -254,7 +254,34 @@ class Types_Test(TestCase):
         instance = mapper.Retrieve(instancePtr)
         self.assertEquals(isinstance(instance, C), True)
         self.assertEquals(mapper.Store(instance), instancePtr)
+    
+    
+    @WithMapper
+    def testPyClass_New(self, mapper, _):
+        namePtr = mapper.Store('klass')
+        dictPtr = mapper.Store({'wurble': 'burble'})
+        basesPtr = mapper.Store((float, object))
         
+        klassPtr = mapper.PyClass_New(basesPtr, dictPtr, namePtr)
+        klass = mapper.Retrieve(klassPtr)
+        
+        self.assertEquals(klass.__name__, 'klass')
+        self.assertEquals(klass.wurble, 'burble')
+        self.assertEquals(klass.__bases__, (float, object))
+    
+    
+    @WithMapper
+    def testPyClass_New_NullBases(self, mapper, _):
+        namePtr = mapper.Store('klass')
+        dictPtr = mapper.Store({'wurble': 'burble'})
+        
+        klassPtr = mapper.PyClass_New(IntPtr.Zero, dictPtr, namePtr)
+        klass = mapper.Retrieve(klassPtr)
+        
+        self.assertEquals(klass.__name__, 'klass')
+        self.assertEquals(klass.wurble, 'burble')
+        self.assertEquals(klass.__bases__, (object,))
+    
         
 class PyType_GenericAlloc_Test(TestCase):
 

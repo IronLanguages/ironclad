@@ -1,5 +1,6 @@
 using System;
 
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Types;
 
@@ -20,6 +21,21 @@ namespace Ironclad
                 return 1;
             }
             return 0;
+        }
+
+        public override IntPtr
+        PyMapping_GetItemString(IntPtr mappingPtr, string key)
+        {
+            try
+            {
+                object result = PythonOperator.getitem(this.scratchContext, this.Retrieve(mappingPtr), key);
+                return this.Store(result);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
         }
     }
 }

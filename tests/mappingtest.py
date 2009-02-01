@@ -35,6 +35,23 @@ class MappingTest(TestCase):
             self.assertEquals(mapper.LastException, None)
             mapper.DecRef(ptr)
 
+    
+    @WithMapper
+    def testPyMapping_GetItemString(self, mapper, _):
+        data = {'foo': 'bar'}
+        class Mapping(object):
+            def __getitem__(self, key):
+                return data[key]
+        
+        mptr = mapper.Store(Mapping())
+        fooresult = mapper.PyMapping_GetItemString(mptr, 'foo')
+        self.assertEquals(mapper.Retrieve(fooresult), 'bar')
+        
+        self.assertEquals(mapper.PyMapping_GetItemString(mptr, 'baz'), IntPtr.Zero)
+        self.assertMapperHasError(mapper, KeyError)
+        
+        
+
 
 suite = makesuite(
     MappingTest,
