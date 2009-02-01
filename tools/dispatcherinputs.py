@@ -177,6 +177,8 @@ known_python25api_signatures = (
     
     ('PyCallable_Check', 'int_ptr'),
     
+    ('PyClass_New', 'ptr_ptrptrptr'),
+    
     ('PyCObject_AsVoidPtr', 'ptr_ptr'),
     ('PyCObject_FromVoidPtr', 'ptr_ptrptr'),
     ('PyCObject_FromVoidPtrAndDesc', 'ptr_ptrptrptr'),
@@ -249,6 +251,7 @@ known_python25api_signatures = (
     ('PyLong_FromUnsignedLongLong', 'ptr_ullong'),
     
     ('PyMapping_Check', 'int_ptr'),
+    ('PyMapping_GetItemString', 'ptr_ptrstr'),
     
     ('PyMem_Free', 'void_ptr'),
     ('PyMem_Malloc', 'ptr_size'),

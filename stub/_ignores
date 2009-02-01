@@ -47,6 +47,7 @@ PyBuffer_New
 
 PyObject_Cmp
 
+PyCObject_GetDesc
 PyCObject_Import
 
 PyTuple_GetItem
