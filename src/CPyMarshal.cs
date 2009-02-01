@@ -30,8 +30,8 @@ namespace Ironclad
             }
         }
 
-        public static void Lo
-        (IntPtr start, Int32 bytes)
+        public static void
+        Log(IntPtr start, Int32 bytes)
         {
             for (int i = 0; i < bytes/CPyMarshal.IntSize; i++)
             {

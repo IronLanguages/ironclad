@@ -16,7 +16,7 @@ from Ironclad.Structs import (
 )
    
 def Raise(*_):
-    raise Exception('should never have called this')     
+    raise Exception('should never have called this')
         
 class LifetimeTest(TestCase):
     
@@ -78,8 +78,8 @@ class InheritanceTest(TestCase):
         
         klass = mapper.Retrieve(klassPtr)
         self.assertEquals(issubclass(klass, mapper.Retrieve(basePtr)), True, "didn't notice klass's base class")
-        self.assertEquals(mapper.RefCount(mapper.PyType_Type), 3, "types did not keep references to TypeType")
-        self.assertEquals(mapper.RefCount(basePtr), 3, "subtype did not keep reference to base")
+        self.assertEquals(mapper.RefCount(mapper.PyType_Type), 4, "types did not keep references to TypeType")
+        self.assertEquals(mapper.RefCount(basePtr), 4, "subtype did not keep reference to base")
         self.assertEquals(mapper.RefCount(mapper.PyBaseObject_Type), 2, "base type did not keep reference to its base (even if it wasn't set explicitly)")
         self.assertEquals(CPyMarshal.ReadPtrField(basePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type")
 
@@ -113,8 +113,8 @@ class InheritanceTest(TestCase):
         klass = mapper.Retrieve(klassPtr)
         for base in bases:
             self.assertEquals(issubclass(klass, base), True)
-        self.assertEquals(mapper.RefCount(base1Ptr), 5, "subtype did not keep reference to bases")
-        self.assertEquals(mapper.RefCount(base2Ptr), 4, "subtype did not keep reference to bases")
+        self.assertEquals(mapper.RefCount(base1Ptr), 8, "subtype did not keep reference to bases")
+        self.assertEquals(mapper.RefCount(base2Ptr), 6, "subtype did not keep reference to bases")
         self.assertEquals(CPyMarshal.ReadPtrField(base1Ptr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type 1")
         self.assertEquals(CPyMarshal.ReadPtrField(base2Ptr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type 2")
     

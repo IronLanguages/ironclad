@@ -6,7 +6,7 @@ include ../Makefile.config
 generatePython25Mapper :
 	cd python25mapper_components && $(MAKE)
 
-Dispatcher.Generated.cs : ../tools/* ../stub/*
+Dispatcher.Generated.cs : ../tools/* ../stub/_ignores
 	cd .. && ipy tools/generatedispatcher.py  src
 
 clean :

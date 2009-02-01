@@ -52,7 +52,7 @@ namespace Ironclad
 
             object klass_actualiser = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_actualiser");
             this.actualiseHelpers[typePtr] = klass_actualiser;
-            
+
             this.map.Associate(typePtr, klass);
             this.IncRef(typePtr);
         }
