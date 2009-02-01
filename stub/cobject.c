@@ -1,4 +1,15 @@
 
+/* Declarations for objects of type PyCObject */
+
+typedef void (*destructor1)(void *);
+typedef void (*destructor2)(void *, void*);
+
+typedef struct {
+    PyObject_HEAD
+    void *cobject;
+    void *desc;
+    void (*destructor)(void *);
+} PyCObject;
 
 void *
 PyCObject_GetDesc(PyObject *self)

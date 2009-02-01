@@ -1,4 +1,6 @@
 
+import sys
+
 from tests.utils.runtest import automakesuite, run
     
 from tests.utils.cpython import MakeGetSetDef, MakeMethodDef, MakeNumSeqMapMethods, MakeTypePtr
@@ -331,6 +333,27 @@ class FieldsTest(TestCase):
         self.assertEquals(instance.attr, -54321)
     
     @WithMapper
+    def testUintFieldReadOnly(self, mapper, addToCleanUp):
+        instance, fieldPtr = MakeInstanceWithField(MemberT.UINT, 1, mapper, addToCleanUp)
+        
+        def Set():
+            instance.attr = 1234567
+        self.assertRaises(AttributeError, Set)
+        
+        CPyMarshal.WriteUInt(fieldPtr, sys.maxint + 1)
+        self.assertEquals(instance.attr, sys.maxint + 1)
+        
+    @WithMapper
+    def testUintFieldReadWrite(self, mapper, addToCleanUp):
+        instance, fieldPtr = MakeInstanceWithField(MemberT.UINT, 0, mapper, addToCleanUp)
+        
+        instance.attr = sys.maxint + 1
+        self.assertEquals(CPyMarshal.ReadUInt(fieldPtr), sys.maxint + 1)
+        
+        CPyMarshal.WriteUInt(fieldPtr, sys.maxint + 3)
+        self.assertEquals(instance.attr, sys.maxint + 3)
+    
+    @WithMapper
     def testDoubleFieldReadOnly(self, mapper, addToCleanUp):
         instance, fieldPtr = MakeInstanceWithField(MemberT.DOUBLE, 1, mapper, addToCleanUp)
         
@@ -342,7 +365,7 @@ class FieldsTest(TestCase):
         self.assertEquals(instance.attr, -54.321)
         
     @WithMapper
-    def testIntFieldReadWrite(self, mapper, addToCleanUp):
+    def testDoubleFieldReadWrite(self, mapper, addToCleanUp):
         instance, fieldPtr = MakeInstanceWithField(MemberT.DOUBLE, 0, mapper, addToCleanUp)
         
         instance.attr = 1234.567
