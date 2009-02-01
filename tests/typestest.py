@@ -114,6 +114,8 @@ class Types_Test(TestCase):
         self.assertEquals(mapper.PyType_Ready(typePtr), 0, "wrong")
         self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type"), mapper.PyType_Type, "failed to fill in missing ob_type")
         self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to fill in missing tp_base")
+        tp_dict = mapper.Retrieve(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_dict"))
+        self.assertEquals(mapper.Retrieve(typePtr).__dict__, tp_dict)
 
         typeFlags = CPyMarshal.ReadIntField(typePtr, PyTypeObject, "tp_flags")
         self.assertEquals(typeFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready type")
@@ -252,130 +254,6 @@ class Types_Test(TestCase):
         instance = mapper.Retrieve(instancePtr)
         self.assertEquals(isinstance(instance, C), True)
         self.assertEquals(mapper.Store(instance), instancePtr)
-
-
-INHERIT_FIELDS = (
-    "tp_alloc",
-    "tp_new",
-    "tp_dealloc",
-    "tp_free",
-    "tp_doc",
-    "tp_call",
-    "tp_as_number",
-    "tp_as_sequence",
-    "tp_as_mapping",
-    "tp_as_buffer"
-)
-DONT_INHERIT_FIELDS = (
-    "tp_init",
-    "tp_repr",
-    "tp_str",
-)
-BASE_FIELD = IntPtr(11111)
-KEEP_FIELD = IntPtr(22222)
-
-class PyType_Ready_InheritTest(TestCase):
-
-    def setUp(self):
-        TestCase.setUp(self)
-        self.mapper = Python25Mapper()
-        self.deallocTypes = CreateTypes(self.mapper)
-        self.baseTypePtr, self.deallocBaseType = MakeTypePtr(self.mapper, {})
-        for field in INHERIT_FIELDS:
-            CPyMarshal.WritePtrField(self.baseTypePtr, PyTypeObject, field, BASE_FIELD)
-        
-        
-    def tearDown(self):
-        self.mapper.Dispose()
-        self.deallocBaseType()
-        self.deallocTypes()
-        TestCase.tearDown(self)
-        
-    
-    def testPyType_Ready_MissingBaseType(self):
-        self.mapper.PyType_Ready(self.mapper.PyBaseObject_Type)
-        self.assertEquals(CPyMarshal.ReadPtrField(self.mapper.PyBaseObject_Type, PyTypeObject, "tp_base"), IntPtr.Zero)
-        
-        typePtr, deallocType = MakeTypePtr(self.mapper, {})
-        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_base", IntPtr.Zero)
-        self.mapper.PyType_Ready(typePtr)
-        self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), self.mapper.PyBaseObject_Type)
-        
-
-    def assertInherits(self, field):
-        # clear base READY flag
-        baseFlags = CPyMarshal.ReadIntField(self.baseTypePtr, PyTypeObject, "tp_flags")
-        mask = UInt32(Py_TPFLAGS.READY) ^ UInt32(0xFFFFFFFF)
-        CPyMarshal.WriteIntField(self.baseTypePtr, PyTypeObject, "tp_flags", baseFlags & mask)
-        
-        # create a subtype (not expecting to inherit)
-        noTypePtr, deallocNoType = MakeTypePtr(self.mapper, {"tp_base": self.baseTypePtr})
-        CPyMarshal.WritePtrField(noTypePtr, PyTypeObject, field, KEEP_FIELD)
-        self.assertEquals(self.mapper.PyType_Ready(noTypePtr), 0)
-        
-        # check base type was readied
-        baseFlags = CPyMarshal.ReadIntField(self.baseTypePtr, PyTypeObject, "tp_flags")
-        self.assertEquals(baseFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY))
-        
-        # check subtype was readied
-        typeFlags = CPyMarshal.ReadIntField(noTypePtr, PyTypeObject, "tp_flags")
-        self.assertEquals(typeFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY))
-        
-        # check field was not inherited by subtype which defines its own
-        self.assertEquals(CPyMarshal.ReadPtrField(noTypePtr, PyTypeObject, field), KEEP_FIELD)
-        deallocNoType()
-        
-        # create another subtype with null field, check that this one does inherit
-        yesTypePtr, deallocYesType = MakeTypePtr(self.mapper, {"tp_base": self.baseTypePtr})
-        CPyMarshal.WritePtrField(yesTypePtr, PyTypeObject, field, IntPtr.Zero)
-        self.assertEquals(self.mapper.PyType_Ready(yesTypePtr), 0)
-        self.assertEquals(CPyMarshal.ReadPtrField(yesTypePtr, PyTypeObject, field), BASE_FIELD)
-        deallocYesType()
-    
-    
-    def assertDoesNotInherit(self, field):
-        # create subtype with null field
-        noTypePtr, deallocNoType = MakeTypePtr(self.mapper, {"tp_base": self.baseTypePtr})
-        CPyMarshal.WritePtrField(noTypePtr, PyTypeObject, field, IntPtr.Zero)
-        self.assertEquals(self.mapper.PyType_Ready(noTypePtr), 0)
-        
-        # check that null was not filled in
-        self.assertEquals(CPyMarshal.ReadPtrField(noTypePtr, PyTypeObject, field), IntPtr.Zero)
-        deallocNoType()
-        
-        
-    def testPyType_Ready_InheritsFields(self):
-        # TODO: multiple inheritance ignored here for now
-        for field in INHERIT_FIELDS:
-            self.assertInherits(field)
-        for field in DONT_INHERIT_FIELDS:
-            self.assertDoesNotInherit(field)
-        
-    def testPyType_Ready_InheritsSizes(self):
-        CPyMarshal.WriteIntField(self.baseTypePtr, PyTypeObject, "tp_basicsize", 123)
-        CPyMarshal.WriteIntField(self.baseTypePtr, PyTypeObject, "tp_itemsize", 456)
-        
-        noSpec = {
-            "tp_base": self.baseTypePtr,
-            "tp_basicsize": 1234,
-            "tp_itemsize": 5678,
-        }
-        noTypePtr, deallocNoType = MakeTypePtr(self.mapper, noSpec)
-        self.assertEquals(self.mapper.PyType_Ready(noTypePtr), 0)
-        self.assertEquals(CPyMarshal.ReadIntField(noTypePtr, PyTypeObject, "tp_basicsize"), 1234)
-        self.assertEquals(CPyMarshal.ReadIntField(noTypePtr, PyTypeObject, "tp_itemsize"), 5678)
-        deallocNoType()
-        
-        yesSpec = {
-            "tp_base": self.baseTypePtr,
-            "tp_basicsize": 0,
-            "tp_itemsize": 0,
-        }
-        yesTypePtr, deallocYesType = MakeTypePtr(self.mapper, yesSpec)
-        self.assertEquals(self.mapper.PyType_Ready(yesTypePtr), 0)
-        self.assertEquals(CPyMarshal.ReadIntField(yesTypePtr, PyTypeObject, "tp_basicsize"), 123)
-        self.assertEquals(CPyMarshal.ReadIntField(yesTypePtr, PyTypeObject, "tp_itemsize"), 456)
-        deallocYesType()
         
         
 class PyType_GenericAlloc_Test(TestCase):
@@ -465,12 +343,77 @@ class PyType_GenericNew_Test(TestCase):
         self.assertEquals(calls, [(typePtr, 0)], "passed wrong args")
 
 
+INHERIT_FIELDS = (
+    "tp_alloc",
+    "tp_new",
+    "tp_dealloc",
+    "tp_free",
+    "tp_doc",
+    "tp_call",
+    "tp_as_number",
+    "tp_as_sequence",
+    "tp_as_mapping",
+    "tp_as_buffer",
+    "tp_basicsize",
+    "tp_itemsize",
+)
+DONT_INHERIT_FIELDS = (
+    "tp_init",
+    "tp_repr",
+    "tp_str",
+)
+NO_VALUE = IntPtr.Zero
+SOME_VALUE = IntPtr(12345)
+
+class PyType_Ready_InheritTest(TestCase):
+    
+    @WithMapper
+    def testBaseTypeMissing(self, mapper, CallLater):
+        mapper.PyType_Ready(mapper.PyBaseObject_Type)
+        self.assertEquals(CPyMarshal.ReadPtrField(mapper.PyBaseObject_Type, PyTypeObject, "tp_base"), IntPtr.Zero)
+        
+        typePtr, deallocType = MakeTypePtr(mapper, {})
+        CallLater(deallocType)
+        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_base", NO_VALUE)
+        mapper.PyType_Ready(typePtr)
+        self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
+        
+
+    @WithMapper
+    def testFields(self, mapper, CallLater):
+        basePtr, deallocBase = MakeTypePtr(mapper, {})
+        typePtr, deallocType = MakeTypePtr(mapper, {})
+        CallLater(deallocBase)
+        CallLater(deallocType)
+        
+        # The purpose of this rigmarole is to enable me to use SOME_VALUE
+        # for every field, rather than creating 'proper' values for every 
+        # field -- once I've Retrieved the types, I won't actualise them 
+        # again, so I can put any old non-zero nonsense in any field to 
+        # check that it gets inherited (or not)
+        mapper.Retrieve(basePtr)
+        mapper.Retrieve(typePtr)
+        CPyMarshal.WriteIntField(typePtr, PyTypeObject, "tp_flags", int(Py_TPFLAGS.HAVE_CLASS))
+        # end rigmarole
+        
+        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_base", basePtr)
+        for field in INHERIT_FIELDS + DONT_INHERIT_FIELDS:
+            CPyMarshal.WritePtrField(typePtr, PyTypeObject, field, NO_VALUE)
+            CPyMarshal.WritePtrField(basePtr, PyTypeObject, field, SOME_VALUE)
+        
+        mapper.PyType_Ready(typePtr)
+        for field in INHERIT_FIELDS:
+            self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, field), SOME_VALUE)
+        for field in DONT_INHERIT_FIELDS:
+            self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, field), NO_VALUE)
+        
+
 
 suite = makesuite(
     Types_Test,
-    PyType_Ready_InheritTest,
     PyType_GenericNew_Test,
     PyType_GenericAlloc_Test,
+    PyType_Ready_InheritTest,
 )
 
 if __name__ == '__main__':

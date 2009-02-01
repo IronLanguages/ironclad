@@ -83,24 +83,27 @@ namespace Ironclad
             }
             
             Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
-            if ((Int32)(flags & Py_TPFLAGS.READY) != 0)
+            if ((Int32)(flags & (Py_TPFLAGS.READY | Py_TPFLAGS.READYING)) != 0)
             {
                 return 0;
             }
+            flags |= Py_TPFLAGS.READYING;
+            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
             
             IntPtr typeTypePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "ob_type");
             if ((typeTypePtr == IntPtr.Zero) && (typePtr != this.PyType_Type))
             {
                 CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.PyType_Type);
             }
+
             IntPtr typeBasePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
             if ((typeBasePtr == IntPtr.Zero) && (typePtr != this.PyBaseObject_Type))
             {
                 typeBasePtr = this.PyBaseObject_Type;
                 CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", typeBasePtr);
             }
+
             PyType_Ready(typeBasePtr);
-            
             this.InheritPtrField(typePtr, "tp_alloc");
             this.InheritPtrField(typePtr, "tp_new");
             this.InheritPtrField(typePtr, "tp_dealloc");
@@ -111,11 +114,16 @@ namespace Ironclad
             this.InheritPtrField(typePtr, "tp_as_sequence");
             this.InheritPtrField(typePtr, "tp_as_mapping");
             this.InheritPtrField(typePtr, "tp_as_buffer");
-            
             this.InheritIntField(typePtr, "tp_basicsize");
             this.InheritIntField(typePtr, "tp_itemsize");
-            
+
+            if (!this.HasPtr(typePtr))
+            {
+                this.Retrieve(typePtr);
+            }
+
             flags |= Py_TPFLAGS.READY;
+            flags &= ~Py_TPFLAGS.READYING;
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
             return 0;
         }
@@ -183,7 +191,7 @@ namespace Ironclad
         Fill_PyCFunction_Type(IntPtr ptr)
         {
             // this does nothing: when we encounter a cfunction, we interpret it like any 
-            // c extension
+            // c extension type.
         }
 
         private void
@@ -248,7 +256,7 @@ namespace Ironclad
                 IntPtr basePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
                 if (basePtr != IntPtr.Zero)
                 {
-                    CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), name,
+                    CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), name, 
                         CPyMarshal.ReadPtrField(basePtr, typeof(PyTypeObject), name));
                 }
             }
@@ -289,8 +297,8 @@ namespace Ironclad
             this.actualiseHelpers[typePtr] = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_actualiser");
             this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
 
-            this.PyType_Ready(typePtr);
             this.map.Associate(typePtr, _type);
+            this.PyType_Ready(typePtr);
             return typePtr;
         }
         
