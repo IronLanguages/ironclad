@@ -48,6 +48,9 @@ namespace Ironclad
         public void 
         LoadModule(string path, string name)
         {
+            // PATH-fiddling apparently necessary: without it,
+            // .pyds fail to find .dlls right next to them. 
+            // (Hmm. Should I perhaps leave PATH changed?)
             this.importName = name;
             string dir = Path.GetDirectoryName(path);
             string searchpath = Environment.GetEnvironmentVariable("PATH");

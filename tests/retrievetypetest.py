@@ -556,6 +556,24 @@ class MethodsTest(MethodConnectionTestCase):
         typeSpec = {"tp_methods": [methodDef]}
         self.assertTypeMethodCall(typeSpec, "method", args, kwargs, result)
         deallocMethod()
+    
+
+    def testKwargsOnlyMethod(self):
+        result = object()
+        args = (object(), object(), object())
+        kwargs = {'x': object(), 'y': object()}
+        def Kwargs(p1, p2, p3):
+            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEquals(self.mapper.Retrieve(p2), args)
+            self.assertEquals(self.mapper.Retrieve(p3), kwargs)
+            return self.mapper.Store(result)
+        
+        # OLDARGS == 0, so it appears to just be KEYWORDS,
+        # but this is how it's specified in CPython
+        methodDef, deallocMethod = MakeMethodDef("method", Kwargs, METH.OLDARGS | METH.KEYWORDS)
+        typeSpec = {"tp_methods": [methodDef]}
+        self.assertTypeMethodCall(typeSpec, "method", args, kwargs, result)
+        deallocMethod()
 
 
 MAGIC_CLOSURE_PTR = IntPtr(12345)
@@ -600,7 +618,7 @@ class GetsetsTest(MethodConnectionTestCase):
 
 
 class TypeMethodsTest(MethodConnectionTestCase):
-
+        
     def testCall(self):
         result = object()
         args = (object(), object(), object())
@@ -613,6 +631,25 @@ class TypeMethodsTest(MethodConnectionTestCase):
         
         typeSpec = {"tp_call": Call}
         self.assertTypeMethodCall(typeSpec, "__call__", args, kwargs, result)
+
+
+    def testCoexist(self):
+        # test that the COEXIST flag causes no errors,
+        # and that methods override type methods; that's all
+        result = object()
+        args = (object(), object(), object())
+        kwargs = {'x': object(), 'y': object()}
+        def Call(p1, p2, p3):
+            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEquals(self.mapper.Retrieve(p2), args)
+            self.assertEquals(self.mapper.Retrieve(p3), kwargs)
+            return self.mapper.Store(result)
+        
+        methodDef, deallocMethod = MakeMethodDef("__call__", Call, METH.VARARGS | METH.KEYWORDS | METH.COEXIST)
+        typeSpec = {"tp_call": Raise, "tp_methods": [methodDef]}
+        self.assertTypeMethodCall(typeSpec, "__call__", args, kwargs, result)
+        deallocMethod()
+
 
     def testInit(self):
         args = (object(), object(), object())

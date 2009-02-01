@@ -78,8 +78,10 @@ namespace Ironclad
                 string template = null;
                 Delegate dgt = null;
 
+                // COEXIST flag ignored; which method is chosen depends on order of calls in ClassBuilder.
                 bool unsupportedFlags = false;
-                switch (thisMethod.ml_flags)
+                METH flags = thisMethod.ml_flags & ~METH.COEXIST;
+                switch (flags)
                 {
                     case METH.NOARGS:
                         template = noargsTemplate;
@@ -102,6 +104,7 @@ namespace Ironclad
                             typeof(dgt_ptr_ptrptr));
                         break;
 
+                    case METH.KEYWORDS:
                     case METH.VARARGS | METH.KEYWORDS:
                         template = varargsKwargsTemplate;
                         dgt = Marshal.GetDelegateForFunctionPointer(
@@ -122,8 +125,8 @@ namespace Ironclad
                 }
                 else
                 {
-                    Console.WriteLine("Detected unsupported method flags for {0}{1}; ignoring.",
-                        tablePrefix, name);
+                    Console.WriteLine("Detected unsupported method flags for {0}{1} ({2}); ignoring.",
+                        tablePrefix, name, thisMethod.ml_flags);
                 }
 
                 methodPtr = CPyMarshal.Offset(methodPtr, Marshal.SizeOf(typeof(PyMethodDef)));

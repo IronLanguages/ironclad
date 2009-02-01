@@ -19,8 +19,11 @@ DELEGATE_TYPES = {
     METH.O: Ironclad.dgt_ptr_ptrptr,
     METH.NOARGS: Ironclad.dgt_ptr_ptrptr,
     METH.VARARGS: Ironclad.dgt_ptr_ptrptr,
-    METH.VARARGS | METH.KEYWORDS: Ironclad.dgt_ptr_ptrptrptr
+    METH.KEYWORDS: Ironclad.dgt_ptr_ptrptrptr,
+    METH.VARARGS | METH.KEYWORDS: Ironclad.dgt_ptr_ptrptrptr,
 }
+for (k, v) in DELEGATE_TYPES.items():
+    DELEGATE_TYPES[k | METH.COEXIST] = v
 def MakeMethodDef(name, implementation, flags, doc="doc"):
     dgt = DELEGATE_TYPES[flags](implementation)
     return PyMethodDef(name, Marshal.GetFunctionPointerForDelegate(dgt), flags, doc), GC_NotYet(dgt)
