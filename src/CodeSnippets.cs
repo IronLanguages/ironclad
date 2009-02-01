@@ -12,6 +12,23 @@ class {0}(_ironclad_base):
     __module__ = '{1}'
 ";
 
+        public const string SCIPY_FIXES = @"
+class Frame(object):
+    def __init__(self, globals_):
+        self.f_locals = {}
+        self.f_globals = globals_
+
+from numpy._import_tools import PackageLoader
+real__init__ = PackageLoader.__init__
+def fake__init__(self):
+    import scipy
+    original = sys._getframe
+    sys._getframe = lambda *_: Frame(scipy.__dict__)
+    real__init__(self)
+    sys._getframe = original
+PackageLoader.__init__ = fake__init__
+";
+
         public const string ACTUALISER_CODE = @"
 class _ironclad_actualiser(_ironclad_class):
     def __new__(cls, *args, **kwargs):

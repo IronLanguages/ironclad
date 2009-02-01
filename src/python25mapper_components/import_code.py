@@ -23,6 +23,8 @@ class MetaImporter(object):
     def find_module(self, fullname, path=None):
         if fullname == 'numpy' or fullname.startswith('numpy.'):
             _mapper.PerpetrateNumpyFixes()
+        if fullname == 'scipy' or fullname.startswith('scipy.'):
+            _mapper.PerpetrateScipyFixes()
         if fullname == 'ctypes':
             raise ImportError('%s is not available in ironclad yet' % fullname)
 

@@ -9,23 +9,6 @@ if sys.platform == 'cli':
     import ironclad
 
 
-class Bunch(object):
-    def __init__(self, **kwargs):
-        for name, value in kwargs.items():
-            setattr(self, name, value)
-
-from numpy._import_tools import PackageLoader
-
-real__init__ = PackageLoader.__init__
-def fake__init__(self):
-    import scipy
-    original = sys._getframe
-    sys._getframe = lambda *_: Bunch(f_locals={}, f_globals=scipy.__dict__)
-    real__init__(self)
-    sys._getframe = original
-PackageLoader.__init__ = fake__init__
-
-
 import scipy
 numpy_path = r"C:\Python25\Lib\site-packages\scipy"
 dirs = ['fftpack', 'integrate', 'optimize', 'ndimage', 'special']
