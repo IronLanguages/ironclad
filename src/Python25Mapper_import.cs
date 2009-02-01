@@ -140,5 +140,18 @@ namespace Ironclad
             ScopeOps.__setattr__(nosetester, "run_module_suite", new Object());
             ScopeOps.__setattr__(nosetester, "get_package_name", new Object());
         }
+
+        public void
+        PerpetrateScipyFixes()
+        {
+            if (this.appliedScipyHack)
+            {
+                return;
+            }
+            this.appliedScipyHack = true;
+            Console.WriteLine("Detected scipy import");
+            Console.WriteLine("  faking out numpy._import_tools.PackageLoader");
+            this.ExecInModule(CodeSnippets.SCIPY_FIXES, this.scratchModule);
+        }
     }
 }

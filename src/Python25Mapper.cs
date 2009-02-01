@@ -57,6 +57,7 @@ namespace Ironclad
 
         private bool alive = false;
         private bool appliedNumpyHack = false;
+        private bool appliedScipyHack = false;
         
         private InterestingPtrMap map = new InterestingPtrMap();
         private Dictionary<IntPtr, ActualiseDelegate> actualisableTypes = new Dictionary<IntPtr, ActualiseDelegate>();
