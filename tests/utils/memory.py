@@ -9,8 +9,9 @@ def OffsetPtr(ptr, offset):
         offset = offset.ToInt32()
     return IntPtr(ptr.ToInt32() + offset)
 
-# note: PyBuffer_Type and PyCFunction_Type are not included, because they are implemented in pure C.
-# This means that, should an extension end up actually using a buffer type
+# note: PyBuffer_Type, PyCObject_Type and PyCFunction_Type are not included, 
+# because they are implemented in pure C.
+# This means that, should an extension end up actually using (say) a buffer type
 # and passing it up to IronPython, it will be treated like any other type 
 # defined in a C extension.
 _types = (
@@ -20,7 +21,6 @@ _types = (
     "PyClass_Type",
     "PyInstance_Type",
     "PyMethod_Type",
-    "PyCObject_Type",
     "PyCode_Type",
     "PyComplex_Type",
     "PyWrapperDescr_Type",

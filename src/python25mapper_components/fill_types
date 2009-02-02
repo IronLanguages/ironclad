@@ -7,7 +7,6 @@ PyInt_Type TypeCache.Int32 {"tp_as_number": "AddNumberMethodsWithIndex", "tp_new
 PyLong_Type TypeCache.BigInteger {"tp_as_number": "AddNumberMethodsWithIndex"}
 PyFloat_Type TypeCache.Double {"tp_as_number": "AddNumberMethodsWithoutIndex", "tp_new": "IC_PyFloat_New"}
 PyComplex_Type TypeCache.Complex64 {"tp_as_number": "AddNumberMethodsWithoutIndex"}
-PyCObject_Type typeof(OpaquePyCObject) {"tp_dealloc": "IC_PyCObject_Dealloc"}
 PyDict_Type TypeCache.Dict
 PyList_Type TypeCache.List {"tp_dealloc": "IC_PyList_Dealloc"}
 PyTuple_Type TypeCache.PythonTuple {"tp_dealloc": "IC_PyTuple_Dealloc"}

@@ -1,10 +1,8 @@
 PyBool_Type PyTypeObject
-PyBuffer_Type PyTypeObject
 PyCell_Type PyTypeObject
 PyClass_Type PyTypeObject
 PyInstance_Type PyTypeObject
 PyMethod_Type PyTypeObject
-PyCObject_Type PyTypeObject
 PyCode_Type PyTypeObject
 PyComplex_Type PyTypeObject
 PyWrapperDescr_Type PyTypeObject

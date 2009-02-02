@@ -1,3 +1,6 @@
+PyBuffer_Type
+PyCFunction_Type
+PyCObject_Type
 
 _Py_VaBuildValue_SizeT
 Py_VaBuildValue
@@ -47,8 +50,12 @@ PyBuffer_New
 
 PyObject_Cmp
 
+PyCObject_FromVoidPtr
+PyCObject_FromVoidPtrAndDesc
+PyCObject_AsVoidPtr
 PyCObject_GetDesc
 PyCObject_Import
+PyCObject_SetVoidPtr
 
 PyTuple_GetItem
 PyTuple_SetItem

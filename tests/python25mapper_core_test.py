@@ -523,7 +523,6 @@ class Python25Mapper_GetAddress_NonApi_Test(TestCase):
             "IC_PyString_Concat_Core",
             
             "IC_PyBaseObject_Dealloc",
-            "IC_PyCObject_Dealloc",
             "IC_PyFile_Dealloc",
             "IC_PyList_Dealloc",
             "IC_PySlice_Dealloc",

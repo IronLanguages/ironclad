@@ -200,20 +200,6 @@ namespace Ironclad
             this.map.Associate(address, TypeCache.String);
         }
 
-        public override void
-        Fill_PyBuffer_Type(IntPtr ptr)
-        {
-            // this does nothing: when we encounter a buffer, we interpret it like any 
-            // c extension type. 
-        }
-
-        public override void
-        Fill_PyCFunction_Type(IntPtr ptr)
-        {
-            // this does nothing: when we encounter a cfunction, we interpret it like any 
-            // c extension type.
-        }
-
         private void
         AddNumberMethodsWithoutIndex(IntPtr typePtr)
         {
@@ -256,7 +242,6 @@ namespace Ironclad
             this.PyType_Ready(this.PyList_Type);
             this.PyType_Ready(this.PyDict_Type);
             this.PyType_Ready(this.PyFile_Type);
-            this.PyType_Ready(this.PyCObject_Type);
             this.PyType_Ready(this.PyNone_Type);
             this.PyType_Ready(this.PySlice_Type);
             this.PyType_Ready(this.PyEllipsis_Type);

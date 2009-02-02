@@ -1,11 +1,9 @@
 PyType_Type
 PyBaseObject_Type
-PyBuffer_Type
 PyCell_Type
 PyClass_Type
 PyInstance_Type
 PyMethod_Type
-PyCObject_Type
 PyCode_Type
 PyComplex_Type
 PyWrapperDescr_Type
@@ -26,7 +24,6 @@ PySeqIter_Type
 PyCallIter_Type
 PyList_Type
 PyLong_Type
-PyCFunction_Type
 PyModule_Type
 PySuper_Type
 PyRange_Type

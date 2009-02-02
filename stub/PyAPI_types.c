@@ -352,23 +352,25 @@ typedef struct _typeobject {
 #define PyLong_Check(op) PyObject_TypeCheck(op, &PyLong_Type)
 #define PyDict_Check(op) PyObject_TypeCheck(op, &PyDict_Type)
 #define PyDict_CheckExact(op) ((op)->ob_type == &PyDict_Type)
+#define PyCObject_Check(op) ((op)->ob_type == &PyCObject_Type)
 #define PyBuffer_Check(op) ((op)->ob_type == &PyBuffer_Type)
 #define Py_END_OF_BUFFER	(-1)
 
 
-//typedef PyObject *(*PyCFunction)(PyObject *, PyObject *);
-//typedef PyObject *(*PyCFunctionWithKeywords)(PyObject *, PyObject *,
-//					     PyObject *);
-//typedef PyObject *(*PyNoArgsFunction)(PyObject *);
+#define PyObject_MALLOC		PyObject_Malloc
+#define PyObject_FREE		PyObject_Free
+#define PyObject_DEL		PyObject_FREE
 
-//struct PyMethodDef {
-//    const char	*ml_name;	/* The name of the built-in function/method */
-//    PyCFunction  ml_meth;	/* The C function that implements it */
-//    int		 ml_flags;	/* Combination of METH_xxx flags, which mostly
-//				   describe the args expected by the C func */
-//    const char	*ml_doc;	/* The __doc__ attribute, or NULL */
-//};
-//typedef struct PyMethodDef PyMethodDef;
+#define _PyObject_SIZE(typeobj) ( (typeobj)->tp_basicsize )
+
+#define PyObject_NEW(type, typeobj) \
+( (type *) PyObject_Init( \
+	(PyObject *) PyObject_MALLOC( _PyObject_SIZE(typeobj) ), (typeobj)) )
+
+
+#define PyDoc_VAR(name) static char name[]
+#define PyDoc_STRVAR(name,str) PyDoc_VAR(name) = PyDoc_STR(str)
+#define PyDoc_STR(str) str
 
 
 typedef
@@ -423,6 +425,12 @@ typedef void *(*PyThreadFrameGetter)(PyThreadState *self_);
 	_PyObject_HEAD_EXTRA		\
 	Py_ssize_t ob_refcnt;		\
 	struct _typeobject *ob_type;
+
+#define _PyObject_EXTRA_INIT
+#define PyObject_HEAD_INIT(type)	\
+	_PyObject_EXTRA_INIT		\
+	1, type,
+
 
 #define T_OBJECT	6
 #define WRITE_RESTRICTED 4
