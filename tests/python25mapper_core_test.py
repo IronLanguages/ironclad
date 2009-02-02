@@ -46,9 +46,9 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
     
     def testLoadsModuleAndUnloadsOnDispose(self):
         mapper = Python25Mapper(os.path.join("build", "ironclad", "python25.dll"))
-        origpath = os.getenv("PATH")
+        origcwd = os.getcwd()
         mapper.LoadModule(os.path.join("tests", "data", "setvalue.pyd"), "some.module")
-        self.assertEquals(os.getenv("PATH"), origpath, "failed to restore PATH")
+        self.assertEquals(os.getcwd(), origcwd, "failed to restore working directory")
         self.assertNotEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                              "library not mapped by construction")
         
