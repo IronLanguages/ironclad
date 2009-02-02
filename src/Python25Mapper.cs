@@ -143,8 +143,6 @@ namespace Ironclad
             
             try
             {
-                // note: SuppressFinalize won't work on ipy objects, but is required for OpaquePyCObjects.
-                GC.SuppressFinalize(this.Retrieve(ptr));
                 IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
                 if (typePtr == IntPtr.Zero)
                 {
@@ -531,9 +529,6 @@ namespace Ironclad
                     break;
                 case "IC_PyBaseObject_Init":
                     this.dgtMap[name] = new dgt_int_ptrptrptr(this.IC_PyBaseObject_Init);
-                    break;
-                case "IC_PyCObject_Dealloc":
-                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PyCObject_Dealloc);
                     break;
                 case "IC_PyFile_Dealloc":
                     this.dgtMap[name] = new dgt_void_ptr(this.IC_PyFile_Dealloc);

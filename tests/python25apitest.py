@@ -37,12 +37,10 @@ TestWrotePyObject = GetTestWroteBytes(Marshal.SizeOf(PyObject))
 
 TYPES = (
     "PyBool_Type",
-    "PyBuffer_Type",
     "PyCell_Type",
     "PyClass_Type",
     "PyInstance_Type",
     "PyMethod_Type",
-    "PyCObject_Type",
     "PyCode_Type",
     "PyComplex_Type",
     "PyWrapperDescr_Type",
@@ -62,7 +60,6 @@ TYPES = (
     "PyCallIter_Type",
     "PyList_Type",
     "PyLong_Type",
-    "PyCFunction_Type",
     "PyModule_Type",
     "PyType_Type",
     "PyBaseObject_Type",

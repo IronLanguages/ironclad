@@ -12,7 +12,7 @@ from tests.utils.testcase import TestCase, WithMapper
 from System import IntPtr, UInt32, WeakReference
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CannotInterpretException, CPyMarshal, HGlobalAllocator, OpaquePyCObject, Python25Mapper, OpaquePyCell
+from Ironclad import CannotInterpretException, CPyMarshal, HGlobalAllocator, Python25Mapper, OpaquePyCell
 from Ironclad.Structs import PyObject, PyNumberMethods, PyTypeObject, PyVarObject, Py_TPFLAGS
 
 class ItemEnumeratorThing(object):
@@ -38,7 +38,6 @@ BUILTIN_TYPES = {
     "PyNone_Type": types.NoneType,
     "PyNotImplemented_Type": types.NotImplementedType,
     "PySeqIter_Type": ItemEnumeratorType,
-    "PyCObject_Type": OpaquePyCObject,
     "PyCell_Type": OpaquePyCell,
 }
 

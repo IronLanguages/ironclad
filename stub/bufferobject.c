@@ -67,27 +67,11 @@
                             0)
 
 
-#define PyObject_MALLOC		PyObject_Malloc
-#define PyObject_FREE		PyObject_Free
-#define PyObject_DEL		PyObject_FREE
-
-#define _PyObject_SIZE(typeobj) ( (typeobj)->tp_basicsize )
-
-#define PyObject_NEW(type, typeobj) \
-( (type *) PyObject_Init( \
-	(PyObject *) PyObject_MALLOC( _PyObject_SIZE(typeobj) ), (typeobj)) )
-
-
 /* does not precisely match CPython -- removed expand-to-nothing macros */
 #define _Py_NewReference(op) (				\
 	(op)->ob_refcnt = 1)
 #define PyObject_INIT(op, typeobj) \
 	( (op)->ob_type = (typeobj), _Py_NewReference((PyObject *)(op)), (op) )
-
-
-#define PyDoc_VAR(name) static char name[]
-#define PyDoc_STRVAR(name,str) PyDoc_VAR(name) = PyDoc_STR(str)
-#define PyDoc_STR(str) str
 
 /* Buffer object implementation */
 
@@ -755,12 +739,6 @@ static PyBufferProcs buffer_as_buffer = {
 	(segcountproc)buffer_getsegcount,
 	(charbufferproc)buffer_getcharbuf,
 };
-
-#define _PyObject_EXTRA_INIT
-#define PyObject_HEAD_INIT(type)	\
-	_PyObject_EXTRA_INIT		\
-	1, type,
-
 
 PyTypeObject PyBuffer_Type = {
 	PyObject_HEAD_INIT(&PyType_Type)

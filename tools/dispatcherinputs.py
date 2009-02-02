@@ -180,10 +180,6 @@ known_python25api_signatures = (
     
     ('PyClass_New', 'ptr_ptrptrptr'),
     
-    ('PyCObject_AsVoidPtr', 'ptr_ptr'),
-    ('PyCObject_FromVoidPtr', 'ptr_ptrptr'),
-    ('PyCObject_FromVoidPtrAndDesc', 'ptr_ptrptrptr'),
-    
     ('PyComplex_AsCComplex', 'cpx_ptr'),
     ('PyComplex_FromDoubles', 'ptr_doubledouble'),
     
