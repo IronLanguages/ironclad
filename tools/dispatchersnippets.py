@@ -186,6 +186,16 @@ def {0}(%(arglist)s):
     return int(_0._dispatcher.%(functype)s('{2}{0}', %(callargs)s))
 _ironclad_class_attrs['{0}'] = {0}"""
 
+SQ_SLICE_HACK_TEMPLATE_TEMPLATE = """
+def {0}(%(arglist)s):
+    '''{1}'''
+    if len(_0) == 0:
+        from System import UInt32
+        if _1 == -1: _1 = UInt32.MaxValue
+        if _2 == -1: _2 = UInt32.MaxValue
+    return _0._dispatcher.%(functype)s('{2}{0}', %(callargs)s)
+_ironclad_class_attrs['{0}'] = {0}"""
+
 POW_TEMPLATE_TEMPLATE = """
 def {0}(self, other, modulo=None):
     '''{1}'''

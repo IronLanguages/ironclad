@@ -153,9 +153,9 @@ protocol_field_types = (
     (('sq_length', 'lenfunc', '__len__'), {'template': LEN_TEMPLATE_TEMPLATE}),
     (('sq_concat', 'binaryfunc', '__add__'), {}),
     (('sq_item', 'ssizeargfunc', '__getitem__'), {}),
-    (('sq_slice', 'ssizessizeargfunc', '__getslice__'), {}),
+    (('sq_slice', 'ssizessizeargfunc', '__getslice__'), {'template': SQ_SLICE_HACK_TEMPLATE_TEMPLATE}),
     (('sq_ass_item', 'ssizeobjargproc', '__setitem__'), {}),
-    (('sq_ass_slice', 'ssizessizeobjargproc', '__setslice__'), {}),
+    (('sq_ass_slice', 'ssizessizeobjargproc', '__setslice__'), {'template': SQ_SLICE_HACK_TEMPLATE_TEMPLATE}),
     
     # PyMappingMethods
     (('mp_length', 'lenfunc', '__len__'), {'template': LEN_TEMPLATE_TEMPLATE}),
