@@ -150,7 +150,7 @@ protocol_field_types = (
     (('nb_index', 'unaryfunc', '__index__'), {}),
 
     # PySequenceMethods
-    (('sq_length', 'lenfunc', '__len__'), {}),
+    (('sq_length', 'lenfunc', '__len__'), {'template': LEN_TEMPLATE_TEMPLATE}),
     (('sq_concat', 'binaryfunc', '__add__'), {}),
     (('sq_item', 'ssizeargfunc', '__getitem__'), {}),
     (('sq_slice', 'ssizessizeargfunc', '__getslice__'), {}),
@@ -158,7 +158,7 @@ protocol_field_types = (
     (('sq_ass_slice', 'ssizessizeobjargproc', '__setslice__'), {}),
     
     # PyMappingMethods
-    (('mp_length', 'lenfunc', '__len__'), {}),
+    (('mp_length', 'lenfunc', '__len__'), {'template': LEN_TEMPLATE_TEMPLATE}),
     (('mp_subscript', 'binaryfunc', '__getitem__'), {}),
     (('mp_ass_subscript', 'objobjargproc', '__setitem__'), {}),
 )

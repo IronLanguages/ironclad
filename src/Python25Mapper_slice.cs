@@ -12,7 +12,7 @@ namespace Ironclad
         private IntPtr
         Store(Slice slice)
         {
-            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PySliceObject)));
+            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PySliceObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PySliceObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), "ob_type", this.PySlice_Type);
             CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), "start", this.Store(slice.start));

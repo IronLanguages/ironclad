@@ -258,10 +258,6 @@ class ListFunctionsTest(TestCase):
         self.assertEquals(mapper.RefCount(objPtr), 1, "reference not stolen")
         
         mapper.IncRef(objPtr)
-        self.assertEquals(mapper.PyList_SetItem(listPtr, -1, objPtr), -1, "did not detect set outside bounds")
-        self.assertEquals(mapper.RefCount(objPtr), 1, "reference not stolen")
-        
-        mapper.IncRef(objPtr)
         self.assertEquals(mapper.PyList_SetItem(IntPtr.Zero, 1, objPtr), -1, "did not detect null list")
         self.assertEquals(mapper.RefCount(objPtr), 1, "reference not stolen")
     
@@ -356,7 +352,7 @@ class ListFunctionsTest(TestCase):
         
         listPtr = mapper.Store([0, 1, 2, 3, 4, 5, 6, 7])
         slices = (
-            (3, 4), (2, -1), (-5, -4), (5, 200), (999, 1000)
+            (3, 4), (3, 0), (5, 200), (999, 1000)
         )
         for (start, stop) in slices:
             TestSlice(listPtr, start, stop)

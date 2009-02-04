@@ -18,7 +18,7 @@ namespace Ironclad
         public override IntPtr
         _PyObject_New(IntPtr typePtr)
         {
-            int tp_basicsize = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
+            uint tp_basicsize = CPyMarshal.ReadUIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
             IntPtr objPtr = this.allocator.Alloc(tp_basicsize);
             CPyMarshal.Zero(objPtr, tp_basicsize);
             return this.PyObject_Init(objPtr, typePtr);
@@ -285,17 +285,17 @@ namespace Ironclad
         }
         
         
-        public override int
+        public override uint
         PyObject_Size(IntPtr objPtr)
         {
             try
             {
-                return PythonOps.Length(this.Retrieve(objPtr));
+                return (uint)PythonOps.Length(this.Retrieve(objPtr));
             }
             catch (Exception e)
             {
                 this.LastException = e;
-                return -1;
+                return UInt32.MaxValue;
             }
         }
 

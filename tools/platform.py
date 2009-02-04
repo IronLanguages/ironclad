@@ -19,7 +19,7 @@ type_codes = {
     'ptr': # unknown ptr types; not translated
         'IntPtr',
     'size': # Py_ssize_t -- should obviously be uint, but complications arose
-        'int',
+        'uint',
     'int': # int
         'int',
     'long': # long

@@ -4,7 +4,7 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.cpython import MakeNumSeqMapMethods, MakeTypePtr
 from tests.utils.testcase import TestCase, WithMapper
 
-from System import IntPtr
+from System import IntPtr, UInt32
 
 from Ironclad import CPyMarshal
 from Ironclad.Structs import PyListObject, PyNumberMethods, PySequenceMethods
@@ -42,7 +42,7 @@ class SequenceFunctionsTest(TestCase):
         for notseq in (object, object(), 37):
             notseqPtr = mapper.Store(notseq)
             mapper.LastException = None
-            self.assertEquals(mapper.PySequence_Size(notseqPtr), -1)
+            self.assertEquals(mapper.PySequence_Size(notseqPtr), UInt32.MaxValue)
             self.assertMapperHasError(mapper, TypeError)
             mapper.DecRef(notseqPtr)
 
@@ -51,11 +51,11 @@ class SequenceFunctionsTest(TestCase):
     def testPySequence_GetItem(self, mapper, _):
         for seq in ([1, 2, 3], ('a', 'b', 'c'), 'bar'):
             seqPtr = mapper.Store(seq)
-            for i in range(-3, 3):
+            for i in range(3):
                 result = mapper.PySequence_GetItem(seqPtr, i)
                 self.assertEquals(mapper.Retrieve(result), seq[i])
 
-            for i in (-5, 66):
+            for i in (5, 66):
                 mapper.LastException = None
                 self.assertEquals(mapper.PySequence_GetItem(seqPtr, i), IntPtr.Zero)
                 self.assertMapperHasError(mapper, IndexError)
@@ -73,7 +73,7 @@ class SequenceFunctionsTest(TestCase):
         seq = [1, 2, 3]
         seqPtr = mapper.Store(seq)
         seqData = CPyMarshal.ReadPtrField(seqPtr, PyListObject, "ob_item")
-        for i in range(-3, 3):
+        for i in range(3):
             itemPtr = mapper.Store(i)
             self.assertEquals(mapper.PySequence_SetItem(seqPtr, i, itemPtr), 0)
             self.assertEquals(mapper.RefCount(itemPtr), 2)
@@ -84,7 +84,7 @@ class SequenceFunctionsTest(TestCase):
             self.assertEquals(CPyMarshal.ReadPtr(valData), itemPtr)
             self.assertEquals(seq[i], i)
 
-        for i in (-5, 66):
+        for i in (5, 66):
             mapper.LastException = None
             self.assertEquals(mapper.PySequence_SetItem(seqPtr, i, mapper.Store(i)), -1)
             self.assertMapperHasError(mapper, IndexError)
@@ -97,7 +97,7 @@ class SequenceFunctionsTest(TestCase):
                 calls.append((index, value))
         seq = Seq()
         seqPtr = mapper.Store(seq)
-        for (i, item) in ((3, 'abc'), (-123, 999)):
+        for (i, item) in ((3, 'abc'), (123, 999)):
             itemPtr = mapper.Store(item)
             self.assertEquals(mapper.PySequence_SetItem(seqPtr, i, itemPtr), 0)
             self.assertEquals(mapper.RefCount(itemPtr), 1)

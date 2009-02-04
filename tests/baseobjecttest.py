@@ -10,7 +10,7 @@ from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
 
-from System import IntPtr
+from System import IntPtr, UInt32
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, dgt_void_ptr, Python25Api, Python25Mapper
@@ -310,7 +310,7 @@ class ObjectFunctionsTest(TestCase):
         for badval in (0, 0.0, False, object, object()):
             ptr = mapper.Store(badval)
             mapper.LastException = None
-            self.assertEquals(mapper.PyObject_Size(ptr), -1)
+            self.assertEquals(mapper.PyObject_Size(ptr), UInt32.MaxValue)
             self.assertMapperHasError(mapper, TypeError)
             mapper.DecRef(ptr)
 

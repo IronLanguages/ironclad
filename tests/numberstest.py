@@ -70,26 +70,29 @@ class PyInt_Test(TestCase):
     
     @WithMapper
     def testPyInt_FromSsize_t(self, mapper, _):
-        for value in (0, Int32.MaxValue, Int32.MinValue):
+        for value in (0, Int32.MaxValue):
             ptr = mapper.PyInt_FromSsize_t(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEquals(mapper.Retrieve(ptr), value)
             self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
             self.assertEquals(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
             mapper.DecRef(ptr)
+            
+        ptr = mapper.PyInt_FromSsize_t(UInt32.MaxValue)
+        self.assertEquals(mapper.Retrieve(ptr), UInt32.MaxValue)
+        self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type)
+        mapper.DecRef(ptr)
 
 
     @WithMapper
     def testPyInt_AsSsize_t(self, mapper, _):
-        # because I haven't yet fixed the signedness of managed Ssize_t equivalent,
-        # do it by magic bit-patterns
-        for (value, expected) in ((0, 0), (Int32.MaxValue + 11, Int32.MinValue + 11)):
+        for value in (0, UInt32.MaxValue):
             result = mapper.PyInt_AsSsize_t(mapper.Store(value))
-            self.assertEquals(result, expected, "failed to map back")
+            self.assertEquals(result, value, "failed to map back")
             self.assertMapperHasError(mapper, None)
             
         for (value, error) in ((UInt32.MaxValue + 1, OverflowError), (-1, OverflowError), (object(), TypeError)):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.PyInt_AsSsize_t(ptr), -1)
+            self.assertEquals(mapper.PyInt_AsSsize_t(ptr), UInt32.MaxValue)
             self.assertMapperHasError(mapper, error)
 
         for cls in (NumberI, NumberL, NumberF):
@@ -164,7 +167,7 @@ class PyLong_Test(TestCase):
 
     @WithMapper
     def testStoreLong(self, mapper, _):
-        for value in (5555555555, -5555555555, long(0)):
+        for value in (5555555555, -5555555555, long(0), UInt32.MaxValue):
             ptr = mapper.Store(value)
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
             self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")

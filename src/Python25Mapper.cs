@@ -278,7 +278,7 @@ namespace Ironclad
         private IntPtr
         StoreObject(object obj)
         {
-            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
+            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyBaseObject_Type);
             this.map.Associate(ptr, obj);

@@ -75,7 +75,7 @@ namespace Ironclad
         }
         
         public override IntPtr
-        PyString_FromStringAndSize(IntPtr stringData, int length)
+        PyString_FromStringAndSize(IntPtr stringData, uint length)
         {
             if (stringData == IntPtr.Zero)
             {
@@ -86,7 +86,7 @@ namespace Ironclad
             else
             {
                 byte[] bytes = new byte[length];
-                Marshal.Copy(stringData, bytes, 0, length);
+                Marshal.Copy(stringData, bytes, 0, (int)length);
                 IntPtr strPtr = this.CreatePyStringWithBytes(bytes);
                 this.map.Associate(strPtr, this.StringFromBytes(bytes));
                 return strPtr;
@@ -97,7 +97,7 @@ namespace Ironclad
         PyString_InternFromString(IntPtr stringData)
         {
             IntPtr newStrPtr = PyString_FromString(stringData);
-            IntPtr newStrPtrPtr = this.allocator.Alloc(Marshal.SizeOf(typeof(IntPtr)));
+            IntPtr newStrPtrPtr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(IntPtr)));
             CPyMarshal.WritePtr(newStrPtrPtr, newStrPtr);
             this.PyString_InternInPlace(newStrPtrPtr);
             IntPtr newNewStrPtr = CPyMarshal.ReadPtr(newStrPtrPtr);
@@ -158,10 +158,10 @@ namespace Ironclad
                 IntPtr dataPtr = CPyMarshal.Offset(strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
                 CPyMarshal.WritePtr(dataPtrPtr, dataPtr);
                 
-                int length = CPyMarshal.ReadIntField(strPtr, typeof(PyStringObject), "ob_size");
+                uint length = CPyMarshal.ReadUIntField(strPtr, typeof(PyStringObject), "ob_size");
                 if (sizePtr == IntPtr.Zero)
                 {
-                    for (int i = 0; i < length; ++i)
+                    for (uint i = 0; i < length; ++i)
                     {
                         if (CPyMarshal.ReadByte(CPyMarshal.Offset(dataPtr, i)) == 0)
                         {
@@ -171,7 +171,7 @@ namespace Ironclad
                 }
                 else
                 {
-                    CPyMarshal.WriteInt(sizePtr, length);
+                    CPyMarshal.WriteUInt(sizePtr, length);
                 }
                 return 0;
             }
@@ -198,14 +198,13 @@ namespace Ironclad
         }
         
         private int
-        IC__PyString_Resize_Grow(IntPtr strPtrPtr, int newSize)
+        IC__PyString_Resize_Grow(IntPtr strPtrPtr, uint newSize)
         {
             IntPtr oldStr = CPyMarshal.ReadPtr(strPtrPtr);
             IntPtr newStr = IntPtr.Zero;
             try
             {
-                newStr = this.allocator.Realloc(
-                    oldStr, Marshal.SizeOf(typeof(PyStringObject)) + newSize);
+                newStr = this.allocator.Realloc(oldStr, (uint)Marshal.SizeOf(typeof(PyStringObject)) + newSize);
             }
             catch (OutOfMemoryException e)
             {
@@ -220,11 +219,11 @@ namespace Ironclad
         }
         
         private int
-        IC__PyString_Resize_NoGrow(IntPtr strPtr, int newSize)
+        IC__PyString_Resize_NoGrow(IntPtr strPtr, uint newSize)
         {
             IntPtr ob_sizePtr = CPyMarshal.Offset(
                 strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
-            CPyMarshal.WriteInt(ob_sizePtr, newSize);
+            CPyMarshal.WriteUInt(ob_sizePtr, newSize);
             IntPtr bufPtr = CPyMarshal.Offset(
                 strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
             IntPtr terminatorPtr = CPyMarshal.Offset(
@@ -235,7 +234,7 @@ namespace Ironclad
         
         
         public override int
-        _PyString_Resize(IntPtr strPtrPtr, int newSize)
+        _PyString_Resize(IntPtr strPtrPtr, uint newSize)
         {
             IntPtr strPtr = CPyMarshal.ReadPtr(strPtrPtr);
             PyStringObject str = (PyStringObject)Marshal.PtrToStructure(strPtr, typeof(PyStringObject));
@@ -249,22 +248,22 @@ namespace Ironclad
             }
         }
         
-        public override int
+        public override uint
         PyString_Size(IntPtr strPtr)
         {
-            return CPyMarshal.ReadIntField(strPtr, typeof(PyStringObject), "ob_size");
+            return CPyMarshal.ReadUIntField(strPtr, typeof(PyStringObject), "ob_size");
         }
         
         private IntPtr 
-        AllocPyString(int length)
+        AllocPyString(uint length)
         {
-            int size = Marshal.SizeOf(typeof(PyStringObject)) + length;
+            uint size = (uint)Marshal.SizeOf(typeof(PyStringObject)) + length;
             IntPtr data = this.allocator.Alloc(size);
             
             PyStringObject s = new PyStringObject();
             s.ob_refcnt = 1;
             s.ob_type = this.PyString_Type;
-            s.ob_size = (uint)length;
+            s.ob_size = length;
             s.ob_shash = -1;
             s.ob_sstate = 0;
             Marshal.StructureToPtr(s, data, false);
@@ -298,7 +297,7 @@ namespace Ironclad
         private IntPtr
         CreatePyStringWithBytes(byte[] bytes)
         {
-            IntPtr strPtr = this.AllocPyString(bytes.Length);
+            IntPtr strPtr = this.AllocPyString((uint)bytes.Length);
             IntPtr bufPtr = CPyMarshal.Offset(
                 strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
             Marshal.Copy(bytes, 0, bufPtr, bytes.Length);

@@ -5,8 +5,8 @@ namespace Ironclad
 {
     public interface IAllocator
     {
-        IntPtr Alloc(int bytes);
-        IntPtr Realloc(IntPtr old, int bytes);
+        IntPtr Alloc(uint bytes);
+        IntPtr Realloc(IntPtr old, uint bytes);
         bool Contains(IntPtr ptr);
         void Free(IntPtr address);
         void FreeAll();
@@ -17,15 +17,15 @@ namespace Ironclad
         private StupidSet allocated = new StupidSet();
         
         public virtual IntPtr 
-        Alloc(int bytes)
+        Alloc(uint bytes)
         {
-            IntPtr ptr = Marshal.AllocHGlobal(bytes);
+            IntPtr ptr = Marshal.AllocHGlobal((IntPtr)bytes);
             this.allocated.Add(ptr);
             return ptr;
         }
         
         public virtual IntPtr
-        Realloc(IntPtr oldptr, int bytes)
+        Realloc(IntPtr oldptr, uint bytes)
         {
             IntPtr newptr = Marshal.ReAllocHGlobal(oldptr, (IntPtr)bytes);    
             this.allocated.SetRemove(oldptr);        
