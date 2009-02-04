@@ -8,7 +8,7 @@ from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase, WithMapper
 
-from System import IntPtr, WeakReference
+from System import IntPtr, UInt32, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, HGlobalAllocator, Python25Mapper
@@ -1011,10 +1011,28 @@ class SequenceMethodsTest(MethodConnectionTestCase):
             self.assertEquals(s1, start_)
             self.assertEquals(s2, stop_)
             return self.mapper.Store(result)
+        def Length(_):
+            return 0
         
-        seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_slice': Getslice})
+        seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_slice': Getslice, 'sq_length': Length})
         typeSpec = {"tp_as_sequence": seq}
         self.assertTypeMethodCall(typeSpec, "__getslice__", (start_, stop_), {}, result)
+        deallocSeq()
+
+
+    def testGetslice_NastyNumpyCase(self):
+        result = object()
+        def Getslice(p1, s1, s2):
+            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEquals(s1, UInt32.MaxValue)
+            self.assertEquals(s2, UInt32.MaxValue)
+            return self.mapper.Store(result)
+        def Length(_):
+            return 0
+        
+        seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_slice': Getslice, 'sq_length': Length})
+        typeSpec = {"tp_as_sequence": seq}
+        self.assertTypeMethodCall(typeSpec, "__getslice__", (-1, -1), {}, result)
         deallocSeq()
 
 
@@ -1028,8 +1046,10 @@ class SequenceMethodsTest(MethodConnectionTestCase):
             self.assertEquals(s2, stop_)
             self.assertEquals(self.mapper.Retrieve(p2), value)
             return self.result
+        def Length(_):
+            return 0
         
-        seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_ass_slice': Setslice})
+        seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_ass_slice': Setslice, 'sq_length': Length})
         typeSpec = {"tp_as_sequence": seq}
 
         self.result = 0
@@ -1037,6 +1057,29 @@ class SequenceMethodsTest(MethodConnectionTestCase):
 
         self.result = -1
         self.assertTypeMethodRaises(typeSpec, "__setslice__", (start_, stop_, value,), {}, Exception)
+
+        deallocSeq()
+
+
+    def testSetslice_NastyNumpyCase(self):
+        value = object()
+        def Setslice(p1, s1, s2, p2):
+            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEquals(s1, UInt32.MaxValue)
+            self.assertEquals(s2, UInt32.MaxValue)
+            self.assertEquals(self.mapper.Retrieve(p2), value)
+            return self.result
+        def Length(_):
+            return 0
+        
+        seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_ass_slice': Setslice, 'sq_length': Length})
+        typeSpec = {"tp_as_sequence": seq}
+
+        self.result = 0
+        self.assertTypeMethodCall(typeSpec, "__setslice__", (-1, -1, value,), {}, self.result)
+
+        self.result = -1
+        self.assertTypeMethodRaises(typeSpec, "__setslice__", (-1, -1, value,), {}, Exception)
 
         deallocSeq()
 
