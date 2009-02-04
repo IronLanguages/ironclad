@@ -84,29 +84,6 @@ namespace Ironclad
         }
         
         public override int
-        PyInt_AsSsize_t(IntPtr valuePtr)
-        {
-            try
-            {
-                BigInteger value = this.MakeBigInteger(this.Retrieve(valuePtr));
-                if ((value >= 0) && (value <= Int32.MaxValue))
-                {
-                    return value.ToInt32();
-                }
-                if (value <= UInt32.MaxValue)
-                {
-                    value -= UInt32.MaxValue;
-                }
-                return value.ToInt32();
-            }
-            catch (Exception e)
-            {
-                this.LastException = e;
-                return -1;
-            }
-        }
-        
-        public override int
         _PyLong_Sign(IntPtr valuePtr)
         {
             BigInteger value = this.MakeBigInteger(this.Retrieve(valuePtr));
@@ -268,7 +245,7 @@ namespace Ironclad
         private IntPtr
         Store(int value)
         {
-            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyIntObject)));
+            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyIntObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyIntObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), "ob_type", this.PyInt_Type);
             CPyMarshal.WriteIntField(ptr, typeof(PyIntObject), "ob_ival", value);
@@ -277,9 +254,19 @@ namespace Ironclad
         }
 
         private IntPtr
+        Store(uint value)
+        {
+            if (value <= Int32.MaxValue)
+            {
+                return this.Store((int)value);
+            }
+            return this.Store(this.MakeBigInteger(value));
+        }
+
+        private IntPtr
         Store(BigInteger value)
         {
-            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
+            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyLong_Type);
             this.map.Associate(ptr, value);
@@ -289,7 +276,7 @@ namespace Ironclad
         private IntPtr
         Store(double value)
         {
-            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyFloatObject)));
+            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyFloatObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyFloatObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyFloatObject), "ob_type", this.PyFloat_Type);
             CPyMarshal.WriteDoubleField(ptr, typeof(PyFloatObject), "ob_fval", value);
@@ -300,7 +287,7 @@ namespace Ironclad
         private IntPtr
         Store(Complex64 value)
         {
-            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyComplexObject)));
+            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyComplexObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyComplexObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyComplexObject), "ob_type", this.PyComplex_Type);
             CPyMarshal.WriteDoubleField(ptr, typeof(PyComplexObject), "real", value.Real);

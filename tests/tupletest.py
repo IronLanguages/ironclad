@@ -165,7 +165,6 @@ class TupleTest(TestCase):
         tuplePtr = mapper.PyTuple_New(1)
         CPyMarshal.WritePtr(tuplePtrPtr, tuplePtr)
         self.assertEquals(mapper._PyTuple_Resize(tuplePtrPtr, 2000000000), -1)
-        self.assertMapperHasError(mapper, MemoryError)
         self.assertEquals(CPyMarshal.ReadPtr(tuplePtrPtr), IntPtr.Zero)
         
 
@@ -204,7 +203,7 @@ class TupleTest(TestCase):
         
         tuplePtr = mapper.Store((0, 1, 2, 3, 4, 5, 6, 7))
         slices = (
-            (3, 4), (2, -1), (-5, -4), (5, 200), (999, 1000)
+            (3, 4), (5, 0), (5, 200), (999, 1000)
         )
         for (start, stop) in slices:
             TestSlice(tuplePtr, start, stop)

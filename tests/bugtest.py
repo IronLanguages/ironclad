@@ -3,6 +3,8 @@ import math
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
 
+from System import UInt32
+
 class Number(object):
     def __long__(self):
         return 0L
@@ -29,6 +31,13 @@ class BugTest(TestCase):
     def testLongFromEmptyString(self):
         for str_ in ('', '   '):
             self.assertEquals(long(str_), 0, "you can fix PyNumber_Long now")
+
+    def testUIntLen(self):
+        class C(object):
+            def __len__(self):
+                return UInt32(123)
+        self.assertRaises(TypeError, len, C())
+        # when this fails, delete all references to LEN_TEMPLATE_TEMPLATE
 
 
 suite = makesuite(BugTest)

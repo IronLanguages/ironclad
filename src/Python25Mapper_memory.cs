@@ -6,7 +6,7 @@ namespace Ironclad
     public partial class Python25Mapper : Python25Api
     {
         public override IntPtr
-        PyMem_Malloc(int size)
+        PyMem_Malloc(uint size)
         {
             size = size == 0 ? 1 : size;
             try
@@ -18,24 +18,9 @@ namespace Ironclad
                 return IntPtr.Zero;
             }
         }
-        
+
         public override IntPtr
-        PyObject_Malloc(int size)
-        {
-            return this.PyMem_Malloc(size);
-        }
-        
-        public override void
-        PyMem_Free(IntPtr ptr)
-        {
-            if (ptr != IntPtr.Zero)
-            {
-                this.allocator.Free(ptr);
-            }
-        }
-        
-        public override IntPtr
-        PyMem_Realloc(IntPtr oldPtr, int size)
+        PyMem_Realloc(IntPtr oldPtr, uint size)
         {
             size = size == 0 ? 1 : size;
             try
@@ -51,9 +36,24 @@ namespace Ironclad
                 return IntPtr.Zero;
             }
         }
+        
+        public override void
+        PyMem_Free(IntPtr ptr)
+        {
+            if (ptr != IntPtr.Zero)
+            {
+                this.allocator.Free(ptr);
+            }
+        }
 
         public override IntPtr
-        PyObject_Realloc(IntPtr oldPtr, int size)
+        PyObject_Malloc(uint size)
+        {
+            return this.PyMem_Malloc(size);
+        }
+
+        public override IntPtr
+        PyObject_Realloc(IntPtr oldPtr, uint size)
         {
             return this.PyMem_Realloc(oldPtr, size);
         }

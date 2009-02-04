@@ -21,7 +21,7 @@ namespace Ironclad
         public const int DoubleSize = 8;
 
         public static void
-        Zero(IntPtr start, Int32 bytes)
+        Zero(IntPtr start, int bytes)
         {
             for (int i = 0; i < bytes/CPyMarshal.IntSize; i++)
             {
@@ -31,7 +31,13 @@ namespace Ironclad
         }
 
         public static void
-        Log(IntPtr start, Int32 bytes)
+        Zero(IntPtr start, uint bytes)
+        {
+            Zero(start, (int)bytes);
+        }
+
+        public static void
+        Log(IntPtr start, int bytes)
         {
             for (int i = 0; i < bytes/CPyMarshal.IntSize; i++)
             {
@@ -77,6 +83,20 @@ namespace Ironclad
         {
             IntPtr readAddr = CPyMarshal.GetField(addr, type, field);
             return CPyMarshal.ReadInt(readAddr);
+        }
+
+        public static void
+        WriteUIntField(IntPtr addr, Type type, string field, uint data)
+        {
+            IntPtr writeAddr = CPyMarshal.GetField(addr, type, field);
+            CPyMarshal.WriteUInt(writeAddr, data);
+        }
+
+        public static uint
+        ReadUIntField(IntPtr addr, Type type, string field)
+        {
+            IntPtr readAddr = CPyMarshal.GetField(addr, type, field);
+            return CPyMarshal.ReadUInt(readAddr);
         }
 
         public static void
@@ -126,6 +146,12 @@ namespace Ironclad
         Offset(IntPtr start, Int32 offset)
         {
             return (IntPtr)(start.ToInt32() + offset);
+        }
+
+        public static IntPtr
+        Offset(IntPtr start, UInt32 offset)
+        {
+            return (IntPtr)(start.ToInt32() + (int)offset);
         }
 
         public static IntPtr

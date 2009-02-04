@@ -23,24 +23,23 @@ namespace Ironclad
         }
         
         public override IntPtr 
-        PyType_GenericAlloc(IntPtr typePtr, int nItems)
+        PyType_GenericAlloc(IntPtr typePtr, uint nItems)
         {
-            int size = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
-            
+            uint size = CPyMarshal.ReadUIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
             if (nItems > 0)
             {
-                int itemsize = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_itemsize");
+                uint itemsize = CPyMarshal.ReadUIntField(typePtr, typeof(PyTypeObject), "tp_itemsize");
                 size += (nItems * itemsize);
             }
             
             IntPtr newInstance = this.allocator.Alloc(size);
             CPyMarshal.Zero(newInstance, size);
-            CPyMarshal.WriteIntField(newInstance, typeof(PyObject), "ob_refcnt", 1);
+            CPyMarshal.WriteUIntField(newInstance, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(newInstance, typeof(PyObject), "ob_type", typePtr);
 
             if (nItems > 0)
             {
-                CPyMarshal.WriteIntField(newInstance, typeof(PyVarObject), "ob_size", nItems);
+                CPyMarshal.WriteUIntField(newInstance, typeof(PyVarObject), "ob_size", nItems);
             }
 
             return newInstance;
@@ -191,7 +190,7 @@ namespace Ironclad
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_str", this.GetAddress("IC_PyString_Str"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_repr", this.GetAddress("PyObject_Repr"));
 
-            int sqSize = Marshal.SizeOf(typeof(PySequenceMethods));
+            uint sqSize = (uint)Marshal.SizeOf(typeof(PySequenceMethods));
             IntPtr sqPtr = this.allocator.Alloc(sqSize);
             CPyMarshal.Zero(sqPtr, sqSize);
             CPyMarshal.WritePtrField(sqPtr, typeof(PySequenceMethods), "sq_concat", this.GetAddress("IC_PyString_Concat_Core"));
@@ -203,7 +202,7 @@ namespace Ironclad
         private void
         AddNumberMethodsWithoutIndex(IntPtr typePtr)
         {
-            int nmSize = Marshal.SizeOf(typeof(PyNumberMethods));
+            uint nmSize = (uint)Marshal.SizeOf(typeof(PyNumberMethods));
             IntPtr nmPtr = this.allocator.Alloc(nmSize);
             CPyMarshal.Zero(nmPtr, nmSize);
 
@@ -285,7 +284,7 @@ namespace Ironclad
         private IntPtr
         Store(PythonType _type)
         {
-            int typeSize = Marshal.SizeOf(typeof(PyTypeObject));
+            uint typeSize = (uint)Marshal.SizeOf(typeof(PyTypeObject));
             IntPtr typePtr = this.allocator.Alloc(typeSize);
             CPyMarshal.Zero(typePtr, typeSize);
 

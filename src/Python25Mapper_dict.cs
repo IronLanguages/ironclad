@@ -32,22 +32,22 @@ namespace Ironclad
             PyObject dict = new PyObject();
             dict.ob_refcnt = 1;
             dict.ob_type = this.PyDict_Type;
-            IntPtr dictPtr = this.allocator.Alloc(Marshal.SizeOf(typeof(PyObject)));
+            IntPtr dictPtr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyObject)));
             Marshal.StructureToPtr(dict, dictPtr, false);
             this.map.Associate(dictPtr, dictMgd);
             return dictPtr;
         }
         
-        public override int
+        public override uint
         PyDict_Size(IntPtr dictPtr)
         {
             IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
             if (dict is DictProxy)
             {
                 DictProxy proxy = (DictProxy)dict;
-                return proxy.__len__(this.scratchContext);
+                return (uint)proxy.__len__(this.scratchContext);
             }
-            return dict.Keys.Count;
+            return (uint)dict.Keys.Count;
         }
         
         
