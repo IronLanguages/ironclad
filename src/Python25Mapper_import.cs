@@ -19,14 +19,30 @@ namespace Ironclad
         public override IntPtr
         PyImport_ImportModule(string name)
         {
-            return this.Store(this.Import(name));
+            try
+            {
+                return this.Store(this.Import(name));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
         }
 
         public override IntPtr
         PyImport_Import(IntPtr namePtr)
         {
-            string name = (string)this.Retrieve(namePtr);
-            return this.Store(this.Import(name));
+            try
+            {
+                string name = (string)this.Retrieve(namePtr);
+                return this.Store(this.Import(name));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
         }
 
         public override IntPtr
@@ -64,7 +80,7 @@ namespace Ironclad
             }
         }
 
-        public object
+        private object
         Import(string name)
         {
             object module = this.GetModule(name);
