@@ -106,7 +106,11 @@ namespace Ironclad
             
             if (dictPtr != IntPtr.Zero)
             {
-                throw new NotImplementedException("Warning: PyErr_NewException called with non-null dictPtr");
+                PythonDictionary dict = (PythonDictionary)this.Retrieve(dictPtr);
+                if (dict.Count != 0)
+                {
+                    throw new NotImplementedException("Warning: PyErr_NewException called with non-null dictPtr");
+                }
             }
             
             string __name__ = null;

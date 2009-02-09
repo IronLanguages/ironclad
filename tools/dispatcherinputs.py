@@ -254,6 +254,8 @@ known_python25api_signatures = (
     ('PyMem_Malloc', 'ptr_size'),
     ('PyMem_Realloc', 'ptr_ptrsize'),
     
+    ('PyMethod_New', 'ptr_ptrptrptr'),
+    
     ('PyModule_AddIntConstant', 'int_ptrstrlong'),
     ('PyModule_AddObject', 'int_ptrstrptr'),
     ('PyModule_AddStringConstant', 'int_ptrstrstr'),
