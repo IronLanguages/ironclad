@@ -22,13 +22,15 @@ namespace Ironclad
         GenerateClass(IntPtr typePtr)
         {
             ClassBuilder cb = new ClassBuilder(typePtr);
-            object ob_type = this.UpdateMethodTableField(cb.methodTable, typePtr, "ob_type");
             PythonTuple tp_bases = this.ExtractBases(typePtr);
             foreach (object _base in tp_bases)
             {
                 this.UpdateMethodTableObj(cb.methodTable, _base);
             }
 
+            IntPtr ob_typePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyObject), "ob_type");
+            this.IncRef(ob_typePtr);
+            object ob_type = this.Retrieve(ob_typePtr);
             ScopeOps.__setattr__(this.scratchModule, "_ironclad_metaclass", ob_type);
             ScopeOps.__setattr__(this.scratchModule, "_ironclad_bases", tp_bases);
             this.ExecInModule(cb.code.ToString(), this.scratchModule);
@@ -61,13 +63,6 @@ namespace Ironclad
                 tp_bases = new PythonTuple(new object[] { this.Retrieve(tp_basePtr) });
             }
             return tp_bases;
-        }
-
-        private object
-        UpdateMethodTableField(PythonDictionary methodTable, IntPtr typePtr, string field)
-        {
-            IntPtr potentialMethodSourcePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), field);
-            return this.UpdateMethodTablePtr(methodTable, potentialMethodSourcePtr);
         }
 
         private object
