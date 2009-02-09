@@ -115,7 +115,7 @@ class InheritanceTest(TestCase):
         klass = mapper.Retrieve(klassPtr)
         for base in bases:
             self.assertEquals(issubclass(klass, base), True)
-        self.assertEquals(mapper.RefCount(base1Ptr), 8, "subtype did not keep reference to bases")
+        self.assertEquals(mapper.RefCount(base1Ptr), 6, "subtype did not keep reference to bases")
         self.assertEquals(mapper.RefCount(base2Ptr), 6, "subtype did not keep reference to bases")
         self.assertEquals(CPyMarshal.ReadPtrField(base1Ptr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type 1")
         self.assertEquals(CPyMarshal.ReadPtrField(base2Ptr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type 2")
@@ -215,6 +215,53 @@ class InheritanceTest(TestCase):
         deallocTypes()
 
 
+    @WithMapper
+    def testNoCollisions(self, mapper, CallLater):
+        calls = []
+        def CreateTypeSpec(method_identifier):
+            def method(self_, _):
+                calls.append(method_identifier)
+                return mapper.Store(object())
+            methodDef, deallocMethod = MakeMethodDef("method", method, METH.NOARGS)
+            return {"tp_name": 'klass', "tp_methods": [methodDef]}
+        
+        unrelatedSpec = CreateTypeSpec('unrelated')
+        unrelatedPtr, deallocUnrelated = MakeTypePtr(mapper, unrelatedSpec)
+        CallLater(deallocUnrelated)
+        unrelated = mapper.Retrieve(unrelatedPtr)
+        
+        superclassSpec = CreateTypeSpec('superclass')
+        superclassPtr, deallocSuper = MakeTypePtr(mapper, superclassSpec)
+        CallLater(deallocSuper)
+        superclass = mapper.Retrieve(superclassPtr)
+        
+        metaclassSpec = CreateTypeSpec('metaclass')
+        metaclassSpec['tp_base'] = mapper.PyType_Type
+        metaclassSpec['tp_basicsize'] = Marshal.SizeOf(PyTypeObject)
+        metaclassPtr, deallocMeta = MakeTypePtr(mapper, metaclassSpec)
+        CallLater(deallocMeta)
+        metaclass = mapper.Retrieve(metaclassPtr)
+        
+        subclassSpec = CreateTypeSpec('subclass')
+        subclassSpec['tp_base'] = superclassPtr
+        subclassSpec['ob_type'] = metaclassPtr
+        subclassPtr, deallocSub = MakeTypePtr(mapper, subclassSpec)
+        CallLater(deallocSub)
+        subclass = mapper.Retrieve(subclassPtr)
+        
+        namespace = locals()
+        for clsname in ('unrelated', 'superclass', 'metaclass'):
+            del calls [:]
+            namespace[clsname]().method()
+            self.assertEquals(calls, [clsname])
+        
+        del calls [:]
+        u = unrelated()
+        s = subclass(u)
+        s.method(u)
+        self.assertEquals(calls, ['unrelated'])
+
+
 class BuiltinSubclassHorrorTest(TestCase):
     
     @WithMapper
@@ -279,6 +326,32 @@ class BuiltinSubclassHorrorTest(TestCase):
         _f0o = mapper.Retrieve(_f0oPtr)
         self.assertEquals(_f0o == 'f\0o', True)
         self.assertEquals('f\0o' == _f0o, True)
+
+
+    @WithMapper
+    def testRetrievedTypesConstructed(self, mapper, CallLater):
+        superclassPtr, deallocSuper = MakeTypePtr(mapper, {'tp_name': 'super'})
+        CallLater(deallocSuper)
+        superclass = mapper.Retrieve(superclassPtr)
+        
+        metaclassSpec = {
+            'tp_name': 'meta',
+            'tp_base': mapper.PyType_Type,
+            'tp_basicsize': Marshal.SizeOf(PyTypeObject)
+        }
+        metaclassPtr, deallocMeta = MakeTypePtr(mapper, metaclassSpec)
+        CallLater(deallocMeta)
+        metaclass = mapper.Retrieve(metaclassPtr)
+        
+        subclassSpec = {
+            'tp_name': 'sub',
+            'tp_base': superclassPtr,
+            'ob_type': metaclassPtr
+        }
+        subclassPtr, deallocSub = MakeTypePtr(mapper, subclassSpec)
+        CallLater(deallocSub)
+        subclass = mapper.Retrieve(subclassPtr)
+        
         
 
 class TypeDictTest(TestCase):

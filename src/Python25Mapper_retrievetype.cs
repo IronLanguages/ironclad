@@ -23,21 +23,10 @@ namespace Ironclad
         {
             ClassBuilder cb = new ClassBuilder(typePtr);
             object ob_type = this.UpdateMethodTableField(cb.methodTable, typePtr, "ob_type");
-            object tp_base = this.UpdateMethodTableField(cb.methodTable, typePtr, "tp_base");
-
-            PythonTuple tp_bases = null;
-            IntPtr tp_basesPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_bases");
-            if (tp_basesPtr != IntPtr.Zero)
+            PythonTuple tp_bases = this.ExtractBases(typePtr);
+            foreach (object _base in tp_bases)
             {
-                tp_bases = (PythonTuple)this.Retrieve(tp_basesPtr);
-                foreach (object _base in tp_bases)
-                {
-                    this.UpdateMethodTableObj(cb.methodTable, _base);
-                }
-            }
-            if (tp_bases == null)
-            {
-                tp_bases = new PythonTuple(new object[] { tp_base });
+                this.UpdateMethodTableObj(cb.methodTable, _base);
             }
 
             ScopeOps.__setattr__(this.scratchModule, "_ironclad_metaclass", ob_type);
@@ -50,11 +39,28 @@ namespace Ironclad
             object typeDict = Builtin.getattr(this.scratchContext, klass, "__dict__");
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_dict", this.Store(typeDict));
 
-            object klass_actualiser = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_actualiser");
-            this.actualiseHelpers[typePtr] = klass_actualiser;
+            object klass_stub = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_class_stub");
+            this.classStubs[typePtr] = klass_stub;
 
             this.map.Associate(typePtr, klass);
             this.IncRef(typePtr);
+        }
+        
+        private PythonTuple
+        ExtractBases(IntPtr typePtr)
+        {
+            PythonTuple tp_bases = null;
+            IntPtr tp_basesPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_bases");
+            if (tp_basesPtr != IntPtr.Zero)
+            {
+                tp_bases = (PythonTuple)this.Retrieve(tp_basesPtr);
+            }
+            if (tp_bases == null)
+            {
+                IntPtr tp_basePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
+                tp_bases = new PythonTuple(new object[] { this.Retrieve(tp_basePtr) });
+            }
+            return tp_bases;
         }
 
         private object

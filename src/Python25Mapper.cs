@@ -61,7 +61,7 @@ namespace Ironclad
         
         private InterestingPtrMap map = new InterestingPtrMap();
         private Dictionary<IntPtr, ActualiseDelegate> actualisableTypes = new Dictionary<IntPtr, ActualiseDelegate>();
-        private Dictionary<IntPtr, object> actualiseHelpers = new Dictionary<IntPtr, object>();
+        private Dictionary<IntPtr, object> classStubs = new Dictionary<IntPtr, object>();
         private Dictionary<IntPtr, UnmanagedDataMarker> incompleteObjects = new Dictionary<IntPtr, UnmanagedDataMarker>();
         private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
         private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();

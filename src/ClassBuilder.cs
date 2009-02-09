@@ -52,12 +52,14 @@ namespace Ironclad
         Build()
         {
             this.InitialiseScope();
+            
             this.GenerateMembers();
             this.GenerateProperties();
             this.GenerateMagicMethods(); // } This order of calls effectively treats all methods as having the
             this.GenerateMethods();      // } COEXIST flag set; swap would be equivalent to it never being set.
             this.GenerateClass();
-            this.GenerateActualiser();
+            
+            this.code.Append(CodeSnippets.CLASS_STUB_CODE);
         }
 
         private void
@@ -125,12 +127,6 @@ namespace Ironclad
             this.GenerateNamedProtocolMagicMethods("tp_as_number", typeof(PyNumberMethods), NB_FIELDS);
             this.GenerateRichcmpMethods();
             this.UglyComplexHack();
-        }
-        
-        private void
-        GenerateActualiser()
-        {
-            this.code.Append(CodeSnippets.ACTUALISER_CODE);
         }
 
         private void

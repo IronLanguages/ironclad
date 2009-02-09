@@ -297,8 +297,8 @@ namespace Ironclad
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", this.Store(tp_base));
 
             ScopeOps.__setattr__(this.scratchModule, "_ironclad_class", _type);
-            this.ExecInModule(CodeSnippets.ACTUALISER_CODE, this.scratchModule);
-            this.actualiseHelpers[typePtr] = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_actualiser");
+            this.ExecInModule(CodeSnippets.CLASS_STUB_CODE, this.scratchModule);
+            this.classStubs[typePtr] = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_class_stub");
             this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
 
             this.map.Associate(typePtr, _type);
@@ -318,7 +318,7 @@ namespace Ironclad
         ActualiseArbitraryObject(IntPtr ptr)
         {
             IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
-            object actualiser = this.actualiseHelpers[typePtr];
+            object classStub = this.classStubs[typePtr];
             object[] args = new object[]{};
             
             PythonType type_ = (PythonType)this.Retrieve(typePtr);
@@ -331,8 +331,14 @@ namespace Ironclad
                 string strval = this.ReadPyString(ptr);
                 args = new object[] { strval };
             }
+            if (Builtin.issubclass(type_, TypeCache.PythonType))
+            {
+                string name = CPyMarshal.ReadCStringField(ptr, typeof(PyTypeObject), "tp_name");
+                PythonTuple tp_bases = this.ExtractBases(typePtr);
+                args = new object[] { name, tp_bases, new PythonDictionary() };
+            }
             
-            object obj = PythonCalls.Call(actualiser, args);
+            object obj = PythonCalls.Call(classStub, args);
             Builtin.setattr(this.scratchContext, obj, "__class__", this.Retrieve(typePtr));
             this.StoreBridge(ptr, obj);
             this.IncRef(ptr);
