@@ -29,13 +29,15 @@ def fake__init__(self):
 PackageLoader.__init__ = fake__init__
 ";
 
-        public const string ACTUALISER_CODE = @"
-class _ironclad_actualiser(_ironclad_class):
+        public const string CLASS_STUB_CODE = @"
+class _ironclad_class_stub(_ironclad_class):
     def __new__(cls, *args, **kwargs):
         if issubclass(cls, int):
             return int.__new__(cls, args[0])
         if issubclass(cls, str):
             return str.__new__(cls, args[0])
+        if issubclass(cls, type):
+            return type.__new__(cls, *args, **kwargs)
         return object.__new__(cls)
     def __init__(self, *args, **kwargs):
         pass
