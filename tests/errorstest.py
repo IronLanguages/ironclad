@@ -152,6 +152,17 @@ class ErrFunctionsTest(TestCase):
         self.assertEquals(newExc.__name__, 'bazerror')
         self.assertEquals(newExc.__module__, 'foo.bar')
         self.assertEquals(issubclass(newExc, ValueError), True)
+        
+
+    @WithMapper
+    def testPyErr_NewException_WithEmptyDict(self, mapper, _):
+        newExcPtr = mapper.PyErr_NewException("foo.bar.bazerror", IntPtr.Zero, mapper.Store({}))
+        self.assertEquals(mapper.RefCount(newExcPtr), 2)
+        
+        newExc = mapper.Retrieve(newExcPtr)
+        self.assertEquals(newExc.__name__, 'bazerror')
+        self.assertEquals(newExc.__module__, 'foo.bar')
+        self.assertEquals(issubclass(newExc, Exception), True)
 
 
     def assertMatch(self, mapper, given, exc, expected):
