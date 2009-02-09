@@ -298,6 +298,15 @@ class ImportTest(TestCase):
         self.assertEquals(mapper.RefCount(modulesPtr), 1, 'borrowed reference not cleaned up')
 
 
+    @WithMapper
+    def testPyImport_ImportFunctions_Failure(self, mapper, _):
+        self.assertEquals(mapper.PyImport_Import(mapper.Store('this_module_does_not_exist')), IntPtr.Zero)
+        self.assertMapperHasError(mapper, ImportError)
+        
+        self.assertEquals(mapper.PyImport_ImportModule('this_module_does_not_exist'), IntPtr.Zero)
+        self.assertMapperHasError(mapper, ImportError)
+
+
 
 # not sure this is the right place for these tests
 class BuiltinsTest(TestCase):
