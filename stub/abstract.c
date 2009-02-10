@@ -376,3 +376,19 @@ PyObject_CallObject(PyObject *o, PyObject *a)
 {
 	return PyEval_CallObjectWithKeywords(o, a, NULL);
 }
+
+
+int
+PyMapping_HasKey(PyObject *o, PyObject *key)
+{
+	PyObject *v;
+
+	v = PyObject_GetItem(o, key);
+	if (v) {
+		Py_DECREF(v);
+		return 1;
+	}
+	PyErr_Clear();
+	return 0;
+}
+
