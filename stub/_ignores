@@ -48,6 +48,8 @@ PyBuffer_FromMemory
 PyBuffer_FromReadWriteMemory
 PyBuffer_New
 
+PyMapping_HasKey
+
 PyObject_Cmp
 
 PyCObject_FromVoidPtr
