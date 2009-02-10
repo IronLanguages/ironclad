@@ -192,6 +192,7 @@ known_python25api_signatures = (
     ('PyDict_SetItem', 'int_ptrptrptr'),
     ('PyDict_SetItemString', 'int_ptrstrptr'),
     ('PyDict_Size', 'size_ptr'),
+    ('PyDict_Update', 'int_ptrptr'),
     ('PyDict_Values', 'ptr_ptr'),
     
     ('PyDictProxy_New', 'ptr_ptr'),

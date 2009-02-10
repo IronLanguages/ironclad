@@ -12,7 +12,7 @@ from tests.utils.testcase import TestCase, WithMapper
 from System import IntPtr, UInt32, WeakReference
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CannotInterpretException, CPyMarshal, HGlobalAllocator, Python25Mapper, OpaquePyCell
+from Ironclad import CannotInterpretException, CPyMarshal, dgt_ptr_ptrptrptr, HGlobalAllocator, Python25Mapper, OpaquePyCell
 from Ironclad.Structs import PyObject, PyNumberMethods, PyTypeObject, PyVarObject, Py_TPFLAGS
 
 class ItemEnumeratorThing(object):
@@ -119,6 +119,8 @@ class Types_Test(TestCase):
 
         typeFlags = CPyMarshal.ReadIntField(typePtr, PyTypeObject, "tp_flags")
         self.assertEquals(typeFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready type")
+        self.assertEquals(typeFlags & UInt32(Py_TPFLAGS.HAVE_CLASS), UInt32(Py_TPFLAGS.HAVE_CLASS), 
+                          "we always set this flag, for no better reason than 'it makes ctypes kinda work'")
         
         CPyMarshal.WritePtrField(typePtr, PyTypeObject, "ob_type", IntPtr.Zero)
         self.assertEquals(mapper.PyType_Ready(typePtr), 0, "wrong")
@@ -132,6 +134,13 @@ class Types_Test(TestCase):
         for _type in BUILTIN_TYPES:
             typePtr = getattr(mapper, _type)
             basePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base")
+            
+            if typePtr not in (mapper.PySeqIter_Type, mapper.PyCell_Type):
+                # PySeqIter_Type is suprrisingly tedious to turn into a proper PythonType in C#
+                # OpaquePyCellObject probably shouldn't even exist, and I don't expect it to ever be used.
+                tp_dict = mapper.Retrieve(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_dict"))
+                self.assertEquals(mapper.Retrieve(typePtr).__dict__, tp_dict)
+
             if typePtr not in (mapper.PyBaseObject_Type, mapper.PyBool_Type):
                 self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
             if typePtr == mapper.PyBool_Type:
@@ -370,6 +379,26 @@ class PyType_GenericNew_Test(TestCase):
         self.assertEquals(calls, [(typePtr, 0)], "passed wrong args")
 
 
+class IC_PyType_New_Test(TestCase):
+    
+    @WithMapper
+    def testIC_PyType_Type_tp_new(self, mapper, _):
+        IC_PyType_New = CPyMarshal.ReadFunctionPtrField(mapper.PyType_Type, PyTypeObject, "tp_new", dgt_ptr_ptrptrptr)
+        typeArgs = ("hello", (float,), {'cheese': 27})
+        # we have only ever seen this called from *within* a metatype's tp_new;
+        # therefore, we claim that its intent is to contruct a vanilla type, and
+        # that any metaclass-notification stuff should be handled by the caller.
+        # therefore, we can ignore the first arg and always pretend it's PyType_Type.
+        # handwave handwave; hey, look, a three-headed monkey!
+        typePtr = IC_PyType_New(IntPtr.Zero, mapper.Store(typeArgs), IntPtr.Zero)
+        
+        type_ = mapper.Retrieve(typePtr)
+        self.assertEquals(type_.__name__, "hello")
+        self.assertEquals(issubclass(type_, float), True)
+        self.assertEquals(type_.cheese, 27)
+        
+
+
 INHERIT_FIELDS = (
     "tp_alloc",
     "tp_new",
@@ -439,6 +468,7 @@ class PyType_Ready_InheritTest(TestCase):
 suite = makesuite(
     Types_Test,
     PyType_GenericNew_Test,
+    IC_PyType_New_Test,
     PyType_GenericAlloc_Test,
     PyType_Ready_InheritTest,
 )
