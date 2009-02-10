@@ -516,8 +516,10 @@ class Python25Mapper_GetAddress_NonApi_Test(TestCase):
         methods = (
             "IC_PyFloat_New",
             "IC_PyInt_New",
+            "IC_PyType_New",
             
             "IC_PyBaseObject_Init",
+            "IC_PyDict_Init",
             
             "IC_PyString_Str",
             "IC_PyString_Concat_Core",

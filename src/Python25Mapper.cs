@@ -530,6 +530,9 @@ namespace Ironclad
                 case "IC_PyBaseObject_Init":
                     this.dgtMap[name] = new dgt_int_ptrptrptr(this.IC_PyBaseObject_Init);
                     break;
+                case "IC_PyDict_Init":
+                    this.dgtMap[name] = new dgt_int_ptrptrptr(this.IC_PyDict_Init);
+                    break;
                 case "IC_PyFile_Dealloc":
                     this.dgtMap[name] = new dgt_void_ptr(this.IC_PyFile_Dealloc);
                     break;
@@ -538,6 +541,9 @@ namespace Ironclad
                     break;
                 case "IC_PyInt_New":
                     this.dgtMap[name] = new dgt_ptr_ptrptrptr(this.IC_PyInt_New);
+                    break;
+                case "IC_PyType_New":
+                    this.dgtMap[name] = new dgt_ptr_ptrptrptr(this.IC_PyType_New);
                     break;
                 case "IC_PyList_Dealloc":
                     this.dgtMap[name] = new dgt_void_ptr(this.IC_PyList_Dealloc);

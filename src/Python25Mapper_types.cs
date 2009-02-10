@@ -6,6 +6,8 @@ using IronPython.Runtime;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
+using Microsoft.Scripting;
+
 using Ironclad.Structs;
 
 
@@ -120,8 +122,17 @@ namespace Ironclad
             {
                 this.Retrieve(typePtr);
             }
+            else
+            {
+                object klass = this.Retrieve(typePtr);
+                if (Builtin.hasattr(this.scratchContext, klass, "__dict__"))
+                {
+                    object typeDict = Builtin.getattr(this.scratchContext, klass, "__dict__");
+                    CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_dict", this.Store(typeDict));
+                }
+            }
 
-            flags |= Py_TPFLAGS.READY;
+            flags |= Py_TPFLAGS.READY | Py_TPFLAGS.HAVE_CLASS;
             flags &= ~Py_TPFLAGS.READYING;
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
             return 0;
@@ -139,6 +150,27 @@ namespace Ironclad
                 }
                 return this.Store(PythonCalls.Call(this.scratchContext, 
                     Builtin.type, new object[] { this.Retrieve(namePtr), bases, this.Retrieve(dictPtr) }));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+        
+        private IntPtr
+        IC_PyType_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
+        {
+            try
+            {
+                // we ignore typePtr; see IC_PyType_New_Test
+                PythonTuple args = (PythonTuple)this.Retrieve(argsPtr);
+                if (kwargsPtr != IntPtr.Zero)
+                {
+                    throw new NotImplementedException("IC_PyType_New; non-null kwargs; please submit a bug (with repro)");
+                }
+                return this.Store(new PythonType(
+                    this.scratchContext, (string)args[0], (PythonTuple)args[1], (IAttributesCollection)args[2]));
             }
             catch (Exception e)
             {

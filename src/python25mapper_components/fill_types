@@ -1,5 +1,5 @@
 PyBaseObject_Type TypeCache.Object {"tp_alloc": "PyType_GenericAlloc", "tp_new": "PyType_GenericNew", "tp_init": "IC_PyBaseObject_Init", "tp_dealloc": "IC_PyBaseObject_Dealloc", "tp_free": "PyObject_Free", "tp_str": "PyObject_Str", "tp_repr": "PyObject_Repr"}
-PyType_Type TypeCache.PythonType
+PyType_Type TypeCache.PythonType {"tp_new": "IC_PyType_New"}
 PyNone_Type TypeCache.None
 PySlice_Type Builtin.slice {"tp_dealloc": "IC_PySlice_Dealloc"}
 PyFile_Type TypeCache.PythonFile  {"tp_dealloc": "IC_PyFile_Dealloc"}
@@ -7,9 +7,9 @@ PyInt_Type TypeCache.Int32 {"tp_as_number": "AddNumberMethodsWithIndex", "tp_new
 PyLong_Type TypeCache.BigInteger {"tp_as_number": "AddNumberMethodsWithIndex"}
 PyFloat_Type TypeCache.Double {"tp_as_number": "AddNumberMethodsWithoutIndex", "tp_new": "IC_PyFloat_New"}
 PyComplex_Type TypeCache.Complex64 {"tp_as_number": "AddNumberMethodsWithoutIndex"}
-PyDict_Type TypeCache.Dict
+PyDict_Type TypeCache.Dict {"tp_init": "IC_PyDict_Init"}
 PyList_Type TypeCache.List {"tp_dealloc": "IC_PyList_Dealloc"}
 PyTuple_Type TypeCache.PythonTuple {"tp_dealloc": "IC_PyTuple_Dealloc"}
+PyMethod_Type TypeCache.Method
 PySeqIter_Type typeof(ItemEnumerator)
 PyCell_Type typeof(OpaquePyCell)
-PyMethod_Type typeof(Method)

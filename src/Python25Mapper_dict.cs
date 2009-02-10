@@ -26,6 +26,13 @@ namespace Ironclad
             return this.Store(new PythonDictionary());
         }
         
+        private int
+        IC_PyDict_Init(IntPtr _, IntPtr __, IntPtr ___)
+        {
+            // _ctypes has some excuse for calling this; we don't normally expect it to be called
+            return 0;
+        }
+        
         private IntPtr
         Store(IDictionary dictMgd)
         {
@@ -50,6 +57,21 @@ namespace Ironclad
             return (uint)dict.Keys.Count;
         }
         
+        public override int
+        PyDict_Update(IntPtr dstPtr, IntPtr srcPtr)
+        {
+            try
+            {
+                PythonDictionary dst = (PythonDictionary)this.Retrieve(dstPtr);
+                dst.update(this.scratchContext, this.Retrieve(srcPtr));
+                return 0;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
+        }
         
         public override IntPtr
         PyDictProxy_New(IntPtr mappingPtr)

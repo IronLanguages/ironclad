@@ -9,7 +9,7 @@ from tests.utils.testcase import TestCase, WithMapper
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, Python25Mapper
+from Ironclad import CPyMarshal, dgt_int_ptrptrptr, Python25Mapper
 from Ironclad.Structs import PyObject, PyTypeObject
 
 
@@ -33,6 +33,13 @@ class DictTest(TestCase):
         self.assertEquals(frees, [dictPtr], "did not release memory")
         mapper.Dispose()
         deallocTypes()
+    
+    
+    @WithMapper
+    def testIC_PyDict_Init(self, mapper, _):
+        IC_PyDict_Init = CPyMarshal.ReadFunctionPtrField(mapper.PyDict_Type, PyTypeObject, "tp_init", dgt_int_ptrptrptr)
+        # really, this function does *nothing*. and certainly doesn't follow the pointers passed in
+        self.assertEquals(IC_PyDict_Init(IntPtr(123), IntPtr(456), IntPtr(789)), 0)
         
 
     @WithMapper
@@ -238,6 +245,20 @@ class DictTest(TestCase):
         dictPtr = mapper.Store(_dict)
         listPtr = mapper.PyDict_Values(dictPtr)
         self.assertEquals(set(mapper.Retrieve(listPtr)), set(_dict.values()))
+
+
+    @WithMapper
+    def testPyDict_Update(self, mapper, _):
+        d1 = {1:2, 3:4}
+        d2 = {1:5, 6:7}
+        
+        self.assertEquals(mapper.PyDict_Update(mapper.Store(d1), mapper.Store(d2)), 0)
+        self.assertMapperHasError(mapper, None)
+        self.assertEquals(d1, {1:5, 3:4, 6:7})
+        
+        self.assertEquals(mapper.PyDict_Update(mapper.Store(d1), mapper.Store(object)), -1)
+        self.assertMapperHasError(mapper, TypeError)
+        
 
 
 class PyDict_Next_Test(TestCase):
