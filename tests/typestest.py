@@ -39,6 +39,7 @@ BUILTIN_TYPES = {
     "PyNotImplemented_Type": types.NotImplementedType,
     "PySeqIter_Type": ItemEnumeratorType,
     "PyCell_Type": OpaquePyCell,
+    "PyMethod_Type": types.MethodType,
 }
 
 class Types_Test(TestCase):

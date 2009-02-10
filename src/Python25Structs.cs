@@ -226,13 +226,14 @@ namespace Ironclad
         }
         
         [StructLayout(LayoutKind.Sequential, Pack=1)]
-        public struct PyCObject
+        public struct PyMethodObject
         {
             public uint ob_refcnt;
             public IntPtr ob_type;
-            public IntPtr cobject;
-            public IntPtr desc;
-            public IntPtr destructor;
+            public IntPtr im_func;
+            public IntPtr im_self;
+            public IntPtr im_class;
+            public IntPtr im_weakreflist;
         }
         
         [StructLayout(LayoutKind.Sequential, Pack=1)]
