@@ -104,24 +104,23 @@ namespace Ironclad
                 _base = this.Retrieve(basePtr);
             }
             
-            if (dictPtr != IntPtr.Zero)
-            {
-                PythonDictionary dict = (PythonDictionary)this.Retrieve(dictPtr);
-                if (dict.Count != 0)
-                {
-                    throw new NotImplementedException("Warning: PyErr_NewException called with non-null dictPtr");
-                }
-            }
-            
+            PythonTuple bases = new PythonTuple(new object[]{_base});
+
             string __name__ = null;
             string __module__ = null;
             CallableBuilder.ExtractNameModule(name, ref __name__, ref __module__);
-            string excCode = String.Format(CodeSnippets.NEW_EXCEPTION, __name__, __module__);
-            ScopeOps.__setattr__(this.scratchModule, "_ironclad_base", _base);
             
-            this.ExecInModule(excCode, this.scratchModule);
-            object newExc = ScopeOps.__getattribute__(this.scratchModule, __name__);
-            return this.Store(newExc);
+            PythonDictionary classDict = new PythonDictionary();
+            classDict["__name__"] = __name__;
+            classDict["__module__"] = __module__;
+            
+            if (dictPtr != IntPtr.Zero)
+            {
+                PythonDictionary dict = (PythonDictionary)this.Retrieve(dictPtr);
+                classDict.update(this.scratchContext, dict);
+            }
+            
+            return this.Store(new PythonType(this.scratchContext, __name__, bases, classDict));
         }
         
         public override int

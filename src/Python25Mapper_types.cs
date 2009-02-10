@@ -247,6 +247,7 @@ namespace Ironclad
             this.PyType_Ready(this.PyNotImplemented_Type);
             this.PyType_Ready(this.PySeqIter_Type);
             this.PyType_Ready(this.PyCell_Type);
+            this.PyType_Ready(this.PyMethod_Type);
 
             this.actualisableTypes[this.PyType_Type] = new ActualiseDelegate(this.ActualiseType);
         }

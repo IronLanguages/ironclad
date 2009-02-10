@@ -7,11 +7,6 @@ from System import IntPtr, NullReferenceException
 from Ironclad import CPyMarshal
 ";
 
-        public const string NEW_EXCEPTION = @"
-class {0}(_ironclad_base):
-    __module__ = '{1}'
-";
-
         public const string SCIPY_FIXES = @"
 class Frame(object):
     def __init__(self, globals_):
