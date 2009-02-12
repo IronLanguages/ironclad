@@ -44,6 +44,8 @@ namespace Ironclad
 
     public partial class Python25Mapper : Python25Api, IDisposable
     {
+        // occasional protected members for ease of testing (ipy subclass)
+    
         private PythonContext python;
         private StubReference stub;
         private PydImporter importer;
@@ -77,7 +79,7 @@ namespace Ironclad
         private StupidSet unknownNames = new StupidSet();
 
         // TODO: must be a better way to handle imports...
-        private string importName = "";
+        protected string importName = "";
         
         public Python25Mapper(CodeContext context): 
           this(context, null, new HGlobalAllocator())

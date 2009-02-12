@@ -1,4 +1,8 @@
-# The following symbols probably aren't defined anywhere. Someone might like to fix this.
+# objdump thinks that the real python25.dll has these symbols;
+# however, they do not appear to be 'officially' exported, or indeed
+# used anywhere.
+
+# this file is not used, it's just a note.
 
 PyStructSequence_UnnamedField
 Py_abstract_hack

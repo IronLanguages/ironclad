@@ -7,10 +7,13 @@ from tests.utils.memory import CreateTypes
 
 from Ironclad import Python25Mapper
 
+class TrivialP25MSubclass(Python25Mapper):
+    pass
 
-def WithMapper(func):
+
+def _WithMapper(func, mapperCls):
     def patched(*args):
-        mapper = Python25Mapper()
+        mapper = mapperCls()
         deallocTypes = CreateTypes(mapper)
         deallocs = [mapper.Dispose, deallocTypes]
         newArgs = args + (mapper, deallocs.append)
@@ -20,7 +23,9 @@ def WithMapper(func):
             for dealloc in deallocs:
                 dealloc()
     return patched
-        
+
+WithMapper = lambda f: _WithMapper(f, Python25Mapper)
+WithMapperSubclass = lambda f: _WithMapper(f, TrivialP25MSubclass)
 
 class TestCase(unittest.TestCase):
     
