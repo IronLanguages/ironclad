@@ -49,6 +49,7 @@ PyBuffer_FromReadWriteMemory
 PyBuffer_New
 
 PyMapping_HasKey
+PyMapping_Size
 
 PyObject_Cmp
 

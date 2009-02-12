@@ -48,6 +48,7 @@ namespace Ironclad
         public override IntPtr
         PyImport_AddModule(string name)
         {
+            name = this.FixImportName(name);
             this.CreateModulesContaining(name);
             return this.Store(this.GetModule(name));
         }
@@ -78,6 +79,20 @@ namespace Ironclad
                 Environment.CurrentDirectory = previousDir;
                 this.importName = "";
             }
+        }
+    
+        private string
+        FixImportName(string name)
+        {
+            if (this.importName == "")
+            {
+                return name;
+            }
+            if (this.importName.EndsWith(name))
+            {
+                return this.importName;
+            }
+            return name;
         }
 
         private object

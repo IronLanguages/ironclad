@@ -392,3 +392,11 @@ PyMapping_HasKey(PyObject *o, PyObject *key)
 	return 0;
 }
 
+
+Py_ssize_t
+PyMapping_Size(PyObject *o)
+{
+	return PyObject_Size(o);
+}
+
+
