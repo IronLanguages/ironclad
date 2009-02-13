@@ -17,6 +17,7 @@ from numpy._import_tools import PackageLoader
 real__init__ = PackageLoader.__init__
 def fake__init__(self):
     import scipy
+    import sys
     original = sys._getframe
     sys._getframe = lambda *_: Frame(scipy.__dict__)
     real__init__(self)

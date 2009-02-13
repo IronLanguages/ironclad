@@ -76,7 +76,7 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             """) % (location, bz2i__file__end, bz2ii__file__end))
 
 
-    def testNumPySciPyStuff(self):
+    def testNumPySciPyMatPlotLibStuff(self):
         # combine several tests into one, so we don't have to wait for multiple reloads
         # This test is a placeholder for  which fails since 1E20 is written as 1e20 in ipy
         self.assertRuns(dedent("""\
@@ -86,7 +86,7 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             import numpy as np
             
             #=====================================================
-            # perform a few basic sanity checks
+            # perform a few basic numpy sanity checks
             
             r1 = np.arange(20)
             r2 = np.arange(20)
@@ -96,6 +96,17 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             def assert_equals(a, b):
                 assert a == b, '%r != %r' % (a, b)
             assert_equals((1+3j), np.complex128(1+3j))
+            
+            #=====================================================
+            # test can do trivial mpl plot without crashing
+            
+            import matplotlib as mpl
+            mpl.use('ps')
+            import pylab
+
+            t = np.arange(0.0, 1.0+0.01, 0.01)
+            s = np.cos(2*2*np.pi*t)
+            pylab.plot(t, s)
             
             #=====================================================
             # test matrices probably work

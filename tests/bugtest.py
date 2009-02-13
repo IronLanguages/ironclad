@@ -28,6 +28,13 @@ class BugTest(TestCase):
         iter(C)
         # when this fails, fix PySeqIter_New and PyObject_GetIter
 
+    def testLog10FloatMixin(self):
+        class Floatish(float, object):
+            pass
+        num = Floatish(100.0)
+        self.assertRaises(TypeError, lambda: math.log10(num))
+        # when this fails stop patching log10 in import_code.py
+
     def testLongFromEmptyString(self):
         for str_ in ('', '   '):
             self.assertEquals(long(str_), 0, "you can fix PyNumber_Long now")
