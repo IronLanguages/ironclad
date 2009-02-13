@@ -529,6 +529,24 @@ class FieldsTest(TestCase):
         self.assertEquals(CPyMarshal.ReadPtr(fieldPtr), mapper.Store(None))
         self.assertEquals(mapper.RefCount(valuePtr), refcnt)
         
+    @WithMapper
+    def testStringField(self, mapper, addToCleanUp):
+        # note specified as read/write: however, STRING fields are always read-only
+        instance, fieldPtr = MakeInstanceWithField(MemberT.STRING, 0, mapper, addToCleanUp)
+        
+        def Set():
+            instance.attr = object()
+        self.assertRaises(AttributeError, Set)
+        
+        CPyMarshal.WritePtr(fieldPtr, IntPtr.Zero)
+        self.assertEquals(instance.attr, None)
+        
+        str_ = 'hullo I am a test string'
+        strPtr = Marshal.StringToHGlobalAnsi(str_)
+        addToCleanUp(lambda: Marshal.FreeHGlobal(strPtr))
+        
+        CPyMarshal.WritePtr(fieldPtr, strPtr)
+        self.assertEquals(instance.attr, str_)
         
 
 class MethodConnectionTestCase(TestCase):

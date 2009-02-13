@@ -1,4 +1,6 @@
 using System;
+using System.Runtime.InteropServices;
+
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
 
@@ -37,6 +39,29 @@ namespace Ironclad
                 this.mapper.ReleaseGIL();
             }
         }
+        
+        public object get_string_field(object instance, int offset)
+        {
+            this.mapper.EnsureGIL();
+            try
+            {
+                IntPtr instancePtr = this.mapper.Store(instance);
+                IntPtr address = CPyMarshal.Offset(instancePtr, offset);
+                IntPtr value = CPyMarshal.ReadPtr(address);
+                object ret = null;
+                if (value != IntPtr.Zero)
+                {
+                    ret = Marshal.PtrToStringAnsi(value);
+                }
+                this.mapper.DecRef(instancePtr);
+                return ret;
+            }
+            finally
+            {
+                this.mapper.ReleaseGIL();
+            }
+        }
+        
         public void set_object_field(object instance, int offset, object value)
         {
             this.mapper.EnsureGIL();
