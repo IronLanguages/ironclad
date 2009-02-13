@@ -163,7 +163,7 @@ namespace Ironclad
         }
 
         private static bool
-        TryGetMemberMethodSuffix(MemberT type, ref string suffix)
+        TryGetMemberMethodInfix(MemberT type, ref string suffix)
         {
             switch (type)
             {
@@ -182,6 +182,9 @@ namespace Ironclad
                 case MemberT.UBYTE:
                     suffix = "ubyte";
                     return true;
+                case MemberT.STRING:
+                    suffix = "string";
+                    return true;
                 case MemberT.OBJECT:
                     suffix = "object";
                     return true;
@@ -198,17 +201,17 @@ namespace Ironclad
 
             this.code.Append(CodeSnippets.CLEAR_GETTER_SETTER_CODE);
 
-            string suffix = null;
-            if (TryGetMemberMethodSuffix(member.type, ref suffix))
+            string infix = null;
+            if (TryGetMemberMethodInfix(member.type, ref infix))
             {
                 string getname = String.Format("__get_{0}", member.name);
-                this.code.Append(String.Format(CodeSnippets.MEMBER_GETTER_CODE, getname, member.offset, suffix));
+                this.code.Append(String.Format(CodeSnippets.MEMBER_GETTER_CODE, getname, member.offset, infix));
 
                 string setname = "None";
-                if ((member.flags & 1) == 0)
+                if ((member.flags & 1) == 0 && member.type != MemberT.STRING)
                 {
                     setname = String.Format("__set_{0}", member.name);
-                    this.code.Append(String.Format(CodeSnippets.MEMBER_SETTER_CODE, setname, member.offset, suffix));
+                    this.code.Append(String.Format(CodeSnippets.MEMBER_SETTER_CODE, setname, member.offset, infix));
                 }
                 this.code.Append(String.Format(CodeSnippets.PROPERTY_CODE, member.name, member.doc));
             }
