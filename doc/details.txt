@@ -157,10 +157,8 @@ kernel32.dll and msvcr71.dll.
 Other things
 
 Python25Structs.cs contains memory layouts for various CPython objects. I fear 
-the day when we have to deal with 64-bit machines; I wish C# had typedefs. This 
-concern also applies to all the function signatures in Python25Api, although the
-dispatcher-generating code in tools/ represents a first step towards solving this 
-problem. In the long term, a C# preprocessor is, sadly, on the cards.
+the day when we have to deal with 64-bit machines; I wish C# had typedefs. In 
+the long term, a C# preprocessor is, sadly, on the cards.
 
 
 

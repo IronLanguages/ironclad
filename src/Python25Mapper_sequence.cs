@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 
 using IronPython.Modules;
 using IronPython.Runtime;
@@ -57,6 +58,22 @@ namespace Ironclad
         {
             try
             {
+                if (CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type") == this.PyTuple_Type)
+                {
+                    IntPtr storagePtr = CPyMarshal.Offset(objPtr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
+                    uint size = CPyMarshal.ReadUIntField(objPtr, typeof(PyTupleObject), "ob_size");
+                    if (idx >= size)
+                    {
+                        throw PythonOps.IndexError("PySequence_GetItem: tuple index {0} out of range", idx);
+                    }
+                    
+                    IntPtr slotPtr = CPyMarshal.Offset(storagePtr, idx * CPyMarshal.PtrSize);
+                    IntPtr itemPtr =  CPyMarshal.ReadPtr(slotPtr);
+                    uint refcnt = CPyMarshal.ReadUIntField(itemPtr, typeof(PyObject), "ob_refcnt");
+                    CPyMarshal.WriteUIntField(itemPtr, typeof(PyObject), "ob_refcnt", refcnt + 1);
+                    return itemPtr;
+                }
+            
                 object sequence = this.Retrieve(objPtr);
                 object getitem;
                 if (PythonOps.TryGetBoundAttr(sequence, Symbols.GetItem, out getitem))

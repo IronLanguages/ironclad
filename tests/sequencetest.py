@@ -7,7 +7,7 @@ from tests.utils.testcase import TestCase, WithMapper
 from System import IntPtr, UInt32
 
 from Ironclad import CPyMarshal
-from Ironclad.Structs import PyListObject, PyNumberMethods, PySequenceMethods
+from Ironclad.Structs import PyListObject, PyNumberMethods, PyObject, PySequenceMethods, PyTupleObject
         
         
 class SequenceFunctionsTest(TestCase):
@@ -67,6 +67,25 @@ class SequenceFunctionsTest(TestCase):
             self.assertEquals(mapper.PySequence_GetItem(notseqPtr, 0), IntPtr.Zero)
             self.assertMapperHasError(mapper, TypeError)
 
+
+    @WithMapper
+    def testPySequence_GetItem_DoesNotActualiseTuples(self, mapper, _):
+        obj1 = object()
+        obj1Ptr = mapper.Store(obj1)
+        obj2 = object()
+        obj2Ptr = mapper.Store(obj2)
+        
+        tuplePtr = mapper.PyTuple_New(1)
+        CPyMarshal.WritePtrField(tuplePtr, PyTupleObject, "ob_item", obj1Ptr)
+        
+        # check that GetItem returns correct object, increffed
+        self.assertEquals(mapper.PySequence_GetItem(tuplePtr, 0), obj1Ptr)
+        self.assertEquals(CPyMarshal.ReadIntField(obj1Ptr, PyObject, "ob_refcnt"), 2)
+        
+        # replace item, check that correct object is retrieved
+        CPyMarshal.WritePtrField(tuplePtr, PyTupleObject, "ob_item", obj2Ptr)
+        self.assertEquals(mapper.Retrieve(tuplePtr), (obj2,))
+        
 
     @WithMapper
     def testPySequence_SetItem_List(self, mapper, _):
