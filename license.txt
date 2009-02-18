@@ -22,8 +22,6 @@ functions. The functions' implementations have not been changed,
 and the intent of all supporting changes is to preserve apparent 
 behaviour while removing currently-irrelevant information.
 
-Portions Copyright (c) Microsoft Corporation. All Rights Reserved.
-
 The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
 
