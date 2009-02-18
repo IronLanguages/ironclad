@@ -58,6 +58,7 @@ namespace Ironclad
         private Lock GIL;
 
         private bool alive = false;
+        private bool logErrors = false;
         private bool appliedNumpyHack = false;
         private bool appliedScipyHack = false;
         
@@ -244,6 +245,14 @@ namespace Ironclad
             get { return this.map.GCThreshold; }
             set { this.map.GCThreshold = value; }
         }
+        
+        public bool
+        LogErrors
+        {
+            get { return this.logErrors; }
+            set { this.logErrors = value; }
+        }
+        
         
         public void
         DumpMappingInfo(object id)

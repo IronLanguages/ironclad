@@ -58,6 +58,12 @@ def set_gc_threshold(value):
 def get_gc_threshold():
     return _mapper.GCThreshold
 
+def set_log_errors(value):
+    _mapper.LogErrors = value
+
+def get_log_errors():
+    return _mapper.LogErrors
+
 def gcwait():
     _mapper.ForceCleanup()
     GC.WaitForPendingFinalizers()
