@@ -32,6 +32,10 @@ namespace Ironclad
                     Exception clrException = value as Exception;
                     if (clrException != null)
                     {
+                        if (this.logErrors)
+                        {
+                            Console.WriteLine("Setting CPython error:\n\n{0}\n\n", clrException);
+                        }
                         value = InappropriateReflection.GetPythonException(clrException);
                     }
                 }
