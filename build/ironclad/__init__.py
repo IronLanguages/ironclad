@@ -1,5 +1,5 @@
 
-__version__ = '0.8.x'
+__version__ = '0.8.1'
 
 import sys
 if sys.platform != 'cli':
