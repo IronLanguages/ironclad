@@ -436,6 +436,15 @@ class Sqlite3Test(ModuleTestCase('sqlite3')):
         self.assertRuns()
         
 
+class PySVNTest(ModuleTestCase('pysvn')):
+
+    def testCanImport(self):
+        # this is *all* I care about at the moment; what it proves is
+        # that I can handle evil and misleading names being passed 
+        # into Py_InitModule4.
+        self.assertRuns()
+        
+
 class HashlibTest(ModuleTestCase('_hashlib')):
 
     def testCanImport(self):
@@ -452,6 +461,7 @@ class HashlibTest(ModuleTestCase('_hashlib')):
 suite = makesuite(
     BZ2Test,
     Sqlite3Test,
+    PySVNTest,
     HashlibTest,
     ExternalFunctionalityTest,
 )
