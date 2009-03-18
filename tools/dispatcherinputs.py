@@ -284,6 +284,7 @@ known_python25api_signatures = (
     
     ('PyObject_Call', 'ptr_ptrptrptr'),
     ('PyObject_Compare', 'int_ptrptr'),
+    ('PyObject_DelItemString', 'int_ptrstr'),
     ('PyObject_Free', 'void_ptr'),
     ('PyObject_GetAttr', 'ptr_ptrptr'),
     ('PyObject_GetAttrString', 'ptr_ptrstr'),

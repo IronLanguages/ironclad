@@ -274,6 +274,24 @@ class ObjectFunctionsTest(TestCase):
 
 
     @WithMapper
+    def testPyObject_DelItemString(self, mapper, _):
+        result = object()
+        contents = {'foo': 1}
+        class Subscriptable(object):
+            def __delitem__(self, key):
+                del contents[key]
+        
+        objPtr = mapper.Store(Subscriptable())
+        self.assertEquals(mapper.PyObject_DelItemString(objPtr, "foo"), 0)
+        self.assertMapperHasError(mapper, None)
+        self.assertEquals(contents, {})
+        
+        self.assertEquals(mapper.PyObject_DelItemString(objPtr, "foo"), -1)
+        self.assertMapperHasError(mapper, KeyError)
+        
+
+
+    @WithMapper
     def testPyObject_IsTrue(self, mapper, _):
         for trueval in ("hullo", 33, -1.5, True, [0], (0,), {1:2}, object()):
             ptr = mapper.Store(trueval)

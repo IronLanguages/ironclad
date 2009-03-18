@@ -265,6 +265,21 @@ namespace Ironclad
                 return -1;
             }
         }
+        
+        public override int
+        PyObject_DelItemString(IntPtr objPtr, string key)
+        {
+            try
+            {
+                PythonOperator.delitem(this.scratchContext, this.Retrieve(objPtr), key);
+                return 0;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
+        }
 
         public override int
         PyObject_IsTrue(IntPtr objPtr)
