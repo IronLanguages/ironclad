@@ -24,6 +24,8 @@ class Py_InitModule4_SetupTest(TestCase):
         self.assertEquals(_dispatcher.mapper, mapper, "dispatcher had wrong mapper")
         
 
+MODULE_PTR = IntPtr(54321)
+
 class Py_InitModule4_Test(TestCase):
 
     def assert_Py_InitModule4_withSingleMethod(self, mapper, methodDef, TestModule):
@@ -32,7 +34,7 @@ class Py_InitModule4_Test(TestCase):
             "test_module",
             methods,
             "test_docstring",
-            IntPtr.Zero,
+            MODULE_PTR,
             12345)
             
         module = mapper.Retrieve(modulePtr)
@@ -73,7 +75,7 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, __):
-            self.assertEquals((_, __), (IntPtr.Zero, IntPtr.Zero))
+            self.assertEquals((_, __), (MODULE_PTR, IntPtr.Zero))
             return resultPtr
         method, deallocMethod = MakeMethodDef("func", func, METH.NOARGS)
         
@@ -93,7 +95,7 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, argPtr):
-            self.assertEquals(_, IntPtr.Zero)
+            self.assertEquals(_, MODULE_PTR)
             self.assertEquals(mapper.Retrieve(argPtr), arg)
             return resultPtr
         method, deallocMethod = MakeMethodDef("func", func, METH.O)
@@ -115,7 +117,7 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, argsPtr):
-            self.assertEquals(_, IntPtr.Zero)
+            self.assertEquals(_, MODULE_PTR)
             self.assertEquals(mapper.Retrieve(argsPtr), args)
             return resultPtr
         method, deallocMethod = MakeMethodDef("func", func, METH.VARARGS)
@@ -138,7 +140,7 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, argsPtr, kwargsPtr):
-            self.assertEquals(_, IntPtr.Zero)
+            self.assertEquals(_, MODULE_PTR)
             self.assertEquals(mapper.Retrieve(argsPtr), args)
             self.assertEquals(mapper.Retrieve(kwargsPtr), kwargs)
             return resultPtr
