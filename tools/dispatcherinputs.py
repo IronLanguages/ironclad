@@ -180,6 +180,8 @@ known_python25api_signatures = (
     
     ('PyClass_New', 'ptr_ptrptrptr'),
     
+    ('PyCode_New', 'ptr_intintintintptrptrptrptrptrptrptrptrintptr'),
+    
     ('PyComplex_AsCComplex', 'cpx_ptr'),
     ('PyComplex_FromDoubles', 'ptr_doubledouble'),
     
@@ -215,6 +217,8 @@ known_python25api_signatures = (
     
     ('PyFloat_AsDouble', 'double_ptr'),
     ('PyFloat_FromDouble', 'ptr_double'),
+    
+    ('PyFrame_New', 'ptr_ptrptrptrptr'),
     
     ('PyGILState_Ensure', 'int_void'), # warning, not really int
     ('PyGILState_Release', 'void_int'), # warning, not really int
@@ -343,6 +347,9 @@ known_python25api_signatures = (
     ('PyThread_release_lock', 'void_ptr'),
     
     ('PyThreadState_GetDict', 'ptr_void'),
+    ('PyThreadState_Get', 'ptr_void'),
+    
+    ('PyTraceBack_Here', 'void_ptr'),
     
     ('PyTuple_GetSlice', 'ptr_ptrsizesize'),
     ('PyTuple_New', 'ptr_size'),
