@@ -12,13 +12,13 @@ dispatcher_field_types = (
 
 # args for generate_dispatcher_method
 dispatcher_PyCFunc_convenience_methods = (
-    (('ic_function_noargs', 'obj_objobj'), {'argtweak': ('null', 'null')}),
+    (('ic_function_noargs', 'obj_objobj'), {'argtweak': ('module', 'null')}),
     (('ic_method_noargs', 'obj_objobj'), {'argtweak': (0, 'null')}),
-    (('ic_function_objarg', 'obj_objobj'), {'argtweak': ('null', 0)}),
+    (('ic_function_objarg', 'obj_objobj'), {'argtweak': ('module', 0)}),
     (('ic_method_objarg', 'obj_objobj'), {}),
-    (('ic_function_varargs', 'obj_objobj'), {'argtweak': ('null', 0)}),
+    (('ic_function_varargs', 'obj_objobj'), {'argtweak': ('module', 0)}),
     (('ic_method_varargs', 'obj_objobj'), {}),
-    (('ic_function_kwargs', 'obj_objobjobj'), {'argtweak': ('null', 0, 1), 'nullablekwargs': 1}),
+    (('ic_function_kwargs', 'obj_objobjobj'), {'argtweak': ('module', 0, 1), 'nullablekwargs': 1}),
     (('ic_method_kwargs', 'obj_objobjobj'), {'nullablekwargs': 2}),
     
     (('ic_method_getter', 'obj_objptr'), {}),

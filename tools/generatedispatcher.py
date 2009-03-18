@@ -36,15 +36,21 @@ def get_callarg((index, code)):
     return 'arg%d' % index
 
 
+def isnormalarg(arg):
+    return arg not in ('null', 'module')
+
+
 def unpack_args(args, argtweak):
     if not argtweak:
         return args, map(get_callarg, enumerate(args))
     else:
         callargs = [None] * len(argtweak)
-        inargs = [None] * len(filter('null'.__ne__, argtweak))
+        inargs = [None] * len(filter(isnormalarg, argtweak))
         for calli, callarg in enumerate(argtweak):
             if callarg == 'null':
                 callargs[calli] = 'IntPtr.Zero'
+            elif callarg == 'module':
+                callargs[calli] = 'this.modulePtr'
             else:
                 inargs[callarg] = args[callarg]
                 callargs[calli] = get_callarg((callarg, args[callarg]))

@@ -11,11 +11,18 @@ namespace Ironclad
         // just pretend this is written in Python
         public Python25Mapper mapper;
         public PythonDictionary table;
+        private IntPtr modulePtr;
         
-        public Dispatcher(Python25Mapper inMapper, PythonDictionary inTable)
+        public Dispatcher(Python25Mapper inMapper, PythonDictionary inTable) :
+            this(inMapper, inTable, IntPtr.Zero)
+        {
+        }
+        
+        public Dispatcher(Python25Mapper inMapper, PythonDictionary inTable, IntPtr module)
         {
             this.mapper = inMapper;
             this.table = inTable;
+            this.modulePtr = module;
         }
         
         public object get_object_field(object instance, int offset)
