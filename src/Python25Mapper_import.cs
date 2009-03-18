@@ -88,8 +88,10 @@ namespace Ironclad
             {
                 return name;
             }
-            if (this.importName.EndsWith(name))
+            if (this.importName.Contains(name))
             {
+                // WTF!? Contains!? Yes.
+                // By rights, that should be EndsWith, but pysvn is evil.
                 return this.importName;
             }
             return name;
