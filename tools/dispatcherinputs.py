@@ -156,6 +156,7 @@ protocol_field_types = (
     (('sq_slice', 'ssizessizeargfunc', '__getslice__'), {'template': SQ_SLICE_HACK_TEMPLATE_TEMPLATE}),
     (('sq_ass_item', 'ssizeobjargproc', '__setitem__'), {}),
     (('sq_ass_slice', 'ssizessizeobjargproc', '__setslice__'), {'template': SQ_SLICE_HACK_TEMPLATE_TEMPLATE}),
+    (('sq_contains', 'objobjproc', '__contains__'), {}),
     
     # PyMappingMethods
     (('mp_length', 'lenfunc', '__len__'), {'template': LEN_TEMPLATE_TEMPLATE}),
@@ -297,6 +298,7 @@ known_python25api_signatures = (
     ('PyObject_GetIter', 'ptr_ptr'),
     ('PyObject_HasAttr', 'int_ptrptr'),
     ('PyObject_HasAttrString', 'int_ptrstr'),
+    ('PyObject_Hash', 'long_ptr'),
     ('PyObject_Init', 'ptr_ptrptr'),
     ('PyObject_IsInstance', 'int_ptrptr'),
     ('PyObject_IsTrue', 'int_ptr'),

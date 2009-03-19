@@ -27,7 +27,7 @@ namespace Ironclad
             "mp_subscript", "mp_ass_subscript", "mp_length" 
         };
         private readonly string[] SQ_FIELDS = new string[] { 
-            "sq_item", "sq_concat", "sq_ass_item", "sq_length", "sq_slice", "sq_ass_slice" 
+            "sq_item", "sq_concat", "sq_ass_item", "sq_length", "sq_slice", "sq_ass_slice", "sq_contains" 
         };
         private readonly string[] NB_FIELDS = new string[] { 
             "nb_add", "nb_subtract", "nb_multiply", "nb_divide", "nb_true_divide", 

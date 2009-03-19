@@ -313,6 +313,22 @@ namespace Ironclad
                 return UInt32.MaxValue;
             }
         }
+        
+        
+        public override int
+        PyObject_Hash(IntPtr objPtr)
+        {
+            try
+            {
+                return PythonOps.Hash(this.scratchContext, this.Retrieve(objPtr));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
+        }
+        
 
         public override IntPtr
         PyObject_Str(IntPtr objPtr)

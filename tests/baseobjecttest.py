@@ -290,6 +290,14 @@ class ObjectFunctionsTest(TestCase):
         self.assertMapperHasError(mapper, KeyError)
         
 
+    @WithMapper
+    def testPyObject_Hash(self, mapper, _):
+        self.assertEquals(mapper.PyObject_Hash(mapper.Store("fooble")), hash("fooble"))
+        self.assertMapperHasError(mapper, None)
+        
+        self.assertEquals(mapper.PyObject_Hash(mapper.Store({})), -1)
+        self.assertMapperHasError(mapper, TypeError)
+
 
     @WithMapper
     def testPyObject_IsTrue(self, mapper, _):

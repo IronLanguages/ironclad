@@ -1058,6 +1058,20 @@ class SequenceMethodsTest(MethodConnectionTestCase):
         deallocSeq()
 
 
+    def testContains(self):
+        arg = object()
+        result = object()
+        def Contains(p1, p2):
+            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEquals(self.mapper.Retrieve(p2), arg)
+            return 1
+        
+        seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_contains': Contains})
+        typeSpec = {"tp_as_sequence": seq}
+        self.assertTypeMethodCall(typeSpec, "__contains__", (arg,), {}, 1)
+        deallocSeq()
+
+
     def testGetitem(self):
         idx = 123
         result = object()
