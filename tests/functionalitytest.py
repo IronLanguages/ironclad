@@ -46,6 +46,7 @@ DLL_PATH = os.path.join("build", "ironclad", "python25.dll")
 
 
 class ExternalFunctionalityTest(FunctionalTestCase):
+
     def testImportHookSimple(self):
         self.assertRuns(dedent("""\
             import bz2
@@ -65,15 +66,25 @@ class ExternalFunctionalityTest(FunctionalTestCase):
         
         # we test .endswith, rather than the full path, because, on WinXP,  the __file__ 
         # contains annoying stuff like 'docume~1' instead of 'Documents and Settings'.
-        bz2i__file__end = os.path.join('nastypackage', 'bz2.pyd')
-        bz2ii__file__end = os.path.join('nastypackage', 'another', 'bz2.pyd')
+        bz2i_path_end = 'nastypackage'
+        bz2ii_path_end = os.path.join('nastypackage', 'another')
         self.assertRuns(dedent("""\
+            import os
             sys.path.insert(0, %r)
+            bz2i_path_end = %r
+            bz2ii_path_end = %r
+            
             import nastypackage.bz2 as testbz2i
             import nastypackage.another.bz2 as testbz2ii
-            assert testbz2i.__file__.endswith(%r)
-            assert testbz2ii.__file__.endswith(%r)
-            """) % (location, bz2i__file__end, bz2ii__file__end))
+            
+            assert len(testbz2i.__path__) == 1
+            assert testbz2i.__path__[0].endswith(bz2i_path_end)
+            assert len(testbz2ii.__path__) == 1
+            assert testbz2ii.__path__[0].endswith(bz2ii_path_end)
+            
+            assert testbz2i.__file__.endswith(os.path.join(bz2i_path_end, 'bz2.pyd'))
+            assert testbz2ii.__file__.endswith(os.path.join(bz2ii_path_end, 'bz2.pyd'))
+            """) % (location, bz2i_path_end, bz2ii_path_end))
 
 
     def testNumPySciPyMatPlotLibStuff(self):
@@ -130,9 +141,12 @@ class ExternalFunctionalityTest(FunctionalTestCase):
     
             test_complex_type(np.cfloat)
             test_complex_type(np.cdouble)
+            
             # this one is a known failure in certain environments, 
             #  butI'm not sure how to identify those environments
             #test_complex_type(np.clongdouble)
+            
+            
             """))
  
 

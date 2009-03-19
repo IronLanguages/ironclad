@@ -81,6 +81,7 @@ namespace Ironclad
 
         // TODO: must be a better way to handle imports...
         protected string importName = "";
+        protected string importFile = null;
         
         public Python25Mapper(CodeContext context): 
           this(context, null, new HGlobalAllocator())

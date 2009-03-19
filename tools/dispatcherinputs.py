@@ -275,6 +275,7 @@ known_python25api_signatures = (
     ('PyNumber_Float', 'ptr_ptr'),
     ('PyNumber_FloorDivide', 'ptr_ptrptr'),
     ('PyNumber_Index', 'ptr_ptr'),
+    ('PyNumber_InPlaceRemainder', 'ptr_ptrptr'),
     ('PyNumber_Int', 'ptr_ptr'),
     ('PyNumber_Long', 'ptr_ptr'),
     ('PyNumber_Lshift', 'ptr_ptrptr'),

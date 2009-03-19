@@ -5,6 +5,7 @@ PyNumber_Divide div
 PyNumber_TrueDivide truediv
 PyNumber_FloorDivide floordiv
 PyNumber_Remainder mod
+PyNumber_InPlaceRemainder imod
 PyNumber_Lshift lshift
 PyNumber_Rshift rshift
 PyNumber_And and_
