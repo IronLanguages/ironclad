@@ -13,12 +13,7 @@ class Loader(object):
         import sys
         if name not in sys.modules:
             self.mapper.LoadModule(self.path, name)
-            module = self.mapper.GetModule(name)
-            module.__file__ = self.path
-            sys.modules[name] = module
-            if '.' in name:
-                parent_name, child_name = name.rsplit('.', 1)
-                setattr(sys.modules[parent_name], child_name, module)
+            sys.modules[name] = self.mapper.GetModule(name)
         return sys.modules[name]
 
 

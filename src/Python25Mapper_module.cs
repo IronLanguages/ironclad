@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -28,6 +29,13 @@ namespace Ironclad
 
             globals["__doc__"] = doc;
             globals["__name__"] = name;
+            globals["__file__"] = this.importFile;
+            List __path__ = new List();
+            if (this.importFile != null)
+            {
+                __path__.append(Path.GetDirectoryName(this.importFile));
+            }
+            globals["__path__"] = __path__;
             globals["_dispatcher"] = moduleDispatcher;
 
             StringBuilder moduleCode = new StringBuilder();
@@ -37,6 +45,7 @@ namespace Ironclad
             Scope module = new Scope(globals);
             this.ExecInModule(moduleCode.ToString(), module);
             this.AddModule(importname, module);
+            this.CreateModulesContaining(importname);
             return this.Store(module);
         }
         

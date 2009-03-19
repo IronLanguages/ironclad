@@ -485,6 +485,9 @@ class PyNumber_Test(TestCase):
     def testPyNumber_Remainder(self):
         self.assertBinaryOp("PyNumber_Remainder", operator.mod)
     
+    def testPyNumber_Remainder(self):
+        self.assertBinaryOp("PyNumber_InPlaceRemainder", operator.imod)
+    
     def testPyNumber_Lshift(self):
         self.assertBinaryOp("PyNumber_Lshift", operator.lshift)
     

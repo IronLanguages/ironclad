@@ -36,6 +36,7 @@ namespace Ironclad
         PyTraceBack_Here(IntPtr frame)
         {
             Console.WriteLine("PyTraceBack_Here: {0}", this.Retrieve(frame));
+            Console.WriteLine("Current error is: {0}", this.LastException);
         }
     }
 }

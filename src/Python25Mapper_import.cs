@@ -66,6 +66,7 @@ namespace Ironclad
         LoadModule(string path, string name)
         {
             this.importName = name;
+            this.importFile = path;
             string dir = Path.GetDirectoryName(path);
             string library = Path.GetFileName(path);
             string previousDir = Environment.CurrentDirectory;
@@ -78,6 +79,7 @@ namespace Ironclad
             {
                 Environment.CurrentDirectory = previousDir;
                 this.importName = "";
+                this.importFile = null;
             }
         }
     
