@@ -212,6 +212,7 @@ NUMSEQMAP_METHODS = {
     "sq_ass_item": Ironclad.dgt_int_ptrsizeptr,
     "sq_ass_slice": Ironclad.dgt_int_ptrsizesizeptr,
     "sq_length": Ironclad.dgt_size_ptr,
+    "sq_contains": Ironclad.dgt_int_ptrptr,
     
     "mp_length": Ironclad.dgt_size_ptr,
     "mp_subscript": Ironclad.dgt_ptr_ptrptr,
