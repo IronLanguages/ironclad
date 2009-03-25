@@ -340,11 +340,36 @@ typedef struct _typeobject {
 	destructor tp_del;
 } PyTypeObject;
 
+typedef struct {
+	Py_ssize_t ob_refcnt;
+	struct _typeobject *ob_type;
+    PyObject	*cl_bases;	/* A tuple of class objects */
+    PyObject	*cl_dict;	/* A dictionary */
+    PyObject	*cl_name;	/* A string */
+    /* The following three are functions or NULL */
+    PyObject	*cl_getattr;
+    PyObject	*cl_setattr;
+    PyObject	*cl_delattr;
+} PyClassObject;
+
+typedef struct {
+	Py_ssize_t ob_refcnt;
+	struct _typeobject *ob_type;
+    PyClassObject *in_class;	/* The class object */
+    PyObject	  *in_dict;	/* A dictionary */
+    PyObject	  *in_weakreflist; /* List of weak references */
+} PyInstanceObject;
+
 #define PyType_HasFeature(t,f)  (((t)->tp_flags & (f)) != 0)
 
 #define PyObject_TypeCheck(ob, tp) \
 	((ob)->ob_type == (tp) || PyType_IsSubtype((ob)->ob_type, (tp)))
 
+#define PyType_Check(op) PyObject_TypeCheck(op, &PyType_Type)
+
+
+#define PyClass_Check(op) ((op)->ob_type == &PyClass_Type)
+#define PyInstance_Check(op) ((op)->ob_type == &PyInstance_Type)
 #define PyTuple_Check(op) PyObject_TypeCheck(op, &PyTuple_Type)
 #define PyString_Check(op) PyObject_TypeCheck(op, &PyString_Type)
 #define PyFloat_Check(op) PyObject_TypeCheck(op, &PyFloat_Type)
@@ -354,7 +379,24 @@ typedef struct _typeobject {
 #define PyDict_CheckExact(op) ((op)->ob_type == &PyDict_Type)
 #define PyCObject_Check(op) ((op)->ob_type == &PyCObject_Type)
 #define PyBuffer_Check(op) ((op)->ob_type == &PyBuffer_Type)
+#define PyTraceBack_Check(v) ((v)->ob_type == &PyTraceBack_Type)
 #define Py_END_OF_BUFFER	(-1)
+
+
+#define PyExceptionClass_Check(x)					\
+	(PyClass_Check((x))						\
+	 || (PyType_Check((x)) && PyType_IsSubtype(			\
+		     (PyTypeObject*)(x), (PyTypeObject*)PyExc_BaseException)))
+
+
+#define PyExceptionInstance_Check(x)			\
+	(PyInstance_Check((x)) ||			\
+	 (PyType_IsSubtype((x)->ob_type, (PyTypeObject*)PyExc_BaseException)))
+
+#define PyExceptionInstance_Class(x)					\
+	((PyInstance_Check((x))						\
+	  ? (PyObject*)((PyInstanceObject*)(x))->in_class		\
+	  : (PyObject*)((x)->ob_type)))
 
 
 #define PyObject_MALLOC		PyObject_Malloc
@@ -379,9 +421,61 @@ typedef
 
 typedef void (*PyOS_sighandler_t)(int);
 
+//typedef int (*Py_tracefunc)(PyObject *, struct _frame *, int, PyObject *);
+typedef int (*Py_tracefunc)(PyObject *, void *, int, PyObject *);
+
+typedef void PyInterpreterState;
+
+#define PyThreadState_GET() (_PyThreadState_Current)
+
+typedef struct _ts {
+    /* See Python/ceval.c for comments explaining most fields */
+
+    struct _ts *next;
+    PyInterpreterState *interp;
+
+    struct _frame *frame;
+    int recursion_depth;
+    /* 'tracing' keeps track of the execution depth when tracing/profiling.
+       This is to prevent the actual trace/profile code from being recorded in
+       the trace/profile. */
+    int tracing;
+    int use_tracing;
+
+    Py_tracefunc c_profilefunc;
+    Py_tracefunc c_tracefunc;
+    PyObject *c_profileobj;
+    PyObject *c_traceobj;
+
+    PyObject *curexc_type;
+    PyObject *curexc_value;
+    PyObject *curexc_traceback;
+
+    PyObject *exc_type;
+    PyObject *exc_value;
+    PyObject *exc_traceback;
+
+    PyObject *dict;  /* Stores per-thread state */
+
+    /* tick_counter is incremented whenever the check_interval ticker
+     * reaches zero. The purpose is to give a useful measure of the number
+     * of interpreted bytecode instructions in a given thread.  This
+     * extremely lightweight statistic collector may be of interest to
+     * profilers (like psyco.jit()), although nothing in the core uses it.
+     */
+    int tick_counter;
+
+    int gilstate_counter;
+
+    PyObject *async_exc; /* Asynchronous exception to raise */
+    long thread_id; /* Thread id where this tstate was created */
+
+    /* XXX signal handlers should also be here */
+
+} PyThreadState;
+
 // Faked declarations for things we hope never to use, ever:
 
-typedef void PyThreadState;
 typedef void PyCompilerFlags;
 typedef void PyArena;
 typedef void PyCodeObject;
@@ -391,7 +485,6 @@ typedef void PyFutureFeatures;
 typedef void PyTryBlock;
 typedef void PyGenObject;
 //typedef void PyMethodChain;
-typedef void PyInterpreterState;
 typedef void PySliceObject;
 typedef void PyStructSequence_Desc;
 typedef void PySTEntryObject;
@@ -404,9 +497,6 @@ typedef void *mod_ty;
 typedef void node;
 typedef void grammar;
 typedef void perrdetail;
-
-//typedef int (*Py_tracefunc)(PyObject *, struct _frame *, int, PyObject *);
-typedef int (*Py_tracefunc)(PyObject *, void *, int, PyObject *);
 
 // typedef struct _frame *(*PyThreadFrameGetter)(PyThreadState *self_);
 typedef void *(*PyThreadFrameGetter)(PyThreadState *self_);

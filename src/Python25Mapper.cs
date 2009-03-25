@@ -72,9 +72,8 @@ namespace Ironclad
         private List<IntPtr> tempObjects = new List<IntPtr>();
         private Stack<dgt_void_void> exitfuncs = new Stack<dgt_void_void>();
 
-        private LocalDataStoreSlot threadDictStore = Thread.AllocateDataSlot();
         private LocalDataStoreSlot threadLockStore = Thread.AllocateDataSlot();
-        private LocalDataStoreSlot threadErrorStore = Thread.AllocateDataSlot();
+        private LocalDataStoreSlot threadStateStore = Thread.AllocateDataSlot();
 
         // one day, perhaps, this 'set' will be empty
         private StupidSet unknownNames = new StupidSet();
@@ -188,6 +187,10 @@ namespace Ironclad
             }
 
             this.alive = false;
+            while (this.exitfuncs.Count > 0)
+            {
+                this.exitfuncs.Pop()();
+            }
 
             if (!this.appliedNumpyHack)
             {
@@ -206,10 +209,6 @@ namespace Ironclad
             foreach (IntPtr FILE in this.FILEs.Values)
             {
                 Unmanaged.fclose(FILE);
-            }
-            while (this.exitfuncs.Count > 0)
-            {
-                this.exitfuncs.Pop()();
             }
             if (this.stub != null)
             {
@@ -635,6 +634,12 @@ namespace Ironclad
         Fill_Py_OptimizeFlag(IntPtr address)
         {
             CPyMarshal.WriteInt(address, 2);
+        }
+        
+        public override void
+        Fill__PyThreadState_Current(IntPtr address)
+        {
+            CPyMarshal.WritePtr(address, IntPtr.Zero);
         }
     }
 

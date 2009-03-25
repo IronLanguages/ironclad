@@ -26,12 +26,6 @@ namespace Ironclad
             return code;
         }
         
-        public override IntPtr
-        PyThreadState_Get()
-        {
-            return IntPtr.Zero;
-        }
-        
         public override void
         PyTraceBack_Here(IntPtr frame)
         {

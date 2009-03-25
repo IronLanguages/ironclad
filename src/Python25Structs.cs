@@ -132,6 +132,40 @@ namespace Ironclad
             }
         }
         
+        
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct PyThreadState
+        {
+            public IntPtr next;          // not used
+            public IntPtr interp;        // not used
+
+            public IntPtr frame;         // not used
+            public int recursion_depth;  // not used
+            public int tracing;          // not used
+            public int use_tracing;      // not used
+
+            public IntPtr c_profilefunc; // not used
+            public IntPtr c_tracefunc;   // not used
+            public IntPtr c_profileobj;  // not used
+            public IntPtr c_traceobj;    // not used
+
+            public IntPtr curexc_type;
+            public IntPtr curexc_value;
+            public IntPtr curexc_traceback;
+
+            public IntPtr exc_type;      // not used
+            public IntPtr exc_value;     // not used
+            public IntPtr exc_traceback; // not used
+
+            public IntPtr dict;
+
+            public int tick_counter;     // not used
+            public int gilstate_counter; // not used
+            public IntPtr async_exc;     // not used
+            public int thread_id;        // not used
+        }
+        
+        
         [StructLayout(LayoutKind.Sequential, Pack=1)]
         public struct Py_complex
         {
@@ -371,4 +405,5 @@ namespace Ironclad
         }
     }
 }
+
 

@@ -190,6 +190,26 @@ namespace Ironclad
                 return -1;
             }
         }
+        
+        public override int
+        PyObject_IsSubclass(IntPtr derivedPtr, IntPtr clsPtr)
+        {
+            try
+            {
+                object derived = this.Retrieve(derivedPtr);
+                object cls = this.Retrieve(clsPtr);
+                if (Builtin.issubclass(this.scratchContext, derived, cls))
+                {
+                    return 1;
+                }
+                return 0;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
+        }
 
         public override IntPtr
         PyObject_GetAttrString(IntPtr objPtr, string name)

@@ -15,21 +15,27 @@ class LockTest(TestCase):
         
         self.assertEquals(lock.Acquire(), 1)
         self.assertEquals(lock.IsAcquired, True)
+        self.assertEquals(lock.CountAcquired, 1)
         
         self.assertEquals(lock.Acquire(), 2)
         self.assertEquals(lock.IsAcquired, True)
+        self.assertEquals(lock.CountAcquired, 2)
 
         lock.Release()
         self.assertEquals(lock.IsAcquired, True)
+        self.assertEquals(lock.CountAcquired, 1)
         
         self.assertEquals(lock.Acquire(), 2)
         self.assertEquals(lock.IsAcquired, True)
+        self.assertEquals(lock.CountAcquired, 2)
 
         lock.Release()
         self.assertEquals(lock.IsAcquired, True)
+        self.assertEquals(lock.CountAcquired, 1)
 
         lock.Release()
         self.assertEquals(lock.IsAcquired, False)
+        self.assertEquals(lock.CountAcquired, 0)
 
 
     def testMultiThreaded(self):

@@ -95,7 +95,20 @@ namespace Ironclad
         {
             get
             {
-                return (owner == Thread.CurrentThread.ManagedThreadId) && (count > 0);
+                return (this.owner == Thread.CurrentThread.ManagedThreadId) && (this.count > 0);
+            }
+        }
+        
+        public int
+        CountAcquired
+        {
+            get
+            {
+                if (this.owner == Thread.CurrentThread.ManagedThreadId)
+                {
+                    return this.count;
+                }
+                return 0;
             }
         }
         

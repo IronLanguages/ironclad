@@ -53,6 +53,9 @@ _Py_TrueStruct PyIntObject
 
 Py_OptimizeFlag int
 
+_PyThreadState_Current void*
+
+
 
 
 
