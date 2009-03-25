@@ -7,6 +7,8 @@ from System import IntPtr
 from System.Reflection import BindingFlags
 from System.Threading import AutoResetEvent, Thread, ThreadStart
 
+from Ironclad import CPyMarshal
+from Ironclad.Structs import PyThreadState
 
 def GetGIL(mapper):    
     _gilField = mapper.GetType().GetMember(
@@ -112,34 +114,6 @@ class PyThread_functions_Test(TestCase):
         
         lock = mapper.Retrieve(lockPtr)
         self.assertEquals(lock.IsAcquired, False)
-        
-
-class PyThreadStateDict_Test(TestCase):
-    
-    @WithMapper
-    def testPyThreadState_GetDict(self, mapper, _):
-        store = {}
-        def GrabThreadDict(key):
-            ptr = mapper.PyThreadState_GetDict()
-            mapper.IncRef(ptr)
-            local = mapper.Retrieve(ptr)
-            local['content'] = key
-            store[key] = local
-            store[key + 'ptr'] = ptr
-        
-        GrabThreadDict('main')
-        for name in ('other', 'another', 'and another'):
-            thread = Thread(ThreadStart(lambda: GrabThreadDict(name)))
-            thread.Start()
-            thread.Join()
-        
-        gcwait()
-        self.assertEquals(store['main']['content'], 'main')
-        self.assertEquals(mapper.RefCount(store['mainptr']), 2, 'lost reference to dict while thread still active')
-        
-        for name in ('other', 'another', 'and another'):
-            self.assertEquals(store[name]['content'], name)
-            self.assertEquals(mapper.RefCount(store[name + 'ptr']), 1, 'failed to dispose of thread dicts when threads ended')
 
 
 class PyThreadExceptionTest(TestCase):
@@ -158,8 +132,39 @@ class PyThreadExceptionTest(TestCase):
         self.assertEquals(isinstance(mapper.LastException, TypeError), True)
 
 
-class PyEvalGILThreadTest(TestCase):
+class PyThreadStateTest(TestCase):
+    
+    @WithMapper
+    def testUnmanagedThreadState(self, mapper, _):
+        # current thread state should be null if nobody has the GIL
+        self.assertEquals(CPyMarshal.ReadPtr(mapper._PyThreadState_Current), IntPtr.Zero)
+        
+        mapper.EnsureGIL()
+        mapper.LastException = NameError("Harold")
+        ts = CPyMarshal.ReadPtr(mapper._PyThreadState_Current)
+        curexc_type = CPyMarshal.ReadPtrField(ts, PyThreadState, "curexc_type")
+        curexc_value = CPyMarshal.ReadPtrField(ts, PyThreadState, "curexc_value")
+        self.assertEquals(mapper.Retrieve(curexc_type), NameError)
+        self.assertEquals(mapper.Retrieve(curexc_value), "Harold")
+        mapper.ReleaseGIL()
+        
+        def CheckOtherThread():
+            mapper.EnsureGIL()
+            ts2 = CPyMarshal.ReadPtr(mapper._PyThreadState_Current)
+            self.assertNotEquals(ts2, ts)
+            curexc_type = CPyMarshal.ReadPtrField(ts2, PyThreadState, "curexc_type")
+            curexc_value = CPyMarshal.ReadPtrField(ts2, PyThreadState, "curexc_value")
+            self.assertEquals(curexc_type, IntPtr.Zero)
+            self.assertEquals(curexc_value, IntPtr.Zero)
+            mapper.ReleaseGIL()
+        thread = Thread(ThreadStart(CheckOtherThread))
+        thread.Start()
+        thread.Join()
+        
+            
 
+
+class PyEvalGILThreadTest(TestCase):
 
     @WithMapper
     def testMultipleSaveRestoreOneThread(self, mapper, _):
@@ -262,8 +267,8 @@ class PyEvalGILThreadTest(TestCase):
 
 suite = makesuite(
     PyThread_functions_Test,
-    PyThreadStateDict_Test,
     PyThreadExceptionTest,
+    PyThreadStateTest,
     PyEvalGILThreadTest,
 )
 

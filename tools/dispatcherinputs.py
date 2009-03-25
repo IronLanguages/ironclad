@@ -200,13 +200,8 @@ known_python25api_signatures = (
     
     ('PyDictProxy_New', 'ptr_ptr'),
     
-    ('PyErr_Clear', 'void_void'),
-    ('PyErr_Fetch', 'void_ptrptrptr'),
-    ('PyErr_GivenExceptionMatches', 'int_ptrptr'),
     ('PyErr_NewException', 'ptr_strptrptr'),
-    ('PyErr_Occurred', 'ptr_void'),
     ('PyErr_Print', 'void_void'),
-    ('PyErr_Restore', 'void_ptrptrptr'),
     
     ('PyEval_GetBuiltins', 'ptr_void'),
     ('PyEval_InitThreads', 'void_void'),
@@ -301,6 +296,7 @@ known_python25api_signatures = (
     ('PyObject_Hash', 'long_ptr'),
     ('PyObject_Init', 'ptr_ptrptr'),
     ('PyObject_IsInstance', 'int_ptrptr'),
+    ('PyObject_IsSubclass', 'int_ptrptr'),
     ('PyObject_IsTrue', 'int_ptr'),
     ('PyObject_Malloc', 'ptr_size'),
     ('PyObject_Realloc', 'ptr_ptrsize'),
@@ -348,9 +344,6 @@ known_python25api_signatures = (
     ('PyThread_allocate_lock', 'ptr_void'),
     ('PyThread_free_lock', 'void_ptr'),
     ('PyThread_release_lock', 'void_ptr'),
-    
-    ('PyThreadState_GetDict', 'ptr_void'),
-    ('PyThreadState_Get', 'ptr_void'),
     
     ('PyTraceBack_Here', 'void_ptr'),
     

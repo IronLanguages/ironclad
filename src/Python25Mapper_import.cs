@@ -65,6 +65,7 @@ namespace Ironclad
         public void 
         LoadModule(string path, string name)
         {
+            this.EnsureGIL();
             this.importName = name;
             this.importFile = path;
             string dir = Path.GetDirectoryName(path);
@@ -80,6 +81,7 @@ namespace Ironclad
                 Environment.CurrentDirectory = previousDir;
                 this.importName = "";
                 this.importFile = null;
+                this.ReleaseGIL();
             }
         }
     

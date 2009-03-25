@@ -404,6 +404,37 @@ class ObjectFunctionsTest(TestCase):
             self.assertMapperHasError(mapper, expectException)
             mapper.DecRef(instPtr)
             mapper.DecRef(clsPtr)
+
+
+    @WithMapper
+    def testPyObject_IsSubclass(self, mapper, _):
+        class C(object): pass
+        class D(C): pass
+        
+        data = (
+            (object, object),
+            (int, object),
+            (D, C),
+            
+            (C, D),
+            (object, str),
+            
+            (1, 2),
+        )
+        for (sub, cls) in data:
+            expectResult = -1
+            expectException = None
+            try:
+                expectResult = int(isinstance(sub, cls))
+            except Exception, e:
+                expectException = type(e)
+            
+            subPtr = mapper.Store(sub)
+            clsPtr = mapper.Store(cls)
+            self.assertEquals(mapper.PyObject_IsInstance(subPtr, clsPtr), expectResult)
+            self.assertMapperHasError(mapper, expectException)
+            mapper.DecRef(subPtr)
+            mapper.DecRef(clsPtr)
         
 
     

@@ -68,6 +68,7 @@ _others = {
     "_Py_EllipsisObject": Marshal.SizeOf(PyObject),
     "_Py_ZeroStruct": Marshal.SizeOf(PyIntObject),
     "_Py_TrueStruct": Marshal.SizeOf(PyIntObject),
+    "_PyThreadState_Current": Marshal.SizeOf(IntPtr),
 }
 def CreateTypes(mapper, readyTypes=True):
     blocks = []
@@ -89,4 +90,5 @@ def CreateTypes(mapper, readyTypes=True):
             Marshal.FreeHGlobal(block)
     
     return DestroyTypes
+
 

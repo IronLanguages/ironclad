@@ -2,6 +2,7 @@
 import sys
 
 from tests.utils.runtest import makesuite, run
+from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase, WithMapper
 
 from tests.utils.allocators import GetAllocatingTestAllocator
@@ -21,8 +22,7 @@ def GetMallocTest(MALLOC_NAME):
             resultPtr = getattr(mapper, MALLOC_NAME)(123)
             self.assertEquals(allocs, [(resultPtr, 123)], "bad alloc")
             mapper.Dispose()
-        
-        
+            
         def testZero(self):
             allocs = []
             mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
@@ -74,6 +74,10 @@ def GetReallocTest(MALLOC_NAME, REALLOC_NAME):
             frees = []
             mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
             
+            deallocTypes = CreateTypes(mapper)
+            mapper.EnsureGIL()
+            mapper.ReleaseGIL()
+            
             mem1 = getattr(mapper, MALLOC_NAME)(4)
             del allocs[:]
             self.assertEquals(getattr(mapper, REALLOC_NAME)(mem1, sys.maxint), IntPtr.Zero)
@@ -82,6 +86,7 @@ def GetReallocTest(MALLOC_NAME, REALLOC_NAME):
             self.assertEquals(frees, [])
             self.assertEquals(allocs, [])
             mapper.Dispose()
+            deallocTypes()
             
             
         def testEasy(self):

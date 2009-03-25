@@ -70,6 +70,7 @@ class Py_InitModule4_Test(TestCase):
 
     def test_Py_InitModule4_NoArgsFunction(self):
         mapper = Python25Mapper()
+        deallocTypes = CreateTypes(mapper)
         result = object()
         resultPtr = mapper.Store(result)
         mapper.IncRef(resultPtr)
@@ -84,6 +85,7 @@ class Py_InitModule4_Test(TestCase):
             
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
         deallocMethod()
+        deallocTypes()
 
 
     def test_Py_InitModule4_ObjargFunction(self):

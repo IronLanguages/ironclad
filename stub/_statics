@@ -39,6 +39,7 @@ PyTuple_Type
 PyUnicode_Type
 PyNone_Type
 PyEllipsis_Type
+_PyThreadState_Current
 _PyWeakref_RefType
 _PyWeakref_ProxyType
 _PyWeakref_CallableProxyType

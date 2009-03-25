@@ -3,43 +3,36 @@ using System.Threading;
 
 using IronPython.Runtime;
 
+using Ironclad.Structs;
+
 namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        public override IntPtr
-        PyThreadState_GetDict()
+        private ThreadState
+        ts
         {
-            ThreadLocalDict threadDict = (ThreadLocalDict)Thread.GetData(this.threadDictStore);
-            if (threadDict == null)
+            get
             {
-                threadDict = new ThreadLocalDict(this);
-                Thread.SetData(this.threadDictStore, threadDict);
+                ThreadState ts = (ThreadState)Thread.GetData(this.threadStateStore);
+                if (ts == null)
+                {
+                    ts = new ThreadState(this);
+                    Thread.SetData(this.threadStateStore, ts);
+                }
+                return ts;
             }
-            return threadDict.Ptr;
         }
         
         public object LastException
         {
             get
             {
-                return Thread.GetData(this.threadErrorStore);
+                return this.ts.LastException;
             }
             set
             {
-                if (value != null)
-                {
-                    Exception clrException = value as Exception;
-                    if (clrException != null)
-                    {
-                        if (this.logErrors)
-                        {
-                            Console.WriteLine("Setting CPython error:\n\n{0}\n\n", clrException);
-                        }
-                        value = InappropriateReflection.GetPythonException(clrException);
-                    }
-                }
-                Thread.SetData(this.threadErrorStore, value);
+                this.ts.LastException = value;
             }
         }
 
@@ -144,7 +137,10 @@ namespace Ironclad
         public void
         EnsureGIL()
         {
-            this.GIL.Acquire();
+            if (this.GIL.Acquire() == 1)
+            {
+                CPyMarshal.WritePtr(this._PyThreadState_Current, this.ts.Ptr);
+            }
         }
         
         public void
@@ -156,6 +152,11 @@ namespace Ironclad
             }
             this.tempObjects.Clear();
             this.map.CheckBridgePtrs(false);
+            
+            if (this.GIL.CountAcquired == 1)
+            {
+                CPyMarshal.WritePtr(this._PyThreadState_Current, IntPtr.Zero);
+            }
             this.GIL.Release();
         }
         

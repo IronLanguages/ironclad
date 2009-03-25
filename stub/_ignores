@@ -10,11 +10,16 @@ Py_BuildValue
 PyString_FromFormat
 PyString_FromFormatV
 
+PyErr_Clear
+PyErr_Fetch
 PyErr_Format
+PyErr_Occurred
+PyErr_Restore
 PyErr_SetObject
 PyErr_SetString
 PyErr_SetNone
 PyErr_ExceptionMatches
+PyErr_GivenExceptionMatches
 
 PyArg_Parse
 _PyArg_Parse_SizeT
@@ -95,3 +100,6 @@ PyCFunction_NewEx
 Py_FindMethodInChain
 Py_FindMethod
 PyCFunction_Fini
+
+PyThreadState_Get
+PyThreadState_GetDict
