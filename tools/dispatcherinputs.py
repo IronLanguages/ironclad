@@ -200,6 +200,7 @@ known_python25api_signatures = (
     
     ('PyDictProxy_New', 'ptr_ptr'),
     
+    ('PyErr_GivenExceptionMatches', 'int_ptrptr'),
     ('PyErr_NewException', 'ptr_strptrptr'),
     ('PyErr_Print', 'void_void'),
     

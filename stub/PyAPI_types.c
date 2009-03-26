@@ -383,22 +383,6 @@ typedef struct {
 #define Py_END_OF_BUFFER	(-1)
 
 
-#define PyExceptionClass_Check(x)					\
-	(PyClass_Check((x))						\
-	 || (PyType_Check((x)) && PyType_IsSubtype(			\
-		     (PyTypeObject*)(x), (PyTypeObject*)PyExc_BaseException)))
-
-
-#define PyExceptionInstance_Check(x)			\
-	(PyInstance_Check((x)) ||			\
-	 (PyType_IsSubtype((x)->ob_type, (PyTypeObject*)PyExc_BaseException)))
-
-#define PyExceptionInstance_Class(x)					\
-	((PyInstance_Check((x))						\
-	  ? (PyObject*)((PyInstanceObject*)(x))->in_class		\
-	  : (PyObject*)((x)->ob_type)))
-
-
 #define PyObject_MALLOC		PyObject_Malloc
 #define PyObject_FREE		PyObject_Free
 #define PyObject_DEL		PyObject_FREE

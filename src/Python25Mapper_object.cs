@@ -62,7 +62,8 @@ namespace Ironclad
         }
 
 
-        private object RichCompare(IntPtr ptr1, IntPtr ptr2, int opid)
+        private object
+        RichCompare(IntPtr ptr1, IntPtr ptr2, int opid)
         {
             object objResult = true;
             CMP op = (CMP)opid;
