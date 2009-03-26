@@ -21,7 +21,7 @@ namespace Ironclad
         public override IntPtr 
         Py_InitModule4(string name, IntPtr methodsPtr, string doc, IntPtr self, int apiver)
         {
-            string importname = this.FixImportName(name);
+            name = this.FixImportName(name);
             
             PythonDictionary methodTable = new PythonDictionary();
             PythonDictionary globals = new PythonDictionary();
@@ -44,8 +44,8 @@ namespace Ironclad
 
             Scope module = new Scope(globals);
             this.ExecInModule(moduleCode.ToString(), module);
-            this.AddModule(importname, module);
-            this.CreateModulesContaining(importname);
+            this.AddModule(name, module);
+            this.CreateModulesContaining(name);
             return this.Store(module);
         }
         

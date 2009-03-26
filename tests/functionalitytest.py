@@ -99,6 +99,8 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             #=====================================================
             # perform a few basic numpy sanity checks
             
+            assert np.core.multiarray.__name__ == 'numpy.core.multiarray'
+            
             r1 = np.arange(20)
             r2 = np.arange(20)
             assert r1 is not r2
