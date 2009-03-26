@@ -66,5 +66,35 @@ namespace Ironclad
             
             return this.Store(new PythonType(this.scratchContext, __name__, bases, classDict));
         }
+        
+        public override int
+        PyErr_GivenExceptionMatches(IntPtr givenPtr, IntPtr matchPtr)
+        {
+            try
+            {
+                // this could probably be implemented in C, if we had other parts of the API defined
+                if (matchPtr == givenPtr)
+                {
+                    return 1;
+                }
+                object given = this.Retrieve(givenPtr);
+                if (Builtin.isinstance(given, Builtin.BaseException))
+                {
+                    given = PythonCalls.Call(Builtin.type, new object[] {given});
+                }
+                // TODO if given is an OldClass, cast will fail and 0 will 
+                // be returned, even if it would have been a match
+                if (Builtin.issubclass((PythonType)given, this.Retrieve(matchPtr)))
+                {
+                    return 1;
+                }
+            }
+            catch
+            {
+                this.PrintToStdErr("PyErr_GivenExceptionMatches: something went wrong. Assuming exception does not match.");
+                // something bad happened. let's say it... <coin toss> wasn't a match.
+            }
+            return 0;
+        }
     }
 }

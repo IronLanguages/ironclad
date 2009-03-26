@@ -94,6 +94,41 @@ class ErrFunctionsTest(TestCase):
         self.assertEquals(newExc.foo, 3)
 
 
+    def assertMatch(self, mapper, given, exc, expected):
+        self.assertEquals(mapper.PyErr_GivenExceptionMatches(
+            mapper.Store(given), mapper.Store(exc)), expected)
+        
+
+    @WithMapper
+    def testPyErr_GivenExceptionMatches(self, mapper, _):
+        self.assertMatch(mapper, TypeError, TypeError, 1)
+        self.assertMatch(mapper, TypeError(), TypeError, 1)
+        self.assertMatch(mapper, TypeError, (TypeError, float), 1)
+        self.assertMatch(mapper, TypeError(), (TypeError, float), 1)
+        self.assertMatch(mapper, ValueError, TypeError, 0)
+        self.assertMatch(mapper, ValueError(), TypeError, 0)
+        self.assertMatch(mapper, ValueError, (TypeError, float), 0)
+        self.assertMatch(mapper, ValueError(), (TypeError, float), 0)
+        
+        specificInstance = TypeError('yes, this specific TypeError')
+        self.assertMatch(mapper, specificInstance, specificInstance, 1)
+        
+        
+        calls = []
+        old = sys.stderr
+        sys.stderr = my_stderr(calls)
+        try:
+            self.assertMatch(mapper, 'whatever', str, 0)
+        finally:
+            sys.stderr = old
+        
+        expectedCalls = [
+            ('PyErr_GivenExceptionMatches: something went wrong. Assuming exception does not match.',), 
+            ('\n',)
+        ]
+        self.assertEquals(calls, expectedCalls)
+
+
 suite = makesuite(
     LastExceptionTest,
     ErrFunctionsTest,

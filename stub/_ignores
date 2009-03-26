@@ -19,7 +19,6 @@ PyErr_SetObject
 PyErr_SetString
 PyErr_SetNone
 PyErr_ExceptionMatches
-PyErr_GivenExceptionMatches
 
 PyArg_Parse
 _PyArg_Parse_SizeT

@@ -49,41 +49,6 @@ PyErr_ExceptionMatches(PyObject *exc)
 }
 
 
-int
-PyErr_GivenExceptionMatches(PyObject *err, PyObject *exc)
-{
-	if (err == NULL || exc == NULL) {
-		/* maybe caused by "import exceptions" that failed early on */
-		return 0;
-	}
-	if (PyTuple_Check(exc)) {
-		Py_ssize_t i, n;
-		n = PyTuple_Size(exc);
-		for (i = 0; i < n; i++) {
-			/* Test recursively */
-		     if (PyErr_GivenExceptionMatches(
-			     err, PyTuple_GET_ITEM(exc, i)))
-		     {
-			     return 1;
-		     }
-		}
-		return 0;
-	}
-	/* err might be an instance, so check its class. */
-	if (PyExceptionInstance_Check(err))
-		err = PyExceptionInstance_Class(err);
-
-	if (PyExceptionClass_Check(err) && PyExceptionClass_Check(exc)) {
-		/* problems here!?  not sure PyObject_IsSubclass expects to
-		   be called with an exception pending... */
-		return PyObject_IsSubclass(err, exc);
-	}
-
-	return err == exc;
-}
-
-
-
 void
 PyErr_Restore(PyObject *type, PyObject *value, PyObject *traceback)
 {
