@@ -550,6 +550,9 @@ namespace Ironclad
                 case "IC_PyFloat_New":
                     this.dgtMap[name] = new dgt_ptr_ptrptrptr(this.IC_PyFloat_New);
                     break;
+                case "IC_PyInstance_Dealloc":
+                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PyInstance_Dealloc);
+                    break;
                 case "IC_PyInt_New":
                     this.dgtMap[name] = new dgt_ptr_ptrptrptr(this.IC_PyInt_New);
                     break;
