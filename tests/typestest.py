@@ -13,7 +13,7 @@ from System import IntPtr, UInt32, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CannotInterpretException, CPyMarshal, dgt_ptr_ptrptrptr, HGlobalAllocator, Python25Mapper, OpaquePyCell
-from Ironclad.Structs import PyObject, PyNumberMethods, PyTypeObject, PyVarObject, Py_TPFLAGS
+from Ironclad.Structs import PyObject, PyClassObject, PyInstanceObject, PyNumberMethods, PyTypeObject, PyVarObject, Py_TPFLAGS
 
 class ItemEnumeratorThing(object):
     def __getitem__(self):
@@ -40,6 +40,8 @@ BUILTIN_TYPES = {
     "PySeqIter_Type": ItemEnumeratorType,
     "PyCell_Type": OpaquePyCell,
     "PyMethod_Type": types.MethodType,
+    "PyClass_Type": types.ClassType,
+    "PyInstance_Type": types.InstanceType,
 }
 
 class Types_Test(TestCase):
@@ -263,20 +265,23 @@ class Types_Test(TestCase):
         instance = mapper.Retrieve(instancePtr)
         self.assertEquals(isinstance(instance, C), True)
         self.assertEquals(mapper.Store(instance), instancePtr)
-    
-    
+
+
+class OldStyle_Test(TestCase):
+        
     @WithMapper
     def testPyClass_New(self, mapper, _):
         namePtr = mapper.Store('klass')
         dictPtr = mapper.Store({'wurble': 'burble'})
-        basesPtr = mapper.Store((float, object))
+        basesPtr = mapper.Store(())
         
         klassPtr = mapper.PyClass_New(basesPtr, dictPtr, namePtr)
+        self.assertEquals(CPyMarshal.ReadPtrField(klassPtr, PyObject, "ob_type"), mapper.PyClass_Type)
         klass = mapper.Retrieve(klassPtr)
         
         self.assertEquals(klass.__name__, 'klass')
         self.assertEquals(klass.wurble, 'burble')
-        self.assertEquals(klass.__bases__, (float, object))
+        self.assertEquals(klass.__bases__, ())
     
     
     @WithMapper
@@ -285,13 +290,56 @@ class Types_Test(TestCase):
         dictPtr = mapper.Store({'wurble': 'burble'})
         
         klassPtr = mapper.PyClass_New(IntPtr.Zero, dictPtr, namePtr)
+        self.assertEquals(CPyMarshal.ReadPtrField(klassPtr, PyObject, "ob_type"), mapper.PyClass_Type)
         klass = mapper.Retrieve(klassPtr)
         
         self.assertEquals(klass.__name__, 'klass')
         self.assertEquals(klass.wurble, 'burble')
-        self.assertEquals(klass.__bases__, (object,))
+        self.assertEquals(klass.__bases__, ())
+
     
+    @WithMapper
+    def testStoreOldStyle(self, mapper, _):
+        class O():
+            pass
+        OPtr = mapper.Store(O)
+        self.assertEquals(CPyMarshal.ReadIntField(OPtr, PyObject, "ob_refcnt"), 2) # again, leak classes deliberately
+        self.assertEquals(CPyMarshal.ReadPtrField(OPtr, PyObject, "ob_type"), mapper.PyClass_Type)
         
+        self.assertEquals(mapper.Retrieve(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_bases")), ())
+        self.assertEquals(mapper.Retrieve(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_name")), "O")
+        self.assertEquals(mapper.Retrieve(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_dict")) is O.__dict__, True)
+        
+        self.assertEquals(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_getattr"), IntPtr.Zero)
+        self.assertEquals(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_setattr"), IntPtr.Zero)
+        self.assertEquals(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_delattr"), IntPtr.Zero)
+        
+        o = O()
+        oPtr = mapper.Store(o)
+        self.assertEquals(CPyMarshal.ReadIntField(oPtr, PyObject, "ob_refcnt"), 1)
+        self.assertEquals(CPyMarshal.ReadPtrField(oPtr, PyObject, "ob_type"), mapper.PyInstance_Type)
+        
+        self.assertEquals(CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, "in_class"), OPtr)
+        self.assertEquals(mapper.Retrieve(CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, "in_dict")) is o.__dict__, True)
+        self.assertEquals(CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, "in_weakreflist"), IntPtr.Zero)
+    
+    
+    @WithMapper
+    def testDestroyOldInstance(self, mapper, _):
+        # don't care about destroying OldClasses: leaked intentionally
+        class O(): pass
+        o = O()
+        oPtr = mapper.Store(o)
+        
+        dictPtr = CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, 'in_dict')
+        mapper.IncRef(dictPtr)
+        refcnt = mapper.RefCount(dictPtr)
+        
+        mapper.DecRef(oPtr)
+        self.assertEquals(mapper.RefCount(dictPtr), refcnt - 1)
+
+
+
 class PyType_GenericAlloc_Test(TestCase):
 
     def testNoItems(self):
@@ -467,6 +515,7 @@ class PyType_Ready_InheritTest(TestCase):
 
 suite = makesuite(
     Types_Test,
+    OldStyle_Test,
     PyType_GenericNew_Test,
     IC_PyType_New_Test,
     PyType_GenericAlloc_Test,

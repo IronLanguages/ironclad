@@ -529,6 +529,7 @@ class Python25Mapper_GetAddress_NonApi_Test(TestCase):
             "IC_PyList_Dealloc",
             "IC_PySlice_Dealloc",
             "IC_PyTuple_Dealloc",
+            "IC_PyInstance_Dealloc",
         )
         for method in methods:
             self.assertGetAddressWorks(method)

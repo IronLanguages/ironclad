@@ -47,6 +47,22 @@ namespace Ironclad
             freeDgt(objPtr);
         }
         
+        public virtual void
+        IC_PyInstance_Dealloc(IntPtr objPtr)
+        {
+            IntPtr dictPtr = CPyMarshal.ReadPtrField(objPtr, typeof(PyInstanceObject), "in_dict");
+            if (dictPtr != IntPtr.Zero)
+            {
+                this.DecRef(dictPtr);
+            }
+            
+            IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
+            dgt_void_ptr freeDgt = (dgt_void_ptr)
+                CPyMarshal.ReadFunctionPtrField(
+                    objType, typeof(PyTypeObject), "tp_free", typeof(dgt_void_ptr));
+            freeDgt(objPtr);
+        }
+        
         public override void 
         PyObject_Free(IntPtr ptr)
         {

@@ -12,3 +12,5 @@ PythonTuple
 List
 Slice
 Method
+OldClass
+OldInstance

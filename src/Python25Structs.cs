@@ -271,6 +271,29 @@ namespace Ironclad
         }
         
         [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct PyClassObject
+        {
+            public uint ob_refcnt;
+            public IntPtr ob_type;
+            public IntPtr cl_bases;
+            public IntPtr cl_dict;
+            public IntPtr cl_name;
+            public IntPtr cl_getattr;
+            public IntPtr cl_setattr;
+            public IntPtr cl_delattr;
+        }
+        
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct PyInstanceObject
+        {
+            public uint ob_refcnt;
+            public IntPtr ob_type;
+            public IntPtr in_class;
+            public IntPtr in_dict;
+            public IntPtr in_weakreflist;
+        }
+        
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
         public struct PyTypeObject
         {
             public uint ob_refcnt;
