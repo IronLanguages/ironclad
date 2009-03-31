@@ -32,3 +32,8 @@
 #include "longobject.c"
 #include "listobject.c"
 #include "pystate.c"
+#include "pythonrun.c"
+
+
+
+

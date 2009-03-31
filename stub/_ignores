@@ -90,6 +90,11 @@ _PyLong_DigitValue
 
 _Py_HashPointer
 
+Py_Initialize
+Py_InitializeEx
+Py_IsInitialized
+Py_Finalize
+
 PyCFunction_Call
 PyCFunction_GetFlags
 PyCFunction_GetSelf
