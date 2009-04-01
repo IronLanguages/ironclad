@@ -23,3 +23,15 @@ PyThreadState_Get(void)
 	return _PyThreadState_Current;
 }
 
+
+PyThreadState *
+PyThreadState_Swap(PyThreadState *newts)
+{
+	PyThreadState *oldts = _PyThreadState_Current;
+
+	_PyThreadState_Current = newts;
+	/* debug-only code omitted for ironclad */
+	return oldts;
+}
+
+

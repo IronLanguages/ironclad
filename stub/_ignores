@@ -107,3 +107,4 @@ PyCFunction_Fini
 
 PyThreadState_Get
 PyThreadState_GetDict
+PyThreadState_Swap
