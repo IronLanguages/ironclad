@@ -25,6 +25,14 @@ when working with sufficiently large datasets.
 
 Similarly, parts of matplotlib now work: the 'ps' backend should work out of the
 box, and the 'pdf' and 'svg' backends appear to work if you install zlib for 
-IronPython. 
+IronPython.
 
-Slightly more detailed information is available in the 'doc' directory.
+TROUBLESHOOTING NOTE:
+
+  If you encounter errors involving 'msvcp71.dll', it means that the MS C++ runtime
+  is not on your PATH. To fix it, acquire a copy from somewhere, and drop it into
+  '/build/ironclad/support'. Matplotlib uses this library and does not include its
+  own copy, and other packages may do the same.
+
+Slightly more detailed information, including development notes, is available in
+the 'doc' directory.
