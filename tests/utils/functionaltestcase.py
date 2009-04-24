@@ -20,7 +20,8 @@ def readBinary(filename):
     stream = file(filename, 'rb')
     try:
         return stream.read()
-    finally: stream.close()
+    finally:
+        stream.close()
 
 
 class FunctionalTestCase(TestCase):

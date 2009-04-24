@@ -125,6 +125,10 @@ namespace Ironclad
             {
                 this.stub = new StubReference(stubPath);
                 this.stub.Init(new AddressGetterDelegate(this.GetAddress), new DataSetterDelegate(this.SetData));
+
+                string path = Environment.GetEnvironmentVariable("PATH");
+                Environment.SetEnvironmentVariable("PATH", path + ";" + Path.Combine(Path.GetDirectoryName(stubPath), "support"));
+
                 this.ReadyBuiltinTypes();
                 this.importer = new PydImporter();
                 

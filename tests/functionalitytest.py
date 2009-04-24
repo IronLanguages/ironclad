@@ -89,7 +89,6 @@ class ExternalFunctionalityTest(FunctionalTestCase):
 
     def testNumPySciPyMatPlotLibStuff(self):
         # combine several tests into one, so we don't have to wait for multiple reloads
-        # This test is a placeholder for  which fails since 1E20 is written as 1e20 in ipy
         self.assertRuns(dedent("""\
             #=====================================================
             # test we can aactually import them
@@ -112,13 +111,16 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             
             #=====================================================
             # test can do trivial mpl plot without crashing
+            # NOTE: if mpl fails to load _path.pyd for want
+            # of mscvp71.dll, find a copy and stick it into
+            # /build/ironclad/support
             
             import matplotlib as mpl
             mpl.use('ps')
             import pylab
 
-            t = np.arange(0.0, 1.0+0.01, 0.01)
-            s = np.cos(2*2*np.pi*t)
+            t = np.arange(0.0, 1.0 + 0.01, 0.01)
+            s = np.cos(4 * np.pi * t)
             pylab.plot(t, s)
             
             #=====================================================
@@ -129,10 +131,12 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             
             #=====================================================
             # adapted from numpy.core.test_print.TestPrint
+            # This test is a placeholder for one which fails 
+            # due to float formatting differences.
 
             def mangle(num):
                 return str(num).lower().replace('+0', '+')
-            def test_complex_type(type):
+            def assert_complex_type(type):
                 for x in (0, 1,-1, 1e10, 1e20):
                     assert_equals(mangle(type(x)),
                                   mangle(complex(x)).lower())
@@ -141,14 +145,14 @@ class ExternalFunctionalityTest(FunctionalTestCase):
                     assert_equals(mangle(type(x + x*1j)).lower(), 
                                   mangle(complex(x + x*1j)).lower())
     
-            test_complex_type(np.cfloat)
-            test_complex_type(np.cdouble)
+            assert_complex_type(np.cfloat)
+            assert_complex_type(np.cdouble)
+            
             
             # this one is a known failure in certain environments, 
-            #  butI'm not sure how to identify those environments
-            #test_complex_type(np.clongdouble)
-            
-            
+            # butI'm not sure how to identify those environments.
+            #
+            # assert_complex_type(np.clongdouble)
             """))
  
 
@@ -162,7 +166,8 @@ def ModuleTestCase(module):
                 exec '\n'.join([import_code, test_code]) in globals(), locals_
             finally:
                 mapper.Dispose()
-                del sys.modules[module]
+                if module in sys.modules:
+                    del sys.modules[module]
     return _ModuleTestCase
 
 

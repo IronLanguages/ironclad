@@ -1,13 +1,9 @@
 
 
 type_codes = {
-    # trivial
-    'void': # no return value
-        'void',
-    'noargs': # er, no args
-        '',
-    
     # special
+    'void': # no return value, or no args
+        'void',
     'str': # char*s; marshalled into strings
         'string',
     'obj': # PyFoo*s; needs to be stored/retrieved/cleaned up
@@ -18,7 +14,7 @@ type_codes = {
     # platform-specific C types
     'ptr': # unknown ptr types; not translated
         'IntPtr',
-    'size': # Py_ssize_t -- should obviously be uint, but complications arose
+    'size': # Py_ssize_t
         'uint',
     'int': # int
         'int',
