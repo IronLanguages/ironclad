@@ -469,10 +469,6 @@ class PySVNTest(ModuleTestCase('pysvn')):
 class HashlibTest(ModuleTestCase('_hashlib')):
 
     def testCanImport(self):
-        # this is *all* I care about at the moment; what it proves is
-        # that the PATH-fiddling in P25M.LoadModule is working as expected,
-        # and that the dll (not pyd) is being successfully loaded.
-        # I have no idea whether sqlite3 actually works at all.
         self.assertRuns(dedent("""
             assert _hashlib.openssl_md5('foobarbaz').digest() == u'm\xf2=\xc0?\x9bT\xcc8\xa0\xfc\x14\x83\xdfn!'
             """)
