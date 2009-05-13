@@ -30,6 +30,7 @@ def read_interesting_lines(name):
     finally:
         f.close() 
 
+
 #===============================================================================================================
 
 
@@ -69,12 +70,12 @@ def generate_signature(name, ret, inargs):
     arglist_end = generate_arglist(inargs)
     if arglist_end:
         arglist = '%s, %s' % (arglist, arglist_end)
-    info = {
+    
+    return SIGNATURE_TEMPLATE % {
         'name': name,
         'arglist': arglist,
         'rettype': type_codes[ret],
     }
-    return SIGNATURE_TEMPLATE % info
 
 
 def generate_objs(inargs, nullablekwargs):
@@ -91,11 +92,10 @@ def generate_objs(inargs, nullablekwargs):
 
 
 def generate_call(dgttype, callargs):
-    info = {
+    return CALL_TEMPLATE % {
         'dgttype': dgttype, 
         'arglist': ', '.join(callargs)
     }
-    return CALL_TEMPLATE % info
 
 
 def generate_ret_handling(ret, rettweak):
@@ -109,39 +109,38 @@ def generate_ret_handling(ret, rettweak):
 
 def generate_magicmethod_template(functype, inargs, template):
     args = ', '.join(['_%d' % i for i in xrange(len(inargs))])
-    info = {
+    return template % {
         'arglist': args,
         'callargs': args,
         'functype': functype,
     }
-    return template % info
+
 
 def generate_magicmethod_swapped_template(functype, inargs, template):
     args = ['_%d' % i for i in xrange(len(inargs))]
-    info = {
+    return template % {
         'arglist': ', '.join(args),
         'callargs': ', '.join(args[::-1]),
         'functype': functype,
     }
-    return template % info
 
 
 def generate_dispatcher_field(name, cstype, cpmtype, gettweak='', settweak=''):
-    info = {
+    return FIELD_TEMPLATE % {
         'name': name,
         'cstype': cstype,
         'cpmtype': cpmtype,
         'gettweak': gettweak,
         'settweak': settweak,
     }
-    return FIELD_TEMPLATE % info
 
 
 #===============================================================================================================
 
+
 class ApiWrangler(object):
 
-    def __init__(self, **input):
+    def __init__(self, input):
         self.callmap = {}
         self.dgttypes = set()
         self.output = {}
@@ -193,12 +192,11 @@ class ApiWrangler(object):
 
     def generate_dgttype(self, dgttype):
         _, ret, args = self.unpack_spec(dgttype)
-        info = {
+        return DGTTYPE_TEMPLATE % {
             'name': dgttype,
             'rettype': type_codes[ret], 
             'arglist': generate_arglist(args)
         }
-        return DGTTYPE_TEMPLATE % info
 
 
     def generate_dispatcher_method(self, name, spec, argtweak=None, rettweak='', nullablekwargs=None):
@@ -280,13 +278,16 @@ class ApiWrangler(object):
         return FILE_TEMPLATE % '\n'.join(map(self.generate_dgttype, sorted(self.dgttypes)))
 
 
+#===============================================================================================================
+
+
 if __name__ == '__main__':
     import os
     import sys
     outdir = sys.argv[1]
     
     from tools.dispatcherinputs import WRANGLER_INPUT
-    wrangler = ApiWrangler(**WRANGLER_INPUT)
+    wrangler = ApiWrangler(WRANGLER_INPUT)
 
     def write(key, name):
         f = open(os.path.join(outdir, name + '.Generated.cs'), 'w')

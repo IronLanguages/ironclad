@@ -26,7 +26,7 @@ dispatcher_PyCFunc_convenience_methods = (
 )
 
 # args for generate_dispatcher_method
-# not all of these are necessarily used
+# not all of these are necessarily used yet
 dispatcher_header_functypes = (
     # object.h
     (('unaryfunc', 'obj_obj'), {}),
