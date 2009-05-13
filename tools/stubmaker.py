@@ -95,11 +95,11 @@ class StubMaker(object):
                     f.close()
             return []
 
-        ignores = set(tryread("_ignores"))
+        ignores = set(tryread("_ignore_symbols"))
         self.functions = [f for f in self.functions if f not in ignores]
         self.data -= ignores
-        self.data |= set(tryread("_extras"))
-        self.ordered_data = tryread("_order")
+        self.data |= set(tryread("_extra_data"))
+        self.ordered_data = tryread("_ordered_data")
         self.data -= set(self.ordered_data)
         
                 

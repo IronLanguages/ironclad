@@ -378,7 +378,7 @@ extra_python25api_signatures = (
 import os
 _in_this_dir = lambda name: os.path.join(os.path.dirname(__file__), name)
 all_functions_file = _in_this_dir("python25ApiFunctions")
-c_functions_file = "stub/_ignores"
+c_functions_file = "stub/_ignore_symbols"
 data_items_file = _in_this_dir("python25ApiDataItems")
 
 
