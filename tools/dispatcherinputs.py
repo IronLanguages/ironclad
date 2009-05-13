@@ -357,3 +357,22 @@ known_python25api_signatures = (
     ('PyType_IsSubtype', 'int_ptrptr'),
     ('PyType_Ready', 'int_ptr'),
 )
+
+import os
+_in_this_dir = lambda name: os.path.join(os.path.dirname(__file__), name)
+all_functions_file = _in_this_dir("python25ApiFunctions")
+c_functions_file = "stub/_ignores"
+data_items_file = _in_this_dir("python25ApiDataItems")
+
+
+wrangler_input_keys = set([
+    'dispatcher_field_types', 
+    'dispatcher_methods',
+    'protocol_field_types',
+    'known_python25api_signatures',
+    'all_functions_file',
+    'c_functions_file',
+    'data_items_file',
+])
+
+WRANGLER_INPUT = dict((k, v) for (k, v) in locals().items() if k in wrangler_input_keys)
