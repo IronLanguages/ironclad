@@ -7,7 +7,7 @@ csharp_funcs = [
     for name in os.listdir("src/python25api_components")]
 
 c_funcs = map(str.strip, file(
-    os.path.join('stub', '_ignores')).readlines())
+    os.path.join('stub', '_ignore_symbols')).readlines())
 
 
 def check_implemented(name):
