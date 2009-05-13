@@ -13,11 +13,12 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        public override IntPtr
-        Make_PyExc_BaseException()
+        public override void
+         Fill_PyExc_BaseException(IntPtr addr)
         {
             // all the others autogenerate nicely
-            return this.Store(Builtin.BaseException);
+            IntPtr value = this.Store(Builtin.BaseException);
+            CPyMarshal.WritePtr(addr, value);
         }
 
         internal void

@@ -55,7 +55,54 @@ Py_OptimizeFlag int
 
 _PyThreadState_Current void*
 
+PyExc_BaseException void*
+PyExc_Exception void*
+PyExc_StopIteration void*
+PyExc_GeneratorExit void*
+PyExc_StandardError void*
+PyExc_ArithmeticError void*
+PyExc_LookupError void*
+PyExc_AssertionError void*
+PyExc_AttributeError void*
+PyExc_EOFError void*
+PyExc_FloatingPointError void*
+PyExc_IOError void*
+PyExc_OSError void*
+PyExc_ImportError void*
+PyExc_IndexError void*
+PyExc_KeyError void*
+PyExc_KeyboardInterrupt void*
+PyExc_MemoryError void*
+PyExc_NameError void*
+PyExc_OverflowError void*
+PyExc_RuntimeError void*
+PyExc_NotImplementedError void*
+PyExc_IndentationError void*
+PyExc_TabError void*
+PyExc_ReferenceError void*
+PyExc_SystemError void*
+PyExc_TypeError void*
+PyExc_UnboundLocalError void*
+PyExc_UnicodeError void*
+PyExc_ValueError void*
+PyExc_ZeroDivisionError void*
+PyExc_Warning void*
+PyExc_UserWarning void*
+PyExc_DeprecationWarning void*
+PyExc_PendingDeprecationWarning void*
+PyExc_SyntaxWarning void*
+PyExc_RuntimeWarning void*
+PyExc_FutureWarning void*
+PyExc_ImportWarning void*
+PyExc_UnicodeWarning void*
 
+PyExc_EnvironmentError void*
+PyExc_SyntaxError void*
+PyExc_SystemExit void*
+PyExc_UnicodeEncodeError void*
+PyExc_UnicodeDecodeError void*
+PyExc_UnicodeTranslateError void*
+PyExc_WindowsError void*
 
 
 

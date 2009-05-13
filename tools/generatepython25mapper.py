@@ -99,9 +99,10 @@ namespace Ironclad
 """
 
 EXCEPTION_TEMPLATE = """\
-        public override IntPtr Make_PyExc_%(name)s()
+        public override void Fill_PyExc_%(name)s(IntPtr addr)
         {
-            return this.Store(PythonExceptions.%(name)s);
+            IntPtr value = this.Store(PythonExceptions.%(name)s);
+            CPyMarshal.WritePtr(addr, value);
         }"""
 
 STORE_METHOD_TEMPLATE = """\
