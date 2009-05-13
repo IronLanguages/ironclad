@@ -154,6 +154,7 @@ class ApiWrangler(object):
         
         self.output['python25api_code'] = self.generate_python25api(
             input['known_python25api_signatures'], 
+            input['extra_python25api_signatures'], 
             input['all_functions_file'], 
             input['c_functions_file'], 
             input['data_items_file'])
@@ -242,7 +243,7 @@ class ApiWrangler(object):
         return FILE_TEMPLATE % MAGICMETHODS_TEMPLATE % ('\n'.join(normal_magic_methods), '\n'.join(swapped_magic_methods))
 
 
-    def generate_python25api(self, known_functions, all_functions_file, c_functions_file, data_items_file):
+    def generate_python25api(self, known_functions, extra_functions, all_functions_file, c_functions_file, data_items_file):
         all_methods_set = set(read_interesting_lines(all_functions_file))
         c_methods_set = set(read_interesting_lines(c_functions_file))
         not_implemented_methods_set = all_methods_set - c_methods_set
@@ -250,6 +251,8 @@ class ApiWrangler(object):
         methods = []
         for (name, dgt_type) in known_functions:
             not_implemented_methods_set.remove(name)
+            methods.append(self.unpack_apifunc(name, dgt_type))
+        for (name, dgt_type) in extra_functions:
             methods.append(self.unpack_apifunc(name, dgt_type))
         not_implemented_methods = [{"symbol": s} for s in not_implemented_methods_set]
         methods_code = glom_templates('\n\n',

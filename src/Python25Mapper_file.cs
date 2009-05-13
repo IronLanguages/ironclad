@@ -76,7 +76,7 @@ namespace Ironclad
         }  
 
         
-        public virtual void 
+        public override void 
         IC_PyFile_Dealloc(IntPtr ptr)
         {
             if (this.FILEs.ContainsKey(ptr))

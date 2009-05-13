@@ -153,8 +153,6 @@ class Python25ApiTest(TestCase):
                           "bad result for nonsense symbol")
 
 
-
-
 suite = makesuite(
     Python25ApiTest,
 )

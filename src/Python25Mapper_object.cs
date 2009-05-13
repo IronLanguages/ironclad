@@ -32,12 +32,13 @@ namespace Ironclad
             return objPtr;
         }
         
-        public int IC_PyBaseObject_Init(IntPtr self, IntPtr args, IntPtr kwargs)
+        public override int 
+        IC_PyBaseObject_Init(IntPtr self, IntPtr args, IntPtr kwargs)
         {
             return 0;
         }
         
-        public virtual void 
+        public override void 
         IC_PyBaseObject_Dealloc(IntPtr objPtr)
         {
             IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
@@ -47,7 +48,7 @@ namespace Ironclad
             freeDgt(objPtr);
         }
         
-        public virtual void
+        public override void
         IC_PyInstance_Dealloc(IntPtr objPtr)
         {
             IntPtr dictPtr = CPyMarshal.ReadPtrField(objPtr, typeof(PyInstanceObject), "in_dict");

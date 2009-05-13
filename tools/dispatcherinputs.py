@@ -358,6 +358,23 @@ known_python25api_signatures = (
     ('PyType_Ready', 'int_ptr'),
 )
 
+# C# methods which need to have function ptrs stored for one reason or another
+extra_python25api_signatures = (
+    ('IC_PyBaseObject_Dealloc', 'void_ptr'),
+    ('IC_PyBaseObject_Init', 'int_ptrptrptr'),
+    ('IC_PyDict_Init', 'int_ptrptrptr'),
+    ('IC_PyFile_Dealloc', 'void_ptr'),
+    ('IC_PyFloat_New', 'ptr_ptrptrptr'),
+    ('IC_PyInstance_Dealloc', 'void_ptr'),
+    ('IC_PyInt_New', 'ptr_ptrptrptr'),
+    ('IC_PyType_New', 'ptr_ptrptrptr'),
+    ('IC_PyList_Dealloc', 'void_ptr'),
+    ('IC_PySlice_Dealloc', 'void_ptr'),
+    ('IC_PyTuple_Dealloc', 'void_ptr'),
+    ('IC_PyString_Str', 'ptr_ptr'),
+    ('IC_PyString_Concat_Core', 'ptr_ptrptr'),
+)
+
 import os
 _in_this_dir = lambda name: os.path.join(os.path.dirname(__file__), name)
 all_functions_file = _in_this_dir("python25ApiFunctions")
@@ -370,6 +387,7 @@ wrangler_input_keys = set([
     'dispatcher_methods',
     'protocol_field_types',
     'known_python25api_signatures',
+    'extra_python25api_signatures',
     'all_functions_file',
     'c_functions_file',
     'data_items_file',

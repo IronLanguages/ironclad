@@ -11,7 +11,7 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        public virtual void 
+        public override void 
         IC_PyList_Dealloc(IntPtr listPtr)
         {
             PyListObject listStruct = (PyListObject)Marshal.PtrToStructure(listPtr, typeof(PyListObject));
