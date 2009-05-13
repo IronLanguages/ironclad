@@ -35,6 +35,9 @@ TestWrotePyTypeObject = GetTestWroteBytes(Marshal.SizeOf(PyTypeObject))
 WritePyObject = GetWriteBytes(Marshal.SizeOf(PyObject))
 TestWrotePyObject = GetTestWroteBytes(Marshal.SizeOf(PyObject))
 
+WritePtr = GetWriteBytes(Marshal.SizeOf(IntPtr))
+TestWrotePtr = GetTestWroteBytes(Marshal.SizeOf(IntPtr))
+
 TYPES = (
     "PyBool_Type",
     "PyCell_Type",
@@ -111,6 +114,15 @@ class Python25ApiTest(TestCase):
             def Fill__Py_NotImplementedStruct(self, address):
                 WritePyObject(address)
         self.assertDataSetterSetsAndRemembers(MyPM, "_Py_NotImplementedStruct", Marshal.SizeOf(PyObject), TestWrotePyObject)
+
+
+    def testFinds_PyExc_OverflowError(self):
+        # and, by assertion, all other error types
+        # TODO: improve ;)
+        class MyPM(Python25Api):
+            def Fill_PyExc_OverflowError(self, address):
+                WritePtr(address)
+        self.assertDataSetterSetsAndRemembers(MyPM, "PyExc_OverflowError", Marshal.SizeOf(PyObject), TestWrotePtr)
         
 
     def assertFindsType(self, name):
@@ -139,28 +151,6 @@ class Python25ApiTest(TestCase):
         self.assertEquals(addressGetter("This_symbol_is_not_exported_by_any_version_of_Python_so_far_as_I_know"),
                           IntPtr.Zero,
                           "bad result for nonsense symbol")
-
-
-    def assertAddressGetterRemembers(self, mapperSubclass, name, expectedAddress):
-        pm = mapperSubclass()
-
-        ptr = pm.GetAddress(name)
-        self.assertEquals(ptr, expectedAddress, "unexpected result")
-        self.assertEquals(getattr(pm, name), ptr, "did not remember")
-
-
-    def testPython25ApiFinds_PyExc_SystemError(self):
-        class MyPM(Python25Api):
-            def Make_PyExc_SystemError(self):
-                return IntPtr(999)
-        self.assertAddressGetterRemembers(MyPM, "PyExc_SystemError", IntPtr(999))
-
-
-    def testPython25ApiFinds_PyExc_OverflowError(self):
-        class MyPM(Python25Api):
-            def Make_PyExc_OverflowError(self):
-                return IntPtr(999)
-        self.assertAddressGetterRemembers(MyPM, "PyExc_OverflowError", IntPtr(999))
 
 
 

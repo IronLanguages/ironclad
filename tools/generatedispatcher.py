@@ -215,7 +215,7 @@ def generate_magic_methods(protocol_field_types):
     
     return FILE_TEMPLATE % MAGICMETHODS_TEMPLATE % ('\n'.join(normal_magic_methods), '\n'.join(swapped_magic_methods))
 
-def generate_python25api(known_functions, all_functions_file, c_functions_file, data_ptr_items_file, data_items_file):
+def generate_python25api(known_functions, all_functions_file, c_functions_file, data_items_file):
     all_methods_set = set(read_interesting_lines(all_functions_file))
     c_methods_set = set(read_interesting_lines(c_functions_file))
     not_implemented_methods_set = all_methods_set - c_methods_set
@@ -234,10 +234,6 @@ def generate_python25api(known_functions, all_functions_file, c_functions_file, 
         (PYTHON25API_NOT_IMPLEMENTED_METHOD_CASE, not_implemented_methods),
     )
 
-    ptr_data_items = [dict([("symbol", p)]) for p in read_interesting_lines(data_ptr_items_file)]
-    ptr_data_items_code = glom_templates("\n\n", (PYTHON25API_PTR_DATA_ITEM_TEMPLATE, ptr_data_items))
-    ptr_data_items_switch = glom_templates("\n", (PYTHON25API_PTR_DATA_ITEM_CASE, ptr_data_items))
-
     data_items = []
     for p in read_interesting_lines(data_items_file):
         symbol, _type = p.split(" ")
@@ -246,10 +242,8 @@ def generate_python25api(known_functions, all_functions_file, c_functions_file, 
     data_items_switch = glom_templates("\n", (PYTHON25API_DATA_ITEM_CASE, data_items))
 
     return FILE_TEMPLATE % PYTHON25API_TEMPLATE % (
-        methods_code, ptr_data_items_code,
-        methods_switch, ptr_data_items_switch,
-        data_items_code,
-        data_items_switch)
+        methods_code, methods_switch,
+        data_items_code, data_items_switch)
         
 
 def generate_dgts():
@@ -267,12 +261,11 @@ magicmethods_code = generate_magic_methods(protocol_field_types)
 
 from tools.dispatcherinputs import known_python25api_signatures
 in_this_dir = lambda name: os.path.join(os.path.dirname(__file__), name)
-data_items = in_this_dir("python25ApiDataItems")
-data_ptr_items = in_this_dir("python25ApiDataPtrItems")
 all_functions = in_this_dir("python25ApiFunctions")
 c_functions = "stub/_ignores"
+data_items = in_this_dir("python25ApiDataItems")
 python25api_code = generate_python25api(
-    known_python25api_signatures, all_functions, c_functions, data_ptr_items, data_items)
+    known_python25api_signatures, all_functions, c_functions, data_items)
 
 dgttype_code = generate_dgts()
 

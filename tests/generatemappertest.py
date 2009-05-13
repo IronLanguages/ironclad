@@ -48,18 +48,12 @@ class GeneratePython25MapperTest(TestCase):
             self.assertEquals(retVal, 0, "process ended badly")
 
             os.chdir(testBuildDir)
-            self.assertEquals(read("Python25Mapper_exceptions.Generated.cs"), EXPECTED_EXCEPTIONS, 
-                              "generated exceptions wrong")
-            self.assertEquals(read("Python25Mapper_store_dispatch.Generated.cs"), EXPECTED_STORE, 
-                              "generated wrong")
-            self.assertEquals(read("Python25Mapper_operator.Generated.cs"), EXPECTED_OPERATOR, 
-                              "generated wrong")
-            self.assertEquals(read("Python25Mapper_numbers_convert_c2py.Generated.cs"), EXPECTED_NUMBERS_CONVERT_C2PY, 
-                              "generated wrong")
-            self.assertEquals(read("Python25Mapper_numbers_convert_py2c.Generated.cs"), EXPECTED_NUMBERS_CONVERT_PY2C, 
-                              "generated wrong")
-            self.assertEquals(read("Python25Mapper_fill_types.Generated.cs"), EXPECTED_FILL_TYPES, 
-                              "generated wrong")
+            self.assertEquals(read("Python25Mapper_exceptions.Generated.cs"), EXPECTED_EXCEPTIONS)
+            self.assertEquals(read("Python25Mapper_store_dispatch.Generated.cs"), EXPECTED_STORE)
+            self.assertEquals(read("Python25Mapper_operator.Generated.cs"), EXPECTED_OPERATOR)
+            self.assertEquals(read("Python25Mapper_numbers_convert_c2py.Generated.cs"), EXPECTED_NUMBERS_CONVERT_C2PY)
+            self.assertEquals(read("Python25Mapper_numbers_convert_py2c.Generated.cs"), EXPECTED_NUMBERS_CONVERT_PY2C)
+            self.assertEquals(read("Python25Mapper_fill_types.Generated.cs"), EXPECTED_FILL_TYPES)
 
         finally:
             os.chdir(origCwd)
@@ -89,14 +83,16 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        public override IntPtr Make_PyExc_SystemError()
+        public override void Fill_PyExc_SystemError(IntPtr addr)
         {
-            return this.Store(PythonExceptions.SystemError);
+            IntPtr value = this.Store(PythonExceptions.SystemError);
+            CPyMarshal.WritePtr(addr, value);
         }
 
-        public override IntPtr Make_PyExc_OverflowError()
+        public override void Fill_PyExc_OverflowError(IntPtr addr)
         {
-            return this.Store(PythonExceptions.OverflowError);
+            IntPtr value = this.Store(PythonExceptions.OverflowError);
+            CPyMarshal.WritePtr(addr, value);
         }
     }
 }

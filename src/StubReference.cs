@@ -34,6 +34,7 @@ namespace Ironclad
             InitDelegate initDgt = (InitDelegate)Marshal.GetDelegateForFunctionPointer(initFP, typeof(InitDelegate));
             IntPtr addressGetterFP = Marshal.GetFunctionPointerForDelegate(addressGetter);
             IntPtr dataSetterFP = Marshal.GetFunctionPointerForDelegate(dataSetter);
+            
             initDgt(addressGetterFP, dataSetterFP);
             
             // yes, these do appear to be necessary: rare NullReferenceExceptions will be thrown

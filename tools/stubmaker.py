@@ -17,10 +17,9 @@ def popen(executable, arguments):
 class StubMaker(object):
 
     def __init__(self, sourceLibrary=None, overrideDir=None):
-        self.data = []
+        self.data = set()
+        self.ordered_data = []
         self.functions = []
-        self.ptr_data = []
-        self.static_data = []
 
         if sourceLibrary is not None:
             self._read_symbol_table(sourceLibrary)
@@ -51,7 +50,7 @@ class StubMaker(object):
                 if len(parts) == 1:
                     self.functions.append(parts[0])
                 else:
-                    self.ptr_data.append(parts[0])
+                    self.data.add(parts[0])
         finally:
             f.close()
 
@@ -77,7 +76,7 @@ class StubMaker(object):
                 if flag == 'F':
                     self.functions.append(name)
                 if flag == 'O':
-                    self.ptr_data.append(name)
+                    self.data.add(name)
         finally:
             f.close()
 
@@ -86,35 +85,32 @@ class StubMaker(object):
         if not os.path.exists(overrideDir):
             return
 
-        ignores = set()
-        ignoreFile = os.path.join(overrideDir, "_ignores")
-        if os.path.exists(ignoreFile):
-            f = open(ignoreFile, 'r')
-            try:
-                ignores = set([l.rstrip() for l in f.readlines() if l.rstrip()])
-            finally:
-                f.close()
-        self.functions = [f for f in self.functions if f not in ignores]
+        def tryread(filename):
+            path = os.path.join(overrideDir, filename)
+            if os.path.exists(path):
+                f = open(path, 'r')
+                try:
+                    return [l.rstrip() for l in f.readlines() if l.rstrip()]
+                finally:
+                    f.close()
+            return []
 
-        staticFile = os.path.join(overrideDir, "_statics")
-        if os.path.exists(staticFile):
-            f = open(staticFile, 'r')
-            try:
-                self.static_data = [l.rstrip() for l in f.readlines() if l.rstrip()]
-            finally:
-                f.close()
-        self.ptr_data = [s for s in self.ptr_data if s not in self.static_data and s not in ignores]
-                
+        ignores = set(tryread("_ignores"))
+        self.functions = [f for f in self.functions if f not in ignores]
+        self.data -= ignores
+        self.data |= set(tryread("_extras"))
+        self.ordered_data = tryread("_order")
+        self.data -= set(self.ordered_data)
+        
                 
     def generate_c(self):
         _boilerplate = 'void *jumptable[%d];\n\nvoid init(void*(*address_getter)(char*), void(*data_setter)(char*, void*)) {\n'
-        _init_ptr_data = '    %s = address_getter("%s");\n'
-        _init_static_data = '    data_setter("%s", &%s);\n'
+        _init_data = '    data_setter("%s", &%s);\n'
         _init_function = '    jumptable[%s] = address_getter("%s");\n'
 
         result = [_boilerplate % len(self.functions)]
-        result.extend([_init_static_data % (s, s) for s in self.static_data])
-        result.extend([_init_ptr_data % (s, s) for s in self.ptr_data])
+        result.extend([_init_data % (s, s) for s in self.ordered_data])
+        result.extend([_init_data % (s, s) for s in self.data])
         for i, name in enumerate(self.functions):
             result.append(_init_function % (i, name))
         result.append('}\n')

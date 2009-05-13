@@ -224,8 +224,6 @@ PYTHON25API_TEMPLATE = """
 
 %s
 
-%s
-
         public virtual IntPtr GetAddress(string name)
         {
             if (this.dgtMap.ContainsKey(name))
@@ -235,7 +233,6 @@ PYTHON25API_TEMPLATE = """
 
             switch (name)
             {
-%s
 %s
 
                 default:
@@ -278,21 +275,6 @@ PYTHON25API_NOT_IMPLEMENTED_METHOD_CASE = """\
                 case "%(symbol)s":
                     this.dgtMap[name] = new dgt_void_void(this.%(symbol)s);
                     break;"""
-
-PYTHON25API_PTR_DATA_ITEM_TEMPLATE = """\
-        public virtual IntPtr Make_%(symbol)s() { return IntPtr.Zero; }
-        public IntPtr %(symbol)s
-        {
-            get
-            {
-                return this.dataMap["%(symbol)s"];
-            }
-        }"""
-
-PYTHON25API_PTR_DATA_ITEM_CASE = """\
-                case "%(symbol)s":
-                    this.dataMap[name] = this.Make_%(symbol)s();
-                    return this.dataMap[name];"""
 
 PYTHON25API_DATA_ITEM_TEMPLATE = """\
         public virtual void Fill_%(symbol)s(IntPtr address) { ; }

@@ -12,28 +12,21 @@ class StubMakerInitTest(TestCase):
     def testInitEmpty(self):
         sm = StubMaker()
         self.assertEquals(sm.functions, [], 'bad init')
-        self.assertEquals(sm.ptr_data, [], 'bad init')
-        self.assertEquals(sm.static_data, [], 'bad init')
+        self.assertEquals(sm.data, set(), 'bad init')
+        self.assertEquals(sm.ordered_data, [], 'bad init')
 
 
     def testInitCollects(self):
         sm = StubMaker('tests/data/exportsymbols.dll')
-        self.assertEquals(sm.functions, ['Func', 'Funk', 'Jazz'],
-                          'found unexpected code symbols')
-        self.assertEquals(sm.ptr_data, ['Alphabetised', 'AnotherExportedSymbol', 'ExportedSymbol'],
-                          'found unexpected data symbols')
-        self.assertEquals(sm.static_data, [],
-                          'moved data symbols unexpectedly')
+        self.assertEquals(sm.functions, ['Func', 'Funk', 'Jazz'])
+        self.assertEquals(sm.data, set(['Alphabetised', 'AnotherExportedSymbol', 'ExportedSymbol']))
 
 
-    def testInitIgnoresIgnoresAndMovesStatics(self):
+    def testInitIgnoresIgnoresAndAddsExtrasAndOrderedData(self):
         sm = StubMaker('tests/data/exportsymbols.dll', 'tests/data/stub')
-        self.assertEquals(sm.functions, ['Func', 'Jazz'],
-                          'failed to remove ignored code symbols')
-        self.assertEquals(sm.ptr_data, ['ExportedSymbol'],
-                          'found unexpected data symbols')
-        self.assertEquals(sm.static_data, ['AnotherExportedSymbol'],
-                          'moved data symbols unexpectedly')
+        self.assertEquals(sm.functions, ['Func', 'Jazz'])
+        self.assertEquals(sm.data, set(['ExportedSymbol', 'SomethingElse']))
+        self.assertEquals(sm.ordered_data, ['MeFirst', 'AnotherExportedSymbol'])
 
 
 class StubMakerGenerateCTest(TestCase):
@@ -41,8 +34,8 @@ class StubMakerGenerateCTest(TestCase):
     def testGenerateCWritesBareMinimum(self):
         sm = StubMaker()
         sm.functions = ['FUNC1', 'FUNC2']
-        sm.ptr_data = ['DATA1', 'DATA2']
-        sm.static_data = ['DATA3', 'DATA4']
+        sm.data = ['DATA1', 'DATA2'] # list not set for reliable ordering
+        sm.ordered_data = ['DATA3', 'DATA4']
 
         expected = dedent("""\
         void *jumptable[2];
@@ -50,8 +43,8 @@ class StubMakerGenerateCTest(TestCase):
         void init(void*(*address_getter)(char*), void(*data_setter)(char*, void*)) {
             data_setter("DATA3", &DATA3);
             data_setter("DATA4", &DATA4);
-            DATA1 = address_getter("DATA1");
-            DATA2 = address_getter("DATA2");
+            data_setter("DATA1", &DATA1);
+            data_setter("DATA2", &DATA2);
             jumptable[0] = address_getter("FUNC1");
             jumptable[1] = address_getter("FUNC2");
         }
