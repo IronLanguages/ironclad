@@ -12,6 +12,7 @@ class StubMakerInitTest(TestCase):
     def testInitEmpty(self):
         sm = StubMaker()
         self.assertEquals(sm.functions, [], 'bad init')
+        self.assertEquals(sm.mgd_functions, [], 'bad init')
         self.assertEquals(sm.data, set(), 'bad init')
         self.assertEquals(sm.ordered_data, [], 'bad init')
 
@@ -22,9 +23,10 @@ class StubMakerInitTest(TestCase):
         self.assertEquals(sm.data, set(['Alphabetised', 'AnotherExportedSymbol', 'ExportedSymbol']))
 
 
-    def testInitIgnoresIgnoresAndAddsExtrasAndOrderedData(self):
+    def testInitIgnoresIgnoresAndAddsExtrasOrderedDataAndMgdFunctions(self):
         sm = StubMaker('tests/data/exportsymbols.dll', 'tests/data/stub')
-        self.assertEquals(sm.functions, ['Func', 'Jazz'])
+        self.assertEquals(sm.functions, ['Func', 'Jazz', 'Bebop'])
+        self.assertEquals(sm.mgd_functions, ['void Bebop(foo this, bar* that);'])
         self.assertEquals(sm.data, set(['ExportedSymbol', 'SomethingElse']))
         self.assertEquals(sm.ordered_data, ['MeFirst', 'AnotherExportedSymbol'])
 
@@ -34,7 +36,8 @@ class StubMakerGenerateCTest(TestCase):
     def testGenerateCWritesBareMinimum(self):
         sm = StubMaker()
         sm.functions = ['FUNC1', 'FUNC2']
-        sm.data = ['DATA1', 'DATA2'] # list not set for reliable ordering
+        sm.mgd_functions = ['void FUNC2();']
+        sm.data = ['DATA1', 'DATA2'] # list not set for reliable ordering in output
         sm.ordered_data = ['DATA3', 'DATA4']
 
         expected = dedent("""\
@@ -48,9 +51,10 @@ class StubMakerGenerateCTest(TestCase):
             jumptable[0] = address_getter("FUNC1");
             jumptable[1] = address_getter("FUNC2");
         }
+        
+        void FUNC2();
         """)
-        result = sm.generate_c()
-        self.assertEquals(result, expected, 'wrong output')
+        self.assertEquals(sm.generate_c(), expected)
 
 
     def testGenerateCWritesJumpTableSize(self):

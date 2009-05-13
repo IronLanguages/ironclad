@@ -14,12 +14,18 @@ def popen(executable, arguments):
     return file(process.StandardOutput.BaseStream, "r")
 
 
+def extract_funcname(c_func):
+    # hacka haca hacka
+    return c_func.split('(')[0].split(' ')[-1].replace('*', '')
+
+
 class StubMaker(object):
 
     def __init__(self, sourceLibrary=None, overrideDir=None):
         self.data = set()
         self.ordered_data = []
         self.functions = []
+        self.mgd_functions = []
 
         if sourceLibrary is not None:
             self._read_symbol_table(sourceLibrary)
@@ -90,15 +96,20 @@ class StubMaker(object):
             if os.path.exists(path):
                 f = open(path, 'r')
                 try:
-                    return [l.rstrip() for l in f.readlines() if l.rstrip()]
+                    return [l.strip() for l in f.readlines() if l.strip()]
                 finally:
                     f.close()
             return []
 
         ignores = set(tryread("_ignore_symbols"))
         self.functions = [f for f in self.functions if f not in ignores]
+        
+        self.mgd_functions = tryread("_mgd_functions")
+        self.functions.extend(map(extract_funcname, self.mgd_functions))
+        
         self.data -= ignores
         self.data |= set(tryread("_extra_data"))
+        
         self.ordered_data = tryread("_ordered_data")
         self.data -= set(self.ordered_data)
         
@@ -113,7 +124,9 @@ class StubMaker(object):
         result.extend([_init_data % (s, s) for s in self.data])
         for i, name in enumerate(self.functions):
             result.append(_init_function % (i, name))
-        result.append('}\n')
+        result.append('}\n\n')
+        result.append('\n'.join(self.mgd_functions))
+        result.append('\n')
         return ''.join(result)
 
 
