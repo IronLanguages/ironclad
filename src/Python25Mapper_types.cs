@@ -158,7 +158,7 @@ namespace Ironclad
             }
         }
         
-        private IntPtr
+        public override IntPtr
         IC_PyType_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
             try

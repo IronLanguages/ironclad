@@ -200,7 +200,7 @@ namespace Ironclad
             }
         }
 
-        public IntPtr
+        public override IntPtr
         IC_PyFloat_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
             try
@@ -215,7 +215,7 @@ namespace Ironclad
             }
         }
 
-        public IntPtr
+        public override IntPtr
         IC_PyInt_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
             try

@@ -75,10 +75,8 @@ namespace Ironclad
         private LocalDataStoreSlot threadLockStore = Thread.AllocateDataSlot();
         private LocalDataStoreSlot threadStateStore = Thread.AllocateDataSlot();
 
-        // one day, perhaps, this 'set' will be empty
-        private StupidSet unknownNames = new StupidSet();
-
         // TODO: must be a better way to handle imports...
+        // protected for setting from tests
         protected string importName = "";
         protected string importFile = null;
         
@@ -526,63 +524,6 @@ namespace Ironclad
                 exitfuncPtr, typeof(dgt_void_void));
             this.exitfuncs.Push(exitfunc);
             return 0;
-        }
-        
-        public override IntPtr 
-        GetAddress(string name)
-        {
-            IntPtr result = base.GetAddress(name);
-            if (result != IntPtr.Zero)
-            {
-                return result;
-            }
-
-            switch (name)
-            {
-                case "IC_PyBaseObject_Dealloc":
-                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PyBaseObject_Dealloc);
-                    break;
-                case "IC_PyBaseObject_Init":
-                    this.dgtMap[name] = new dgt_int_ptrptrptr(this.IC_PyBaseObject_Init);
-                    break;
-                case "IC_PyDict_Init":
-                    this.dgtMap[name] = new dgt_int_ptrptrptr(this.IC_PyDict_Init);
-                    break;
-                case "IC_PyFile_Dealloc":
-                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PyFile_Dealloc);
-                    break;
-                case "IC_PyFloat_New":
-                    this.dgtMap[name] = new dgt_ptr_ptrptrptr(this.IC_PyFloat_New);
-                    break;
-                case "IC_PyInstance_Dealloc":
-                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PyInstance_Dealloc);
-                    break;
-                case "IC_PyInt_New":
-                    this.dgtMap[name] = new dgt_ptr_ptrptrptr(this.IC_PyInt_New);
-                    break;
-                case "IC_PyType_New":
-                    this.dgtMap[name] = new dgt_ptr_ptrptrptr(this.IC_PyType_New);
-                    break;
-                case "IC_PyList_Dealloc":
-                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PyList_Dealloc);
-                    break;
-                case "IC_PySlice_Dealloc":
-                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PySlice_Dealloc);
-                    break;
-                case "IC_PyTuple_Dealloc":
-                    this.dgtMap[name] = new dgt_void_ptr(this.IC_PyTuple_Dealloc);
-                    break;
-                case "IC_PyString_Str":
-                    this.dgtMap[name] = new dgt_ptr_ptr(this.IC_PyString_Str);
-                    break;
-                case "IC_PyString_Concat_Core":
-                    this.dgtMap[name] = new dgt_ptr_ptrptr(this.IC_PyString_Concat_Core);
-                    break;
-                default:
-                    this.unknownNames.Add(name);
-                    return IntPtr.Zero;
-            }
-            return Marshal.GetFunctionPointerForDelegate(this.dgtMap[name]);
         }
         
         public override void

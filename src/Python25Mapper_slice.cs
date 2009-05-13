@@ -22,7 +22,7 @@ namespace Ironclad
             return ptr;
         }
 
-        public void
+        public override void
         IC_PySlice_Dealloc(IntPtr slicePtr)
         {
             this.DecRef(CPyMarshal.ReadPtrField(slicePtr, typeof(PySliceObject), "start"));

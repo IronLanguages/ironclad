@@ -18,7 +18,7 @@ namespace Ironclad
             return tuplePtr;
         }
         
-        public virtual void 
+        public override void 
         IC_PyTuple_Dealloc(IntPtr tuplePtr)
         {
             int length = CPyMarshal.ReadIntField(tuplePtr, typeof(PyTupleObject), "ob_size");

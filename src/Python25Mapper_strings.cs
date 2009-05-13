@@ -14,7 +14,7 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        private IntPtr
+        public override IntPtr
         IC_PyString_Concat_Core(IntPtr str1Ptr, IntPtr str2Ptr)
         {
             try
@@ -340,7 +340,7 @@ namespace Ironclad
             this.map.Associate(ptr, str);
         }
 
-        public IntPtr
+        public override IntPtr
         IC_PyString_Str(IntPtr ptr)
         {
             try
