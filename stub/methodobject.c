@@ -184,6 +184,8 @@ static PyMemberDef meth_members[] = {
 	{NULL}
 };
 
+#undef OFF
+
 static PyObject *
 meth_repr(PyCFunctionObject *m)
 {

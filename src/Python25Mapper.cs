@@ -172,7 +172,7 @@ namespace Ironclad
             }
             catch (NullReferenceException)
             {
-                // meh, mapping broken, no great surprise at this point
+                // meh, mapping broken. tough.
             }
             catch (Exception e)
             {            
@@ -452,7 +452,7 @@ namespace Ironclad
                     throw new CannotInterpretException(String.Format(
                         "Cannot destroy object at {0} with type at {1}: no dealloc function", ptr.ToString("x"), typePtr.ToString("x")));
                 }
-                
+
                 dgt_void_ptr deallocDgt = (dgt_void_ptr)CPyMarshal.ReadFunctionPtrField(
                     typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(dgt_void_ptr));
                 deallocDgt(ptr);

@@ -383,6 +383,9 @@ typedef struct {
 #define Py_END_OF_BUFFER	(-1)
 
 
+#define PyUnicode_Check(op) PyObject_TypeCheck(op, &PyUnicode_Type)
+#define PyUnicode_CheckExact(op) ((op)->ob_type == &PyUnicode_Type)
+
 #define PyObject_MALLOC		PyObject_Malloc
 #define PyObject_FREE		PyObject_Free
 #define PyObject_DEL		PyObject_FREE
@@ -510,18 +513,6 @@ typedef void *(*PyThreadFrameGetter)(PyThreadState *self_);
 #define WRITE_RESTRICTED 4
 
 
-typedef struct PyMemberDef {
-	/* Current version, use this */
-	char *name;
-	int type;
-	Py_ssize_t offset;
-	int flags;
-	char *doc;
-} PyMemberDef;
-
-#define offsetof(type, member) ( (int) & ((type*)0) -> member )
-
-
 /* Utility macro to help write tp_traverse functions.
  * To use this macro, the tp_traverse function must name its arguments
  * "visit" and "arg".  This is intended to keep tp_traverse functions
@@ -535,3 +526,23 @@ typedef struct PyMemberDef {
                                 return vret;				\
                 }							\
         } while (0)
+
+
+#define Py_BEGIN_ALLOW_THREADS { \
+			PyThreadState *_save; \
+			_save = PyEval_SaveThread();
+#define Py_BLOCK_THREADS	PyEval_RestoreThread(_save);
+#define Py_UNBLOCK_THREADS	_save = PyEval_SaveThread();
+#define Py_END_ALLOW_THREADS	PyEval_RestoreThread(_save); \
+		 }
+
+
+#define Py_RETURN_NONE return Py_INCREF(Py_None), Py_None
+
+#define PyObject_Del		PyObject_Free
+
+/* Flag bits for printing: */
+#define Py_PRINT_RAW	1	/* No string quotes etc. */
+
+
+

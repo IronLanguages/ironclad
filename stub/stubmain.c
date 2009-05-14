@@ -7,8 +7,11 @@
 
 
 #include "PyAPI_types.c"
+
+#include "structmember.h"
 #include "methodobject.h"
 #include "descrobject.h"
+#include "fileobject.h"
 
 #include "PyAPI_DATAs.c"
 #include "PyAPI_FUNCs.c"
@@ -33,6 +36,7 @@
 #include "listobject.c"
 #include "pystate.c"
 #include "pythonrun.c"
+#include "fileobject.c"
 
 
 

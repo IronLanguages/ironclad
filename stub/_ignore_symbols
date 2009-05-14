@@ -76,6 +76,18 @@ PyList_Size
 PyEval_CallObject
 PyEval_CallObjectWithKeywords
 
+PyFile_FromString
+PyFile_SetBufSize
+PyFile_SetEncoding
+PyFile_FromFile
+PyFile_AsFile
+PyFile_Name
+PyFile_GetLine
+PyFile_WriteObject
+PyFile_SoftSpace
+PyFile_WriteString
+PyObject_AsFileDescriptor
+
 PyOS_snprintf
 PyOS_vsnprintf
 PyOS_ascii_strtod

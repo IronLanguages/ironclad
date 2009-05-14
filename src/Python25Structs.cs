@@ -164,7 +164,30 @@ namespace Ironclad
             public IntPtr async_exc;     // not used
             public int thread_id;        // not used
         }
-        
+
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        public struct PyFileObject
+        {
+            public uint ob_refcnt;
+            public IntPtr ob_type;
+            public IntPtr f_fp;
+            public IntPtr f_name;
+            public IntPtr f_mode;
+            public IntPtr f_close;
+            public int f_softspace;	/* Flag used by 'print' command */
+            public int f_binary;		/* Flag which indicates whether the file is 
+				   open in binary (1) or text (0) mode */
+            public IntPtr f_buf;		/* Allocated readahead buffer */
+            public IntPtr f_bufend;		/* Points after last occupied position */
+            public IntPtr f_bufptr;		/* Current buffer position */
+            public IntPtr f_setbuf;		/* Buffer for setbuf(3) and setvbuf(3) */
+            public int f_univ_newline;	/* Handle any newline convention */
+            public int f_newlinetypes;	/* Types of newlines seen */
+            public int f_skipnextlf;	/* Skip next \n */
+            public IntPtr f_encoding;
+            public IntPtr weakreflist; /* List of weak references */
+        }
         
         [StructLayout(LayoutKind.Sequential, Pack=1)]
         public struct Py_complex
