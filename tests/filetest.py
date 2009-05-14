@@ -13,7 +13,7 @@ from System.IO import FileStream
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, dgt_void_ptr, Python25Api, Python25Mapper, Unmanaged
-from Ironclad.Structs import PyObject, PyStringObject, PyTypeObject
+from Ironclad.Structs import PyFileObject, PyObject, PyStringObject, PyTypeObject
 
 from TestUtils.Unmanaged import fflush, fread, fwrite
 
@@ -34,21 +34,41 @@ class PyFile_Type_Test(TestCase):
         
         mapper.SetData("PyFile_Type", typeBlock)
         self.assertEquals(mapper.PyFile_Type, typeBlock, "type address not stored")
-        self.assertEquals(CPyMarshal.ReadPtrField(mapper.PyFile_Type, PyTypeObject, 'tp_dealloc'), mapper.GetAddress('IC_PyFile_Dealloc'))
         self.assertEquals(mapper.Retrieve(typeBlock), file, "type not mapped")
+        
+        # no explicit test that PyFile_Type was not overwritten -- although it should indeed not be
     
     
     @WithMapper
-    def testCallPyFile_Type(self, mapper, addToCleanUp):
+    def testStoreIPyFile(self, mapper, _):
+        f = open(*READ_ARGS)
+        fPtr = mapper.Store(f)
+        self.assertEquals(CPyMarshal.ReadPtrField(fPtr, PyObject, 'ob_type'), mapper.PyFile_Type)
+        self.assertEquals(CPyMarshal.ReadIntField(fPtr, PyObject, 'ob_refcnt'), 1)
+        self.assertEquals(CPyMarshal.ReadIntField(fPtr, PyFileObject, 'f_fp'), -2)
+    
+    
+    @WithMapper
+    def testOpenAsIfFromUnmanaged(self, mapper, addToCleanUp):
+        self.fail('next steps: (1) make cpy calls create cpy files; (2) interpret cpy file type and store it in ironclad')
+        
         argsPtr = mapper.Store(READ_ARGS)
         kwargsPtr = IntPtr.Zero
         deallocTypes = CreateTypes(mapper)
         addToCleanUp(deallocTypes)
         
-        filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
-        self.assertEquals(CPyMarshal.ReadPtrField(filePtr, PyObject, 'ob_type'), mapper.PyFile_Type)
-        f = mapper.Retrieve(filePtr)
-        self.assertEquals(f.read(), TEST_TEXT, "didn't get a real file")
+        for kallable in (mapper.PyFile_Type, mapper.Store(open)):
+            filePtr = mapper.PyObject_Call(kallable, argsPtr, kwargsPtr)
+            self.assertEquals(CPyMarshal.ReadPtrField(filePtr, PyObject, 'ob_type'), mapper.PyFile_Type)
+            f = mapper.Retrieve(filePtr)
+            
+            self.assertFalse(type(f) is file, "we don't want ipy files used in c code")
+            self.assertFalse(CPyMarshal.ReadIntField(filePtr, PyFileObject, 'f_fp') in (0, -2), "shouldn't be either closed or magic")
+            self.assertEquals(f.read(), TEST_TEXT, "didn't get a sufficiently real file")
+            f.close()
+            self.assertEquals(CPyMarshal.ReadIntField(filePtr, PyFileObject, 'f_fp'), 0, "didn't close")
+            mapper.DecRef(filePtr)
+        
 
 
     @WithMapper
@@ -79,15 +99,13 @@ class PyFile_Type_Test(TestCase):
 class PyFileAPIFunctions(TestCase):
 
     @WithMapper
-    def testPyFile_AsFile(self, mapper, addToCleanUp):
-        kwargsPtr = IntPtr.Zero
+    def testIC_PyFile_AsFile(self, mapper, addToCleanUp):
         buflen = len(TEST_TEXT) + 10
         buf = Marshal.AllocHGlobal(buflen)
-        argsPtr = mapper.Store(READ_ARGS)
         
-        filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
+        filePtr = mapper.Store(open(*READ_ARGS))
         
-        f = mapper.PyFile_AsFile(filePtr)
+        f = mapper.IC_PyFile_AsFile(filePtr)
         self.assertEquals(fread(buf, 1, buflen, f), len(TEST_TEXT), "didn't get a real FILE")
         ptr = buf
         for c in TEST_TEXT:
@@ -99,22 +117,18 @@ class PyFileAPIFunctions(TestCase):
 
     @WithMapper
     def testPyFile_AsFile_Write(self, mapper, addToCleanUp):
-        kwargsPtr = IntPtr.Zero
-        
         testDir = tempfile.mkdtemp()
         addToCleanUp(lambda: shutil.rmtree(testDir))
-
         path = os.path.join(testDir, "test")
-        write_args = (path, 'w')
-        argsPtr = mapper.Store(write_args)
         
         testStr = "meh, string data"
         testLength = len(testStr)
         testStrPtr = mapper.Store(testStr)
         testDataPtr = OffsetPtr(testStrPtr, Marshal.OffsetOf(PyStringObject, "ob_sval"))
         
-        filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
-        f = mapper.PyFile_AsFile(filePtr)
+        filePtr = mapper.Store(open(path, 'w'))
+        
+        f = mapper.IC_PyFile_AsFile(filePtr)
         self.assertEquals(fwrite(testDataPtr, 1, testLength, f), testLength, "didn't work")
         
         # nasty test: patch out PyObject_Free
@@ -145,8 +159,8 @@ class PyFileAPIFunctions(TestCase):
         buf = Marshal.AllocHGlobal(buflen)
         
         for _ in range(1000):
-            filePtr = mapper.PyObject_Call(mapper.PyFile_Type, argsPtr, kwargsPtr)
-            FILE = mapper.PyFile_AsFile(filePtr)
+            filePtr = mapper.Store(open(*READ_ARGS))
+            FILE = mapper.IC_PyFile_AsFile(filePtr)
             self.assertNotEquals(FILE, IntPtr.Zero, "exhausted")
             mapper.Retrieve(filePtr).close()
             # note: we don't call fclose until the file is destroyed, rather than closed
@@ -155,20 +169,9 @@ class PyFileAPIFunctions(TestCase):
 
 
     @WithMapper
-    def testPyFile_Name(self, mapper, CallLater):
-        f = open(__file__)
-        CallLater(f.close)
-        fptr = mapper.Store(f)
-        strptr = mapper.PyFile_Name(fptr)
-        self.assertEquals(mapper.Retrieve(strptr), __file__)
-
-
-    @WithMapper
     def testPyFileFunctionErrors(self, mapper, _):
         ptr = mapper.Store(object())
-        self.assertEquals(mapper.PyFile_AsFile(ptr), IntPtr.Zero)
-        self.assertMapperHasError(mapper, TypeError)
-        self.assertEquals(mapper.PyFile_Name(ptr), IntPtr.Zero)
+        self.assertEquals(mapper.IC_PyFile_AsFile(ptr), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
 
 

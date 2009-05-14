@@ -209,9 +209,6 @@ known_python25api_signatures = (
     ('PyEval_RestoreThread', 'void_ptr'),
     ('PyEval_SaveThread', 'ptr_void'),
     
-    ('PyFile_AsFile', 'ptr_ptr'),
-    ('PyFile_Name', 'ptr_ptr'),
-    
     ('PyFloat_AsDouble', 'double_ptr'),
     ('PyFloat_FromDouble', 'ptr_double'),
     
@@ -363,7 +360,6 @@ extra_python25api_signatures = (
     ('IC_PyBaseObject_Dealloc', 'void_ptr'),
     ('IC_PyBaseObject_Init', 'int_ptrptrptr'),
     ('IC_PyDict_Init', 'int_ptrptrptr'),
-    ('IC_PyFile_Dealloc', 'void_ptr'),
     ('IC_PyFloat_New', 'ptr_ptrptrptr'),
     ('IC_PyInstance_Dealloc', 'void_ptr'),
     ('IC_PyInt_New', 'ptr_ptrptrptr'),
@@ -373,6 +369,9 @@ extra_python25api_signatures = (
     ('IC_PyTuple_Dealloc', 'void_ptr'),
     ('IC_PyString_Str', 'ptr_ptr'),
     ('IC_PyString_Concat_Core', 'ptr_ptrptr'),
+    
+    ('IC_PyFile_AsFile', 'ptr_ptr'),
+    ('IC_file_dealloc', 'void_ptr'),
 )
 
 import os

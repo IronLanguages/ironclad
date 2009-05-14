@@ -1,0 +1,18 @@
+
+FILE * IC_PyFile_AsFile(PyObject *f);
+int IC_PyFile_SetEncoding(PyObject *f, const char *enc);
+void IC_file_dealloc(PyFileObject *f);
+PyObject * IC_file_close(PyFileObject *f);
+PyObject * IC_file_seek(PyFileObject *f, PyObject *args);
+PyObject * IC_file_truncate(PyFileObject *f, PyObject *args);
+PyObject * IC_file_tell(PyFileObject *f);
+PyObject * IC_file_flush(PyFileObject *f);
+PyObject * IC_file_read(PyFileObject *f, PyObject *args);
+PyObject * IC_file_readinto(PyFileObject *f, PyObject *args);
+PyObject * IC_file_readline(PyFileObject *f, PyObject *args);
+PyObject * IC_file_readlines(PyFileObject *f, PyObject *args);
+PyObject * IC_file_write(PyFileObject *f, PyObject *args);
+PyObject * IC_file_writelines(PyFileObject *f, PyObject *args);
+PyObject * IC_file_iternext(PyFileObject *f);
+int IC_PyFile_WriteObject(PyObject *v, PyObject *f, int flags);
+int IC_PyFile_WriteString(const char *s, PyObject *f);

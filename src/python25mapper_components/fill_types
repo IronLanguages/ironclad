@@ -2,7 +2,6 @@ PyBaseObject_Type TypeCache.Object {"tp_alloc": "PyType_GenericAlloc", "tp_new":
 PyType_Type TypeCache.PythonType {"tp_new": "IC_PyType_New"}
 PyNone_Type TypeCache.None
 PySlice_Type Builtin.slice {"tp_dealloc": "IC_PySlice_Dealloc"}
-PyFile_Type TypeCache.PythonFile  {"tp_dealloc": "IC_PyFile_Dealloc"}
 PyInt_Type TypeCache.Int32 {"tp_as_number": "AddNumberMethodsWithIndex", "tp_new": "IC_PyInt_New"}
 PyLong_Type TypeCache.BigInteger {"tp_as_number": "AddNumberMethodsWithIndex"}
 PyFloat_Type TypeCache.Double {"tp_as_number": "AddNumberMethodsWithoutIndex", "tp_new": "IC_PyFloat_New"}

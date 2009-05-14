@@ -2,6 +2,7 @@
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
+from Ironclad import CPyMarshal
 from Ironclad.Structs import PyIntObject, PyObject, PyTypeObject
 
 def OffsetPtr(ptr, offset):
@@ -14,6 +15,8 @@ def OffsetPtr(ptr, offset):
 # This means that, should an extension end up actually using (say) a buffer type
 # and passing it up to IronPython, it will be treated like any other type 
 # defined in a C extension.
+# PyFile_Type is a special case: it *should* be filled in by C code but, in a test
+# context, is usually not. So, we zero it and fill in the one critical method.
 _types = (
     "PyType_Type",
     "PyBaseObject_Type",
@@ -74,6 +77,9 @@ def CreateTypes(mapper, readyTypes=True):
     blocks = []
     def create(name, size):
         block = Marshal.AllocHGlobal(size)
+        if name == 'PyFile_Type':
+            CPyMarshal.Zero(block, size);
+            CPyMarshal.WritePtrField(block, PyTypeObject, 'tp_dealloc', mapper.GetAddress('IC_file_dealloc'))
         mapper.SetData(name, block)
         blocks.append(block)
     

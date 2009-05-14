@@ -11,7 +11,7 @@ namespace Ironclad
     public partial class Python25Mapper : Python25Api
     {
         public override IntPtr
-        PyFile_AsFile(IntPtr pyFilePtr)
+        IC_PyFile_AsFile(IntPtr pyFilePtr)
         {
             try
             {
@@ -41,21 +41,6 @@ namespace Ironclad
             }
         }
 
-        public override IntPtr
-        PyFile_Name(IntPtr filePtr)
-        {
-            try
-            {
-                PythonFile file = (PythonFile)this.Retrieve(filePtr);
-                return this.Store(file.name);
-            }
-            catch (Exception e)
-            {
-                this.LastException = e;
-                return IntPtr.Zero;
-            }
-        }
-
         public int
         ConvertPyFileToDescriptor(PythonFile pyFile)
         {
@@ -68,16 +53,17 @@ namespace Ironclad
         private IntPtr
         Store(PythonFile obj)
         {
-            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyObject)));
+            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyFileObject)));
+            CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyFileObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyFile_Type);
+            CPyMarshal.WriteIntField(ptr, typeof(PyFileObject), "f_fp", -2);
             this.map.Associate(ptr, obj);
             return ptr;
-        }  
-
+        }
         
         public override void 
-        IC_PyFile_Dealloc(IntPtr ptr)
+        IC_file_dealloc(IntPtr ptr)
         {
             if (this.FILEs.ContainsKey(ptr))
             {
