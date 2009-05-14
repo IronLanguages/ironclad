@@ -6,6 +6,9 @@ core.test_memmap
 # binascii.crc32
 lib.test_io.TestSavezLoad 
 
+# subprocess requires fcntl
+linalg.test_build
+
  # sys.getframe
 core.test_defmatrix.TestCtor.test_basic
 core.test_defmatrix.TestCtor.test_bmat_nondefault_str

@@ -63,9 +63,9 @@ class FunctionalTestCase(TestCase):
         process.StartInfo.RedirectStandardOutput = process.StartInfo.RedirectStandardError = True
 
         process.Start()
-        process.WaitForExit(60000)
+        process.WaitForExit(150000)
         if not process.HasExited:
-            process.Kill
+            process.Kill()
         output = process.StandardOutput.ReadToEnd()
         error = process.StandardError.ReadToEnd()
         self.assertEquals(process.ExitCode, 0, "Execution failed: >>>%s<<<\n>>>%s<<<" % (output, error))
