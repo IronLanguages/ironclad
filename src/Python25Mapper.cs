@@ -55,6 +55,7 @@ namespace Ironclad
         private CodeContext scratchContext;
         private object removeSysHacks;
         private object kindaDictProxyClass;
+        private object cFileClass;
         private Lock GIL;
 
         private bool alive = false;
@@ -107,7 +108,11 @@ namespace Ironclad
         
         ~Python25Mapper()
         {
-            throw new Exception("Python25Mappers need to be Disposed manually. Please don't just leave them lying around.");
+            // alive check is here so that we don't crash hard on failed construct
+            if (this.alive)
+            {
+                throw new Exception("Python25Mappers need to be Disposed manually. Please don't just leave them lying around.");
+            }
         }
 
         private void Init(PythonContext inPython, string stubPath, IAllocator inAllocator)
@@ -121,6 +126,8 @@ namespace Ironclad
             
             if (stubPath != null)
             {
+                Unmanaged.LoadLibrary("msvcr71.dll");
+                
                 this.stub = new StubReference(stubPath);
                 this.stub.Init(new AddressGetterDelegate(this.GetAddress), new DataSetterDelegate(this.SetData));
 
@@ -254,7 +261,12 @@ namespace Ironclad
             get { return this.logErrors; }
             set { this.logErrors = value; }
         }
-        
+
+        public object
+        CPyFileClass
+        {
+            get { return this.cFileClass; }
+        }
         
         public void
         DumpMappingInfo(object id)

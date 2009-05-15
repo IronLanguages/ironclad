@@ -1,5 +1,9 @@
 include ../Makefile.config
 
+ifeq ($(OS),windows)
+	CFLAGS += -specs=use-msvcr71.spec
+endif
+
 ../build/ironclad/python25.dll: stub.asm.o stub.c.o 
 	gcc $(CFLAGS) -shared -o ../build/ironclad/python25.dll stub.asm.o stub.c.o
 stub.asm.o: generated

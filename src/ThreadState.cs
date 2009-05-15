@@ -55,7 +55,6 @@ namespace Ironclad
                     value = InappropriateReflection.GetPythonException((Exception)value);
                 }
                 
-                
                 IntPtr typePtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyThreadState), "curexc_type");
                 if (typePtr != IntPtr.Zero)
                 {

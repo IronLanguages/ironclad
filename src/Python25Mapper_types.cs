@@ -294,6 +294,12 @@ namespace Ironclad
             this.PyType_Ready(this.PyInstance_Type);
 
             this.actualisableTypes[this.PyType_Type] = new ActualiseDelegate(this.ActualiseType);
+            
+            // now, let's corrupt the mapping in a useful way...
+            this.cFileClass = this.GenerateClass(this.PyFile_Type);
+            Builtin.setattr(this.scratchContext, this.cFileClass, "__name__", "cpy_file");
+            this.actualisableTypes[this.PyFile_Type] = new ActualiseDelegate(this.ActualiseArbitraryObject);
+            this.map.Associate(this.PyFile_Type, this.cFileClass);
         }
                 
         private void
@@ -395,8 +401,11 @@ namespace Ironclad
         ActualiseType(IntPtr typePtr)
         {
             this.PyType_Ready(typePtr);
-            this.GenerateClass(typePtr);
+            object klass = this.GenerateClass(typePtr);
             this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
+            
+            this.map.Associate(typePtr, klass);
+            this.IncRef(typePtr);
         }
         
         private void

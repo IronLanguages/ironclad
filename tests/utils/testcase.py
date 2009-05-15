@@ -1,4 +1,5 @@
 
+import sys
 import unittest
 import tests.utils.loadassemblies
 
@@ -26,6 +27,27 @@ def _WithMapper(func, mapperCls):
 
 WithMapper = lambda f: _WithMapper(f, Python25Mapper)
 WithMapperSubclass = lambda f: _WithMapper(f, TrivialP25MSubclass)
+
+
+class my_stderr(object):
+    def __init__(self, calls):
+        self.calls = calls
+    def write(self, *args):
+        self.calls.append(args)
+
+def WithPatchedStdErr(func):
+    def patched(*args):
+        calls = []
+        old = sys.stderr
+        sys.stderr = my_stderr(calls)
+        newArgs = args + (calls,)
+        try:
+            return func(*newArgs)
+        finally:
+            sys.stderr = old
+    return patched
+    
+
 
 class TestCase(unittest.TestCase):
     
