@@ -1,17 +1,11 @@
 import sys
 from tests.utils.runtest import makesuite, run
-from tests.utils.testcase import TestCase, WithMapper
+from tests.utils.testcase import TestCase, WithMapper, WithPatchedStdErr
 
 import System
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal
-
-class my_stderr(object):
-    def __init__(self, calls):
-        self.calls = calls
-    def write(self, *args):
-        self.calls.append(args)
 
 class LastExceptionTest(TestCase):
 
@@ -30,21 +24,15 @@ class ErrFunctionsTest(TestCase):
 
 
     @WithMapper
-    def testPyErr_Print(self, mapper, _):
+    @WithPatchedStdErr
+    def testPyErr_Print(self, mapper, _, stderr_writes):
         mapper.LastException = None
         self.assertRaises(Exception, mapper.PyErr_Print)
         
         mapper.LastException = AttributeError("twaddle")
+        mapper.PyErr_Print()
         
-        calls = []
-        old = sys.stderr
-        sys.stderr = my_stderr(calls)
-        try:
-            mapper.PyErr_Print()
-        finally:
-            sys.stderr = old
-        
-        self.assertEquals(calls, [("twaddle",), ('\n',)])
+        self.assertEquals(stderr_writes, [("twaddle",), ('\n',)])
         
 
     @WithMapper
@@ -100,7 +88,8 @@ class ErrFunctionsTest(TestCase):
         
 
     @WithMapper
-    def testPyErr_GivenExceptionMatches(self, mapper, _):
+    @WithPatchedStdErr
+    def testPyErr_GivenExceptionMatches(self, mapper, _, stderr_writes):
         self.assertMatch(mapper, TypeError, TypeError, 1)
         self.assertMatch(mapper, TypeError(), TypeError, 1)
         self.assertMatch(mapper, TypeError, (TypeError, float), 1)
@@ -113,20 +102,12 @@ class ErrFunctionsTest(TestCase):
         specificInstance = TypeError('yes, this specific TypeError')
         self.assertMatch(mapper, specificInstance, specificInstance, 1)
         
-        
-        calls = []
-        old = sys.stderr
-        sys.stderr = my_stderr(calls)
-        try:
-            self.assertMatch(mapper, 'whatever', str, 0)
-        finally:
-            sys.stderr = old
-        
         expectedCalls = [
             ('PyErr_GivenExceptionMatches: something went wrong. Assuming exception does not match.',), 
             ('\n',)
         ]
-        self.assertEquals(calls, expectedCalls)
+        self.assertMatch(mapper, 'whatever', str, 0)
+        self.assertEquals(stderr_writes, expectedCalls)
 
 
 suite = makesuite(

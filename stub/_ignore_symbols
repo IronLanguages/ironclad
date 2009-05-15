@@ -75,6 +75,7 @@ PyList_Size
 
 PyEval_CallObject
 PyEval_CallObjectWithKeywords
+PyEval_GetRestricted
 
 PyFile_FromString
 PyFile_SetBufSize

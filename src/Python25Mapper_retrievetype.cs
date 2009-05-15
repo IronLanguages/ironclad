@@ -18,7 +18,7 @@ namespace Ironclad
 {
     public partial class Python25Mapper : Python25Api
     {
-        private void
+        private object
         GenerateClass(IntPtr typePtr)
         {
             ClassBuilder cb = new ClassBuilder(typePtr);
@@ -43,9 +43,7 @@ namespace Ironclad
 
             object klass_stub = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_class_stub");
             this.classStubs[typePtr] = klass_stub;
-
-            this.map.Associate(typePtr, klass);
-            this.IncRef(typePtr);
+            return klass;
         }
         
         private PythonTuple

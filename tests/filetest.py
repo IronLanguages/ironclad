@@ -2,7 +2,7 @@
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.memory import CreateTypes, OffsetPtr
-from tests.utils.testcase import TestCase, WithMapper
+from tests.utils.testcase import TestCase, WithMapper, WithPatchedStdErr
 
 import os
 import shutil
@@ -14,8 +14,6 @@ from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, dgt_void_ptr, Python25Api, Python25Mapper, Unmanaged
 from Ironclad.Structs import PyFileObject, PyObject, PyStringObject, PyTypeObject
-
-from TestUtils.Unmanaged import fflush, fread, fwrite
 
 
 READ_ARGS = (os.path.join('tests', 'data', 'text.txt'), 'r')
@@ -46,29 +44,35 @@ class PyFile_Type_Test(TestCase):
         self.assertEquals(CPyMarshal.ReadPtrField(fPtr, PyObject, 'ob_type'), mapper.PyFile_Type)
         self.assertEquals(CPyMarshal.ReadIntField(fPtr, PyObject, 'ob_refcnt'), 1)
         self.assertEquals(CPyMarshal.ReadIntField(fPtr, PyFileObject, 'f_fp'), -2)
+        self.assertEquals(mapper.Retrieve(CPyMarshal.ReadPtrField(fPtr, PyFileObject, 'f_name')), READ_ARGS[0])
+        self.assertEquals(mapper.Retrieve(CPyMarshal.ReadPtrField(fPtr, PyFileObject, 'f_mode')), READ_ARGS[1])
     
     
     @WithMapper
-    def testOpenAsIfFromUnmanaged(self, mapper, addToCleanUp):
-        self.fail('next steps: (1) make cpy calls create cpy files; (2) interpret cpy file type and store it in ironclad')
-        
+    def testUnmanagedOpenCreatesCPyFile(self, mapper, addToCleanUp):
         argsPtr = mapper.Store(READ_ARGS)
         kwargsPtr = IntPtr.Zero
         deallocTypes = CreateTypes(mapper)
         addToCleanUp(deallocTypes)
         
         for kallable in (mapper.PyFile_Type, mapper.Store(open)):
+            # ok, it seems these are the same object in ipy.
+            # I doubt they always will be, though :-).
             filePtr = mapper.PyObject_Call(kallable, argsPtr, kwargsPtr)
-            self.assertEquals(CPyMarshal.ReadPtrField(filePtr, PyObject, 'ob_type'), mapper.PyFile_Type)
-            f = mapper.Retrieve(filePtr)
             
-            self.assertFalse(type(f) is file, "we don't want ipy files used in c code")
-            self.assertFalse(CPyMarshal.ReadIntField(filePtr, PyFileObject, 'f_fp') in (0, -2), "shouldn't be either closed or magic")
-            self.assertEquals(f.read(), TEST_TEXT, "didn't get a sufficiently real file")
-            f.close()
-            self.assertEquals(CPyMarshal.ReadIntField(filePtr, PyFileObject, 'f_fp'), 0, "didn't close")
-            mapper.DecRef(filePtr)
-        
+            self.assertEquals(CPyMarshal.ReadPtrField(filePtr, PyObject, 'ob_type'), mapper.PyFile_Type)
+            ipy_type = type(mapper.Retrieve(filePtr))
+            self.assertFalse(ipy_type is file, "we don't want ipy files used in c code")
+            self.assertEquals(ipy_type.__name__, "cpy_file")
+            
+            # note: no direct tests for cpy file type, for 2 reasons:
+            #
+            # (1) we need to load the stub dll to get the code, and
+            #     it feels wrong to do that here; insufficiently unity.
+            # (2) this test proves that functionalitytest.py is creating 
+            #     cpy files, and functionalitytest.py should prove that 
+            #     using those cpy files actually works.
+            #
 
 
     @WithMapper
@@ -86,8 +90,8 @@ class PyFile_Type_Test(TestCase):
         testStrPtr = mapper.Store(testStr)
         testDataPtr = OffsetPtr(testStrPtr, Marshal.OffsetOf(PyStringObject, "ob_sval"))
         
-        self.assertTrue(fwrite(testDataPtr, 1, len(testStr), FILE) > 0, "writing failed")
-        fflush(FILE)
+        self.assertTrue(Unmanaged.fwrite(testDataPtr, 1, len(testStr), FILE) > 0, "writing failed")
+        Unmanaged.fflush(FILE)
         pyFile.close()
         
         stream = file(outFile, 'r')
@@ -99,14 +103,16 @@ class PyFile_Type_Test(TestCase):
 class PyFileAPIFunctions(TestCase):
 
     @WithMapper
-    def testIC_PyFile_AsFile(self, mapper, addToCleanUp):
+    @WithPatchedStdErr
+    def testIC_PyFile_AsFile(self, mapper, addToCleanUp, stderr_writes):
         buflen = len(TEST_TEXT) + 10
         buf = Marshal.AllocHGlobal(buflen)
         
         filePtr = mapper.Store(open(*READ_ARGS))
         
         f = mapper.IC_PyFile_AsFile(filePtr)
-        self.assertEquals(fread(buf, 1, buflen, f), len(TEST_TEXT), "didn't get a real FILE")
+        self.assertEquals(stderr_writes, [('Warning: creating unmanaged FILE* from managed stream. Please use ironclad.open with this extension.',), ('\n',)])
+        self.assertEquals(Unmanaged.fread(buf, 1, buflen, f), len(TEST_TEXT), "didn't get a real FILE")
         ptr = buf
         for c in TEST_TEXT:
             self.assertEquals(Marshal.ReadByte(ptr), ord(c), "got bad data from FILE")
@@ -116,7 +122,8 @@ class PyFileAPIFunctions(TestCase):
 
 
     @WithMapper
-    def testPyFile_AsFile_Write(self, mapper, addToCleanUp):
+    @WithPatchedStdErr
+    def testIC_PyFile_AsFile_Write(self, mapper, addToCleanUp, _):
         testDir = tempfile.mkdtemp()
         addToCleanUp(lambda: shutil.rmtree(testDir))
         path = os.path.join(testDir, "test")
@@ -129,7 +136,7 @@ class PyFileAPIFunctions(TestCase):
         filePtr = mapper.Store(open(path, 'w'))
         
         f = mapper.IC_PyFile_AsFile(filePtr)
-        self.assertEquals(fwrite(testDataPtr, 1, testLength, f), testLength, "didn't work")
+        self.assertEquals(Unmanaged.fwrite(testDataPtr, 1, testLength, f), testLength, "didn't work")
         
         # nasty test: patch out PyObject_Free
         # the memory will not be deallocated, but the FILE handle should be
@@ -151,7 +158,8 @@ class PyFileAPIFunctions(TestCase):
 
 
     @WithMapper
-    def testPyFile_AsFile_Exhaustion(self, mapper, _):
+    @WithPatchedStdErr
+    def testIC_PyFile_AsFile_Exhaustion(self, mapper, _, __):
         argsPtr = mapper.Store(READ_ARGS)
         kwargsPtr = IntPtr.Zero
         
@@ -169,7 +177,8 @@ class PyFileAPIFunctions(TestCase):
 
 
     @WithMapper
-    def testPyFileFunctionErrors(self, mapper, _):
+    @WithPatchedStdErr
+    def testPyFileFunctionErrors(self, mapper, _, __):
         ptr = mapper.Store(object())
         self.assertEquals(mapper.IC_PyFile_AsFile(ptr), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)

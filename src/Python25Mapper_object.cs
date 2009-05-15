@@ -157,6 +157,13 @@ namespace Ironclad
             try
             {
                 object obj = this.Retrieve(objPtr);
+                
+                if (obj == TypeCache.PythonFile)
+                {
+                    obj = this.cFileClass;
+                }
+                
+                
                 object[] argsArray = null;
 
                 if (argsPtr == IntPtr.Zero)

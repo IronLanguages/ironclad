@@ -4,8 +4,8 @@
 
 
 const int IPY_MAGIC_FILE = -2;
-const char *IPY_ERR_MSG = 
-    "Can't use an IronPython file here: please try again using ironclad.cpython.open()";
+const char *IPY_ERR_MSG =
+    "Can't use an IronPython file here. Please use ironclad.open with this extension.";
 
 #define IPY_IS_MAGIC(fp) \
     ((int)fp == IPY_MAGIC_FILE)
@@ -395,7 +395,7 @@ PyFile_SetBufSize(PyObject *f, int bufsize)
 			PyMem_Free(file->f_setbuf);
 			file->f_setbuf = NULL;
 		} else {
-			file->f_setbuf = (char *)PyMem_Realloc(file->f_setbuf, 
+			file->f_setbuf = (char *)PyMem_Realloc(file->f_setbuf,
                                                                 bufsize);
 		}
 #ifdef HAVE_SETVBUF
@@ -459,11 +459,11 @@ file_dealloc(PyFileObject *f)
 		Py_BEGIN_ALLOW_THREADS
 		sts = (*f->f_close)(f->f_fp);
 		Py_END_ALLOW_THREADS
-		if (sts == EOF) 
+		if (sts == EOF)
 #ifdef HAVE_STRERROR
-			PySys_WriteStderr("close failed: [Errno %d] %s\n", errno, strerror(errno)); 
+			PySys_WriteStderr("close failed: [Errno %d] %s\n", errno, strerror(errno));
 #else
-			PySys_WriteStderr("close failed: [Errno %d]\n", errno); 
+			PySys_WriteStderr("close failed: [Errno %d]\n", errno);
 #endif
 	}
 	PyMem_Free(f->f_setbuf);
@@ -2113,8 +2113,8 @@ file_init(PyObject *self, PyObject *args, PyObject *kwds)
 			return -1;
 
                 /* We parse again to get the name as a PyObject */
-                if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|si:file", 
-                                                 kwlist, &o_name, &mode, 
+                if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|si:file",
+                                                 kwlist, &o_name, &mode,
                                                  &bufsize))
                         goto Error;
 
@@ -2132,7 +2132,7 @@ Error:
 	ret = -1;
 	/* fall through */
 Done:
-	PyMem_Free(name); /* free the encoded string */
+	PyMem_FREE(name); /* free the encoded string */ /* IPY_FILE change -- mismatched macros. grr. */
 	return ret;
 }
 

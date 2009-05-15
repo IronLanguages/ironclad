@@ -50,8 +50,17 @@ class Types_Test(TestCase):
     def testTypeMappings(self, mapper, _):
         for (k, v) in BUILTIN_TYPES.items():
             typePtr = getattr(mapper, k)
-            self.assertEquals(mapper.Retrieve(typePtr), v, "failed to map " + k)
-            self.assertEquals(mapper.RefCount(typePtr), 1, "failed to add reference to " + k)
+            
+            if typePtr == mapper.PyFile_Type:
+                self.assertNotEquals(mapper.Retrieve(typePtr), v, "failed to map PyFile_Type to something-that-isn't file")
+            else:
+                self.assertEquals(mapper.Retrieve(typePtr), v, "failed to map " + k)
+            
+            if typePtr in (mapper.PyType_Type, mapper.PyBaseObject_Type):
+                # surprising refcount because of the unmanaged PyFile malarkey
+                self.assertEquals(mapper.RefCount(typePtr), 2, "failed to add reference to " + k)
+            else:
+                self.assertEquals(mapper.RefCount(typePtr), 1, "failed to add reference to " + k)
             
             mapper.PyType_Ready(typePtr)
             basePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base")
@@ -154,7 +163,7 @@ class Types_Test(TestCase):
 
     @WithMapper
     def testNotAutoActualisableTypes(self, mapper, _):
-        safeTypes = ("PyString_Type", "PyList_Type", "PyTuple_Type", "PyType_Type")
+        safeTypes = ("PyString_Type", "PyList_Type", "PyTuple_Type", "PyType_Type", "PyFile_Type")
         discoveryModes = ("IncRef", "Retrieve", "DecRef", "RefCount")
         for _type in filter(lambda s: s not in safeTypes, BUILTIN_TYPES):
             for mode in discoveryModes:

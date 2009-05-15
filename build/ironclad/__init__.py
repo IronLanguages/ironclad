@@ -17,12 +17,15 @@ from Ironclad import CPyMarshal, Python25Mapper
 from Ironclad.Structs import PyObject, PyVarObject, PyTypeObject
 _mapper = Python25Mapper(os.path.join(_dirname, "python25.dll"))
 
+def open(*args):
+    return _mapper.CPyFileClass(*args)
+
 import atexit
 def _shutdown():
     try:
         _mapper.Dispose()
     except Exception, e:
-        print 'error on mapper Dispose:'
+        print 'error on ironclad shutdown:'
         print e
     gcwait()
 atexit.register(_shutdown)

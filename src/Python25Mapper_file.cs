@@ -21,6 +21,8 @@ namespace Ironclad
                 }
 
                 PythonFile pyFile = (PythonFile)this.Retrieve(pyFilePtr);
+                
+                this.PrintToStdErr("Warning: creating unmanaged FILE* from managed stream. Please use ironclad.open with this extension.");
                 int fd = this.ConvertPyFileToDescriptor(pyFile);
                 IntPtr FILE = IntPtr.Zero;
                 if (InappropriateReflection.StreamFromPythonFile(pyFile).CanWrite)
@@ -58,6 +60,8 @@ namespace Ironclad
             CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyFile_Type);
             CPyMarshal.WriteIntField(ptr, typeof(PyFileObject), "f_fp", -2);
+            CPyMarshal.WritePtrField(ptr, typeof(PyFileObject), "f_name", this.Store(obj.name));
+            CPyMarshal.WritePtrField(ptr, typeof(PyFileObject), "f_mode", this.Store(obj.mode));
             this.map.Associate(ptr, obj);
             return ptr;
         }

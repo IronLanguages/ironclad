@@ -1,9 +1,6 @@
 include ../../../Makefile.config
 
-all : ../testutils.dll ../setvalue.pyd ../exportsymbols.dll
-
-../testutils.dll : unmanaged.cs
-	$(CSC) /out:../testutils.dll /t:library /nologo /r:$(IPY_DIR)/Microsoft.Scripting.dll /r:$(IPY_DIR)/Microsoft.Scripting.Core.dll /r:$(IPY_DIR)/IronPython.dll unmanaged.cs
+all : ../setvalue.pyd ../exportsymbols.dll
 
 ../setvalue.pyd : setvalue.o
 	gcc $(CFLAGS) -shared -o ../setvalue.pyd setvalue.o
@@ -19,6 +16,5 @@ exportsymbols.o : exportsymbols.c
 
 clean :
 	$(RM) *.o
-	$(RM) ..\testutils.dll
 	$(RM) ..\setvalue.pyd
 	$(RM) ..\exportsymbols.dll

@@ -475,7 +475,24 @@ class HashlibTest(ModuleTestCase('_hashlib')):
         )
 
 
+class PyFileTest(FunctionalTestCase):
+    
+    def testPyFile(self):
+        self.fail("need to implement PyString_Type->tp_as_buffer")
+        mapper = Python25Mapper(DLL_PATH)
+        try:
+            f1 = mapper.CPyFileClass(os.path.join(self.testDir, 'newFile'), 'w')
+            f1.write("hello!")
+            f1.close()
+            
+            f2 = mapper.CPyFileClass(os.path.join(self.testDir, 'newFile'), 'r')
+            assert f2.read() == 'hello'
+            f2.close()
+        finally:
+            mapper.Dispose()
+
 suite = makesuite(
+    PyFileTest,
     BZ2Test,
     Sqlite3Test,
     PySVNTest,
