@@ -162,9 +162,7 @@ namespace Ironclad
             this.appliedNumpyHack = true;
             
             Console.WriteLine("Detected numpy import");
-            Console.WriteLine("  faking out modules: mmap, nosetester, parser");
-            this.CreateModule("parser");
-            this.CreateModule("mmap");
+            Console.WriteLine("  faking out modules: nosetester, parser");
             
             Scope nosetester = this.CreateModule("numpy.testing.nosetester");
             PythonDictionary NoseTesterDict = new PythonDictionary();
@@ -174,6 +172,8 @@ namespace Ironclad
             ScopeOps.__setattr__(nosetester, "import_nose", new Object());
             ScopeOps.__setattr__(nosetester, "run_module_suite", new Object());
             ScopeOps.__setattr__(nosetester, "get_package_name", new Object());
+            
+            this.CreateModule("parser");
         }
 
         public void
