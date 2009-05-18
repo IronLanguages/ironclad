@@ -6,10 +6,10 @@ from tests.utils.memory import OffsetPtr, CreateTypes
 from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
 
-from System import Array, Byte, Char, IntPtr
+from System import Array, Byte, Char, IntPtr, UInt32
 from System.Runtime.InteropServices import Marshal
-from Ironclad import CPyMarshal, dgt_ptr_ptrptr, Python25Mapper
-from Ironclad.Structs import PyStringObject, PyTypeObject, PySequenceMethods
+from Ironclad import CPyMarshal, dgt_size_ptrsizeptr, dgt_size_ptrptr, dgt_ptr_ptrptr, Python25Mapper
+from Ironclad.Structs import PyStringObject, PyTypeObject, PyBufferProcs, PySequenceMethods, Py_TPFLAGS
 
 
 class PyString_TestCase(TestCase):
@@ -75,12 +75,20 @@ class PyString_Type_Test(TypeTestCase):
     def testString_tp_dealloc(self):
         self.assertUsual_tp_dealloc("PyString_Type")
 
+
+    @WithMapper
+    def testFlags(self, mapper, _):
+        flags = CPyMarshal.ReadUIntField(mapper.PyString_Type, PyTypeObject, "tp_flags")
+        self.assertEquals(flags & UInt32(Py_TPFLAGS.HAVE_GETCHARBUFFER), UInt32(Py_TPFLAGS.HAVE_GETCHARBUFFER))
+        
+
     @WithMapper
     def testSizes(self, mapper, _):
         tp_basicsize = CPyMarshal.ReadIntField(mapper.PyString_Type, PyTypeObject, 'tp_basicsize')
         self.assertNotEquals(tp_basicsize, 0)
         tp_itemsize = CPyMarshal.ReadIntField(mapper.PyString_Type, PyTypeObject, 'tp_itemsize')
         self.assertNotEquals(tp_itemsize, 0)
+
 
     @WithMapper
     def testStringifiers(self, mapper, _):
@@ -91,6 +99,51 @@ class PyString_Type_Test(TypeTestCase):
         PyObject_Repr = mapper.GetAddress("PyObject_Repr")
         tp_repr = CPyMarshal.ReadPtrField(mapper.PyString_Type, PyTypeObject, "tp_repr")
         self.assertEquals(tp_repr, PyObject_Repr)
+
+
+    @WithMapper
+    def testSequenceProtocol(self, mapper, _):
+        strPtr = mapper.PyString_Type
+        
+        seqPtr = CPyMarshal.ReadPtrField(strPtr, PyTypeObject, 'tp_as_sequence')
+        self.assertNotEquals(seqPtr, IntPtr.Zero)
+        concatPtr = CPyMarshal.ReadPtrField(seqPtr, PySequenceMethods, 'sq_concat')
+        # concat_core tested further down
+        self.assertEquals(concatPtr, mapper.GetAddress('IC_PyString_Concat_Core'))
+        
+        
+    @WithMapper
+    def testBufferProtocol(self, mapper, later):
+        # should all be implemented in C really, but weaving cpy string type into
+        # our code feels too much like hard work for now
+        strPtr = mapper.PyString_Type
+        
+        bufPtr = CPyMarshal.ReadPtrField(strPtr, PyTypeObject, 'tp_as_buffer')
+        self.assertNotEquals(bufPtr, IntPtr.Zero)
+        getreadbuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getreadbuffer', dgt_size_ptrsizeptr)
+        getwritebuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getwritebuffer', dgt_size_ptrsizeptr)
+        getcharbuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getcharbuffer', dgt_size_ptrsizeptr)
+        getsegcount = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getsegcount', dgt_size_ptrptr)
+        
+        ptrptr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        later(lambda: Marshal.FreeHGlobal(ptrptr))
+        
+        strptr = mapper.Store("hullo")
+        for getter in (getreadbuffer, getcharbuffer):
+            self.assertEquals(getter(strptr, 0, ptrptr), 5)
+            self.assertEquals(CPyMarshal.ReadPtr(ptrptr), CPyMarshal.GetField(strptr, PyStringObject, 'ob_sval'))
+            self.assertEquals(getter(strptr, 1, ptrptr), UInt32.MaxValue)
+            self.assertMapperHasError(mapper, SystemError)
+        
+        self.assertEquals(getwritebuffer(strptr, 0, ptrptr), UInt32.MaxValue)
+        self.assertMapperHasError(mapper, SystemError)
+        
+        self.assertEquals(getsegcount(strptr, ptrptr), 1)
+        self.assertEquals(CPyMarshal.ReadInt(ptrptr), 5)
+        self.assertEquals(getsegcount(strptr, IntPtr.Zero), 1)
+        
+
+
 
 class PyString_FromString_Test(PyString_TestCase):
 
@@ -412,12 +465,10 @@ class PyString_OtherMethodsTest(TestCase):
     
     @WithMapper
     def testConcat(self, mapper, _):
-        sqPtr = CPyMarshal.ReadPtrField(mapper.PyString_Type, PyTypeObject, "tp_as_sequence")
-        concat = CPyMarshal.ReadFunctionPtrField(sqPtr, PySequenceMethods, "sq_concat", dgt_ptr_ptrptr)
         strs = ('', 'abc', '\0xo')
         for s1 in strs:
             for s2 in strs:
-                s3ptr = concat(mapper.Store(s1), mapper.Store(s2))
+                s3ptr = mapper.IC_PyString_Concat_Core(mapper.Store(s1), mapper.Store(s2))
                 self.assertEquals(mapper.Retrieve(s3ptr), s1 + s2)
 
 

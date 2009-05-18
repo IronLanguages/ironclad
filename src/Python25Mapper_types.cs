@@ -228,6 +228,17 @@ namespace Ironclad
             CPyMarshal.WritePtrField(sqPtr, typeof(PySequenceMethods), "sq_concat", this.GetAddress("IC_PyString_Concat_Core"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_as_sequence", sqPtr);
 
+            uint bfSize = (uint)Marshal.SizeOf(typeof(PyBufferProcs));
+            IntPtr bfPtr = this.allocator.Alloc(bfSize);
+            CPyMarshal.Zero(bfPtr, bfSize);
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getreadbuffer", this.GetAddress("IC_str_getreadbuffer"));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getwritebuffer", this.GetAddress("IC_str_getwritebuffer"));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getsegcount", this.GetAddress("IC_str_getsegcount"));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getcharbuffer", this.GetAddress("IC_str_getreadbuffer"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_as_buffer", bfPtr);
+            
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "tp_flags", (Int32)Py_TPFLAGS.HAVE_GETCHARBUFFER);
+
             this.map.Associate(address, TypeCache.String);
         }
 

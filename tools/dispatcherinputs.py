@@ -369,6 +369,9 @@ extra_python25api_signatures = (
     ('IC_PyTuple_Dealloc', 'void_ptr'),
     ('IC_PyString_Str', 'ptr_ptr'),
     ('IC_PyString_Concat_Core', 'ptr_ptrptr'),
+    ('IC_str_getreadbuffer', 'size_ptrsizeptr'),
+    ('IC_str_getwritebuffer', 'size_ptrsizeptr'),
+    ('IC_str_getsegcount', 'size_ptrptr'),
     
     ('IC_PyFile_AsFile', 'ptr_ptr'),
     ('IC_file_dealloc', 'void_ptr'),
