@@ -51,7 +51,7 @@ namespace Ironclad
             Console.WriteLine();
         }
 
-        private static IntPtr
+        public static IntPtr
         GetField(IntPtr addr, Type type, string field)
         {
             return CPyMarshal.Offset(addr, Marshal.OffsetOf(type, field));

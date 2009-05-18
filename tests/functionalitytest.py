@@ -478,7 +478,7 @@ class HashlibTest(ModuleTestCase('_hashlib')):
 class PyFileTest(FunctionalTestCase):
     
     def testPyFile(self):
-        self.fail("need to implement PyString_Type->tp_as_buffer")
+        # this is the CPython file type, interpreted just like an extension type
         mapper = Python25Mapper(DLL_PATH)
         try:
             f1 = mapper.CPyFileClass(os.path.join(self.testDir, 'newFile'), 'w')
@@ -486,10 +486,11 @@ class PyFileTest(FunctionalTestCase):
             f1.close()
             
             f2 = mapper.CPyFileClass(os.path.join(self.testDir, 'newFile'), 'r')
-            assert f2.read() == 'hello'
+            assert f2.read() == 'hello!'
             f2.close()
         finally:
             mapper.Dispose()
+
 
 suite = makesuite(
     PyFileTest,

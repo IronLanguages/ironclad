@@ -155,7 +155,7 @@ namespace Ironclad
                     throw PythonOps.TypeError("PyString_AsStringAndSize: not a string");
                 }
                 
-                IntPtr dataPtr = CPyMarshal.Offset(strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+                IntPtr dataPtr = CPyMarshal.GetField(strPtr, typeof(PyStringObject), "ob_sval");
                 CPyMarshal.WritePtr(dataPtrPtr, dataPtr);
                 
                 uint length = CPyMarshal.ReadUIntField(strPtr, typeof(PyStringObject), "ob_size");
@@ -352,6 +352,41 @@ namespace Ironclad
                 this.LastException = e;
                 return IntPtr.Zero;
             }
+        }
+        
+        
+        public override uint
+        IC_str_getreadbuffer(IntPtr strPtr, uint seg, IntPtr bufPtrPtr)
+        {
+            if (seg != 0)
+            {
+                this.LastException = PythonOps.SystemError("string buffers have only 1 segment");
+                return UInt32.MaxValue; // -1
+            }
+            
+            IntPtr bufPtr = CPyMarshal.GetField(strPtr, typeof(PyStringObject), "ob_sval");
+            CPyMarshal.WritePtr(bufPtrPtr, bufPtr);
+            
+            return this.PyString_Size(strPtr);
+        }
+        
+        
+        public override uint
+        IC_str_getwritebuffer(IntPtr strPtr, uint seg, IntPtr bufPtrPtr)
+        {
+            this.LastException = PythonOps.SystemError("string buffers are not writable");
+            return UInt32.MaxValue; // -1
+        }
+        
+        
+        public override uint
+        IC_str_getsegcount(IntPtr strPtr, IntPtr lenPtr)
+        {
+            if (lenPtr != IntPtr.Zero)
+            {
+                CPyMarshal.WriteUInt(lenPtr, this.PyString_Size(strPtr));
+            }
+            return 1;
         }
     }
 }
