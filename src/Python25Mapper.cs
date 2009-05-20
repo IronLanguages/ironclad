@@ -173,17 +173,19 @@ namespace Ironclad
                         typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(dgt_void_ptr));
                 dealloc(ptr);
             }
-            catch (BadMappingException)
-            {
-                // meh, we're probably deallocing things out of order. tough.
-            }
-            catch (NullReferenceException)
-            {
-                // meh, mapping broken. tough.
-            }
+            
+            // not really surprised to see these errors...
+            catch (BadMappingException) {}
+            catch (AccessViolationException) {}
+            catch (NullReferenceException) {}
+            
+            // may be worth mentioning other errors though
             catch (Exception e)
-            {            
-                Console.WriteLine("unexpected error during DumpPtr:\n{0}", e);
+            {
+                if (this.logErrors)
+                {
+                    Console.WriteLine("unexpected error during DumpPtr:\n{0}", e);
+                }
             }
         }
         

@@ -55,15 +55,12 @@ class Python25StubTest(TestCase):
     def testPython25Stub(self):
         f = open("tests/data/python25-pexports")
         try:
-            python25exports = set(map(lambda s: s.strip(), f.readlines()))
+            python25exports = set(map(str.strip, f.readlines()))
         finally:
             f.close()
 
-        python25exports |= set(["init", "jumptable DATA"])
         generatedExports = GetPexportsLines("build/ironclad/python25.dll")
-
-        self.assertEquals(generatedExports.issuperset(python25exports), True,
-                          "build product wrong")
+        self.assertEquals(python25exports - generatedExports, set())
 
 suite = makesuite(BuildStubTest, Python25StubTest)
 

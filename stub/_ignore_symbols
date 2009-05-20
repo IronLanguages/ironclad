@@ -41,6 +41,10 @@ PyObject_CallMethod
 _PyObject_CallMethod_SizeT
 PyObject_CallMethodObjArgs
 
+PyObject_Cmp
+_PyObject_GC_New
+_PyObject_GC_NewVar
+
 PyObject_AsCharBuffer
 PyObject_CheckReadBuffer
 PyObject_AsReadBuffer
@@ -55,8 +59,6 @@ PyBuffer_New
 PyMapping_HasKey
 PyMapping_HasKeyString
 PyMapping_Size
-
-PyObject_Cmp
 
 PyCObject_FromVoidPtr
 PyCObject_FromVoidPtrAndDesc
@@ -97,11 +99,12 @@ PyOS_ascii_atof
 PyOS_strtoul
 PyOS_strtol
 
-_PyParser_TokenNames
 _Py_SwappedOp
 _PyLong_DigitValue
 
 _Py_HashPointer
+
+_PyParser_TokenNames
 
 Py_Initialize
 Py_InitializeEx
@@ -121,3 +124,7 @@ PyCFunction_Fini
 PyThreadState_Get
 PyThreadState_GetDict
 PyThreadState_Swap
+
+PyUnicodeUCS2_GetDefaultEncoding
+PyUnicodeUCS2_SetDefaultEncoding
+

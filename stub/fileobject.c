@@ -1,58 +1,67 @@
 /* File object implementation */
 
-/* evil ironclad macros, used ~once per function */
-
-
-const int IPY_MAGIC_FILE = -2;
-const char *IPY_ERR_MSG =
+#ifdef IRONCLAD // redirection macros
+const int IRONCLAD_MAGIC_FILE = -2;
+const char *IRONCLAD_ERR_MSG =
     "Can't use an IronPython file here. Please use ironclad.open with this extension.";
 
-#define IPY_IS_MAGIC(fp) \
-    ((int)fp == IPY_MAGIC_FILE)
+#define IRONCLAD_IS_MAGIC(fp) \
+    ((int)fp == IRONCLAD_MAGIC_FILE)
 
-#define IPY_FILE_CheckCPyFile(f) \
-    (PyObject_TypeCheck(f, &PyFile_Type) && !IPY_IS_MAGIC(((PyFileObject *)f)->f_fp))
+#define IRONCLAD_FILE_CheckCPyFile(f) \
+    (PyObject_TypeCheck(f, &PyFile_Type) && !IRONCLAD_IS_MAGIC(((PyFileObject *)f)->f_fp))
 
-#define IPY_FILE_REDIRECT_1(file, funcname, arg1) \
-    if (IPY_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
+#define IRONCLAD_FILE_REDIRECT_1(file, funcname, arg1) \
+    if (IRONCLAD_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
         return funcname(arg1);
 
-#define IPY_FILE_REDIRECT_2(file, funcname, arg1, arg2) \
-    if (IPY_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
+#define IRONCLAD_FILE_REDIRECT_2(file, funcname, arg1, arg2) \
+    if (IRONCLAD_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
         return funcname(arg1, arg2);
 
-#define IPY_FILE_REDIRECT_3(file, funcname, arg1, arg2, arg3) \
-    if (IPY_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
+#define IRONCLAD_FILE_REDIRECT_3(file, funcname, arg1, arg2, arg3) \
+    if (IRONCLAD_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
         return funcname(arg1, arg2, arg3);
 
-#define IPY_FILE_REDIRECT_NORETVAL_1(file, funcname, arg1) \
-    if (IPY_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
+#define IRONCLAD_FILE_REDIRECT_NORETVAL_1(file, funcname, arg1) \
+    if (IRONCLAD_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
         { \
         funcname(arg1); \
         return; \
         }
 
-#define IPY_FILE_ERROR(file, retval) \
-    if (IPY_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
+#define IRONCLAD_FILE_ERROR(file, retval) \
+    if (IRONCLAD_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
         { \
-        PyErr_SetString(PyExc_TypeError, IPY_ERR_MSG); \
+        PyErr_SetString(PyExc_TypeError, IRONCLAD_ERR_MSG); \
         return retval; \
         }
 
-#define IPY_FILE_ERROR_NORETVAL(file) \
-    if (IPY_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
+#define IRONCLAD_FILE_ERROR_NORETVAL(file) \
+    if (IRONCLAD_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
         { \
-        PyErr_SetString(PyExc_TypeError, IPY_ERR_MSG); \
+        PyErr_SetString(PyExc_TypeError, IRONCLAD_ERR_MSG); \
         return; \
         }
 
-#define IPY_FILE_RETURN(file, retval) \
-    if (IPY_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
+#define IRONCLAD_FILE_RETURN(file, retval) \
+    if (IRONCLAD_IS_MAGIC(((PyFileObject *)file)->f_fp)) \
         { \
         return retval; \
         }
+#else // IRONCLAD
 
-/* end evil ironclad macros */
+#define IRONCLAD_FILE_CheckCPyFile PyFile_Check
+#define IRONCLAD_FILE_REDIRECT_1(file, funcname, arg1)
+#define IRONCLAD_FILE_REDIRECT_2(file, funcname, arg1, arg2)
+#define IRONCLAD_FILE_REDIRECT_3(file, funcname, arg1, arg2, arg3)
+#define IRONCLAD_FILE_REDIRECT_NORETVAL_1(file, funcname, arg1)
+#define IRONCLAD_FILE_ERROR(file, retval)
+#define IRONCLAD_FILE_ERROR_NORETVAL(file)
+#define IRONCLAD_FILE_RETURN(file, retval)
+
+#endif // IRONCLAD
+
 
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
@@ -63,7 +72,9 @@ const char *IPY_ERR_MSG =
 #endif /* HAVE_SYS_TYPES_H */
 
 #ifdef MS_WINDOWS
+#ifndef IRONCLAD // mingw already gives us fileno
 #define fileno _fileno
+#endif // IRONCLAD
 /* can simulate truncate with Win32 API functions; see file_truncate */
 #define HAVE_FTRUNCATE
 #define WIN32_LEAN_AND_MEAN
@@ -109,7 +120,7 @@ extern "C" {
 FILE *
 PyFile_AsFile(PyObject *f)
 {
-    IPY_FILE_REDIRECT_1(f, IC_PyFile_AsFile, f);
+    IRONCLAD_FILE_REDIRECT_1(f, IC_PyFile_AsFile, f);
 
 	if (f == NULL || !PyFile_Check(f))
 		return NULL;
@@ -368,7 +379,7 @@ PyFile_FromString(char *name, char *mode)
 void
 PyFile_SetBufSize(PyObject *f, int bufsize)
 {
-    IPY_FILE_ERROR_NORETVAL(f);
+    IRONCLAD_FILE_ERROR_NORETVAL(f);
 
 	PyFileObject *file = (PyFileObject *)f;
 	if (bufsize >= 0) {
@@ -412,7 +423,7 @@ PyFile_SetBufSize(PyObject *f, int bufsize)
 int
 PyFile_SetEncoding(PyObject *f, const char *enc)
 {
-    IPY_FILE_REDIRECT_2(f, IC_PyFile_SetEncoding, f, enc);
+    IRONCLAD_FILE_REDIRECT_2(f, IC_PyFile_SetEncoding, f, enc);
 
 	PyFileObject *file = (PyFileObject*)f;
 	PyObject *str = PyString_FromString(enc);
@@ -450,7 +461,7 @@ static void drop_readahead(PyFileObject *);
 static void
 file_dealloc(PyFileObject *f)
 {
-    IPY_FILE_REDIRECT_NORETVAL_1(f, IC_file_dealloc, f);
+    IRONCLAD_FILE_REDIRECT_NORETVAL_1(f, IC_file_dealloc, f);
 
 	int sts = 0;
 	if (f->weakreflist != NULL)
@@ -502,7 +513,7 @@ file_repr(PyFileObject *f)
 static PyObject *
 file_close(PyFileObject *f)
 {
-    IPY_FILE_REDIRECT_1(f, IC_file_close, f);
+    IRONCLAD_FILE_REDIRECT_1(f, IC_file_close, f);
 
 	int sts = 0;
 	if (f->f_fp != NULL) {
@@ -605,7 +616,7 @@ _portable_ftell(FILE* fp)
 static PyObject *
 file_seek(PyFileObject *f, PyObject *args)
 {
-    IPY_FILE_REDIRECT_2(f, IC_file_seek, f, args);
+    IRONCLAD_FILE_REDIRECT_2(f, IC_file_seek, f, args);
 
 	int whence;
 	int ret;
@@ -647,7 +658,7 @@ file_seek(PyFileObject *f, PyObject *args)
 static PyObject *
 file_truncate(PyFileObject *f, PyObject *args)
 {
-    IPY_FILE_REDIRECT_2(f, IC_file_truncate, f, args);
+    IRONCLAD_FILE_REDIRECT_2(f, IC_file_truncate, f, args);
 
 	Py_off_t newsize;
 	PyObject *newsizeobj = NULL;
@@ -759,7 +770,7 @@ onioerror:
 static PyObject *
 file_tell(PyFileObject *f)
 {
-    IPY_FILE_REDIRECT_1(f, IC_file_tell, f);
+    IRONCLAD_FILE_REDIRECT_1(f, IC_file_tell, f);
 
 	Py_off_t pos;
 
@@ -792,7 +803,7 @@ file_tell(PyFileObject *f)
 static PyObject *
 file_fileno(PyFileObject *f)
 {
-    IPY_FILE_ERROR(f, NULL);
+    IRONCLAD_FILE_ERROR(f, NULL);
 
 	if (f->f_fp == NULL)
 		return err_closed();
@@ -802,7 +813,7 @@ file_fileno(PyFileObject *f)
 static PyObject *
 file_flush(PyFileObject *f)
 {
-    IPY_FILE_REDIRECT_1(f, IC_file_flush, f);
+    IRONCLAD_FILE_REDIRECT_1(f, IC_file_flush, f);
 
 	int res;
 
@@ -824,7 +835,7 @@ file_flush(PyFileObject *f)
 static PyObject *
 file_isatty(PyFileObject *f)
 {
-    IPY_FILE_RETURN(f, PyBool_FromLong(0));
+    IRONCLAD_FILE_RETURN(f, PyBool_FromLong(0));
 
 	long res;
 	if (f->f_fp == NULL)
@@ -904,7 +915,7 @@ new_buffersize(PyFileObject *f, size_t currentsize)
 static PyObject *
 file_read(PyFileObject *f, PyObject *args)
 {
-    IPY_FILE_REDIRECT_2(f, IC_file_read, f, args);
+    IRONCLAD_FILE_REDIRECT_2(f, IC_file_read, f, args);
 
 	long bytesrequested = -1;
 	size_t bytesread, buffersize, chunksize;
@@ -974,7 +985,7 @@ file_read(PyFileObject *f, PyObject *args)
 static PyObject *
 file_readinto(PyFileObject *f, PyObject *args)
 {
-    IPY_FILE_REDIRECT_2(f, IC_file_readinto, f, args);
+    IRONCLAD_FILE_REDIRECT_2(f, IC_file_readinto, f, args);
 
 	char *ptr;
 	Py_ssize_t ntodo;
@@ -1345,7 +1356,7 @@ PyFile_GetLine(PyObject *f, int n)
 		return NULL;
 	}
 
-	if (IPY_FILE_CheckCPyFile(f)) {
+	if (IRONCLAD_FILE_CheckCPyFile(f)) {
 		PyFileObject *fo = (PyFileObject *)f;
 		if (fo->f_fp == NULL)
 			return err_closed();
@@ -1433,7 +1444,7 @@ PyFile_GetLine(PyObject *f, int n)
 static PyObject *
 file_readline(PyFileObject *f, PyObject *args)
 {
-    IPY_FILE_REDIRECT_2(f, IC_file_readline, f, args);
+    IRONCLAD_FILE_REDIRECT_2(f, IC_file_readline, f, args);
 
 	int n = -1;
 
@@ -1456,7 +1467,7 @@ file_readline(PyFileObject *f, PyObject *args)
 static PyObject *
 file_readlines(PyFileObject *f, PyObject *args)
 {
-    IPY_FILE_REDIRECT_2(f, IC_file_readlines, f, args);
+    IRONCLAD_FILE_REDIRECT_2(f, IC_file_readlines, f, args);
 
 	long sizehint = 0;
 	PyObject *list;
@@ -1585,7 +1596,7 @@ file_readlines(PyFileObject *f, PyObject *args)
 static PyObject *
 file_write(PyFileObject *f, PyObject *args)
 {
-    IPY_FILE_REDIRECT_2(f, IC_file_write, f, args);
+    IRONCLAD_FILE_REDIRECT_2(f, IC_file_write, f, args);
 
 	char *s;
 	Py_ssize_t n, n2;
@@ -1610,7 +1621,7 @@ file_write(PyFileObject *f, PyObject *args)
 static PyObject *
 file_writelines(PyFileObject *f, PyObject *seq)
 {
-    IPY_FILE_REDIRECT_2(f, IC_file_writelines, f, seq);
+    IRONCLAD_FILE_REDIRECT_2(f, IC_file_writelines, f, seq);
 
 #define CHUNKSIZE 1000
 	PyObject *list, *line;
@@ -2019,7 +2030,7 @@ readahead_get_line_skip(PyFileObject *f, int skip, int bufsize)
 static PyObject *
 file_iternext(PyFileObject *f)
 {
-    IPY_FILE_REDIRECT_1(f, IC_file_iternext, f);
+    IRONCLAD_FILE_REDIRECT_1(f, IC_file_iternext, f);
 
 	PyStringObject* l;
 
@@ -2067,7 +2078,7 @@ file_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 file_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    IPY_FILE_ERROR(self, -1);
+    IRONCLAD_FILE_ERROR(self, -1);
 
 	PyFileObject *foself = (PyFileObject *)self;
 	int ret = 0;
@@ -2132,7 +2143,7 @@ Error:
 	ret = -1;
 	/* fall through */
 Done:
-	PyMem_FREE(name); /* free the encoded string */ /* IPY_FILE change -- mismatched macros. grr. */
+	PyMem_FREE(name); /* free the encoded string */ /* IRONCLAD_FILE change -- mismatched macros. grr. */
 	return ret;
 }
 
@@ -2211,7 +2222,7 @@ PyFile_SoftSpace(PyObject *f, int newflag)
 	if (f == NULL) {
 		/* Do nothing */
 	}
-	else if (IPY_FILE_CheckCPyFile(f)) {
+	else if (IRONCLAD_FILE_CheckCPyFile(f)) {
 		oldflag = ((PyFileObject *)f)->f_softspace;
 		((PyFileObject *)f)->f_softspace = newflag;
 	}
@@ -2243,7 +2254,7 @@ PyFile_SoftSpace(PyObject *f, int newflag)
 int
 PyFile_WriteObject(PyObject *v, PyObject *f, int flags)
 {
-    IPY_FILE_REDIRECT_3(f, IC_PyFile_WriteObject, v, f, flags);
+    IRONCLAD_FILE_REDIRECT_3(f, IC_PyFile_WriteObject, v, f, flags);
 
 	PyObject *writer, *value, *args, *result;
 	if (f == NULL) {
@@ -2313,7 +2324,7 @@ PyFile_WriteObject(PyObject *v, PyObject *f, int flags)
 int
 PyFile_WriteString(const char *s, PyObject *f)
 {
-    IPY_FILE_REDIRECT_2(f, IC_PyFile_WriteString, s, f);
+    IRONCLAD_FILE_REDIRECT_2(f, IC_PyFile_WriteString, s, f);
 
 	if (f == NULL) {
 		/* Should be caused by a pre-existing error */
@@ -2364,7 +2375,7 @@ int PyObject_AsFileDescriptor(PyObject *o)
 	}
 	else if ((meth = PyObject_GetAttrString(o, "fileno")) != NULL)
 	{
-        IPY_FILE_ERROR(o, -1);
+        IRONCLAD_FILE_ERROR(o, -1);
 
 		PyObject *fno = PyEval_CallObject(meth, NULL);
 		Py_DECREF(meth);
