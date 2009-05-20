@@ -1,22 +1,30 @@
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <locale.h>
 
+// force build-as-if-building-Python-itself
+#define Py_BUILD_CORE
 
-#include "PyAPI_types.c"
+// enable ironclad-related tweaks
 
+#define IRONCLAD
+#include "Python.h"
+
+// not included by Python.h, but contain definitions used elsewhere
+
+#include "Python-AST.h"
+#include "symtable.h"
 #include "structmember.h"
-#include "methodobject.h"
-#include "descrobject.h"
-#include "fileobject.h"
+#include "pygetopt.h"
+#include "abstract.h"
+#include "token.h"
 
-#include "PyAPI_DATAs.c"
-#include "PyAPI_FUNCs.c"
+// definitions for missing data; alternative C implementations of various functions
+
+#include "ironclad-hacks.c"
+
+// init function
 
 #include "stub.generated.c"
+
+// c implementations
 
 #include "abstract.c"
 #include "ceval.c"
@@ -37,7 +45,8 @@
 #include "pystate.c"
 #include "pythonrun.c"
 #include "fileobject.c"
+#include "unicodeobject.c"
 
+// builtin modules
 
-
-
+// ...

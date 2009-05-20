@@ -1,3 +1,7 @@
+/* -*- Mode: C; c-file-style: "python" -*- */
+
+#include <Python.h>
+#include <locale.h>
 
 /* ascii character tests (as opposed to locale tests) */
 #define ISSPACE(c)  ((c) == ' ' || (c) == '\f' || (c) == '\n' || \
@@ -11,7 +15,7 @@
  * @nptr:    the string to convert to a numeric value.
  * @endptr:  if non-%NULL, it returns the character after
  *           the last character used in the conversion.
- * 
+ *
  * Converts a string to a #gdouble value.
  * This function behaves like the standard strtod() function
  * does in the C locale. It does this without actually
@@ -28,7 +32,7 @@
  * stored in %errno. If the correct value would cause underflow,
  * zero is returned and %ERANGE is stored in %errno.
  * If memory allocation fails, %ENOMEM is stored in %errno.
- * 
+ *
  * This function resets %errno before calling strtod() so that
  * you can reliably detect overflow and underflow.
  *
@@ -37,118 +41,118 @@
 double
 PyOS_ascii_strtod(const char *nptr, char **endptr)
 {
-    char *fail_pos;
-    double val = -1.0;
-    struct lconv *locale_data;
-    const char *decimal_point;
-    size_t decimal_point_len;
-    const char *p, *decimal_point_pos;
-    const char *end = NULL; /* Silence gcc */
+	char *fail_pos;
+	double val = -1.0;
+	struct lconv *locale_data;
+	const char *decimal_point;
+	size_t decimal_point_len;
+	const char *p, *decimal_point_pos;
+	const char *end = NULL; /* Silence gcc */
 
-    assert(nptr != NULL);
+	assert(nptr != NULL);
 
-    fail_pos = NULL;
+	fail_pos = NULL;
 
-    locale_data = localeconv();
-    decimal_point = locale_data->decimal_point;
-    decimal_point_len = strlen(decimal_point);
+	locale_data = localeconv();
+	decimal_point = locale_data->decimal_point;
+	decimal_point_len = strlen(decimal_point);
 
-    assert(decimal_point_len != 0);
+	assert(decimal_point_len != 0);
 
-    decimal_point_pos = NULL;
-    if (decimal_point[0] != '.' || 
-        decimal_point[1] != 0)
-    {
-        p = nptr;
-          /* Skip leading space */
-        while (ISSPACE(*p))
-            p++;
+	decimal_point_pos = NULL;
+	if (decimal_point[0] != '.' ||
+	    decimal_point[1] != 0)
+	{
+		p = nptr;
+		  /* Skip leading space */
+		while (ISSPACE(*p))
+			p++;
 
-          /* Skip leading optional sign */
-        if (*p == '+' || *p == '-')
-            p++;
+		  /* Skip leading optional sign */
+		if (*p == '+' || *p == '-')
+			p++;
 
-        while (ISDIGIT(*p))
-            p++;
+		while (ISDIGIT(*p))
+			p++;
 
-        if (*p == '.')
-        {
-            decimal_point_pos = p++;
+		if (*p == '.')
+		{
+			decimal_point_pos = p++;
 
-            while (ISDIGIT(*p))
-                p++;
+			while (ISDIGIT(*p))
+				p++;
 
-            if (*p == 'e' || *p == 'E')
-                p++;
-            if (*p == '+' || *p == '-')
-                p++;
-            while (ISDIGIT(*p))
-                p++;
-            end = p;
-        }
-        else if (strncmp(p, decimal_point, decimal_point_len) == 0)
-        {
-            /* Python bug #1417699 */
-            *endptr = (char*)nptr;
-            errno = EINVAL;
-            return val;
-        }
-        /* For the other cases, we need not convert the decimal point */
-    }
+			if (*p == 'e' || *p == 'E')
+				p++;
+			if (*p == '+' || *p == '-')
+				p++;
+			while (ISDIGIT(*p))
+				p++;
+			end = p;
+		}
+		else if (strncmp(p, decimal_point, decimal_point_len) == 0)
+		{
+			/* Python bug #1417699 */
+			*endptr = (char*)nptr;
+			errno = EINVAL;
+			return val;
+		}
+		/* For the other cases, we need not convert the decimal point */
+	}
 
-    /* Set errno to zero, so that we can distinguish zero results
-       and underflows */
-    errno = 0;
+	/* Set errno to zero, so that we can distinguish zero results
+	   and underflows */
+	errno = 0;
 
-    if (decimal_point_pos)
-    {
-        char *copy, *c;
+	if (decimal_point_pos)
+	{
+		char *copy, *c;
 
-        /* We need to convert the '.' to the locale specific decimal point */
-        copy = (char *)PyMem_MALLOC(end - nptr + 1 + decimal_point_len);
-        if (copy == NULL) {
-            if (endptr)
-                *endptr = (char *)nptr;
-            errno = ENOMEM;
-            return val;
-        }
+		/* We need to convert the '.' to the locale specific decimal point */
+		copy = (char *)PyMem_MALLOC(end - nptr + 1 + decimal_point_len);
+		if (copy == NULL) {
+			if (endptr)
+				*endptr = (char *)nptr;
+			errno = ENOMEM;
+			return val;
+		}
 
-        c = copy;
-        memcpy(c, nptr, decimal_point_pos - nptr);
-        c += decimal_point_pos - nptr;
-        memcpy(c, decimal_point, decimal_point_len);
-        c += decimal_point_len;
-        memcpy(c, decimal_point_pos + 1, end - (decimal_point_pos + 1));
-        c += end - (decimal_point_pos + 1);
-        *c = 0;
+		c = copy;
+		memcpy(c, nptr, decimal_point_pos - nptr);
+		c += decimal_point_pos - nptr;
+		memcpy(c, decimal_point, decimal_point_len);
+		c += decimal_point_len;
+		memcpy(c, decimal_point_pos + 1, end - (decimal_point_pos + 1));
+		c += end - (decimal_point_pos + 1);
+		*c = 0;
 
-        val = strtod(copy, &fail_pos);
+		val = strtod(copy, &fail_pos);
 
-        if (fail_pos)
-        {
-            if (fail_pos > decimal_point_pos)
-                fail_pos = (char *)nptr + (fail_pos - copy) - (decimal_point_len - 1);
-            else
-                fail_pos = (char *)nptr + (fail_pos - copy);
-        }
+		if (fail_pos)
+		{
+			if (fail_pos > decimal_point_pos)
+				fail_pos = (char *)nptr + (fail_pos - copy) - (decimal_point_len - 1);
+			else
+				fail_pos = (char *)nptr + (fail_pos - copy);
+		}
 
-        PyMem_FREE(copy);
+		PyMem_FREE(copy);
 
-    }
-    else {
-        unsigned i = 0;
-        if (nptr[i] == '-')
-            i++;
-        if (nptr[i] == '0' && (nptr[i+1] == 'x' || nptr[i+1] == 'X'))
-            fail_pos = (char*)nptr;
-        else
-            val = strtod(nptr, &fail_pos);
-    }
+	}
+	else {
+		unsigned i = 0;
+		if (nptr[i] == '-')
+			i++;
+		if (nptr[i] == '0' && (nptr[i+1] == 'x' || nptr[i+1] == 'X'))
+			fail_pos = (char*)nptr;
+		else
+			val = strtod(nptr, &fail_pos);
+	}
 
-    if (endptr)
-        *endptr = fail_pos;
+	if (endptr)
+		*endptr = fail_pos;
 
-    return val;
+	return val;
 }
 
 
@@ -157,88 +161,88 @@ PyOS_ascii_strtod(const char *nptr, char **endptr)
  * @buffer: A buffer to place the resulting string in
  * @buf_len: The length of the buffer.
  * @format: The printf()-style format to use for the
- *          code to use for converting. 
+ *          code to use for converting.
  * @d: The #gdouble to convert
  *
  * Converts a #gdouble to a string, using the '.' as
  * decimal point. To format the number you pass in
  * a printf()-style format string. Allowed conversion
- * specifiers are 'e', 'E', 'f', 'F', 'g' and 'G'. 
- * 
+ * specifiers are 'e', 'E', 'f', 'F', 'g' and 'G'.
+ *
  * Return value: The pointer to the buffer with the converted string.
  **/
 char *
-PyOS_ascii_formatd(char       *buffer, 
-           size_t      buf_len, 
-           const char *format, 
-           double      d)
+PyOS_ascii_formatd(char       *buffer,
+		   size_t      buf_len,
+		   const char *format,
+		   double      d)
 {
-    struct lconv *locale_data;
-    const char *decimal_point;
-    size_t decimal_point_len, rest_len;
-    char *p;
-    char format_char;
+	struct lconv *locale_data;
+	const char *decimal_point;
+	size_t decimal_point_len, rest_len;
+	char *p;
+	char format_char;
 
-/*  g_return_val_if_fail (buffer != NULL, NULL); */
-/*  g_return_val_if_fail (format[0] == '%', NULL); */
-/*  g_return_val_if_fail (strpbrk (format + 1, "'l%") == NULL, NULL); */
+/* 	g_return_val_if_fail (buffer != NULL, NULL); */
+/* 	g_return_val_if_fail (format[0] == '%', NULL); */
+/* 	g_return_val_if_fail (strpbrk (format + 1, "'l%") == NULL, NULL); */
 
-    format_char = format[strlen(format) - 1];
+	format_char = format[strlen(format) - 1];
 
-/*  g_return_val_if_fail (format_char == 'e' || format_char == 'E' || */
-/*                format_char == 'f' || format_char == 'F' || */
-/*                format_char == 'g' || format_char == 'G', */
-/*                NULL); */
+/* 	g_return_val_if_fail (format_char == 'e' || format_char == 'E' || */
+/* 			      format_char == 'f' || format_char == 'F' || */
+/* 			      format_char == 'g' || format_char == 'G', */
+/* 			      NULL); */
 
-    if (format[0] != '%')
-        return NULL;
+	if (format[0] != '%')
+		return NULL;
 
-    if (strpbrk(format + 1, "'l%"))
-        return NULL;
+	if (strpbrk(format + 1, "'l%"))
+		return NULL;
 
-    if (!(format_char == 'e' || format_char == 'E' || 
-          format_char == 'f' || format_char == 'F' || 
-          format_char == 'g' || format_char == 'G'))
-        return NULL;
+	if (!(format_char == 'e' || format_char == 'E' ||
+	      format_char == 'f' || format_char == 'F' ||
+	      format_char == 'g' || format_char == 'G'))
+		return NULL;
 
 
-    PyOS_snprintf(buffer, buf_len, format, d);
+	PyOS_snprintf(buffer, buf_len, format, d);
 
-    locale_data = localeconv();
-    decimal_point = locale_data->decimal_point;
-    decimal_point_len = strlen(decimal_point);
+	locale_data = localeconv();
+	decimal_point = locale_data->decimal_point;
+	decimal_point_len = strlen(decimal_point);
 
-    assert(decimal_point_len != 0);
+	assert(decimal_point_len != 0);
 
-    if (decimal_point[0] != '.' || 
-        decimal_point[1] != 0)
-    {
-        p = buffer;
+	if (decimal_point[0] != '.' ||
+	    decimal_point[1] != 0)
+	{
+		p = buffer;
 
-        if (*p == '+' || *p == '-')
-            p++;
+		if (*p == '+' || *p == '-')
+			p++;
 
-        while (isdigit((unsigned char)*p))
-            p++;
+		while (isdigit((unsigned char)*p))
+			p++;
 
-        if (strncmp(p, decimal_point, decimal_point_len) == 0)
-        {
-            *p = '.';
-            p++;
-            if (decimal_point_len > 1) {
-                rest_len = strlen(p + (decimal_point_len - 1));
-                memmove(p, p + (decimal_point_len - 1), 
-                    rest_len);
-                p[rest_len] = 0;
-            }
-        }
-    }
+		if (strncmp(p, decimal_point, decimal_point_len) == 0)
+		{
+			*p = '.';
+			p++;
+			if (decimal_point_len > 1) {
+				rest_len = strlen(p + (decimal_point_len - 1));
+				memmove(p, p + (decimal_point_len - 1),
+					rest_len);
+				p[rest_len] = 0;
+			}
+		}
+	}
 
-    return buffer;
+	return buffer;
 }
 
 double
 PyOS_ascii_atof(const char *nptr)
 {
-    return PyOS_ascii_strtod(nptr, NULL);
+	return PyOS_ascii_strtod(nptr, NULL);
 }

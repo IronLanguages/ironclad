@@ -43,12 +43,4 @@ PyEval_CallObjectWithKeywords(PyObject *func, PyObject *arg, PyObject *kw)
 	return result;
 }
 
-int
-PyEval_GetRestricted(void)
-{
-	// Ironclad
-	return 0;
 
-	PyFrameObject *current_frame = PyEval_GetFrame();
-	return current_frame == NULL ? 0 : PyFrame_IsRestricted(current_frame);
-}

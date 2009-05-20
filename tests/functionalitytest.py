@@ -502,5 +502,5 @@ suite = makesuite(
 )
 
 if __name__ == '__main__':
-    run(suite)
+    run(suite, 2)
 

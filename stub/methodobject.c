@@ -23,7 +23,9 @@ PyCFunction_NewEx(PyMethodDef *ml, PyObject *self, PyObject *module)
 	op->m_self = self;
 	Py_XINCREF(module);
 	op->m_module = module;
+#ifndef IRONCLAD // pretend no such thing as GC
 	_PyObject_GC_TRACK(op);
+#endif // IRONCLAD
 	return (PyObject *)op;
 }
 
@@ -356,7 +358,7 @@ PyCFunction_Fini(void)
    but it's part of the API so we need to keep a function around that
    existing C extensions can call.
 */
-   
+
 // defined as a macro elsewhere
 //PyObject *
 //PyCFunction_New(PyMethodDef *ml, PyObject *self)
