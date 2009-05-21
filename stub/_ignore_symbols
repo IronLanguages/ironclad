@@ -1,6 +1,27 @@
+# This file is used by tools/dispatcherinputs.py and tools/stubmaker.py
+#
+# Symbols in this file will NOT have any of the following generated:
+#
+# * jumptable redirections to managed code
+# * virtual methods on Python25Api
+# * GetAddress/SetData registration calls or handlers
+#
+
+# These are here because, when we happen to see an object of one of
+# these types, we can just interpret it as we would any other: there's
+# no obvious ipy type to map to (buffer exists but isn't good for much yet).
+
 PyBuffer_Type
 PyCFunction_Type
 PyCObject_Type
+
+# These are static data and aren't bothering anybody, so there is no
+# need to register them with the managed side.
+
+_Py_SwapedOp
+_PyLong_DigitValue
+
+# All the rest are functions implemented somewhere amongst the C code
 
 _Py_VaBuildValue_SizeT
 Py_VaBuildValue
@@ -10,15 +31,40 @@ Py_BuildValue
 PyString_FromFormat
 PyString_FromFormatV
 
+# errors.c
+_PyErr_BadInternalCall
+PyErr_BadArgument
+PyErr_BadInternalCall
 PyErr_Clear
+PyErr_ExceptionMatches
 PyErr_Fetch
 PyErr_Format
+PyErr_GivenExceptionMatches
+PyErr_NewException
+PyErr_NoMemory
+PyErr_NormalizeException
 PyErr_Occurred
+PyErr_ProgramText
 PyErr_Restore
+PyErr_SetExcFromWindowsErr
+PyErr_SetExcFromWindowsErrWithFilename
+PyErr_SetExcFromWindowsErrWithFilenameObject
+PyErr_SetExcFromWindowsErrWithUnicodeFilename
+PyErr_SetFromErrno
+PyErr_SetFromErrnoWithFilename
+PyErr_SetFromErrnoWithFilenameObject
+PyErr_SetFromErrnoWithUnicodeFilename
+PyErr_SetFromWindowsErr
+PyErr_SetFromWindowsErrWithFilename
+PyErr_SetFromWindowsErrWithUnicodeFilename
+PyErr_SetNone
 PyErr_SetObject
 PyErr_SetString
-PyErr_SetNone
-PyErr_ExceptionMatches
+PyErr_SyntaxLocation
+PyErr_Warn
+PyErr_WarnEx
+PyErr_WarnExplicit
+PyErr_WriteUnraisable
 
 PyArg_Parse
 _PyArg_Parse_SizeT
@@ -69,6 +115,7 @@ PyCObject_SetVoidPtr
 
 PyTuple_GetItem
 PyTuple_SetItem
+PyTuple_Pack
 
 PyLong_FromVoidPtr
 PyLong_AsVoidPtr
@@ -99,12 +146,7 @@ PyOS_ascii_atof
 PyOS_strtoul
 PyOS_strtol
 
-_Py_SwappedOp
-_PyLong_DigitValue
-
 _Py_HashPointer
-
-_PyParser_TokenNames
 
 Py_Initialize
 Py_InitializeEx

@@ -73,66 +73,6 @@ extern "C" {
 
 
 PyAPI_DATA(char *) _PyParser_TokenNames[]; /* Token names */
-#ifdef IRONCLAD // just use definition from tokenizer.c
-char *_PyParser_TokenNames[] = {
-	"ENDMARKER",
-	"NAME",
-	"NUMBER",
-	"STRING",
-	"NEWLINE",
-	"INDENT",
-	"DEDENT",
-	"LPAR",
-	"RPAR",
-	"LSQB",
-	"RSQB",
-	"COLON",
-	"COMMA",
-	"SEMI",
-	"PLUS",
-	"MINUS",
-	"STAR",
-	"SLASH",
-	"VBAR",
-	"AMPER",
-	"LESS",
-	"GREATER",
-	"EQUAL",
-	"DOT",
-	"PERCENT",
-	"BACKQUOTE",
-	"LBRACE",
-	"RBRACE",
-	"EQEQUAL",
-	"NOTEQUAL",
-	"LESSEQUAL",
-	"GREATEREQUAL",
-	"TILDE",
-	"CIRCUMFLEX",
-	"LEFTSHIFT",
-	"RIGHTSHIFT",
-	"DOUBLESTAR",
-	"PLUSEQUAL",
-	"MINEQUAL",
-	"STAREQUAL",
-	"SLASHEQUAL",
-	"PERCENTEQUAL",
-	"AMPEREQUAL",
-	"VBAREQUAL",
-	"CIRCUMFLEXEQUAL",
-	"LEFTSHIFTEQUAL",
-	"RIGHTSHIFTEQUAL",
-	"DOUBLESTAREQUAL",
-	"DOUBLESLASH",
-	"DOUBLESLASHEQUAL",
-	"AT",
-	/* This table must match the #defines in token.h! */
-	"OP",
-	"<ERRORTOKEN>",
-	"<N_TOKENS>"
-};
-#endif // IRONCLAD
-
 
 PyAPI_FUNC(int) PyToken_OneChar(int);
 PyAPI_FUNC(int) PyToken_TwoChars(int, int);

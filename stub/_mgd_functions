@@ -1,3 +1,9 @@
+# This file is used by tools/dispatcherinputs.py and tools/stubmaker.py
+#
+# this file contains C declarations of functions which:
+# (1) are not part of the public CPython API
+# (2) need to be used by c code
+
 
 FILE * IC_PyFile_AsFile(PyObject *f);
 int IC_PyFile_SetEncoding(PyObject *f, const char *enc);
@@ -16,3 +22,5 @@ PyObject * IC_file_writelines(PyFileObject *f, PyObject *args);
 PyObject * IC_file_iternext(PyFileObject *f);
 int IC_PyFile_WriteObject(PyObject *v, PyObject *f, int flags);
 int IC_PyFile_WriteString(const char *s, PyObject *f);
+
+PyObject *PyModule_GetWarningsModule(void);

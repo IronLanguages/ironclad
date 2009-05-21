@@ -1,34 +1,9 @@
 
 import os
 
-from tools.platform import type_codes
 from tools.dispatchersnippets import *
-
-
-def starstarmap(func, items):
-    for (args, kwargs) in items:
-        yield func(*args, **kwargs)
-
-
-def glom_templates(joiner, *args):
-    output = []
-    for (template, infos) in args:
-        for info in infos:
-            output.append(template % info)
-    return joiner.join(output)
-
-
-def multi_update(dict_, names, values):
-    for (k, v) in zip(names, values):
-        dict_[k] = v  
-
-
-def read_interesting_lines(name):
-    f = open(name)
-    try:
-        return [l.rstrip() for l in f.readlines() if l.rstrip()]
-    finally:
-        f.close() 
+from tools.platform import type_codes
+from tools.utils import glom_templates, multi_update, read_interesting_lines, starstarmap
 
 
 #===============================================================================================================
@@ -146,18 +121,18 @@ class ApiWrangler(object):
         self.output = {}
         
         self.output['dispatcher_code'] = self.generate_dispatcher(
-            input['dispatcher_field_types'], 
-            input['dispatcher_methods'])
+            input['DISPATCHER_FIELD_TYPES'], 
+            input['DISPATCHER_METHODS'])
         
         self.output['magicmethods_code'] = self.generate_magic_methods(
-            input['protocol_field_types'])
+            input['PROTOCOL_FIELD_TYPES'])
         
         self.output['python25api_code'] = self.generate_python25api(
-            input['known_python25api_signatures'], 
-            input['extra_python25api_signatures'], 
-            input['all_functions_file'], 
-            input['c_functions_file'], 
-            input['data_items_file'])
+            input['MGD_PYTHON25API_FUNCTIONS'], 
+            input['MGD_NONAPI_C_FUNCTIONS'], 
+            input['ALL_API_FUNCTIONS'], 
+            input['PURE_C_SYMBOLS'], 
+            input['MGD_DATA'])
 
         self.output['dgttype_code'] = self.generate_dgts()
 
@@ -243,18 +218,17 @@ class ApiWrangler(object):
         return FILE_TEMPLATE % MAGICMETHODS_TEMPLATE % ('\n'.join(normal_magic_methods), '\n'.join(swapped_magic_methods))
 
 
-    def generate_python25api(self, known_functions, extra_functions, all_functions_file, c_functions_file, data_items_file):
-        all_methods_set = set(read_interesting_lines(all_functions_file))
-        c_methods_set = set(read_interesting_lines(c_functions_file))
-        not_implemented_methods_set = all_methods_set - c_methods_set
+    def generate_python25api(self, mgd_python25api_functions, mgd_nonapi_c_functions, all_api_functions, pure_c_symbols, mgd_data):
+        all_mgd_functions = mgd_python25api_functions | mgd_nonapi_c_functions
+        not_implemented_functions = all_api_functions - pure_c_symbols
         
         methods = []
-        for (name, dgt_type) in known_functions:
-            not_implemented_methods_set.remove(name)
+        for (name, dgt_type) in all_mgd_functions:
+            if name in not_implemented_functions:
+                not_implemented_functions.remove(name)
             methods.append(self.unpack_apifunc(name, dgt_type))
-        for (name, dgt_type) in extra_functions:
-            methods.append(self.unpack_apifunc(name, dgt_type))
-        not_implemented_methods = [{"symbol": s} for s in not_implemented_methods_set]
+            
+        not_implemented_methods = [{"symbol": s} for s in not_implemented_functions]
         methods_code = glom_templates('\n\n',
             (PYTHON25API_METHOD_TEMPLATE, methods), 
             (PYTHON25API_NOT_IMPLEMENTED_METHOD_TEMPLATE, not_implemented_methods),
@@ -264,12 +238,8 @@ class ApiWrangler(object):
             (PYTHON25API_NOT_IMPLEMENTED_METHOD_CASE, not_implemented_methods),
         )
 
-        data_items = []
-        for p in read_interesting_lines(data_items_file):
-            symbol, _type = p.split(" ")
-            data_items.append({"symbol": symbol, "type": _type})
-        data_items_code = glom_templates("\n\n", (PYTHON25API_DATA_ITEM_TEMPLATE, data_items))
-        data_items_switch = glom_templates("\n", (PYTHON25API_DATA_ITEM_CASE, data_items))
+        data_items_code = glom_templates("\n\n", (PYTHON25API_DATA_ITEM_TEMPLATE, mgd_data))
+        data_items_switch = glom_templates("\n", (PYTHON25API_DATA_ITEM_CASE, mgd_data))
 
         return FILE_TEMPLATE % PYTHON25API_TEMPLATE % (
             methods_code, methods_switch,

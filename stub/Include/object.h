@@ -733,11 +733,6 @@ PyAPI_DATA(PyObject) _Py_NotImplementedStruct; /* Don't use this directly */
  */
 PyAPI_DATA(int) _Py_SwappedOp[];
 
-#ifdef IRONCLAD // copy definition from object.c
-/* Map rich comparison operators to their swapped version, e.g. LT --> GT */
-int _Py_SwappedOp[] = {Py_GT, Py_GE, Py_EQ, Py_NE, Py_LT, Py_LE};
-#endif // IRONCLAD
-
 /*
 Define staticforward and statichere for source compatibility with old
 C extensions.

@@ -49,6 +49,7 @@
 #include "pythonrun.c"
 #include "fileobject.c"
 #include "unicodeobject.c"
+#include "tokenizer.c"
 
 // builtin modules
 
