@@ -32,10 +32,7 @@ class MetaImporter(object):
         
         self.patched_for_matplotlib = True
         print 'Detected matplotlib import'
-        print '  patching out csv, math.log10'
-        
-        import sys
-        sys.modules['csv'] = object()
+        print '  patching out math.log10'
         
         import math
         true_log10 = math.log10
