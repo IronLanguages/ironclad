@@ -128,3 +128,5 @@ PyThreadState_Swap
 PyUnicodeUCS2_GetDefaultEncoding
 PyUnicodeUCS2_SetDefaultEncoding
 
+PyNumber_AsSsize_t
+

@@ -126,6 +126,7 @@ namespace Ironclad
             
             if (stubPath != null)
             {
+                // this appears to be necessary if you want to run functionalitytest.py on its own
                 Unmanaged.LoadLibrary("msvcr71.dll");
                 
                 this.stub = new StubReference(stubPath);
@@ -140,6 +141,9 @@ namespace Ironclad
                 // TODO: work out why this line causes leakage
                 this.ExecInModule(CodeSnippets.INSTALL_IMPORT_HOOK_CODE, this.scratchModule);
                 this.removeSysHacks = ScopeOps.__getattribute__(this.scratchModule, "remove_sys_hacks");
+                
+                // TODO: load builtin modules only on demand?
+                this.stub.LoadBuiltinModule("mmap");
             }
             this.alive = true;
         }
@@ -221,9 +225,14 @@ namespace Ironclad
             {
                 Unmanaged.fclose(FILE);
             }
+            
             if (this.stub != null)
             {
                 PythonCalls.Call(this.removeSysHacks);
+                
+                PythonDictionary modules = (PythonDictionary)ScopeOps.__getattribute__(this.python.SystemState, "modules");
+                modules.Remove("mmap");
+                
                 this.importer.Dispose();
                 this.stub.Dispose();
             }

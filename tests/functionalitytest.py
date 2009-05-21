@@ -4,7 +4,7 @@ import sys
 import shutil
 import tempfile
 from textwrap import dedent
-from tests.utils.runtest import makesuite, run
+from tests.utils.runtest import automakesuite, run
 from tests.utils.testcase import TestCase
 from tests.utils.functionaltestcase import FunctionalTestCase
 
@@ -43,6 +43,28 @@ bz2_test_line = "I wonder why. I wonder why. I wonder why I wonder why.\n"
 bz2_test_text_lines = bz2_test_line * 1000
 
 DLL_PATH = os.path.join("build", "ironclad", "python25.dll")
+ 
+
+def ModuleTestCase(module):
+    import_code = 'import ' + module
+    locals_ = locals()
+    class _ModuleTestCase(TestCase):
+        __name__ = module + 'Test'
+        def assertRuns(self, test_code=''): 
+            mapper = Python25Mapper(DLL_PATH)
+            try:
+                exec '\n'.join([import_code, test_code]) in globals(), locals_
+            finally:
+                mapper.Dispose()
+                if module in sys.modules:
+                    del sys.modules[module]
+    return _ModuleTestCase
+
+
+def TrivialModuleTestCase(module):
+    test = ModuleTestCase(module)
+    test.testImports = test.assertRuns
+    return test
 
 
 class ExternalFunctionalityTest(FunctionalTestCase):
@@ -154,21 +176,6 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             #
             # assert_complex_type(np.clongdouble)
             """))
- 
-
-def ModuleTestCase(module):
-    import_code = 'import ' + module
-    locals_ = locals()
-    class _ModuleTestCase(TestCase):
-        def assertRuns(self, test_code=''): 
-            mapper = Python25Mapper(DLL_PATH)
-            try:
-                exec '\n'.join([import_code, test_code]) in globals(), locals_
-            finally:
-                mapper.Dispose()
-                if module in sys.modules:
-                    del sys.modules[module]
-    return _ModuleTestCase
 
 
 class BZ2Test(ModuleTestCase('bz2')):
@@ -447,28 +454,9 @@ class BZ2Test(ModuleTestCase('bz2')):
         self.assertFileWriteLines(tuple([bz2_test_str] * 1000))
         
 
-class Sqlite3Test(ModuleTestCase('sqlite3')):
-
-    def testCanImport(self):
-        # this is *all* I care about at the moment; what it proves is
-        # that the PATH-fiddling in P25M.LoadModule is working as expected,
-        # and that the dll (not pyd) is being successfully loaded.
-        # I have no idea whether sqlite3 actually works at all.
-        self.assertRuns()
-        
-
-class PySVNTest(ModuleTestCase('pysvn')):
-
-    def testCanImport(self):
-        # this is *all* I care about at the moment; what it proves is
-        # that I can handle evil and misleading names being passed 
-        # into Py_InitModule4.
-        self.assertRuns()
-        
-
 class HashlibTest(ModuleTestCase('_hashlib')):
 
-    def testCanImport(self):
+    def testTrivial(self):
         self.assertRuns(dedent("""
             assert _hashlib.openssl_md5('foobarbaz').digest() == u'm\xf2=\xc0?\x9bT\xcc8\xa0\xfc\x14\x83\xdfn!'
             """)
@@ -490,16 +478,13 @@ class PyFileTest(FunctionalTestCase):
             f2.close()
         finally:
             mapper.Dispose()
+        
 
+Sqlite3Test = TrivialModuleTestCase('sqlite3') # test PATH manipulation in LoadModule
+PySVNTest = TrivialModuleTestCase('pysvn') # test misleading names passed to Py_InitModule4
+MMapTest = TrivialModuleTestCase('mmap')
 
-suite = makesuite(
-    PyFileTest,
-    BZ2Test,
-    Sqlite3Test,
-    PySVNTest,
-    HashlibTest,
-    ExternalFunctionalityTest,
-)
+suite = automakesuite(locals())
 
 if __name__ == '__main__':
     run(suite, 2)

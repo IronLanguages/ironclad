@@ -414,3 +414,47 @@ PyMapping_Size(PyObject *o)
 }
 
 
+
+Py_ssize_t
+PyNumber_AsSsize_t(PyObject *item, PyObject *err)
+{
+	Py_ssize_t result;
+	PyObject *runerr;
+	PyObject *value = PyNumber_Index(item);
+	if (value == NULL)
+		return -1;
+
+	/* We're done if PyInt_AsSsize_t() returns without error. */
+	result = PyInt_AsSsize_t(value);
+	if (result != -1 || !(runerr = PyErr_Occurred()))
+		goto finish;
+
+	/* Error handling code -- only manage OverflowError differently */
+	if (!PyErr_GivenExceptionMatches(runerr, PyExc_OverflowError))
+		goto finish;
+
+	PyErr_Clear();
+	/* If no error-handling desired then the default clipping
+	   is sufficient.
+	 */
+	if (!err) {
+		assert(PyLong_Check(value));
+		/* Whether or not it is less than or equal to
+		   zero is determined by the sign of ob_size
+		*/
+		if (_PyLong_Sign(value) < 0)
+			result = PY_SSIZE_T_MIN;
+		else
+			result = PY_SSIZE_T_MAX;
+	}
+	else {
+		/* Otherwise replace the error with caller's error object. */
+		PyErr_Format(err,
+			     "cannot fit '%.200s' into an index-sized integer",
+			     item->ob_type->tp_name);
+	}
+
+ finish:
+	Py_DECREF(value);
+	return result;
+}

@@ -28,7 +28,8 @@ namespace Ironclad
             this.Dispose(false);
         }
     
-        public void Init(AddressGetterDelegate addressGetter, DataSetterDelegate dataSetter)
+        public void
+        Init(AddressGetterDelegate addressGetter, DataSetterDelegate dataSetter)
         {
             IntPtr initFP = Unmanaged.GetProcAddress(this.library, "init");
             InitDelegate initDgt = (InitDelegate)Marshal.GetDelegateForFunctionPointer(initFP, typeof(InitDelegate));
@@ -43,7 +44,16 @@ namespace Ironclad
             GC.KeepAlive(dataSetter);
         }
         
-        protected virtual void Dispose(bool disposing)
+        public void
+        LoadBuiltinModule(string name)
+        {
+            IntPtr initFP = Unmanaged.GetProcAddress(this.library, "init" + name);
+            PydInit_Delegate init = (PydInit_Delegate)Marshal.GetDelegateForFunctionPointer(initFP, typeof(PydInit_Delegate));
+            init();
+        }
+        
+        protected virtual void
+        Dispose(bool disposing)
         {
             if (this.alive)
             {
@@ -53,7 +63,8 @@ namespace Ironclad
             }
         }
         
-        public void Dispose()
+        public void
+        Dispose()
         {
             GC.SuppressFinalize(this);
             this.Dispose(true);
