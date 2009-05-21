@@ -23,6 +23,7 @@ class MetaImporter(object):
         self.loader = loader
         self.mapper = mapper
         self.patched_for_matplotlib = False
+        self.patched_numpy_core_memmap = False
 
     def fix_matplotlib(self):
         # much easier to do this in Python than in C#
@@ -44,6 +45,20 @@ class MetaImporter(object):
             return true_log10(arg)
         math.log10 = my_log10
 
+    def fix_numpy_core_mmap(self):
+        if self.patched_numpy_core_memmap:
+            return
+        
+        import sys
+        if 'numpy.core.memmap' not in sys.modules:
+            return
+        
+        self.patched_numpy_core_memmap = True
+        print 'Found numpy.core.memmap module'
+        print '  patching file'
+        
+        sys.modules['numpy.core.memmap'].file = self.mapper.CPyFileClass
+        
     def find_module(self, fullname, path=None):
         matches = lambda partialname: fullname == partialname or fullname.startswith(partialname + '.')
         if matches('numpy'):
@@ -55,12 +70,15 @@ class MetaImporter(object):
         elif matches('ctypes'):
             raise ImportError('%s is not available in ironclad yet' % fullname)
 
+        # hacka hacka hacka!
+        self.fix_numpy_core_mmap()
+            
         import os
         import sys
         lastname = fullname.rsplit('.', 1)[-1]
         for d in (path or sys.path):
             pyd = os.path.join(d, lastname + '.pyd')
-            if os.path.exists(pyd):
+            if os.path.isfile(pyd):
                 return self.loader(self.mapper, pyd)
 
         return None
