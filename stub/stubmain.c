@@ -50,6 +50,7 @@
 #include "fileobject.c"
 #include "unicodeobject.c"
 #include "tokenizer.c"
+#include "objimpl.c"
 
 // builtin modules
 

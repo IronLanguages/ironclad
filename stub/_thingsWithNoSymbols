@@ -7,7 +7,6 @@
 PyStructSequence_UnnamedField
 Py_abstract_hack
 PyParser_Grammar
-PyGC_generation0
 PyImport_Filetab
 Py_cobject_hack 
 PyImport_Inittab
