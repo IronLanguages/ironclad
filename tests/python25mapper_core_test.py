@@ -1,4 +1,5 @@
 import os
+import sys
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
@@ -55,6 +56,12 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
         mapper.Dispose()
         self.assertEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                           "library not unmapped by Dispose")
+    
+    
+    def testRemovesMmapOnDispose(self):
+        mapper = Python25Mapper(os.path.join("build", "ironclad", "python25.dll"))
+        mapper.Dispose()
+        self.assertFalse('mmap' in sys.modules)
     
     
     def testFreesObjectsOnDispose(self):

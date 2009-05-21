@@ -40,7 +40,7 @@ class StubReferenceTest(TestCase):
         # safe to call Dispose twice
         
         
-    def testUnampsAutomagically(self):
+    def testUnmapsAutomagically(self):
         sr = StubReference(os.path.join("build", "ironclad", "python25.dll"))
         self.assertNotEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library not mapped by construction")
@@ -49,6 +49,13 @@ class StubReferenceTest(TestCase):
         self.assertEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
                           "library not unmapped on finalize")
         
+
+    def testLoadBuiltinModule(self):
+        sr = StubReference(os.path.join("tests", "data", "fakepython25.dll"))
+        sr.LoadBuiltinModule('somecrazymodule') # if func not found and callable, error
+        sr.Dispose()
+        
+
 
 
 suite = makesuite(StubReferenceTest)

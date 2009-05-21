@@ -1,10 +1,13 @@
 
 // force build-as-if-building-Python-itself
+
 #define Py_BUILD_CORE
 
 // enable ironclad-related tweaks
 
 #define IRONCLAD
+
+
 #include "Python.h"
 
 // not included by Python.h, but contain definitions used elsewhere
@@ -49,4 +52,4 @@
 
 // builtin modules
 
-// ...
+#include "mmapmodule.c"
