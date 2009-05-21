@@ -2,20 +2,11 @@
 import os
 import sys
 
-from System.Diagnostics import Process, ProcessStartInfo
-
-def popen(executable, arguments):
-    global process # XXX: keep it alive
-    processStartInfo = ProcessStartInfo(executable, arguments)
-    processStartInfo.UseShellExecute = False
-    processStartInfo.CreateNoWindow = True
-    processStartInfo.RedirectStandardOutput = True
-    process = Process.Start(processStartInfo)
-    return file(process.StandardOutput.BaseStream, "r")
+from utils import popen, read_interesting_lines
 
 
 def extract_funcname(c_func):
-    # hacka haca hacka
+    # hacka hacka hacka
     return c_func.split('(')[0].split(' ')[-1].replace('*', '')
 
 
@@ -93,12 +84,8 @@ class StubMaker(object):
 
         def tryread(filename):
             path = os.path.join(overrideDir, filename)
-            if os.path.exists(path):
-                f = open(path, 'r')
-                try:
-                    return [l.strip() for l in f.readlines() if l.strip()]
-                finally:
-                    f.close()
+            if os.path.isfile(path):
+                return read_interesting_lines(path)
             return []
 
         ignores = set(tryread("_ignore_symbols"))
@@ -108,8 +95,6 @@ class StubMaker(object):
         self.functions.extend(map(extract_funcname, self.mgd_functions))
         
         self.data -= ignores
-        self.data |= set(tryread("_extra_data"))
-        
         self.ordered_data = tryread("_ordered_data")
         self.data -= set(self.ordered_data)
         

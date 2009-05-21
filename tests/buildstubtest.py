@@ -4,10 +4,10 @@ import shutil
 import tempfile
 
 from tests.utils.process import spawn
-from tests.utils.runtest import makesuite, run
+from tests.utils.runtest import automakesuite, run
 from tests.utils.testcase import TestCase
 
-from tools.stubmaker import popen
+from tools.utils import popen, read_interesting_lines
 
 def GetPexportsLines(path):
     stream = popen("pexports", path.replace('/cygdrive/c', 'c:'))
@@ -53,16 +53,11 @@ class BuildStubTest(TestCase):
 class Python25StubTest(TestCase):
 
     def testPython25Stub(self):
-        f = open("tests/data/python25-pexports")
-        try:
-            python25exports = set(map(str.strip, f.readlines()))
-        finally:
-            f.close()
-
+        path = os.path.join('tests', 'data', 'python25-pexports')
+        python25exports = set(read_interesting_lines(path))
         generatedExports = GetPexportsLines("build/ironclad/python25.dll")
         self.assertEquals(python25exports - generatedExports, set())
 
-suite = makesuite(BuildStubTest, Python25StubTest)
-
+suite = automakesuite(locals())
 if __name__ == '__main__':
     run(suite)

@@ -1,2 +1,10 @@
+# This file is used by tools/stubmaker.py
+# 
+# Data symbols in this file will be registered before any others,
+# in the order they appear in this file, during python25.dll init().
+
 PyType_Type
 PyBaseObject_Type
+
+PyInt_Type
+PyBool_Type

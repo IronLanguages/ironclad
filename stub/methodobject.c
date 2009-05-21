@@ -122,7 +122,9 @@ PyCFunction_Call(PyObject *func, PyObject *arg, PyObject *kw)
 static void
 meth_dealloc(PyCFunctionObject *m)
 {
+#ifndef IRONCLAD // pretend no such thing as GC
 	_PyObject_GC_UNTRACK(m);
+#endif // IRONCLAD
 	Py_XDECREF(m->m_self);
 	Py_XDECREF(m->m_module);
 	m->m_self = (PyObject *)free_list;
