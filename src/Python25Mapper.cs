@@ -144,6 +144,7 @@ namespace Ironclad
                 
                 // TODO: load builtin modules only on demand?
                 this.stub.LoadBuiltinModule("mmap");
+                this.stub.LoadBuiltinModule("_csv");
             }
             this.alive = true;
         }
@@ -232,6 +233,11 @@ namespace Ironclad
                 
                 PythonDictionary modules = (PythonDictionary)ScopeOps.__getattribute__(this.python.SystemState, "modules");
                 modules.Remove("mmap");
+                modules.Remove("_csv");
+                if (modules.Contains("csv"))
+                {
+                    modules.Remove("csv");
+                }
                 
                 this.importer.Dispose();
                 this.stub.Dispose();

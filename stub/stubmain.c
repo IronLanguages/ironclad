@@ -53,3 +53,4 @@
 // builtin modules
 
 #include "mmapmodule.c"
+#include "_csv.c"
