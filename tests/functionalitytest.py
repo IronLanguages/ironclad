@@ -111,6 +111,9 @@ class ExternalFunctionalityTest(FunctionalTestCase):
 
     def testNumPySciPyMatPlotLibStuff(self):
         # combine several tests into one, so we don't have to wait for multiple reloads
+        file_path = os.path.abspath(os.path.join('tests', 'data', 'text.txt'))
+        file_contents = list(open(file_path).read())
+        
         self.assertRuns(dedent("""\
             #=====================================================
             # test we can aactually import them
@@ -128,7 +131,7 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             assert np.all(r1 == r2)
 
             def assert_equals(a, b):
-                assert a == b, '%r != %r' % (a, b)
+                assert a == b, '%%r != %%r' %% (a, b)
             assert_equals((1+3j), np.complex128(1+3j))
             
             #=====================================================
@@ -150,6 +153,11 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             
             m = np.matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
             assert abs(np.linalg.det(m)) < 0.0000001
+            
+            #=====================================================
+            # test memmap
+            f = np.core.memmap(%r)
+            assert map(chr, f) == %r
             
             #=====================================================
             # adapted from numpy.core.test_print.TestPrint
@@ -175,7 +183,7 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             # butI'm not sure how to identify those environments.
             #
             # assert_complex_type(np.clongdouble)
-            """))
+            """ % (file_path, file_contents)))
 
 
 class BZ2Test(ModuleTestCase('bz2')):
@@ -487,5 +495,5 @@ MMapTest = TrivialModuleTestCase('mmap')
 suite = automakesuite(locals())
 
 if __name__ == '__main__':
-    run(suite, 2)
+    run(suite)
 
