@@ -492,6 +492,28 @@ class FieldsTest(TestCase):
     
     
     @WithMapper
+    def testUlongFieldReadOnly(self, mapper, addToCleanUp):
+        instance, fieldPtr = MakeInstanceWithField(MemberT.ULONG, 1, mapper, addToCleanUp)
+        
+        def Set():
+            instance.attr = 123
+        self.assertRaises(AttributeError, Set)
+        
+        CPyMarshal.WriteUInt(fieldPtr, UInt32.MaxValue - 1)
+        self.assertEquals(instance.attr, UInt32.MaxValue - 1)
+        
+    @WithMapper
+    def testUlongFieldReadWrite(self, mapper, addToCleanUp):
+        instance, fieldPtr = MakeInstanceWithField(MemberT.ULONG, 0, mapper, addToCleanUp)
+        
+        instance.attr = UInt32.MaxValue - 1
+        self.assertEquals(CPyMarshal.ReadUInt(fieldPtr), UInt32.MaxValue - 1)
+        
+        CPyMarshal.WriteUInt(fieldPtr, UInt32.MaxValue - 2)
+        self.assertEquals(instance.attr, UInt32.MaxValue - 2)
+    
+    
+    @WithMapper
     def testObjectFieldReadOnly(self, mapper, addToCleanUp):
         instance, fieldPtr = MakeInstanceWithField(MemberT.OBJECT, 1, mapper, addToCleanUp)
         

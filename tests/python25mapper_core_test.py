@@ -60,8 +60,11 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
     
     def testRemovesMmapOnDispose(self):
         mapper = Python25Mapper(os.path.join("build", "ironclad", "python25.dll"))
+        sys.modules['csv'] = object()
         mapper.Dispose()
         self.assertFalse('mmap' in sys.modules)
+        self.assertFalse('_csv' in sys.modules)
+        self.assertFalse('csv' in sys.modules)
     
     
     def testFreesObjectsOnDispose(self):
