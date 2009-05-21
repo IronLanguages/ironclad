@@ -1388,6 +1388,7 @@ csv_register_dialect(PyObject *module, PyObject *args, PyObject *kwargs)
                                 "dialect name must be a string or unicode");
                 return NULL;
         }
+
 	dialect = _call_dialect(dialect_obj, kwargs);
 	if (dialect == NULL)
 		return NULL;
@@ -1593,6 +1594,9 @@ init_csv(void)
 
         /* Add _dialects dictionary */
         dialects = PyDict_New();
+#ifdef IRONCLAD // if you want to use this pointer, you should damn well store a reference to it
+		Py_INCREF(dialects);
+#endif // IRONCLAD
         if (dialects == NULL)
                 return;
         if (PyModule_AddObject(module, "_dialects", dialects))
