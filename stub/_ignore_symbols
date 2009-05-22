@@ -88,8 +88,13 @@ _PyObject_CallMethod_SizeT
 PyObject_CallMethodObjArgs
 
 PyObject_Cmp
+
+_PyObject_GC_Malloc
 _PyObject_GC_New
 _PyObject_GC_NewVar
+PyObject_GC_Del
+PyObject_GC_Track
+PyObject_GC_UnTrack
 
 PyObject_AsCharBuffer
 PyObject_CheckReadBuffer
