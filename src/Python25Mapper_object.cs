@@ -163,7 +163,6 @@ namespace Ironclad
                     obj = this.cFileClass;
                 }
                 
-                
                 object[] argsArray = null;
 
                 if (argsPtr == IntPtr.Zero)
@@ -187,6 +186,7 @@ namespace Ironclad
                     IAttributesCollection kwargs = (IAttributesCollection)this.Retrieve(kwargsPtr);
                     result = PythonCalls.CallWithKeywordArgs(this.scratchContext, obj, argsArray, kwargs);
                 }
+                
                 return this.Store(result);
             }
             catch (Exception e)

@@ -180,12 +180,6 @@ def {0}(%(arglist)s):
     return _0._dispatcher.%(functype)s('{2}{0}', %(callargs)s)
 _ironclad_class_attrs['{0}'] = {0}"""
 
-LEN_TEMPLATE_TEMPLATE = """
-def {0}(%(arglist)s):
-    '''{1}'''
-    return int(_0._dispatcher.%(functype)s('{2}{0}', %(callargs)s))
-_ironclad_class_attrs['{0}'] = {0}"""
-
 SQ_SLICE_HACK_TEMPLATE_TEMPLATE = """
 def {0}(%(arglist)s):
     '''{1}'''

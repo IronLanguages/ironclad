@@ -478,10 +478,9 @@ class PyFileTest(FunctionalTestCase):
 Sqlite3Test = TrivialModuleTestCase('sqlite3') # test PATH manipulation in LoadModule
 PySVNTest = TrivialModuleTestCase('pysvn') # test misleading names passed to Py_InitModule4
 MMapTest = TrivialModuleTestCase('mmap')
-MMapTest = TrivialModuleTestCase('csv')
+CsvTest = TrivialModuleTestCase('csv')
 
 suite = automakesuite(locals())
-
 if __name__ == '__main__':
     run(suite)
 
