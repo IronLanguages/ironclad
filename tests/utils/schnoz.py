@@ -92,7 +92,7 @@ class Schnoz(object):
                         yield test_class(test_name)
                         
 
-    def main(self, paths=None):
+    def main(self, paths=None, verbosity=1):
         args = sys.argv[1:] or paths or ()
         paths = (path_string.split('.') for path_string in args)
         
@@ -100,4 +100,4 @@ class Schnoz(object):
         for path in paths:
             for test in self.get_matching_tests(path):
                 suite.addTest(test)
-        TextTestRunner().run(suite)
+        TextTestRunner(verbosity=verbosity).run(suite)

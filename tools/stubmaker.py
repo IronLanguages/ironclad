@@ -94,6 +94,7 @@ class StubMaker(object):
         self.mgd_functions = tryread("_mgd_functions")
         self.functions.extend(map(extract_funcname, self.mgd_functions))
         
+        self.data |= set(tryread("_extra_data"))
         self.data -= ignores
         self.ordered_data = tryread("_ordered_data")
         self.data -= set(self.ordered_data)

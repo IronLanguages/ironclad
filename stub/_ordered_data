@@ -8,3 +8,14 @@ PyBaseObject_Type
 
 PyInt_Type
 PyBool_Type
+_Py_TrueStruct
+_Py_ZeroStruct
+
+PyEllipsis_Type
+_Py_EllipsisObject
+
+PyNone_Type
+_Py_NoneStruct
+
+PyNotImplemented_Type
+_Py_NotImplementedStruct
