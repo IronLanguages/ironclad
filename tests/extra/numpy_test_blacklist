@@ -23,6 +23,7 @@ lib.test_io.TestSaveLoad.test_record
 core.test_multiarray.TestResize.test_check_reference
 core.test_regression.TestRegression.test_refcount_vdot
 core.test_regression.TestRegression.test_refcount_vectorize
+core.test_regression.TestRegression.test_errobj_reference_leak
 
 # no unicode support (mostly call PyObject_Unicode)
 core.test_unicode
@@ -56,9 +57,7 @@ core.test_print.TestPrint.test_complex_float
 core.test_print.TestPrint.test_complex_longdouble
 
 # apparently due to CodePlex work item #20191
-core.test_records.TestFromrecords.test_method_array
 core.test_records.TestFromrecords.test_method_array2
-core.test_records.TestFromrecords.test_recarray_fromfile
 core.test_records.TestFromrecords.test_recarray_slices
 core.test_regression.TestRegression.test_rec_fromarray
 
@@ -72,11 +71,13 @@ lib.test__datasource.TestDataSourceOpen.test_ValidHTTP
 lib.test__datasource.TestOpenFunc.test_DataSourceOpen
 
 
-# remaining failures are not well understood
+# remaining failures are generally not well understood
 
 core.test_multiarray.TestPickling.test_version0_object
 core.test_multiarray.TestPickling.test_version1_object
 
+core.test_records.TestFromrecords.test_method_array
+core.test_records.TestFromrecords.test_recarray_fromfile # ipy file has no .readinto
 core.test_records.TestFromrecords.test_recarray_conflict_fields
 core.test_records.TestFromrecords.test_recarray_from_repr
 

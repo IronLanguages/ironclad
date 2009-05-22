@@ -167,7 +167,7 @@ PROTOCOL_FIELD_TYPES = (
     (('nb_index', 'unaryfunc', '__index__'), {}),
 
     # PySequenceMethods
-    (('sq_length', 'lenfunc', '__len__'), {'template': LEN_TEMPLATE_TEMPLATE}),
+    (('sq_length', 'lenfunc', '__len__'), {}),
     (('sq_concat', 'binaryfunc', '__add__'), {}),
     (('sq_item', 'ssizeargfunc', '__getitem__'), {}),
     (('sq_slice', 'ssizessizeargfunc', '__getslice__'), {'template': SQ_SLICE_HACK_TEMPLATE_TEMPLATE}),
@@ -176,7 +176,7 @@ PROTOCOL_FIELD_TYPES = (
     (('sq_contains', 'objobjproc', '__contains__'), {}),
     
     # PyMappingMethods
-    (('mp_length', 'lenfunc', '__len__'), {'template': LEN_TEMPLATE_TEMPLATE}),
+    (('mp_length', 'lenfunc', '__len__'), {}),
     (('mp_subscript', 'binaryfunc', '__getitem__'), {}),
     (('mp_ass_subscript', 'objobjargproc', '__setitem__'), {}),
 )
@@ -224,8 +224,6 @@ MGD_PYTHON25API_FUNCTIONS = set((
     
     ('PyClass_New', 'ptr_ptrptrptr'),
     
-    ('PyCode_New', 'ptr_intintintintptrptrptrptrptrptrptrptrintptr'),
-    
     ('PyComplex_AsCComplex', 'cpx_ptr'),
     ('PyComplex_FromDoubles', 'ptr_doubledouble'),
     
@@ -252,8 +250,6 @@ MGD_PYTHON25API_FUNCTIONS = set((
     
     ('PyFloat_AsDouble', 'double_ptr'),
     ('PyFloat_FromDouble', 'ptr_double'),
-    
-    ('PyFrame_New', 'ptr_ptrptrptrptr'),
     
     ('PyGILState_Ensure', 'int_void'), # warning, not really int
     ('PyGILState_Release', 'void_int'), # warning, not really int
@@ -383,8 +379,6 @@ MGD_PYTHON25API_FUNCTIONS = set((
     ('PyThread_allocate_lock', 'ptr_void'),
     ('PyThread_free_lock', 'void_ptr'),
     ('PyThread_release_lock', 'void_ptr'),
-    
-    ('PyTraceBack_Here', 'void_ptr'),
     
     ('PyTuple_GetSlice', 'ptr_ptrsizesize'),
     ('PyTuple_New', 'ptr_size'),

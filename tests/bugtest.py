@@ -43,8 +43,7 @@ class BugTest(TestCase):
         class C(object):
             def __len__(self):
                 return UInt32(123)
-        self.assertRaises(TypeError, len, C())
-        # when this fails, delete all references to LEN_TEMPLATE_TEMPLATE
+        self.assertEquals(len(C()), 123, "uint len bug is back")
 
 
 suite = makesuite(BugTest)

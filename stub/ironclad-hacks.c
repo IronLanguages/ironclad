@@ -42,3 +42,40 @@ PyObject_GC_Del(void *op)
 void PyObject_GC_Track(void *_) {}
 void PyObject_GC_UnTrack(void *_) {}
 
+
+/* traceback hacks for Pyrex; truly, truly evil */
+
+PyCodeObject *
+PyCode_New(
+	int _0, int _1, int _2, int _3, PyObject *_4, PyObject *_5, PyObject *_6, PyObject *_7,
+	PyObject *_8, PyObject *_9, PyObject *_10, PyObject *funcname, int _12, PyObject *_13)
+{
+	Py_INCREF(funcname);
+	return (PyCodeObject*)funcname;
+}
+
+PyFrameObject *
+PyFrame_New(PyThreadState *_0, PyCodeObject *code, PyObject *_2, PyObject *_3)
+{
+	Py_INCREF(code);
+	return (PyFrameObject*)code;
+}
+
+int
+PyTraceBack_Here(struct _frame *frame)
+{
+	PyThreadState *tstate = PyThreadState_GET();
+	PyTracebackObject *oldtb = (PyTracebackObject *) tstate->curexc_traceback;
+
+	PyObject *tb = (PyObject*)frame;
+	Py_INCREF(tb);
+
+	if (tb == NULL)
+		return -1;
+	tstate->curexc_traceback = (PyObject *)tb;
+	Py_XDECREF(oldtb);
+	return 0;
+}
+
+
+

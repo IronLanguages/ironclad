@@ -177,3 +177,6 @@ PyUnicodeUCS2_SetDefaultEncoding
 
 PyNumber_AsSsize_t
 
+PyCode_New
+PyFrame_New
+PyTraceBack_Here
