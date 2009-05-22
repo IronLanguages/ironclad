@@ -53,11 +53,11 @@ class FunctionalTestCase(TestCase):
     def runCode(self, code, interpreter="ipy.exe"):
         if interpreter == "ipy.exe":
             code = TEMPLATE % code
-        self.write("test.py", code)
+        self.write("test-code.py", code)
         
         process = Process()
         process.StartInfo.FileName = interpreter
-        process.StartInfo.Arguments = "test.py"
+        process.StartInfo.Arguments = "test-code.py"
         process.StartInfo.WorkingDirectory = self.testDir
         process.StartInfo.UseShellExecute = False
         process.StartInfo.RedirectStandardOutput = process.StartInfo.RedirectStandardError = True
@@ -68,10 +68,10 @@ class FunctionalTestCase(TestCase):
             process.Kill()
         output = process.StandardOutput.ReadToEnd()
         error = process.StandardError.ReadToEnd()
-        self.assertEquals(process.ExitCode, 0, "Execution failed: >>>%s<<<\n>>>%s<<<" % (output, error))
 
         return process.ExitCode, output, error
 
 
     def assertRuns(self, code):
-        self.runCode(code)
+        exit_code, output, error = self.runCode(code)
+        self.assertEquals(exit_code, 0, "Execution failed: >>>%s<<<\n>>>%s<<<" % (output, error))

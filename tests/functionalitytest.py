@@ -68,6 +68,7 @@ def TrivialModuleTestCase(module):
 
 
 class ExternalFunctionalityTest(FunctionalTestCase):
+        
 
     def testImportHookSimple(self):
         self.assertRuns(dedent("""\
@@ -199,16 +200,14 @@ class BZ2Test(ModuleTestCase('bz2')):
             """) % (bz2_doc,
                     bz2___author__,
                     bz2_compress_doc,
-                    bz2_decompress_doc)
-        )
+                    bz2_decompress_doc))
 
     def testFunctionsWork(self):
         self.assertRuns(dedent("""
             assert bz2.compress(%(uncompressed)r) == %(compressed)r
             assert bz2.decompress(%(compressed)r) == %(uncompressed)r
             """) % {"compressed": bz2_test_data,
-                    "uncompressed": bz2_test_text}
-        )
+                    "uncompressed": bz2_test_text})
 
 
     def testTypesExist(self):
@@ -219,8 +218,7 @@ class BZ2Test(ModuleTestCase('bz2')):
             assert bz2.BZ2Compressor.__module__ == 'bz2'
             assert bz2.BZ2Decompressor.__name__ == 'BZ2Decompressor'
             assert bz2.BZ2Decompressor.__module__ == 'bz2'
-            """)
-        )
+            """))
 
     def testCompressor(self):
         self.assertRuns(dedent("""
@@ -238,8 +236,7 @@ class BZ2Test(ModuleTestCase('bz2')):
                 n += 1
             data += compressor.flush()
             assert data == %r
-            """) % (bz2_test_text, bz2_test_data)
-        )
+            """) % (bz2_test_text, bz2_test_data))
 
     def testDecompressor(self):
         self.assertRuns(dedent("""
@@ -256,8 +253,7 @@ class BZ2Test(ModuleTestCase('bz2')):
                 text += decompressor.decompress(chunk)
                 n += 1
             assert text == %r
-            """) % (bz2_test_data, bz2_test_text)
-        )
+            """) % (bz2_test_data, bz2_test_text))
         
 
     def testFileRead(self):
@@ -268,8 +264,7 @@ class BZ2Test(ModuleTestCase('bz2')):
                 assert f.read() == %r
             finally:
                 f.close()
-            """) % (testPath, bz2_test_text)
-        )
+            """) % (testPath, bz2_test_text))
 
     def testFileReadLine(self):
         testPath = os.path.join("tests", "data", "bz2", "compressed.bz2")
@@ -280,8 +275,7 @@ class BZ2Test(ModuleTestCase('bz2')):
                 assert f.readline() == ''
             finally:
                 f.close()
-            """) % (testPath, bz2_test_text)
-        )
+            """) % (testPath, bz2_test_text))
 
 
     def testFileReadLines_Short(self):
@@ -294,8 +288,7 @@ class BZ2Test(ModuleTestCase('bz2')):
                 assert ''.join(lines) == %r
             finally:
                 f.close()
-            """) % (testPath, bz2_test_text_lines)
-        )
+            """) % (testPath, bz2_test_text_lines))
 
 
     def testFileReadLines_Long(self):
@@ -307,8 +300,7 @@ class BZ2Test(ModuleTestCase('bz2')):
                 assert lines == [%r]
             finally:
                 f.close()
-            """) % (testPath, bz2_test_text)
-        )
+            """) % (testPath, bz2_test_text))
 
 
     def testFileIterate(self):
@@ -328,8 +320,7 @@ class BZ2Test(ModuleTestCase('bz2')):
                     pass
             finally:
                 f.close()
-            """) % (testPath, bz2_test_line)
-        )
+            """) % (testPath, bz2_test_line))
 
     
     def testFileSeekTell(self):
@@ -351,8 +342,7 @@ class BZ2Test(ModuleTestCase('bz2')):
                 assertSeeksTo(f, (-55000, 2), 0)
             finally:
                 f.close()
-            """) % (bz2_test_text, testPath)
-        )
+            """) % (bz2_test_text, testPath))
         
 
     def testFileWrite(self):
@@ -370,8 +360,7 @@ class BZ2Test(ModuleTestCase('bz2')):
                 assert r.read() == %r
             finally:
                 r.close()
-            """) % (path, bz2_test_text, path, bz2_test_text)
-        )
+            """) % (path, bz2_test_text, path, bz2_test_text))
         shutil.rmtree(testDir)
 
 
@@ -389,8 +378,7 @@ class BZ2Test(ModuleTestCase('bz2')):
                     compressors[i].flush())
             
             assert current == %r
-            """) % (bz2_test_text, bz2_test_text)
-        )    
+            """) % (bz2_test_text, bz2_test_text))    
     
     
     def testFileProperties(self):
@@ -416,8 +404,7 @@ class BZ2Test(ModuleTestCase('bz2')):
             finally:
                 f.close()
             assert f.closed == True
-            """) % (testPath, testPath)
-        )
+            """) % (testPath, testPath))
 
 
     def testFileMember(self):
@@ -430,8 +417,7 @@ class BZ2Test(ModuleTestCase('bz2')):
                 assert f.softspace == 1
             finally:
                 f.close()
-            """) % testPath
-        )
+            """) % testPath)
         
         
     def assertFileWriteLines(self, sequence):
@@ -449,8 +435,7 @@ class BZ2Test(ModuleTestCase('bz2')):
                 assert r.read() == %r
             finally:
                 r.close()
-            """) % (path, sequence, path, bz2_test_text)
-        )
+            """) % (path, sequence, path, bz2_test_text))
         shutil.rmtree(testDir)
         
 
@@ -467,8 +452,7 @@ class HashlibTest(ModuleTestCase('_hashlib')):
     def testTrivial(self):
         self.assertRuns(dedent("""
             assert _hashlib.openssl_md5('foobarbaz').digest() == u'm\xf2=\xc0?\x9bT\xcc8\xa0\xfc\x14\x83\xdfn!'
-            """)
-        )
+            """))
 
 
 class PyFileTest(FunctionalTestCase):
@@ -491,7 +475,7 @@ class PyFileTest(FunctionalTestCase):
 Sqlite3Test = TrivialModuleTestCase('sqlite3') # test PATH manipulation in LoadModule
 PySVNTest = TrivialModuleTestCase('pysvn') # test misleading names passed to Py_InitModule4
 MMapTest = TrivialModuleTestCase('mmap')
-CsvTest = TrivialModuleTestCase('_csv')
+MMapTest = TrivialModuleTestCase('csv')
 
 suite = automakesuite(locals())
 
