@@ -23,11 +23,11 @@ class StubMakerInitTest(TestCase):
         self.assertEquals(sm.data, set(['Alphabetised', 'AnotherExportedSymbol', 'ExportedSymbol']))
 
 
-    def testInitIgnoresIgnoresAndAddsOrderedDataAndMgdFunctions(self):
+    def testInitIgnoresIgnoresAndAddsExtrasOrderedDataAndMgdFunctions(self):
         sm = StubMaker('tests/data/exportsymbols.dll', 'tests/data/stub')
         self.assertEquals(sm.functions, ['Func', 'Jazz', 'Bebop'])
         self.assertEquals(sm.mgd_functions, ['void Bebop(foo this, bar* that);'])
-        self.assertEquals(sm.data, set(['ExportedSymbol']))
+        self.assertEquals(sm.data, set(['ExportedSymbol', 'ExtraSymbol']))
         self.assertEquals(sm.ordered_data, ['MeFirst', 'AnotherExportedSymbol'])
 
 

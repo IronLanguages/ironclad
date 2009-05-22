@@ -23,5 +23,5 @@ dirs = ['core', 'fft', 'lib', 'linalg', 'ma', 'oldnumeric', 'random']
 
 if __name__ == "__main__":
     numpytester = Schnoz(name="numpy", lib_path=numpy_path, data_dir=os.path.dirname(__file__))
-    numpytester.main(dirs)
+    numpytester.main(dirs, 2)
 

@@ -1,0 +1,9 @@
+# This file is used by tools/stubmaker.py
+# 
+# It includes data symbols that need to be registered with the managed
+# side, but are not exported by the source library, and so don't get picked up
+# automatically.
+
+PyNotImplemented_Type
+PyEllipsis_Type
+PyNone_Type

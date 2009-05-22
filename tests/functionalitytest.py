@@ -131,6 +131,9 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             assert r1 is not r2
             assert np.all(r1 == r2)
 
+            r1[...] = 20
+            assert np.all(r1 > r2)
+
             def assert_equals(a, b):
                 assert a == b, '%%r != %%r' %% (a, b)
             assert_equals((1+3j), np.complex128(1+3j))

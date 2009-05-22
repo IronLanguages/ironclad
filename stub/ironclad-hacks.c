@@ -1,7 +1,7 @@
 
 
+PyTypeObject PyNotImplemented_Type;
 PyTypeObject PyEllipsis_Type;
-PyTypeObject PyFrame_Type;
 PyTypeObject PyNone_Type;
 
 
@@ -13,7 +13,7 @@ PyEval_GetRestricted(void)
 }
 
 
-PyObject * 
+PyObject *
 _PyObject_GC_Malloc(size_t basicsize)
 {
     return PyObject_Malloc(basicsize);
