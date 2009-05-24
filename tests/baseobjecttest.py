@@ -410,28 +410,38 @@ class ObjectFunctionsTest(TestCase):
     def testPyObject_IsSubclass(self, mapper, _):
         class C(object): pass
         class D(C): pass
+        class E: pass
+        class F(E): pass
         
         data = (
+            (C, C),
+            (C, D),
+            (D, C),
+            (D, D),
+            (E, E),
+            (E, F),
+            (F, E),
+            (F, F),
             (object, object),
             (int, object),
-            (D, C),
-            
-            (C, D),
             (object, str),
-            
+            (TypeError, TypeError),
+            (TypeError, Exception),
+            (Exception, TypeError),
             (1, 2),
         )
         for (sub, cls) in data:
             expectResult = -1
             expectException = None
             try:
-                expectResult = int(isinstance(sub, cls))
+                expectResult = int(issubclass(sub, cls))
             except Exception, e:
                 expectException = type(e)
             
+            print sub, cls, expectResult
             subPtr = mapper.Store(sub)
             clsPtr = mapper.Store(cls)
-            self.assertEquals(mapper.PyObject_IsInstance(subPtr, clsPtr), expectResult)
+            self.assertEquals(mapper.PyObject_IsSubclass(subPtr, clsPtr), expectResult)
             self.assertMapperHasError(mapper, expectException)
             mapper.DecRef(subPtr)
             mapper.DecRef(clsPtr)
