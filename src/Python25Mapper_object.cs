@@ -223,14 +223,33 @@ namespace Ironclad
             {
                 object derived = this.Retrieve(derivedPtr);
                 object cls = this.Retrieve(clsPtr);
-                if (Builtin.issubclass(this.scratchContext, derived, cls))
+
+                // stupid casting rigmarole is because Builtin.issubclass gets
+                // issubclass(object, object) wrong if I don't force a more
+                // specific call.
+
+                PythonType subType = derived as PythonType;
+                if (subType != null)
                 {
+                    if (Builtin.issubclass(subType, cls))
+                    {
+                        Console.WriteLine("is subclass");
+                        return 1;
+                    }
+                    return 0;
+                }
+
+                // if this raises, it should have raised anyway
+                if (Builtin.issubclass((OldClass)derived, cls))
+                {
+                    Console.WriteLine("is subclass (old)");
                     return 1;
                 }
                 return 0;
             }
             catch (Exception e)
             {
+                Console.WriteLine("is $%^&*(");
                 this.LastException = e;
                 return -1;
             }
