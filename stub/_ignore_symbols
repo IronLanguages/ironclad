@@ -151,6 +151,13 @@ PyOS_ascii_atof
 PyOS_strtoul
 PyOS_strtol
 
+PyErr_SetInterrupt
+PyErr_CheckSignals
+PyOS_InitInterrupts
+PyOS_FiniInterrupts
+PyOS_InterruptOccurred
+PyOS_AfterFork
+
 _Py_HashPointer
 
 Py_Initialize

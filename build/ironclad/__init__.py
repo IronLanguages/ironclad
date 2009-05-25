@@ -20,6 +20,11 @@ _mapper = Python25Mapper(os.path.join(_dirname, "python25.dll"))
 def open(*args):
     return _mapper.CPyFileClass(*args)
 
+def patch_builtin_open():
+    import sys
+    sys.modules['__builtin__'].open = open
+    sys.modules['__builtin__'].file = open
+
 import atexit
 def _shutdown():
     try:

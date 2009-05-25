@@ -52,6 +52,8 @@
 #include "unicodeobject.c"
 #include "tokenizer.c"
 #include "objimpl.c"
+#include "intrcheck.c"
+#include "sigcheck.c"
 
 // builtin modules
 
