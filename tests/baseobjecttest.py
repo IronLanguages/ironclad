@@ -438,7 +438,6 @@ class ObjectFunctionsTest(TestCase):
             except Exception, e:
                 expectException = type(e)
             
-            print sub, cls, expectResult
             subPtr = mapper.Store(sub)
             clsPtr = mapper.Store(cls)
             self.assertEquals(mapper.PyObject_IsSubclass(subPtr, clsPtr), expectResult)

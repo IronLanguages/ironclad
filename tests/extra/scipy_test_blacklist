@@ -1,17 +1,19 @@
 
-# just fail with wrong results
-fftpack.test_pseudo_diffs
-optimize.test_zeros.TestBasic
 
-# wedges?
-fftpack.test_basic.TestRfft.test_djbfft
-integrate.test_quadpack.TestQuad.test_indefinite
-optimize.test_optimize.TestOptimize.test_powell
+fftpack.test_basic.TestRfft.test_djbfft # either wedges, or takes > 15 minutes
+fftpack.test_pseudo_diffs # almost all just fail -- wrong results
 
-# wrong number of args to something-or-other
+# wrong number of args to some lambda
 integrate.test_integrate.TestOde.test_vode
 integrate.test_integrate.TestOde.test_zvode
 optimize.test_cobyla.TestCobyla.test_simple
 
-# no idea
-optimize.test_optimize.TestOptimize.test_fminbound
+io.test_array_import.TestReadArray # deprecated, fail unpredictably due to 'file being used by another process'
+io.test_array_import.TestReadArray.test_complex # this one: PyFloat_FromString needs implementing
+
+odr.test_odr.TestODR.test_explicit # segfault
+
+optimize.test_zeros.TestBasic # x4: in _bisect: ValueError: f(a) and f(b) must have different signs
+optimize.test_optimize.TestOptimize.test_fminbound # import_nose(): TypeError: Object is not callable
+
+stats.test_mstats_basic.TestCorr.test_pearsonr # divide by 0

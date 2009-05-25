@@ -233,7 +233,6 @@ namespace Ironclad
                 {
                     if (Builtin.issubclass(subType, cls))
                     {
-                        Console.WriteLine("is subclass");
                         return 1;
                     }
                     return 0;
@@ -242,14 +241,12 @@ namespace Ironclad
                 // if this raises, it should have raised anyway
                 if (Builtin.issubclass((OldClass)derived, cls))
                 {
-                    Console.WriteLine("is subclass (old)");
                     return 1;
                 }
                 return 0;
             }
             catch (Exception e)
             {
-                Console.WriteLine("is $%^&*(");
                 this.LastException = e;
                 return -1;
             }

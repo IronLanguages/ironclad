@@ -7,13 +7,23 @@ if sys.platform == 'cli':
     # we expect this to be run from project root
     sys.path.insert(0, "build")
     import ironclad
+    ironclad.patch_builtin_open()
 
 
 import scipy
 scipy_path = r"C:\Python25\Lib\site-packages\scipy"
-dirs = ['fftpack', 'integrate', 'optimize', 'ndimage', 'special']
+dirs = [
+    'fftpack', 'integrate', 'io', 'maxentropy', 
+    'ndimage', 'odr', 'optimize', 'special', 'stats'
+]
+# 'cluster', # several passes; weird failure after a while; no idea whether repros
+# 'interpolate', 'signal', # cannot import factorial from scipy
+# 'misc', # pilutil import Image
+# 'sparse', 'spatial', # slow and boring, but haven't seen any failures
+
+
 
 if __name__ == "__main__":
     scipytester = Schnoz(name="scipy", lib_path=scipy_path, data_dir=os.path.dirname(__file__))
-    scipytester.main(dirs)
+    scipytester.main(dirs, 2)
 
