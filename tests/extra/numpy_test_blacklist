@@ -1,6 +1,8 @@
 # known failures by reason, if known
 
-# mmap module
+# mmap module now works, but I have yet to work myself up
+# to the task of patching os.open and friends to make
+# tempfile work as it should.
 core.test_memmap
 
 # binascii.crc32
@@ -46,9 +48,6 @@ lib.test_getlimits
 # meant to be disabled on windows
 core.test_multiarray.TestFromToFile.test_file
 
-# so slow that the fact that they pass is no consolation
-lib.test_machar.TestMachAr.test_underlow
-
 # fail due to differences in string representation
 core.test_print.TestPrint.test_double
 core.test_print.TestPrint.test_longdouble
@@ -77,12 +76,11 @@ core.test_multiarray.TestPickling.test_version0_object
 core.test_multiarray.TestPickling.test_version1_object
 
 core.test_records.TestFromrecords.test_method_array
-core.test_records.TestFromrecords.test_recarray_fromfile # ipy file has no .readinto
+core.test_records.TestFromrecords.test_recarray_fromfile
 core.test_records.TestFromrecords.test_recarray_conflict_fields
 core.test_records.TestFromrecords.test_recarray_from_repr
 
 core.test_regression.TestRegression.test_for_object_scalar_creation
-core.test_regression.TestRegression.test_junk_in_string_fields_of_recarray
 core.test_regression.TestRegression.test_mem_custom_float_to_array
 
 ma.test_core.TestFillingValues.test_fillvalue_conversion
@@ -90,12 +88,9 @@ ma.test_core.TestMaskedArrayArithmetic.test_methods_with_output
 ma.test_core.TestMaskedArrayArithmetic.test_minmax_funcs_with_output
 ma.test_core.TestMaskedArrayFunctions.test_choose_with_out
 
-ma.test_extras.TestMedian.test_2d # PyCode_New
-ma.test_extras.TestMedian.test_3d
-ma.test_extras.TestNotMasked.test_contiguous
+ma.test_extras.TestMedian.test_2d # hangs
 
 ma.test_mrecords.TestMRecords.test_filled
 ma.test_mrecords.TestMRecords.test_set_fields
-ma.test_mrecords.TestMRecordsImport.test_fromarrays
-ma.test_mrecords.TestMRecordsImport.test_fromrecords # broken by r344?
+ma.test_mrecords.TestMRecordsImport.test_fromrecords
 ma.test_mrecords.TestMRecordsImport.test_fromtextfile

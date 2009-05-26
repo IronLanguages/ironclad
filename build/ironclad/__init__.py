@@ -23,7 +23,7 @@ def open(*args):
 def patch_builtin_open():
     import sys
     sys.modules['__builtin__'].open = open
-    sys.modules['__builtin__'].file = open
+    sys.modules['__builtin__'].file = _mapper.CPyFileClass
 
 import atexit
 def _shutdown():
