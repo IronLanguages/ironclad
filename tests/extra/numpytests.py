@@ -7,6 +7,7 @@ if sys.platform == 'cli':
     # we expect this to be run from project root
     sys.path.insert(0, "build")
     import ironclad
+    ironclad.patch_builtin_open()
 
 import numpy
 def my_assert_raises(exc, call, *args, **kwargs):

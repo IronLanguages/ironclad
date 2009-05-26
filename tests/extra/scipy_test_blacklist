@@ -15,5 +15,6 @@ odr.test_odr.TestODR.test_explicit # segfault
 
 optimize.test_zeros.TestBasic # x4: in _bisect: ValueError: f(a) and f(b) must have different signs
 optimize.test_optimize.TestOptimize.test_fminbound # import_nose(): TypeError: Object is not callable
+optimize.test_optimize.TestOptimize.test_neldermead # passes but takes forever
 
 stats.test_mstats_basic.TestCorr.test_pearsonr # divide by 0

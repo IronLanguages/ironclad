@@ -51,9 +51,7 @@ class MetaImporter(object):
             return
         
         self.patched_numpy_core_memmap = True
-        print 'Found numpy.core.memmap module'
-        print '  patching file'
-        
+        print '  patching numpy.core.memmap.file'
         sys.modules['numpy.core.memmap'].file = self.mapper.CPyFileClass
         
     def find_module(self, fullname, path=None):
@@ -68,6 +66,10 @@ class MetaImporter(object):
             raise ImportError('%s is not available in ironclad yet' % fullname)
 
         # hacka hacka hacka!
+        # this depends on numpy.core.memmap not being the
+        # very last module imported before it's first used;
+        # however, since that module itself imports modules,
+        # it should be safe. don't look at me like that.
         self.fix_numpy_core_mmap()
             
         import os
