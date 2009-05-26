@@ -23,10 +23,17 @@ namespace Ironclad
         public static void
         Zero(IntPtr start, int bytes)
         {
-            for (int i = 0; i < bytes/CPyMarshal.IntSize; i++)
+            int ptrs = bytes / CPyMarshal.PtrSize;
+            bytes = bytes % CPyMarshal.PtrSize;
+            for (int i = 0; i < ptrs; i++)
             {
-                CPyMarshal.WriteInt(start, 0);
-                start = CPyMarshal.Offset(start, CPyMarshal.IntSize);
+                CPyMarshal.WritePtr(start, IntPtr.Zero);
+                start = CPyMarshal.Offset(start, CPyMarshal.PtrSize);
+            }
+            for (int i = 0; i < bytes; i++)
+            {
+                CPyMarshal.WriteByte(start, 0);
+                start = CPyMarshal.Offset(start, 1);
             }
         }
 

@@ -28,19 +28,22 @@ class CPyMarshalTest_32(TestCase):
 
 
     def testZero(self):
-        bytes = 200
-        data = Marshal.AllocHGlobal(bytes)
+        bufferlen = 200
+        zerolen = 173
         
+        data = Marshal.AllocHGlobal(bufferlen)
         this = data
-        for _ in xrange(bytes):
+        for _ in xrange(bufferlen):
             CPyMarshal.WriteByte(this, 255)
             this = OffsetPtr(this, 1)
         
-        CPyMarshal.Zero(data, bytes)
+        CPyMarshal.Zero(data, zerolen)
         
         this = data
-        for _ in xrange(bytes):
-            self.assertEquals(CPyMarshal.ReadByte(this), 0, "failed to zero")
+        for i in xrange(bufferlen):
+            actual = CPyMarshal.ReadByte(this)
+            expected = (255, 0)[i < zerolen]
+            self.assertEquals(actual, expected, "wrong value at %d (%d, %d)" % (i, actual, expected))
             this = OffsetPtr(this, 1)
             
         Marshal.FreeHGlobal(data)
