@@ -349,14 +349,22 @@ namespace Ironclad
             uint typeSize = (uint)Marshal.SizeOf(typeof(PyTypeObject));
             IntPtr typePtr = this.allocator.Alloc(typeSize);
             CPyMarshal.Zero(typePtr, typeSize);
+            
+            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "ob_refcnt", 2);
 
-            // TODO: handle multiple inheritance
             object ob_type = PythonCalls.Call(this.scratchContext, Builtin.type, new object[] { _type });
+            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.Store(ob_type));
+            
+            string tp_name = (string)_type.__getattribute__(this.scratchContext, "__name__");
+            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_name", this.Store(tp_name));
+            
             PythonTuple tp_bases = (PythonTuple)_type.__getattribute__(this.scratchContext, "__bases__");
             object tp_base = tp_bases[0];
-            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "ob_refcnt", 2);
-            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.Store(ob_type));
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", this.Store(tp_base));
+            if (tp_bases.__len__() > 1)
+            {
+                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_bases", this.Store(tp_bases));
+            }
 
             ScopeOps.__setattr__(this.scratchModule, "_ironclad_class", _type);
             this.ExecInModule(CodeSnippets.CLASS_STUB_CODE, this.scratchModule);
