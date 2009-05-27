@@ -257,12 +257,16 @@ class Types_Test(TestCase):
     @WithMapper
     def testStoreUnknownType(self, mapper, _):
         class C(object):
-            pass
+            __name__ = "cantankerous.cochineal"
         cPtr = mapper.Store(C)
         self.assertEquals(CPyMarshal.ReadIntField(cPtr, PyTypeObject, "ob_refcnt"), 2, "seems easiest to 'leak' types, and ensure they live forever")
         self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "ob_type"), mapper.PyType_Type)
         self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
+        self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_bases"), IntPtr.Zero)
         self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_as_number"), IntPtr.Zero)
+
+        namePtr = CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_name")
+        self.assertEquals(mapper.Retrieve(namePtr), "cantankerous.cochineal")
 
         baseFlags = CPyMarshal.ReadIntField(cPtr, PyTypeObject, "tp_flags")
         self.assertEquals(baseFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready newly-stored type")
@@ -274,6 +278,17 @@ class Types_Test(TestCase):
         instance = mapper.Retrieve(instancePtr)
         self.assertEquals(isinstance(instance, C), True)
         self.assertEquals(mapper.Store(instance), instancePtr)
+
+
+    @WithMapper
+    def testStoreUnknownTypeWithBases(self, mapper, _):
+        class C(object): pass
+        class D(object): pass
+        class E(C, D): pass
+        
+        ePtr = mapper.Store(E)
+        basesPtr = CPyMarshal.ReadPtrField(ePtr, PyTypeObject, "tp_bases")
+        self.assertEquals(mapper.Retrieve(basesPtr), (C, D))
 
 
 class OldStyle_Test(TestCase):
