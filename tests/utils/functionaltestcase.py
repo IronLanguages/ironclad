@@ -8,13 +8,6 @@ from System.Threading import Thread
 from textwrap import dedent
 from tests.utils.testcase import TestCase
 
-TEMPLATE = dedent("""\
-    import sys
-    sys.path.insert(0, %r)
-    import ironclad
-    %%s
-    """) % os.path.abspath("build")
-
 
 def readBinary(filename):
     stream = file(filename, 'rb')
@@ -27,6 +20,13 @@ def readBinary(filename):
 class FunctionalTestCase(TestCase):
     testDir = None
     removeTestDir = True
+
+    TEMPLATE = dedent("""\
+        import sys
+        sys.path.insert(0, %r)
+        import ironclad
+        %%s
+        """) % os.path.abspath("build")
     
     def setUp(self):
         TestCase.setUp(self)
@@ -52,7 +52,7 @@ class FunctionalTestCase(TestCase):
 
     def runCode(self, code, interpreter="ipy.exe"):
         if interpreter == "ipy.exe":
-            code = TEMPLATE % code
+            code = self.TEMPLATE % code
         self.write("test-code.py", code)
         
         process = Process()

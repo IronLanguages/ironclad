@@ -19,6 +19,7 @@
 #include "pygetopt.h"
 #include "abstract.h"
 #include "token.h"
+#include "osdefs.h"
 
 // definitions for missing data; alternative C implementations of various functions
 
@@ -54,9 +55,11 @@
 #include "objimpl.c"
 #include "intrcheck.c"
 #include "sigcheck.c"
+#include "structseq.c"
 
 // builtin modules
 
+#include "posixmodule.c"
 #include "mmapmodule.c"
 #include "_csv.c"
 

@@ -28,6 +28,10 @@ MS_CORE_DLL.
 
 */
 
+#ifdef IRONCLAD // we need to define this somewhere for posixmodule.c to work
+#define HAVE_DIRENT_H
+#endif // IRONCLAD
+
 #ifdef _WIN32_WCE
 #define MS_WINCE
 #endif
@@ -175,7 +179,7 @@ typedef int pid_t;
 #define Py_IS_INFINITY(X) (!_finite(X) && !_isnan(X))
 #define Py_IS_FINITE(X) _finite(X)
 
-/* Turn off warnings about deprecated C runtime functions in 
+/* Turn off warnings about deprecated C runtime functions in
    VisualStudio .NET 2005 */
 #if _MSC_VER >= 1400 && !defined _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_DEPRECATE

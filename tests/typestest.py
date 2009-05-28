@@ -63,6 +63,7 @@ class Types_Test(TestCase):
                 self.assertEquals(mapper.RefCount(typePtr), 1, "failed to add reference to " + k)
             
             mapper.PyType_Ready(typePtr)
+            self.assertNotEquals(CPyMarshal.ReadIntField(typePtr, PyTypeObject, "tp_basicsize"), 0)
             basePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base")
             if k == "PyBaseObject_Type":
                 self.assertEquals(basePtr, IntPtr.Zero)

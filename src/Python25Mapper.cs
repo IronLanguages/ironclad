@@ -143,6 +143,7 @@ namespace Ironclad
                 this.removeSysHacks = ScopeOps.__getattribute__(this.scratchModule, "remove_sys_hacks");
                 
                 // TODO: load builtin modules only on demand?
+                this.stub.LoadBuiltinModule("posix");
                 this.stub.LoadBuiltinModule("mmap");
                 this.stub.LoadBuiltinModule("_csv");
             }
@@ -233,6 +234,7 @@ namespace Ironclad
                 
                 PythonDictionary modules = (PythonDictionary)ScopeOps.__getattribute__(this.python.SystemState, "modules");
                 modules.Remove("mmap");
+                modules.Remove("posix");
                 modules.Remove("_csv");
                 if (modules.Contains("csv"))
                 {

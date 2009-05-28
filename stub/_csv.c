@@ -61,7 +61,7 @@ module instead.
 
 /* end 2.2 compatibility macros */
 
-#ifdef IRONCLAD
+#ifdef IRONCLAD // tweak string type checks
 #define IS_BASESTRING PyString_Check
 #else // IRONCLAD
 #define IS_BASESTRING(o) \

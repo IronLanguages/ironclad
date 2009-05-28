@@ -20,15 +20,56 @@ _mapper = Python25Mapper(os.path.join(_dirname, "python25.dll"))
 def open(*args):
     return _mapper.CPyFileClass(*args)
 
-def patch_builtin_open():
-    import sys
-    sys.modules['__builtin__'].open = open
-    sys.modules['__builtin__'].file = _mapper.CPyFileClass
+_FD_USING_NAMES = (
+    'fdopen', 'tmpfile', 'close', 'fstat', 'open', 'read', 'write'
+)
+
+class NativeFilenoPatch(object):
+    
+    def __init__(self):
+        self._count = 0
+        self._patches = []
+    
+    def _apply_patch(self, modname, name, value):
+        oldvalue = getattr(sys.modules[modname], name)
+        setattr(sys.modules[modname], name, value)
+        return (modname, name, oldvalue)
+
+    def _patch_all(self):
+        patch = lambda *args: self._patches.append(self._apply_patch(*args))
+        patch('__builtin__', 'open', open)
+        patch('__builtin__', 'file', _mapper.CPyFileClass)
+        
+        import os, posix
+        for name in _FD_USING_NAMES:
+            patch('os', name, getattr(posix, name))
+    
+    def _unpatch_all(self):
+        while len(self._patches):
+            unpatch = self._patches.pop()
+            self._apply_patch(*unpatch)
+    
+    def patch_filenos(self):
+        if self._count == 0:
+            self._patch_all()
+        self._count += 1
+        
+    def unpatch_filenos(self):
+        self._count -= 1
+        if self._count == 0:
+            self._unpatch_all()
+        if self._count < 0:
+            raise Exception("filenos not patched; please don't try to unpatch")
+
+_patch_lifetime = NativeFilenoPatch()
+patch_native_filenos = _patch_lifetime.patch_filenos
+unpatch_native_filenos = _patch_lifetime.unpatch_filenos
 
 import atexit
 def _shutdown():
     try:
         _mapper.Dispose()
+        _patch_lifetime._unpatch_all()
     except Exception, e:
         print 'error on ironclad shutdown:'
         print e
