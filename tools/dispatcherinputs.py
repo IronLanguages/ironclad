@@ -404,10 +404,9 @@ PURE_C_SYMBOLS = set(read_interesting_lines(pure_c_symbols_file))
 
 all_data_items_file = _in_this_dir("python25ApiDataItems")
 MGD_DATA = []
-for p in read_interesting_lines(all_data_items_file):
-    symbol, _type = p.split(" ")
+for symbol in read_interesting_lines(all_data_items_file):
     if symbol not in PURE_C_SYMBOLS:
-        MGD_DATA.append({"symbol": symbol, "type": _type})
+        MGD_DATA.append({"symbol": symbol})
 
 #==============================================================================
 
