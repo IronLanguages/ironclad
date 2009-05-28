@@ -1,108 +1,108 @@
-PyBool_Type PyTypeObject
-PyCell_Type PyTypeObject
-PyClass_Type PyTypeObject
-PyInstance_Type PyTypeObject
-PyMethod_Type PyTypeObject
-PyCode_Type PyTypeObject
-PyComplex_Type PyTypeObject
-PyWrapperDescr_Type PyTypeObject
-PyProperty_Type PyTypeObject
-PyDict_Type PyTypeObject
-PyEnum_Type PyTypeObject
-PyReversed_Type PyTypeObject
-PyFile_Type PyTypeObject
-PyFloat_Type PyTypeObject
-PyFrame_Type PyTypeObject
-PyFunction_Type PyTypeObject
-PyClassMethod_Type PyTypeObject
-PyStaticMethod_Type PyTypeObject
-PyGen_Type PyTypeObject
-PyInt_Type PyTypeObject
-PySeqIter_Type PyTypeObject
-PyCallIter_Type PyTypeObject
-PyList_Type PyTypeObject
-PyLong_Type PyTypeObject
-PyCFunction_Type PyTypeObject
-PyModule_Type PyTypeObject
-PyType_Type PyTypeObject
-PyBaseObject_Type PyTypeObject
-PySuper_Type PyTypeObject
-PyRange_Type PyTypeObject
-PySet_Type PyTypeObject
-PyFrozenSet_Type PyTypeObject
-PySlice_Type PyTypeObject
-PyBaseString_Type PyTypeObject
-PySTEntry_Type PyTypeObject
-PyString_Type PyTypeObject
-PySymtableEntry_Type PyTypeObject
-PyTraceBack_Type PyTypeObject
-PyTuple_Type PyTypeObject
-PyUnicode_Type PyTypeObject
-PyNone_Type PyTypeObject
-PyEllipsis_Type PyTypeObject
-PyNotImplemented_Type PyTypeObject
-_PyWeakref_RefType PyTypeObject
-_PyWeakref_ProxyType PyTypeObject
-_PyWeakref_CallableProxyType PyTypeObject
+PyBool_Type 
+PyCell_Type 
+PyClass_Type 
+PyInstance_Type 
+PyMethod_Type 
+PyCode_Type 
+PyComplex_Type 
+PyWrapperDescr_Type 
+PyProperty_Type 
+PyDict_Type 
+PyEnum_Type 
+PyReversed_Type 
+PyFile_Type 
+PyFloat_Type 
+PyFrame_Type 
+PyFunction_Type 
+PyClassMethod_Type 
+PyStaticMethod_Type 
+PyGen_Type 
+PyInt_Type 
+PySeqIter_Type 
+PyCallIter_Type 
+PyList_Type 
+PyLong_Type 
+PyCFunction_Type 
+PyModule_Type 
+PyType_Type 
+PyBaseObject_Type 
+PySuper_Type 
+PyRange_Type 
+PySet_Type 
+PyFrozenSet_Type 
+PySlice_Type 
+PyBaseString_Type 
+PySTEntry_Type 
+PyString_Type 
+PySymtableEntry_Type 
+PyTraceBack_Type 
+PyTuple_Type 
+PyUnicode_Type 
+PyNone_Type 
+PyEllipsis_Type 
+PyNotImplemented_Type 
+_PyWeakref_RefType 
+_PyWeakref_ProxyType 
+_PyWeakref_CallableProxyType 
 
-_Py_NoneStruct PyObject
-_Py_EllipsisObject PyObject
-_Py_NotImplementedStruct PyObject
-_Py_ZeroStruct PyIntObject
-_Py_TrueStruct PyIntObject
+_Py_NoneStruct 
+_Py_EllipsisObject 
+_Py_NotImplementedStruct 
+_Py_ZeroStruct 
+_Py_TrueStruct 
 
-Py_OptimizeFlag int
+Py_OptimizeFlag
 
-_PyThreadState_Current void*
+_PyThreadState_Current 
 
-PyExc_BaseException void*
-PyExc_Exception void*
-PyExc_StopIteration void*
-PyExc_GeneratorExit void*
-PyExc_StandardError void*
-PyExc_ArithmeticError void*
-PyExc_LookupError void*
-PyExc_AssertionError void*
-PyExc_AttributeError void*
-PyExc_EOFError void*
-PyExc_FloatingPointError void*
-PyExc_IOError void*
-PyExc_OSError void*
-PyExc_ImportError void*
-PyExc_IndexError void*
-PyExc_KeyError void*
-PyExc_KeyboardInterrupt void*
-PyExc_MemoryError void*
-PyExc_NameError void*
-PyExc_OverflowError void*
-PyExc_RuntimeError void*
-PyExc_NotImplementedError void*
-PyExc_IndentationError void*
-PyExc_TabError void*
-PyExc_ReferenceError void*
-PyExc_SystemError void*
-PyExc_TypeError void*
-PyExc_UnboundLocalError void*
-PyExc_UnicodeError void*
-PyExc_ValueError void*
-PyExc_ZeroDivisionError void*
-PyExc_Warning void*
-PyExc_UserWarning void*
-PyExc_DeprecationWarning void*
-PyExc_PendingDeprecationWarning void*
-PyExc_SyntaxWarning void*
-PyExc_RuntimeWarning void*
-PyExc_FutureWarning void*
-PyExc_ImportWarning void*
-PyExc_UnicodeWarning void*
+PyExc_BaseException 
+PyExc_Exception 
+PyExc_StopIteration 
+PyExc_GeneratorExit 
+PyExc_StandardError 
+PyExc_ArithmeticError 
+PyExc_LookupError 
+PyExc_AssertionError 
+PyExc_AttributeError 
+PyExc_EOFError 
+PyExc_FloatingPointError 
+PyExc_IOError 
+PyExc_OSError 
+PyExc_ImportError 
+PyExc_IndexError 
+PyExc_KeyError 
+PyExc_KeyboardInterrupt 
+PyExc_MemoryError 
+PyExc_NameError 
+PyExc_OverflowError 
+PyExc_RuntimeError 
+PyExc_NotImplementedError 
+PyExc_IndentationError 
+PyExc_TabError 
+PyExc_ReferenceError 
+PyExc_SystemError 
+PyExc_TypeError 
+PyExc_UnboundLocalError 
+PyExc_UnicodeError 
+PyExc_ValueError 
+PyExc_ZeroDivisionError 
+PyExc_Warning 
+PyExc_UserWarning 
+PyExc_DeprecationWarning 
+PyExc_PendingDeprecationWarning 
+PyExc_SyntaxWarning 
+PyExc_RuntimeWarning 
+PyExc_FutureWarning 
+PyExc_ImportWarning 
+PyExc_UnicodeWarning 
 
-PyExc_EnvironmentError void*
-PyExc_SyntaxError void*
-PyExc_SystemExit void*
-PyExc_UnicodeEncodeError void*
-PyExc_UnicodeDecodeError void*
-PyExc_UnicodeTranslateError void*
-PyExc_WindowsError void*
+PyExc_EnvironmentError 
+PyExc_SyntaxError 
+PyExc_SystemExit 
+PyExc_UnicodeEncodeError 
+PyExc_UnicodeDecodeError 
+PyExc_UnicodeTranslateError 
+PyExc_WindowsError 
 
 
 
