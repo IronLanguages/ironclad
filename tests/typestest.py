@@ -9,11 +9,11 @@ from tests.utils.gc import gcwait
 from tests.utils.memory import OffsetPtr, CreateTypes
 from tests.utils.testcase import TestCase, WithMapper
 
-from System import IntPtr, UInt32, WeakReference
+from System import Byte, IntPtr, UInt32, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CannotInterpretException, CPyMarshal, dgt_ptr_ptrptrptr, HGlobalAllocator, Python25Mapper, OpaquePyCell
-from Ironclad.Structs import PyObject, PyClassObject, PyInstanceObject, PyNumberMethods, PyTypeObject, PyVarObject, Py_TPFLAGS
+from Ironclad.Structs import *
 
 class ItemEnumeratorThing(object):
     def __getitem__(self):
@@ -289,6 +289,26 @@ class Types_Test(TestCase):
         ePtr = mapper.Store(E)
         basesPtr = CPyMarshal.ReadPtrField(ePtr, PyTypeObject, "tp_bases")
         self.assertEquals(mapper.Retrieve(basesPtr), (C, D))
+
+
+    def assertSizes(self, ptr, basic, item=0):
+        self.assertEquals(CPyMarshal.ReadIntField(ptr, PyTypeObject, "tp_basicsize"), basic)
+        self.assertEquals(CPyMarshal.ReadIntField(ptr, PyTypeObject, "tp_itemsize"), item)
+
+    @WithMapper
+    def testSizes(self, mapper, _):
+        self.assertSizes(mapper.PyBaseObject_Type, Marshal.SizeOf(PyObject))
+        self.assertSizes(mapper.PyType_Type, Marshal.SizeOf(PyTypeObject))
+        self.assertSizes(mapper.PyTuple_Type, Marshal.SizeOf(PyTupleObject), Marshal.SizeOf(IntPtr)) # bigger than necessary
+        self.assertSizes(mapper.PyString_Type, Marshal.SizeOf(PyStringObject) - 1, Marshal.SizeOf(Byte))
+        self.assertSizes(mapper.PyList_Type, Marshal.SizeOf(PyListObject))
+        self.assertSizes(mapper.PySlice_Type, Marshal.SizeOf(PySliceObject))
+        self.assertSizes(mapper.PyMethod_Type, Marshal.SizeOf(PyMethodObject))
+        self.assertSizes(mapper.PyInt_Type, Marshal.SizeOf(PyIntObject))
+        self.assertSizes(mapper.PyFloat_Type, Marshal.SizeOf(PyFloatObject))
+        self.assertSizes(mapper.PyComplex_Type, Marshal.SizeOf(PyComplexObject))
+        self.assertSizes(mapper.PyClass_Type, Marshal.SizeOf(PyClassObject))
+        self.assertSizes(mapper.PyInstance_Type, Marshal.SizeOf(PyInstanceObject))
 
 
 class OldStyle_Test(TestCase):

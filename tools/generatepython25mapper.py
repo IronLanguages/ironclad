@@ -1,12 +1,6 @@
 
 import os
-
-def read_interesting_lines(name):
-    f = open(name)
-    try:
-        return [l.rstrip() for l in f.readlines() if l.rstrip()]
-    finally:
-        f.close()
+from utils import read_interesting_lines
 
 def writefile(name, text):
     f = open(name, "w")
@@ -51,11 +45,13 @@ def run():
         _extra_snippets = []
         if len(_input) > 2:
             _extra = eval(_input[-1])
-            for (k, v) in _extra.items():
+            for (k, v) in sorted(_extra.items()):
                 if k == "tp_as_number":
-                    _extra_snippets.append(FILL_TYPES_NUMBERS % v)
+                    _extra_snippets.append(FILL_TYPES_AS_NUMBER_TEMPLATE % v)
+                elif k in ("tp_basicsize", "tp_itemsize"):
+                    _extra_snippets.append(FILL_TYPES_SIZE_TEMPLATE % (k, v))
                 else:
-                    _extra_snippets.append(FILL_TYPES_EXTRA_TEMPLATE % (k, v))
+                    _extra_snippets.append(FILL_TYPES_GETADDRESS_TEMPLATE % (k, v))
         _dict["extra"] = '\n'.join(_extra_snippets)
         
         fill_types_snippets.append(FILL_TYPES_TEMPLATE % _dict)
@@ -163,10 +159,13 @@ FILL_TYPES_TEMPLATE = """\
             this.map.Associate(ptr, %(type)s);
         }"""
 
-FILL_TYPES_NUMBERS = """\
+FILL_TYPES_AS_NUMBER_TEMPLATE = """\
             this.%s(ptr);"""
 
-FILL_TYPES_EXTRA_TEMPLATE = """\
+FILL_TYPES_SIZE_TEMPLATE = """\
+            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "%s", Marshal.SizeOf(typeof(%s)));"""
+
+FILL_TYPES_GETADDRESS_TEMPLATE = """\
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "%s", this.GetAddress("%s"));"""
 
 if __name__ == "__main__":

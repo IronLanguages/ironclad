@@ -233,7 +233,7 @@ namespace Ironclad
 
 FILL_TYPES = """
 
-PyFoo_Type TypeCache.Foo {"tp_init": "SomeInitMethod", "tp_iter": "SomeIterMethod"}
+PyFoo_Type TypeCache.Foo {"tp_init": "SomeInitMethod", "tp_iter": "SomeIterMethod", "tp_basicsize": "PyFooObject", "tp_itemsize": "Byte"}
 PyBar_Type TypeCache.Bar {"tp_init": "SomeOtherInitMethod", "tp_as_number": "NumberSetupMethod"}
 PyBaz_Type TypeCache.Baz
 """
@@ -248,7 +248,9 @@ namespace Ironclad
         {
             CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "tp_basicsize", Marshal.SizeOf(typeof(PyFooObject)));
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetAddress("SomeInitMethod"));
+            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "tp_itemsize", Marshal.SizeOf(typeof(Byte)));
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_iter", this.GetAddress("SomeIterMethod"));
             this.map.Associate(ptr, TypeCache.Foo);
         }
@@ -258,8 +260,8 @@ namespace Ironclad
         {
             CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetAddress("SomeOtherInitMethod"));
             this.NumberSetupMethod(ptr);
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetAddress("SomeOtherInitMethod"));
             this.map.Associate(ptr, TypeCache.Bar);
         }
 
