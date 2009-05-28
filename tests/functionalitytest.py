@@ -68,7 +68,6 @@ def TrivialModuleTestCase(module):
 
 
 class ExternalFunctionalityTest(FunctionalTestCase):
-        
 
     def testImportHookSimple(self):
         self.assertRuns(dedent("""\
@@ -189,6 +188,27 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             # assert_complex_type(np.clongdouble)
             """ % (file_path, file_contents)))
 
+    def testPatchNativeFilenos(self):
+        self.assertRuns(dedent("""\
+            import os
+            import sys
+            builtinBefore = dict(sys.modules['__builtin__'].__dict__)
+            osBefore = dict(sys.modules['os'].__dict__)
+            
+            ironclad.patch_native_filenos()
+            
+            # numpytests and scipytests both call this;
+            # not worth testing what actually happens,
+            # just that they can be unpatched
+            
+            ironclad.unpatch_native_filenos()
+            
+            for k, v in builtinBefore.items():
+                assert sys.modules['__builtin__'].__dict__[k] is v
+            for k, v in osBefore.items():
+                assert sys.modules['os'].__dict__[k] is v
+            
+            """))
 
 class BZ2Test(ModuleTestCase('bz2')):
 
@@ -473,7 +493,7 @@ class PyFileTest(FunctionalTestCase):
             f2.close()
         finally:
             mapper.Dispose()
-        
+
 
 Sqlite3Test = TrivialModuleTestCase('sqlite3') # test PATH manipulation in LoadModule
 PySVNTest = TrivialModuleTestCase('pysvn') # test misleading names passed to Py_InitModule4

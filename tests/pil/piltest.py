@@ -22,12 +22,25 @@ def readBinary(filename):
         return f.read()
     finally:
         f.close()
-    
+
+
+IPY = 'ipy.exe'
+PYTHON = 'python.exe'
+
 
 class PILTest(FunctionalTestCase):
+
+    testDir = "testDir"
+    removeTestDir = False
+    TEMPLATE = dedent("""\
+        import sys
+        sys.path.insert(0, %r)
+        import ironclad
+        ironclad.patch_native_filenos()
+        %%s
+        """) % os.path.abspath("build")
+
     def setUp(self):
-        self.testDir = "testDir"
-        self.removeTestDir = False
         FunctionalTestCase.setUp(self)
         for filename in SAMPLE_IMAGES:
             shutil.copy(filename, self.testDir)
@@ -44,8 +57,8 @@ class PILTest(FunctionalTestCase):
 
 
     def assertConsistency(self, code):
-        ironExitCode, ironOutput, ironError = self.runCode(code, "ipy.exe")
-        pyExitCode, pyOutput, pyError = self.runCode(code, "python.bat")
+        ironExitCode, ironOutput, ironError = self.runCode(code, IPY)
+        pyExitCode, pyOutput, pyError = self.runCode(code, PYTHON)
 
         ironLines = ironOutput.splitlines()
         pyLines = pyOutput.splitlines()
@@ -57,9 +70,9 @@ class PILTest(FunctionalTestCase):
     def assertOperation(self, code, format):
         tempOut, ironOut, pyOut = [os.path.join(self.testDir, name + format)
                                                     for name in  'output. ironOutput. pyOutput.'.split()]
-        ironExitCode, ironOutput, ironError = self.runCode(code % dict(format=format), "ipy.exe")
+        ironExitCode, ironOutput, ironError = self.runCode(code % dict(format=format), IPY)
         shutil.move(tempOut, ironOut)
-        pyExitCode, pyOutput, pyError = self.runCode(code % {'format':format}, "python.bat")
+        pyExitCode, pyOutput, pyError = self.runCode(code % {'format':format}, PYTHON)
         shutil.move(tempOut, pyOut)
         self.assertEquals(readBinary(ironOut), readBinary(pyOut))
 
@@ -84,8 +97,6 @@ class PILTest(FunctionalTestCase):
         self.assertSaveLoad('gif')
         self.assertSaveLoad('png')
         self.assertSaveLoad('bmp')
-        # don't work 
-        #self.assertSaveLoad('jpg') - need to build pil properly
 
 
     def testImageInformation(self):
@@ -93,10 +104,6 @@ class PILTest(FunctionalTestCase):
         self.assertInformation('gif')
         self.assertInformation('bmp')
         self.assertInformation('png')
-
-        # don't work - need to build PIL properly
-        #self.assertInformation('jpg')
-
 
 
     def assertImageOp(self, op):
@@ -106,10 +113,8 @@ class PILTest(FunctionalTestCase):
         open('test.%%(format)s').%s.save('output.%%(format)s')""" % op)
         # should work
         self.assertOperation(code, format="gif")
-
-        # might work
-        #self.assertOperation(code, format="png")
-        #self.assertOperation(code, format="bmp")
+        self.assertOperation(code, format="png")
+        self.assertOperation(code, format="bmp")
         
 
     def testRotate(self):
@@ -123,18 +128,14 @@ class PILTest(FunctionalTestCase):
 
 
     def DONTtestOtherOps(self):
-        pass
-        #may work - but probably won't
-        #self.assertImageOp('resize((400, 500), Image.NEAREST)')
-        #self.assertImageOp('resize((400, 500), Image.ANTIALIAS)')
-        #self.assertImageOp('transpose(Image.ROTATE_90)')
-        #self.assertImageOp('transpose(Image.FLIP_LEFT_RIGHT)')
-        #self.assertImageOp('transpose(Image.FLIP_TOP_BOTTOM)')
-        #self.assertImageOp('transpose(Image.ROTATE_180)')
-        #self.assertImageOp('transpose(Image.ROTATE_270)')
-
-        # don't work
-        #self.assertImageOp('crop((20, 30, 40, 50))')
+        self.assertImageOp('resize((400, 500), Image.NEAREST)')
+        self.assertImageOp('resize((400, 500), Image.ANTIALIAS)')
+        self.assertImageOp('transpose(Image.ROTATE_90)')
+        self.assertImageOp('transpose(Image.FLIP_LEFT_RIGHT)')
+        self.assertImageOp('transpose(Image.FLIP_TOP_BOTTOM)')
+        self.assertImageOp('transpose(Image.ROTATE_180)')
+        self.assertImageOp('transpose(Image.ROTATE_270)')
+        self.assertImageOp('crop((20, 30, 40, 50))')
         #TODO: MESH? - other things in image
 
 
@@ -145,8 +146,8 @@ class PILTest(FunctionalTestCase):
         for i, im in enumerate(open('test.bmp').split()):
             im.save('%s%%d.bmp' %% i)
         """)
-        ironExitCode, ironOutput, ironError = self.runCode(code % 'ironoutput', "ipy.exe")
-        pyExitCode, pyOutput, pyError = self.runCode(code % "pyoutput", "python.bat")
+        ironExitCode, ironOutput, ironError = self.runCode(code % 'ironoutput', IPY)
+        pyExitCode, pyOutput, pyError = self.runCode(code % "pyoutput", PYTHON)
         for i, (actual, expected) in enumerate(zip(sorted(glob('ironoutput*')), sorted(glob('pyoutput*')))):
             print i
             self.assertEquals(readBinary(actual), readBinary(expected), i)
@@ -155,4 +156,4 @@ class PILTest(FunctionalTestCase):
 
 suite = automakesuite(locals())
 if __name__ == "__main__":
-    run(suite)
+    run(suite, 2)

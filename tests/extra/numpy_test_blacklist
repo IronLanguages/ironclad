@@ -1,10 +1,5 @@
 # known failures by reason, if known
 
-# mmap module now works, but I have yet to work myself up
-# to the task of patching os.open and friends to make
-# tempfile work as it should.
-core.test_memmap
-
 # binascii.crc32
 lib.test_io.TestSavezLoad 
 
@@ -69,6 +64,8 @@ lib.test__datasource.TestDataSourceOpen.test_ValidGzipFile
 lib.test__datasource.TestDataSourceOpen.test_ValidHTTP
 lib.test__datasource.TestOpenFunc.test_DataSourceOpen
 
+# assumes that del immediately deletes
+core.test_memmap.TestMemmap.test_open_with_filename
 
 # remaining failures are generally not well understood
 
