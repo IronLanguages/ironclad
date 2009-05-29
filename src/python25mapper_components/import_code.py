@@ -10,7 +10,13 @@ class Loader(object):
         self.path = path
 
     def load_module(self, name):
-        import sys
+        import os, sys
+        
+        for m in sys.modules.values():
+            if hasattr(m, '__file__'):
+                if os.path.abspath(m.__file__) == os.path.abspath(self.path):
+                    return m
+        
         if name not in sys.modules:
             self.mapper.LoadModule(self.path, name)
             sys.modules[name] = self.mapper.GetModule(name)
@@ -71,7 +77,7 @@ class MetaImporter(object):
         # however, since that module itself imports modules,
         # it should be safe. don't look at me like that.
         self.fix_numpy_core_mmap()
-            
+        
         import os
         import sys
         lastname = fullname.rsplit('.', 1)[-1]

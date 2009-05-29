@@ -109,7 +109,7 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             """) % (location, bz2i_path_end, bz2ii_path_end))
 
 
-    def testNumPySciPyMatPlotLibStuff(self):
+    def testNumPySciPyMatPlotLibH5Stuff(self):
         # combine several tests into one, so we don't have to wait for multiple reloads
         file_path = os.path.abspath(os.path.join('tests', 'data', 'text.txt'))
         file_contents = list(open(file_path).read())
@@ -181,11 +181,21 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             assert_complex_type(np.cfloat)
             assert_complex_type(np.cdouble)
             
-            
             # this one is a known failure in certain environments, 
             # butI'm not sure how to identify those environments.
             #
             # assert_complex_type(np.clongdouble)
+            
+            #=====================================================
+            # test for no dupe h5 imports
+            # we still have dupe .py imports from .pyds for some reason
+            
+            import h5py
+            import sys
+            assert 'h5py.h5g.h5' not in sys.modules
+            assert 'h5py.h5i.h5' not in sys.modules
+            assert 'h5py.h5t.h5' not in sys.modules
+            
             """ % (file_path, file_contents)))
 
     def testPatchNativeFilenos(self):
