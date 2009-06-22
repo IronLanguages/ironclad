@@ -59,8 +59,8 @@
 
 // builtin modules
 
-#include "posixmodule.c"
-#include "mmapmodule.c"
-#include "_csv.c"
+#include "Modules/posixmodule.c"
+#include "Modules/mmapmodule.c"
+#include "Modules/_csv.c"
 
 
