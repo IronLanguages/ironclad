@@ -63,7 +63,7 @@ class FunctionalTestCase(TestCase):
         process.StartInfo.RedirectStandardOutput = process.StartInfo.RedirectStandardError = True
 
         process.Start()
-        process.WaitForExit(300000)
+        process.WaitForExit(600000)
         if not process.HasExited:
             process.Kill()
         output = process.StandardOutput.ReadToEnd()
