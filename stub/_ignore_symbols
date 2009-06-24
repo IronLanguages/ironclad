@@ -57,20 +57,26 @@ PyCObject_GetDesc
 PyCObject_Import
 PyCObject_SetVoidPtr
 
+# Objects/fileobject.c
+PyFile_FromString
+PyFile_SetBufSize
+PyFile_SetEncoding
+PyFile_FromFile
+PyFile_AsFile
+PyFile_Name
+PyFile_GetLine
+PyFile_WriteObject
+PyFile_SoftSpace
+PyFile_WriteString
+PyObject_AsFileDescriptor
+
+
 # Python/ceval.c
 PyEval_CallObject
 PyEval_CallObjectWithKeywords
 PyEval_GetRestricted
 
-_Py_VaBuildValue_SizeT
-Py_VaBuildValue
-_Py_BuildValue_SizeT
-Py_BuildValue
-
-PyString_FromFormat
-PyString_FromFormatV
-
-# errors.c
+# Python/errors.c
 _PyErr_BadInternalCall
 PyErr_BadArgument
 PyErr_BadInternalCall
@@ -105,6 +111,7 @@ PyErr_WarnEx
 PyErr_WarnExplicit
 PyErr_WriteUnraisable
 
+# Python/getargs.c
 PyArg_Parse
 _PyArg_Parse_SizeT
 PyArg_ParseTuple
@@ -117,6 +124,18 @@ PyArg_VaParseTupleAndKeywords
 _PyArg_VaParseTupleAndKeywords_SizeT
 PyArg_UnpackTuple
 _PyArg_NoKeywords
+
+
+###################################################
+
+_Py_VaBuildValue_SizeT
+Py_VaBuildValue
+_Py_BuildValue_SizeT
+Py_BuildValue
+
+PyString_FromFormat
+PyString_FromFormatV
+
 
 
 _PyObject_GC_Malloc
@@ -136,18 +155,6 @@ PyLong_FromVoidPtr
 PyLong_AsVoidPtr
 
 PyList_Size
-
-PyFile_FromString
-PyFile_SetBufSize
-PyFile_SetEncoding
-PyFile_FromFile
-PyFile_AsFile
-PyFile_Name
-PyFile_GetLine
-PyFile_WriteObject
-PyFile_SoftSpace
-PyFile_WriteString
-PyObject_AsFileDescriptor
 
 PyOS_snprintf
 PyOS_vsnprintf
