@@ -14,13 +14,17 @@ Portions Copyright (c)
 Foundation; 
 All Rights Reserved
 
-Some of the contents of some C files from the Python 2.5.2 source 
-release are included herein; in all cases, the parts copied are 
-either Python C API functions (and associated helper functions), 
-or declarations and defines necessary to compile the aforementioned 
-functions. The functions' implementations have not been changed, 
-and the intent of all supporting changes is to preserve apparent 
-behaviour while removing currently-irrelevant information.
+Large parts of build/ironclad/python25.dll are compiled from C
+language source files taken from Python 2.5.4 and modified as 
+follows. In most cases, types and functions have been used,
+without modification, to support the operation of C extension
+modules which expect to be linked to the real CPython library.
+Several parts of several files are #iffed out because they're 
+not currently used. The file type has had redirection macros 
+inserted into every associated function, which abuse the f_fp
+field in service of nearly-seamless interoperability. All 
+modifications can be found by searching for IRONCLAD in the 
+'stub' directory.
 
 The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
