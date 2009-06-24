@@ -31,7 +31,7 @@
 
 // c implementations
 
-#include "abstract.c"
+#include "Objects/abstract.c"
 #include "ceval.c"
 #include "cobject.c"
 #include "errors.c"
