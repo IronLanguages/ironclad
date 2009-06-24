@@ -23,7 +23,7 @@ _PyLong_DigitValue
 
 # All the rest are functions implemented somewhere amongst the C code
 
-# abstract.c
+# Objects/abstract.c
 PyObject_Cmp
 PyObject_Type
 PyObject_AsCharBuffer
@@ -31,6 +31,9 @@ PyObject_CheckReadBuffer
 PyObject_AsReadBuffer
 PyObject_AsWriteBuffer
 PyNumber_AsSsize_t
+PyMapping_HasKey
+PyMapping_HasKeyString
+PyMapping_Size
 PyObject_CallObject
 PyObject_CallFunction
 _PyObject_CallFunction_SizeT
@@ -38,6 +41,18 @@ PyObject_CallFunctionObjArgs
 PyObject_CallMethod
 _PyObject_CallMethod_SizeT
 PyObject_CallMethodObjArgs
+
+# Objects/bufferobject.c
+PyBuffer_FromObject
+PyBuffer_FromReadWriteObject
+PyBuffer_FromMemory
+PyBuffer_FromReadWriteMemory
+PyBuffer_New
+
+# Python/ceval.c
+PyEval_CallObject
+PyEval_CallObjectWithKeywords
+PyEval_GetRestricted
 
 _Py_VaBuildValue_SizeT
 Py_VaBuildValue
@@ -103,15 +118,6 @@ PyObject_GC_Del
 PyObject_GC_Track
 PyObject_GC_UnTrack
 
-PyBuffer_FromObject
-PyBuffer_FromReadWriteObject
-PyBuffer_FromMemory
-PyBuffer_FromReadWriteMemory
-PyBuffer_New
-
-PyMapping_HasKey
-PyMapping_HasKeyString
-PyMapping_Size
 
 PyCObject_FromVoidPtr
 PyCObject_FromVoidPtrAndDesc
@@ -128,10 +134,6 @@ PyLong_FromVoidPtr
 PyLong_AsVoidPtr
 
 PyList_Size
-
-PyEval_CallObject
-PyEval_CallObjectWithKeywords
-PyEval_GetRestricted
 
 PyFile_FromString
 PyFile_SetBufSize
@@ -183,8 +185,6 @@ PyThreadState_Swap
 
 PyUnicodeUCS2_GetDefaultEncoding
 PyUnicodeUCS2_SetDefaultEncoding
-
-PyNumber_AsSsize_t
 
 PyCode_New
 PyFrame_New
