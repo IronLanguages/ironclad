@@ -1,6 +1,8 @@
 
 /* Buffer object implementation */
 
+#include "Python.h"
+
 
 typedef struct {
 	PyObject_HEAD
@@ -387,7 +389,7 @@ buffer_concat(PyBufferObject *self, PyObject *other)
 
  	if (!get_buf(self, &ptr1, &size, ANY_BUFFER))
  		return NULL;
-
+ 
 	/* optimize special case */
 	if ( size == 0 )
 	{
@@ -425,6 +427,10 @@ buffer_repeat(PyBufferObject *self, Py_ssize_t count)
 		count = 0;
 	if (!get_buf(self, &ptr, &size, ANY_BUFFER))
 		return NULL;
+	if (count > PY_SSIZE_T_MAX / size) {
+		PyErr_SetString(PyExc_MemoryError, "result too large");
+		return NULL;
+	}
 	ob = PyString_FromStringAndSize(NULL, size * count);
 	if ( ob == NULL )
 		return NULL;
@@ -695,7 +701,7 @@ PyTypeObject PyBuffer_Type = {
 	0,					/* tp_weaklistoffset */
 	0,					/* tp_iter */
 	0,					/* tp_iternext */
-	0,					/* tp_methods */
+	0,					/* tp_methods */	
 	0,					/* tp_members */
 	0,					/* tp_getset */
 	0,					/* tp_base */
@@ -707,4 +713,3 @@ PyTypeObject PyBuffer_Type = {
 	0,					/* tp_alloc */
 	buffer_new,				/* tp_new */
 };
-

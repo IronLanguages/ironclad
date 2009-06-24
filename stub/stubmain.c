@@ -43,7 +43,7 @@
 #include "pystrtod.c"
 #include "stringobject.c"
 #include "tupleobject.c"
-#include "bufferobject.c"
+#include "Objects/bufferobject.c"
 #include "methodobject.c"
 #include "longobject.c"
 #include "listobject.c"
