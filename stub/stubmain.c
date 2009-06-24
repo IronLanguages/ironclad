@@ -39,15 +39,11 @@
 #include "pystrtod.c"
 #include "stringobject.c"
 #include "tupleobject.c"
-#include "methodobject.c"
-#include "longobject.c"
-#include "listobject.c"
 #include "pystate.c"
 #include "pythonrun.c"
 #include "unicodeobject.c"
 #include "tokenizer.c"
 #include "objimpl.c"
-#include "intrcheck.c"
 #include "sigcheck.c"
 #include "structseq.c"
 
@@ -57,10 +53,15 @@
 #include "Objects/bufferobject.c"
 #include "Objects/cobject.c"
 #include "Objects/fileobject.c"
+#include "Objects/listobject.c"
+#include "Objects/longobject.c"
+#include "Objects/methodobject.c"
 
 #include "Python/ceval.c"
 #include "Python/errors.c"
 #include "Python/getargs.c"
+
+#include "Parser/intrcheck.c"
 
 #include "Modules/posixmodule.c"
 #include "Modules/mmapmodule.c"
