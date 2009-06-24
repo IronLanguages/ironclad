@@ -23,6 +23,22 @@ _PyLong_DigitValue
 
 # All the rest are functions implemented somewhere amongst the C code
 
+# abstract.c
+PyObject_Cmp
+PyObject_Type
+PyObject_AsCharBuffer
+PyObject_CheckReadBuffer
+PyObject_AsReadBuffer
+PyObject_AsWriteBuffer
+PyNumber_AsSsize_t
+PyObject_CallObject
+PyObject_CallFunction
+_PyObject_CallFunction_SizeT
+PyObject_CallFunctionObjArgs
+PyObject_CallMethod
+_PyObject_CallMethod_SizeT
+PyObject_CallMethodObjArgs
+
 _Py_VaBuildValue_SizeT
 Py_VaBuildValue
 _Py_BuildValue_SizeT
@@ -79,15 +95,6 @@ _PyArg_VaParseTupleAndKeywords_SizeT
 PyArg_UnpackTuple
 _PyArg_NoKeywords
 
-PyObject_CallObject
-PyObject_CallFunction
-_PyObject_CallFunction_SizeT
-PyObject_CallFunctionObjArgs
-PyObject_CallMethod
-_PyObject_CallMethod_SizeT
-PyObject_CallMethodObjArgs
-
-PyObject_Cmp
 
 _PyObject_GC_Malloc
 _PyObject_GC_New
@@ -95,11 +102,6 @@ _PyObject_GC_NewVar
 PyObject_GC_Del
 PyObject_GC_Track
 PyObject_GC_UnTrack
-
-PyObject_AsCharBuffer
-PyObject_CheckReadBuffer
-PyObject_AsReadBuffer
-PyObject_AsWriteBuffer
 
 PyBuffer_FromObject
 PyBuffer_FromReadWriteObject
