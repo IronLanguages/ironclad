@@ -1888,6 +1888,10 @@ static PyMemberDef file_memberlist[] = {
 	{NULL}	/* Sentinel */
 };
 
+#ifdef IRONCLAD // tidiness
+#undef OFF
+#endif // IRONCLAD
+
 static PyObject *
 get_closed(PyFileObject *f, void *closure)
 {

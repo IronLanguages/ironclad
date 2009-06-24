@@ -1,6 +1,9 @@
-#include "methodobject.h"
 
 /* Method object implementation */
+
+#include "Python.h"
+#include "structmember.h"
+
 static PyCFunctionObject *free_list = NULL;
 
 PyObject *
@@ -13,7 +16,6 @@ PyCFunction_NewEx(PyMethodDef *ml, PyObject *self, PyObject *module)
 		PyObject_INIT(op, &PyCFunction_Type);
 	}
 	else {
-	    int blah = 1;
 		op = PyObject_GC_New(PyCFunctionObject, &PyCFunction_Type);
 		if (op == NULL)
 			return NULL;
@@ -168,8 +170,6 @@ meth_get__self__(PyCFunctionObject *m, void *closure)
 	return self;
 }
 
-
-
 static PyGetSetDef meth_getsets [] = {
 	{"__doc__",  (getter)meth_get__doc__,  NULL, NULL},
 	{"__name__", (getter)meth_get__name__, NULL, NULL},
@@ -184,7 +184,9 @@ static PyMemberDef meth_members[] = {
 	{NULL}
 };
 
+#ifdef IRONCLAD // tidiness
 #undef OFF
+#endif // IRONCLAD
 
 static PyObject *
 meth_repr(PyCFunctionObject *m)
@@ -357,9 +359,11 @@ PyCFunction_Fini(void)
    existing C extensions can call.
 */
 
-// defined as a macro elsewhere
-//PyObject *
-//PyCFunction_New(PyMethodDef *ml, PyObject *self)
-//{
-//	return PyCFunction_NewEx(ml, self, NULL);
-//}
+#undef PyCFunction_New
+PyAPI_FUNC(PyObject *) PyCFunction_New(PyMethodDef *, PyObject *);
+
+PyObject *
+PyCFunction_New(PyMethodDef *ml, PyObject *self)
+{
+	return PyCFunction_NewEx(ml, self, NULL);
+}

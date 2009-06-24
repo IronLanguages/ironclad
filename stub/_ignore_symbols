@@ -70,6 +70,23 @@ PyFile_SoftSpace
 PyFile_WriteString
 PyObject_AsFileDescriptor
 
+# Objects/listobject.c
+PyList_Size
+
+# Objects/longobject.c
+PyLong_FromVoidPtr
+PyLong_AsVoidPtr
+
+# Objects/methodobject.c
+PyCFunction_Call
+PyCFunction_GetFlags
+PyCFunction_GetSelf
+PyCFunction_GetFunction
+PyCFunction_NewEx
+Py_FindMethodInChain
+Py_FindMethod
+PyCFunction_Fini
+PyCFunction_New
 
 # Python/ceval.c
 PyEval_CallObject
@@ -125,6 +142,13 @@ _PyArg_VaParseTupleAndKeywords_SizeT
 PyArg_UnpackTuple
 _PyArg_NoKeywords
 
+# Parser/intrcheck.c
+PyErr_SetInterrupt
+PyErr_CheckSignals
+PyOS_InitInterrupts
+PyOS_FiniInterrupts
+PyOS_InterruptOccurred
+PyOS_AfterFork
 
 ###################################################
 
@@ -151,10 +175,7 @@ PyTuple_GetItem
 PyTuple_SetItem
 PyTuple_Pack
 
-PyLong_FromVoidPtr
-PyLong_AsVoidPtr
 
-PyList_Size
 
 PyOS_snprintf
 PyOS_vsnprintf
@@ -164,13 +185,6 @@ PyOS_ascii_atof
 PyOS_strtoul
 PyOS_strtol
 
-PyErr_SetInterrupt
-PyErr_CheckSignals
-PyOS_InitInterrupts
-PyOS_FiniInterrupts
-PyOS_InterruptOccurred
-PyOS_AfterFork
-
 _Py_HashPointer
 
 Py_Initialize
@@ -178,15 +192,6 @@ Py_InitializeEx
 Py_IsInitialized
 Py_Finalize
 
-PyCFunction_Call
-PyCFunction_GetFlags
-PyCFunction_GetSelf
-PyCFunction_GetFunction
-PyCFunction_NewEx
-
-Py_FindMethodInChain
-Py_FindMethod
-PyCFunction_Fini
 
 PyThreadState_Get
 PyThreadState_GetDict
