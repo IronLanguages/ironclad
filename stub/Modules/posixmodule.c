@@ -137,7 +137,7 @@ corresponding Unix manual entries for more information on calls.");
 
 #ifdef IRONCLAD // don't define HAVE_SOMETHING_WE_DONT_REALLY_HAVE, insert extra useful hacks
 
-// TODO reinstate some?
+#include <shellapi.h>	// pure laziness prevents me from working out why I suddenly need this
 
 #else // IRONCLAD
 

@@ -29,13 +29,9 @@
 
 #include "stub.generated.c"
 
-// c implementations
 
-#include "Objects/abstract.c"
-#include "Python/ceval.c"
-#include "Objects/cobject.c"
-#include "errors.c"
-#include "getargs.c"
+// c implementations in the wrong place
+
 #include "modsupport.c"
 #include "mysnprintf.c"
 #include "mystrtoul.c"
@@ -43,13 +39,11 @@
 #include "pystrtod.c"
 #include "stringobject.c"
 #include "tupleobject.c"
-#include "Objects/bufferobject.c"
 #include "methodobject.c"
 #include "longobject.c"
 #include "listobject.c"
 #include "pystate.c"
 #include "pythonrun.c"
-#include "fileobject.c"
 #include "unicodeobject.c"
 #include "tokenizer.c"
 #include "objimpl.c"
@@ -57,10 +51,17 @@
 #include "sigcheck.c"
 #include "structseq.c"
 
-// builtin modules
+// c implementations in the right place
+
+#include "Objects/abstract.c"
+#include "Objects/bufferobject.c"
+#include "Objects/cobject.c"
+#include "Objects/fileobject.c"
+
+#include "Python/ceval.c"
+#include "Python/errors.c"
+#include "Python/getargs.c"
 
 #include "Modules/posixmodule.c"
 #include "Modules/mmapmodule.c"
 #include "Modules/_csv.c"
-
-
