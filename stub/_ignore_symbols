@@ -88,6 +88,26 @@ Py_FindMethod
 PyCFunction_Fini
 PyCFunction_New
 
+#Objects/object.c
+_Py_HashPointer
+
+# Objects/stringobject.c
+PyString_FromFormat
+PyString_FromFormatV
+
+# Objects/structseq.c
+PyStructSequence_New
+PyStructSequence_InitType
+
+# Objects/tupleobject.c
+PyTuple_GetItem
+PyTuple_SetItem
+PyTuple_Pack
+
+# Objects/unicodeobject.c, sorry about the mangling, not sure how to deal with that
+PyUnicodeUCS2_GetDefaultEncoding
+PyUnicodeUCS2_SetDefaultEncoding
+
 # Python/ceval.c
 PyEval_CallObject
 PyEval_CallObjectWithKeywords
@@ -163,6 +183,11 @@ PyOS_ascii_strtod
 PyOS_ascii_formatd
 PyOS_ascii_atof
 
+# Python/pystate.c
+PyThreadState_Get
+PyThreadState_GetDict
+PyThreadState_Swap
+
 # Parser/intrcheck.c
 PyErr_SetInterrupt
 PyErr_CheckSignals
@@ -171,13 +196,8 @@ PyOS_FiniInterrupts
 PyOS_InterruptOccurred
 PyOS_AfterFork
 
-###################################################
-
-
-PyString_FromFormat
-PyString_FromFormatV
-
-
+##################################################
+# in ironclad-hacks.c for various reasons, alluded to therein
 
 _PyObject_GC_Malloc
 _PyObject_GC_New
@@ -186,35 +206,12 @@ PyObject_GC_Del
 PyObject_GC_Track
 PyObject_GC_UnTrack
 
-
-
-PyTuple_GetItem
-PyTuple_SetItem
-PyTuple_Pack
-
-
-
-
-
-
-_Py_HashPointer
+PyCode_New
+PyFrame_New
+PyTraceBack_Here
 
 Py_Initialize
 Py_InitializeEx
 Py_IsInitialized
 Py_Finalize
 
-
-PyThreadState_Get
-PyThreadState_GetDict
-PyThreadState_Swap
-
-PyUnicodeUCS2_GetDefaultEncoding
-PyUnicodeUCS2_SetDefaultEncoding
-
-PyCode_New
-PyFrame_New
-PyTraceBack_Here
-
-PyStructSequence_New
-PyStructSequence_InitType

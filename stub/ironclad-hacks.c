@@ -1,9 +1,11 @@
 
+// filled in by Python25Api; just need to exist somewhere
 
 PyTypeObject PyNotImplemented_Type;
 PyTypeObject PyEllipsis_Type;
 PyTypeObject PyNone_Type;
 
+// perhaps possible to use real gc module
 
 PyObject *
 _PyObject_GC_Malloc(size_t basicsize)
@@ -35,7 +37,7 @@ void PyObject_GC_Track(void *_) {}
 void PyObject_GC_UnTrack(void *_) {}
 
 
-/* traceback hacks for Pyrex; truly, truly evil */
+// traceback hacks for Pyrex; truly, truly evil
 
 PyCodeObject *
 PyCode_New(
@@ -69,5 +71,10 @@ PyTraceBack_Here(struct _frame *frame)
 	return 0;
 }
 
+// originaly defined in Python/pythonrun.c; entirely faked-up here
 
+void Py_Initialize(void) {}
+void Py_InitializeEx(int _) {}
+void Py_Finalize(void) {}
+int Py_IsInitialized(void) { return 1; }
 
