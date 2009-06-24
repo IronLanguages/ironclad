@@ -1,4 +1,8 @@
 
+/* Wrap void* pointers to be passed between C modules */
+
+#include "Python.h"
+
 
 /* Declarations for objects of type PyCObject */
 
@@ -101,7 +105,7 @@ PyCObject_SetVoidPtr(PyObject *self, void *cobj)
     PyCObject* cself = (PyCObject*)self;
     if (cself == NULL || !PyCObject_Check(cself) ||
 	cself->destructor != NULL) {
-	PyErr_SetString(PyExc_TypeError,
+	PyErr_SetString(PyExc_TypeError, 
 			"Invalid call to PyCObject_SetVoidPtr");
 	return 0;
     }
