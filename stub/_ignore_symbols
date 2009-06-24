@@ -49,6 +49,14 @@ PyBuffer_FromMemory
 PyBuffer_FromReadWriteMemory
 PyBuffer_New
 
+# Objects/cobject.c
+PyCObject_FromVoidPtr
+PyCObject_FromVoidPtrAndDesc
+PyCObject_AsVoidPtr
+PyCObject_GetDesc
+PyCObject_Import
+PyCObject_SetVoidPtr
+
 # Python/ceval.c
 PyEval_CallObject
 PyEval_CallObjectWithKeywords
@@ -119,12 +127,6 @@ PyObject_GC_Track
 PyObject_GC_UnTrack
 
 
-PyCObject_FromVoidPtr
-PyCObject_FromVoidPtrAndDesc
-PyCObject_AsVoidPtr
-PyCObject_GetDesc
-PyCObject_Import
-PyCObject_SetVoidPtr
 
 PyTuple_GetItem
 PyTuple_SetItem

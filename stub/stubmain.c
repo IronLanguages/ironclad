@@ -33,7 +33,7 @@
 
 #include "Objects/abstract.c"
 #include "Python/ceval.c"
-#include "cobject.c"
+#include "Objects/cobject.c"
 #include "errors.c"
 #include "getargs.c"
 #include "modsupport.c"
