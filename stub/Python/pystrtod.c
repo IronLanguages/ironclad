@@ -15,7 +15,7 @@
  * @nptr:    the string to convert to a numeric value.
  * @endptr:  if non-%NULL, it returns the character after
  *           the last character used in the conversion.
- *
+ * 
  * Converts a string to a #gdouble value.
  * This function behaves like the standard strtod() function
  * does in the C locale. It does this without actually
@@ -32,7 +32,7 @@
  * stored in %errno. If the correct value would cause underflow,
  * zero is returned and %ERANGE is stored in %errno.
  * If memory allocation fails, %ENOMEM is stored in %errno.
- *
+ * 
  * This function resets %errno before calling strtod() so that
  * you can reliably detect overflow and underflow.
  *
@@ -60,7 +60,7 @@ PyOS_ascii_strtod(const char *nptr, char **endptr)
 	assert(decimal_point_len != 0);
 
 	decimal_point_pos = NULL;
-	if (decimal_point[0] != '.' ||
+	if (decimal_point[0] != '.' || 
 	    decimal_point[1] != 0)
 	{
 		p = nptr;
@@ -161,20 +161,20 @@ PyOS_ascii_strtod(const char *nptr, char **endptr)
  * @buffer: A buffer to place the resulting string in
  * @buf_len: The length of the buffer.
  * @format: The printf()-style format to use for the
- *          code to use for converting.
+ *          code to use for converting. 
  * @d: The #gdouble to convert
  *
  * Converts a #gdouble to a string, using the '.' as
  * decimal point. To format the number you pass in
  * a printf()-style format string. Allowed conversion
- * specifiers are 'e', 'E', 'f', 'F', 'g' and 'G'.
- *
+ * specifiers are 'e', 'E', 'f', 'F', 'g' and 'G'. 
+ * 
  * Return value: The pointer to the buffer with the converted string.
  **/
 char *
-PyOS_ascii_formatd(char       *buffer,
-		   size_t      buf_len,
-		   const char *format,
+PyOS_ascii_formatd(char       *buffer, 
+		   size_t      buf_len, 
+		   const char *format, 
 		   double      d)
 {
 	struct lconv *locale_data;
@@ -200,8 +200,8 @@ PyOS_ascii_formatd(char       *buffer,
 	if (strpbrk(format + 1, "'l%"))
 		return NULL;
 
-	if (!(format_char == 'e' || format_char == 'E' ||
-	      format_char == 'f' || format_char == 'F' ||
+	if (!(format_char == 'e' || format_char == 'E' || 
+	      format_char == 'f' || format_char == 'F' || 
 	      format_char == 'g' || format_char == 'G'))
 		return NULL;
 
@@ -214,7 +214,7 @@ PyOS_ascii_formatd(char       *buffer,
 
 	assert(decimal_point_len != 0);
 
-	if (decimal_point[0] != '.' ||
+	if (decimal_point[0] != '.' || 
 	    decimal_point[1] != 0)
 	{
 		p = buffer;
@@ -231,7 +231,7 @@ PyOS_ascii_formatd(char       *buffer,
 			p++;
 			if (decimal_point_len > 1) {
 				rest_len = strlen(p + (decimal_point_len - 1));
-				memmove(p, p + (decimal_point_len - 1),
+				memmove(p, p + (decimal_point_len - 1), 
 					rest_len);
 				p[rest_len] = 0;
 			}

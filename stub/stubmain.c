@@ -32,17 +32,11 @@
 
 // c implementations in the wrong place
 
-#include "modsupport.c"
-#include "mysnprintf.c"
-#include "mystrtoul.c"
-#include "object.c"
-#include "pystrtod.c"
 #include "stringobject.c"
 #include "tupleobject.c"
 #include "pystate.c"
 #include "pythonrun.c"
 #include "unicodeobject.c"
-#include "tokenizer.c"
 #include "objimpl.c"
 #include "sigcheck.c"
 #include "structseq.c"
@@ -56,12 +50,18 @@
 #include "Objects/listobject.c"
 #include "Objects/longobject.c"
 #include "Objects/methodobject.c"
+#include "Objects/object.c"
 
 #include "Python/ceval.c"
 #include "Python/errors.c"
 #include "Python/getargs.c"
+#include "Python/modsupport.c"
+#include "Python/mysnprintf.c"
+#include "Python/mystrtoul.c"
+#include "Python/pystrtod.c"
 
 #include "Parser/intrcheck.c"
+#include "Parser/tokenizer.c"
 
 #include "Modules/posixmodule.c"
 #include "Modules/mmapmodule.c"

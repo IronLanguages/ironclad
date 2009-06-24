@@ -18,7 +18,7 @@ PyCObject_Type
 # These are static data and aren't bothering anybody, so there is no
 # need to register them with the managed side.
 
-_Py_SwapedOp
+_Py_SwappedOp
 _PyLong_DigitValue
 
 # All the rest are functions implemented somewhere amongst the C code
@@ -142,6 +142,27 @@ _PyArg_VaParseTupleAndKeywords_SizeT
 PyArg_UnpackTuple
 _PyArg_NoKeywords
 
+# Python/moduspport.c
+_Py_VaBuildValue_SizeT
+Py_VaBuildValue
+_Py_BuildValue_SizeT
+Py_BuildValue
+PyEval_CallFunction
+PyEval_CallMethod
+
+# Python/mysnprintf.c
+PyOS_snprintf
+PyOS_vsnprintf
+
+# Python/mystrtoul.c
+PyOS_strtoul
+PyOS_strtol
+
+# Python/pystrtod.c
+PyOS_ascii_strtod
+PyOS_ascii_formatd
+PyOS_ascii_atof
+
 # Parser/intrcheck.c
 PyErr_SetInterrupt
 PyErr_CheckSignals
@@ -152,10 +173,6 @@ PyOS_AfterFork
 
 ###################################################
 
-_Py_VaBuildValue_SizeT
-Py_VaBuildValue
-_Py_BuildValue_SizeT
-Py_BuildValue
 
 PyString_FromFormat
 PyString_FromFormatV
@@ -177,13 +194,8 @@ PyTuple_Pack
 
 
 
-PyOS_snprintf
-PyOS_vsnprintf
-PyOS_ascii_strtod
-PyOS_ascii_formatd
-PyOS_ascii_atof
-PyOS_strtoul
-PyOS_strtol
+
+
 
 _Py_HashPointer
 
