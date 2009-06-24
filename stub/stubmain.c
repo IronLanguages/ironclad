@@ -32,7 +32,7 @@
 // c implementations
 
 #include "Objects/abstract.c"
-#include "ceval.c"
+#include "Python/ceval.c"
 #include "cobject.c"
 #include "errors.c"
 #include "getargs.c"

@@ -5,14 +5,6 @@ PyTypeObject PyEllipsis_Type;
 PyTypeObject PyNone_Type;
 
 
-
-int
-PyEval_GetRestricted(void)
-{
-	return 0;
-}
-
-
 PyObject *
 _PyObject_GC_Malloc(size_t basicsize)
 {
