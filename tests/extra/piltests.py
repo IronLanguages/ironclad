@@ -6,12 +6,8 @@ from textwrap import dedent
 from tests.utils.functionaltestcase import FunctionalTestCase
 from tests.utils.runtest import automakesuite, run
 
-SAMPLE_GIF = os.path.join("tests", "data", "test.gif")
-SAMPLE_PNG = os.path.join("tests", "data", "test.png")
-SAMPLE_BMP = os.path.join("tests", "data", "test.bmp")
-SAMPLE_JPG = os.path.join("tests", "data", "test.jpg")
-
-SAMPLE_IMAGES = [SAMPLE_GIF, SAMPLE_PNG, SAMPLE_BMP, SAMPLE_JPG]
+FORMATS = 'gif', 'png', 'bmp', 'jpg'
+SAMPLE_IMAGES = map(os.path.join("tests", "data", "test.").__add__, FORMATS)
 
 # It might be possible to speed up these consistency tests by keeping around
 # two interpreter processes and injecting commands into them (this should work)
@@ -30,8 +26,6 @@ PYTHON = 'python.exe'
 
 class PILTest(FunctionalTestCase):
 
-    testDir = "testDir"
-    removeTestDir = False
     TEMPLATE = dedent("""\
         import sys
         sys.path.insert(0, %r)
