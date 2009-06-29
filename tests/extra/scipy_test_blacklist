@@ -1,6 +1,5 @@
 
 
-fftpack.test_basic.TestRfft.test_djbfft # either wedges, or takes > 15 minutes
 fftpack.test_pseudo_diffs # almost all just fail -- wrong results
 
 # wrong number of args to some lambda
@@ -11,10 +10,14 @@ optimize.test_cobyla.TestCobyla.test_simple
 io.test_array_import.TestReadArray # deprecated, fail unpredictably due to 'file being used by another process'
 io.test_array_import.TestReadArray.test_complex # this one: PyFloat_FromString needs implementing
 
-odr.test_odr.TestODR.test_explicit # segfault
+odr.test_odr.TestODR.test_explicit # 100% cpu for ever (well; 16 hours at least)
 
 optimize.test_zeros.TestBasic # x4: in _bisect: ValueError: f(a) and f(b) must have different signs
 optimize.test_optimize.TestOptimize.test_fminbound # import_nose(): TypeError: Object is not callable
-optimize.test_optimize.TestOptimize.test_neldermead # passes but takes forever
 
 stats.test_mstats_basic.TestCorr.test_pearsonr # divide by 0
+
+# work fine, but take way too long
+fftpack.test_basic.TestRfft.test_djbfft
+optimize.test_optimize.TestOptimize.test_neldermead
+odr.test_odr.TestODR

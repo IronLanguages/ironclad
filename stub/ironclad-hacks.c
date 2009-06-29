@@ -31,8 +31,6 @@ PyObject_GC_Del(void *op)
 	PyObject_Del(op);
 }
 
-
-
 void PyObject_GC_Track(void *_) {}
 void PyObject_GC_UnTrack(void *_) {}
 
