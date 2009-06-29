@@ -29,7 +29,7 @@
 
 #include "stub.generated.c"
 
-// c implementations in the right place
+// original c implementations
 
 #include "Objects/abstract.c"
 #include "Objects/bufferobject.c"

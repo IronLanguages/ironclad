@@ -10,7 +10,7 @@ endif
 stub.asm.o: generated
 	nasm -o stub.asm.o -f $(OBJ_FORMAT) stub.generated.asm
 
-stub.c.o: generated
+stub.c.o: generated Include/*.h Modules/*.c Objects/*.c Parser/*.c Python/*.c
 	gcc $(CFLAGS) -o stub.c.o -c stubmain.c -I Include
 
 generated: *.c
