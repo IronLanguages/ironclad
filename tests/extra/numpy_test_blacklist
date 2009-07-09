@@ -1,12 +1,48 @@
-# known failures by reason, if known
+###############################################################################
+#### known failures, worth looking into
+
+core.test_records.TestFromrecords.test_method_array
+core.test_records.TestFromrecords.test_recarray_conflict_fields
+core.test_records.TestFromrecords.test_recarray_from_repr
+
+core.test_regression.TestRegression.test_for_object_scalar_creation
+core.test_regression.TestRegression.test_mem_custom_float_to_array
+
+lib.test__iotools.TestStringConverter.test_string_to_object
+
+# works, but takes 3 minutes
+lib.test_machar.TestMachAr.test_underlow
+
+# out of memory during run
+lib.test_recfunctions.TestAppendFields.test_append_double
+lib.test_recfunctions.TestMergeArrays.test_flatten
+lib.test_recfunctions.TestMergeArrays.test_flatten_wflexible
+lib.test_recfunctions.TestMergeArrays.test_solo_w_flatten
+lib.test_recfunctions.TestMergeArrays.test_standard
+lib.test_recfunctions.TestMergeArrays.test_w_shorter_flex
+lib.test_recfunctions.TestMergeArrays.test_w_singlefield
+lib.test_recfunctions.TestMergeArrays.test_wmasked_arrays
+
+linalg.test_linalg._TestNorm.test_vector
+
+ma.test_core.TestMaskedArrayArithmetic.test_methods_with_output
+ma.test_core.TestMaskedArrayFunctions.test_choose_with_out
+
+ma.test_mrecords.TestMRecords.test_filled
+ma.test_mrecords.TestMRecords.test_set_fields
+ma.test_mrecords.TestMRecordsImport.test_fromrecords
+ma.test_mrecords.TestMRecordsImport.test_fromtextfile
+
+###############################################################################
+#### known failures, low priority
 
 # binascii.crc32
 lib.test_io.TestSavezLoad 
 
-# subprocess requires fcntl
+# even with fixed subprocess, scary fortran problems
 linalg.test_build
 
- # sys.getframe
+# sys.getframe
 core.test_defmatrix.TestCtor.test_basic
 core.test_defmatrix.TestCtor.test_bmat_nondefault_str
 lib.test_polynomial.TestDocs.test_doctests
@@ -22,7 +58,7 @@ core.test_regression.TestRegression.test_refcount_vdot
 core.test_regression.TestRegression.test_refcount_vectorize
 core.test_regression.TestRegression.test_errobj_reference_leak
 
-# no unicode support (mostly call PyObject_Unicode)
+# no unicode support
 core.test_unicode
 core.test_numerictypes.test_create_values_nested_multiple
 core.test_numerictypes.test_create_values_nested_single
@@ -40,22 +76,16 @@ core.test_umath.TestAttributes.test_attributes
 # cannot reload
 lib.test_getlimits
 
-# meant to be disabled on windows
+# known failures on windows
 core.test_multiarray.TestFromToFile.test_file
+lib.test_io.TestSaveLoad.test_mmap
 
-# fail due to differences in string representation
+# differences in string representation
 core.test_print.TestPrint.test_double
 core.test_print.TestPrint.test_longdouble
 core.test_print.TestPrint.test_complex_double
 core.test_print.TestPrint.test_complex_float
 core.test_print.TestPrint.test_complex_longdouble
-
-# apparently due to CodePlex work item #20191
-core.test_records.TestFromrecords.test_method_array2
-core.test_records.TestFromrecords.test_recarray_slices
-core.test_regression.TestRegression.test_rec_fromarray
-
-# apparently due to CodePlex work item #20275
 core.test_regression.TestRegression.test_startswith
 
 # stupid tedious shutil.rmtree problems (run on thier own, they usually work...)
@@ -66,28 +96,3 @@ lib.test__datasource.TestOpenFunc.test_DataSourceOpen
 
 # assumes that del immediately deletes
 core.test_memmap.TestMemmap.test_open_with_filename
-
-# remaining failures are generally not well understood
-
-core.test_multiarray.TestPickling.test_version0_object
-core.test_multiarray.TestPickling.test_version1_object
-
-core.test_records.TestFromrecords.test_method_array
-core.test_records.TestFromrecords.test_recarray_fromfile
-core.test_records.TestFromrecords.test_recarray_conflict_fields
-core.test_records.TestFromrecords.test_recarray_from_repr
-
-core.test_regression.TestRegression.test_for_object_scalar_creation
-core.test_regression.TestRegression.test_mem_custom_float_to_array
-
-ma.test_core.TestFillingValues.test_fillvalue_conversion
-ma.test_core.TestMaskedArrayArithmetic.test_methods_with_output
-ma.test_core.TestMaskedArrayArithmetic.test_minmax_funcs_with_output
-ma.test_core.TestMaskedArrayFunctions.test_choose_with_out
-
-ma.test_extras.TestMedian.test_2d # hangs
-
-ma.test_mrecords.TestMRecords.test_filled
-ma.test_mrecords.TestMRecords.test_set_fields
-ma.test_mrecords.TestMRecordsImport.test_fromrecords
-ma.test_mrecords.TestMRecordsImport.test_fromtextfile

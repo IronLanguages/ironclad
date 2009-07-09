@@ -2,7 +2,7 @@ Ironclad's build process deserves a brief discussion.
 
 32-BIT WINDOWS REQUIREMENTS:
 
-* IronPython 2.0 final (2.0.0.0)
+* IronPython 2.0.1 final
 * mingw or cygwin (including gcc and make) 
 * pexports
 * nasm
@@ -37,33 +37,33 @@ appropriately.
 
 Running make in the top-level directory should do the following:
 
-* Run 'tools/generatepython25mapper.py' to create various files in 'src/' from 
-  the contents of 'src/python25mappercomponents/'
-* Run 'tools/generatepython25api.py' to create 'src/Python25Api.cs' from the 
-  contents of 'src/python25apicomponents/'
-* Run 'tools/generatedispatcher.py' to create various files in 'src/' from 
-  various files in 'tools/' and 'stub/'
-* Compile the contents of 'src/' to create 'build/ironclad/ironclad.dll'
 * Run 'tools/buildstub.py' to (eventually) create the stub library 
   'build/ironclad/python25.dll' from an existing (real) python25.dll and the 
   contents of 'stub/'
+* Run 'tools/generatepython25mapper.py' to create various files in 'src/' from 
+  the contents of 'src/python25mappercomponents/'
+* Run 'tools/generatedispatcher.py' to create several C# files --not just the 
+  Dispatcher, I'm afraid -- from the contents of 'stub/' and 'tools/'
+* Compile the contents of 'src/' to create 'build/ironclad/ironclad.dll'
 
 At this point, the project is built and may even be usable. However, make will 
-also build some test data, and run several tests; we expect all these to pass.
+also build some test data, and run several tests; we expect all these to pass,
+excluding any parts of 'tests/functionalitytest.py' which import modules you
+haven't installed on your system.
 
 TESTING
 
 You should ensure that IRONPYTHONPATH is set correctly. In particular, it
 should include the directory containing .pyd files.
 
-In order for all tests to run, numpy 1.2, scipy 0.7, and matplotlib 0.98 must 
-be installed - but this is not otherwise necessary.
+In order for all tests to run, numpy 1.2, scipy 0.7, matplotlib 0.98, h5py 1.1,
+and pysvn 1.6 must be installed - and the Python25 distribution's Dlls, Lib and
+Lib/site-packages should be on your path - but this is not otherwise necessary.
 
-If the directory containing your numpy installation is on your sys.path, it
-should be possible to run 'ipy tests\scipy\numpytests.py' from the top-level
-directory, which will test numpy far more comprehensively than 
-'tests/functionalitytest.py' can. To convince numpy's tests to run, nose must 
-be installed, but will not actually be used.
-
+If the directory containing your foo installation is on your sys.path, it
+should be possible to run 'ipy tests\extra\footests.py' from the top-level
+directory, which will test foo far more comprehensively than 
+'tests/functionalitytest.py' can. Nose must be installed, but will not actually 
+be used.
 
 
