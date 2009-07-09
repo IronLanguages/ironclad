@@ -1,0 +1,6 @@
+This directory is added to your PATH when you import ironclad.
+
+If you want to use extension modules which fail to include required DLLs
+(such as matplotlib, which depends on -- but does not distribute -- 
+msvcp71.dll), please acquire legitimate copies of the necessary files and 
+place them in this folder.

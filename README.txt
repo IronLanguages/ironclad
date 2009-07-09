@@ -20,10 +20,9 @@ IronPython.
 
 TROUBLESHOOTING NOTE:
 
-  If you encounter errors involving 'msvcp71.dll', it means that the MS C++ runtime
-  is not on your PATH. To fix it, acquire a copy from somewhere, and drop it into
-  '/build/ironclad/support'. Matplotlib uses this library and does not include its
-  own copy, and other packages may do the same.
+  If you encounter errors involving 'msvcr71.dll' or 'msvcp71.dll', it means that
+  certain required libraries are not on your PATH. To fix this problem, see 
+  build/support/purpose.txt
 
 Slightly more detailed information, including development notes, is available in
 the 'doc' directory.
