@@ -2,7 +2,7 @@
 ###############################################################################
 #### initialise mapper
 
-__version__ = '0.8.1'
+__version__ = '0.8.5a (r506)'
 
 import sys
 if sys.platform != 'cli':
@@ -12,10 +12,14 @@ import os
 _dirname = os.path.dirname(__file__)
 
 import clr
-from System import GC
+from System import GC, Int32, IntPtr
 from System.Reflection import Assembly
-clr.AddReference(Assembly.LoadFile(os.path.join(_dirname, "ironclad.dll")))
+from System.Runtime.InteropServices import Marshal
 
+if Marshal.SizeOf(Int32) != Marshal.SizeOf(IntPtr):
+    raise ImportError("Ironclad is currently 32-bit only")
+
+clr.AddReference(Assembly.LoadFile(os.path.join(_dirname, "ironclad.dll")))
 from Ironclad import CPyMarshal, Python25Mapper
 from Ironclad.Structs import PyObject, PyVarObject, PyTypeObject
 _mapper = Python25Mapper(os.path.join(_dirname, "python25.dll"))
