@@ -1,4 +1,7 @@
 
+###############################################################################
+#### initialise mapper
+
 __version__ = '0.8.1'
 
 import sys
@@ -16,6 +19,43 @@ clr.AddReference(Assembly.LoadFile(os.path.join(_dirname, "ironclad.dll")))
 from Ironclad import CPyMarshal, Python25Mapper
 from Ironclad.Structs import PyObject, PyVarObject, PyTypeObject
 _mapper = Python25Mapper(os.path.join(_dirname, "python25.dll"))
+
+def gcwait():
+    _mapper.ForceCleanup()
+    GC.WaitForPendingFinalizers()
+
+import atexit
+def _shutdown():
+    try:
+        _mapper.Dispose()
+        _patch_lifetime._unpatch_all()
+    except Exception, e:
+        print 'error on ironclad shutdown:'
+        print e
+    gcwait()
+atexit.register(_shutdown)
+
+def shutdown():
+    print 'shutdown no longer does anything'
+
+###############################################################################
+#### basic attempt to respect .pth files
+
+extrapaths = []
+for path in sys.path:
+    _, __, filenames = os.walk(path).next()
+    for filename in filenames:
+        if filename.endswith('.pth'):
+            f = open(os.path.join(path, filename))
+            for newpath in map(str.strip, f.readlines()):
+                newpath = os.path.normpath(os.path.join(path, newpath))
+                if os.path.exists(newpath):
+                    extrapaths.append(newpath)
+            f.close()
+sys.path.extend(extrapaths)
+
+###############################################################################
+#### native fileno patches
 
 def open(*args):
     return _mapper.CPyFileClass(*args)
@@ -65,21 +105,8 @@ _patch_lifetime = NativeFilenoPatch()
 patch_native_filenos = _patch_lifetime.patch_filenos
 unpatch_native_filenos = _patch_lifetime.unpatch_filenos
 
-import atexit
-def _shutdown():
-    try:
-        _mapper.Dispose()
-        _patch_lifetime._unpatch_all()
-    except Exception, e:
-        print 'error on ironclad shutdown:'
-        print e
-    gcwait()
-atexit.register(_shutdown)
-
-def shutdown():
-    print 'shutdown no longer does anything'
-
-# various useful functions
+###############################################################################
+#### various useful functions
 
 def dump_info(obj, size=None):
     print 
@@ -112,8 +139,4 @@ def set_log_errors(value):
 
 def get_log_errors():
     return _mapper.LogErrors
-
-def gcwait():
-    _mapper.ForceCleanup()
-    GC.WaitForPendingFinalizers()
     
