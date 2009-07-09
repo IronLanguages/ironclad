@@ -2,7 +2,7 @@
 ###############################################################################
 #### initialise mapper
 
-__version__ = '0.8.5a (r506)'
+__version__ = '0.8.5a'
 
 import sys
 if sys.platform != 'cli':
