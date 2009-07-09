@@ -1,4 +1,13 @@
+###############################################################################
+#### failures, probably worth worrying about
 
+# scarybad failures, after long waits
+cluster.test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5A
+cluster.test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5B
+cluster.test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5C
+cluster.test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6A
+cluster.test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6B
+cluster.test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6C
 
 fftpack.test_pseudo_diffs # almost all just fail -- wrong results
 
@@ -8,7 +17,7 @@ integrate.test_integrate.TestOde.test_zvode
 optimize.test_cobyla.TestCobyla.test_simple
 
 io.test_array_import.TestReadArray # deprecated, fail unpredictably due to 'file being used by another process'
-io.test_array_import.TestReadArray.test_complex # this one: PyFloat_FromString needs implementing
+io.test_array_import.TestReadArray.test_complex # this one exposes different problem: PyFloat_FromString needs implementing
 
 odr.test_odr.TestODR.test_explicit # 100% cpu for ever (well; 16 hours at least)
 
@@ -17,7 +26,103 @@ optimize.test_optimize.TestOptimize.test_fminbound # import_nose(): TypeError: O
 
 stats.test_mstats_basic.TestCorr.test_pearsonr # divide by 0
 
-# work fine, but take way too long
+
+###############################################################################
+#### work fine, but take way too long (>>30s each)
+
+cluster.test_hierarchy.TestLeavesList.test_leaves_list_iris_average
+cluster.test_hierarchy.TestLeavesList.test_leaves_list_iris_centroid
+cluster.test_hierarchy.TestLeavesList.test_leaves_list_iris_complete
+cluster.test_hierarchy.TestLeavesList.test_leaves_list_iris_median
+cluster.test_hierarchy.TestLeavesList.test_leaves_list_iris_single
+cluster.test_hierarchy.TestLeavesList.test_leaves_list_iris_ward
+
+cluster.test_hierarchy.TestMaxDists.test_maxdists_Q_linkage_centroid
+cluster.test_hierarchy.TestMaxDists.test_maxdists_Q_linkage_complete
+cluster.test_hierarchy.TestMaxDists.test_maxdists_Q_linkage_median
+cluster.test_hierarchy.TestMaxDists.test_maxdists_Q_linkage_single
+cluster.test_hierarchy.TestMaxDists.test_maxdists_Q_linkage_ward
+
+cluster.test_hierarchy.TestMaxInconsts.test_maxinconsts_Q_linkage_centroid
+cluster.test_hierarchy.TestMaxInconsts.test_maxinconsts_Q_linkage_complete
+cluster.test_hierarchy.TestMaxInconsts.test_maxinconsts_Q_linkage_median
+cluster.test_hierarchy.TestMaxInconsts.test_maxinconsts_Q_linkage_single
+cluster.test_hierarchy.TestMaxInconsts.test_maxinconsts_Q_linkage_ward
+
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_0_Q_linkage_centroid
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_0_Q_linkage_complete
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_0_Q_linkage_median
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_0_Q_linkage_single
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_0_Q_linkage_ward
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_1_Q_linkage_centroid
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_1_Q_linkage_complete
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_1_Q_linkage_median
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_1_Q_linkage_single
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_1_Q_linkage_ward
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_2_Q_linkage_centroid
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_2_Q_linkage_complete
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_2_Q_linkage_median
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_2_Q_linkage_single
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_2_Q_linkage_ward
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_3_Q_linkage_centroid
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_3_Q_linkage_complete
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_3_Q_linkage_median
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_3_Q_linkage_single
+cluster.test_hierarchy.TestMaxRStat.test_maxRstat_3_Q_linkage_ward
+
+cluster.test_hierarchy.TestNumObsLinkage.test_num_obs_linkage_4_and_up
+
 fftpack.test_basic.TestRfft.test_djbfft
+
+ndimage.test_ndimage.TestNdimage.test_generic_filter1d01
+
+odr.test_odr.TestODR.test_implicit
+odr.test_odr.TestODR.test_multi
+
+optimize.test_nonlin.TestNonlin.test_broydengeneralized
+optimize.test_nonlin.TestNonlin.test_exciting
+optimize.test_nonlin.TestNonlin.test_linearmixing
+
+optimize.test_optimize.TestOptimize.test_brent
 optimize.test_optimize.TestOptimize.test_neldermead
-odr.test_odr.TestODR
+optimize.test_optimize.TestOptimize.test_powell
+
+optimize.test_optimize.TestTnc.test_tnc
+
+optimize.test_optimize.test_slsqp.TestSLSQP.test_bound_approximated
+optimize.test_optimize.test_slsqp.TestSLSQP.test_bound_equality_given
+optimize.test_optimize.test_slsqp.TestSLSQP.test_bound_equality_inequality_given
+optimize.test_optimize.test_slsqp.TestSLSQP.test_unbounded_approximated
+optimize.test_optimize.test_slsqp.TestSLSQP.test_unbounded_given
+
+special.test_basic.TestAssocLaguerre.test_assoc_laguerre
+
+special.test_basic.TestBessel.test_jacobi
+
+special.test_basic.TestCheby.test_chebyc
+special.test_basic.TestCheby.test_chebys
+special.test_basic.TestCheby.test_chebyt
+special.test_basic.TestCheby.test_chebyu
+
+special.test_basic.TestGegenbauer.test_gegenbauer
+
+special.test_basic.TestHermite.test_hermite
+special.test_basic.TestHermite.test_hermitenorm
+
+special.test_basic.TestHyper.test_hyp1f1
+
+special.test_basic._test_sh_chebyt.test_sh_chebyt
+special.test_basic._test_sh_chebyu.test_sh_chebyu
+special.test_basic._test_sh_jacobi.test_sh_jacobi
+special.test_basic._test_sh_legendre.test_sh_legendre
+
+stats.test_distributions.TestRvDiscrete.test_rvs # takes ~20 mins
+
+stats.test_morestats.TestLevene.test_data
+
+stats.test_mstats_basic.TestCorr.test_kendalltau
+stats.test_mstats_basic.TestCorr.test_kendalltau_seasonal
+stats.test_mstats_basic.TestCorr.test_spearmanr
+
+stats.test_mstats_extras.TestQuantiles.test_hdquantiles
+

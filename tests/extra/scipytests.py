@@ -13,12 +13,10 @@ if sys.platform == 'cli':
 import scipy
 scipy_path = r"C:\Python25\Lib\site-packages\scipy"
 dirs = [
-    'fftpack', 'integrate', 'io', 'maxentropy', 
-    'ndimage', 'odr', 'optimize', 'special', 'stats'
+    'cluster', 'fftpack', 'integrate', 'io', 'maxentropy', 
+    'misc', 'ndimage', 'odr', 'optimize', 'special', 'stats'
 ]
-# 'cluster', # several passes; weird failure after a while; no idea whether repros
 # 'interpolate', 'signal', # cannot import factorial from scipy
-# 'misc', # pilutil import Image
 # 'sparse', 'spatial', # slow and boring, but haven't seen any failures
 
 
