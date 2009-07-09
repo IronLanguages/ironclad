@@ -29,7 +29,7 @@ class MetaImporter(object):
         self.loader = loader
         self.mapper = mapper
         self.patched_for_matplotlib = False
-        self.patched_numpy_core_memmap = False
+        self.patched_numpy_lib_iotools = False
 
     def fix_matplotlib(self):
         # much easier to do this in Python than in C#
@@ -48,17 +48,33 @@ class MetaImporter(object):
             return true_log10(arg)
         math.log10 = my_log10
 
-    def fix_numpy_core_mmap(self):
-        if self.patched_numpy_core_memmap:
+    def late_numpy_fixes(self):
+        # hacka hacka hacka!
+        # don't look at me like that.
+        if self.patched_numpy_lib_iotools:
             return
         
         import sys
-        if 'numpy.core.memmap' not in sys.modules:
+        if 'numpy.lib._iotools' not in sys.modules:
+            return
+        if 'numpy.lib.io' not in sys.modules:
             return
         
-        self.patched_numpy_core_memmap = True
-        print '  patching numpy.core.memmap.file'
-        sys.modules['numpy.core.memmap'].file = self.mapper.CPyFileClass
+        _iotools = sys.modules['numpy.lib._iotools']
+        io = sys.modules['numpy.lib.io']
+        if not hasattr(_iotools, '_is_string_like'):
+            return
+        
+        print '  patching numpy.lib._iotools._is_string_like'
+        self.patched_numpy_lib_iotools = True
+        def NoneFalseWrapper(f):
+            def g(obj):
+                if obj is None:
+                    return False
+                return f(obj)
+            return g
+        _iotools._is_string_like = NoneFalseWrapper(_iotools._is_string_like)
+        io._is_string_like = _iotools._is_string_like
         
     def find_module(self, fullname, path=None):
         matches = lambda partialname: fullname == partialname or fullname.startswith(partialname + '.')
@@ -70,13 +86,8 @@ class MetaImporter(object):
             self.fix_matplotlib()
         elif matches('ctypes'):
             raise ImportError('%s is not available in ironclad yet' % fullname)
-
-        # hacka hacka hacka!
-        # this depends on numpy.core.memmap not being the
-        # very last module imported before it's first used;
-        # however, since that module itself imports modules,
-        # it should be safe. don't look at me like that.
-        self.fix_numpy_core_mmap()
+        
+        self.late_numpy_fixes()
         
         import os
         import sys

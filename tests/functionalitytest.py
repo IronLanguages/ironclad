@@ -158,7 +158,8 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             assert abs(np.linalg.det(m)) < 0.0000001
             
             #=====================================================
-            # test memmap
+            # test memmap when patched
+            ironclad.patch_native_filenos()
             f = np.core.memmap(%r)
             assert map(chr, f) == %r
             

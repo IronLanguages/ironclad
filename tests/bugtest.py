@@ -33,7 +33,7 @@ class BugTest(TestCase):
             pass
         num = Floatish(100.0)
         self.assertRaises(TypeError, lambda: math.log10(num))
-        # when this fails stop patching log10 in import_code.py
+        # when this fails, stop patching log10 in import_code.py
 
     def testLongFromEmptyString(self):
         for str_ in ('', '   '):
@@ -44,6 +44,11 @@ class BugTest(TestCase):
             def __len__(self):
                 return UInt32(123)
         self.assertEquals(len(C()), 123, "uint len bug is back (are you using ipy 2.0 instead of 2.0.1?)")
+
+
+    def testNonePlusString(self):
+        None + ''
+        # when this fails, stop patching numpy.lib._iotools._is_string_like in import_code.py
 
 
 suite = makesuite(BugTest)
