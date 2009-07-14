@@ -24,6 +24,73 @@ odr.test_odr.TestODR.test_explicit # 100% cpu for ever (well; 16 hours at least)
 optimize.test_zeros.TestBasic # x4: in _bisect: ValueError: f(a) and f(b) must have different signs
 optimize.test_optimize.TestOptimize.test_fminbound # import_nose(): TypeError: Object is not callable
 
+# import_nose()
+sparse.test_base.TestBSR.test_invalid_shapes
+sparse.test_base.TestBSR.test_matmat_sparse
+sparse.test_base.TestBSR.test_matvec
+sparse.test_base.TestCOO.test_invalid_shapes
+sparse.test_base.TestCOO.test_matmat_sparse
+sparse.test_base.TestCOO.test_matvec
+sparse.test_base.TestCSC.test_getelement
+sparse.test_base.TestCSC.test_invalid_shapes
+sparse.test_base.TestCSC.test_matmat_sparse
+sparse.test_base.TestCSC.test_matvec
+sparse.test_base.TestCSC.test_setelement
+sparse.test_base.TestCSR.test_getelement
+sparse.test_base.TestCSR.test_invalid_shapes
+sparse.test_base.TestCSR.test_matmat_sparse
+sparse.test_base.TestCSR.test_matvec
+sparse.test_base.TestCSR.test_setelement
+sparse.test_base.TestDIA.test_invalid_shapes
+sparse.test_base.TestDIA.test_matmat_sparse
+sparse.test_base.TestDIA.test_matvec
+sparse.test_base.TestDOK.test_getelement
+sparse.test_base.TestDOK.test_invalid_shapes
+sparse.test_base.TestDOK.test_matmat_sparse
+sparse.test_base.TestDOK.test_matvec
+sparse.test_base.TestDOK.test_setelement
+sparse.test_base.TestLIL.test_getelement
+sparse.test_base.TestLIL.test_invalid_shapes
+sparse.test_base.TestLIL.test_matmat_sparse
+sparse.test_base.TestLIL.test_matvec
+sparse.test_base.TestLIL.test_setelement
+
+# something returns null
+sparse.test_base.TestCSC.test_solve
+sparse.test_base.TestCSR.test_solve
+sparse.test_base.TestDOK.test_solve
+sparse.test_base.TestLIL.test_solve
+
+# these might eventually pass, but I lack the patience to find out
+spatial.test_distance.TestPdist.test_pdist_canberra_match
+spatial.test_distance.TestPdist.test_pdist_chebychev_iris_nonC
+spatial.test_distance.TestPdist.test_pdist_chebychev_random_nonC
+spatial.test_distance.TestPdist.test_pdist_cityblock_iris_nonC
+spatial.test_distance.TestPdist.test_pdist_cityblock_random_nonC
+spatial.test_distance.TestPdist.test_pdist_correlation_iris_nonC
+spatial.test_distance.TestPdist.test_pdist_correlation_random_nonC
+spatial.test_distance.TestPdist.test_pdist_cosine_iris_nonC
+spatial.test_distance.TestPdist.test_pdist_cosine_random_nonC
+spatial.test_distance.TestPdist.test_pdist_dhamming_random_nonC
+spatial.test_distance.TestPdist.test_pdist_dice_match
+spatial.test_distance.TestPdist.test_pdist_djaccard_random_nonC
+spatial.test_distance.TestPdist.test_pdist_euclidean_iris_nonC
+spatial.test_distance.TestPdist.test_pdist_euclidean_random_nonC
+spatial.test_distance.TestPdist.test_pdist_hamming_random_nonC
+spatial.test_distance.TestPdist.test_pdist_jaccard_match
+spatial.test_distance.TestPdist.test_pdist_jaccard_random_nonC
+spatial.test_distance.TestPdist.test_pdist_kulsinski_match
+spatial.test_distance.TestPdist.test_pdist_matching_match
+spatial.test_distance.TestPdist.test_pdist_minkowski_iris_nonC # note: there are 2 tests with this name
+spatial.test_distance.TestPdist.test_pdist_minkowski_random_nonC
+spatial.test_distance.TestPdist.test_pdist_rogerstanimoto_match
+spatial.test_distance.TestPdist.test_pdist_russellrao_match
+spatial.test_distance.TestPdist.test_pdist_seuclidean_iris_nonC
+spatial.test_distance.TestPdist.test_pdist_seuclidean_random_nonC
+spatial.test_distance.TestPdist.test_pdist_sokalmichener_match
+spatial.test_distance.TestPdist.test_pdist_sokalsneath_match
+spatial.test_distance.TestPdist.test_pdist_yule_match
+
 stats.test_mstats_basic.TestCorr.test_pearsonr # divide by 0
 
 
@@ -94,6 +161,101 @@ optimize.test_optimize.test_slsqp.TestSLSQP.test_bound_equality_given
 optimize.test_optimize.test_slsqp.TestSLSQP.test_bound_equality_inequality_given
 optimize.test_optimize.test_slsqp.TestSLSQP.test_unbounded_approximated
 optimize.test_optimize.test_slsqp.TestSLSQP.test_unbounded_given
+
+sparse.test_base.TestBSR.test_add_sub
+sparse.test_base.TestBSR.test_mu
+
+sparse.test_base.TestCSC.test_add_sub
+sparse.test_base.TestCSC.test_empty_arithmetic
+sparse.test_base.TestCSC.test_fancy_indexing
+sparse.test_base.TestCSC.test_mu
+
+sparse.test_base.TestCSR.test_add_sub # ~30 mins
+sparse.test_base.TestCSR.test_empty_arithmetic
+sparse.test_base.TestCSR.test_fancy_indexing
+sparse.test_base.TestCSR.test_mu # ~20 mins
+sparse.test_base.TestCSR.test_sparse_format_conversions
+sparse.test_base.TestCSR.test_tobsr
+
+sparse.test_base.TestDIA.test_add_sub # nearly 2 hrs
+sparse.test_base.TestDIA.test_diagonal
+sparse.test_base.TestDIA.test_elementwise_divide
+sparse.test_base.TestDIA.test_elementwise_multiply
+sparse.test_base.TestDIA.test_empty_arithmetic
+sparse.test_base.TestDIA.test_mu # nearly 1 hr
+sparse.test_base.TestDIA.test_rsub
+sparse.test_base.TestDIA.test_sparse_format_conversions
+sparse.test_base.TestDIA.test_sub
+sparse.test_base.TestDIA.test_tobsr
+
+sparse.test_base.TestDOK.test_asfptype
+sparse.test_base.TestDOK.test_astype
+sparse.test_base.TestDOK.test_copy
+sparse.test_base.TestDOK.test_diagonal
+sparse.test_base.TestDOK.test_elementwise_divide
+sparse.test_base.TestDOK.test_elementwise_multiply
+sparse.test_base.TestDOK.test_empty_arithmetic
+sparse.test_base.TestDOK.test_from_sparse
+sparse.test_base.TestDOK.test_mean
+sparse.test_base.TestDOK.test_rmatvec
+sparse.test_base.TestDOK.test_rsub
+sparse.test_base.TestDOK.test_set_slice
+sparse.test_base.TestDOK.test_sparse_format_conversions
+sparse.test_base.TestDOK.test_sub
+sparse.test_base.TestDOK.test_sum
+sparse.test_base.TestDOK.test_tobsr
+
+sparse.test_base.TestLIL.test_add_sub # nearly 2 hrs
+sparse.test_base.TestLIL.test_astype
+sparse.test_base.TestLIL.test_diagonal
+sparse.test_base.TestLIL.test_elementwise_divide
+sparse.test_base.TestLIL.test_elementwise_multiply
+sparse.test_base.TestLIL.test_empty_arithmetic
+sparse.test_base.TestLIL.test_get_slices
+sparse.test_base.TestLIL.test_set_slice
+sparse.test_base.TestLIL.test_mu # |1.5 hrs
+sparse.test_base.TestLIL.test_point_wise_multiply
+sparse.test_base.TestLIL.test_sparse_format_conversions
+sparse.test_base.TestLIL.test_tobsr
+
+sparse.test_construct.TestConstructUtils.test_bmat
+sparse.test_construct.TestConstructUtils.test_eye
+sparse.test_construct.TestConstructUtils.test_kron # ~1hr
+sparse.test_construct.TestConstructUtils.test_kronsum # ~1hr
+sparse.test_construct.TestConstructUtils.test_spdiags
+sparse.test_construct.TestConstructUtils.test_vstack
+
+sparse.test_extract.TestExtract.test_tril
+sparse.test_extract.TestExtract.test_triu
+
+sparse.test_spfuncs.TestSparseFunctions.test_count_blocks
+sparse.test_spfuncs.TestSparseFunctions.test_estimate_blocksize
+sparse.test_spfuncs.TestSparseFunctions.test_scale_rows_and_cols
+
+spatial.test_distance.TestCdist.test_cdist_chebychev_random
+spatial.test_distance.TestCdist.test_cdist_correlation_random
+spatial.test_distance.TestCdist.test_cdist_cosine_random
+spatial.test_distance.TestCdist.test_cdist_dice_random
+spatial.test_distance.TestCdist.test_cdist_jaccard_bool_random
+spatial.test_distance.TestCdist.test_cdist_jaccard_double_random
+spatial.test_distance.TestCdist.test_cdist_kulsinski_random
+spatial.test_distance.TestCdist.test_cdist_mahalanobis_random
+spatial.test_distance.TestCdist.test_cdist_matching_random
+spatial.test_distance.TestCdist.test_cdist_mahalanobis_random
+spatial.test_distance.TestCdist.test_cdist_minkowski_random_p1d23
+spatial.test_distance.TestCdist.test_cdist_minkowski_random_p3d8
+spatial.test_distance.TestCdist.test_cdist_minkowski_random_p4d6
+spatial.test_distance.TestCdist.test_cdist_rogerstanimoto_random
+spatial.test_distance.TestCdist.test_cdist_russellrao_random
+spatial.test_distance.TestCdist.test_cdist_seuclidean_random
+spatial.test_distance.TestCdist.test_cdist_sokalmichener_random
+spatial.test_distance.TestCdist.test_cdist_sokalsneath_random
+spatial.test_distance.TestCdist.test_cdist_wminkowski_random_p1d23
+spatial.test_distance.TestCdist.test_cdist_wminkowski_random_p3d8
+spatial.test_distance.TestCdist.test_cdist_wminkowski_random_p4d6
+spatial.test_distance.TestCdist.test_cdist_yule_random
+
+spatial.test_distance.TestPdist.test_pdist_canberra_match # many hours
 
 special.test_basic.TestAssocLaguerre.test_assoc_laguerre
 

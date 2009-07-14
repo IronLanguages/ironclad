@@ -11,13 +11,13 @@ if sys.platform == 'cli':
 
 
 import scipy
+import scipy.misc
 scipy_path = r"C:\Python25\Lib\site-packages\scipy"
 dirs = [
-    'cluster', 'fftpack', 'integrate', 'io', 'maxentropy', 
-    'misc', 'ndimage', 'odr', 'optimize', 'special', 'stats'
+    'cluster', 'fftpack', 'integrate', 'io', 'maxentropy', 'misc', 
+    'ndimage', 'odr', 'optimize', 'sparse', 'spatial', 'special', 'stats'
 ]
 # 'interpolate', 'signal', # cannot import factorial from scipy
-# 'sparse', 'spatial', # slow and boring, but haven't seen any failures
 
 
 
