@@ -24,12 +24,12 @@ Status
 types, and strings are accessible from IronPython. See 'functionalitytest.py' 
 (all of which should pass) for examples.
 
-* It is possible to import numpy without errors, and to use most of it; 956 
-tests pass from NumPy 1.2, and 1140 from 1.3.
+* It is possible to import numpy without errors, and to use most of it; almost
+1200 tests pass in numpy 1.3.
 
-* scipy 0.7 will import without errors, and parts can be used; we have yet 
-to enumerate precisely what works and what doesn't, although >1000 tests 
-pass. Parts of them are desperately slow, but we don't yet know how 
+* scipy 0.7 will import without errors, and most of it can be used; we have yet 
+to enumerate precisely what works and what doesn't, although well over 2000 
+tests pass. Parts of them are desperately slow, but we don't yet know how 
 important those bits are. Feedback would be greatly appreciated.
 
 * h5py 1.1 imports without (visible) errors, and 115 tests pass.

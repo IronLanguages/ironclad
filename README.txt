@@ -9,14 +9,14 @@ any compiled CPython extensions accessible from your sys.path.
 If you have any problems, please ask for help at
 http://groups.google.com/group/c-extensions-for-ironpython
 
-Notably, it should be possible to import and use most of NumPy 1.2 and an unknown 
-proportion of SciPy 0.7; it's not as fast as it is on CPython (and some parts are 
-unbelievably, hideously slow) but the benefits are generally still noticeable 
-when working with sufficiently large datasets.
+Notably, it should be possible to import and use most of NumPy 1.3 and SciPy 0.7; 
+it's not as fast as it is on CPython (and some parts are unbelievably, hideously 
+slow) but the benefits are generally still noticeable when working with 
+sufficiently large datasets.
 
 Similarly, parts of matplotlib now work: the 'ps' backend should work out of the
 box, and the 'pdf' and 'svg' backends appear to work if you install zlib for 
-IronPython.
+IronPython. PIL and h5py also work pretty well.
 
 TROUBLESHOOTING NOTE:
 

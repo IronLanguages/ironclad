@@ -1,8 +1,7 @@
-
 ###############################################################################
 #### initialise mapper
 
-__version__ = '0.8.5a'
+__version__ = '0.8.5'
 
 import sys
 if sys.platform != 'cli':
@@ -61,12 +60,9 @@ sys.path.extend(extrapaths)
 ###############################################################################
 #### native fileno patches
 
+file = _mapper.CPyFileClass
 def open(*args):
-    return _mapper.CPyFileClass(*args)
-
-_FD_USING_NAMES = (
-    'fdopen', 'tmpfile', 'close', 'fstat', 'open', 'read', 'write'
-)
+    return file(*args)
 
 class NativeFilenoPatch(object):
     
@@ -85,7 +81,7 @@ class NativeFilenoPatch(object):
         patch('__builtin__', 'file', _mapper.CPyFileClass)
         
         import os, posix
-        for name in _FD_USING_NAMES:
+        for name in 'close fdopen fstat open read tmpfile write'.split():
             patch('os', name, getattr(posix, name))
     
     def _unpatch_all(self):

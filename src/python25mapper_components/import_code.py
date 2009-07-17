@@ -29,6 +29,7 @@ class MetaImporter(object):
         self.loader = loader
         self.mapper = mapper
         self.patched_for_matplotlib = False
+        self.patched_numpy_testing = False
         self.patched_numpy_lib_iotools = False
 
     def fix_matplotlib(self):
@@ -51,6 +52,10 @@ class MetaImporter(object):
     def late_numpy_fixes(self):
         # hacka hacka hacka!
         # don't look at me like that.
+        self.patch_numpy_lib_iotools()
+        self.patch_numpy_testing()
+        
+    def patch_numpy_lib_iotools(self):
         if self.patched_numpy_lib_iotools:
             return
         
@@ -75,6 +80,21 @@ class MetaImporter(object):
             return g
         _iotools._is_string_like = NoneFalseWrapper(_iotools._is_string_like)
         io._is_string_like = _iotools._is_string_like
+        
+    def patch_numpy_testing(self):
+        if self.patched_numpy_testing:
+            return
+        
+        import sys
+        if 'numpy.testing' not in sys.modules:
+            return
+        
+        print '  patching numpy.testing.NumpyTest, NumpyTestCase'
+        self.patched_numpy_testing = True
+        
+        import unittest
+        sys.modules['numpy.testing'].NumpyTest = object()
+        sys.modules['numpy.testing'].NumpyTestCase = unittest.TestCase
         
     def find_module(self, fullname, path=None):
         matches = lambda partialname: fullname == partialname or fullname.startswith(partialname + '.')
