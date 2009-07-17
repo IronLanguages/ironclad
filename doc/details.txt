@@ -23,8 +23,8 @@ already implemented in python25.dll.
 
 __init__.py
 
-Importing this module will install import hooks which allow you to
-transparently import CPython extensions.
+Importing this module will subsequently allow you to transparently import 
+CPython extensions.
 
 
 Interesting Classes
@@ -89,7 +89,7 @@ ClassBuilder
 Generates IronPython code to create a class from a PyTypeObject pointer (and an
 extra compatible type which allows for safe __class__ reassignment in the cases 
 where C code creates -- or, at least, starts to create -- an object without using 
-the C API). 
+the C API directly). 
 
 CallableBuilder
 
@@ -115,7 +115,8 @@ care of by API calls.
 HGlobalAllocator
 
 Allocates, reallocates and deallocates unmanaged memory. Knows what pointers
-it's responsible for. Not exciting.
+it's responsible for. Not exciting, and we should probably use the CPython 
+allocator anyway.
 
 CPyMarshal
 

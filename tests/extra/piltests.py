@@ -42,10 +42,10 @@ class PILTest(FunctionalTestCase):
 
     def assertSaveLoad(self, format):
         self.assertRuns(dedent("""
-            from PIL.Image import open
-            input = open('test.%(fmt)s')
+            import Image
+            input = Image.open('test.%(fmt)s')
             input.save('output.%(fmt)s')
-            output = open('output.%(fmt)s')
+            output = Image.open('output.%(fmt)s')
             assert list(input.getdata()) == list(output.getdata()), 'saved image not identical to opened image'
             """ % {'fmt': format}))
 
@@ -62,19 +62,19 @@ class PILTest(FunctionalTestCase):
 
 
     def assertOperation(self, code, format):
-        tempOut, ironOut, pyOut = [os.path.join(self.testDir, name + format)
-                                                    for name in  'output. ironOutput. pyOutput.'.split()]
-        ironExitCode, ironOutput, ironError = self.runCode(code % dict(format=format), IPY)
+        roots = 'output. ironOutput. pyOutput.'.split()
+        tempOut, ironOut, pyOut = [os.path.join(self.testDir, name + format) for name in roots]
+        self.runCode(code % dict(format=format), IPY)
         shutil.move(tempOut, ironOut)
-        pyExitCode, pyOutput, pyError = self.runCode(code % {'format':format}, PYTHON)
+        self.runCode(code % {'format':format}, PYTHON)
         shutil.move(tempOut, pyOut)
         self.assertEquals(readBinary(ironOut), readBinary(pyOut))
 
 
     def assertInformation(self, format):
         code = dedent("""
-            from PIL.Image import open
-            im = open('test.%s')
+            import Image
+            im = Image.open('test.%s')
             print 'FILENAME:', im.filename
             print 'SIZE:', im.size
             print 'FORMAT:', im.format
@@ -87,14 +87,12 @@ class PILTest(FunctionalTestCase):
 
 
     def testSaveLoad(self):
-        # these will fail intermittently... needs some investigation
         self.assertSaveLoad('gif')
         self.assertSaveLoad('png')
         self.assertSaveLoad('bmp')
 
 
     def testImageInformation(self):
-        # fails somewhere after getpixel on ironclad
         self.assertInformation('gif')
         self.assertInformation('bmp')
         self.assertInformation('png')
@@ -102,13 +100,9 @@ class PILTest(FunctionalTestCase):
 
     def assertImageOp(self, op):
         code = dedent("""
-        from PIL import Image
-        from PIL.Image import open
-        open('test.%%(format)s').%s.save('output.%%(format)s')""" % op)
-        # should work
-        self.assertOperation(code, format="gif")
+            import Image
+            Image.open('test.%%(format)s').%s.save('output.%%(format)s')""" % op)
         self.assertOperation(code, format="png")
-        self.assertOperation(code, format="bmp")
         
 
     def testRotate(self):
@@ -121,7 +115,7 @@ class PILTest(FunctionalTestCase):
         self.assertImageOp('transform((100, 120), Image.QUAD, (10, 20, 5, 50, 50, 60, 40, 20))')
 
 
-    def DONTtestOtherOps(self):
+    def testOtherOps(self):
         self.assertImageOp('resize((400, 500), Image.NEAREST)')
         self.assertImageOp('resize((400, 500), Image.ANTIALIAS)')
         self.assertImageOp('transpose(Image.ROTATE_90)')
@@ -129,21 +123,18 @@ class PILTest(FunctionalTestCase):
         self.assertImageOp('transpose(Image.FLIP_TOP_BOTTOM)')
         self.assertImageOp('transpose(Image.ROTATE_180)')
         self.assertImageOp('transpose(Image.ROTATE_270)')
-        self.assertImageOp('crop((20, 30, 40, 50))')
-        #TODO: MESH? - other things in image
+        # self.assertImageOp('crop((20, 30, 40, 50))')
 
 
-    def DONTtestSplit(self):
-        # might work
+    def testSplit(self):
         code = dedent("""
-        from PIL.Image import open
-        for i, im in enumerate(open('test.bmp').split()):
-            im.save('%s%%d.bmp' %% i)
+            import Image
+            for i, im in enumerate(Image.open('test.bmp').split()):
+                im.save('%s%%d.bmp' %% i)
         """)
-        ironExitCode, ironOutput, ironError = self.runCode(code % 'ironoutput', IPY)
-        pyExitCode, pyOutput, pyError = self.runCode(code % "pyoutput", PYTHON)
+        self.runCode(code % 'ironoutput', IPY)
+        self.runCode(code % "pyoutput", PYTHON)
         for i, (actual, expected) in enumerate(zip(sorted(glob('ironoutput*')), sorted(glob('pyoutput*')))):
-            print i
             self.assertEquals(readBinary(actual), readBinary(expected), i)
 
 
