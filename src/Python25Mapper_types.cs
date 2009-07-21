@@ -366,7 +366,8 @@ namespace Ironclad
                 CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_bases", this.Store(tp_bases));
             }
 
-            ScopeOps.__setattr__(this.scratchModule, "_ironclad_class", _type);
+            ScopeOps.__setattr__(this.scratchModule, "_ironclad_bases", tp_bases);
+            ScopeOps.__setattr__(this.scratchModule, "_ironclad_metaclass", ob_type);
             this.ExecInModule(CodeSnippets.CLASS_STUB_CODE, this.scratchModule);
             this.classStubs[typePtr] = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_class_stub");
             this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
@@ -431,18 +432,20 @@ namespace Ironclad
         ActualiseArbitraryObject(IntPtr ptr)
         {
             IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
-            object classStub = this.classStubs[typePtr];
-            object[] args = new object[]{};
-            
             PythonType type_ = (PythonType)this.Retrieve(typePtr);
+            
+            object[] args = new object[]{};
             if (Builtin.issubclass(type_, TypeCache.Int32))
             {
                 args = new object[] { CPyMarshal.ReadIntField(ptr, typeof(PyIntObject), "ob_ival") };
             }
+            if (Builtin.issubclass(type_, TypeCache.Double))
+            {
+                args = new object[] { CPyMarshal.ReadDoubleField(ptr, typeof(PyFloatObject), "ob_fval") };
+            }
             if (Builtin.issubclass(type_, TypeCache.String))
             {
-                string strval = this.ReadPyString(ptr);
-                args = new object[] { strval };
+                args = new object[] { this.ReadPyString(ptr) };
             }
             if (Builtin.issubclass(type_, TypeCache.PythonType))
             {
@@ -451,8 +454,8 @@ namespace Ironclad
                 args = new object[] { name, tp_bases, new PythonDictionary() };
             }
             
-            object obj = PythonCalls.Call(classStub, args);
-            Builtin.setattr(this.scratchContext, obj, "__class__", this.Retrieve(typePtr));
+            object obj = PythonCalls.Call(this.classStubs[typePtr], args);
+            Builtin.setattr(this.scratchContext, obj, "__class__", type_);
             this.StoreBridge(ptr, obj);
             this.IncRef(ptr);
             GC.KeepAlive(obj); // TODO: please test me, if you can work out how to

@@ -91,6 +91,9 @@ spatial.test_distance.TestPdist.test_pdist_sokalmichener_match
 spatial.test_distance.TestPdist.test_pdist_sokalsneath_match
 spatial.test_distance.TestPdist.test_pdist_yule_match
 
+special.test_basic.TestBessel.test_ynp_zeros_large_order # KnownFailure
+special.test_basic.TestBessel.test_yv_cephes_vs_amos # KnownFailure
+
 stats.test_mstats_basic.TestCorr.test_pearsonr # divide by 0
 
 
@@ -259,7 +262,11 @@ spatial.test_distance.TestPdist.test_pdist_canberra_match # many hours
 
 special.test_basic.TestAssocLaguerre.test_assoc_laguerre
 
+special.test_basic.TestBessel.test_iv_series
 special.test_basic.TestBessel.test_jacobi
+special.test_basic.TestBessel.test_jv_cephes_vs_amos
+special.test_basic.TestBessel.test_kv_cephes_vs_amos
+special.test_basic.TestBessel.test_yv_cephes_vs_amos_only_small_orders
 
 special.test_basic.TestCheby.test_chebyc
 special.test_basic.TestCheby.test_chebys
@@ -272,6 +279,9 @@ special.test_basic.TestHermite.test_hermite
 special.test_basic.TestHermite.test_hermitenorm
 
 special.test_basic.TestHyper.test_hyp1f1
+
+special.test_basic.TestLaguerre.test_laguerre
+special.test_basic.TestLaguerre.test_genlaguerre
 
 special.test_basic._test_sh_chebyt.test_sh_chebyt
 special.test_basic._test_sh_chebyu.test_sh_chebyu
@@ -288,3 +298,4 @@ stats.test_mstats_basic.TestCorr.test_spearmanr
 
 stats.test_mstats_extras.TestQuantiles.test_hdquantiles
 
+stats.test_stats.TestMean.test_ravel

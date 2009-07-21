@@ -46,6 +46,8 @@ def shutdown():
 
 extrapaths = []
 for path in sys.path:
+    if not os.path.isdir(path):
+        continue
     _, __, filenames = os.walk(path).next()
     for filename in filenames:
         if filename.endswith('.pth'):

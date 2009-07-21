@@ -28,6 +28,8 @@ linalg.test_linalg._TestNorm.test_vector
 ma.test_core.TestMaskedArrayArithmetic.test_methods_with_output
 ma.test_core.TestMaskedArrayFunctions.test_choose_with_out
 
+ma.test_extras.TestMedian.test_2d # unreliable
+
 ma.test_mrecords.TestMRecords.test_filled
 ma.test_mrecords.TestMRecords.test_set_fields
 ma.test_mrecords.TestMRecordsImport.test_fromrecords
