@@ -243,10 +243,6 @@ class Python25Mapper_References_Test(TestCase):
         mapper.StoreBridge(objPtr, object())
         
         self.assertRaises(BadRefCountException, lambda: mapper.DecRef(objPtr))
-        
-        # need to dealloc ptr ourselves, it doesn't hapen automatically
-        # except for objects with Dispatchers
-        mapper.IC_PyBaseObject_Dealloc(objPtr)
         mapper.Dispose()
         deallocTypes()
 
