@@ -288,9 +288,15 @@ namespace Ironclad
         }
         
         public void
-        DumpMappingInfo(object id)
+        LogMappingInfo(object id)
         {
-            this.map.DumpMappingInfo(id);
+            this.map.LogMappingInfo(id);
+        }
+        
+        public void
+        LogRefs()
+        {
+            this.map.LogRefs();
         }
         
         public IntPtr 

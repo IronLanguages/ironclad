@@ -76,7 +76,7 @@ namespace Ironclad
         
         
         public void
-        DumpMappingInfo(object id)
+        LogMappingInfo(object id)
         {
             if (this.id2ptr.ContainsKey(id))
             {
@@ -111,6 +111,54 @@ namespace Ironclad
             else
             {
                 Console.WriteLine("{0} is not mapped", id);
+            }
+        }
+        
+        public void
+        LogRefs()
+        {
+            Dictionary<object, int> scounts = new Dictionary<object, int>();
+            Dictionary<object, int> wcounts = new Dictionary<object, int>();
+            wcounts["ZOMBIE"] = 0;
+            foreach (object id in this.id2wref.Keys)
+            {
+                if (!this.id2sref.ContainsKey(id))
+                {
+                    WeakReference wref = this.id2wref[id];
+                    if (wref.IsAlive)
+                    {
+                        object type_ = PythonCalls.Call(Builtin.type, new object[] { wref.Target });
+                        if (!wcounts.ContainsKey(type_))
+                        {
+                            wcounts[type_] = 0;
+                        }
+                        wcounts[type_] += 1;
+                    }
+                    else
+                    {
+                        wcounts["ZOMBIE"] += 1;
+                    }
+                }
+                else
+                {
+                    object type_ = PythonCalls.Call(Builtin.type, new object[] { this.id2sref[id] });
+                    if (!scounts.ContainsKey(type_))
+                    {
+                        scounts[type_] = 0;
+                    }
+                    scounts[type_] += 1;
+                }
+            }
+            Console.WriteLine("weak refs:");
+            foreach (object type_ in wcounts.Keys)
+            {
+                Console.WriteLine("{0}: {1}", PythonCalls.Call(Builtin.str, new object[] { type_ }), wcounts[type_]);
+            }
+            
+            Console.WriteLine("strong refs:");
+            foreach (object type_ in scounts.Keys)
+            {
+                Console.WriteLine("{0}: {1}", PythonCalls.Call(Builtin.str, new object[] { type_ }), scounts[type_]);
             }
         }
         
