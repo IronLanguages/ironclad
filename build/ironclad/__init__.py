@@ -110,11 +110,13 @@ unpatch_native_filenos = _patch_lifetime.unpatch_filenos
 ###############################################################################
 #### various useful functions
 
-def dump_info(obj, size=None):
+def log_info(obj, size=None):
     print 
     print 'before storing:'
-    _mapper.DumpMappingInfo(id(obj))
+    _mapper.LogMappingInfo(id(obj))
 
+    print 
+    print 'after storing:'
     objPtr = _mapper.Store(obj)
     if size is None:
         typePtr = CPyMarshal.ReadPtrField(objPtr, PyObject, "ob_type")
@@ -123,12 +125,13 @@ def dump_info(obj, size=None):
         if itemsize > 0:
             itemcount = CPyMarshal.ReadIntField(objPtr, PyVarObject, "ob_size")
             size += itemcount * itemsize
-    print 
-    print 'after storing:'
-    print 'dumping %d bytes of object at %x' % (size, objPtr)
+    print 'printing %d bytes of object at %x' % (size, objPtr)
     CPyMarshal.Log(objPtr, size)
     print
     _mapper.DecRef(objPtr)
+
+def log_refs():
+    _mapper.LogRefs()
 
 def set_gc_threshold(value):
     _mapper.GCThreshold = value
