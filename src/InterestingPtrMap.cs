@@ -100,8 +100,6 @@ namespace Ironclad
                     {   
                         Console.WriteLine("object is at GC's mercy");
                     }
-                    WeakReference wref = this.id2wref[id];
-                    Console.WriteLine(PythonCalls.Call(Builtin.str, new object[] { wref.Target }));
                 }
                 else
                 {

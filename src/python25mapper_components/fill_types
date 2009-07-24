@@ -9,7 +9,7 @@ PyComplex_Type TypeCache.Complex64 {"tp_as_number": "AddNumberMethodsWithoutInde
 PyDict_Type TypeCache.Dict {"tp_init": "IC_PyDict_Init"}
 PyList_Type TypeCache.List {"tp_dealloc": "IC_PyList_Dealloc", "tp_basicsize": "PyListObject"}
 PyTuple_Type TypeCache.PythonTuple {"tp_dealloc": "IC_PyTuple_Dealloc", "tp_basicsize": "PyTupleObject", "tp_itemsize": "IntPtr"}
-PyMethod_Type TypeCache.Method {"tp_basicsize": "PyMethodObject"}
+PyMethod_Type TypeCache.Method {"tp_dealloc": "IC_PyMethod_Dealloc", "tp_basicsize": "PyMethodObject"}
 PySeqIter_Type typeof(ItemEnumerator)
 PyCell_Type typeof(OpaquePyCell)
 PyClass_Type TypeCache.OldClass {"tp_basicsize": "PyClassObject"}

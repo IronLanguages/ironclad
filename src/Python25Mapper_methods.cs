@@ -47,5 +47,19 @@ namespace Ironclad
             this.map.Associate(methPtr, meth);
             return methPtr;
         }
+        
+        public override void
+        IC_PyMethod_Dealloc(IntPtr objPtr)
+        {
+            this.DecRef(CPyMarshal.ReadPtrField(objPtr, typeof(PyMethodObject), "im_func"));
+            this.DecRef(CPyMarshal.ReadPtrField(objPtr, typeof(PyMethodObject), "im_self"));
+            this.DecRef(CPyMarshal.ReadPtrField(objPtr, typeof(PyMethodObject), "im_class"));
+            
+            IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
+            dgt_void_ptr freeDgt = (dgt_void_ptr)
+                CPyMarshal.ReadFunctionPtrField(
+                    objType, typeof(PyTypeObject), "tp_free", typeof(dgt_void_ptr));
+            freeDgt(objPtr);
+        }
     }
 }

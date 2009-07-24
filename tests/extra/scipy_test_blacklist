@@ -96,6 +96,8 @@ sparse.test_spfuncs.TestSparseFunctions.test_count_blocks
 
 spatial.test_distance.TestPdist.test_pdist_canberra_match
 spatial.test_distance.TestPdist.test_pdist_chebychev_iris_nonC
+spatial.test_distance.TestPdist.test_pdist_chebychev_random_nonC
+spatial.test_distance.TestPdist.test_pdist_cityblock_iris_nonC
 spatial.test_distance.TestPdist.test_pdist_correlation_iris_nonC
 spatial.test_distance.TestPdist.test_pdist_cosine_iris_nonC
 spatial.test_distance.TestPdist.test_pdist_dhamming_random_nonC

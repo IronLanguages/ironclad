@@ -199,6 +199,7 @@ MGD_PYTHON25API_FUNCTIONS = set((
     ('IC_PyInstance_Dealloc', 'void_ptr'),
     ('IC_PyInt_New', 'ptr_ptrptrptr'),
     ('IC_PyList_Dealloc', 'void_ptr'),
+    ('IC_PyMethod_Dealloc', 'void_ptr'),
     ('IC_PySlice_Dealloc', 'void_ptr'),
     ('IC_PyString_Str', 'ptr_ptr'),
     ('IC_PyString_Concat_Core', 'ptr_ptrptr'),
