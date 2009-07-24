@@ -39,13 +39,19 @@ class MethodTest(TestCase):
             'im_self': 'bar',
             'im_class': 'baz',
         }
+        attrPtrs = []
         for (attr, expected) in attrs.items():
             attrPtr = getattr(stored, attr)
             self.assertEquals(mapper.RefCount(attrPtr), 1)
+            mapper.IncRef(attrPtr)
+            attrPtrs.append(attrPtr)
             value = mapper.Retrieve(attrPtr)
             self.assertEquals(value, expected)
         
-        
+        mapper.DecRef(methPtr)
+        for attrPtr in attrPtrs:
+            self.assertEquals(mapper.RefCount(attrPtr), 1)
+            
         
 
 
