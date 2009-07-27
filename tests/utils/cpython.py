@@ -16,6 +16,7 @@ def GC_NotYet(dgt):
     return GC_Soon
 
 DELEGATE_TYPES = {
+    METH.OLDARGS: Ironclad.dgt_ptr_ptrptr,
     METH.O: Ironclad.dgt_ptr_ptrptr,
     METH.NOARGS: Ironclad.dgt_ptr_ptrptr,
     METH.VARARGS: Ironclad.dgt_ptr_ptrptr,

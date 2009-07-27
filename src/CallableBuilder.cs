@@ -15,6 +15,7 @@ namespace Ironclad
         {
             GenerateCallablesFromMethodDefs(
                 code, methods, methodTable, "",
+                CodeSnippets.OLDARGS_FUNCTION_CODE,
                 CodeSnippets.NOARGS_FUNCTION_CODE,
                 CodeSnippets.OBJARG_FUNCTION_CODE,
                 CodeSnippets.VARARGS_FUNCTION_CODE,
@@ -48,6 +49,7 @@ namespace Ironclad
         {
             GenerateCallablesFromMethodDefs(
                 code, methods, methodTable, tablePrefix,
+                CodeSnippets.OLDARGS_METHOD_CODE,
                 CodeSnippets.NOARGS_METHOD_CODE,
                 CodeSnippets.OBJARG_METHOD_CODE,
                 CodeSnippets.VARARGS_METHOD_CODE,
@@ -59,6 +61,7 @@ namespace Ironclad
                         IntPtr methods,
                         PythonDictionary methodTable,
                         string tablePrefix,
+                        string oldargsTemplate,
                         string noargsTemplate,
                         string objargTemplate,
                         string varargsTemplate,
@@ -83,6 +86,13 @@ namespace Ironclad
                 METH flags = thisMethod.ml_flags & ~METH.COEXIST;
                 switch (flags)
                 {
+                    case METH.OLDARGS:
+                        template = oldargsTemplate;
+                        dgt = Marshal.GetDelegateForFunctionPointer(
+                            thisMethod.ml_meth,
+                            typeof(dgt_ptr_ptrptr));
+                        break;
+
                     case METH.NOARGS:
                         template = noargsTemplate;
                         dgt = Marshal.GetDelegateForFunctionPointer(
