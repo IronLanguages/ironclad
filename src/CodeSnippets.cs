@@ -110,6 +110,14 @@ def __complex__(self):
 _ironclad_class_attrs['__complex__'] = __complex__
 ";
 
+        public const string OLDARGS_FUNCTION_CODE = @"
+def {0}(*args):
+    '''{1}'''
+    if len(args) == 1:
+        return _dispatcher.ic_function_objarg('{2}{0}', args[0])
+    return _dispatcher.ic_function_varargs('{2}{0}', args)
+";
+
         public const string NOARGS_FUNCTION_CODE = @"
 def {0}():
     '''{1}'''
@@ -132,6 +140,15 @@ def {0}(*args):
 def {0}(*args, **kwargs):
     '''{1}'''
     return _dispatcher.ic_function_kwargs('{2}{0}', args, kwargs)
+";
+
+        public const string OLDARGS_METHOD_CODE = @"
+def {0}(self, *args):
+    '''{1}'''
+    if len(args) == 1:
+        return self._dispatcher.ic_method_objarg('{2}{0}', self, args[0])
+    return self._dispatcher.ic_method_varargs('{2}{0}', self, args)
+_ironclad_class_attrs['{0}'] = {0}
 ";
 
         public const string NOARGS_METHOD_CODE = @"

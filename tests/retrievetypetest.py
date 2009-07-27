@@ -625,6 +625,34 @@ class MethodsTest(MethodConnectionTestCase):
         typeSpec = {"tp_methods": [methodDef]}
         self.assertTypeMethodCall(typeSpec, "method", (), {}, result)
         deallocMethod()
+
+
+    def testOldArgsMethod_OneArg(self):
+        result = object()
+        arg = object()
+        def OldArgs(p1, p2):
+            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEquals(self.mapper.Retrieve(p2), arg)
+            return self.mapper.Store(result)
+        
+        methodDef, deallocMethod = MakeMethodDef("method", OldArgs, METH.OLDARGS)
+        typeSpec = {"tp_methods": [methodDef]}
+        self.assertTypeMethodCall(typeSpec, "method", (arg,), {}, result)
+        deallocMethod()
+
+
+    def testOldArgsMethod_SomeArgs(self):
+        result = object()
+        args = (object(), object())
+        def OldArgs(p1, p2):
+            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEquals(self.mapper.Retrieve(p2), args)
+            return self.mapper.Store(result)
+        
+        methodDef, deallocMethod = MakeMethodDef("method", OldArgs, METH.OLDARGS)
+        typeSpec = {"tp_methods": [methodDef]}
+        self.assertTypeMethodCall(typeSpec, "method", args, {}, result)
+        deallocMethod()
     
 
     def testObjArgMethod(self):
