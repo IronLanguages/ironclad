@@ -115,6 +115,8 @@ namespace Ironclad
         public void
         LogRefs()
         {
+            int wtotal = 0;
+            int stotal = 0;
             Dictionary<object, int> scounts = new Dictionary<object, int>();
             Dictionary<object, int> wcounts = new Dictionary<object, int>();
             wcounts["ZOMBIE"] = 0;
@@ -122,6 +124,7 @@ namespace Ironclad
             {
                 if (!this.id2sref.ContainsKey(id))
                 {
+                    wtotal += 1;
                     WeakReference wref = this.id2wref[id];
                     if (wref.IsAlive)
                     {
@@ -139,6 +142,7 @@ namespace Ironclad
                 }
                 else
                 {
+                    stotal += 1;
                     object type_ = PythonCalls.Call(Builtin.type, new object[] { this.id2sref[id] });
                     if (!scounts.ContainsKey(type_))
                     {
@@ -147,13 +151,13 @@ namespace Ironclad
                     scounts[type_] += 1;
                 }
             }
-            Console.WriteLine("weak refs:");
+            Console.WriteLine("weak refs: {0}", wtotal);
             foreach (object type_ in wcounts.Keys)
             {
                 Console.WriteLine("{0}: {1}", PythonCalls.Call(Builtin.str, new object[] { type_ }), wcounts[type_]);
             }
             
-            Console.WriteLine("strong refs:");
+            Console.WriteLine("strong refs: {0}", stotal);
             foreach (object type_ in scounts.Keys)
             {
                 Console.WriteLine("{0}: {1}", PythonCalls.Call(Builtin.str, new object[] { type_ }), scounts[type_]);
