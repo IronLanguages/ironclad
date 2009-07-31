@@ -82,7 +82,7 @@ The GCThreshold setting controls how frequently we update objects' reference
 strengths and force garbage collection; it's accessible via the ironclad module's
 set_gc_threshold function. Low values cause aggressive cleanup, and hence slower
 execution; high values lead to faster execution, but may cause out-of-memory errors
-if lots of short-lived objects are being created.
+if lots of large short-lived objects are being created.
 
 ClassBuilder
 
@@ -141,7 +141,7 @@ interesting, but used in several places.
 
 InappropriateReflection
 
-Static utility class for messing with other class' privates. Yes, I'm ashamed.
+Static utility class for messing with other classes' privates. Yes, I'm ashamed.
 
 ThreadLocalCounter/ThreadLocalDict
 

@@ -60,7 +60,7 @@ for path in sys.path:
 sys.path.extend(extrapaths)
 
 ###############################################################################
-#### native fileno patches
+#### native fileno patches (optional)
 
 file = _mapper.CPyFileClass
 def open(*args):
@@ -101,7 +101,7 @@ class NativeFilenoPatch(object):
         if self._count == 0:
             self._unpatch_all()
         if self._count < 0:
-            raise Exception("filenos not patched; please don't try to unpatch")
+            raise Exception("filenos not patched; please don't try to unpatch them")
 
 _patch_lifetime = NativeFilenoPatch()
 patch_native_filenos = _patch_lifetime.patch_filenos
