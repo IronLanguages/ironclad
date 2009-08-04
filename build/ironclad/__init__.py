@@ -24,8 +24,10 @@ from Ironclad.Structs import PyObject, PyVarObject, PyTypeObject
 _mapper = Python25Mapper(os.path.join(_dirname, "python25.dll"))
 
 def gcwait():
-    _mapper.ForceCleanup()
-    GC.WaitForPendingFinalizers()
+    for _ in range(4):
+        _mapper.ForceCleanup()
+        GC.Collect()
+        GC.WaitForPendingFinalizers()
 
 import atexit
 def _shutdown():

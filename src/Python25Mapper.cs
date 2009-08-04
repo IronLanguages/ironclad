@@ -290,13 +290,29 @@ namespace Ironclad
         public void
         LogMappingInfo(object id)
         {
-            this.map.LogMappingInfo(id);
+            this.GIL.Acquire();
+            try
+            {
+                this.map.LogMappingInfo(id);
+            }
+            finally
+            {
+                this.GIL.Release();
+            }
         }
         
         public void
         LogRefs()
         {
-            this.map.LogRefs();
+            this.GIL.Acquire();
+            try
+            {
+                this.map.LogRefs();
+            }
+            finally
+            {
+                this.GIL.Release();
+            }
         }
         
         public IntPtr 
@@ -507,13 +523,29 @@ namespace Ironclad
         public void 
         Strengthen(object obj)
         {
-            this.map.Strengthen(obj);
+            this.GIL.Acquire();
+            try
+            {
+                this.map.Strengthen(obj);
+            }
+            finally
+            {
+                this.GIL.Release();
+            }
         }
         
         public void 
         Weaken(object obj)
         {
-            this.map.Weaken(obj);
+            this.GIL.Acquire();
+            try
+            {
+                this.map.Weaken(obj);
+            }
+            finally
+            {
+                this.GIL.Release();
+            }
         }
         
         public void
