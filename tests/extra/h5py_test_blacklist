@@ -4,6 +4,8 @@
 
 .test_h5d.TestH5D.test_read
 
+.test_h5f.TestH5F.test_get_obj_ids # works on its own
+
 .test_h5g.TestH5G.test_iterate
 
 .test_h5i.TestH5I.test_get_file_id
