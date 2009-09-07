@@ -374,7 +374,12 @@ class ListFunctionsTest(TestCase):
         notListPtr = mapper.Store(object())
         self.assertEquals(mapper.PyList_GetItem(notListPtr, 0), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
-        
+    
+    
+    @WithMapper
+    def testPyList_AsTuple(self, mapper, _):
+        tPtr = mapper.PyList_AsTuple(mapper.Store([1, 2, 3]))
+        self.assertEquals(mapper.Retrieve(tPtr), (1, 2, 3))
         
         
 suite = makesuite(

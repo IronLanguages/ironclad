@@ -225,6 +225,22 @@ namespace Ironclad
                 return IntPtr.Zero;
             }
         }
+
+
+        public override IntPtr
+        PyList_AsTuple(IntPtr listPtr)
+        {
+            try
+            {
+                PythonTuple tuple = new PythonTuple(this.Retrieve(listPtr));
+                return this.Store(tuple);
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
             
             
         private void

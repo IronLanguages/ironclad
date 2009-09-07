@@ -264,11 +264,13 @@ MGD_PYTHON25API_FUNCTIONS = set((
     ('PyInt_AsSsize_t', 'size_ptr'),
     ('PyInt_AsUnsignedLongMask', 'ulong_ptr'),
     ('PyInt_FromLong', 'ptr_long'),
-    ('PyInt_FromSsize_t', 'ptr_size'),
+    ('PyInt_FromSize_t', 'ptr_size'), # It may possibly be the case that size_t and Py_Ssize_t
+    ('PyInt_FromSsize_t', 'ptr_size'), # are different, but I'm assuming they're not
     
     ('PyIter_Next', 'ptr_ptr'),
     
     ('PyList_Append', 'int_ptrptr'),
+    ('PyList_AsTuple', 'ptr_ptr'),
     ('PyList_GetItem', 'ptr_ptrsize'),
     ('PyList_GetSlice', 'ptr_ptrsizesize'),
     ('PyList_New', 'ptr_size'),
