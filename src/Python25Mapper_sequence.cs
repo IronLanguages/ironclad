@@ -194,6 +194,24 @@ namespace Ironclad
                 return IntPtr.Zero;
             }
         }
+
+        public override int
+        PySequence_Contains(IntPtr seqPtr, IntPtr memberPtr)
+        {
+            try
+            {
+                if ((bool)PythonOperator.contains(this.scratchContext, this.Retrieve(seqPtr), this.Retrieve(memberPtr)))
+                {
+                    return 1;
+                }
+                return 0;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
+        }
         
         public override IntPtr
         PySequence_Tuple(IntPtr seqPtr)

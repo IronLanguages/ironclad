@@ -354,6 +354,7 @@ MGD_PYTHON25API_FUNCTIONS = set((
     
     ('PySequence_Check', 'int_ptr'),
     ('PySequence_Concat', 'ptr_ptrptr'),
+    ('PySequence_Contains', 'int_ptrptr'),
     ('PySequence_GetItem', 'ptr_ptrsize'),
     ('PySequence_GetSlice', 'ptr_ptrsizesize'),
     ('PySequence_Repeat', 'ptr_ptrsize'),
