@@ -70,17 +70,18 @@ class PyInt_Test(TestCase):
     
     @WithMapper
     def testPyInt_FromSsize_t(self, mapper, _):
-        for value in (0, Int32.MaxValue):
-            ptr = mapper.PyInt_FromSsize_t(value)
-            self.assertEquals(mapper.Retrieve(ptr), value)
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
-            self.assertEquals(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
+        for kallable in (mapper.PyInt_FromSsize_t, mapper.PyInt_FromSize_t):
+            for value in (0, Int32.MaxValue):
+                ptr = kallable(value)
+                self.assertEquals(mapper.Retrieve(ptr), value)
+                self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
+                self.assertEquals(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
+                mapper.DecRef(ptr)
+                
+            ptr = kallable(UInt32.MaxValue)
+            self.assertEquals(mapper.Retrieve(ptr), UInt32.MaxValue)
+            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type)
             mapper.DecRef(ptr)
-            
-        ptr = mapper.PyInt_FromSsize_t(UInt32.MaxValue)
-        self.assertEquals(mapper.Retrieve(ptr), UInt32.MaxValue)
-        self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type)
-        mapper.DecRef(ptr)
 
 
     @WithMapper
