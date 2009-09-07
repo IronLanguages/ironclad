@@ -213,6 +213,20 @@ class SequenceFunctionsTest(TestCase):
 
 
     @WithMapper
+    def testPySequence_Contains(self, mapper, _):
+        all = ([1, 2, 3], ('a', 'b', 'c'), 'abc', object())
+        for seq in all:
+            for val in (1, 'b', object):
+                try:
+                    error = None
+                    result = int(val in seq)
+                except Exception, e:
+                    error = type(e)
+                    result = -1
+                self.assertEquals(mapper.PySequence_Contains(mapper.Store(seq), mapper.Store(val)), result)
+                self.assertMapperHasError(mapper, error)
+
+    @WithMapper
     def testPySequence_Tuple_withTuple(self, mapper, _):
         tuplePtr = mapper.Store((1, 2, 3))
         self.assertEquals(mapper.PySequence_Tuple(tuplePtr), tuplePtr)

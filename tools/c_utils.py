@@ -20,6 +20,8 @@ def name_spec_from_c(c):
     for c_arg in c_args:
         if c_arg.find('*') == -1:
             args.append(type_from_c_type(c_arg.rsplit(' ', 1)[0]))
+        elif c_arg.find('char') != -1:
+            args.append('str')
         else:
             args.append('ptr')
     

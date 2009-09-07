@@ -29,6 +29,7 @@ class MetaImporter(object):
         self.loader = loader
         self.mapper = mapper
         self.patched_for_matplotlib = False
+        self.patched_for_h5py = False
         self.patched_numpy_testing = False
         self.patched_numpy_lib_iotools = False
 
@@ -48,6 +49,19 @@ class MetaImporter(object):
                 arg = float(arg)
             return true_log10(arg)
         math.log10 = my_log10
+
+    def fix_h5py(self):
+        if self.patched_for_h5py:
+            return
+        
+        self.patched_for_h5py = True
+        print 'Detected h5py import'
+        print '  patching out sys.getfilesystemencoding'
+        
+        def getutf8():
+            return 'utf-8'
+        import sys
+        sys.getfilesystemencoding = getutf8
 
     def late_numpy_fixes(self):
         # hacka hacka hacka!
@@ -104,6 +118,8 @@ class MetaImporter(object):
             self.mapper.PerpetrateScipyFixes()
         elif matches('matplotlib'):
             self.fix_matplotlib()
+        elif matches('h5py'):
+            self.fix_h5py()
         elif matches('ctypes'):
             raise ImportError('%s is not available in ironclad yet' % fullname)
         
