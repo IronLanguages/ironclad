@@ -184,6 +184,64 @@ class PyFileAPIFunctions(TestCase):
         self.assertMapperHasError(mapper, TypeError)
 
 
+    @WithMapper
+    def testIC_PyFile_WriteString(self, mapper, addToCleanUp):
+        testDir = tempfile.mkdtemp()
+        addToCleanUp(lambda: shutil.rmtree(testDir))
+        path = os.path.join(testDir, "test")
+        
+        testStr = "meh, more string data"
+        
+        f = open(path, 'w')
+        try:
+            fPtr = mapper.Store(f)
+            # note: don't pass a ptr, trust that magical string-marshalling works
+            self.assertEquals(mapper.IC_PyFile_WriteString(testStr, fPtr), 0)
+            mapper.DecRef(fPtr)
+            self.assertEquals(mapper.IC_PyFile_WriteString(testStr, mapper.Store(object())), -1)
+            self.assertMapperHasError(mapper, TypeError)
+        finally:
+            f.close()
+        
+        f = open(path)
+        try:
+            result = f.read()
+            self.assertEquals(result, testStr)
+        finally:
+            f.close()
+
+
+    @WithMapper
+    def testIC_PyFile_WriteObject(self, mapper, addToCleanUp):
+        testDir = tempfile.mkdtemp()
+        addToCleanUp(lambda: shutil.rmtree(testDir))
+        path = os.path.join(testDir, "test")
+        
+        class C(object):
+            __str__ = lambda s: 'str'
+            __repr__ = lambda s: 'repr'
+        
+        f = open(path, 'w')
+        try:
+            fPtr = mapper.Store(f)
+            cPtr = mapper.Store(C())
+            self.assertEquals(mapper.IC_PyFile_WriteObject(cPtr, fPtr, 0), 0)
+            self.assertEquals(mapper.IC_PyFile_WriteObject(cPtr, fPtr, 1), 0)
+            mapper.DecRef(fPtr)
+            self.assertEquals(mapper.IC_PyFile_WriteObject(cPtr, mapper.Store(object()), 0), -1)
+            self.assertMapperHasError(mapper, TypeError)
+        finally:
+            f.close()
+        
+        f = open(path)
+        try:
+            result = f.read()
+            self.assertEquals(result, 'reprstr')
+        finally:
+            f.close()
+        
+
+
 suite = makesuite(
     PyFile_Type_Test,
     PyFileAPIFunctions,

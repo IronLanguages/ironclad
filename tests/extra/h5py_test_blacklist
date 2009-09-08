@@ -1,32 +1,55 @@
 
+.test_filters.TestFilters.test_data
+
+.test_group.TestOther.test_copy_16
+.test_group.TestOther.test_require
+.test_group.TestOther.test_visit_16
+.test_group.TestOther.test_visit_18
+
+.test_group.TestSetItem.test_hardlink
+
+.test_group.TestSpecial.test_dictcompat
+
 .test_h5a.TestH5A.test_delete
 .test_h5a.TestH5A.test_iterate
 
 .test_h5d.TestH5D.test_read
 
-.test_h5f.TestH5F.test_get_obj_ids # works on its own
+.test_h5f.TestH5F.test_create # exceptions.<smileyface>
+.test_h5f.TestH5F.test_get_obj_ids
+.test_h5f.TestH5F.test_open_close # exceptions.<smileyface>
 
 .test_h5g.TestH5G.test_iterate
 
-.test_h5i.TestH5I.test_get_file_id
+.test_h5i.TestH5I.test_get_file_id # error error
 
 .test_h5p.TestFCID.test_version
 
 .test_h5r.TestH5R.test_objref
 
-.test_h5t.TestH5T.test_create
-.test_h5t.TestH5T.test_py_create_enum # hard crash, not just error
+.test_h5s.TestH5S.test_get_blocks
+.test_h5s.TestH5S.test_simple
 
-.test_highlevel.TestDataset.test_slice_coords
+.test_h5t.TestH5T.test_create
+
 .test_highlevel.TestDataset.test_special
 
-.test_highlevel.TestFile.test_File_init_wm # hangs
+.test_highlevel.TestExceptions.test_mode # exceptions.<smileyface>
 
-.test_highlevel.TestGroup.test_Group_create_group # hangs
-.test_highlevel.TestGroup.test_Group_init # hangs
+.test_highlevel.TestFile.test_drivers # exceptions.<smileyface>
+.test_highlevel.TestFile.test_attr_dictcompat
 
-.test_highlevel.TestGroup.test_Group_special
-.test_highlevel.TestGroup.test_copy_16
-.test_highlevel.TestGroup.test_require
-.test_highlevel.TestGroup.test_visit_16
-.test_highlevel.TestGroup.test_visit_18
+.test_slicing.TestSlicing.test_fancy_index
+.test_slicing.TestSlicing.test_slices
+
+.test_vlen.TestVlen # almost all very unreliable if not broken outright
+
+
+
+
+
+
+
+
+
+
