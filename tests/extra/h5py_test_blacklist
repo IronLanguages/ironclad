@@ -6,7 +6,7 @@
 .test_group.TestOther.test_visit_16 # call None
 .test_group.TestOther.test_visit_18 # mapping corrupt
 
-.test_group.TestSetItem.test_hardlink # _PyString_Eq
+.test_group.TestSetItem.test_hardlink # mapping corrupt
 
 .test_group.TestSpecial.test_dictcompat # mapping corrupt
 
@@ -27,9 +27,6 @@
 
 .test_h5r.TestH5R.test_objref # mapping corrupt
 
-.test_h5s.TestH5S.test_get_blocks # _PyString_Eq
-.test_h5s.TestH5S.test_simple # _PyString_Eq
-
 .test_h5t.TestH5T.test_create # attempt to raise non-BaseException
 
 .test_highlevel.TestDataset.test_special # mapping corrupt
@@ -39,7 +36,6 @@
 .test_highlevel.TestFile.test_drivers # exceptions.<smileyface>
 .test_highlevel.TestFile.test_attr_dictcompat # ValueError
 
-.test_slicing.TestSlicing.test_fancy_index # _PyString_Eq
 .test_slicing.TestSlicing.test_slices # mapping corrupt
 
 # test_write_strings fails outright; 

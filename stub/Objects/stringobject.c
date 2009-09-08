@@ -1192,6 +1192,8 @@ string_richcompare(PyStringObject *a, PyStringObject *b, int op)
 	return result;
 }
 
+#endif // IRONCLAD
+
 int
 _PyString_Eq(PyObject *o1, PyObject *o2)
 {
@@ -1201,6 +1203,8 @@ _PyString_Eq(PyObject *o1, PyObject *o2)
           && *a->ob_sval == *b->ob_sval
           && memcmp(a->ob_sval, b->ob_sval, a->ob_size) == 0;
 }
+
+#ifndef IRONCLAD
 
 static long
 string_hash(PyStringObject *a)
