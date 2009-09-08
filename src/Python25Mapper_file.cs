@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
+using IronPython.Runtime.Operations;
 
 using Ironclad.Structs;
 
@@ -40,6 +41,48 @@ namespace Ironclad
             {
                 this.LastException = e;
                 return IntPtr.Zero;
+            }
+        }
+
+        public override int
+        IC_PyFile_WriteString(string s, IntPtr filePtr)
+        {
+            try
+            {
+                PythonFile file = (PythonFile)this.Retrieve(filePtr);
+                file.write(s);
+                return 0;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
+        }
+
+        public override int
+        IC_PyFile_WriteObject(IntPtr objPtr, IntPtr filePtr, int use_str)
+        {
+            try
+            {
+                object obj = this.Retrieve(objPtr);
+                string s;
+                if (use_str % 2 == 1)
+                {
+                    s = (string)PythonCalls.Call(Builtin.str, new object[] { obj });
+                }
+                else
+                {
+                    s = (string)Builtin.repr(this.scratchContext, obj);
+                }
+                PythonFile file = (PythonFile)this.Retrieve(filePtr);
+                file.write(s);
+                return 0;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
             }
         }
 
