@@ -94,6 +94,7 @@ _Py_HashPointer
 # Objects/stringobject.c
 PyString_FromFormat
 PyString_FromFormatV
+_PyString_Eq
 
 # Objects/structseq.c
 PyStructSequence_New
