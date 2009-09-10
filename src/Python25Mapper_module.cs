@@ -25,27 +25,30 @@ namespace Ironclad
             
             PythonDictionary methodTable = new PythonDictionary();
             PythonDictionary globals = new PythonDictionary();
-            Dispatcher moduleDispatcher = new Dispatcher(this, methodTable, self);
+            Scope module = new Scope(globals);
+            
+            this.AddModule(name, module);
+            this.CreateModulesContaining(name);
 
             globals["__doc__"] = doc;
             globals["__name__"] = name;
-            globals["__file__"] = this.importFile;
+            globals["__file__"] = this.importFiles.Peek();
             List __path__ = new List();
-            if (this.importFile != null)
+            
+            string importFile = this.importFiles.Peek();
+            if (importFile != null)
             {
-                __path__.append(Path.GetDirectoryName(this.importFile));
+                __path__.append(Path.GetDirectoryName(importFile));
             }
             globals["__path__"] = __path__;
+            Dispatcher moduleDispatcher = new Dispatcher(this, methodTable, self);
             globals["_dispatcher"] = moduleDispatcher;
 
             StringBuilder moduleCode = new StringBuilder();
             moduleCode.Append(CodeSnippets.USEFUL_IMPORTS);
             CallableBuilder.GenerateFunctions(moduleCode, methodsPtr, methodTable);
-
-            Scope module = new Scope(globals);
             this.ExecInModule(moduleCode.ToString(), module);
-            this.AddModule(name, module);
-            this.CreateModulesContaining(name);
+            
             return this.Store(module);
         }
         

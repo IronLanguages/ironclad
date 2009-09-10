@@ -360,7 +360,7 @@ class NastyImportDetailsTest(TestCase):
     
     @WithMapperSubclass
     def testNameFixing_PyImport_AddModule_NamesMatch(self, mapper, _):
-        mapper.importName = 'hungry.hungry.hippo'
+        mapper.importNames.Push('hungry.hungry.hippo')
         mapper.PyImport_AddModule("hippo")
         
         self.assertEquals(sys.modules.has_key("hippo"), False)
@@ -373,7 +373,8 @@ class NastyImportDetailsTest(TestCase):
     
     @WithMapperSubclass
     def testNameFixing_PyImport_AddModule_NoMatch(self, mapper, _):
-        mapper.importName = 'angry.angry.alligator'
+        mapper.importNames.Push('hungry.hungry.hippo')
+        mapper.importNames.Push('angry.angry.alligator')
         mapper.PyImport_AddModule("hippo")
         
         self.assertEquals(sys.modules.has_key("hippo"), True)
@@ -384,11 +385,13 @@ class NastyImportDetailsTest(TestCase):
     
     @WithMapperSubclass
     def testNameFixing_Py_InitModule4_NamesMatch(self, mapper, _):
-        mapper.importName = 'hungry.hungry.hippo'
+        mapper.importFiles.Push('hippo_file')
+        mapper.importNames.Push('hungry.hungry.hippo')
         mapper.Py_InitModule4("hippo", IntPtr.Zero, "test_docstring", IntPtr.Zero, 12345)
         
         self.assertEquals(sys.modules.has_key("hippo"), False)
         self.assertEquals(sys.modules['hungry.hungry.hippo'].__doc__, 'test_docstring')
+        self.assertEquals(sys.modules['hungry.hungry.hippo'].__file__, 'hippo_file')
         
         for key in sys.modules.keys():
             if key.startswith('hungry'):

@@ -66,8 +66,8 @@ namespace Ironclad
         LoadModule(string path, string name)
         {
             this.EnsureGIL();
-            this.importName = name;
-            this.importFile = path;
+            this.importNames.Push(name);
+            this.importFiles.Push(path);
             string dir = Path.GetDirectoryName(path);
             string library = Path.GetFileName(path);
             string previousDir = Environment.CurrentDirectory;
@@ -79,8 +79,8 @@ namespace Ironclad
             finally
             {
                 Environment.CurrentDirectory = previousDir;
-                this.importName = "";
-                this.importFile = null;
+                this.importNames.Pop();
+                this.importFiles.Pop();
                 this.ReleaseGIL();
             }
         }
@@ -88,15 +88,16 @@ namespace Ironclad
         private string
         FixImportName(string name)
         {
-            if (this.importName == "")
+            string importName = this.importNames.Peek();
+            if (importName == "")
             {
                 return name;
             }
-            if (this.importName.Contains(name))
+            if (importName.Contains(name))
             {
                 // WTF!? Contains!? Yes.
                 // By rights, that should be EndsWith, but pysvn is evil.
-                return this.importName;
+                return importName;
             }
             return name;
         }
@@ -110,14 +111,14 @@ namespace Ironclad
                 return module;
             }
             
-            this.importName = name;
+            this.importNames.Push(name);
             try
             {
                 this.ExecInModule(String.Format("import {0}", name), this.scratchModule);
             }
             finally
             {
-                this.importName = "";
+                this.importNames.Pop();
             }
     
             return this.GetModule(name);

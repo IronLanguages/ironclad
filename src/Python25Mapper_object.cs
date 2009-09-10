@@ -7,6 +7,7 @@ using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
 using Microsoft.Scripting;
+using Microsoft.Scripting.Runtime;
 
 using Ironclad.Structs;
 
@@ -163,6 +164,9 @@ namespace Ironclad
                     obj = this.cFileClass;
                 }
                 
+                Scope __builtin__ = (Scope)this.GetModule("__builtin__");
+                object __import__ = Builtin.getattr(this.scratchContext, __builtin__, "__import__");
+                
                 object[] argsArray = null;
 
                 if (argsPtr == IntPtr.Zero)
@@ -174,6 +178,20 @@ namespace Ironclad
                     ICollection args = (ICollection)this.Retrieve(argsPtr);
                     argsArray = new object[args.Count];
                     args.CopyTo(argsArray, 0);
+                }
+
+                if (obj == __import__)
+                {
+                    // I really, really wish that Pyrex used the C API for importing things,
+                    // instead of PyObject_Call __import__. However, it doesn't, so I have to 
+                    // do this.
+                    // This is only tested in functionalitytest -- if h5's pyd submodules each 
+                    // have their own copy of _sync, this bit is broken.
+                    if (kwargsPtr != IntPtr.Zero)
+                    {
+                        throw new NotImplementedException("Someone tried to PyObject_Call __import__ with non-null kwargs.");
+                    }
+                    return this.DoFoulImportHack(argsArray);
                 }
 
                 object result = null;
@@ -195,6 +213,39 @@ namespace Ironclad
                 return IntPtr.Zero;
             }
         }
+        
+        
+        private IntPtr DoFoulImportHack(object[] argsArray)
+        {
+            PythonDictionary dest = (PythonDictionary)argsArray[1];
+            string tryimport = (string)argsArray[0];
+            string __name__ = (string)dest["__name__"];
+            
+            object module = null;
+            while (module == null)
+            {
+                try
+                {
+                    module = this.Import(tryimport);
+                }
+                catch
+                {
+                    int lastDot = __name__.LastIndexOf('.');
+                    tryimport = String.Format("{0}{1}", __name__.Substring(0, lastDot + 1), tryimport); 
+                    __name__ = __name__.Substring(0, lastDot);
+                }
+            }
+            
+            ICollection fromList = (ICollection)argsArray[3];
+            foreach (object name_ in fromList)
+            {
+                string name = (string)name_;
+                dest[name] = Builtin.getattr(this.scratchContext, module, name);
+            }
+            return this.Store(module);
+        
+        }
+        
         
         public override int
         PyObject_IsInstance(IntPtr instPtr, IntPtr clsPtr)

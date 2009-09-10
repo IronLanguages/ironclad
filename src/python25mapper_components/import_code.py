@@ -32,6 +32,31 @@ class MetaImporter(object):
         self.patched_for_h5py = False
         self.patched_numpy_testing = False
         self.patched_numpy_lib_iotools = False
+        
+    def find_module(self, fullname, path=None):
+        matches = lambda partialname: fullname == partialname or fullname.startswith(partialname + '.')
+        if matches('numpy'):
+            self.mapper.PerpetrateNumpyFixes()
+        elif matches('scipy'):
+            self.mapper.PerpetrateScipyFixes()
+        elif matches('matplotlib'):
+            self.fix_matplotlib()
+        elif matches('h5py'):
+            self.fix_h5py()
+        elif matches('ctypes'):
+            raise ImportError('%s is not available in ironclad yet' % fullname)
+        
+        self.late_numpy_fixes()
+        
+        import os
+        import sys
+        lastname = fullname.rsplit('.', 1)[-1]
+        for d in (path or sys.path):
+            pyd = os.path.join(d, lastname + '.pyd')
+            if os.path.isfile(pyd):
+                return self.loader(self.mapper, pyd)
+
+        return None
 
     def fix_matplotlib(self):
         # much easier to do this in Python than in C#
@@ -109,31 +134,6 @@ class MetaImporter(object):
         import unittest
         sys.modules['numpy.testing'].NumpyTest = object()
         sys.modules['numpy.testing'].NumpyTestCase = unittest.TestCase
-        
-    def find_module(self, fullname, path=None):
-        matches = lambda partialname: fullname == partialname or fullname.startswith(partialname + '.')
-        if matches('numpy'):
-            self.mapper.PerpetrateNumpyFixes()
-        elif matches('scipy'):
-            self.mapper.PerpetrateScipyFixes()
-        elif matches('matplotlib'):
-            self.fix_matplotlib()
-        elif matches('h5py'):
-            self.fix_h5py()
-        elif matches('ctypes'):
-            raise ImportError('%s is not available in ironclad yet' % fullname)
-        
-        self.late_numpy_fixes()
-        
-        import os
-        import sys
-        lastname = fullname.rsplit('.', 1)[-1]
-        for d in (path or sys.path):
-            pyd = os.path.join(d, lastname + '.pyd')
-            if os.path.isfile(pyd):
-                return self.loader(self.mapper, pyd)
-
-        return None
 
 
 class Lifetime(object):
