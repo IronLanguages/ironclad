@@ -193,9 +193,12 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             
             import h5py
             import sys
-            assert 'h5py.h5g.h5' not in sys.modules
-            assert 'h5py.h5i.h5' not in sys.modules
-            assert 'h5py.h5t.h5' not in sys.modules
+            assert 'h5py.h5g.h5' not in sys.modules # .pyd dupes
+            assert 'h5py.h5i.h5' not in sys.modules # .pyd dupes
+            assert 'h5py.h5t.h5' not in sys.modules # .pyd dupes
+            assert 'h5py.h5g._sync' not in sys.modules # .py dupes
+            assert 'h5py.h5i._sync' not in sys.modules # .py dupes
+            assert 'h5py.h5t._sync' not in sys.modules # .py dupes
             
             """ % (file_path, file_contents)))
 

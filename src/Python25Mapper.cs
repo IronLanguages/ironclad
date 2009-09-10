@@ -77,9 +77,10 @@ namespace Ironclad
         private LocalDataStoreSlot threadStateStore = Thread.AllocateDataSlot();
 
         // TODO: must be a better way to handle imports...
-        // protected for setting from tests
-        protected string importName = "";
-        protected string importFile = null;
+        // public to allow manipulation from test code
+        public Stack<string> importNames = new Stack<string>();
+        public Stack<string> importFiles = new Stack<string>();
+        
         
         public Python25Mapper(CodeContext context): 
           this(context, null, new HGlobalAllocator())
@@ -120,6 +121,9 @@ namespace Ironclad
             this.GIL = new Lock();
             this.python = inPython;
             this.allocator = inAllocator;
+            
+            this.importNames.Push("");
+            this.importFiles.Push(null);
             
             this.CreateScratchModule();
             this.CreateKindaDictProxy();
