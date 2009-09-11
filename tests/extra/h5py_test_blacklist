@@ -34,7 +34,6 @@
 .test_highlevel.TestExceptions.test_mode # exceptions.<smileyface>
 
 .test_highlevel.TestFile.test_drivers # exceptions.<smileyface>
-.test_highlevel.TestFile.test_attr_dictcompat # ValueError
 .test_highlevel.TestFile.test_unicode # unreliable -- sometimes hangs
 
 .test_slicing.TestSlicing.test_slices # mapping corrupt
