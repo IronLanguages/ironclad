@@ -106,7 +106,7 @@ namespace Ironclad
         }
         
         private IntPtr
-        Store(PythonTuple tuple)
+        StoreTyped(PythonTuple tuple)
         {
             uint length = (uint)tuple.__len__();
             IntPtr tuplePtr = this.CreateTuple(length);

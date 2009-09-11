@@ -109,7 +109,7 @@ STORE_METHOD_TEMPLATE = """\
         }"""
 
 STORE_TYPE_TEMPLATE = """\
-            if (obj is %(type)s) { return this.Store((%(type)s)obj); }"""
+            if (obj is %(type)s) { return this.StoreTyped((%(type)s)obj); }"""
 
 OPERATOR_TEMPLATE = """\
         public override IntPtr

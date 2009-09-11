@@ -32,7 +32,7 @@ namespace Ironclad
         }
         
         private IntPtr
-        Store(Method meth)
+        StoreTyped(Method meth)
         {
             uint size = (uint)Marshal.SizeOf(typeof(PyMethodObject));
             IntPtr methPtr = this.allocator.Alloc(size);

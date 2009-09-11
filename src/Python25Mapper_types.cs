@@ -344,7 +344,7 @@ namespace Ironclad
         }
 
         private IntPtr
-        Store(PythonType _type)
+        StoreTyped(PythonType _type)
         {
             uint typeSize = (uint)Marshal.SizeOf(typeof(PyTypeObject));
             IntPtr typePtr = this.allocator.Alloc(typeSize);
@@ -378,7 +378,7 @@ namespace Ironclad
         }
         
         private IntPtr
-        Store(OldClass cls)
+        StoreTyped(OldClass cls)
         {
             uint size = (uint)Marshal.SizeOf(typeof(PyClassObject));
             IntPtr ptr = this.allocator.Alloc(size);
@@ -399,7 +399,7 @@ namespace Ironclad
         }
         
         private IntPtr
-        Store(OldInstance inst)
+        StoreTyped(OldInstance inst)
         {
             uint size = (uint)Marshal.SizeOf(typeof(PyInstanceObject));
             IntPtr ptr = this.allocator.Alloc(size);

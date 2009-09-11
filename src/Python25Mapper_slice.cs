@@ -10,7 +10,7 @@ namespace Ironclad
     public partial class Python25Mapper : Python25Api
     {
         private IntPtr
-        Store(Slice slice)
+        StoreTyped(Slice slice)
         {
             IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PySliceObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PySliceObject), "ob_refcnt", 1);

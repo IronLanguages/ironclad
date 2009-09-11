@@ -34,7 +34,7 @@ namespace Ironclad
         }
         
         private IntPtr
-        Store(IDictionary dictMgd)
+        StoreTyped(IDictionary dictMgd)
         {
             PyObject dict = new PyObject();
             dict.ob_refcnt = 1;

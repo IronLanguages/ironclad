@@ -38,7 +38,7 @@ namespace Ironclad
         
         
         private IntPtr
-        Store(List list)
+        StoreTyped(List list)
         {
             int length = list.__len__();
             PyListObject listStruct = new PyListObject();

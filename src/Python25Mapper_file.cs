@@ -96,7 +96,7 @@ namespace Ironclad
         }
 
         private IntPtr
-        Store(PythonFile obj)
+        StoreTyped(PythonFile obj)
         {
             IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyFileObject)));
             CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyFileObject)));

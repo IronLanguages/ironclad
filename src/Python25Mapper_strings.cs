@@ -305,7 +305,7 @@ namespace Ironclad
         }
         
         private IntPtr
-        Store(string str)
+        StoreTyped(string str)
         {
             char[] chars = str.ToCharArray();
             byte[] bytes = Array.ConvertAll<char, byte>(
