@@ -231,7 +231,7 @@ namespace Ironclad
         }
 
         private IntPtr
-        Store(bool value)
+        StoreTyped(bool value)
         {
             IntPtr ptr = this._Py_ZeroStruct;
             if (value)
@@ -243,7 +243,7 @@ namespace Ironclad
         }
 
         private IntPtr
-        Store(int value)
+        StoreTyped(int value)
         {
             IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyIntObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyIntObject), "ob_refcnt", 1);
@@ -254,7 +254,7 @@ namespace Ironclad
         }
 
         private IntPtr
-        Store(uint value)
+        StoreTyped(uint value)
         {
             if (value <= Int32.MaxValue)
             {
@@ -264,7 +264,7 @@ namespace Ironclad
         }
 
         private IntPtr
-        Store(BigInteger value)
+        StoreTyped(BigInteger value)
         {
             IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
@@ -274,7 +274,7 @@ namespace Ironclad
         }
 
         private IntPtr
-        Store(double value)
+        StoreTyped(double value)
         {
             IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyFloatObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyFloatObject), "ob_refcnt", 1);
@@ -285,7 +285,7 @@ namespace Ironclad
         }
 
         private IntPtr
-        Store(Complex64 value)
+        StoreTyped(Complex64 value)
         {
             IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyComplexObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyComplexObject), "ob_refcnt", 1);

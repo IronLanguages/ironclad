@@ -111,9 +111,9 @@ namespace Ironclad
     {
         private IntPtr StoreDispatch(object obj)
         {
-            if (obj is string) { return this.Store((string)obj); }
-            if (obj is Tuple) { return this.Store((Tuple)obj); }
-            if (obj is Dict) { return this.Store((Dict)obj); }
+            if (obj is string) { return this.StoreTyped((string)obj); }
+            if (obj is Tuple) { return this.StoreTyped((Tuple)obj); }
+            if (obj is Dict) { return this.StoreTyped((Dict)obj); }
             return this.StoreObject(obj);
         }
     }

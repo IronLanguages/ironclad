@@ -1,45 +1,29 @@
 
-.test_filters.TestFilters.test_data # mapping corrupt
-
 .test_group.TestOther.test_copy_16 # call None
-.test_group.TestOther.test_require # mapping corrupt
 .test_group.TestOther.test_visit_16 # call None
-.test_group.TestOther.test_visit_18 # mapping corrupt
-
-.test_group.TestSetItem.test_hardlink # mapping corrupt
-
-.test_group.TestSpecial.test_dictcompat # mapping corrupt
 
 .test_h5a.TestH5A.test_delete # fails
 .test_h5a.TestH5A.test_iterate # fails
 
 .test_h5d.TestH5D.test_read # KeyError
 
-.test_h5f.TestH5F.test_create # exceptions.<smileyface>
+.test_h5f.TestH5F.test_create # exceptions.<smileyface> message, then fail
 .test_h5f.TestH5F.test_get_obj_ids # can't delete file
-.test_h5f.TestH5F.test_open_close # exceptions.<smileyface>
+.test_h5f.TestH5F.test_open_close # exceptions.<smileyface> message, then fail
 
 .test_h5g.TestH5G.test_iterate # fails
 
-.test_h5i.TestH5I.test_get_file_id # mapping corrupt (then can't delete file)
-
-.test_h5p.TestFCID.test_version # mapping corrupt
-
-.test_h5r.TestH5R.test_objref # mapping corrupt
+.test_h5i.TestH5I.test_get_file_id # can't delete file
 
 .test_h5t.TestH5T.test_create # attempt to raise non-BaseException
 
-.test_highlevel.TestDataset.test_special # mapping corrupt
+.test_highlevel.TestExceptions.test_mode # exceptions.<smileyface>, then odd TypeError
 
-.test_highlevel.TestExceptions.test_mode # exceptions.<smileyface>
-
-.test_highlevel.TestFile.test_drivers # exceptions.<smileyface>
-.test_highlevel.TestFile.test_unicode # unreliable -- sometimes hangs
-
-.test_slicing.TestSlicing.test_slices # mapping corrupt
+.test_highlevel.TestFile.test_drivers # exceptions.<smileyface>, then ValueError
+#.test_highlevel.TestFile.test_unicode # unreliable -- sometimes hangs
 
 # test_write_strings fails outright; 
-# test_read_strings, test_read_attr, test_compound frequently print upsetting console messages
+# most others frequently print upsetting console messages; occasionally hang
 .test_vlen.TestVlen
 
 
