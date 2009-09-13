@@ -1,7 +1,7 @@
 
-from UserDict import UserDict
+from UserDict import IterableUserDict
 
-class KindaDictProxy(UserDict):
+class KindaDictProxy(IterableUserDict):
     
     def __setitem__(self, key, value):
         raise TypeError('read-only dict')

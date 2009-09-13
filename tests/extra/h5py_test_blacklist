@@ -1,11 +1,6 @@
 
-.test_group.TestOther.test_copy_16 # call None
-.test_group.TestOther.test_visit_16 # call None
-
 .test_h5a.TestH5A.test_delete # fails
 .test_h5a.TestH5A.test_iterate # fails
-
-.test_h5d.TestH5D.test_read # KeyError
 
 .test_h5f.TestH5F.test_create # exceptions.<smileyface> message, then fail
 .test_h5f.TestH5F.test_get_obj_ids # can't delete file

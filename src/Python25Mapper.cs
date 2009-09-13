@@ -617,7 +617,7 @@ namespace Ironclad
             False.ob_type = this.PyBool_Type;
             False.ob_ival = 0;
             Marshal.StructureToPtr(False, address, false);
-            this.map.Associate(address, false);
+            this.map.Associate(address, Builtin.False);
         }
 
         public override void
@@ -628,7 +628,7 @@ namespace Ironclad
             True.ob_type = this.PyBool_Type;
             True.ob_ival = 1;
             Marshal.StructureToPtr(True, address, false);
-            this.map.Associate(address, true);
+            this.map.Associate(address, Builtin.True);
         }
 
         public override void
