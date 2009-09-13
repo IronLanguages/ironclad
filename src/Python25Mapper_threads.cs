@@ -58,20 +58,20 @@ namespace Ironclad
         public override int 
         PyThread_acquire_lock(IntPtr lockPtr, int flags)
         {
-            Lock lockObject = (Lock)this.Retrieve(lockPtr);
-            if (lockObject.IsAcquired)
+            Lock lock_ = (Lock)this.Retrieve(lockPtr);
+            if (lock_.IsAcquired)
             {
                 return 0;
             }
             
             if (flags == 1)
             {
-                lockObject.Acquire();
+                lock_.Acquire();
                 return 1;
             }
             else
             {
-                if (lockObject.TryAcquire())
+                if (lock_.TryAcquire())
                 {
                     return 1;
                 }
@@ -82,8 +82,8 @@ namespace Ironclad
         public override void 
         PyThread_release_lock(IntPtr lockPtr)
         {
-            Lock lockObject = (Lock)this.Retrieve(lockPtr);
-            lockObject.Release();
+            Lock lock_ = (Lock)this.Retrieve(lockPtr);
+            lock_.Release();
         }
 
         public override void

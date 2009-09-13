@@ -166,10 +166,10 @@ namespace Ironclad
             Console.WriteLine("  faking out modules: nosetester, parser");
             
             Scope nosetester = this.CreateModule("numpy.testing.nosetester");
-            PythonDictionary NoseTesterDict = new PythonDictionary();
-            NoseTesterDict["bench"] = NoseTesterDict["test"] = "This has been patched and broken by ironclad";
-            PythonType NoseTesterClass = new PythonType(this.scratchContext, "NoseTester", new PythonTuple(), NoseTesterDict);
-            ScopeOps.__setattr__(nosetester, "NoseTester", NoseTesterClass);
+            PythonDictionary __dict__ = new PythonDictionary();
+            __dict__["bench"] = __dict__["test"] = "This has been patched and broken by ironclad";
+            PythonType NoseTester = new PythonType(this.scratchContext, "NoseTester", new PythonTuple(), __dict__);
+            ScopeOps.__setattr__(nosetester, "NoseTester", NoseTester);
             ScopeOps.__setattr__(nosetester, "import_nose", new Object());
             ScopeOps.__setattr__(nosetester, "run_module_suite", new Object());
             ScopeOps.__setattr__(nosetester, "get_package_name", new Object());

@@ -128,11 +128,11 @@ class ApiWrangler(object):
             input['PROTOCOL_FIELD_TYPES'])
         
         self.output['python25api_code'] = self.generate_python25api(
-            input['MGD_PYTHON25API_FUNCTIONS'], 
+            input['MGD_API_FUNCTIONS'], 
             input['MGD_NONAPI_C_FUNCTIONS'], 
             input['ALL_API_FUNCTIONS'], 
             input['PURE_C_SYMBOLS'], 
-            input['MGD_DATA'])
+            input['MGD_API_DATA'])
 
         self.output['dgttype_code'] = self.generate_dgts()
 
