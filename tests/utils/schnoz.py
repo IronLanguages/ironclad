@@ -89,7 +89,8 @@ class Schnoz(object):
                     test_names = input_test_names or self.get_test_names(test_class, (package_name, mod_name, class_name))
     
                     for test_name in test_names:
-                        yield test_class(test_name)
+                        if getattr(test_class, test_name) is not None:
+                            yield test_class(test_name)
                         
 
     def main(self, paths=None, verbosity=1):

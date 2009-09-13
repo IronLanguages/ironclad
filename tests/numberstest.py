@@ -18,6 +18,7 @@ class PyBool_Test(TestCase):
     def testTrueFalse(self, mapper, _):
         truePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
         mapper.SetData("_Py_TrueStruct", truePtr)
+        self.assertTrue(mapper.Retrieve(truePtr) is True)
         self.assertEquals(CPyMarshal.ReadPtrField(truePtr, PyIntObject, 'ob_type'), mapper.PyBool_Type)
         self.assertEquals(CPyMarshal.ReadIntField(truePtr, PyIntObject, 'ob_refcnt'), 1)
         self.assertEquals(CPyMarshal.ReadIntField(truePtr, PyIntObject, 'ob_ival'), 1)
@@ -27,6 +28,7 @@ class PyBool_Test(TestCase):
         
         falsePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
         mapper.SetData("_Py_ZeroStruct", falsePtr)
+        self.assertTrue(mapper.Retrieve(falsePtr) is False)
         self.assertEquals(CPyMarshal.ReadPtrField(falsePtr, PyIntObject, 'ob_type'), mapper.PyBool_Type)
         self.assertEquals(CPyMarshal.ReadIntField(falsePtr, PyIntObject, 'ob_refcnt'), 1)
         self.assertEquals(CPyMarshal.ReadIntField(falsePtr, PyIntObject, 'ob_ival'), 0)
