@@ -429,7 +429,7 @@ namespace Ironclad
                         break;
 
                     case UnmanagedDataMarker.PyListObject:
-                        ActualiseList(ptr);
+                        this.ActualiseList(ptr);
                         break;
 
                     default:

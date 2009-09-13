@@ -181,236 +181,26 @@ PROTOCOL_FIELD_TYPES = (
     (('mp_ass_subscript', 'objobjargproc', '__setitem__'), {}),
 )
 
-#==============================================================================
-# Python25Api inputs
-
-MGD_PYTHON25API_FUNCTIONS = set((
-# these are Python25Api method names; they may or may not
-# be part of the real CPython API, but they all need to be
-# called by the stub for one reason or another.
-
-    # functions which need to be used by unmanaged code, and hence
-    # need to use the GetAddress mechanism:
-
-    ('IC_PyBaseObject_Dealloc', 'void_ptr'),
-    ('IC_PyBaseObject_Init', 'int_ptrptrptr'),
-    ('IC_PyDict_Init', 'int_ptrptrptr'),
-    ('IC_PyFloat_New', 'ptr_ptrptrptr'),
-    ('IC_PyInstance_Dealloc', 'void_ptr'),
-    ('IC_PyInt_New', 'ptr_ptrptrptr'),
-    ('IC_PyList_Dealloc', 'void_ptr'),
-    ('IC_PyMethod_Dealloc', 'void_ptr'),
-    ('IC_PySlice_Dealloc', 'void_ptr'),
-    ('IC_PyString_Str', 'ptr_ptr'),
-    ('IC_PyString_Concat_Core', 'ptr_ptrptr'),
-    ('IC_PyTuple_Dealloc', 'void_ptr'),
-    ('IC_PyType_New', 'ptr_ptrptrptr'),
-    ('IC_str_getreadbuffer', 'size_ptrsizeptr'),
-    ('IC_str_getwritebuffer', 'size_ptrsizeptr'),
-    ('IC_str_getsegcount', 'size_ptrptr'),
-
-    # CPython API:
-
-    ('_PyLong_Sign', 'int_ptr'),
-    ('_PyObject_New', 'ptr_ptr'),
-    ('_PyString_Resize', 'int_ptrsize'),
-    ('_PyTuple_Resize', 'int_ptrsize'),
-    
-    ('Py_AtExit', 'int_ptr'),
-    ('Py_InitModule4', 'ptr_strptrstrptrint'),
-    
-    ('PyBool_FromLong', 'ptr_long'),
-    
-    ('PyCallable_Check', 'int_ptr'),
-    
-    ('PyClass_New', 'ptr_ptrptrptr'),
-    
-    ('PyComplex_AsCComplex', 'cpx_ptr'),
-    ('PyComplex_FromDoubles', 'ptr_doubledouble'),
-    
-    ('PyDict_DelItem', 'int_ptrptr'),
-    ('PyDict_DelItemString', 'int_ptrstr'),
-    ('PyDict_GetItem', 'ptr_ptrptr'),
-    ('PyDict_GetItemString', 'ptr_ptrstr'),
-    ('PyDict_New', 'ptr_void'),
-    ('PyDict_Next', 'int_ptrptrptrptr'),
-    ('PyDict_SetItem', 'int_ptrptrptr'),
-    ('PyDict_SetItemString', 'int_ptrstrptr'),
-    ('PyDict_Size', 'size_ptr'),
-    ('PyDict_Update', 'int_ptrptr'),
-    ('PyDict_Values', 'ptr_ptr'),
-    
-    ('PyDictProxy_New', 'ptr_ptr'),
-    
-    ('PyErr_Print', 'void_void'),
-    
-    ('PyEval_GetBuiltins', 'ptr_void'),
-    ('PyEval_InitThreads', 'void_void'),
-    ('PyEval_RestoreThread', 'void_ptr'),
-    ('PyEval_SaveThread', 'ptr_void'),
-    
-    ('PyFloat_AsDouble', 'double_ptr'),
-    ('PyFloat_FromDouble', 'ptr_double'),
-    
-    ('PyGILState_Ensure', 'int_void'), # warning, not really int
-    ('PyGILState_Release', 'void_int'), # warning, not really int
-    
-    ('PyImport_AddModule', 'ptr_str'),
-    ('PyImport_GetModuleDict', 'ptr_void'),
-    ('PyImport_Import', 'ptr_ptr'),
-    ('PyImport_ImportModule', 'ptr_str'),
-    
-    ('PyInt_AsLong', 'long_ptr'),
-    ('PyInt_AsSsize_t', 'size_ptr'),
-    ('PyInt_AsUnsignedLongMask', 'ulong_ptr'),
-    ('PyInt_FromLong', 'ptr_long'),
-    ('PyInt_FromSize_t', 'ptr_size'), # It may possibly be the case that size_t and Py_Ssize_t
-    ('PyInt_FromSsize_t', 'ptr_size'), # are different, but I'm assuming they're not
-    
-    ('PyIter_Next', 'ptr_ptr'),
-    
-    ('PyList_Append', 'int_ptrptr'),
-    ('PyList_AsTuple', 'ptr_ptr'),
-    ('PyList_GetItem', 'ptr_ptrsize'),
-    ('PyList_GetSlice', 'ptr_ptrsizesize'),
-    ('PyList_New', 'ptr_size'),
-    ('PyList_SetItem', 'int_ptrsizeptr'),
-    
-    ('PyLong_AsLong', 'long_ptr'),
-    ('PyLong_AsLongLong', 'llong_ptr'),
-    ('PyLong_AsUnsignedLong', 'ulong_ptr'),
-    ('PyLong_AsUnsignedLongLong', 'ullong_ptr'),
-    ('PyLong_FromDouble', 'ptr_double'),
-    ('PyLong_FromLong', 'ptr_long'),
-    ('PyLong_FromLongLong', 'ptr_llong'),
-    ('PyLong_FromUnsignedLong', 'ptr_ulong'),
-    ('PyLong_FromUnsignedLongLong', 'ptr_ullong'),
-    
-    ('PyMapping_Check', 'int_ptr'),
-    ('PyMapping_GetItemString', 'ptr_ptrstr'),
-    
-    ('PyMem_Free', 'void_ptr'),
-    ('PyMem_Malloc', 'ptr_size'),
-    ('PyMem_Realloc', 'ptr_ptrsize'),
-    
-    ('PyMethod_New', 'ptr_ptrptrptr'),
-    
-    ('PyModule_AddIntConstant', 'int_ptrstrlong'),
-    ('PyModule_AddObject', 'int_ptrstrptr'),
-    ('PyModule_AddStringConstant', 'int_ptrstrstr'),
-    ('PyModule_GetDict', 'ptr_ptr'),
-    ('PyModule_New', 'ptr_str'),
-    
-    ('PyNumber_Absolute', 'ptr_ptr'),
-    ('PyNumber_Add', 'ptr_ptrptr'),
-    ('PyNumber_And', 'ptr_ptrptr'),
-    ('PyNumber_Check', 'int_ptr'),
-    ('PyNumber_Divide', 'ptr_ptrptr'),
-    ('PyNumber_Float', 'ptr_ptr'),
-    ('PyNumber_FloorDivide', 'ptr_ptrptr'),
-    ('PyNumber_Index', 'ptr_ptr'),
-    ('PyNumber_InPlaceRemainder', 'ptr_ptrptr'),
-    ('PyNumber_Int', 'ptr_ptr'),
-    ('PyNumber_Long', 'ptr_ptr'),
-    ('PyNumber_Lshift', 'ptr_ptrptr'),
-    ('PyNumber_Multiply', 'ptr_ptrptr'),
-    ('PyNumber_Or', 'ptr_ptrptr'),
-    ('PyNumber_Remainder', 'ptr_ptrptr'),
-    ('PyNumber_Rshift', 'ptr_ptrptr'),
-    ('PyNumber_Subtract', 'ptr_ptrptr'),
-    ('PyNumber_TrueDivide', 'ptr_ptrptr'),
-    ('PyNumber_Xor', 'ptr_ptrptr'),
-    
-    ('PyObject_Call', 'ptr_ptrptrptr'),
-    ('PyObject_Compare', 'int_ptrptr'),
-    ('PyObject_DelItemString', 'int_ptrstr'),
-    ('PyObject_Free', 'void_ptr'),
-    ('PyObject_GetAttr', 'ptr_ptrptr'),
-    ('PyObject_GetAttrString', 'ptr_ptrstr'),
-    ('PyObject_GetItem', 'ptr_ptrptr'),
-    ('PyObject_GetIter', 'ptr_ptr'),
-    ('PyObject_HasAttr', 'int_ptrptr'),
-    ('PyObject_HasAttrString', 'int_ptrstr'),
-    ('PyObject_Hash', 'long_ptr'),
-    ('PyObject_Init', 'ptr_ptrptr'),
-    ('PyObject_IsInstance', 'int_ptrptr'),
-    ('PyObject_IsSubclass', 'int_ptrptr'),
-    ('PyObject_IsTrue', 'int_ptr'),
-    ('PyObject_Malloc', 'ptr_size'),
-    ('PyObject_Realloc', 'ptr_ptrsize'),
-    ('PyObject_Repr', 'ptr_ptr'),
-    ('PyObject_RichCompare', 'ptr_ptrptrint'),
-    ('PyObject_RichCompareBool', 'int_ptrptrint'),
-    ('PyObject_SelfIter', 'ptr_ptr'),
-    ('PyObject_SetAttr', 'int_ptrptrptr'),
-    ('PyObject_SetAttrString', 'int_ptrstrptr'),
-    ('PyObject_SetItem', 'int_ptrptrptr'),
-    ('PyObject_Size', 'size_ptr'),
-    ('PyObject_Str', 'ptr_ptr'),
-    
-    ('PyRun_StringFlags', 'ptr_strintptrptrptr'),
-    
-    ('PySeqIter_New', 'ptr_ptr'),
-    
-    ('PySequence_Check', 'int_ptr'),
-    ('PySequence_Concat', 'ptr_ptrptr'),
-    ('PySequence_Contains', 'int_ptrptr'),
-    ('PySequence_GetItem', 'ptr_ptrsize'),
-    ('PySequence_GetSlice', 'ptr_ptrsizesize'),
-    ('PySequence_Repeat', 'ptr_ptrsize'),
-    ('PySequence_SetItem', 'int_ptrsizeptr'),
-    ('PySequence_Size', 'size_ptr'),
-    ('PySequence_Tuple', 'ptr_ptr'),
-    
-    ('PySlice_New', 'ptr_ptrptrptr'),
-    
-    # the use of ptrs instead of strs is entirely deliberate
-    ('PyString_AsString', 'ptr_ptr'),
-    ('PyString_AsStringAndSize', 'int_ptrptrptr'),
-    ('PyString_Concat', 'void_ptrptr'),
-    ('PyString_ConcatAndDel', 'void_ptrptr'),
-    ('PyString_FromString', 'ptr_ptr'),
-    ('PyString_FromStringAndSize', 'ptr_ptrsize'),
-    ('PyString_InternFromString', 'ptr_ptr'),
-    ('PyString_InternInPlace', 'void_ptr'),
-    ('PyString_Repr', 'ptr_ptrint'),
-    ('PyString_Size', 'size_ptr'),
-    
-    ('PySys_GetObject', 'ptr_str'),
-    
-    # not sure ptrs here are really ptrs
-    ('PyThread_acquire_lock', 'int_ptrint'),
-    ('PyThread_allocate_lock', 'ptr_void'),
-    ('PyThread_free_lock', 'void_ptr'),
-    ('PyThread_release_lock', 'void_ptr'),
-    
-    ('PyTuple_GetSlice', 'ptr_ptrsizesize'),
-    ('PyTuple_New', 'ptr_size'),
-    ('PyTuple_Size', 'size_ptr'),
-    
-    ('PyType_GenericAlloc', 'ptr_ptrsize'),
-    ('PyType_GenericNew', 'ptr_ptrptrptr'),
-    ('PyType_IsSubtype', 'int_ptrptr'),
-    ('PyType_Ready', 'int_ptr'),
-))
-
 
 #==============================================================================
+
+mgd_api_functions_file = _in_this_dir("_mgd_api_functions")
+MGD_API_FUNCTIONS = set(map(lambda x: tuple(x.split()), read_interesting_lines(mgd_api_functions_file)))
 
 mgd_nonapi_c_functions_file = "stub/_mgd_functions"
 MGD_NONAPI_C_FUNCTIONS = set(map(name_spec_from_c, read_interesting_lines(mgd_nonapi_c_functions_file)))
 
-all_api_functions_file = _in_this_dir("python25ApiFunctions")
+all_api_functions_file = _in_this_dir("_all_api_functions")
 ALL_API_FUNCTIONS = set(read_interesting_lines(all_api_functions_file))
 
 pure_c_symbols_file = "stub/_ignore_symbols"
 PURE_C_SYMBOLS = set(read_interesting_lines(pure_c_symbols_file))
 
-all_data_items_file = _in_this_dir("python25ApiDataItems")
-MGD_DATA = []
-for symbol in read_interesting_lines(all_data_items_file):
+mgd_api_data_file = _in_this_dir("_mgd_api_data")
+MGD_API_DATA = []
+for symbol in read_interesting_lines(mgd_api_data_file):
     if symbol not in PURE_C_SYMBOLS:
-        MGD_DATA.append({"symbol": symbol})
+        MGD_API_DATA.append({"symbol": symbol})
 
 #==============================================================================
 

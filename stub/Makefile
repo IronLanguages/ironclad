@@ -13,7 +13,7 @@ stub.asm.o: generated
 stub.c.o: generated Include/*.h Modules/*.c Objects/*.c Parser/*.c Python/*.c
 	gcc $(CFLAGS) -o stub.c.o -c stubmain.c -I Include
 
-generated: *.c
+generated: *.c _ordered_data _mgd_functions _ignore_symbols _extra_data
 	ipy ../tools/buildstub.py $(PYTHON_DLL) . .
 
 clean:
