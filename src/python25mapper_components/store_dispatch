@@ -11,6 +11,7 @@ PythonFile
 PythonTuple
 List
 Slice
+PythonFunction
 Method
 OldClass
 OldInstance

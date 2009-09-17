@@ -11,12 +11,9 @@ cluster.test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6C
 
 cluster.test_vq.TestKMean.test_kmeans2_init # occasional horror
 
-fftpack.test_pseudo_diffs # almost all just fail -- wrong results
+fftpack.test_pseudo_diffs # almost all just fail -- mostly arrays of zeros
 
-# wrong number of args to some lambda
-integrate.test_integrate.TestOde.test_vode
-integrate.test_integrate.TestOde.test_zvode
-optimize.test_cobyla.TestCobyla.test_simple
+integrate.test_integrate.TestOde.test_zvode # fails, not yet analysed
 
 io.test_array_import.TestReadArray # deprecated, fail unpredictably due to 'file being used by another process'
 io.test_array_import.TestReadArray.test_complex # this one exposes different problem: PyFloat_FromString needs implementing
@@ -63,12 +60,10 @@ sparse.test_base.TestCSR.test_solve
 sparse.test_base.TestDOK.test_solve
 sparse.test_base.TestLIL.test_solve
 
-sparse.test_base.TestLIL.test_astype # passes, but error on some object del
-
 special.test_basic.TestBessel.test_ynp_zeros_large_order # KnownFailure
 special.test_basic.TestBessel.test_yv_cephes_vs_amos # KnownFailure
 
-stats.test_mstats_basic.TestCorr.test_pearsonr # divide by 0
+stats.test_mstats_basic.TestCorr.test_pearsonr # divide by 0 in wrong runtime (if it happened in C code, we'd be fine)
 
 
 ###############################################################################
