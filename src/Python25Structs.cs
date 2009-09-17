@@ -238,7 +238,7 @@ namespace Ironclad
         {
             public uint ob_refcnt;
             public IntPtr ob_type;
-            public double real; // a Py_complex struct replace these fields in C,
+            public double real; // a Py_complex struct replaces these fields in C,
             public double imag; // but it's not very convenient here
         }
         
@@ -280,6 +280,22 @@ namespace Ironclad
             public int ob_shash;
             public int ob_sstate;
             public byte ob_sval;
+        }
+        
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct PyFunctionObject
+        {
+            public uint ob_refcnt;
+            public IntPtr ob_type;
+            public IntPtr func_code; /* A code object */
+            public IntPtr func_globals; /* A dictionary (other mappings won't do) */
+            public IntPtr func_defaults; /* NULL or a tuple */
+            public IntPtr func_closure; /* NULL or a tuple of cell objects */
+            public IntPtr func_doc; /* The __doc__ attribute, can be anything */
+            public IntPtr func_name; /* The __name__ attribute, a string object */
+            public IntPtr func_dict; /* The __dict__ attribute, a dict or NULL */
+            public IntPtr func_weakreflist; /* List of weak references */
+            public IntPtr func_module; /* The __module__ attribute, can be anything */
         }
         
         [StructLayout(LayoutKind.Sequential, Pack=1)]

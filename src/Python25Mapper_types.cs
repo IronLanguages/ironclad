@@ -301,6 +301,7 @@ namespace Ironclad
             this.PyType_Ready(this.PySeqIter_Type);
             this.PyType_Ready(this.PyCell_Type);
             this.PyType_Ready(this.PyMethod_Type);
+            this.PyType_Ready(this.PyFunction_Type);
             this.PyType_Ready(this.PyClass_Type);
             this.PyType_Ready(this.PyInstance_Type);
 
