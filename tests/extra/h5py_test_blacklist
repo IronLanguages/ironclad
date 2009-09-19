@@ -1,21 +1,16 @@
 
 .test_h5a.TestH5A.test_delete # fails
-.test_h5a.TestH5A.test_iterate # fails
+.test_h5a.TestH5A.test_iterate # explodes
 
-.test_h5f.TestH5F.test_create # exceptions.<smileyface> message, then fail
 .test_h5f.TestH5F.test_get_obj_ids # can't delete file
-.test_h5f.TestH5F.test_open_close # exceptions.<smileyface> message, then fail
 
-.test_h5g.TestH5G.test_iterate # fails
+.test_h5g.TestH5G.test_iterate # explodes
 
 .test_h5i.TestH5I.test_get_file_id # can't delete file
 
 .test_h5t.TestH5T.test_create # attempt to raise non-BaseException
 
-.test_highlevel.TestExceptions.test_mode # exceptions.<smileyface>, then odd TypeError
-
-.test_highlevel.TestFile.test_drivers # exceptions.<smileyface>, then ValueError
-#.test_highlevel.TestFile.test_unicode # unreliable -- sometimes hangs
+.test_highlevel.TestFile.test_unicode # unreliable -- sometimes hangs
 
 # test_write_strings fails outright; 
 # most others frequently print upsetting console messages; occasionally hang
