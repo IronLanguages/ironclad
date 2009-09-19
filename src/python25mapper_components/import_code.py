@@ -32,6 +32,7 @@ class MetaImporter(object):
         self.patched_for_h5py = False
         self.patched_numpy_testing = False
         self.patched_numpy_lib_iotools = False
+        self.patched_h5py__stub = False
         
     def find_module(self, fullname, path=None):
         matches = lambda partialname: fullname == partialname or fullname.startswith(partialname + '.')
@@ -46,7 +47,7 @@ class MetaImporter(object):
         elif matches('ctypes'):
             raise ImportError('%s is not available in ironclad yet' % fullname)
         
-        self.late_numpy_fixes()
+        self.late_fixes()
         
         import os
         import sys
@@ -88,11 +89,12 @@ class MetaImporter(object):
         import sys
         sys.getfilesystemencoding = getutf8
 
-    def late_numpy_fixes(self):
+    def late_fixes(self):
         # hacka hacka hacka!
         # don't look at me like that.
         self.patch_numpy_lib_iotools()
         self.patch_numpy_testing()
+        self.patch_h5py__stub()
         
     def patch_numpy_lib_iotools(self):
         if self.patched_numpy_lib_iotools:
@@ -135,6 +137,25 @@ class MetaImporter(object):
         sys.modules['numpy.testing'].NumpyTest = object()
         sys.modules['numpy.testing'].NumpyTestCase = unittest.TestCase
 
+    def patch_h5py__stub(self):
+        if self.patched_h5py__stub:
+            return
+        
+        import sys
+        if 'h5py._stub' not in sys.modules:
+            return
+        
+        print '  patching h5py._stub.generate_class'
+        self.patched_h5py__stub = True
+        
+        def generate_class(cls1, cls2):
+            try:
+                ret = type('HybridClass', (cls1, cls2), {})
+            except:
+                ret = type('NotHybridClass', (cls2,), {})
+            ret.__name__ = '%s_%s_H5' % (cls1, cls2)
+            return ret
+        sys.modules['h5py._stub'].generate_class = generate_class
 
 class Lifetime(object):
     

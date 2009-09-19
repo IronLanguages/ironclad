@@ -51,6 +51,11 @@ class BugTest(TestCase):
         # when this fails, stop patching numpy.lib._iotools._is_string_like in import_code.py
 
 
+    def testIckyDiamondException(self):
+        class E1(Exception): pass
+        self.assertRaises(TypeError, type, 'E2', (E1, IOError), {})
+        # when this fails, remove h5py._stub.generate_class hack
+
 suite = makesuite(BugTest)
 if __name__ == '__main__':
     run(suite)
