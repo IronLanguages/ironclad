@@ -39,6 +39,7 @@ BUILTIN_TYPES = {
     "PyNotImplemented_Type": types.NotImplementedType,
     "PySeqIter_Type": ItemEnumeratorType,
     "PyCell_Type": OpaquePyCell,
+    "PyFunction_Type": types.FunctionType,
     "PyMethod_Type": types.MethodType,
     "PyClass_Type": types.ClassType,
     "PyInstance_Type": types.InstanceType,
@@ -568,4 +569,4 @@ suite = makesuite(
 )
 
 if __name__ == '__main__':
-    run(suite)
+    run(suite, 2)
