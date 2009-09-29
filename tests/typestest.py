@@ -569,4 +569,4 @@ suite = makesuite(
 )
 
 if __name__ == '__main__':
-    run(suite, 2)
+    run(suite)

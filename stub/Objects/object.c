@@ -7,7 +7,6 @@
 extern "C" {
 #endif
 
-
 #ifndef IRONCLAD
 
 #ifdef Py_REF_DEBUG
@@ -32,6 +31,7 @@ _Py_GetRefTotal(void)
 #endif /* Py_REF_DEBUG */
 
 int Py_DivisionWarningFlag;
+int Py_Py3kWarningFlag;
 
 /* Object allocation routines used by NEWOBJ and NEWVAROBJ macros.
    These are used by the individual routines for object creation.
@@ -216,7 +216,7 @@ PyObject_Init(PyObject *op, PyTypeObject *tp)
 	if (op == NULL)
 		return PyErr_NoMemory();
 	/* Any changes should be reflected in PyObject_INIT (objimpl.h) */
-	op->ob_type = tp;
+	Py_TYPE(op) = tp;
 	_Py_NewReference(op);
 	return op;
 }
@@ -228,7 +228,7 @@ PyObject_InitVar(PyVarObject *op, PyTypeObject *tp, Py_ssize_t size)
 		return (PyVarObject *) PyErr_NoMemory();
 	/* Any changes should be reflected in PyObject_INIT_VAR */
 	op->ob_size = size;
-	op->ob_type = tp;
+	Py_TYPE(op) = tp;
 	_Py_NewReference((PyObject *)op);
 	return op;
 }
@@ -281,15 +281,19 @@ internal_print(PyObject *op, FILE *fp, int flags, int nesting)
 #endif
 	clearerr(fp); /* Clear any previous error condition */
 	if (op == NULL) {
+		Py_BEGIN_ALLOW_THREADS
 		fprintf(fp, "<nil>");
+		Py_END_ALLOW_THREADS
 	}
 	else {
 		if (op->ob_refcnt <= 0)
 			/* XXX(twouters) cast refcount to long until %zd is
 			   universally available */
+			Py_BEGIN_ALLOW_THREADS
 			fprintf(fp, "<refcnt %ld at %p>",
 				(long)op->ob_refcnt, op);
-		else if (op->ob_type->tp_print == NULL) {
+			Py_END_ALLOW_THREADS
+		else if (Py_TYPE(op)->tp_print == NULL) {
 			PyObject *s;
 			if (flags & Py_PRINT_RAW)
 				s = PyObject_Str(op);
@@ -304,7 +308,7 @@ internal_print(PyObject *op, FILE *fp, int flags, int nesting)
 			Py_XDECREF(s);
 		}
 		else
-			ret = (*op->ob_type->tp_print)(op, fp, flags);
+			ret = (*Py_TYPE(op)->tp_print)(op, fp, flags);
 	}
 	if (ret == 0) {
 		if (ferror(fp)) {
@@ -329,15 +333,24 @@ void _PyObject_Dump(PyObject* op)
 	if (op == NULL)
 		fprintf(stderr, "NULL\n");
 	else {
+#ifdef WITH_THREAD
+		PyGILState_STATE gil;
+#endif
 		fprintf(stderr, "object  : ");
+#ifdef WITH_THREAD
+		gil = PyGILState_Ensure();
+#endif
 		(void)PyObject_Print(op, stderr, 0);
+#ifdef WITH_THREAD
+		PyGILState_Release(gil);
+#endif
 		/* XXX(twouters) cast refcount to long until %zd is
 		   universally available */
 		fprintf(stderr, "\n"
 			"type    : %s\n"
 			"refcount: %ld\n"
 			"address : %p\n",
-			op->ob_type==NULL ? "NULL" : op->ob_type->tp_name,
+			Py_TYPE(op)==NULL ? "NULL" : Py_TYPE(op)->tp_name,
 			(long)op->ob_refcnt,
 			op);
 	}
@@ -356,12 +369,12 @@ PyObject_Repr(PyObject *v)
 #endif
 	if (v == NULL)
 		return PyString_FromString("<NULL>");
-	else if (v->ob_type->tp_repr == NULL)
+	else if (Py_TYPE(v)->tp_repr == NULL)
 		return PyString_FromFormat("<%s object at %p>",
-					   v->ob_type->tp_name, v);
+					   Py_TYPE(v)->tp_name, v);
 	else {
 		PyObject *res;
-		res = (*v->ob_type->tp_repr)(v);
+		res = (*Py_TYPE(v)->tp_repr)(v);
 		if (res == NULL)
 			return NULL;
 #ifdef Py_USING_UNICODE
@@ -378,7 +391,7 @@ PyObject_Repr(PyObject *v)
 		if (!PyString_Check(res)) {
 			PyErr_Format(PyExc_TypeError,
 				     "__repr__ returned non-string (type %.200s)",
-				     res->ob_type->tp_name);
+				     Py_TYPE(res)->tp_name);
 			Py_DECREF(res);
 			return NULL;
 		}
@@ -403,14 +416,14 @@ _PyObject_Str(PyObject *v)
 		return v;
 	}
 #endif
-	if (v->ob_type->tp_str == NULL)
+	if (Py_TYPE(v)->tp_str == NULL)
 		return PyObject_Repr(v);
 
 	/* It is possible for a type to have a tp_str representation that loops
 	   infinitely. */
 	if (Py_EnterRecursiveCall(" while getting the str of an object"))
 		return NULL;
-	res = (*v->ob_type->tp_str)(v);
+	res = (*Py_TYPE(v)->tp_str)(v);
 	Py_LeaveRecursiveCall();
 	if (res == NULL)
 		return NULL;
@@ -421,7 +434,7 @@ _PyObject_Str(PyObject *v)
 	if (!type_ok) {
 		PyErr_Format(PyExc_TypeError,
 			     "__str__ returned non-string (type %.200s)",
-			     res->ob_type->tp_name);
+			     Py_TYPE(res)->tp_name);
 		Py_DECREF(res);
 		return NULL;
 	}
@@ -456,6 +469,7 @@ PyObject_Unicode(PyObject *v)
 	PyObject *res;
 	PyObject *func;
 	PyObject *str;
+	int unicode_method_found = 0;
 	static PyObject *unicodestr;
 
 	if (v == NULL) {
@@ -469,38 +483,59 @@ PyObject_Unicode(PyObject *v)
 		Py_INCREF(v);
 		return v;
 	}
-	/* XXX As soon as we have a tp_unicode slot, we should
-	   check this before trying the __unicode__
-	   method. */
+
+	/* Try the __unicode__ method */
 	if (unicodestr == NULL) {
 		unicodestr= PyString_InternFromString("__unicode__");
 		if (unicodestr == NULL)
 			return NULL;
 	}
-	func = PyObject_GetAttr(v, unicodestr);
-	if (func != NULL) {
-		res = PyEval_CallObject(func, (PyObject *)NULL);
-		Py_DECREF(func);
+	if (PyInstance_Check(v)) {
+		/* We're an instance of a classic class */
+		/* Try __unicode__ from the instance -- alas we have no type */
+		func = PyObject_GetAttr(v, unicodestr);
+		if (func != NULL) {
+			unicode_method_found = 1;
+			res = PyObject_CallFunctionObjArgs(func, NULL);
+			Py_DECREF(func);
+		}
+		else {
+			PyErr_Clear();
+		}
 	}
 	else {
-		PyErr_Clear();
+		/* Not a classic class instance, try __unicode__ from type */
+		/* _PyType_Lookup doesn't create a reference */
+		func = _PyType_Lookup(Py_TYPE(v), unicodestr);
+		if (func != NULL) {
+			unicode_method_found = 1;
+			res = PyObject_CallFunctionObjArgs(func, v, NULL);
+		}
+		else {
+			PyErr_Clear();
+		}
+	}
+
+	/* Didn't find __unicode__ */
+	if (!unicode_method_found) {
 		if (PyUnicode_Check(v)) {
 			/* For a Unicode subtype that's didn't overwrite __unicode__,
 			   return a true Unicode object with the same data. */
 			return PyUnicode_FromUnicode(PyUnicode_AS_UNICODE(v),
-			                             PyUnicode_GET_SIZE(v));
+						     PyUnicode_GET_SIZE(v));
 		}
 		if (PyString_CheckExact(v)) {
 			Py_INCREF(v);
 			res = v;
 		}
 		else {
-			if (v->ob_type->tp_str != NULL)
-				res = (*v->ob_type->tp_str)(v);
+			if (Py_TYPE(v)->tp_str != NULL)
+				res = (*Py_TYPE(v)->tp_str)(v);
 			else
 				res = PyObject_Repr(v);
 		}
 	}
+
 	if (res == NULL)
 		return NULL;
 	if (!PyUnicode_Check(res)) {
@@ -865,8 +900,19 @@ try_3way_to_rich_compare(PyObject *v, PyObject *w, int op)
 	int c;
 
 	c = try_3way_compare(v, w);
-	if (c >= 2)
+	if (c >= 2) {
+
+		/* Py3K warning if types are not equal and comparison isn't == or !=  */
+		if (Py_Py3kWarningFlag &&
+		    v->ob_type != w->ob_type && op != Py_EQ && op != Py_NE &&
+		    PyErr_WarnEx(PyExc_DeprecationWarning,
+			       "comparing unequal types not supported "
+			       "in 3.x", 1) < 0) {
+			return NULL;
+		}
+
 		c = default_3way_compare(v, w);
+	}
 	if (c <= -2)
 		return NULL;
 	return convert_3way_to_object(op, c);
@@ -989,7 +1035,7 @@ _Py_HashDouble(double v)
 	fractpart = modf(v, &intpart);
 	if (fractpart == 0.0) {
 		/* This must return the same hash as an equal int or long. */
-		if (intpart > LONG_MAX || -intpart > LONG_MAX) {
+		if (intpart > LONG_MAX/2 || -intpart > LONG_MAX/2) {
 			/* Convert to long and use its hash. */
 			PyObject *plong;	/* converted to Python long */
 			if (Py_IS_INFINITY(intpart))
@@ -1057,18 +1103,35 @@ finally:
 #ifndef IRONCLAD
 
 long
+PyObject_HashNotImplemented(PyObject *self)
+{
+	PyErr_Format(PyExc_TypeError, "unhashable type: '%.200s'",
+		     self->ob_type->tp_name);
+	return -1;
+}
+
+long
 PyObject_Hash(PyObject *v)
 {
 	PyTypeObject *tp = v->ob_type;
 	if (tp->tp_hash != NULL)
 		return (*tp->tp_hash)(v);
+	/* To keep to the general practice that inheriting
+	 * solely from object in C code should work without
+	 * an explicit call to PyType_Ready, we implicitly call
+	 * PyType_Ready here and then check the tp_hash slot again
+	 */
+	if (tp->tp_dict == NULL) {
+		if (PyType_Ready(tp) < 0)
+			return -1;
+		if (tp->tp_hash != NULL)
+			return (*tp->tp_hash)(v);
+	}
 	if (tp->tp_compare == NULL && RICHCOMPARE(tp) == NULL) {
 		return _Py_HashPointer(v); /* Use address as hash value */
 	}
 	/* If there's a cmp but no hash defined, the object can't be hashed */
-	PyErr_Format(PyExc_TypeError, "unhashable type: '%.200s'",
-		     v->ob_type->tp_name);
-	return -1;
+	return PyObject_HashNotImplemented(v);
 }
 
 PyObject *
@@ -1076,8 +1139,8 @@ PyObject_GetAttrString(PyObject *v, const char *name)
 {
 	PyObject *w, *res;
 
-	if (v->ob_type->tp_getattr != NULL)
-		return (*v->ob_type->tp_getattr)(v, (char*)name);
+	if (Py_TYPE(v)->tp_getattr != NULL)
+		return (*Py_TYPE(v)->tp_getattr)(v, (char*)name);
 	w = PyString_InternFromString(name);
 	if (w == NULL)
 		return NULL;
@@ -1104,8 +1167,8 @@ PyObject_SetAttrString(PyObject *v, const char *name, PyObject *w)
 	PyObject *s;
 	int res;
 
-	if (v->ob_type->tp_setattr != NULL)
-		return (*v->ob_type->tp_setattr)(v, (char*)name, w);
+	if (Py_TYPE(v)->tp_setattr != NULL)
+		return (*Py_TYPE(v)->tp_setattr)(v, (char*)name, w);
 	s = PyString_InternFromString(name);
 	if (s == NULL)
 		return -1;
@@ -1117,7 +1180,7 @@ PyObject_SetAttrString(PyObject *v, const char *name, PyObject *w)
 PyObject *
 PyObject_GetAttr(PyObject *v, PyObject *name)
 {
-	PyTypeObject *tp = v->ob_type;
+	PyTypeObject *tp = Py_TYPE(v);
 
 	if (!PyString_Check(name)) {
 #ifdef Py_USING_UNICODE
@@ -1134,7 +1197,7 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
 		{
 			PyErr_Format(PyExc_TypeError,
 				     "attribute name must be string, not '%.200s'",
-				     name->ob_type->tp_name);
+				     Py_TYPE(name)->tp_name);
 			return NULL;
 		}
 	}
@@ -1163,7 +1226,7 @@ PyObject_HasAttr(PyObject *v, PyObject *name)
 int
 PyObject_SetAttr(PyObject *v, PyObject *name, PyObject *value)
 {
-	PyTypeObject *tp = v->ob_type;
+	PyTypeObject *tp = Py_TYPE(v);
 	int err;
 
 	if (!PyString_Check(name)){
@@ -1181,7 +1244,7 @@ PyObject_SetAttr(PyObject *v, PyObject *name, PyObject *value)
 		{
 			PyErr_Format(PyExc_TypeError,
 				     "attribute name must be string, not '%.200s'",
-				     name->ob_type->tp_name);
+				     Py_TYPE(name)->tp_name);
 			return -1;
 		}
 	}
@@ -1223,7 +1286,7 @@ PyObject **
 _PyObject_GetDictPtr(PyObject *obj)
 {
 	Py_ssize_t dictoffset;
-	PyTypeObject *tp = obj->ob_type;
+	PyTypeObject *tp = Py_TYPE(obj);
 
 	if (!(tp->tp_flags & Py_TPFLAGS_HAVE_CLASS))
 		return NULL;
@@ -1258,7 +1321,7 @@ PyObject_SelfIter(PyObject *obj)
 PyObject *
 PyObject_GenericGetAttr(PyObject *obj, PyObject *name)
 {
-	PyTypeObject *tp = obj->ob_type;
+	PyTypeObject *tp = Py_TYPE(obj);
 	PyObject *descr = NULL;
 	PyObject *res = NULL;
 	descrgetfunc f;
@@ -1280,7 +1343,7 @@ PyObject_GenericGetAttr(PyObject *obj, PyObject *name)
 		{
 			PyErr_Format(PyExc_TypeError,
 				     "attribute name must be string, not '%.200s'",
-				     name->ob_type->tp_name);
+				     Py_TYPE(name)->tp_name);
 			return NULL;
 		}
 	}
@@ -1292,6 +1355,7 @@ PyObject_GenericGetAttr(PyObject *obj, PyObject *name)
 			goto done;
 	}
 
+#if 0 /* XXX this is not quite _PyType_Lookup anymore */
 	/* Inline _PyType_Lookup */
 	{
 		Py_ssize_t i, n;
@@ -1316,6 +1380,9 @@ PyObject_GenericGetAttr(PyObject *obj, PyObject *name)
 				break;
 		}
 	}
+#else
+	descr = _PyType_Lookup(tp, name);
+#endif
 
 	Py_XINCREF(descr);
 
@@ -1363,7 +1430,7 @@ PyObject_GenericGetAttr(PyObject *obj, PyObject *name)
 	}
 
 	if (f != NULL) {
-		res = f(descr, obj, (PyObject *)obj->ob_type);
+		res = f(descr, obj, (PyObject *)Py_TYPE(obj));
 		Py_DECREF(descr);
 		goto done;
 	}
@@ -1385,7 +1452,7 @@ PyObject_GenericGetAttr(PyObject *obj, PyObject *name)
 int
 PyObject_GenericSetAttr(PyObject *obj, PyObject *name, PyObject *value)
 {
-	PyTypeObject *tp = obj->ob_type;
+	PyTypeObject *tp = Py_TYPE(obj);
 	PyObject *descr;
 	descrsetfunc f;
 	PyObject **dictptr;
@@ -1406,7 +1473,7 @@ PyObject_GenericSetAttr(PyObject *obj, PyObject *name, PyObject *value)
 		{
 			PyErr_Format(PyExc_TypeError,
 				     "attribute name must be string, not '%.200s'",
-				     name->ob_type->tp_name);
+				     Py_TYPE(name)->tp_name);
 			return -1;
 		}
 	}
@@ -1586,6 +1653,8 @@ PyCallable_Check(PyObject *x)
 	}
 }
 
+/* ------------------------- PyObject_Dir() helpers ------------------------- */
+
 /* Helper for PyObject_Dir.
    Merge the __dict__ of aclass into dict, and recursively also all
    the __dict__s of aclass's base classes.  The order of merging isn't
@@ -1676,127 +1745,208 @@ merge_list_attr(PyObject* dict, PyObject* obj, const char *attrname)
 					break;
 			}
 		}
+		if (Py_Py3kWarningFlag &&
+		    (strcmp(attrname, "__members__") == 0 ||
+		     strcmp(attrname, "__methods__") == 0)) {
+			if (PyErr_WarnEx(PyExc_DeprecationWarning,
+				       "__members__ and __methods__ not "
+				       "supported in 3.x", 1) < 0) {
+				Py_XDECREF(list);
+				return -1;
+			}
+		}
 	}
 
 	Py_XDECREF(list);
 	return result;
 }
 
-/* Like __builtin__.dir(arg).  See bltinmodule.c's builtin_dir for the
-   docstring, which should be kept in synch with this implementation. */
-
-PyObject *
-PyObject_Dir(PyObject *arg)
+/* Helper for PyObject_Dir without arguments: returns the local scope. */
+static PyObject *
+_dir_locals(void)
 {
-	/* Set exactly one of these non-NULL before the end. */
-	PyObject *result = NULL;	/* result list */
-	PyObject *masterdict = NULL;	/* result is masterdict.keys() */
+	PyObject *names;
+	PyObject *locals = PyEval_GetLocals();
 
-	/* If NULL arg, return the locals. */
-	if (arg == NULL) {
-		PyObject *locals = PyEval_GetLocals();
-		if (locals == NULL)
-			goto error;
-		result = PyMapping_Keys(locals);
-		if (result == NULL)
-			goto error;
+	if (locals == NULL) {
+		PyErr_SetString(PyExc_SystemError, "frame does not exist");
+		return NULL;
 	}
 
-	/* Elif this is some form of module, we only want its dict. */
-	else if (PyModule_Check(arg)) {
-		masterdict = PyObject_GetAttrString(arg, "__dict__");
-		if (masterdict == NULL)
-			goto error;
-		if (!PyDict_Check(masterdict)) {
-			PyErr_SetString(PyExc_TypeError,
-					"module.__dict__ is not a dictionary");
-			goto error;
-		}
-	}
-
-	/* Elif some form of type or class, grab its dict and its bases.
-	   We deliberately don't suck up its __class__, as methods belonging
-	   to the metaclass would probably be more confusing than helpful. */
-	else if (PyType_Check(arg) || PyClass_Check(arg)) {
-		masterdict = PyDict_New();
-		if (masterdict == NULL)
-			goto error;
-		if (merge_class_dict(masterdict, arg) < 0)
-			goto error;
-	}
-
-	/* Else look at its dict, and the attrs reachable from its class. */
-	else {
-		PyObject *itsclass;
-		/* Create a dict to start with.  CAUTION:  Not everything
-		   responding to __dict__ returns a dict! */
-		masterdict = PyObject_GetAttrString(arg, "__dict__");
-		if (masterdict == NULL) {
-			PyErr_Clear();
-			masterdict = PyDict_New();
-		}
-		else if (!PyDict_Check(masterdict)) {
-			Py_DECREF(masterdict);
-			masterdict = PyDict_New();
-		}
-		else {
-			/* The object may have returned a reference to its
-			   dict, so copy it to avoid mutating it. */
-			PyObject *temp = PyDict_Copy(masterdict);
-			Py_DECREF(masterdict);
-			masterdict = temp;
-		}
-		if (masterdict == NULL)
-			goto error;
-
-		/* Merge in __members__ and __methods__ (if any).
-		   XXX Would like this to go away someday; for now, it's
-		   XXX needed to get at im_self etc of method objects. */
-		if (merge_list_attr(masterdict, arg, "__members__") < 0)
-			goto error;
-		if (merge_list_attr(masterdict, arg, "__methods__") < 0)
-			goto error;
-
-		/* Merge in attrs reachable from its class.
-		   CAUTION:  Not all objects have a __class__ attr. */
-		itsclass = PyObject_GetAttrString(arg, "__class__");
-		if (itsclass == NULL)
-			PyErr_Clear();
-		else {
-			int status = merge_class_dict(masterdict, itsclass);
-			Py_DECREF(itsclass);
-			if (status < 0)
-				goto error;
-		}
-	}
-
-	assert((result == NULL) ^ (masterdict == NULL));
-	if (masterdict != NULL) {
-		/* The result comes from its keys. */
-		assert(result == NULL);
-		result = PyDict_Keys(masterdict);
-		if (result == NULL)
-			goto error;
-	}
-
-	assert(result);
-	if (!PyList_Check(result)) {
+	names = PyMapping_Keys(locals);
+	if (!names)
+		return NULL;
+	if (!PyList_Check(names)) {
 		PyErr_Format(PyExc_TypeError,
-			"Expected keys() to be a list, not '%.200s'",
-			result->ob_type->tp_name);
-		goto error;
+			"dir(): expected keys() of locals to be a list, "
+			"not '%.200s'", Py_TYPE(names)->tp_name);
+		Py_DECREF(names);
+		return NULL;
 	}
-	if (PyList_Sort(result) != 0)
-		goto error;
-	else
-		goto normal_return;
+	/* the locals don't need to be DECREF'd */
+	return names;
+}
 
-  error:
-	Py_XDECREF(result);
-	result = NULL;
+/* Helper for PyObject_Dir of type objects: returns __dict__ and __bases__.
+   We deliberately don't suck up its __class__, as methods belonging to the
+   metaclass would probably be more confusing than helpful.
+*/
+static PyObject *
+_specialized_dir_type(PyObject *obj)
+{
+	PyObject *result = NULL;
+	PyObject *dict = PyDict_New();
+
+	if (dict != NULL && merge_class_dict(dict, obj) == 0)
+		result = PyDict_Keys(dict);
+
+	Py_XDECREF(dict);
+	return result;
+}
+
+/* Helper for PyObject_Dir of module objects: returns the module's __dict__. */
+static PyObject *
+_specialized_dir_module(PyObject *obj)
+{
+	PyObject *result = NULL;
+	PyObject *dict = PyObject_GetAttrString(obj, "__dict__");
+
+	if (dict != NULL) {
+		if (PyDict_Check(dict))
+			result = PyDict_Keys(dict);
+		else {
+			PyErr_Format(PyExc_TypeError,
+				     "%.200s.__dict__ is not a dictionary",
+				     PyModule_GetName(obj));
+		}
+	}
+
+	Py_XDECREF(dict);
+	return result;
+}
+
+/* Helper for PyObject_Dir of generic objects: returns __dict__, __class__,
+   and recursively up the __class__.__bases__ chain.
+*/
+static PyObject *
+_generic_dir(PyObject *obj)
+{
+	PyObject *result = NULL;
+	PyObject *dict = NULL;
+	PyObject *itsclass = NULL;
+
+	/* Get __dict__ (which may or may not be a real dict...) */
+	dict = PyObject_GetAttrString(obj, "__dict__");
+	if (dict == NULL) {
+		PyErr_Clear();
+		dict = PyDict_New();
+	}
+	else if (!PyDict_Check(dict)) {
+		Py_DECREF(dict);
+		dict = PyDict_New();
+	}
+	else {
+		/* Copy __dict__ to avoid mutating it. */
+		PyObject *temp = PyDict_Copy(dict);
+		Py_DECREF(dict);
+		dict = temp;
+	}
+
+	if (dict == NULL)
+		goto error;
+
+	/* Merge in __members__ and __methods__ (if any).
+	 * This is removed in Python 3000. */
+	if (merge_list_attr(dict, obj, "__members__") < 0)
+		goto error;
+	if (merge_list_attr(dict, obj, "__methods__") < 0)
+		goto error;
+
+	/* Merge in attrs reachable from its class. */
+	itsclass = PyObject_GetAttrString(obj, "__class__");
+	if (itsclass == NULL)
+		/* XXX(tomer): Perhaps fall back to obj->ob_type if no
+		               __class__ exists? */
+		PyErr_Clear();
+	else {
+		if (merge_class_dict(dict, itsclass) != 0)
+			goto error;
+	}
+
+	result = PyDict_Keys(dict);
 	/* fall through */
-  normal_return:
-  	Py_XDECREF(masterdict);
+error:
+	Py_XDECREF(itsclass);
+	Py_XDECREF(dict);
+	return result;
+}
+
+/* Helper for PyObject_Dir: object introspection.
+   This calls one of the above specialized versions if no __dir__ method
+   exists. */
+static PyObject *
+_dir_object(PyObject *obj)
+{
+	PyObject *result = NULL;
+	PyObject *dirfunc = PyObject_GetAttrString((PyObject *)obj->ob_type,
+						   "__dir__");
+
+	assert(obj);
+	if (dirfunc == NULL) {
+		/* use default implementation */
+		PyErr_Clear();
+		if (PyModule_Check(obj))
+			result = _specialized_dir_module(obj);
+		else if (PyType_Check(obj) || PyClass_Check(obj))
+			result = _specialized_dir_type(obj);
+		else
+			result = _generic_dir(obj);
+	}
+	else {
+		/* use __dir__ */
+		result = PyObject_CallFunctionObjArgs(dirfunc, obj, NULL);
+		Py_DECREF(dirfunc);
+		if (result == NULL)
+			return NULL;
+
+		/* result must be a list */
+		/* XXX(gbrandl): could also check if all items are strings */
+		if (!PyList_Check(result)) {
+			PyErr_Format(PyExc_TypeError,
+				     "__dir__() must return a list, not %.200s",
+				     Py_TYPE(result)->tp_name);
+			Py_DECREF(result);
+			result = NULL;
+		}
+	}
+
+	return result;
+}
+
+/* Implementation of dir() -- if obj is NULL, returns the names in the current
+   (local) scope.  Otherwise, performs introspection of the object: returns a
+   sorted list of attribute names (supposedly) accessible from the object
+*/
+PyObject *
+PyObject_Dir(PyObject *obj)
+{
+	PyObject * result;
+
+	if (obj == NULL)
+		/* no object -- introspect the locals */
+		result = _dir_locals();
+	else
+		/* object -- introspect the object */
+		result = _dir_object(obj);
+
+	assert(result == NULL || PyList_Check(result));
+
+	if (result != NULL && PyList_Sort(result) != 0) {
+		/* sorting the list failed */
+		Py_DECREF(result);
+		result = NULL;
+	}
+
 	return result;
 }
 
@@ -1826,8 +1976,7 @@ none_dealloc(PyObject* ignore)
 
 
 static PyTypeObject PyNone_Type = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"NoneType",
 	0,
 	0,
@@ -1840,11 +1989,12 @@ static PyTypeObject PyNone_Type = {
 	0,		/*tp_as_number*/
 	0,		/*tp_as_sequence*/
 	0,		/*tp_as_mapping*/
-	0,		/*tp_hash */
+	(hashfunc)_Py_HashPointer, /*tp_hash */
 };
 
 PyObject _Py_NoneStruct = {
-	PyObject_HEAD_INIT(&PyNone_Type)
+  _PyObject_EXTRA_INIT
+  1, &PyNone_Type
 };
 
 /* NotImplemented is an object that can be used to signal that an
@@ -1857,8 +2007,7 @@ NotImplemented_repr(PyObject *op)
 }
 
 static PyTypeObject PyNotImplemented_Type = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"NotImplementedType",
 	0,
 	0,
@@ -1875,7 +2024,8 @@ static PyTypeObject PyNotImplemented_Type = {
 };
 
 PyObject _Py_NotImplementedStruct = {
-	PyObject_HEAD_INIT(&PyNotImplemented_Type)
+	_PyObject_EXTRA_INIT
+	1, &PyNotImplemented_Type
 };
 
 void
@@ -1892,6 +2042,9 @@ _Py_ReadyTypes(void)
 
 	if (PyType_Ready(&PyString_Type) < 0)
 		Py_FatalError("Can't initialize 'str'");
+
+	if (PyType_Ready(&PyByteArray_Type) < 0)
+		Py_FatalError("Can't initialize 'bytes'");
 
 	if (PyType_Ready(&PyList_Type) < 0)
 		Py_FatalError("Can't initialize 'list'");
@@ -1943,7 +2096,7 @@ _Py_ForgetReference(register PyObject *op)
 void
 _Py_Dealloc(PyObject *op)
 {
-	destructor dealloc = op->ob_type->tp_dealloc;
+	destructor dealloc = Py_TYPE(op)->tp_dealloc;
 	_Py_ForgetReference(op);
 	(*dealloc)(op);
 }
@@ -1974,7 +2127,7 @@ _Py_PrintReferenceAddresses(FILE *fp)
 	fprintf(fp, "Remaining object addresses:\n");
 	for (op = refchain._ob_next; op != &refchain; op = op->_ob_next)
 		fprintf(fp, "%p [%" PY_FORMAT_SIZE_T "d] %s\n", op,
-			op->ob_refcnt, op->ob_type->tp_name);
+			op->ob_refcnt, Py_TYPE(op)->tp_name);
 }
 
 PyObject *
@@ -1992,7 +2145,7 @@ _Py_GetObjects(PyObject *self, PyObject *args)
 		return NULL;
 	for (i = 0; (n == 0 || i < n) && op != &refchain; i++) {
 		while (op == self || op == args || op == res || op == t ||
-		       (t != NULL && op->ob_type != (PyTypeObject *) t)) {
+		       (t != NULL && Py_TYPE(op) != (PyTypeObject *) t)) {
 			op = op->_ob_next;
 			if (op == &refchain)
 				return res;
@@ -2135,7 +2288,7 @@ _PyTrash_destroy_chain(void)
 {
 	while (_PyTrash_delete_later) {
 		PyObject *op = _PyTrash_delete_later;
-		destructor dealloc = op->ob_type->tp_dealloc;
+		destructor dealloc = Py_TYPE(op)->tp_dealloc;
 
 		_PyTrash_delete_later =
 			(PyObject*) _Py_AS_GC(op)->gc.gc_prev;

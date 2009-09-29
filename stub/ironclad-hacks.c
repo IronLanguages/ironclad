@@ -76,3 +76,15 @@ void Py_InitializeEx(int _) {}
 void Py_Finalize(void) {}
 int Py_IsInitialized(void) { return 1; }
 
+// Python/ceval.c
+
+int
+PyEval_GetRestricted(void)
+{
+	return 0;
+}
+
+// Parser/graminit.c
+
+void* _PyParser_Grammar[1000] = {0,};
+

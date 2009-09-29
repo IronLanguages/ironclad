@@ -237,6 +237,7 @@ class InheritanceTest(TestCase):
         
         metaclassSpec = CreateTypeSpec('metaclass')
         metaclassSpec['tp_base'] = mapper.PyType_Type
+        metaclassSpec['tp_init'] = lambda _, __, ___: 0
         metaclassSpec['tp_basicsize'] = Marshal.SizeOf(PyTypeObject)
         metaclassPtr, deallocMeta = MakeTypePtr(mapper, metaclassSpec)
         CallLater(deallocMeta)

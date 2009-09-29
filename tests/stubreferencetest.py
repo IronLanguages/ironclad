@@ -12,11 +12,11 @@ from System import IntPtr
 class StubReferenceTest(TestCase):
 
     def testMapInitUnmapLibrary(self):
-        self.assertEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
+        self.assertEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
                           "library already mapped")
 
-        sr = StubReference(os.path.join("build", "ironclad", "python25.dll"))
-        self.assertNotEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
+        sr = StubReference(os.path.join("build", "ironclad", "python26.dll"))
+        self.assertNotEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
                           "library not mapped by construction")
 
         addressCalls = []
@@ -33,7 +33,7 @@ class StubReferenceTest(TestCase):
         self.assertEquals(len(dataCalls) > 0, True, "did not set any data")
 
         sr.Dispose()
-        self.assertEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
+        self.assertEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
                           "library not unmapped on dispose")
 
         sr.Dispose()
@@ -41,12 +41,12 @@ class StubReferenceTest(TestCase):
         
         
     def testUnmapsAutomagically(self):
-        sr = StubReference(os.path.join("build", "ironclad", "python25.dll"))
-        self.assertNotEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
+        sr = StubReference(os.path.join("build", "ironclad", "python26.dll"))
+        self.assertNotEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
                           "library not mapped by construction")
         del sr
         gcwait()
-        self.assertEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
+        self.assertEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
                           "library not unmapped on finalize")
         
 

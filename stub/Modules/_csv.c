@@ -129,7 +129,7 @@ typedef struct {
 
 staticforward PyTypeObject Reader_Type;
 
-#define ReaderObject_Check(v)   ((v)->ob_type == &Reader_Type)
+#define ReaderObject_Check(v)   (Py_TYPE(v) == &Reader_Type)
 
 typedef struct {
         PyObject_HEAD
@@ -314,7 +314,7 @@ static void
 Dialect_dealloc(DialectObj *self)
 {
         Py_XDECREF(self->lineterminator);
-        self->ob_type->tp_free((PyObject *)self);
+        Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 static char *dialect_kws[] = {
@@ -464,8 +464,7 @@ PyDoc_STRVAR(Dialect_Type_doc,
 "The Dialect type records CSV parsing and generation options.\n");
 
 static PyTypeObject Dialect_Type = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                      /* ob_size */
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"_csv.Dialect",                         /* tp_name */
 	sizeof(DialectObj),                     /* tp_basicsize */
 	0,                                      /* tp_itemsize */
@@ -877,8 +876,7 @@ static struct PyMemberDef Reader_memberlist[] = {
 
 
 static PyTypeObject Reader_Type = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                      /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"_csv.reader",                          /*tp_name*/
 	sizeof(ReaderObj),                      /*tp_basicsize*/
 	0,                                      /*tp_itemsize*/
@@ -1294,8 +1292,7 @@ PyDoc_STRVAR(Writer_Type_doc,
 );
 
 static PyTypeObject Writer_Type = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                      /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"_csv.writer",                          /*tp_name*/
 	sizeof(WriterObj),                      /*tp_basicsize*/
 	0,                                      /*tp_itemsize*/
@@ -1388,7 +1385,6 @@ csv_register_dialect(PyObject *module, PyObject *args, PyObject *kwargs)
                                 "dialect name must be a string or unicode");
                 return NULL;
         }
-
 	dialect = _call_dialect(dialect_obj, kwargs);
 	if (dialect == NULL)
 		return NULL;
@@ -1594,11 +1590,11 @@ init_csv(void)
 
         /* Add _dialects dictionary */
         dialects = PyDict_New();
+        if (dialects == NULL)
+                return;
 #ifdef IRONCLAD // if you want to use this pointer, you should damn well store a reference to it
 		Py_INCREF(dialects);
 #endif // IRONCLAD
-        if (dialects == NULL)
-                return;
         if (PyModule_AddObject(module, "_dialects", dialects))
                 return;
 

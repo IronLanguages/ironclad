@@ -4,7 +4,20 @@
 #include "Python.h"
 #include "structmember.h"
 
+/* Free list for method objects to safe malloc/free overhead
+ * The m_self element is used to chain the objects.
+ */
+#ifdef IRONCLAD
+static PyCFunctionObject *IC_method_free_list = NULL;
+#define free_list IC_method_free_list
+#else // IRONCLAD
 static PyCFunctionObject *free_list = NULL;
+#endif // IRONCLAD
+
+static int numfree = 0;
+#ifndef PyCFunction_MAXFREELIST
+#define PyCFunction_MAXFREELIST 256
+#endif
 
 PyObject *
 PyCFunction_NewEx(PyMethodDef *ml, PyObject *self, PyObject *module)
@@ -14,6 +27,7 @@ PyCFunction_NewEx(PyMethodDef *ml, PyObject *self, PyObject *module)
 	if (op != NULL) {
 		free_list = (PyCFunctionObject *)(op->m_self);
 		PyObject_INIT(op, &PyCFunction_Type);
+		numfree--;
 	}
 	else {
 		op = PyObject_GC_New(PyCFunctionObject, &PyCFunction_Type);
@@ -125,8 +139,14 @@ meth_dealloc(PyCFunctionObject *m)
 	_PyObject_GC_UNTRACK(m);
 	Py_XDECREF(m->m_self);
 	Py_XDECREF(m->m_module);
-	m->m_self = (PyObject *)free_list;
-	free_list = m;
+	if (numfree < PyCFunction_MAXFREELIST) {
+		m->m_self = (PyObject *)free_list;
+		free_list = m;
+		numfree++;
+	}
+	else {
+		PyObject_GC_Del(m);
+	}
 }
 
 static PyObject *
@@ -180,7 +200,7 @@ static PyGetSetDef meth_getsets [] = {
 #define OFF(x) offsetof(PyCFunctionObject, x)
 
 static PyMemberDef meth_members[] = {
-	{"__module__",    T_OBJECT,     OFF(m_module), WRITE_RESTRICTED},
+	{"__module__",    T_OBJECT,     OFF(m_module), PY_WRITE_RESTRICTED},
 	{NULL}
 };
 
@@ -213,6 +233,39 @@ meth_compare(PyCFunctionObject *a, PyCFunctionObject *b)
 		return 1;
 }
 
+static PyObject *
+meth_richcompare(PyObject *self, PyObject *other, int op)
+{
+	PyCFunctionObject *a, *b;
+	PyObject *res;
+	int eq;
+
+	if ((op != Py_EQ && op != Py_NE) ||
+	    !PyCFunction_Check(self) ||
+	    !PyCFunction_Check(other))
+	{
+		/* Py3K warning if types are not equal and comparison isn't == or !=  */
+		if (PyErr_WarnPy3k("builtin_function_or_method inequality "
+				   "comparisons not supported in 3.x", 1) < 0) {
+			return NULL;
+		}
+
+		Py_INCREF(Py_NotImplemented);
+		return Py_NotImplemented;
+	}
+	a = (PyCFunctionObject *)self;
+	b = (PyCFunctionObject *)other;
+	eq = a->m_self == b->m_self;
+	if (eq)
+		eq = a->m_ml->ml_meth == b->m_ml->ml_meth;
+	if (op == Py_EQ)
+		res = eq ? Py_True : Py_False;
+	else
+		res = eq ? Py_False : Py_True;
+	Py_INCREF(res);
+	return res;
+}
+
 static long
 meth_hash(PyCFunctionObject *a)
 {
@@ -235,8 +288,7 @@ meth_hash(PyCFunctionObject *a)
 
 
 PyTypeObject PyCFunction_Type = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"builtin_function_or_method",
 	sizeof(PyCFunctionObject),
 	0,
@@ -259,7 +311,7 @@ PyTypeObject PyCFunction_Type = {
  	0,					/* tp_doc */
  	(traverseproc)meth_traverse,		/* tp_traverse */
 	0,					/* tp_clear */
-	0,					/* tp_richcompare */
+	meth_richcompare,					/* tp_richcompare */
 	0,					/* tp_weaklistoffset */
 	0,					/* tp_iter */
 	0,					/* tp_iternext */
@@ -309,8 +361,12 @@ PyObject *
 Py_FindMethodInChain(PyMethodChain *chain, PyObject *self, const char *name)
 {
 	if (name[0] == '_' && name[1] == '_') {
-		if (strcmp(name, "__methods__") == 0)
+		if (strcmp(name, "__methods__") == 0) {
+			if (PyErr_WarnPy3k("__methods__ not supported in 3.x",
+					   1) < 0)
+				return NULL;
 			return listmethodchain(chain);
+		}
 		if (strcmp(name, "__doc__") == 0) {
 			const char *doc = self->ob_type->tp_doc;
 			if (doc != NULL)
@@ -344,14 +400,25 @@ Py_FindMethod(PyMethodDef *methods, PyObject *self, const char *name)
 
 /* Clear out the free list */
 
-void
-PyCFunction_Fini(void)
+int
+PyCFunction_ClearFreeList(void)
 {
+	int freelist_size = numfree;
+
 	while (free_list) {
 		PyCFunctionObject *v = free_list;
 		free_list = (PyCFunctionObject *)(v->m_self);
 		PyObject_GC_Del(v);
+		numfree--;
 	}
+	assert(numfree == 0);
+	return freelist_size;
+}
+
+void
+PyCFunction_Fini(void)
+{
+	(void)PyCFunction_ClearFreeList();
 }
 
 /* PyCFunction_New() is now just a macro that calls PyCFunction_NewEx(),
@@ -367,3 +434,7 @@ PyCFunction_New(PyMethodDef *ml, PyObject *self)
 {
 	return PyCFunction_NewEx(ml, self, NULL);
 }
+
+#ifdef IRONCLAD // tidiness
+#undef free_list
+#endif // IRONCLAD

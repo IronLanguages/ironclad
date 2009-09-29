@@ -14,16 +14,14 @@ PyAPI_FUNC(PyObject *) PyImport_ExecCodeModuleEx(
 PyAPI_FUNC(PyObject *) PyImport_GetModuleDict(void);
 PyAPI_FUNC(PyObject *) PyImport_AddModule(const char *name);
 PyAPI_FUNC(PyObject *) PyImport_ImportModule(const char *name);
+PyAPI_FUNC(PyObject *) PyImport_ImportModuleNoBlock(const char *);
 PyAPI_FUNC(PyObject *) PyImport_ImportModuleLevel(char *name,
 	PyObject *globals, PyObject *locals, PyObject *fromlist, int level);
 
-/* For DLL compatibility */
-#undef PyImport_ImportModuleEx
-PyAPI_FUNC(PyObject *) PyImport_ImportModuleEx(
-	char *name, PyObject *globals, PyObject *locals, PyObject *fromlist);
 #define PyImport_ImportModuleEx(n, g, l, f) \
 	PyImport_ImportModuleLevel(n, g, l, f, -1)
 
+PyAPI_FUNC(PyObject *) PyImport_GetImporter(PyObject *path);
 PyAPI_FUNC(PyObject *) PyImport_Import(PyObject *name);
 PyAPI_FUNC(PyObject *) PyImport_ReloadModule(PyObject *m);
 PyAPI_FUNC(void) PyImport_Cleanup(void);
@@ -42,6 +40,7 @@ struct _inittab {
     void (*initfunc)(void);
 };
 
+PyAPI_DATA(PyTypeObject) PyNullImporter_Type;
 PyAPI_DATA(struct _inittab *) PyImport_Inittab;
 
 PyAPI_FUNC(int) PyImport_AppendInittab(char *name, void (*initfunc)(void));

@@ -133,6 +133,10 @@ typedef Py_intptr_t	Py_ssize_t;
 /* Smallest negative value of type Py_ssize_t. */
 #define PY_SSIZE_T_MIN (-PY_SSIZE_T_MAX-1)
 
+#if SIZEOF_PID_T > SIZEOF_LONG
+#   error "Python doesn't support sizeof(pid_t) > sizeof(long)"
+#endif
+
 /* PY_FORMAT_SIZE_T is a platform-specific modifier for use in a printf
  * format to convert an argument with the width of a size_t or Py_ssize_t.
  * C99 introduced "z" for this purpose, but not all platforms support that;
@@ -360,84 +364,6 @@ extern "C" {
 #define Py_SAFE_DOWNCAST(VALUE, WIDE, NARROW) (NARROW)(VALUE)
 #endif
 
-/* Py_IS_NAN(X)
- * Return 1 if float or double arg is a NaN, else 0.
- * Caution:
- *     X is evaluated more than once.
- *     This may not work on all platforms.  Each platform has *some*
- *     way to spell this, though -- override in pyconfig.h if you have
- *     a platform where it doesn't work.
- */
-#ifndef Py_IS_NAN
-#define Py_IS_NAN(X) ((X) != (X))
-#endif
-
-/* Py_IS_INFINITY(X)
- * Return 1 if float or double arg is an infinity, else 0.
- * Caution:
- *    X is evaluated more than once.
- *    This implementation may set the underflow flag if |X| is very small;
- *    it really can't be implemented correctly (& easily) before C99.
- *    Override in pyconfig.h if you have a better spelling on your platform.
- */
-#ifndef Py_IS_INFINITY
-#define Py_IS_INFINITY(X) ((X) && (X)*0.5 == (X))
-#endif
-
-/* Py_IS_FINITE(X)
- * Return 1 if float or double arg is neither infinite nor NAN, else 0.
- * Some compilers (e.g. VisualStudio) have intrisics for this, so a special
- * macro for this particular test is useful
- */
-#ifndef Py_IS_FINITE
-#define Py_IS_FINITE(X) (!Py_IS_INFINITY(X) && !Py_IS_NAN(X))
-#endif
-
-/* HUGE_VAL is supposed to expand to a positive double infinity.  Python
- * uses Py_HUGE_VAL instead because some platforms are broken in this
- * respect.  We used to embed code in pyport.h to try to worm around that,
- * but different platforms are broken in conflicting ways.  If you're on
- * a platform where HUGE_VAL is defined incorrectly, fiddle your Python
- * config to #define Py_HUGE_VAL to something that works on your platform.
- */
-#ifndef Py_HUGE_VAL
-#define Py_HUGE_VAL HUGE_VAL
-#endif
-
-/* Py_OVERFLOWED(X)
- * Return 1 iff a libm function overflowed.  Set errno to 0 before calling
- * a libm function, and invoke this macro after, passing the function
- * result.
- * Caution:
- *    This isn't reliable.  C99 no longer requires libm to set errno under
- *	  any exceptional condition, but does require +- HUGE_VAL return
- *	  values on overflow.  A 754 box *probably* maps HUGE_VAL to a
- *	  double infinity, and we're cool if that's so, unless the input
- *	  was an infinity and an infinity is the expected result.  A C89
- *	  system sets errno to ERANGE, so we check for that too.  We're
- *	  out of luck if a C99 754 box doesn't map HUGE_VAL to +Inf, or
- *	  if the returned result is a NaN, or if a C89 box returns HUGE_VAL
- *	  in non-overflow cases.
- *    X is evaluated more than once.
- * Some platforms have better way to spell this, so expect some #ifdef'ery.
- *
- * OpenBSD uses 'isinf()' because a compiler bug on that platform causes
- * the longer macro version to be mis-compiled. This isn't optimal, and
- * should be removed once a newer compiler is available on that platform.
- * The system that had the failure was running OpenBSD 3.2 on Intel, with
- * gcc 2.95.3.
- *
- * According to Tim's checkin, the FreeBSD systems use isinf() to work
- * around a FPE bug on that platform.
- */
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
-#define Py_OVERFLOWED(X) isinf(X)
-#else
-#define Py_OVERFLOWED(X) ((X) != 0.0 && (errno == ERANGE ||    \
-					 (X) == Py_HUGE_VAL || \
-					 (X) == -Py_HUGE_VAL))
-#endif
-
 /* Py_SET_ERRNO_ON_MATH_ERROR(x)
  * If a libm function did not set errno, but it looks like the result
  * overflowed or not-a-number, set errno to ERANGE or EDOM.  Set errno
@@ -539,13 +465,20 @@ int shutdown( int, int );
 extern char * _getpty(int *, int, mode_t, int);
 #endif
 
+/* On QNX 6, struct termio must be declared by including sys/termio.h
+   if TCGETA, TCSETA, TCSETAW, or TCSETAF are used.  sys/termio.h must
+   be included before termios.h or it will generate an error. */
+#ifdef HAVE_SYS_TERMIO_H
+#include <sys/termio.h>
+#endif
+
 #if defined(HAVE_OPENPTY) || defined(HAVE_FORKPTY)
 #if !defined(HAVE_PTY_H) && !defined(HAVE_LIBUTIL_H)
 /* BSDI does not supply a prototype for the 'openpty' and 'forkpty'
    functions, even though they are included in libutil. */
 #include <termios.h>
 extern int openpty(int *, int *, char *, struct termios *, struct winsize *);
-extern int forkpty(int *, char *, struct termios *, struct winsize *);
+extern pid_t forkpty(int *, char *, struct termios *, struct winsize *);
 #endif /* !defined(HAVE_PTY_H) && !defined(HAVE_LIBUTIL_H) */
 #endif /* defined(HAVE_OPENPTY) || defined(HAVE_FORKPTY) */
 
@@ -567,15 +500,6 @@ extern int fclose(FILE *);
 /* From Modules/posixmodule.c */
 extern int fdatasync(int);
 #endif /* 0 */
-
-
-/************************
- * WRAPPER FOR <math.h> *
- ************************/
-
-#ifndef HAVE_HYPOT
-extern double hypot(double, double);
-#endif
 
 
 /* On 4.4BSD-descendants, ctype functions serves the whole range of
@@ -782,6 +706,24 @@ typedef	struct fd_set {
 #define Py_GCC_ATTRIBUTE(x)
 #else
 #define Py_GCC_ATTRIBUTE(x) __attribute__(x)
+#endif
+
+/*
+ * Add PyArg_ParseTuple format where available.
+ */
+#ifdef HAVE_ATTRIBUTE_FORMAT_PARSETUPLE
+#define Py_FORMAT_PARSETUPLE(func,p1,p2) __attribute__((format(func,p1,p2)))
+#else
+#define Py_FORMAT_PARSETUPLE(func,p1,p2)
+#endif
+
+/*
+ * Specify alignment on compilers that support it.
+ */
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define Py_ALIGNED(x) __attribute__((aligned(x)))
+#else
+#define Py_ALIGNED(x)
 #endif
 
 /* Eliminate end-of-loop code not reached warnings from SunPro C

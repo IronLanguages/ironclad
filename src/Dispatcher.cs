@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
 

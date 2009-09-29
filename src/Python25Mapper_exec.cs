@@ -4,6 +4,7 @@ using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
 using Microsoft.Scripting.Runtime;
 
+using IronPython.Runtime;
 using IronPython.Runtime.Operations;
 
 using Ironclad.Structs;
@@ -31,7 +32,7 @@ namespace Ironclad
             
             try
             {
-                IAttributesCollection globals = (IAttributesCollection)this.Retrieve(globalsPtr);
+                PythonDictionary globals = (PythonDictionary)this.Retrieve(globalsPtr);
                 object locals = null;
                 if (localsPtr != IntPtr.Zero)
                 {

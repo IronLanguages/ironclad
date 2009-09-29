@@ -30,23 +30,24 @@ class Py_InitModule4_Test(TestCase):
 
     def assert_Py_InitModule4_withSingleMethod(self, mapper, methodDef, TestModule):
         methods, deallocMethods = MakeItemsTablePtr([methodDef])
-        modulePtr = mapper.Py_InitModule4(
-            "test_module",
-            methods,
-            "test_docstring",
-            MODULE_PTR,
-            12345)
-            
-        module = mapper.Retrieve(modulePtr)
-        test_module = sys.modules['test_module']
-        
-        for item in dir(test_module):
-            self.assertEquals(getattr(module, item) is getattr(test_module, item),
-                              True, "%s didn't match" % item)
-        TestModule(test_module, mapper)
-        
-        mapper.Dispose()
-        deallocMethods()
+        try:
+            modulePtr = mapper.Py_InitModule4(
+                "test_module",
+                methods,
+                "test_docstring",
+                MODULE_PTR,
+                12345)
+
+            module = mapper.Retrieve(modulePtr)
+            test_module = sys.modules['test_module']
+
+            for item in dir(test_module):
+                self.assertEquals(getattr(module, item) is getattr(test_module, item),
+                                  True, "%s didn't match" % item)
+            TestModule(test_module, mapper)
+        finally:
+            mapper.Dispose()
+            deallocMethods()
 
 
     def test_Py_InitModule4_CreatesPopulatedModule(self):

@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 
 using IronPython.Hosting;
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
@@ -44,17 +45,17 @@ namespace Ironclad
 
     public partial class Python25Mapper : Python25Api, IDisposable
     {
-        // occasional protected members for ease of testing (ipy subclass)
-    
         private PythonContext python;
         private StubReference stub;
         private PydImporter importer;
         private IAllocator allocator;
 
-        private Scope scratchModule;
+        private PythonModule scratchModule;
         private CodeContext scratchContext;
+
         private object removeSysHacks;
-        private object kindaDictProxyClass;
+        private object kindaDictProxy;
+        private object kindaSeqIter;
         private object cFileClass;
         private Lock GIL;
 
@@ -98,7 +99,7 @@ namespace Ironclad
         }
 
         public Python25Mapper(CodeContext context, string stubPath, IAllocator allocator):
-          this(PythonContext.GetContext(context), stubPath, allocator)
+          this(context.LanguageContext, stubPath, allocator)
         {
         }
 
@@ -126,12 +127,13 @@ namespace Ironclad
             this.importFiles.Push(null);
             
             this.CreateScratchModule();
-            this.CreateKindaDictProxy();
+            this.kindaDictProxy = this.CreateFromSnippet(CodeSnippets.KINDA_DICT_PROXY_CODE, "KindaDictProxy");
+            this.kindaSeqIter = this.CreateFromSnippet(CodeSnippets.KINDA_SEQ_ITER_CODE, "KindaSeqIter");
             
             if (stubPath != null)
             {
                 // this appears to be necessary if you want to run functionalitytest.py on its own
-                Unmanaged.LoadLibrary("msvcr71.dll");
+                Unmanaged.LoadLibrary("msvcr90.dll");
                 
                 this.stub = new StubReference(stubPath);
                 this.stub.Init(new AddressGetterDelegate(this.GetAddress), new DataSetterDelegate(this.SetData));
@@ -142,9 +144,8 @@ namespace Ironclad
                 this.ReadyBuiltinTypes();
                 this.importer = new PydImporter();
                 
-                // TODO: work out why this line causes leakage
-                this.ExecInModule(CodeSnippets.INSTALL_IMPORT_HOOK_CODE, this.scratchModule);
-                this.removeSysHacks = ScopeOps.__getattribute__(this.scratchModule, "remove_sys_hacks");
+                // TODO: does this line cause leakage?
+                this.removeSysHacks = this.CreateFromSnippet(CodeSnippets.INSTALL_IMPORT_HOOK_CODE, "remove_sys_hacks");
                 
                 // TODO: load builtin modules only on demand?
                 this.stub.LoadBuiltinModule("posix");
@@ -215,7 +216,7 @@ namespace Ironclad
 
             if (!this.appliedNumpyHack)
             {
-                // FIXME?
+                // TODO: FIXME?
                 // I don't know what it is about numpy, but using it heavily
                 // makes this step extremely flaky: that's, like, BSOD flaky.
                 // OTOH, even attempting this operation is very optimistic
@@ -236,7 +237,7 @@ namespace Ironclad
             {
                 PythonCalls.Call(this.removeSysHacks);
                 
-                PythonDictionary modules = (PythonDictionary)ScopeOps.__getattribute__(this.python.SystemState, "modules");
+                PythonDictionary modules = (PythonDictionary)this.python.SystemState.__dict__["modules"];
                 modules.Remove("mmap");
                 modules.Remove("posix");
                 modules.Remove("_csv");
@@ -661,6 +662,12 @@ namespace Ironclad
         Fill__PyThreadState_Current(IntPtr address)
         {
             CPyMarshal.WritePtr(address, IntPtr.Zero);
+        }
+
+        private object CreateFromSnippet(string code, string key)
+        {
+            this.ExecInModule(code, this.scratchModule);
+            return this.scratchModule.__dict__[key];
         }
     }
 

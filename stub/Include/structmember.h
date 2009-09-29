@@ -62,6 +62,9 @@ typedef struct PyMemberDef {
 /* Added by Jack: strings contained in the structure */
 #define T_STRING_INPLACE	13
 
+/* Added by Lillo: bools contained in the structure (assumed char) */
+#define T_BOOL		14
+
 #define T_OBJECT_EX	16	/* Like T_OBJECT, but raises AttributeError
 				   when the value is NULL, instead of
 				   converting to None. */
@@ -70,12 +73,15 @@ typedef struct PyMemberDef {
 #define T_ULONGLONG      18
 #endif /* HAVE_LONG_LONG */
 
+#define T_PYSSIZET       19 /* Py_ssize_t */
+
+
 /* Flags */
 #define READONLY	1
 #define RO		READONLY		/* Shorthand */
 #define READ_RESTRICTED	2
-#define WRITE_RESTRICTED 4
-#define RESTRICTED	(READ_RESTRICTED | WRITE_RESTRICTED)
+#define PY_WRITE_RESTRICTED 4
+#define RESTRICTED	(READ_RESTRICTED | PY_WRITE_RESTRICTED)
 
 
 /* Obsolete API, for binary backwards compatibility */

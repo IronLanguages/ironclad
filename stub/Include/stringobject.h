@@ -1,5 +1,5 @@
 
-/* String object interface */
+/* String (str/bytes) object interface */
 
 #ifndef Py_STRINGOBJECT_H
 #define Py_STRINGOBJECT_H
@@ -55,8 +55,9 @@ typedef struct {
 PyAPI_DATA(PyTypeObject) PyBaseString_Type;
 PyAPI_DATA(PyTypeObject) PyString_Type;
 
-#define PyString_Check(op) PyObject_TypeCheck(op, &PyString_Type)
-#define PyString_CheckExact(op) ((op)->ob_type == &PyString_Type)
+#define PyString_Check(op) \
+                 PyType_FastSubclass(Py_TYPE(op), Py_TPFLAGS_STRING_SUBCLASS)
+#define PyString_CheckExact(op) (Py_TYPE(op) == &PyString_Type)
 
 PyAPI_FUNC(PyObject *) PyString_FromStringAndSize(const char *, Py_ssize_t);
 PyAPI_FUNC(PyObject *) PyString_FromString(const char *);
@@ -88,7 +89,7 @@ PyAPI_FUNC(void) _Py_ReleaseInternedStrings(void);
 
 /* Macro, trading safety for speed */
 #define PyString_AS_STRING(op) (((PyStringObject *)(op))->ob_sval)
-#define PyString_GET_SIZE(op)  (((PyStringObject *)(op))->ob_size)
+#define PyString_GET_SIZE(op)  Py_SIZE(op)
 
 /* _PyString_Join(sep, x) is like sep.join(x).  sep must be PyStringObject*,
    x must be an iterable object. */
@@ -175,7 +176,23 @@ PyAPI_FUNC(int) PyString_AsStringAndSize(
 				   (only possible for 0-terminated
 				   strings) */
     );
-    
+
+/* Using the current locale, insert the thousands grouping
+   into the string pointed to by buffer.  For the argument descriptions,
+   see Objects/stringlib/localeutil.h */
+
+PyAPI_FUNC(int) _PyString_InsertThousandsGrouping(char *buffer,
+						  Py_ssize_t n_buffer,
+						  Py_ssize_t n_digits,
+						  Py_ssize_t buf_size,
+						  Py_ssize_t *count,
+						  int append_zero_char);
+
+/* Format the object based on the format_spec, as defined in PEP 3101
+   (Advanced String Formatting). */
+PyAPI_FUNC(PyObject *) _PyBytes_FormatAdvanced(PyObject *obj,
+					       char *format_spec,
+					       Py_ssize_t format_spec_len);
 
 #ifdef __cplusplus
 }

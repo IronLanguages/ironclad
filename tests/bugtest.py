@@ -20,41 +20,11 @@ class BugTest(TestCase):
         math.log(Number())
         math.log10(Number())
 
-    def testIterType(self):
-        class C(object):
-            def __iter__(self):
-                yield 1
-        
-        iter(C)
-        # when this fails, fix PySeqIter_New and PyObject_GetIter
-
-    def testLog10FloatMixin(self):
-        class Floatish(float, object):
-            pass
-        num = Floatish(100.0)
-        self.assertRaises(TypeError, lambda: math.log10(num))
-        # when this fails, stop patching log10 in import_code.py
-
-    def testLongFromEmptyString(self):
-        for str_ in ('', '   '):
-            self.assertEquals(long(str_), 0, "you can fix PyNumber_Long now")
-
     def testUIntLen(self):
         class C(object):
             def __len__(self):
                 return UInt32(123)
         self.assertEquals(len(C()), 123, "uint len bug is back (are you using ipy 2.0 instead of 2.0.1?)")
-
-
-    def testNonePlusString(self):
-        None + ''
-        # when this fails, stop patching numpy.lib._iotools._is_string_like in import_code.py
-
-
-    def testIckyDiamondException(self):
-        class E1(Exception): pass
-        self.assertRaises(TypeError, type, 'E2', (E1, IOError), {})
-        # when this fails, remove h5py._stub.generate_class hack
 
 suite = makesuite(BugTest)
 if __name__ == '__main__':

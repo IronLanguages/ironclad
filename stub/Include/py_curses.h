@@ -73,7 +73,7 @@ typedef struct {
 	WINDOW *win;
 } PyCursesWindowObject;
 
-#define PyCursesWindow_Check(v)	 ((v)->ob_type == &PyCursesWindow_Type)
+#define PyCursesWindow_Check(v)	 (Py_TYPE(v) == &PyCursesWindow_Type)
 
 #ifdef CURSES_MODULE
 /* This section is used when compiling _cursesmodule.c */
@@ -90,7 +90,7 @@ static void **PyCurses_API;
 
 #define import_curses() \
 { \
-  PyObject *module = PyImport_ImportModule("_curses"); \
+  PyObject *module = PyImport_ImportModuleNoBlock("_curses"); \
   if (module != NULL) { \
     PyObject *module_dict = PyModule_GetDict(module); \
     PyObject *c_api_object = PyDict_GetItemString(module_dict, "_C_API"); \
@@ -172,5 +172,6 @@ static PyObject *PyCurses_ ## X (PyObject *self) \
 #endif
 
 #endif /* !defined(Py_CURSES_H) */
+
 
 

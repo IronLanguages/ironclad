@@ -30,21 +30,6 @@ namespace Ironclad
                 "_dt", BindingFlags.NonPublic | BindingFlags.Instance)[0]);
             return (PythonType)_typeField.GetValue(proxy);
         }
-
-        public static IEnumerator
-        CreateItemEnumerator(object obj)
-        {
-            MethodInfo _createMethod = typeof(ItemEnumerator).GetMethod(
-                "Create", BindingFlags.NonPublic | BindingFlags.Static);
-            try
-            {
-                return (IEnumerator)_createMethod.Invoke(null, new object[] { obj });
-            }
-            catch (Exception e)
-            {
-                throw e.GetBaseException();
-            }
-        }
         
         public static object
         GetPythonException(System.Exception clrException)

@@ -7,12 +7,12 @@ Portions Copyright (c)
 All Rights Reserved
 
 Portions Copyright (c)
-2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Python Software 
+2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Python Software 
 Foundation; 
 All Rights Reserved
 
-Large parts of build/ironclad/python25.dll are compiled from C
-language source files taken from Python 2.5.4 and modified as 
+Large parts of build/ironclad/python26.dll are compiled from C
+language source files taken from Python 2.6.2 and modified as 
 follows. In most cases, types and functions have been used,
 without modification, to support the operation of C extension
 modules which expect to be linked to the real CPython library.
