@@ -42,7 +42,7 @@ bz2_test_data = 'BZh91AY&SYM\xf6FM\x00!\xd9\x95\x80@\x01\x00 \x06A\x90\xa0 \x00\
 bz2_test_line = "I wonder why. I wonder why. I wonder why I wonder why.\n"
 bz2_test_text_lines = bz2_test_line * 1000
 
-DLL_PATH = os.path.join("build", "ironclad", "python25.dll")
+DLL_PATH = os.path.join("build", "ironclad", "python26.dll")
  
 
 def ModuleTestCase(module):
@@ -517,4 +517,5 @@ CsvTest = TrivialModuleTestCase('csv')
 suite = automakesuite(locals())
 if __name__ == '__main__':
     run(suite)
+
 

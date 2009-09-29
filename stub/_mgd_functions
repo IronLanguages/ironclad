@@ -6,7 +6,7 @@
 
 
 FILE * IC_PyFile_AsFile(PyObject *f);
-int IC_PyFile_SetEncoding(PyObject *f, const char *enc);
+int IC_PyFile_SetEncodingAndErrors(PyObject *f, const char *enc, char* errors);
 void IC_file_dealloc(PyFileObject *f);
 PyObject * IC_file_close(PyFileObject *f);
 PyObject * IC_file_seek(PyFileObject *f, PyObject *args);

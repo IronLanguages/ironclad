@@ -3,6 +3,7 @@ using System.Collections;
 
 using Microsoft.Scripting;
 
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
@@ -12,16 +13,6 @@ namespace Ironclad
     public partial class Python25Mapper : Python25Api
     {
 
-        private void
-        AssertNotType(object obj)
-        {
-            // see bugtest.py
-            if (Builtin.isinstance(obj, TypeCache.PythonType))
-            {
-                throw new ArgumentTypeException(String.Format("Even though I apparently can enumerate {0}, I'm pretty sure I shouldn't", obj));
-            }
-        }
-
         public override IntPtr
         PySeqIter_New(IntPtr seqPtr)
         {
@@ -30,9 +21,7 @@ namespace Ironclad
             try
             {
                 object seq = this.Retrieve(seqPtr);
-                this.AssertNotType(seq);
-                IEnumerator enumerator = InappropriateReflection.CreateItemEnumerator(seq);
-                return this.Store(enumerator);
+                return this.Store(PythonCalls.Call(this.kindaSeqIter, new object[] { seq } ));
             }
             catch (Exception e)
             {
@@ -56,8 +45,7 @@ namespace Ironclad
             try
             {
                 object obj = this.Retrieve(objPtr);
-                this.AssertNotType(obj);
-                return this.Store(Builtin.iter(obj));
+                return this.Store(Builtin.iter(this.scratchContext, obj));
             }
             catch (Exception e)
             {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
@@ -68,7 +69,7 @@ namespace Ironclad
             {
                 return 0;
             }
-            if (Builtin.issubclass(subtype, _type))
+            if (Builtin.issubclass(this.scratchContext, subtype, _type))
             {
                 return 1;
             }
@@ -149,7 +150,7 @@ namespace Ironclad
                     bases = (PythonTuple)this.Retrieve(basesPtr);
                 }
                 return this.Store(OldClass.__new__(this.scratchContext, 
-                    TypeCache.OldClass, (string)this.Retrieve(namePtr), bases, (IAttributesCollection)this.Retrieve(dictPtr)));
+                    TypeCache.OldClass, (string)this.Retrieve(namePtr), bases, (PythonDictionary)this.Retrieve(dictPtr)));
             }
             catch (Exception e)
             {
@@ -170,7 +171,7 @@ namespace Ironclad
                     throw new NotImplementedException("IC_PyType_New; non-null kwargs; please submit a bug (with repro)");
                 }
                 return this.Store(new PythonType(
-                    this.scratchContext, (string)args[0], (PythonTuple)args[1], (IAttributesCollection)args[2]));
+                    this.scratchContext, (string)args[0], (PythonTuple)args[1], (PythonDictionary)args[2]));
             }
             catch (Exception e)
             {
@@ -367,12 +368,12 @@ namespace Ironclad
                 CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_bases", this.Store(tp_bases));
             }
 
-            ScopeOps.__setattr__(this.scratchModule, "_ironclad_bases", tp_bases);
-            ScopeOps.__setattr__(this.scratchModule, "_ironclad_metaclass", ob_type);
+            this.scratchModule.__dict__["_ironclad_bases"] = tp_bases;
+            this.scratchModule.__dict__["_ironclad_metaclass"] = ob_type;
             this.ExecInModule(CodeSnippets.CLASS_STUB_CODE, this.scratchModule);
-            this.classStubs[typePtr] = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_class_stub");
-            this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
+            this.classStubs[typePtr] = this.scratchModule.__dict__["_ironclad_class_stub"];
 
+            this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
             this.map.Associate(typePtr, _type);
             this.PyType_Ready(typePtr);
             return typePtr;
@@ -436,19 +437,19 @@ namespace Ironclad
             PythonType type_ = (PythonType)this.Retrieve(typePtr);
             
             object[] args = new object[]{};
-            if (Builtin.issubclass(type_, TypeCache.Int32))
+            if (Builtin.issubclass(this.scratchContext, type_, TypeCache.Int32))
             {
                 args = new object[] { CPyMarshal.ReadIntField(ptr, typeof(PyIntObject), "ob_ival") };
             }
-            if (Builtin.issubclass(type_, TypeCache.Double))
+            if (Builtin.issubclass(this.scratchContext, type_, TypeCache.Double))
             {
                 args = new object[] { CPyMarshal.ReadDoubleField(ptr, typeof(PyFloatObject), "ob_fval") };
             }
-            if (Builtin.issubclass(type_, TypeCache.String))
+            if (Builtin.issubclass(this.scratchContext, type_, TypeCache.String))
             {
                 args = new object[] { this.ReadPyString(ptr) };
             }
-            if (Builtin.issubclass(type_, TypeCache.PythonType))
+            if (Builtin.issubclass(this.scratchContext, type_, TypeCache.PythonType))
             {
                 string name = CPyMarshal.ReadCStringField(ptr, typeof(PyTypeObject), "tp_name");
                 PythonTuple tp_bases = this.ExtractBases(typePtr);

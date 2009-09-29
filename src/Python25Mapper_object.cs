@@ -158,14 +158,12 @@ namespace Ironclad
             try
             {
                 object obj = this.Retrieve(objPtr);
-                
-                if (obj == TypeCache.PythonFile)
+
+                PythonDictionary builtins = this.GetModule("__builtin__").__dict__;
+                if (obj == TypeCache.PythonFile || obj == builtins["open"])
                 {
                     obj = this.cFileClass;
                 }
-                
-                Scope __builtin__ = (Scope)this.GetModule("__builtin__");
-                object __import__ = Builtin.getattr(this.scratchContext, __builtin__, "__import__");
                 
                 object[] argsArray = null;
 
@@ -180,7 +178,7 @@ namespace Ironclad
                     args.CopyTo(argsArray, 0);
                 }
 
-                if (obj == __import__)
+                if (obj == builtins["__import__"])
                 {
                     // I really, really wish that Pyrex used the C API for importing things,
                     // instead of PyObject_Call __import__. However, it doesn't, so I have to 
@@ -201,7 +199,7 @@ namespace Ironclad
                 }
                 else
                 {
-                    IAttributesCollection kwargs = (IAttributesCollection)this.Retrieve(kwargsPtr);
+                    PythonDictionary kwargs = (PythonDictionary)this.Retrieve(kwargsPtr);
                     result = PythonCalls.CallWithKeywordArgs(this.scratchContext, obj, argsArray, kwargs);
                 }
                 
@@ -254,7 +252,7 @@ namespace Ironclad
             {
                 object inst = this.Retrieve(instPtr);
                 object cls = this.Retrieve(clsPtr);
-                if (Builtin.isinstance(inst, cls))
+                if (PythonOps.IsInstance(this.scratchContext, inst, cls))
                 {
                     return 1;
                 }
@@ -282,7 +280,7 @@ namespace Ironclad
                 PythonType subType = derived as PythonType;
                 if (subType != null)
                 {
-                    if (Builtin.issubclass(subType, cls))
+                    if (Builtin.issubclass(this.scratchContext, subType, cls))
                     {
                         return 1;
                     }
@@ -290,7 +288,7 @@ namespace Ironclad
                 }
 
                 // if this raises, it should have raised anyway
-                if (Builtin.issubclass((OldClass)derived, cls))
+                if (Builtin.issubclass(this.scratchContext, (OldClass)derived, cls))
                 {
                     return 1;
                 }

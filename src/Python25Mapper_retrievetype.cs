@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
@@ -31,18 +32,17 @@ namespace Ironclad
             IntPtr ob_typePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyObject), "ob_type");
             this.IncRef(ob_typePtr);
             object ob_type = this.Retrieve(ob_typePtr);
-            ScopeOps.__setattr__(this.scratchModule, "_ironclad_metaclass", ob_type);
-            ScopeOps.__setattr__(this.scratchModule, "_ironclad_bases", tp_bases);
-            this.ExecInModule(cb.code.ToString(), this.scratchModule);
 
-            object klass = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_class");
-            Dispatcher _dispatcher = new Dispatcher(this, cb.methodTable);
-            Builtin.setattr(this.scratchContext, klass, "_dispatcher", _dispatcher);
+            this.scratchModule.__dict__["_ironclad_metaclass"] = ob_type;
+            this.scratchModule.__dict__["_ironclad_bases"] = tp_bases;
+            this.ExecInModule(cb.code.ToString(), this.scratchModule);
+            object klass = this.scratchModule.__dict__["_ironclad_class"];
+            object klass_stub = this.scratchModule.__dict__["_ironclad_class_stub"];
+
+            this.classStubs[typePtr] = klass_stub;
+            Builtin.setattr(this.scratchContext, klass, "_dispatcher", new Dispatcher(this, cb.methodTable));
             object typeDict = Builtin.getattr(this.scratchContext, klass, "__dict__");
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_dict", this.Store(typeDict));
-
-            object klass_stub = ScopeOps.__getattribute__(this.scratchModule, "_ironclad_class_stub");
-            this.classStubs[typePtr] = klass_stub;
             return klass;
         }
         

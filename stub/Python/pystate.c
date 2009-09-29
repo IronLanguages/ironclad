@@ -304,6 +304,7 @@ PyThreadState_DeleteCurrent()
 }
 #endif /* WITH_THREAD */
 
+
 #endif // IRONCLAD
 
 PyThreadState *
@@ -649,5 +650,6 @@ PyGILState_Release(PyGILState_STATE oldstate)
 #endif
 
 #endif /* WITH_THREAD */
+
 
 

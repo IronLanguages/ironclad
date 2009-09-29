@@ -3,6 +3,7 @@ using System;
 using Microsoft.Scripting.Runtime;
 
 using IronPython.Hosting;
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
@@ -24,7 +25,7 @@ namespace Ironclad
         internal void
         PrintToStdErr(object obj)
         {
-            object stderr = ScopeOps.__getattribute__(this.python.SystemState, "stderr");
+            object stderr = this.python.SystemState.__dict__["stderr"];
             PythonOps.PrintWithDest(this.scratchContext, stderr, obj);
         }
 

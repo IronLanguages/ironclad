@@ -39,7 +39,7 @@ appropriately.
 Running make in the top-level directory should do the following:
 
 * Run 'tools/buildstub.py' to (eventually) create the stub library 
-  'build/ironclad/python25.dll' from an existing (real) python25.dll and the 
+  'build/ironclad/python26.dll' from an existing (real) python26.dll and the 
   contents of 'stub/'
 * Run 'tools/generatepython25mapper.py' to create various files in 'src/' from 
   the contents of 'src/python25mappercomponents/'
@@ -57,7 +57,7 @@ TESTING
 You should ensure that IRONPYTHONPATH is set correctly. In particular, it
 should include the directory containing .pyd files.
 
-In order for all tests to run, numpy 1.3, scipy 0.7, matplotlib 0.98, h5py 1.1,
+In order for all tests to run, numpy 1.3, scipy 0.7, matplotlib 0.98, h5py 1.2.1,
 and pysvn 1.6 must be installed - and the Python25 distribution's Dlls, Lib and
 Lib/site-packages should be on your path - but this is not otherwise necessary.
 

@@ -90,8 +90,9 @@ struct _dictobject {
 
 PyAPI_DATA(PyTypeObject) PyDict_Type;
 
-#define PyDict_Check(op) PyObject_TypeCheck(op, &PyDict_Type)
-#define PyDict_CheckExact(op) ((op)->ob_type == &PyDict_Type)
+#define PyDict_Check(op) \
+                 PyType_FastSubclass(Py_TYPE(op), Py_TPFLAGS_DICT_SUBCLASS)
+#define PyDict_CheckExact(op) (Py_TYPE(op) == &PyDict_Type)
 
 PyAPI_FUNC(PyObject *) PyDict_New(void);
 PyAPI_FUNC(PyObject *) PyDict_GetItem(PyObject *mp, PyObject *key);
@@ -109,6 +110,7 @@ PyAPI_FUNC(Py_ssize_t) PyDict_Size(PyObject *mp);
 PyAPI_FUNC(PyObject *) PyDict_Copy(PyObject *mp);
 PyAPI_FUNC(int) PyDict_Contains(PyObject *mp, PyObject *key);
 PyAPI_FUNC(int) _PyDict_Contains(PyObject *mp, PyObject *key, long hash);
+PyAPI_FUNC(PyObject *) _PyDict_NewPresized(Py_ssize_t minused);
 
 /* PyDict_Update(mp, other) is equivalent to PyDict_Merge(mp, other, 1). */
 PyAPI_FUNC(int) PyDict_Update(PyObject *mp, PyObject *other);

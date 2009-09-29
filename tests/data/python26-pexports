@@ -1,4 +1,4 @@
-LIBRARY python25.dll
+LIBRARY python26.dll
 EXPORTS
 PyAST_Compile
 PyAST_FromNode
@@ -16,13 +16,31 @@ PyBaseObject_Type DATA
 PyBaseString_Type DATA
 PyBool_FromLong
 PyBool_Type DATA
+PyBuffer_FillContiguousStrides
+PyBuffer_FillInfo
+PyBuffer_FromContiguous
 PyBuffer_FromMemory
 PyBuffer_FromObject
 PyBuffer_FromReadWriteMemory
 PyBuffer_FromReadWriteObject
+PyBuffer_GetPointer
+PyBuffer_IsContiguous
 PyBuffer_New
+PyBuffer_Release
+PyBuffer_ToContiguous
 PyBuffer_Type DATA
+PyByteArrayIter_Type DATA
+PyByteArray_AsString
+PyByteArray_Concat
+PyByteArray_Fini
+PyByteArray_FromObject
+PyByteArray_FromStringAndSize
+PyByteArray_Init
+PyByteArray_Resize
+PyByteArray_Size
+PyByteArray_Type DATA
 PyCFunction_Call
+PyCFunction_ClearFreeList
 PyCFunction_Fini
 PyCFunction_GetFlags
 PyCFunction_GetFunction
@@ -52,6 +70,7 @@ PyClass_Type DATA
 PyCode_Addr2Line
 PyCode_CheckLineNumber
 PyCode_New
+PyCode_Optimize
 PyCode_Type DATA
 PyCodec_BackslashReplaceErrors
 PyCodec_Decode
@@ -86,6 +105,7 @@ PyDict_Contains
 PyDict_Copy
 PyDict_DelItem
 PyDict_DelItemString
+PyDict_Fini
 PyDict_GetItem
 PyDict_GetItemString
 PyDict_Items
@@ -170,6 +190,8 @@ PyExc_ArithmeticError DATA
 PyExc_AssertionError DATA
 PyExc_AttributeError DATA
 PyExc_BaseException DATA
+PyExc_BufferError DATA
+PyExc_BytesWarning DATA
 PyExc_DeprecationWarning DATA
 PyExc_EOFError DATA
 PyExc_EnvironmentError DATA
@@ -192,6 +214,7 @@ PyExc_NotImplementedError DATA
 PyExc_OSError DATA
 PyExc_OverflowError DATA
 PyExc_PendingDeprecationWarning DATA
+PyExc_RecursionErrorInst DATA
 PyExc_ReferenceError DATA
 PyExc_RuntimeError DATA
 PyExc_RuntimeWarning DATA
@@ -215,12 +238,15 @@ PyExc_Warning DATA
 PyExc_WindowsError DATA
 PyExc_ZeroDivisionError DATA
 PyFile_AsFile
+PyFile_DecUseCount
 PyFile_FromFile
 PyFile_FromString
 PyFile_GetLine
+PyFile_IncUseCount
 PyFile_Name
 PyFile_SetBufSize
 PyFile_SetEncoding
+PyFile_SetEncodingAndErrors
 PyFile_SoftSpace
 PyFile_Type DATA
 PyFile_WriteObject
@@ -228,12 +254,17 @@ PyFile_WriteString
 PyFloat_AsDouble
 PyFloat_AsReprString
 PyFloat_AsString
+PyFloat_ClearFreeList
 PyFloat_Fini
 PyFloat_FromDouble
 PyFloat_FromString
+PyFloat_GetInfo
+PyFloat_GetMax
+PyFloat_GetMin
 PyFloat_Type DATA
 PyFrame_BlockPop
 PyFrame_BlockSetup
+PyFrame_ClearFreeList
 PyFrame_FastToLocals
 PyFrame_Fini
 PyFrame_LocalsToFast
@@ -265,13 +296,14 @@ PyImport_ExecCodeModule
 PyImport_ExecCodeModuleEx
 PyImport_ExtendInittab
 PyImport_FrozenModules DATA
+PyImport_GetImporter
 PyImport_GetMagicNumber
 PyImport_GetModuleDict
 PyImport_Import
 PyImport_ImportFrozenModule
 PyImport_ImportModule
-PyImport_ImportModuleEx
 PyImport_ImportModuleLevel
+PyImport_ImportModuleNoBlock
 PyImport_Inittab DATA
 PyImport_ReloadModule
 PyInstance_New
@@ -281,6 +313,7 @@ PyInt_AsLong
 PyInt_AsSsize_t
 PyInt_AsUnsignedLongLongMask
 PyInt_AsUnsignedLongMask
+PyInt_ClearFreeList
 PyInt_Fini
 PyInt_FromLong
 PyInt_FromSize_t
@@ -312,6 +345,7 @@ PyList_Type DATA
 PyLong_AsDouble
 PyLong_AsLong
 PyLong_AsLongLong
+PyLong_AsSsize_t
 PyLong_AsUnsignedLong
 PyLong_AsUnsignedLongLong
 PyLong_AsUnsignedLongLongMask
@@ -320,6 +354,8 @@ PyLong_AsVoidPtr
 PyLong_FromDouble
 PyLong_FromLong
 PyLong_FromLongLong
+PyLong_FromSize_t
+PyLong_FromSsize_t
 PyLong_FromString
 PyLong_FromUnicode
 PyLong_FromUnsignedLong
@@ -349,6 +385,7 @@ PyMember_GetOne
 PyMember_Set
 PyMember_SetOne
 PyMethod_Class
+PyMethod_ClearFreeList
 PyMethod_Fini
 PyMethod_Function
 PyMethod_New
@@ -367,6 +404,7 @@ PyNode_Compile
 PyNode_Free
 PyNode_ListTree
 PyNode_New
+PyNullImporter_Type DATA
 PyNumber_Absolute
 PyNumber_Add
 PyNumber_And
@@ -404,6 +442,7 @@ PyNumber_Power
 PyNumber_Remainder
 PyNumber_Rshift
 PyNumber_Subtract
+PyNumber_ToBase
 PyNumber_TrueDivide
 PyNumber_Xor
 PyOS_AfterFork
@@ -418,6 +457,8 @@ PyOS_ascii_atof
 PyOS_ascii_formatd
 PyOS_ascii_strtod
 PyOS_getsig
+PyOS_mystricmp
+PyOS_mystrnicmp
 PyOS_setsig
 PyOS_snprintf
 PyOS_strtol
@@ -437,9 +478,11 @@ PyObject_CheckReadBuffer
 PyObject_ClearWeakRefs
 PyObject_Cmp
 PyObject_Compare
+PyObject_CopyData
 PyObject_DelItem
 PyObject_DelItemString
 PyObject_Dir
+PyObject_Format
 PyObject_Free
 PyObject_GC_Del
 PyObject_GC_Track
@@ -448,11 +491,13 @@ PyObject_GenericGetAttr
 PyObject_GenericSetAttr
 PyObject_GetAttr
 PyObject_GetAttrString
+PyObject_GetBuffer
 PyObject_GetItem
 PyObject_GetIter
 PyObject_HasAttr
 PyObject_HasAttrString
 PyObject_Hash
+PyObject_HashNotImplemented
 PyObject_Init
 PyObject_InitVar
 PyObject_IsInstance
@@ -478,9 +523,11 @@ PyParser_ASTFromFile
 PyParser_ASTFromString
 PyParser_ParseFile
 PyParser_ParseFileFlags
+PyParser_ParseFileFlagsEx
 PyParser_ParseString
 PyParser_ParseStringFlags
 PyParser_ParseStringFlagsFilename
+PyParser_ParseStringFlagsFilenameEx
 PyParser_SetError
 PyParser_SimpleParseFile
 PyParser_SimpleParseFileFlags
@@ -579,6 +626,7 @@ PySymtable_Lookup
 PySys_AddWarnOption
 PySys_GetFile
 PySys_GetObject
+PySys_HasWarnOptions
 PySys_ResetWarnOptions
 PySys_SetArgv
 PySys_SetObject
@@ -594,6 +642,7 @@ PyThreadState_New
 PyThreadState_Next
 PyThreadState_SetAsyncExc
 PyThreadState_Swap
+PyThread_ReInitTLS
 PyThread_acquire_lock
 PyThread_allocate_lock
 PyThread_create_key
@@ -615,6 +664,7 @@ PyToken_TwoChars
 PyTraceBack_Here
 PyTraceBack_Print
 PyTraceBack_Type DATA
+PyTuple_ClearFreeList
 PyTuple_Fini
 PyTuple_GetItem
 PyTuple_GetSlice
@@ -623,9 +673,11 @@ PyTuple_Pack
 PyTuple_SetItem
 PyTuple_Size
 PyTuple_Type DATA
+PyType_ClearCache
 PyType_GenericAlloc
 PyType_GenericNew
 PyType_IsSubtype
+PyType_Modified
 PyType_Ready
 PyType_Type DATA
 PyUnicodeDecodeError_Create
@@ -661,10 +713,12 @@ PyUnicodeUCS2_AsEncodedString
 PyUnicodeUCS2_AsLatin1String
 PyUnicodeUCS2_AsRawUnicodeEscapeString
 PyUnicodeUCS2_AsUTF16String
+PyUnicodeUCS2_AsUTF32String
 PyUnicodeUCS2_AsUTF8String
 PyUnicodeUCS2_AsUnicode
 PyUnicodeUCS2_AsUnicodeEscapeString
 PyUnicodeUCS2_AsWideChar
+PyUnicodeUCS2_ClearFreelist
 PyUnicodeUCS2_Compare
 PyUnicodeUCS2_Concat
 PyUnicodeUCS2_Contains
@@ -676,6 +730,8 @@ PyUnicodeUCS2_DecodeLatin1
 PyUnicodeUCS2_DecodeRawUnicodeEscape
 PyUnicodeUCS2_DecodeUTF16
 PyUnicodeUCS2_DecodeUTF16Stateful
+PyUnicodeUCS2_DecodeUTF32
+PyUnicodeUCS2_DecodeUTF32Stateful
 PyUnicodeUCS2_DecodeUTF8
 PyUnicodeUCS2_DecodeUTF8Stateful
 PyUnicodeUCS2_DecodeUnicodeEscape
@@ -686,13 +742,18 @@ PyUnicodeUCS2_EncodeDecimal
 PyUnicodeUCS2_EncodeLatin1
 PyUnicodeUCS2_EncodeRawUnicodeEscape
 PyUnicodeUCS2_EncodeUTF16
+PyUnicodeUCS2_EncodeUTF32
 PyUnicodeUCS2_EncodeUTF8
 PyUnicodeUCS2_EncodeUnicodeEscape
 PyUnicodeUCS2_Find
 PyUnicodeUCS2_Format
 PyUnicodeUCS2_FromEncodedObject
+PyUnicodeUCS2_FromFormat
+PyUnicodeUCS2_FromFormatV
 PyUnicodeUCS2_FromObject
 PyUnicodeUCS2_FromOrdinal
+PyUnicodeUCS2_FromString
+PyUnicodeUCS2_FromStringAndSize
 PyUnicodeUCS2_FromUnicode
 PyUnicodeUCS2_FromWideChar
 PyUnicodeUCS2_GetDefaultEncoding
@@ -716,6 +777,7 @@ PyUnicode_BuildEncodingMap
 PyUnicode_DecodeMBCS
 PyUnicode_DecodeMBCSStateful
 PyUnicode_DecodeUTF7
+PyUnicode_DecodeUTF7Stateful
 PyUnicode_EncodeMBCS
 PyUnicode_EncodeUTF7
 PyUnicode_Type DATA
@@ -727,11 +789,13 @@ PyWrapper_New
 Py_AddPendingCall
 Py_AtExit
 Py_BuildValue
+Py_BytesWarningFlag DATA
 Py_CompileString
 Py_CompileStringFlags
 Py_DebugFlag DATA
 Py_DecRef
 Py_DivisionWarningFlag DATA
+Py_DontWriteBytecodeFlag DATA
 Py_EndInterpreter
 Py_Exit
 Py_FatalError
@@ -759,13 +823,16 @@ Py_IncRef
 Py_InitModule4
 Py_Initialize
 Py_InitializeEx
+Py_InspectFlag DATA
 Py_InteractiveFlag DATA
 Py_IsInitialized
 Py_Main
 Py_MakePendingCalls
 Py_NewInterpreter
 Py_NoSiteFlag DATA
+Py_NoUserSiteDirectory DATA
 Py_OptimizeFlag DATA
+Py_Py3kWarningFlag DATA
 Py_ReprEnter
 Py_ReprLeave
 Py_SetProgramName
@@ -786,14 +853,17 @@ _PyArg_Parse_SizeT
 _PyArg_VaParseTupleAndKeywords_SizeT
 _PyArg_VaParse_SizeT
 _PyBuiltin_Init
+_PyBytes_FormatAdvanced
 _PyCodec_Lookup
 _PyDict_Contains
+_PyDict_NewPresized
 _PyDict_Next
 _PyErr_BadInternalCall
 _PyEval_CallTracing
 _PyEval_SliceIndex
 _PyExc_Fini
 _PyExc_Init
+_PyFloat_FormatAdvanced
 _PyFloat_Init
 _PyFloat_Pack4
 _PyFloat_Pack8
@@ -809,20 +879,22 @@ _PyImport_Init
 _PyImport_IsScript
 _PyImport_ReInitLock
 _PyInstance_Lookup
+_PyInt_Format
+_PyInt_FormatAdvanced
 _PyInt_Init
 _PyList_Extend
 _PyLong_AsByteArray
 _PyLong_AsScaledDouble
-_PyLong_AsSsize_t
 _PyLong_Copy
 _PyLong_DigitValue DATA
+_PyLong_Format
+_PyLong_FormatAdvanced
 _PyLong_FromByteArray
-_PyLong_FromSize_t
-_PyLong_FromSsize_t
 _PyLong_New
 _PyLong_NumBits
 _PyLong_Sign
 _PyModule_Clear
+_PyNumber_ConvertIntegralToInt
 _PyOS_ReadlineTState DATA
 _PyObject_CallFunction_SizeT
 _PyObject_CallMethod_SizeT
@@ -835,7 +907,10 @@ _PyObject_GetDictPtr
 _PyObject_LengthHint
 _PyObject_New
 _PyObject_NewVar
+_PyObject_RealIsInstance
+_PyObject_RealIsSubclass
 _PyObject_Str
+_PyParser_Grammar DATA
 _PyParser_TokenNames DATA
 _PySequence_IterSearch
 _PySet_Next
@@ -844,6 +919,7 @@ _PySet_Update
 _PySlice_FromIndices
 _PyString_Eq
 _PyString_FormatLong
+_PyString_InsertThousandsGrouping
 _PyString_Join
 _PyString_Resize
 _PySys_Init
@@ -873,7 +949,9 @@ _PyUnicodeUCS2_ToLowercase
 _PyUnicodeUCS2_ToNumeric
 _PyUnicodeUCS2_ToTitlecase
 _PyUnicodeUCS2_ToUppercase
+_PyUnicode_FormatAdvanced
 _PyUnicode_XStrip
+_PyWarnings_Init
 _PyWeakref_CallableProxyType DATA
 _PyWeakref_ClearRef
 _PyWeakref_GetWeakrefCount
@@ -883,6 +961,7 @@ _Py_BuildValue_SizeT
 _Py_CheckInterval DATA
 _Py_CheckRecursionLimit DATA
 _Py_CheckRecursiveCall
+_Py_DisplaySourceLine
 _Py_EllipsisObject DATA
 _Py_HashDouble
 _Py_HashPointer
@@ -897,6 +976,8 @@ _Py_Ticker DATA
 _Py_TrueStruct DATA
 _Py_VaBuildValue_SizeT
 _Py_ZeroStruct DATA
+_Py_ascii_whitespace DATA
+_Py_c_abs
 _Py_c_diff
 _Py_c_neg
 _Py_c_pow

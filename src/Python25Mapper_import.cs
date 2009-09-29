@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 using IronPython.Hosting;
 using IronPython.Runtime;
+using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
 using Microsoft.Scripting;
@@ -56,8 +57,7 @@ namespace Ironclad
         public override IntPtr
         PyImport_GetModuleDict()
         {
-            Scope sys = this.python.SystemState;
-            IntPtr modulesPtr = this.Store(ScopeOps.__getattribute__(sys, "modules"));
+            IntPtr modulesPtr = this.Store(this.python.SystemState.__dict__["modules"]);
             this.RememberTempObject(modulesPtr);
             return modulesPtr;
         }
@@ -102,10 +102,10 @@ namespace Ironclad
             return name;
         }
 
-        private object
+        private PythonModule
         Import(string name)
         {
-            object module = this.GetModule(name);
+            PythonModule module = this.GetModule(name);
             if (module != null)
             {
                 return module;
@@ -114,6 +114,7 @@ namespace Ironclad
             this.importNames.Push(name);
             try
             {
+                // TODO: yes, on inspection, I'm sure this is a stupid way to do it
                 this.ExecInModule(String.Format("import {0}", name), this.scratchModule);
             }
             finally
@@ -124,32 +125,29 @@ namespace Ironclad
             return this.GetModule(name);
         }
         
-        private Scope
+        private PythonModule
         CreateModule(string name)
         {
-            if (this.GetModule(name) == null)
+            PythonModule module = this.GetModule(name);
+            if (module == null)
             {
-                PythonDictionary __dict__ = new PythonDictionary();
-                __dict__["__name__"] = name;
-                Scope module = new Scope(__dict__);
+                module = new PythonModule();
+                module.__dict__["__name__"] = name;
                 this.AddModule(name, module);
-                return module;
             }
-            return null;
+            return module;
         }
 
         private void
         CreateModulesContaining(string name)
         {
-            this.CreateModule(name);
-            object innerScope = this.GetModule(name);
-
+            PythonModule inner = this.CreateModule(name);
             int lastDot = name.LastIndexOf('.');
             if (lastDot != -1)
             {
                 this.CreateModulesContaining(name.Substring(0, lastDot));
-                Scope outerScope = (Scope)this.GetModule(name.Substring(0, lastDot));
-                ScopeOps.__setattr__(outerScope, name.Substring(lastDot + 1), innerScope);
+                PythonModule outer = this.GetModule(name.Substring(0, lastDot));
+                outer.__dict__[name.Substring(lastDot + 1)] = inner;
             }
         }
         
@@ -164,15 +162,16 @@ namespace Ironclad
             
             Console.WriteLine("Detected numpy import");
             Console.WriteLine("  faking out modules: nosetester, parser");
-            
-            Scope nosetester = this.CreateModule("numpy.testing.nosetester");
+
+            PythonModule nosetester = this.CreateModule("numpy.testing.nosetester");
+            nosetester.__setattr__("import_nose", new Object());
+            nosetester.__setattr__("run_module_suite", new Object());
+            nosetester.__setattr__("get_package_name", new Object());
+
             PythonDictionary __dict__ = new PythonDictionary();
             __dict__["bench"] = __dict__["test"] = "This has been patched and broken by ironclad";
             PythonType NoseTester = new PythonType(this.scratchContext, "NoseTester", new PythonTuple(), __dict__);
-            ScopeOps.__setattr__(nosetester, "NoseTester", NoseTester);
-            ScopeOps.__setattr__(nosetester, "import_nose", new Object());
-            ScopeOps.__setattr__(nosetester, "run_module_suite", new Object());
-            ScopeOps.__setattr__(nosetester, "get_package_name", new Object());
+            nosetester.__setattr__("NoseTester", NoseTester);
             
             this.CreateModule("parser");
         }

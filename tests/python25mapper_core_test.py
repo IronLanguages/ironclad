@@ -31,8 +31,8 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
         
     
     def testLoadsStubWhenPassedPathAndUnloadsOnDispose(self):
-        mapper = Python25Mapper(os.path.join("build", "ironclad", "python25.dll"))
-        self.assertNotEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
+        mapper = Python25Mapper(os.path.join("build", "ironclad", "python26.dll"))
+        self.assertNotEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
                              "library not mapped by construction")
         self.assertNotEquals(Python25Mapper._Py_NoneStruct, IntPtr.Zero,
                              "mapping not set up")
@@ -41,12 +41,12 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
         self.assertEquals(CPyMarshal.ReadPtrField(mapper.PyLong_Type, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
         
         mapper.Dispose()
-        self.assertEquals(Unmanaged.GetModuleHandle("python25.dll"), IntPtr.Zero,
+        self.assertEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
                           "library not unmapped by Dispose")
         
     
     def testLoadsModuleAndUnloadsOnDispose(self):
-        mapper = Python25Mapper(os.path.join("build", "ironclad", "python25.dll"))
+        mapper = Python25Mapper(os.path.join("build", "ironclad", "python26.dll"))
         origcwd = os.getcwd()
         mapper.LoadModule(os.path.join("tests", "data", "setvalue.pyd"), "some.module")
         self.assertEquals(os.getcwd(), origcwd, "failed to restore working directory")
@@ -59,7 +59,7 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
     
     
     def testRemovesMmapOnDispose(self):
-        mapper = Python25Mapper(os.path.join("build", "ironclad", "python25.dll"))
+        mapper = Python25Mapper(os.path.join("build", "ironclad", "python26.dll"))
         sys.modules['csv'] = object()
         mapper.Dispose()
         self.assertFalse('mmap' in sys.modules)
@@ -302,32 +302,35 @@ class Python25Mapper_References_Test(TestCase):
         objref = WeakReference(obj)
         # need to use same allocator as mapper, otherwise it gets upset on shutdown
         ptr = allocator.Alloc(Marshal.SizeOf(PyObject))
-        CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
-        CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
-        mapper.StoreBridge(ptr, obj)
+        
+        try:
+            CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
+            CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
+            mapper.StoreBridge(ptr, obj)
 
-        self.assertEquals(mapper.Retrieve(ptr), obj, "object not stored")
-        self.assertEquals(mapper.Store(obj), ptr, "object not reverse-mapped")
-        
-        mapper.Weaken(obj)
-        CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
-        
-        mapper.IncRef(ptr)
-        del obj
-        gcwait()
-        self.assertEquals(objref.IsAlive, True, "was not strengthened by IncRef")
-        
-        obj = mapper.Retrieve(ptr)
-        mapper.DecRef(ptr)
-        del obj
-        gcwait()
-        self.assertEquals(objref.IsAlive, False, "was not weakened by DecRef")
-        
-        # need to dealloc ptr ourselves, it doesn't hapen automatically
-        # except for objects with Dispatchers
-        mapper.IC_PyBaseObject_Dealloc(ptr)
-        mapper.Dispose()
-        deallocTypes()
+            self.assertEquals(mapper.Retrieve(ptr), obj, "object not stored")
+            self.assertEquals(mapper.Store(obj), ptr, "object not reverse-mapped")
+
+            mapper.Weaken(obj)
+            CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
+
+            mapper.IncRef(ptr)
+            del obj
+            gcwait()
+            self.assertEquals(objref.IsAlive, True, "was not strengthened by IncRef")
+
+            obj = mapper.Retrieve(ptr)
+            mapper.DecRef(ptr)
+            del obj
+            gcwait()
+            self.assertEquals(objref.IsAlive, False, "was not weakened by DecRef")
+
+        finally:
+            # need to dealloc ptr ourselves, it doesn't hapen automatically
+            # except for objects with Dispatchers
+            mapper.IC_PyBaseObject_Dealloc(ptr)
+            mapper.Dispose()
+            deallocTypes()
     
 
     def testStrengthenWeakenUnmanagedInstance(self):
@@ -340,25 +343,28 @@ class Python25Mapper_References_Test(TestCase):
         objref = WeakReference(obj)
         # need to use same allocator as mapper, otherwise it gets upset on shutdown
         ptr = allocator.Alloc(Marshal.SizeOf(PyObject))
-        CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
-        CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
-        mapper.StoreBridge(ptr, obj)
         
-        del obj
-        gcwait()
-        self.assertEquals(objref.IsAlive, True, "was not strongly referenced")
+        try:
+            CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
+            CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
+            mapper.StoreBridge(ptr, obj)
+
+            del obj
+            gcwait()
+            self.assertEquals(objref.IsAlive, True, "was not strongly referenced")
+
+            sameobj = objref.Target
+            mapper.Weaken(sameobj)
+            del sameobj
+            gcwait()
+            self.assertRaises(NullReferenceException, mapper.Retrieve, ptr)
         
-        sameobj = objref.Target
-        mapper.Weaken(sameobj)
-        del sameobj
-        gcwait()
-        self.assertRaises(NullReferenceException, mapper.Retrieve, ptr)
-        
-        # need to dealloc ptr ourselves, it doesn't hapen automatically
-        # except for objects with Dispatchers
-        mapper.IC_PyBaseObject_Dealloc(ptr)
-        mapper.Dispose()
-        deallocTypes()
+        finally:
+            # need to dealloc ptr ourselves, it doesn't hapen automatically
+            # except for objects with Dispatchers
+            mapper.IC_PyBaseObject_Dealloc(ptr)
+            mapper.Dispose()
+            deallocTypes()
 
 
     def testReleaseGILChecksBridgePtrs(self):

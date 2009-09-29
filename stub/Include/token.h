@@ -57,7 +57,7 @@ extern "C" {
 #define DOUBLESTAREQUAL	47
 #define DOUBLESLASH	48
 #define DOUBLESLASHEQUAL 49
-#define AT              50
+#define AT              50	
 /* Don't forget to update the table _PyParser_TokenNames in tokenizer.c! */
 #define OP		51
 #define ERRORTOKEN	52
@@ -73,7 +73,6 @@ extern "C" {
 
 
 PyAPI_DATA(char *) _PyParser_TokenNames[]; /* Token names */
-
 PyAPI_FUNC(int) PyToken_OneChar(int);
 PyAPI_FUNC(int) PyToken_TwoChars(int, int);
 PyAPI_FUNC(int) PyToken_ThreeChars(int, int, int);

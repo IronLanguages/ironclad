@@ -1,11 +1,11 @@
 include ../Makefile.config
 
 ifeq ($(OS),windows)
-	CFLAGS += -specs=use-msvcr71.spec
+	CFLAGS += -specs=use-msvcr90.spec
 endif
 
-../build/ironclad/python25.dll: stub.asm.o stub.c.o 
-	gcc $(CFLAGS) -export-all-symbols -shared -o ../build/ironclad/python25.dll stub.asm.o stub.c.o
+../build/ironclad/python26.dll: stub.asm.o stub.c.o 
+	gcc $(CFLAGS) -export-all-symbols -shared -o ../build/ironclad/python26.dll stub.asm.o stub.c.o
 
 stub.asm.o: generated
 	nasm -o stub.asm.o -f $(OBJ_FORMAT) stub.generated.asm
@@ -18,4 +18,4 @@ generated: *.c _ordered_data _mgd_functions _ignore_symbols _extra_data
 
 clean:
 	$(RM) *.o stub.generated.*
-	$(RM) ..\build\ironclad\python25.dll
+	$(RM) ..\build\ironclad\python26.dll

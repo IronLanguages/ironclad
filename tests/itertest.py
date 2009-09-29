@@ -122,7 +122,7 @@ class SequenceIterationTest(TestCase):
             mapper.DecRef(iterPtr)
             mapper.DecRef(seqPtr)
     
-        notseqs = (3, -2.5e5, object, object())
+        notseqs = (3, -2.5e5, object, object(), list)
         for notseq in notseqs:
             notseqPtr = mapper.Store(notseq)
             mapper.LastException = None

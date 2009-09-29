@@ -53,10 +53,10 @@ class BuildStubTest(TestCase):
 class Python25StubTest(TestCase):
 
     def testPython25Stub(self):
-        path = os.path.join('tests', 'data', 'python25-pexports')
-        python25exports = set(read_interesting_lines(path))
-        generatedExports = GetPexportsLines("build/ironclad/python25.dll")
-        self.assertEquals(python25exports - generatedExports, set())
+        path = os.path.join('tests', 'data', 'python26-pexports')
+        python26exports = set(read_interesting_lines(path))
+        generatedExports = GetPexportsLines("build/ironclad/python26.dll")
+        self.assertEquals(python26exports - generatedExports, set())
 
 suite = automakesuite(locals())
 if __name__ == '__main__':

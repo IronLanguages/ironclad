@@ -19,30 +19,27 @@ namespace Ironclad
     public partial class Python25Mapper : Python25Api
     {
         public override IntPtr 
-        Py_InitModule4(string name, IntPtr methodsPtr, string doc, IntPtr self, int apiver)
+        Py_InitModule4(string name, IntPtr methodsPtr, string doc, IntPtr selfPtr, int apiver)
         {
             name = this.FixImportName(name);
             
             PythonDictionary methodTable = new PythonDictionary();
-            PythonDictionary globals = new PythonDictionary();
-            Scope module = new Scope(globals);
-            
+            PythonModule module = new PythonModule();
             this.AddModule(name, module);
             this.CreateModulesContaining(name);
 
-            globals["__doc__"] = doc;
-            globals["__name__"] = name;
-            globals["__file__"] = this.importFiles.Peek();
+            PythonDictionary __dict__ = module.__dict__;
+            __dict__["__doc__"] = doc;
+            __dict__["__name__"] = name;
+            string __file__ = this.importFiles.Peek();
+            __dict__["__file__"] = __file__;
             List __path__ = new List();
-            
-            string importFile = this.importFiles.Peek();
-            if (importFile != null)
+            if (__file__ != null)
             {
-                __path__.append(Path.GetDirectoryName(importFile));
+                __path__.append(Path.GetDirectoryName(__file__));
             }
-            globals["__path__"] = __path__;
-            Dispatcher moduleDispatcher = new Dispatcher(this, methodTable, self);
-            globals["_dispatcher"] = moduleDispatcher;
+            __dict__["__path__"] = __path__;
+            __dict__["_dispatcher"] = new Dispatcher(this, methodTable, selfPtr);
 
             StringBuilder moduleCode = new StringBuilder();
             moduleCode.Append(CodeSnippets.USEFUL_IMPORTS);
@@ -55,8 +52,8 @@ namespace Ironclad
         public override IntPtr
         PyEval_GetBuiltins()
         {
-            Scope __builtin__ = (Scope)this.GetModule("__builtin__");
-            return this.Store(__builtin__.Dict);
+            PythonModule __builtin__ = this.GetModule("__builtin__");
+            return this.Store(__builtin__.__dict__);
         }
         
         public override IntPtr
@@ -64,8 +61,7 @@ namespace Ironclad
         {
             try
             {
-                Scope sys = this.python.SystemState;
-                return this.Store(ScopeOps.__getattribute__(sys, name));
+                return this.Store(this.python.SystemState.__dict__[name]);
             }
             catch (Exception e)
             {
@@ -77,17 +73,17 @@ namespace Ironclad
         public override IntPtr
         PyModule_New(string name)
         {
-            Scope module = new Scope();
-            ScopeOps.__setattr__(module, "__name__", name);
-            ScopeOps.__setattr__(module, "__doc__", "");
+            PythonModule module = new PythonModule();
+            module.__dict__["__name__"] = name;
+            module.__dict__["__doc__"] = "";
             return this.Store(module);
         }
 
         public override IntPtr
         PyModule_GetDict(IntPtr modulePtr)
         {
-            Scope module = (Scope)this.Retrieve(modulePtr);
-            return this.Store(ScopeOps.Get__dict__(module));
+            PythonModule module = (PythonModule)this.Retrieve(modulePtr);
+            return this.Store(module.__dict__);
         }
 
         private int 
@@ -97,8 +93,8 @@ namespace Ironclad
             {
                 return -1;
             }
-            Scope module = (Scope)this.Retrieve(modulePtr);
-            ScopeOps.__setattr__(module, name, value);
+            PythonModule module = (PythonModule)this.Retrieve(modulePtr);
+            module.__setattr__(name, value);
             return 0;
         }
         
@@ -127,28 +123,26 @@ namespace Ironclad
         }
 
         private void
-        ExecInModule(string code, Scope module)
+        ExecInModule(string code, PythonModule module)
         {
             SourceUnit script = this.python.CreateSnippet(code, SourceCodeKind.Statements);
-            script.Execute(module);
+            script.Execute(new Scope(module.__dict__));
         }
         
         public void
-        AddModule(string name, Scope module)
+        AddModule(string name, PythonModule module)
         {
-            Scope sys = this.python.SystemState;
-            PythonDictionary modules = (PythonDictionary)ScopeOps.__getattribute__(sys, "modules");
+            PythonDictionary modules = (PythonDictionary)this.python.SystemState.__dict__["modules"];
             modules[name] = module;
         }
 
-        public object 
+        public PythonModule
         GetModule(string name)
         {
-            Scope sys = this.python.SystemState;
-            PythonDictionary modules = (PythonDictionary)ScopeOps.__getattribute__(sys, "modules");
+            PythonDictionary modules = (PythonDictionary)this.python.SystemState.__dict__["modules"];
             if (modules.has_key(name))
             {
-                return modules[name];
+                return (PythonModule)modules[name];
             }
             return null;
         }
@@ -156,12 +150,11 @@ namespace Ironclad
         private void
         CreateScratchModule()
         {
-            PythonDictionary globals = new PythonDictionary();
-            globals["_mapper"] = this;
-            
-            this.scratchModule = new Scope(globals);
+            this.scratchModule = new PythonModule();
+            this.scratchModule.__dict__["_mapper"] = this;
+
             this.ExecInModule(CodeSnippets.USEFUL_IMPORTS, this.scratchModule);
-            this.scratchContext = new CodeContext(this.scratchModule, this.python);
+            this.scratchContext = new ModuleContext(this.scratchModule.__dict__, this.python).GlobalContext;
         }
     }
 }

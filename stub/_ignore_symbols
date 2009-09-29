@@ -56,11 +56,13 @@ PyCObject_AsVoidPtr
 PyCObject_GetDesc
 PyCObject_Import
 PyCObject_SetVoidPtr
+PyCFunction_ClearFreeList
 
 # Objects/fileobject.c
 PyFile_FromString
 PyFile_SetBufSize
 PyFile_SetEncoding
+PyFile_SetEncodingAndErrors
 PyFile_FromFile
 PyFile_AsFile
 PyFile_Name
@@ -69,6 +71,8 @@ PyFile_WriteObject
 PyFile_SoftSpace
 PyFile_WriteString
 PyObject_AsFileDescriptor
+PyFile_IncUseCount
+PyFile_DecUseCount
 
 # Objects/listobject.c
 PyList_Size
@@ -144,9 +148,6 @@ PyErr_SetNone
 PyErr_SetObject
 PyErr_SetString
 PyErr_SyntaxLocation
-PyErr_Warn
-PyErr_WarnEx
-PyErr_WarnExplicit
 PyErr_WriteUnraisable
 
 # Python/getargs.c
@@ -215,4 +216,5 @@ Py_Initialize
 Py_InitializeEx
 Py_IsInitialized
 Py_Finalize
+
 

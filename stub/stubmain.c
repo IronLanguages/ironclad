@@ -1,12 +1,9 @@
 
 // force build-as-if-building-Python-itself
-
 #define Py_BUILD_CORE
 
 // enable ironclad-related tweaks
-
 #define IRONCLAD
-
 
 #include "Python.h"
 
@@ -61,4 +58,5 @@
 #include "Modules/mmapmodule.c"
 #include "Modules/_csv.c"
 #include "Modules/gcmodule.c" // for static definitions only atm
+
 

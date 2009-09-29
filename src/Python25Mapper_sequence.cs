@@ -18,7 +18,7 @@ namespace Ironclad
         PySequence_Check(IntPtr objPtr)
         {
             object obj = this.Retrieve(objPtr);
-            if (Builtin.isinstance(obj, typeof(XRange)))
+            if (Builtin.isinstance(obj, Builtin.xrange))
             {
                 return 1;
             }
@@ -76,7 +76,7 @@ namespace Ironclad
             
                 object sequence = this.Retrieve(objPtr);
                 object getitem;
-                if (PythonOps.TryGetBoundAttr(sequence, Symbols.GetItem, out getitem))
+                if (PythonOps.TryGetBoundAttr(sequence, "__getitem__", out getitem))
                 {
                     return this.Store(PythonCalls.Call(getitem, (int)idx));
                 }
@@ -113,7 +113,7 @@ namespace Ironclad
 
                 object sequence = this.Retrieve(objPtr);
                 object setitem;
-                if (PythonOps.TryGetBoundAttr(sequence, Symbols.SetItem, out setitem))
+                if (PythonOps.TryGetBoundAttr(sequence, "__setitem__", out setitem))
                 {
                     PythonCalls.Call(setitem, idx, this.Retrieve(valuePtr));
                     return 0;
@@ -134,7 +134,7 @@ namespace Ironclad
             {
                 object sequence = this.Retrieve(objPtr);
                 object getitem;
-                if (PythonOps.TryGetBoundAttr(sequence, Symbols.GetItem, out getitem))
+                if (PythonOps.TryGetBoundAttr(sequence, "__getitem__", out getitem))
                 {
                     return this.Store(PythonCalls.Call(getitem, new Slice((int)i, (int)j)));
                 }

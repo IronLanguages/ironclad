@@ -106,9 +106,17 @@ PyErr_GivenExceptionMatches(PyObject *err, PyObject *exc)
 		err = PyExceptionInstance_Class(err);
 
 	if (PyExceptionClass_Check(err) && PyExceptionClass_Check(exc)) {
-		/* problems here!?  not sure PyObject_IsSubclass expects to
-		   be called with an exception pending... */
-		return PyObject_IsSubclass(err, exc);
+		int res = 0;
+		PyObject *exception, *value, *tb;
+		PyErr_Fetch(&exception, &value, &tb);
+		res = PyObject_IsSubclass(err, exc);
+		/* This function must not fail, so print the error here */
+		if (res == -1) {
+			PyErr_WriteUnraisable(err);
+			res = 0;
+		}
+		PyErr_Restore(exception, value, tb);
+		return res;
 	}
 
 	return err == exc;
@@ -132,6 +140,7 @@ PyErr_NormalizeException(PyObject **exc, PyObject **val, PyObject **tb)
 	PyObject *value = *val;
 	PyObject *inclass = NULL;
 	PyObject *initial_tb = NULL;
+	PyThreadState *tstate = NULL;
 
 	if (type == NULL) {
 		/* There was no exception, so nothing to do. */
@@ -207,7 +216,22 @@ finally:
 			Py_DECREF(initial_tb);
 	}
 	/* normalize recursively */
+	tstate = PyThreadState_GET();
+	if (++tstate->recursion_depth > Py_GetRecursionLimit()) {
+	    --tstate->recursion_depth;
+	    /* throw away the old exception... */
+	    Py_DECREF(*exc);
+	    Py_DECREF(*val);
+	    /* ... and use the recursion error instead */
+	    *exc = PyExc_RuntimeError;
+	    *val = PyExc_RecursionErrorInst;
+	    Py_INCREF(*exc);
+	    Py_INCREF(*val);
+	    /* just keeping the old traceback */
+	    return;
+	}
 	PyErr_NormalizeException(exc, val, tb);
+	--tstate->recursion_depth;
 }
 
 
@@ -590,12 +614,9 @@ PyErr_WriteUnraisable(PyObject *obj)
 		PyFile_WriteString("Exception ", f);
 		if (t) {
 			PyObject* moduleName;
-			char* className = NULL;
-			if (PyExceptionClass_Check(t))
-				className = PyExceptionClass_Name(t);
-			else if (PyString_Check(t))
-				className = PyString_AS_STRING(t);
-
+			char* className;
+			assert(PyExceptionClass_Check(t));
+			className = PyExceptionClass_Name(t);
 			if (className != NULL) {
 				char *dot = strrchr(className, '.');
 				if (dot != NULL)
@@ -607,7 +628,8 @@ PyErr_WriteUnraisable(PyObject *obj)
 				PyFile_WriteString("<unknown>", f);
 			else {
 				char* modstr = PyString_AsString(moduleName);
-				if (modstr)
+				if (modstr &&
+				    strcmp(modstr, "exceptions") != 0)
 				{
 					PyFile_WriteString(modstr, f);
 					PyFile_WriteString(".", f);
@@ -634,81 +656,6 @@ PyErr_WriteUnraisable(PyObject *obj)
 }
 
 extern PyObject *PyModule_GetWarningsModule(void);
-
-/* Function to issue a warning message; may raise an exception. */
-int
-PyErr_WarnEx(PyObject *category, const char *message, Py_ssize_t stack_level)
-{
-	PyObject *dict, *func = NULL;
-	PyObject *warnings_module = PyModule_GetWarningsModule();
-
-	if (warnings_module != NULL) {
-		dict = PyModule_GetDict(warnings_module);
-		if (dict != NULL)
-			func = PyDict_GetItemString(dict, "warn");
-	}
-	if (func == NULL) {
-		PySys_WriteStderr("warning: %s\n", message);
-		return 0;
-	}
-	else {
-		PyObject *res;
-
-		if (category == NULL)
-			category = PyExc_RuntimeWarning;
-		res = PyObject_CallFunction(func, "sOn",
-					    message, category, stack_level);
-		if (res == NULL)
-			return -1;
-		Py_DECREF(res);
-		return 0;
-	}
-}
-
-/* PyErr_Warn is only for backwards compatability and will be removed.
-   Use PyErr_WarnEx instead. */
-
-#undef PyErr_Warn
-
-PyAPI_FUNC(int)
-PyErr_Warn(PyObject *category, char *message)
-{
-	return PyErr_WarnEx(category, message, 1);
-}
-
-/* Warning with explicit origin */
-int
-PyErr_WarnExplicit(PyObject *category, const char *message,
-		   const char *filename, int lineno,
-		   const char *module, PyObject *registry)
-{
-	PyObject *mod, *dict, *func = NULL;
-
-	mod = PyImport_ImportModule("warnings");
-	if (mod != NULL) {
-		dict = PyModule_GetDict(mod);
-		func = PyDict_GetItemString(dict, "warn_explicit");
-		Py_DECREF(mod);
-	}
-	if (func == NULL) {
-		PySys_WriteStderr("warning: %s\n", message);
-		return 0;
-	}
-	else {
-		PyObject *res;
-
-		if (category == NULL)
-			category = PyExc_RuntimeWarning;
-		if (registry == NULL)
-			registry = Py_None;
-		res = PyObject_CallFunction(func, "sOsizO", message, category,
-					    filename, lineno, module, registry);
-		if (res == NULL)
-			return -1;
-		Py_DECREF(res);
-		return 0;
-	}
-}
 
 
 /* Set file and line information for the current exception.
@@ -819,4 +766,5 @@ PyErr_ProgramText(const char *filename, int lineno)
 #ifdef __cplusplus
 }
 #endif
+
 

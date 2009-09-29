@@ -154,9 +154,9 @@ PyAPI_FUNC(PyVarObject *) _PyObject_NewVar(PyTypeObject *, Py_ssize_t);
 /* Macros trading binary compatibility for speed. See also pymem.h.
    Note that these macros expect non-NULL object pointers.*/
 #define PyObject_INIT(op, typeobj) \
-	( (op)->ob_type = (typeobj), _Py_NewReference((PyObject *)(op)), (op) )
+	( Py_TYPE(op) = (typeobj), _Py_NewReference((PyObject *)(op)), (op) )
 #define PyObject_INIT_VAR(op, typeobj, size) \
-	( (op)->ob_size = (size), PyObject_INIT((op), (typeobj)) )
+	( Py_SIZE(op) = (size), PyObject_INIT((op), (typeobj)) )
 
 #define _PyObject_SIZE(typeobj) ( (typeobj)->tp_basicsize )
 
@@ -231,8 +231,8 @@ PyAPI_FUNC(Py_ssize_t) PyGC_Collect(void);
 #define PyType_IS_GC(t) PyType_HasFeature((t), Py_TPFLAGS_HAVE_GC)
 
 /* Test if an object has a GC head */
-#define PyObject_IS_GC(o) (PyType_IS_GC((o)->ob_type) && \
-	((o)->ob_type->tp_is_gc == NULL || (o)->ob_type->tp_is_gc(o)))
+#define PyObject_IS_GC(o) (PyType_IS_GC(Py_TYPE(o)) && \
+	(Py_TYPE(o)->tp_is_gc == NULL || Py_TYPE(o)->tp_is_gc(o)))
 
 PyAPI_FUNC(PyVarObject *) _PyObject_GC_Resize(PyVarObject *, Py_ssize_t);
 #define PyObject_GC_Resize(type, op, n) \
@@ -263,7 +263,7 @@ extern PyGC_Head *_PyGC_generation0;
  * collector it must be safe to call the ob_traverse method. */
 #ifdef IRONCLAD // don't do anything
 #define _PyObject_GC_TRACK(o)
-#else //IRONCLAD
+#else // IRONCLAD
 #define _PyObject_GC_TRACK(o) do { \
 	PyGC_Head *g = _Py_AS_GC(o); \
 	if (g->gc.gc_refs != _PyGC_REFS_UNTRACKED) \
@@ -274,7 +274,7 @@ extern PyGC_Head *_PyGC_generation0;
 	g->gc.gc_prev->gc.gc_next = g; \
 	_PyGC_generation0->gc.gc_prev = g; \
     } while (0);
-#endif //IRONCLAD
+#endif // IRONCLAD
 
 /* Tell the GC to stop tracking this object.
  * gc_next doesn't need to be set to NULL, but doing so is a good
@@ -336,7 +336,7 @@ PyAPI_FUNC(void) PyObject_GC_Del(void *);
          && ((t)->tp_weaklistoffset > 0))
 
 #define PyObject_GET_WEAKREFS_LISTPTR(o) \
-	((PyObject **) (((char *) (o)) + (o)->ob_type->tp_weaklistoffset))
+	((PyObject **) (((char *) (o)) + Py_TYPE(o)->tp_weaklistoffset))
 
 #ifdef __cplusplus
 }

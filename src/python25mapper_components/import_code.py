@@ -28,10 +28,8 @@ class MetaImporter(object):
     def __init__(self, loader, mapper):
         self.loader = loader
         self.mapper = mapper
-        self.patched_for_matplotlib = False
         self.patched_for_h5py = False
         self.patched_numpy_testing = False
-        self.patched_numpy_lib_iotools = False
         self.patched_h5py__stub = False
         
     def find_module(self, fullname, path=None):
@@ -40,8 +38,6 @@ class MetaImporter(object):
             self.mapper.PerpetrateNumpyFixes()
         elif matches('scipy'):
             self.mapper.PerpetrateScipyFixes()
-        elif matches('matplotlib'):
-            self.fix_matplotlib()
         elif matches('h5py'):
             self.fix_h5py()
         elif matches('ctypes'):
@@ -59,23 +55,6 @@ class MetaImporter(object):
 
         return None
 
-    def fix_matplotlib(self):
-        # much easier to do this in Python than in C#
-        if self.patched_for_matplotlib:
-            return
-        
-        self.patched_for_matplotlib = True
-        print 'Detected matplotlib import'
-        print '  patching out math.log10'
-        
-        import math
-        true_log10 = math.log10
-        def my_log10(arg):
-            if isinstance(arg, float):
-                arg = float(arg)
-            return true_log10(arg)
-        math.log10 = my_log10
-
     def fix_h5py(self):
         if self.patched_for_h5py:
             return
@@ -92,35 +71,7 @@ class MetaImporter(object):
     def late_fixes(self):
         # hacka hacka hacka!
         # don't look at me like that.
-        self.patch_numpy_lib_iotools()
         self.patch_numpy_testing()
-        self.patch_h5py__stub()
-        
-    def patch_numpy_lib_iotools(self):
-        if self.patched_numpy_lib_iotools:
-            return
-        
-        import sys
-        if 'numpy.lib._iotools' not in sys.modules:
-            return
-        if 'numpy.lib.io' not in sys.modules:
-            return
-        
-        _iotools = sys.modules['numpy.lib._iotools']
-        io = sys.modules['numpy.lib.io']
-        if not hasattr(_iotools, '_is_string_like'):
-            return
-        
-        print '  patching numpy.lib._iotools._is_string_like'
-        self.patched_numpy_lib_iotools = True
-        def NoneFalseWrapper(f):
-            def g(obj):
-                if obj is None:
-                    return False
-                return f(obj)
-            return g
-        _iotools._is_string_like = NoneFalseWrapper(_iotools._is_string_like)
-        io._is_string_like = _iotools._is_string_like
         
     def patch_numpy_testing(self):
         if self.patched_numpy_testing:
@@ -136,26 +87,6 @@ class MetaImporter(object):
         import unittest
         sys.modules['numpy.testing'].NumpyTest = object()
         sys.modules['numpy.testing'].NumpyTestCase = unittest.TestCase
-
-    def patch_h5py__stub(self):
-        if self.patched_h5py__stub:
-            return
-        
-        import sys
-        if 'h5py._stub' not in sys.modules:
-            return
-        
-        print '  patching h5py._stub.generate_class'
-        self.patched_h5py__stub = True
-        
-        def generate_class(cls1, cls2):
-            try:
-                ret = type('HybridClass', (cls1, cls2), {})
-            except:
-                ret = type('NotHybridClass', (cls2,), {})
-            ret.__name__ = '%s_%s_H5' % (cls1, cls2)
-            return ret
-        sys.modules['h5py._stub'].generate_class = generate_class
 
 class Lifetime(object):
     

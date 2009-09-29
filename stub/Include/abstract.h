@@ -433,25 +433,12 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
      PyAPI_FUNC(Py_ssize_t) PyObject_Length(PyObject *o);
 #define PyObject_Length PyObject_Size
 
-     PyAPI_FUNC(Py_ssize_t) _PyObject_LengthHint(PyObject *o);
+     PyAPI_FUNC(Py_ssize_t) _PyObject_LengthHint(PyObject *o, Py_ssize_t);
 
        /*
-         Return the size of object o.  If the object, o, provides
-	 both sequence and mapping protocols, the sequence size is
-	 returned. On error, -1 is returned.  If the object provides
-	 a __length_hint__() method, its value is returned.  This is an
-	 internal undocumented API provided for performance reasons;
-	 for compatibility, don't use it outside the core.  This is the
-	 equivalent to the Python expression: 
-		try:
-			return len(o)
-		except (AttributeError, TypeError):
-			exc_type, exc_value, exc_tb = sys.exc_info()
-			try:
-				return o.__length_hint__()
-			except:
-				pass
-			raise exc_type, exc_value, exc_tb
+         Guess the size of object o using len(o) or o.__length_hint__().
+         If neither of those return a non-negative value, then return the
+         default value.  If one of the calls fails, this function returns -1.
        */
 
      PyAPI_FUNC(PyObject *) PyObject_GetItem(PyObject *o, PyObject *key);
@@ -540,6 +527,104 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 	  set in case no error occurrs. Otherwise, -1 is returned and
 	  an exception set.
 
+       */
+
+	/* new buffer API */
+
+#define PyObject_CheckBuffer(obj) \
+	(((obj)->ob_type->tp_as_buffer != NULL) &&			\
+	 (PyType_HasFeature((obj)->ob_type, Py_TPFLAGS_HAVE_NEWBUFFER)) && \
+	 ((obj)->ob_type->tp_as_buffer->bf_getbuffer != NULL))
+			    
+	/* Return 1 if the getbuffer function is available, otherwise 
+	   return 0 */
+
+     PyAPI_FUNC(int) PyObject_GetBuffer(PyObject *obj, Py_buffer *view, 
+					int flags);
+
+	/* This is a C-API version of the getbuffer function call.  It checks
+       	   to make sure object has the required function pointer and issues the
+	   call.  Returns -1 and raises an error on failure and returns 0 on 
+	   success
+        */
+
+
+     PyAPI_FUNC(void *) PyBuffer_GetPointer(Py_buffer *view, Py_ssize_t *indices);
+        
+        /* Get the memory area pointed to by the indices for the buffer given. 
+           Note that view->ndim is the assumed size of indices 
+        */
+
+     PyAPI_FUNC(int) PyBuffer_SizeFromFormat(const char *);
+		
+	/* Return the implied itemsize of the data-format area from a 
+	   struct-style description */
+    
+
+	
+     PyAPI_FUNC(int) PyBuffer_ToContiguous(void *buf, Py_buffer *view,
+    					   Py_ssize_t len, char fort);
+
+     PyAPI_FUNC(int) PyBuffer_FromContiguous(Py_buffer *view, void *buf, 
+    					     Py_ssize_t len, char fort);
+
+
+	/* Copy len bytes of data from the contiguous chunk of memory
+	   pointed to by buf into the buffer exported by obj.  Return
+	   0 on success and return -1 and raise a PyBuffer_Error on
+	   error (i.e. the object does not have a buffer interface or
+	   it is not working).
+
+	   If fort is 'F' and the object is multi-dimensional,
+	   then the data will be copied into the array in
+	   Fortran-style (first dimension varies the fastest).  If
+	   fort is 'C', then the data will be copied into the array
+	   in C-style (last dimension varies the fastest).  If fort
+	   is 'A', then it does not matter and the copy will be made
+	   in whatever way is more efficient.
+
+        */
+
+     PyAPI_FUNC(int) PyObject_CopyData(PyObject *dest, PyObject *src);
+        
+        /* Copy the data from the src buffer to the buffer of destination
+         */
+
+     PyAPI_FUNC(int) PyBuffer_IsContiguous(Py_buffer *view, char fort);
+
+
+     PyAPI_FUNC(void) PyBuffer_FillContiguousStrides(int ndims, 
+	  					    Py_ssize_t *shape, 
+						    Py_ssize_t *strides,
+	                                            int itemsize,
+	     					    char fort);
+
+       	/*  Fill the strides array with byte-strides of a contiguous
+            (Fortran-style if fort is 'F' or C-style otherwise)
+            array of the given shape with the given number of bytes
+            per element.
+        */
+
+     PyAPI_FUNC(int) PyBuffer_FillInfo(Py_buffer *view, PyObject *o, void *buf,
+		             	       Py_ssize_t len, int readonly,
+				       int flags);
+
+        /* Fills in a buffer-info structure correctly for an exporter
+           that can only share a contiguous chunk of memory of
+           "unsigned bytes" of the given length. Returns 0 on success
+           and -1 (with raising an error) on error.
+         */
+
+     PyAPI_FUNC(void) PyBuffer_Release(Py_buffer *view);
+
+       /* Releases a Py_buffer obtained from getbuffer ParseTuple's s*.
+        */
+
+     PyAPI_FUNC(PyObject *) PyObject_Format(PyObject* obj,
+					    PyObject *format_spec);
+       /*
+	 Takes an arbitrary object and returns the result of
+	 calling obj.__format__(format_spec).
        */
 
 /* Iterators */
@@ -774,6 +859,19 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
      PyAPI_FUNC(Py_ssize_t) PyNumber_AsSsize_t(PyObject *o, PyObject *exc);
 
        /*
+         Returns the Integral instance converted to an int. The
+         instance is expected to be int or long or have an __int__
+         method. Steals integral's reference. error_format will be
+         used to create the TypeError if integral isn't actually an
+         Integral instance. error_format should be a format string
+         that can accept a char* naming integral's type.
+       */
+
+     PyAPI_FUNC(PyObject *) _PyNumber_ConvertIntegralToInt(
+             PyObject *integral,
+             const char* error_format);
+
+       /*
         Returns the object converted to Py_ssize_t by going through
         PyNumber_Index first.  If an overflow error occurs while
         converting the int-or-long to Py_ssize_t, then the second argument
@@ -932,6 +1030,15 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
        */
 
 
+     PyAPI_FUNC(PyObject *) PyNumber_ToBase(PyObject *n, int base);
+
+       /*
+	 Returns the integer n converted to a string with a base, with a base
+	 marker of 0b, 0o or 0x prefixed if applicable.
+	 If n is not an int object, it is converted with PyNumber_Index first.
+       */
+
+
 /*  Sequence protocol:*/
 
      PyAPI_FUNC(int) PySequence_Check(PyObject *o);
@@ -1064,7 +1171,7 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
        */
 
 #define PySequence_ITEM(o, i)\
-	( o->ob_type->tp_as_sequence->sq_item(o, i) )
+	( Py_TYPE(o)->tp_as_sequence->sq_item(o, i) )
        /* Assume tp_as_sequence and sq_item exist and that i does not
 	  need to be corrected for a negative index
        */     
@@ -1268,6 +1375,11 @@ PyAPI_FUNC(int) PyObject_IsInstance(PyObject *object, PyObject *typeorclass);
 
 PyAPI_FUNC(int) PyObject_IsSubclass(PyObject *object, PyObject *typeorclass);
       /* issubclass(object, typeorclass) */
+
+
+PyAPI_FUNC(int) _PyObject_RealIsInstance(PyObject *inst, PyObject *cls);
+
+PyAPI_FUNC(int) _PyObject_RealIsSubclass(PyObject *derived, PyObject *cls);
 
 
 #ifdef __cplusplus

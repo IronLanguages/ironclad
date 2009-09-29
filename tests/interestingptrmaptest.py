@@ -33,61 +33,64 @@ class InterestingPtrMapTest(TestCase):
         return InterestingPtrMap(), ptr, obj, WeakReference(obj)
         
         
-    def testHasGetPtrObj(self):
-        map, ptr, obj, objref = self.getVars()
+    def testAssociateIsStrong(self):
+        map, ptr, obj, ref = self.getVars()
         map.Associate(ptr, obj)
         del obj
         gcwait()
         
-        self.assertEquals(objref.IsAlive, True, "unexpected GC")
-        self.assertEquals(map.HasObj(objref.Target), True, "wrong")
-        self.assertEquals(map.GetObj(ptr), objref.Target, "not mapped")
+        self.assertEquals(ref.IsAlive, True, "unexpected GC")
+        self.assertEquals(map.HasObj(ref.Target), True, "wrong")
+        self.assertEquals(map.GetObj(ptr), ref.Target, "not mapped")
         self.assertEquals(map.HasPtr(ptr), True, "wrong")
-        self.assertEquals(map.GetPtr(objref.Target), ptr, "not mapped")
+        self.assertEquals(map.GetPtr(ref.Target), ptr, "not mapped")
         
         
-    def testAssociateIsStrong(self):
-        map, ptr, obj, objref = self.getVars()
+    def testAssociateCanWeaken(self):
+        map, ptr, obj, ref = self.getVars()
         map.Associate(ptr, obj)
+        
+        self.assertEquals(map.HasPtr(ptr), True)
+        self.assertEquals(ref.IsAlive, True, "bad GC")
         
         del obj
         map.Release(ptr)
         gcwait()
         
-        self.assertEquals(objref.IsAlive, False, "failed to GC")
         self.assertEquals(map.HasPtr(ptr), False)
+        self.assertEquals(ref.IsAlive, False, "failed to GC")
         self.assertRaises(BadMappingException, map.GetObj, ptr)
         # can't really try to get the ptr, because we don't have the obj any more
     
     
-    def testBridgeAssociateAssociatesStrongly(self):
-        map, ptr, obj, objref = self.getVars()
+    def testBridgeAssociateIsStrong(self):
+        map, ptr, obj, ref = self.getVars()
         map.BridgeAssociate(ptr, obj)
         del obj
         gcwait()
         
-        self.assertEquals(objref.IsAlive, True, "unexpected GC")
-        self.assertEquals(map.HasObj(objref.Target), True, "wrong")
-        self.assertEquals(map.GetPtr(objref.Target), ptr, "not mapped")
+        self.assertEquals(ref.IsAlive, True, "unexpected GC")
+        self.assertEquals(map.HasObj(ref.Target), True, "wrong")
+        self.assertEquals(map.GetPtr(ref.Target), ptr, "not mapped")
         self.assertEquals(map.HasPtr(ptr), True, "wrong")
-        self.assertEquals(map.GetObj(ptr), objref.Target, "not mapped")
+        self.assertEquals(map.GetObj(ptr), ref.Target, "not mapped")
         map.Release(ptr)
     
     
-    def testBridgeAssociateThenUpdate(self):
-        map, ptr, obj, objref = self.getVars()
+    def testBridgeAssociateCanWeaken(self):
+        map, ptr, obj, ref = self.getVars()
         map.BridgeAssociate(ptr, obj)
         map.UpdateStrength(ptr)
         del obj
         gcwait()
         
-        self.assertEquals(objref.IsAlive, False, "failed to GC")
+        self.assertEquals(ref.IsAlive, False, "failed to GC")
         self.assertRaises(NullReferenceException, map.GetObj, ptr)
         map.Release(ptr)
     
     
     def testUpdateStrengthStrengthensWeakRefWithRefcnt2(self):
-        map, ptr, obj, objref = self.getVars()
+        map, ptr, obj, ref = self.getVars()
         self.keepalive = map
         map.BridgeAssociate(ptr, obj)
         map.UpdateStrength(ptr)
@@ -95,16 +98,17 @@ class InterestingPtrMapTest(TestCase):
         # ref should now be weak, but obj is still referenced in this scope
         CPyMarshal.WriteIntField(ptr, PyObject, 'ob_refcnt', 2)
         map.UpdateStrength(ptr)
+        obj # to make very clear tthat it is still referenced
         
         # should now be strong; safe to del obj
         del obj
         gcwait()
-        self.assertEquals(objref.IsAlive, True, "unexpected GC")
+        self.assertEquals(ref.IsAlive, True, "unexpected GC")
     
     
     def testCheckBridgePtrsShouldUpdateAll(self):
-        map, ptr1, obj1, obj1ref = self.getVars()
-        _, ptr2, obj2, obj2ref = self.getVars()
+        map, ptr1, obj1, ref1 = self.getVars()
+        _, ptr2, obj2, ref2 = self.getVars()
         map.BridgeAssociate(ptr1, obj1)
         map.BridgeAssociate(ptr2, obj2)
         
@@ -116,13 +120,13 @@ class InterestingPtrMapTest(TestCase):
         del obj1
         del obj2
         gcwait()
-        self.assertEquals(obj1ref.IsAlive, False, "failed to GC")
-        self.assertEquals(obj2ref.IsAlive, False, "failed to GC")
+        self.assertEquals(ref1.IsAlive, False, "failed to GC")
+        self.assertEquals(ref2.IsAlive, False, "failed to GC")
     
     
     def testMapOverBridgePtrs(self):
-        map, ptr1, obj1, obj1ref = self.getVars()
-        _, ptr2, obj2, obj2ref = self.getVars()
+        map, ptr1, obj1, _ = self.getVars()
+        __, ptr2, obj2, ___ = self.getVars()
         map.BridgeAssociate(ptr1, obj1)
         map.BridgeAssociate(ptr2, obj2)
         
@@ -132,18 +136,6 @@ class InterestingPtrMapTest(TestCase):
         map.MapOverBridgePtrs(PtrFunc(MapFunc))
         self.assertEquals(len(ptrs), 2)
         self.assertEquals(set(ptrs), set([ptr1, ptr2]))
-        
-
-    def testReleaseStrongRefWeakens(self):
-        map, ptr, obj, objref = self.getVars()
-        map.BridgeAssociate(ptr, obj)
-        map.Release(ptr)
-        
-        del obj
-        gcwait()
-        self.assertEquals(objref.IsAlive, False, "failed to GC")
-        self.assertRaises(BadMappingException, map.GetObj, ptr)
-        self.assertEquals(map.HasPtr(ptr), False, "wrong")
         
         
 
