@@ -12,6 +12,11 @@ from Ironclad import BadMappingException, CPyMarshal, InterestingPtrMap, PtrFunc
 from Ironclad.Structs import PyObject
 
 
+# NOTE: certain tests wrap some of their execution in a do() function;
+# either to ensure that things-which-should-be-GCed really do get GCed,
+# rather than hanging around until out of scope, or to ensure that 
+# inappropriate gc gets a chance to happen and cause a failure.
+
 class InterestingPtrMapTest(TestCase):
     
     def setUp(self):
@@ -34,9 +39,13 @@ class InterestingPtrMapTest(TestCase):
         
         
     def testAssociateIsStrong(self):
-        map, ptr, obj, ref = self.getVars()
-        map.Associate(ptr, obj)
-        del obj
+        def do():
+            # see NOTE
+            map, ptr, obj, ref = self.getVars()
+            map.Associate(ptr, obj)
+            del obj
+            return map, ptr, ref
+        map, ptr, ref = do()
         gcwait()
         
         self.assertEquals(ref.IsAlive, True, "unexpected GC")
@@ -47,16 +56,20 @@ class InterestingPtrMapTest(TestCase):
         
         
     def testAssociateCanWeaken(self):
-        map, ptr, obj, ref = self.getVars()
-        map.Associate(ptr, obj)
-        
-        self.assertEquals(map.HasPtr(ptr), True)
-        self.assertEquals(ref.IsAlive, True, "bad GC")
-        
-        del obj
-        map.Release(ptr)
+        def do():
+            # see NOTE
+            map, ptr, obj, ref = self.getVars()
+            map.Associate(ptr, obj)
+
+            self.assertEquals(map.HasPtr(ptr), True)
+            self.assertEquals(ref.IsAlive, True, "unexpected GC")
+
+            del obj
+            map.Release(ptr)
+            return map, ptr, ref
+        map, ptr, ref = do()
         gcwait()
-        
+    
         self.assertEquals(map.HasPtr(ptr), False)
         self.assertEquals(ref.IsAlive, False, "failed to GC")
         self.assertRaises(BadMappingException, map.GetObj, ptr)
@@ -64,9 +77,13 @@ class InterestingPtrMapTest(TestCase):
     
     
     def testBridgeAssociateIsStrong(self):
-        map, ptr, obj, ref = self.getVars()
-        map.BridgeAssociate(ptr, obj)
-        del obj
+        def do():
+            # see NOTE
+            map, ptr, obj, ref = self.getVars()
+            map.BridgeAssociate(ptr, obj)
+            del obj
+            return map, ptr, ref
+        map, ptr, ref = do()
         gcwait()
         
         self.assertEquals(ref.IsAlive, True, "unexpected GC")
@@ -78,10 +95,14 @@ class InterestingPtrMapTest(TestCase):
     
     
     def testBridgeAssociateCanWeaken(self):
-        map, ptr, obj, ref = self.getVars()
-        map.BridgeAssociate(ptr, obj)
-        map.UpdateStrength(ptr)
-        del obj
+        def do():
+            # see NOTE
+            map, ptr, obj, ref = self.getVars()
+            map.BridgeAssociate(ptr, obj)
+            map.UpdateStrength(ptr)
+            del obj
+            return map, ptr, ref
+        map, ptr, ref = do()
         gcwait()
         
         self.assertEquals(ref.IsAlive, False, "failed to GC")
@@ -90,36 +111,45 @@ class InterestingPtrMapTest(TestCase):
     
     
     def testUpdateStrengthStrengthensWeakRefWithRefcnt2(self):
-        map, ptr, obj, ref = self.getVars()
-        self.keepalive = map
-        map.BridgeAssociate(ptr, obj)
-        map.UpdateStrength(ptr)
-        
-        # ref should now be weak, but obj is still referenced in this scope
-        CPyMarshal.WriteIntField(ptr, PyObject, 'ob_refcnt', 2)
-        map.UpdateStrength(ptr)
-        obj # to make very clear tthat it is still referenced
-        
-        # should now be strong; safe to del obj
-        del obj
+        def do():
+            # see NOTE
+            map, ptr, obj, ref = self.getVars()
+            self.keepalive = map
+            map.BridgeAssociate(ptr, obj)
+            map.UpdateStrength(ptr)
+
+            # ref should now be weak, but obj is still referenced in this scope
+            CPyMarshal.WriteIntField(ptr, PyObject, 'ob_refcnt', 2)
+            map.UpdateStrength(ptr)
+
+            # should now be strong; safe to del obj
+            del obj
+            return ref
+        ref = do()
         gcwait()
+        
         self.assertEquals(ref.IsAlive, True, "unexpected GC")
     
     
     def testCheckBridgePtrsShouldUpdateAll(self):
-        map, ptr1, obj1, ref1 = self.getVars()
-        _, ptr2, obj2, ref2 = self.getVars()
-        map.BridgeAssociate(ptr1, obj1)
-        map.BridgeAssociate(ptr2, obj2)
-        
-        # make both ptrs 'ready to weaken'
-        CPyMarshal.WriteIntField(ptr1, PyObject, 'ob_refcnt', 1)
-        CPyMarshal.WriteIntField(ptr2, PyObject, 'ob_refcnt', 1)
-        
-        map.CheckBridgePtrs(True)
-        del obj1
-        del obj2
+        def do():
+            # see NOTE
+            map, ptr1, obj1, ref1 = self.getVars()
+            _, ptr2, obj2, ref2 = self.getVars()
+            map.BridgeAssociate(ptr1, obj1)
+            map.BridgeAssociate(ptr2, obj2)
+
+            # make both ptrs 'ready to weaken'
+            CPyMarshal.WriteIntField(ptr1, PyObject, 'ob_refcnt', 1)
+            CPyMarshal.WriteIntField(ptr2, PyObject, 'ob_refcnt', 1)
+
+            map.CheckBridgePtrs(True)
+            del obj1
+            del obj2
+            return map, ref1, ref2
+        map, ref1, ref2 = do()
         gcwait()
+        
         self.assertEquals(ref1.IsAlive, False, "failed to GC")
         self.assertEquals(ref2.IsAlive, False, "failed to GC")
     
