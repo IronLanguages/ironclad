@@ -297,33 +297,34 @@ class Python25Mapper_References_Test(TestCase):
         allocator = HGlobalAllocator()
         mapper = Python25Mapper(allocator)
         deallocTypes = CreateTypes(mapper)
-
-        obj = object()
-        objref = WeakReference(obj)
         # need to use same allocator as mapper, otherwise it gets upset on shutdown
         ptr = allocator.Alloc(Marshal.SizeOf(PyObject))
         
         try:
-            CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
-            CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
-            mapper.StoreBridge(ptr, obj)
+            def do():
+                # see NOTE in interestingptrmaptest
+                obj = object()
+                ref = WeakReference(obj)
+                CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
+                CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
+                mapper.StoreBridge(ptr, obj)
 
-            self.assertEquals(mapper.Retrieve(ptr), obj, "object not stored")
-            self.assertEquals(mapper.Store(obj), ptr, "object not reverse-mapped")
+                self.assertEquals(mapper.Retrieve(ptr), obj, "object not stored")
+                self.assertEquals(mapper.Store(obj), ptr, "object not reverse-mapped")
 
-            mapper.Weaken(obj)
-            CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
+                mapper.Weaken(obj)
+                CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
 
-            mapper.IncRef(ptr)
-            del obj
+                mapper.IncRef(ptr)
+                del obj
+                return ref
+            ref = do()
             gcwait()
-            self.assertEquals(objref.IsAlive, True, "was not strengthened by IncRef")
+            self.assertEquals(ref.IsAlive, True, "was not strengthened by IncRef")
 
-            obj = mapper.Retrieve(ptr)
             mapper.DecRef(ptr)
-            del obj
             gcwait()
-            self.assertEquals(objref.IsAlive, False, "was not weakened by DecRef")
+            self.assertEquals(ref.IsAlive, False, "was not weakened by DecRef")
 
         finally:
             # need to dealloc ptr ourselves, it doesn't hapen automatically
@@ -339,23 +340,28 @@ class Python25Mapper_References_Test(TestCase):
         mapper = Python25Mapper(allocator)
         deallocTypes = CreateTypes(mapper)
 
-        obj = object()
-        objref = WeakReference(obj)
         # need to use same allocator as mapper, otherwise it gets upset on shutdown
         ptr = allocator.Alloc(Marshal.SizeOf(PyObject))
         
         try:
-            CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
-            CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
-            mapper.StoreBridge(ptr, obj)
-
-            del obj
+            def do1():
+                # see NOTE in interestingptrmaptest
+                obj = object()
+                ref = WeakReference(obj)
+                CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
+                CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
+                mapper.StoreBridge(ptr, obj)
+                del obj
+                return ref
+            ref = do1()
             gcwait()
-            self.assertEquals(objref.IsAlive, True, "was not strongly referenced")
+            self.assertEquals(ref.IsAlive, True, "was not strongly referenced")
 
-            sameobj = objref.Target
-            mapper.Weaken(sameobj)
-            del sameobj
+            def do2():
+                obj = ref.Target
+                mapper.Weaken(obj)
+                del obj
+            do2()
             gcwait()
             self.assertRaises(NullReferenceException, mapper.Retrieve, ptr)
         
@@ -376,26 +382,27 @@ class Python25Mapper_References_Test(TestCase):
         # force no throttling of cleanup
         mapper.GCThreshold = 0
         
-        obj = object()
-        objref = WeakReference(obj)
-        # need to use same allocator as mapper, otherwise it gets upset on shutdown
-        ptr = allocator.Alloc(Marshal.SizeOf(PyObject))
-        CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 2)
-        CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
-        mapper.StoreBridge(ptr, obj)
-        
-        # refcount > 1 means ref should have been strengthened
-        del obj
+        def do1():
+            obj = object()
+            ref = WeakReference(obj)
+            # need to use same allocator as mapper, otherwise it gets upset on shutdown
+            ptr = allocator.Alloc(Marshal.SizeOf(PyObject))
+            CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 2)
+            CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
+            mapper.StoreBridge(ptr, obj)
+
+            # refcount > 1 means ref should have been strengthened
+            del obj
+            return ref, ptr
+        ref, ptr = do1()
         gcwait()
-        self.assertEquals(objref.IsAlive, True, "was reaped unexpectedly (refcount was 2)")
+        self.assertEquals(ref.IsAlive, True, "was reaped unexpectedly (refcount was 2)")
         
         CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
         mapper.EnsureGIL()
         mapper.ReleaseGIL()
         
         # refcount < 2 should have been weakened
-        obj = objref.Target
-        del obj
         gcwait()
         self.assertRaises(NullReferenceException, mapper.Retrieve, ptr)
         
