@@ -81,7 +81,7 @@ namespace Ironclad
             if (dict.Contains(key))
             {
                 IntPtr result = this.Store(dict[key]);
-                this.RememberTempObject(result);
+                this.DecRefLater(result);
                 return result;
             }
             return IntPtr.Zero;
@@ -204,11 +204,11 @@ namespace Ironclad
 
                 object key = keys.Current;
                 IntPtr keyPtr = this.Store(key);
-                this.RememberTempObject(keyPtr);
+                this.DecRefLater(keyPtr);
                 CPyMarshal.WritePtr(keyPtrPtr, keyPtr);
                 
                 IntPtr valuePtr = this.Store(dict[key]);
-                this.RememberTempObject(valuePtr);
+                this.DecRefLater(valuePtr);
                 CPyMarshal.WritePtr(valuePtrPtr, valuePtr);
                 
                 CPyMarshal.WriteInt(posPtr, pos + 1);

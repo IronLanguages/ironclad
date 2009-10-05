@@ -466,13 +466,13 @@ class Python25Mapper_References_Test(TestCase):
         tempObject1 = mapper.Store(1)
         tempObject2 = mapper.Store(2)
 
-        mapper.RememberTempObject(tempObject1)
-        mapper.RememberTempObject(tempObject2)
+        mapper.DecRefLater(tempObject1)
+        mapper.DecRefLater(tempObject2)
 
         self.assertEquals(mapper.RefCount(tempObject1), 1,
-                          "RememberTempObject should not incref")
+                          "DecRefLater should not change refcnt")
         self.assertEquals(mapper.RefCount(tempObject2), 1,
-                          "RememberTempObject should not incref")
+                          "DecRefLater should not change refcnt")
 
         mapper.IncRef(tempObject1)
         mapper.IncRef(tempObject2)
@@ -510,7 +510,7 @@ class Python25Mapper_References_Test(TestCase):
             return None
         
         ptrs = {}
-        for i in xrange(1000000):
+        for i in xrange(100000):
             obj = GetObject(i)
             ptr = mapper.Store(obj)
             ptrs[ptr] = obj
