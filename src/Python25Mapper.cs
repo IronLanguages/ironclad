@@ -139,12 +139,11 @@ namespace Ironclad
                 this.stub.Init(new AddressGetterDelegate(this.GetAddress), new DataSetterDelegate(this.SetData));
 
                 string path = Environment.GetEnvironmentVariable("PATH");
-                Environment.SetEnvironmentVariable("PATH", path + ";" + Path.Combine(Path.GetDirectoryName(stubPath), "support"));
+                string newpath = path + ";" + Path.Combine(Path.GetDirectoryName(stubPath), "support");
+                Environment.SetEnvironmentVariable("PATH", newpath);
 
                 this.ReadyBuiltinTypes();
                 this.importer = new PydImporter();
-                
-                // TODO: does this line cause leakage?
                 this.removeSysHacks = this.CreateFromSnippet(CodeSnippets.INSTALL_IMPORT_HOOK_CODE, "remove_sys_hacks");
                 
                 // TODO: load builtin modules only on demand?
@@ -586,7 +585,7 @@ namespace Ironclad
         }
 
         public void
-        RememberTempObject(IntPtr ptr)
+        DecRefLater(IntPtr ptr)
         {
             this.tempObjects.Add(ptr);
         }

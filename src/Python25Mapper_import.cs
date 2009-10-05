@@ -58,7 +58,7 @@ namespace Ironclad
         PyImport_GetModuleDict()
         {
             IntPtr modulesPtr = this.Store(this.python.SystemState.__dict__["modules"]);
-            this.RememberTempObject(modulesPtr);
+            this.DecRefLater(modulesPtr);
             return modulesPtr;
         }
 
@@ -68,9 +68,11 @@ namespace Ironclad
             this.EnsureGIL();
             this.importNames.Push(name);
             this.importFiles.Push(path);
+
             string dir = Path.GetDirectoryName(path);
             string library = Path.GetFileName(path);
             string previousDir = Environment.CurrentDirectory;
+
             Environment.CurrentDirectory = dir;
             try
             {
