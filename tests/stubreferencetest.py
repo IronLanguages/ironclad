@@ -8,7 +8,6 @@ from tests.utils.testcase import TestCase
 from Ironclad import AddressGetterDelegate, DataSetterDelegate, Unmanaged, StubReference
 from System import IntPtr
 
-
 class StubReferenceTest(TestCase):
 
     def testMapInitUnmapLibrary(self):

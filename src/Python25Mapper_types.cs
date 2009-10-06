@@ -106,6 +106,7 @@ namespace Ironclad
             }
 
             PyType_Ready(typeBasePtr);
+            this.InheritSubclassFlags(typePtr);
             this.InheritPtrField(typePtr, "tp_alloc");
             this.InheritPtrField(typePtr, "tp_new");
             this.InheritPtrField(typePtr, "tp_dealloc");
@@ -133,6 +134,7 @@ namespace Ironclad
                 }
             }
 
+            flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
             flags |= Py_TPFLAGS.READY | Py_TPFLAGS.HAVE_CLASS;
             flags &= ~Py_TPFLAGS.READYING;
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
@@ -343,6 +345,23 @@ namespace Ironclad
                         CPyMarshal.ReadIntField(basePtr, typeof(PyTypeObject), name));
                 }
             }
+        }
+        
+        private void
+        InheritSubclassFlags(IntPtr typePtr)
+        {
+            Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
+            
+            if (this.PyType_IsSubtype(typePtr, this.PyInt_Type) != 0) { flags |= Py_TPFLAGS.INT_SUBCLASS; }
+            if (this.PyType_IsSubtype(typePtr, this.PyLong_Type) != 0) { flags |= Py_TPFLAGS.LONG_SUBCLASS; }
+            if (this.PyType_IsSubtype(typePtr, this.PyList_Type) != 0) { flags |= Py_TPFLAGS.LIST_SUBCLASS; }
+            if (this.PyType_IsSubtype(typePtr, this.PyTuple_Type) != 0) { flags |= Py_TPFLAGS.TUPLE_SUBCLASS; }
+            if (this.PyType_IsSubtype(typePtr, this.PyString_Type) != 0) { flags |= Py_TPFLAGS.STRING_SUBCLASS; }
+            if (this.PyType_IsSubtype(typePtr, this.PyDict_Type) != 0) { flags |= Py_TPFLAGS.DICT_SUBCLASS; }
+            if (this.PyType_IsSubtype(typePtr, this.PyType_Type) != 0) { flags |= Py_TPFLAGS.TYPE_SUBCLASS; }
+            // TODO: PyExc_BaseException is tedious
+            
+            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
         }
 
         private IntPtr

@@ -37,25 +37,25 @@ namespace Ironclad
         public static extern void DebugBreak();
         
         
-        [DllImport("msvcr71.dll")]
+        [DllImport("msvcr90.dll")]
         public static extern IntPtr _fdopen(int fd, string mode);
         
-        [DllImport("msvcr71.dll")]
+        [DllImport("msvcr90.dll")]
         public static extern int _open_osfhandle(IntPtr f, int flags);
         
-        [DllImport("msvcr71.dll")]
+        [DllImport("msvcr90.dll")]
         public static extern int fread(IntPtr buf, int size, int count, IntPtr file);
         
-        [DllImport("msvcr71.dll")]
+        [DllImport("msvcr90.dll")]
         public static extern int fwrite(IntPtr buf, int size, int count, IntPtr file);
 
-        [DllImport("msvcr71.dll")]
+        [DllImport("msvcr90.dll")]
         public static extern int fflush(IntPtr file);
         
-        [DllImport("msvcr71.dll")]
+        [DllImport("msvcr90.dll")]
         public static extern int fclose(IntPtr FILE);
         
-        [DllImport("msvcr71.dll")]
+        [DllImport("msvcr90.dll")]
         public static extern IntPtr memcpy(IntPtr dst, IntPtr src, uint bytes);
     }
 }

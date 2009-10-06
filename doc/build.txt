@@ -2,14 +2,20 @@ Ironclad's build process deserves a brief discussion.
 
 32-BIT WINDOWS REQUIREMENTS:
 
-* IronPython 2.0.1 final
-* mingw or cygwin (including gcc and make) 
+* IronPython 2.6
+* mingw or cygwin (including gcc and make)
+** note that mingw needs to be tweaked in 2 ways:
+*** gcc's default specs need to be modified as in keith's 28/08/2008 
+    comment on http://www.mingw.org/wiki/SpecsFileHOWTO (but you don't 
+    need to worry about creating your own msvcr90.spec)
+*** mingw's function name mapping for msvcr90 needs to be updated;
+    TODO how on earth do we do this? libmoldname90.a and sys/stat.h?
 * pexports
 * nasm
 * .NET 2.0 Service Pack 1 (csc, specifically)
 ** note that Vista users need to install Vista SP1, or .NET 3.5,
    to get .NET 2.0 SP1
-* Python 2.5
+* Python 2.6
 
 If you are using cygwin you should set the environment variable 
 IRONCLAD_USE_CYGWIN to YES.

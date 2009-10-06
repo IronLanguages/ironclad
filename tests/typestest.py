@@ -1,5 +1,5 @@
 
-import types
+import operator, types
 
 from tests.utils.runtest import makesuite, run
 
@@ -45,6 +45,18 @@ BUILTIN_TYPES = {
     "PyInstance_Type": types.InstanceType,
 }
 
+TYPE_SUBCLASS_FLAGS = {
+    int: Py_TPFLAGS.INT_SUBCLASS,
+    long: Py_TPFLAGS.LONG_SUBCLASS,
+    list: Py_TPFLAGS.LIST_SUBCLASS,
+    tuple: Py_TPFLAGS.TUPLE_SUBCLASS,
+    str: Py_TPFLAGS.STRING_SUBCLASS,
+    dict: Py_TPFLAGS.DICT_SUBCLASS,
+# TODO    BaseException: Py_TPFLAGS.BASE_EXC_SUBCLASS, # this is a little tricky
+    type: Py_TPFLAGS.TYPE_SUBCLASS,
+}
+SUBCLASS_FLAGS_MASK = UInt32(reduce(operator.or_, TYPE_SUBCLASS_FLAGS.values()))
+
 class Types_Test(TestCase):
     
     @WithMapper
@@ -73,6 +85,25 @@ class Types_Test(TestCase):
             else:
                 self.assertEquals(basePtr, mapper.PyBaseObject_Type)
 
+    def assertTypeSubclassFlag(self, mapper, t, f):
+        typeFlags = CPyMarshal.ReadIntField(mapper.Store(t), PyTypeObject, "tp_flags")
+        self.assertEquals(typeFlags & UInt32(f), UInt32(f), "did not have appropriate flag")
+        
+    def assertNoTypeSubclassFlag(self, mapper, t):
+        typeFlags = CPyMarshal.ReadIntField(mapper.Store(t), PyTypeObject, "tp_flags")
+        self.assertEquals(typeFlags & SUBCLASS_FLAGS_MASK, 0, "had bad flag")
+        
+
+    @WithMapper
+    def testTypeSubclassFlags(self, mapper, _):
+        for (t, f) in TYPE_SUBCLASS_FLAGS.items():
+            self.assertTypeSubclassFlag(mapper, t, f)
+            st = type('%s_sub' % t, (t,), {})
+            self.assertTypeSubclassFlag(mapper, st, f)
+        
+        self.assertNoTypeSubclassFlag(mapper, object)
+        self.assertNoTypeSubclassFlag(mapper, type("obj_sub", (object,), {}))
+        
 
     @WithMapper
     def testPyType_IsSubtype(self, mapper, _):

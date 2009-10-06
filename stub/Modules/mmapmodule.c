@@ -90,7 +90,7 @@ typedef struct {
 	char *	data;
 	size_t	size;
 	size_t	pos;    /* relative to offset */
-	size_t	offset; 
+	size_t	offset;
 
 #ifdef MS_WINDOWS
 	HANDLE	map_handle;
@@ -758,7 +758,7 @@ mmap_subscript(mmap_object *self, PyObject *item)
 				 &start, &stop, &step, &slicelen) < 0) {
 			return NULL;
 		}
-		
+
 		if (slicelen <= 0)
 			return PyString_FromStringAndSize("", 0);
 		else if (step == 1)
@@ -908,7 +908,7 @@ mmap_ass_subscript(mmap_object *self, PyObject *item, PyObject *value)
 	}
 	else if (PySlice_Check(item)) {
 		Py_ssize_t start, stop, step, slicelen;
-		
+
 		if (PySlice_GetIndicesEx((PySliceObject *)item,
 					 self->size, &start, &stop,
 					 &step, &slicelen) < 0) {
@@ -945,7 +945,7 @@ mmap_ass_subscript(mmap_object *self, PyObject *item, PyObject *value)
 		else {
 			Py_ssize_t cur, i;
 			const char *buf = PyString_AsString(value);
-			
+
 			if (buf == NULL)
 				return -1;
 			for (cur = start, i = 0; i < slicelen;
@@ -1067,9 +1067,9 @@ _GetMapSize(PyObject *o, const char* param)
 		return 0;
 	if (PyIndex_Check(o)) {
 		Py_ssize_t i = PyNumber_AsSsize_t(o, PyExc_OverflowError);
-		if (i==-1 && PyErr_Occurred()) 
+		if (i==-1 && PyErr_Occurred())
 			return -1;
-		if (i < 0) {	 
+		if (i < 0) {
 			PyErr_Format(PyExc_OverflowError,
 					"memory mapped %s must be positive",
                                         param);
@@ -1188,7 +1188,7 @@ new_mmap_object(PyTypeObject *type, PyObject *args, PyObject *kwdict)
 			return NULL;
 		}
 	}
-	
+
 	m_obj->data = mmap(NULL, map_size,
 			   prot, flags,
 			   fd, offset);
@@ -1314,8 +1314,8 @@ new_mmap_object(PyTypeObject *type, PyObject *args, PyObject *kwdict)
 			    (dwErr = GetLastError()) != NO_ERROR) {
 				Py_DECREF(m_obj);
 				return PyErr_SetFromWindowsErr(dwErr);
-			}	
-				    
+			}
+
 #if SIZEOF_SIZE_T > 4
 			m_obj->size = (((size_t)high)<<32) + low;
 #else
@@ -1453,7 +1453,7 @@ initmmap(void)
 
 	setint(dict, "PAGESIZE", (long)my_getpagesize());
 
-	setint(dict, "ALLOCATIONGRANULARITY", (long)my_getallocationgranularity()); 
+	setint(dict, "ALLOCATIONGRANULARITY", (long)my_getallocationgranularity());
 
 	setint(dict, "ACCESS_READ", ACCESS_READ);
 	setint(dict, "ACCESS_WRITE", ACCESS_WRITE);
