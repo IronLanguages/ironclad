@@ -37,6 +37,19 @@ namespace Ironclad
             READYING = 0x00002000,
             HAVE_GC = 0x00004000,
             HAVE_INDEX = 0x00020000,
+            HAVE_VERSION_TAG = 0x00040000,
+            VALID_VERSION_TAG = 0x00080000,
+            IS_ABSTRACT = 0x00100000,
+            HAVE_NEWBUFFER = 0x00200000,
+            INT_SUBCLASS = 0x00800000,
+            LONG_SUBCLASS = 0x01000000,
+            LIST_SUBCLASS = 0x02000000,
+            TUPLE_SUBCLASS = 0x04000000,
+            STRING_SUBCLASS = 0x08000000,
+            UNICODE_SUBCLASS = 0x10000000,
+            DICT_SUBCLASS = 0x20000000,
+            BASE_EXC_SUBCLASS = 0x40000000,
+            TYPE_SUBCLASS = 0x80000000,
         }
                 
         public enum CMP : uint

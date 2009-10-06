@@ -8174,6 +8174,10 @@ posix_abort(PyObject *self, PyObject *noargs)
     return NULL;
 }
 
+#ifndef IRONCLAD
+// 1) referencing ShellExecute pulls in *loads* of random dll dependencies,
+//    with which I don't want to deal at the moment;
+// 2) we don't copy startfile into os, so we don't need this code anyway.
 #ifdef MS_WINDOWS
 PyDoc_STRVAR(win32_startfile__doc__,
 "startfile(filepath [, operation]) - Start a file with its associated\n\
@@ -8256,6 +8260,7 @@ normal:
 	return Py_None;
 }
 #endif
+#endif // IRONCLAD
 
 #ifdef HAVE_GETLOADAVG
 PyDoc_STRVAR(posix_getloadavg__doc__,
@@ -8527,7 +8532,9 @@ static PyMethodDef posix_methods[] = {
 	{"popen2",	win32_popen2, METH_VARARGS},
 	{"popen3",	win32_popen3, METH_VARARGS},
 	{"popen4",	win32_popen4, METH_VARARGS},
+#ifndef IRONCLAD
 	{"startfile",	win32_startfile, METH_VARARGS, win32_startfile__doc__},
+#endif // IRONCLAD
 #else
 #if defined(PYOS_OS2) && defined(PYCC_GCC)
 	{"popen2",	os2emx_popen2, METH_VARARGS},
