@@ -1,6 +1,6 @@
 include ../../../Makefile.config
 
-all : ../setvalue.pyd ../exportsymbols.dll ../fakepython25.dll
+all : ../setvalue.pyd ../exportsymbols.dll ../fakepython25.dll ../implicit-load-msvcr90.dll
 
 
 ../setvalue.pyd : setvalue.o
@@ -24,8 +24,18 @@ fakepython25.o : fakepython25.c
 	gcc $(CFLAGS) -o fakepython25.o -c fakepython25.c
 
 
+../implicit-load-msvcr90.dll : empty.o
+	gcc $(CFLAGS) -shared -o ../implicit-load-msvcr90.dll empty.o
+	mt -manifest ..\..\..\stub\depend-msvcr90.manifest -outputresource:..\implicit-load-msvcr90.dll;2 -nologo
+
+empty.o : empty.c
+	gcc $(CFLAGS) -o empty.o -c empty.c
+	
+
+
 clean :
 	$(RM) *.o
 	$(RM) ..\setvalue.pyd
 	$(RM) ..\exportsymbols.dll
 	$(RM) ..\fakepython25.dll
+	$(RM) ..\implicit-load-msvcr90.dll

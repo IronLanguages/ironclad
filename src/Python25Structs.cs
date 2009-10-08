@@ -486,6 +486,8 @@ namespace Ironclad
             public IntPtr bf_getwritebuffer;
             public IntPtr bf_getsegcount;
             public IntPtr bf_getcharbuffer;
+            public IntPtr bf_getbuffer;
+            public IntPtr bf_releasebuffer;
         }
     }
 }

@@ -655,6 +655,8 @@ int PyObject_CopyData(PyObject *dest, PyObject *src)
 	return 0;
 }
 
+#endif // IRONCLAD
+
 void
 PyBuffer_FillContiguousStrides(int nd, Py_ssize_t *shape,
 			       Py_ssize_t *strides, int itemsize,
@@ -722,6 +724,8 @@ PyBuffer_Release(Py_buffer *view)
 	Py_XDECREF(obj);
 	view->obj = NULL;
 }
+
+#ifndef IRONCLAD
 
 PyObject *
 PyObject_Format(PyObject* obj, PyObject *format_spec)

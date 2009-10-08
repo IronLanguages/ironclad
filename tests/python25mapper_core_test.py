@@ -32,39 +32,50 @@ class Python25Mapper_CreateDestroy_Test(TestCase):
     
     def testLoadsStubWhenPassedPathAndUnloadsOnDispose(self):
         mapper = Python25Mapper(os.path.join("build", "ironclad", "python26.dll"))
-        self.assertNotEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
-                             "library not mapped by construction")
-        self.assertNotEquals(Python25Mapper._Py_NoneStruct, IntPtr.Zero,
-                             "mapping not set up")
-        
-        # weak side-effect test to hopefully prove that ReadyBuiltinTypes has been called
-        self.assertEquals(CPyMarshal.ReadPtrField(mapper.PyLong_Type, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
-        
-        mapper.Dispose()
-        self.assertEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
-                          "library not unmapped by Dispose")
+        try:
+            self.assertNotEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
+                                 "library not mapped by construction")
+            self.assertNotEquals(Python25Mapper._Py_NoneStruct, IntPtr.Zero,
+                                 "mapping not set up")
+
+            # weak side-effect test to hopefully prove that ReadyBuiltinTypes has been called
+            self.assertEquals(CPyMarshal.ReadPtrField(mapper.PyLong_Type, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
+
+            mapper.Dispose()
+            self.assertEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
+                              "library not unmapped by Dispose")
+        finally:
+            mapper.Dispose()
         
     
     def testLoadsModuleAndUnloadsOnDispose(self):
         mapper = Python25Mapper(os.path.join("build", "ironclad", "python26.dll"))
-        origcwd = os.getcwd()
-        mapper.LoadModule(os.path.join("tests", "data", "setvalue.pyd"), "some.module")
-        self.assertEquals(os.getcwd(), origcwd, "failed to restore working directory")
-        self.assertNotEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
-                             "library not mapped by construction")
-        
-        mapper.Dispose()
-        self.assertEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
-                          "library not unmapped by Dispose")
+        try:
+            origcwd = os.getcwd()
+            mapper.LoadModule(os.path.join("tests", "data", "setvalue.pyd"), "some.module")
+            self.assertEquals(os.getcwd(), origcwd, "failed to restore working directory")
+            self.assertNotEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
+                                 "library not mapped by construction")
+
+            mapper.Dispose()
+            self.assertEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
+                              "library not unmapped by Dispose")
+            self.assertEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
+                              "library not unmapped by Dispose")
+        finally:
+            mapper.Dispose()
     
     
     def testRemovesMmapOnDispose(self):
         mapper = Python25Mapper(os.path.join("build", "ironclad", "python26.dll"))
-        sys.modules['csv'] = object()
-        mapper.Dispose()
-        self.assertFalse('mmap' in sys.modules)
-        self.assertFalse('_csv' in sys.modules)
-        self.assertFalse('csv' in sys.modules)
+        try:
+            sys.modules['csv'] = object()
+            mapper.Dispose()
+            self.assertFalse('mmap' in sys.modules)
+            self.assertFalse('_csv' in sys.modules)
+            self.assertFalse('csv' in sys.modules)
+        finally:
+            mapper.Dispose()
     
     
     def testFreesObjectsOnDispose(self):

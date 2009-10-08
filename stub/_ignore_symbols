@@ -41,6 +41,9 @@ PyObject_CallFunctionObjArgs
 PyObject_CallMethod
 _PyObject_CallMethod_SizeT
 PyObject_CallMethodObjArgs
+PyBuffer_FillContiguousStrides
+PyBuffer_FillInfo
+PyBuffer_Release
 
 # Objects/bufferobject.c
 PyBuffer_FromObject

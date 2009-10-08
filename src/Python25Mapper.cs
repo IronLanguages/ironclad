@@ -132,9 +132,6 @@ namespace Ironclad
             
             if (stubPath != null)
             {
-                // this appears to be necessary if you want to run functionalitytest.py on its own
-                Unmanaged.LoadLibrary("msvcr90.dll");
-                
                 this.stub = new StubReference(stubPath);
                 this.stub.Init(new AddressGetterDelegate(this.GetAddress), new DataSetterDelegate(this.SetData));
 
