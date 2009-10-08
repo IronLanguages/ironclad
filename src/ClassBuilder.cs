@@ -173,6 +173,9 @@ namespace Ironclad
                 case MemberT.UINT:
                     suffix = "uint";
                     return true;
+                case MemberT.LONG:
+                    suffix = "long";
+                    return true;
                 case MemberT.ULONG:
                     suffix = "ulong";
                     return true;

@@ -8,7 +8,7 @@ from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase, WithMapper
 
-from System import IntPtr, UInt32, WeakReference
+from System import IntPtr, Int32, UInt32, WeakReference
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, HGlobalAllocator, Python25Mapper
@@ -512,6 +512,28 @@ class FieldsTest(TestCase):
         
         CPyMarshal.WriteUInt(fieldPtr, UInt32.MaxValue - 2)
         self.assertEquals(instance.attr, UInt32.MaxValue - 2)
+    
+    
+    @WithMapper
+    def testLongFieldReadOnly(self, mapper, addToCleanUp):
+        instance, fieldPtr = MakeInstanceWithField(MemberT.LONG, 1, mapper, addToCleanUp)
+        
+        def Set():
+            instance.attr = 123
+        self.assertRaises(AttributeError, Set)
+        
+        CPyMarshal.WriteInt(fieldPtr, Int32.MinValue + 1)
+        self.assertEquals(instance.attr, Int32.MinValue + 1)
+        
+    @WithMapper
+    def testLongFieldReadWrite(self, mapper, addToCleanUp):
+        instance, fieldPtr = MakeInstanceWithField(MemberT.LONG, 0, mapper, addToCleanUp)
+        
+        instance.attr = Int32.MinValue + 1
+        self.assertEquals(CPyMarshal.ReadInt(fieldPtr), Int32.MinValue + 1)
+        
+        CPyMarshal.WriteInt(fieldPtr, Int32.MinValue + 2)
+        self.assertEquals(instance.attr, Int32.MinValue + 2)
     
     
     @WithMapper
