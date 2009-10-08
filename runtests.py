@@ -13,11 +13,6 @@ suite = unittest.TestSuite()
 for f in os.listdir("tests"):
     if f.endswith("test.py"):
         name = f[:-3]
-        
-        if name == 'functionalitytest':
-            suite.addTest(GetFailedImportTestSuite(name, 'well, we could, but (almost) none of them work yet and they ugly up the test run'))
-            continue
-        
         try:
             m = __import__("tests.%s" % name)
             suite.addTest(getattr(m, name).suite)

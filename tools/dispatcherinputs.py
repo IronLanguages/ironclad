@@ -16,6 +16,7 @@ DISPATCHER_FIELD_TYPES = (
 
     (('int', 'int', 'Int'), {}),
     (('uint', 'uint', 'UInt'), {}),
+    (('long', 'int', 'Int'), {}),
     (('ulong', 'uint', 'UInt'), {}),
     (('double', 'double', 'Double'), {}),
     (('ubyte', 'byte', 'Byte'), {}),

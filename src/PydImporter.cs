@@ -19,7 +19,12 @@ namespace Ironclad
         public void
         Load(string path)
         {
+            // the ActCtx stuff allows us to import .pyds which link to msvcr90 but don't have manifests
+            // implementation explained in stub/ic_msvcr90.c
+            IntPtr cookie = Unmanaged._Py_ActivateActCtx();
             IntPtr l = Unmanaged.LoadLibrary(path);
+            Unmanaged._Py_DeactivateActCtx(cookie);
+            
             if (l == IntPtr.Zero)
             {
                 throw new Exception(
