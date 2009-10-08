@@ -37,25 +37,35 @@ namespace Ironclad
         public static extern void DebugBreak();
         
         
-        [DllImport("msvcr90.dll")]
-        public static extern IntPtr _fdopen(int fd, string mode);
-        
-        [DllImport("msvcr90.dll")]
-        public static extern int _open_osfhandle(IntPtr f, int flags);
-        
-        [DllImport("msvcr90.dll")]
-        public static extern int fread(IntPtr buf, int size, int count, IntPtr file);
-        
-        [DllImport("msvcr90.dll")]
-        public static extern int fwrite(IntPtr buf, int size, int count, IntPtr file);
-
-        [DllImport("msvcr90.dll")]
-        public static extern int fflush(IntPtr file);
-        
-        [DllImport("msvcr90.dll")]
-        public static extern int fclose(IntPtr FILE);
-        
-        [DllImport("msvcr90.dll")]
+        [DllImport("msvcrt.dll")]
         public static extern IntPtr memcpy(IntPtr dst, IntPtr src, uint bytes);
+        
+        
+        // All these are here because I can't DllImport from msvcr90.dll (sxs issues)
+        // They're prefixed IC_ because I can't be bothered to set up a .def to use their real names and forward them
+        
+        [DllImport("ic_msvcr90.dll")]
+        private static extern IntPtr IC__fdopen(int fd, string mode);
+        public static IntPtr _fdopen(int fd, string mode) { return IC__fdopen(fd, mode); }
+        
+        [DllImport("ic_msvcr90.dll")]
+        private static extern int IC__open_osfhandle(IntPtr f, int flags);
+        public static int _open_osfhandle(IntPtr f, int flags) { return IC__open_osfhandle(f, flags); }
+        
+        [DllImport("ic_msvcr90.dll")]
+        private static extern int IC_fread(IntPtr buf, int size, int count, IntPtr file);
+        public static int fread(IntPtr buf, int size, int count, IntPtr file) { return IC_fread(buf, size, count, file); }
+        
+        [DllImport("ic_msvcr90.dll")]
+        private static extern int IC_fwrite(IntPtr buf, int size, int count, IntPtr file);
+        public static int fwrite(IntPtr buf, int size, int count, IntPtr file) { return IC_fwrite(buf, size, count, file); }
+
+        [DllImport("ic_msvcr90.dll")]
+        private static extern int IC_fflush(IntPtr file);
+        public static int fflush(IntPtr file) { return IC_fflush(file); }
+        
+        [DllImport("ic_msvcr90.dll")]
+        private static extern int IC_fclose(IntPtr file);
+        public static int fclose(IntPtr file) { return IC_fclose(file); }
     }
 }

@@ -89,11 +89,9 @@ PyEval_GetRestricted(void)
 void* _PyParser_Grammar[1000] = {0,};
 
 
-
+// TODO - this is just to dodge ugly linking issues
 int fstat(int fd, struct stat* buffer)
 {
-	// TODO - this is just to dodge ugly linking issues
 	printf("called fake fstat\n");
 	return -1;
 }
-
