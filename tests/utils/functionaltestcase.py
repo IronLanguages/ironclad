@@ -50,14 +50,14 @@ class FunctionalTestCase(TestCase):
             testFile.close()
 
 
-    def runCode(self, code, interpreter="ipy.exe"):
+    def runCode(self, code, interpreter="ipy.exe", insert_args=''):
         if interpreter == "ipy.exe":
             code = self.TEMPLATE % code
         self.write("test-code.py", code)
         
         process = Process()
         process.StartInfo.FileName = interpreter
-        process.StartInfo.Arguments = "test-code.py"
+        process.StartInfo.Arguments = "%s test-code.py" % insert_args
         process.StartInfo.WorkingDirectory = self.testDir
         process.StartInfo.UseShellExecute = False
         process.StartInfo.RedirectStandardOutput = process.StartInfo.RedirectStandardError = True
@@ -72,6 +72,6 @@ class FunctionalTestCase(TestCase):
         return process.ExitCode, output, error
 
 
-    def assertRuns(self, code):
-        exit_code, output, error = self.runCode(code)
+    def assertRuns(self, code, interpreter="ipy.exe", insert_args=''):
+        exit_code, output, error = self.runCode(code, interpreter, insert_args)
         self.assertEquals(exit_code, 0, "Execution failed: >>>%s<<<\n>>>%s<<<" % (output, error))

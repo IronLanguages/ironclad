@@ -7,30 +7,6 @@ from System import IntPtr, NullReferenceException
 from Ironclad import CPyMarshal
 ";
 
-        public const string SCIPY_FIXES = @"
-class Frame(object):
-    def __init__(self, globals_):
-        self.f_locals = {}
-        self.f_globals = globals_
-
-from numpy._import_tools import PackageLoader
-real__init__ = PackageLoader.__init__
-def fake__init__(self):
-    import scipy
-    import sys
-    
-    has_getframe = hasattr(sys, '_getframe')
-    if has_getframe:
-        original = sys._getframe
-    sys._getframe = lambda *_: Frame(scipy.__dict__)
-    real__init__(self)
-    if has_getframe:
-        sys._getframe = original
-    else:
-        del sys._getframe
-PackageLoader.__init__ = fake__init__
-";
-
         public const string CLASS_STUB_CODE = @"
 def __new__(cls, *args, **kwargs):
     if issubclass(cls, int):

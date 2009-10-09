@@ -61,8 +61,6 @@ namespace Ironclad
 
         private bool alive = false;
         private bool logErrors = false;
-        private bool appliedNumpyHack = false;
-        private bool appliedScipyHack = false;
         
         private InterestingPtrMap map = new InterestingPtrMap();
         private Dictionary<IntPtr, ActualiseDelegate> actualisableTypes = new Dictionary<IntPtr, ActualiseDelegate>();
@@ -210,7 +208,8 @@ namespace Ironclad
                 this.exitfuncs.Pop()();
             }
 
-            if (!this.appliedNumpyHack)
+            PythonDictionary modules = (PythonDictionary)this.python.SystemState.__dict__["modules"];
+            if (!modules.Contains("numpy"))
             {
                 // TODO: FIXME?
                 // I don't know what it is about numpy, but using it heavily
@@ -232,8 +231,6 @@ namespace Ironclad
             if (this.stub != null)
             {
                 PythonCalls.Call(this.removeSysHacks);
-                
-                PythonDictionary modules = (PythonDictionary)this.python.SystemState.__dict__["modules"];
                 modules.Remove("mmap");
                 modules.Remove("posix");
                 modules.Remove("_csv");
