@@ -40,8 +40,9 @@ class MetaImporter(object):
             self.mapper.PerpetrateScipyFixes()
         elif matches('h5py'):
             self.fix_h5py()
-        elif matches('ctypes'):
-            raise ImportError('%s is not available in ironclad yet' % fullname)
+        elif matches('_ctypes'):
+            # _ctypes.pyd will mask ipy _ctypes, I think
+            return None
         
         self.late_fixes()
         
