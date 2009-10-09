@@ -68,9 +68,10 @@ namespace Ironclad
         private static extern int IC_fclose(IntPtr file);
         public static int fclose(IntPtr file) { return IC_fclose(file); }
         
+        
         // And these are here because it looked like an easy place to put them
         // (I don't want them in python26.dll, because automatic loading screws up certain tests;
-        // and I don't them anywhere else because I don't want yet another dll in the package.)
+        // and I don't want them anywhere else because I don't want yet another dll in the package.)
         
         [DllImport("ic_msvcr90.dll")]
         public static extern IntPtr _Py_ActivateActCtx();

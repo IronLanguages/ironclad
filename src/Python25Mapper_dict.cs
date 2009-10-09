@@ -24,6 +24,7 @@ namespace Ironclad
         IC_PyDict_Init(IntPtr _, IntPtr __, IntPtr ___)
         {
             // _ctypes has some excuse for calling this; we don't normally expect it to be called
+            // probably no longer needed
             return 0;
         }
         

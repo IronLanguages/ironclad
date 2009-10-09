@@ -89,7 +89,8 @@ class ExternalFunctionalityTest(FunctionalTestCase):
         
         self.assertRuns(dedent("""\
             #=====================================================
-            # test we can aactually import them
+            # test we can actually import them
+            
             import scipy as sp
             import numpy as np
             
@@ -112,17 +113,14 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             
             #=====================================================
             # test can do trivial mpl plot without crashing
-            # NOTE: if mpl fails to load _path.pyd for want
-            # of mscvp71.dll, find a copy and stick it into
-            # /build/ironclad/support
             
-            import matplotlib as mpl
-            mpl.use('ps')
-            import pylab
+            #import matplotlib as mpl
+            #mpl.use('ps')
+            #import pylab
 
-            t = np.arange(0.0, 1.0 + 0.01, 0.01)
-            s = np.cos(4 * np.pi * t)
-            pylab.plot(t, s)
+            #t = np.arange(0.0, 1.0 + 0.01, 0.01)
+            #s = np.cos(4 * np.pi * t)
+            #pylab.plot(t, s)
             
             #=====================================================
             # test matrices probably work
@@ -164,16 +162,18 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             # test for no dupe h5 imports
             # we still have dupe .py imports from .pyds for some reason
             
-            import h5py
-            import sys
-            assert 'h5py.h5g.h5' not in sys.modules # .pyd dupes
-            assert 'h5py.h5i.h5' not in sys.modules # .pyd dupes
-            assert 'h5py.h5t.h5' not in sys.modules # .pyd dupes
-            assert 'h5py.h5g._sync' not in sys.modules # .py dupes
-            assert 'h5py.h5i._sync' not in sys.modules # .py dupes
-            assert 'h5py.h5t._sync' not in sys.modules # .py dupes
+            #import h5py
+            #import sys
+            #assert 'h5py.h5g.h5' not in sys.modules # .pyd dupes
+            #assert 'h5py.h5i.h5' not in sys.modules # .pyd dupes
+            #assert 'h5py.h5t.h5' not in sys.modules # .pyd dupes
+            #assert 'h5py.h5g._sync' not in sys.modules # .py dupes
+            #assert 'h5py.h5i._sync' not in sys.modules # .py dupes
+            #assert 'h5py.h5t._sync' not in sys.modules # .py dupes
             
             """ % (file_path, file_contents)))
+        self.fail("matplotlib and h5py tests are commented out")
+
 
     def testPatchNativeFilenos(self):
         self.assertRuns(dedent("""\
