@@ -34,11 +34,7 @@ class MetaImporter(object):
         
     def find_module(self, fullname, path=None):
         matches = lambda partialname: fullname == partialname or fullname.startswith(partialname + '.')
-        if matches('numpy'):
-            self.mapper.PerpetrateNumpyFixes()
-        elif matches('scipy'):
-            self.mapper.PerpetrateScipyFixes()
-        elif matches('h5py'):
+        if matches('h5py'):
             self.fix_h5py()
         elif matches('_ctypes'):
             # _ctypes.pyd will mask ipy _ctypes, I think

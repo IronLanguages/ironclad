@@ -171,7 +171,7 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             #assert 'h5py.h5i._sync' not in sys.modules # .py dupes
             #assert 'h5py.h5t._sync' not in sys.modules # .py dupes
             
-            """ % (file_path, file_contents)))
+            """ % (file_path, file_contents)), insert_args='-X:Frames')
         self.fail("matplotlib and h5py tests are commented out")
 
 

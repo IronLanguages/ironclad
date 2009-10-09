@@ -152,43 +152,5 @@ namespace Ironclad
                 outer.__dict__[name.Substring(lastDot + 1)] = inner;
             }
         }
-        
-        public void
-        PerpetrateNumpyFixes()
-        {
-            if (this.appliedNumpyHack)
-            {
-                return;
-            }
-            this.appliedNumpyHack = true;
-            
-            Console.WriteLine("Detected numpy import");
-            Console.WriteLine("  faking out modules: nosetester, parser");
-
-            PythonModule nosetester = this.CreateModule("numpy.testing.nosetester");
-            nosetester.__setattr__("import_nose", new Object());
-            nosetester.__setattr__("run_module_suite", new Object());
-            nosetester.__setattr__("get_package_name", new Object());
-
-            PythonDictionary __dict__ = new PythonDictionary();
-            __dict__["bench"] = __dict__["test"] = "This has been patched and broken by ironclad";
-            PythonType NoseTester = new PythonType(this.scratchContext, "NoseTester", new PythonTuple(), __dict__);
-            nosetester.__setattr__("NoseTester", NoseTester);
-            
-            this.CreateModule("parser");
-        }
-
-        public void
-        PerpetrateScipyFixes()
-        {
-            if (this.appliedScipyHack)
-            {
-                return;
-            }
-            this.appliedScipyHack = true;
-            Console.WriteLine("Detected scipy import");
-            Console.WriteLine("  faking out numpy._import_tools.PackageLoader");
-            this.ExecInModule(CodeSnippets.SCIPY_FIXES, this.scratchModule);
-        }
     }
 }
