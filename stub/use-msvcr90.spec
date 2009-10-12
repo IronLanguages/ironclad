@@ -7,3 +7,9 @@ msvcr90
 *moldname:
 moldname90
 
+*cpp:
+%(msvcrt_version) %{posix:-D_POSIX_SOURCE} %{mthreads:-D_MT}
+
+*libgcc:
+%{mthreads:-lmingwthrd} -lmingw32 -lgcc -l%(moldname) -lmingwex -l%(msvcrt)
+

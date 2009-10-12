@@ -4,12 +4,8 @@ Ironclad's build process deserves a brief discussion.
 
 * IronPython 2.6
 * mingw or cygwin (including gcc and make)
-** note that mingw needs to be tweaked in 2 ways:
-*** gcc's default specs need to be modified as in keith's 28/08/2008 
-    comment on http://www.mingw.org/wiki/SpecsFileHOWTO (but you don't 
-    need to worry about creating your own msvcr90.spec)
-*** mingw's function name mapping for msvcr90 needs to be updated;
-    TODO how on earth do we do this? libmoldname90.a and sys/stat.h?
+* note that mingw needs to be tweaked; the setup directory will contain a 
+  script to patch/unpatch your mingw install.
 * pexports
 * nasm
 * .NET 2.0 Service Pack 1 (csc, specifically)
