@@ -88,6 +88,14 @@ PyEval_GetRestricted(void)
 
 void* _PyParser_Grammar[1000] = {0,};
 
+// Objects/typeobject.c
+void
+PyType_Modified(PyTypeObject *type)
+{
+	// do nothing for now -- the only use I'm aware of is in h5py, which
+	// sometimes modifed types' __dict__s, which ipy is capable of dealing
+	// with itself.
+}
 
 // TODO: I don't understand why this works, but somehow it apparently does
 int fstat(int fd, struct stat* buffer)

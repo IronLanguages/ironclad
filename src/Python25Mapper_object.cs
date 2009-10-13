@@ -361,6 +361,20 @@ namespace Ironclad
             return this.PyObject_SetAttrString(objPtr, name, valuePtr);
         }
 
+        public override IntPtr
+        PyObject_GetItemString(IntPtr objPtr, string key)
+        {
+            try
+            {
+                return this.Store(PythonOperator.getitem(this.scratchContext, this.Retrieve(objPtr), key));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
         public override int
         PyObject_SetItem(IntPtr objPtr, IntPtr keyPtr, IntPtr valuePtr)
         {

@@ -95,7 +95,7 @@ Py_FindMethod
 PyCFunction_Fini
 PyCFunction_New
 
-#Objects/object.c
+# Objects/object.c
 _Py_HashPointer
 
 # Objects/stringobject.c
@@ -111,6 +111,9 @@ PyStructSequence_InitType
 PyTuple_GetItem
 PyTuple_SetItem
 PyTuple_Pack
+
+# Objects/typeobject.c
+PyType_Modified
 
 # Objects/unicodeobject.c, sorry about the mangling, not sure how to deal with that
 PyUnicodeUCS2_GetDefaultEncoding
