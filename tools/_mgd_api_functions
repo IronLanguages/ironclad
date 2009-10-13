@@ -142,6 +142,7 @@ PyObject_Free void_ptr
 PyObject_GetAttr ptr_ptrptr
 PyObject_GetAttrString ptr_ptrstr
 PyObject_GetItem ptr_ptrptr
+PyObject_GetItemString ptr_ptrstr
 PyObject_GetIter ptr_ptr
 PyObject_HasAttr int_ptrptr
 PyObject_HasAttrString int_ptrstr

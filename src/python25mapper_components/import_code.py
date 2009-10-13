@@ -29,8 +29,6 @@ class MetaImporter(object):
         self.loader = loader
         self.mapper = mapper
         self.patched_for_h5py = False
-        self.patched_numpy_testing = False
-        self.patched_h5py__stub = False
         
     def find_module(self, fullname, path=None):
         matches = lambda partialname: fullname == partialname or fullname.startswith(partialname + '.')
@@ -39,8 +37,6 @@ class MetaImporter(object):
         elif matches('_ctypes'):
             # _ctypes.pyd will mask ipy _ctypes, I think
             return None
-        
-        self.late_fixes()
         
         import os
         import sys
@@ -57,33 +53,12 @@ class MetaImporter(object):
             return
         
         self.patched_for_h5py = True
-        print 'Detected h5py import'
-        print '  patching out sys.getfilesystemencoding'
+        print 'ironclad: detected h5py, patching out sys.getfilesystemencoding'
         
         def getutf8():
             return 'utf-8'
         import sys
         sys.getfilesystemencoding = getutf8
-
-    def late_fixes(self):
-        # hacka hacka hacka!
-        # don't look at me like that.
-        self.patch_numpy_testing()
-        
-    def patch_numpy_testing(self):
-        if self.patched_numpy_testing:
-            return
-        
-        import sys
-        if 'numpy.testing' not in sys.modules:
-            return
-        
-        print '  patching numpy.testing.NumpyTest, NumpyTestCase'
-        self.patched_numpy_testing = True
-        
-        import unittest
-        sys.modules['numpy.testing'].NumpyTest = object()
-        sys.modules['numpy.testing'].NumpyTestCase = unittest.TestCase
 
 class Lifetime(object):
     
