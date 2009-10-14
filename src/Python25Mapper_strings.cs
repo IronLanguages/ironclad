@@ -70,9 +70,10 @@ namespace Ironclad
             }
             byte[] bytes = new byte[bytesList.Count];
             bytesList.CopyTo(bytes);
-            IntPtr strPtr = this.CreatePyStringWithBytes(bytes);
-            this.map.Associate(strPtr, this.StringFromBytes(bytes));
-            return strPtr;
+            // note: NOT Associate
+            // couldn't figure out to test this directly
+            // without this, h5py tests get horribly screwy in PHIL contextmanager
+            return this.Store(this.StringFromBytes(bytes));
         }
         
         public override IntPtr
@@ -88,9 +89,10 @@ namespace Ironclad
             {
                 byte[] bytes = new byte[length];
                 Marshal.Copy(stringData, bytes, 0, (int)length);
-                IntPtr strPtr = this.CreatePyStringWithBytes(bytes);
-                this.map.Associate(strPtr, this.StringFromBytes(bytes));
-                return strPtr;
+                // note: NOT Associate
+                // couldn't figure out to test this directly
+                // without this, h5py tests get horribly screwy in PHIL contextmanager
+                return this.Store(this.StringFromBytes(bytes));
             }
         }
 
