@@ -1,11 +1,5 @@
 
-// filled in by Python25Api; just need to exist somewhere
-
-PyTypeObject PyNotImplemented_Type;
-PyTypeObject PyEllipsis_Type;
-PyTypeObject PyNone_Type;
-
-// perhaps possible to use real gc module
+// TODO: perhaps possible to use real gc module
 
 PyObject *
 _PyObject_GC_Malloc(size_t basicsize)
@@ -84,10 +78,6 @@ PyEval_GetRestricted(void)
 	return 0;
 }
 
-// Parser/graminit.c
-
-void* _PyParser_Grammar[1000] = {0,};
-
 // Objects/typeobject.c
 void
 PyType_Modified(PyTypeObject *type)
@@ -97,8 +87,10 @@ PyType_Modified(PyTypeObject *type)
 	// with itself.
 }
 
-// TODO: I don't understand why this works, but somehow it apparently does
+
+// TODO: if this works right, it's only by coincidence
 int fstat(int fd, struct stat* buffer)
 {
 	return _fstat64i32(fd, (struct _stat64i32*)buffer);
 }
+

@@ -1,9 +1,3 @@
-# This file is used by tools/dispatcherinputs.py and tools/stubmaker.py
-#
-# this file contains C declarations of functions which:
-# (1) are not part of the public CPython API
-# (2) need to be used by c code
-
 
 FILE * IC_PyFile_AsFile(PyObject *f);
 int IC_PyFile_SetEncodingAndErrors(PyObject *f, const char *enc, char* errors);
