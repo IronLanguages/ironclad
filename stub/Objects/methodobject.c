@@ -204,10 +204,6 @@ static PyMemberDef meth_members[] = {
 	{NULL}
 };
 
-#ifdef IRONCLAD // tidiness
-#undef OFF
-#endif // IRONCLAD
-
 static PyObject *
 meth_repr(PyCFunctionObject *m)
 {
@@ -434,7 +430,3 @@ PyCFunction_New(PyMethodDef *ml, PyObject *self)
 {
 	return PyCFunction_NewEx(ml, self, NULL);
 }
-
-#ifdef IRONCLAD // tidiness
-#undef free_list
-#endif // IRONCLAD
