@@ -88,9 +88,12 @@ PyType_Modified(PyTypeObject *type)
 }
 
 
-// TODO: if this works right, it's only by coincidence
+// TODO: this will break, when you least expect it, because it assumes that
+// _off_t and time_t are both 32-bit. OTOH, the users don't seem to look in
+// those parts of the struct, so we may continue to get away with it for a
+// while...
 int fstat(int fd, struct stat* buffer)
 {
-	return _fstat64i32(fd, (struct _stat64i32*)buffer);
+	return _fstat32(fd, buffer);
 }
 
