@@ -559,16 +559,8 @@ extern int fdatasync(int);
 #if defined(Py_ENABLE_SHARED) || defined(__CYGWIN__)
 #	if defined(HAVE_DECLSPEC_DLL)
 #		ifdef Py_BUILD_CORE
-
-#ifdef IRONCLAD // lose 'extern' to avoid need to actually define data;
-			    // lose __declspecc(dllexport) because we're using -export-all-symbols anyway
-#			define PyAPI_FUNC(RTYPE) RTYPE
-#			define PyAPI_DATA(RTYPE) RTYPE
-#else // IRONCLAD
 #			define PyAPI_FUNC(RTYPE) __declspec(dllexport) RTYPE
 #			define PyAPI_DATA(RTYPE) extern __declspec(dllexport) RTYPE
-#endif // IRONCLAD
-
 			/* module init functions inside the core need no external linkage */
 			/* except for Cygwin to handle embedding (FIXME: BeOS too?) */
 #			if defined(__CYGWIN__)
