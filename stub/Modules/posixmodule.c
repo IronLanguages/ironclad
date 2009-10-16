@@ -135,11 +135,7 @@ corresponding Unix manual entries for more information on calls.");
 /* Everything needed is defined in PC/os2emx/pyconfig.h or vms/pyconfig.h */
 #else			/* all other compilers */
 
-#ifdef IRONCLAD // don't define HAVE_SOMETHING_WE_DONT_REALLY_HAVE, insert extra useful hacks
-
-#include <shellapi.h>	// pure laziness prevents me from working out why I suddenly need this
-
-#else // IRONCLAD
+#ifndef IRONCLAD // don't define HAVE_SOMETHING_WE_DONT_REALLY_HAVE
 
 /* Unix functions that the configure script doesn't check for */
 #define HAVE_EXECV      1
@@ -172,6 +168,12 @@ corresponding Unix manual entries for more information on calls.");
 #endif /* ! __IBMC__ */
 
 #ifndef _MSC_VER
+
+#ifdef IRONCLAD
+#include "osdefs.h"
+#include <windows.h>
+#include <shellapi.h>
+#endif // IRONCLAD
 
 #if defined(__sgi)&&_COMPILER_VERSION>=700
 /* declare ctermid_r if compiling with MIPSPro 7.x in ANSI C mode
@@ -1222,10 +1224,6 @@ static PyStructSequence_Desc statvfs_result_desc = {
 static int initialized;
 static PyTypeObject StatResultType;
 static PyTypeObject StatVFSResultType;
-
-#ifdef IRONCLAD // ugly, include-order-dependant
-#define structseq_new IRONCLAD_structseq_new
-#endif // IRONCLAD
 
 static newfunc structseq_new;
 

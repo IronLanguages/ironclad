@@ -1,6 +1,10 @@
 /* File object implementation */
 
 #ifdef IRONCLAD // redirection macros
+
+#include "Python.h"
+#include "../_mgd_functions"
+
 const int IRONCLAD_MAGIC_FILE = -2;
 const char *IRONCLAD_ERR_MSG =
     "Can't use an IronPython file here. Please use ironclad.open with this extension.";
@@ -2026,10 +2030,6 @@ static PyMemberDef file_memberlist[] = {
 	/* getattr(f, "closed") is implemented without this table */
 	{NULL}	/* Sentinel */
 };
-
-#ifdef IRONCLAD // tidiness
-#undef OFF
-#endif // IRONCLAD
 
 static PyObject *
 get_closed(PyFileObject *f, void *closure)
