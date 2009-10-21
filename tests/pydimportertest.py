@@ -44,11 +44,7 @@ class PydImporterTest(TestCase):
         self.assertEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                           "failed to unload on dispose")
     
-    
-    
-    
 
 suite = makesuite(PydImporterTest)
-
 if __name__ == '__main__':
     run(suite)

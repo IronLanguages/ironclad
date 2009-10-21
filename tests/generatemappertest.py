@@ -44,7 +44,7 @@ class GeneratePython25MapperTest(TestCase):
             write("numbers_convert_py2c", NUMBERS_CONVERT_PY2C)
             write("fill_types", FILL_TYPES)
 
-            retVal = spawn("ipy", toolPath)
+            retVal = spawn("ipy", toolPath, testSrcDir, testBuildDir)
             self.assertEquals(retVal, 0, "process ended badly")
 
             os.chdir(testBuildDir)

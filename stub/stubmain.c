@@ -19,5 +19,5 @@
 #include "ironclad-data.c"
 
 // init function
-#include "stub.generated.c"
+#include "stubinit.generated.c"
 

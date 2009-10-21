@@ -1,5 +1,5 @@
 
-import os
+import os, sys
 from utils import read_interesting_lines
 
 def writefile(name, text):
@@ -20,7 +20,16 @@ def mapstrings(names, infile, template):
     extract = lambda line: template % dict(zip(names, foreversplit(line)))
     return map(extract, read_interesting_lines(infile))
 
-def run():
+def run(in_dir, out_dir):
+    def mung_filename(name):
+        return os.path.join(in_dir, name), os.path.join(out_dir, "Python25Mapper_%s.Generated.cs" % name)
+    EXCEPTIONS_INFILE, EXCEPTIONS_OUTFILE = mung_filename("exceptions")
+    STORE_INFILE, STORE_OUTFILE = mung_filename("store_dispatch")
+    OPERATOR_INFILE, OPERATOR_OUTFILE = mung_filename("operator")
+    C2PY_INFILE, C2PY_OUTFILE = mung_filename("numbers_convert_c2py")
+    PY2C_INFILE, PY2C_OUTFILE = mung_filename("numbers_convert_py2c")
+    FILL_TYPES_INFILE, FILL_TYPES_OUTFILE = mung_filename("fill_types")
+    
     exc_snippets = mapstrings(("name",), EXCEPTIONS_INFILE, EXCEPTION_TEMPLATE)
     writefile(EXCEPTIONS_OUTFILE, "\n\n".join(exc_snippets))
     
@@ -59,19 +68,6 @@ def run():
     
     
     
-
-EXCEPTIONS_INFILE = "exceptions"
-EXCEPTIONS_OUTFILE = "../Python25Mapper_exceptions.Generated.cs"
-STORE_INFILE = "store_dispatch"
-STORE_OUTFILE = "../Python25Mapper_store_dispatch.Generated.cs"
-OPERATOR_INFILE = "operator"
-OPERATOR_OUTFILE = "../Python25mapper_operator.Generated.cs"
-C2PY_INFILE = "numbers_convert_c2py"
-C2PY_OUTFILE = "../Python25mapper_numbers_convert_c2py.Generated.cs"
-PY2C_INFILE = "numbers_convert_py2c"
-PY2C_OUTFILE = "../Python25mapper_numbers_convert_py2c.Generated.cs"
-FILL_TYPES_INFILE = "fill_types"
-FILL_TYPES_OUTFILE = "../Python25mapper_fill_types.Generated.cs"
 
 FILE_TEMPLATE = """
 using System;
@@ -169,7 +165,7 @@ FILL_TYPES_GETADDRESS_TEMPLATE = """\
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "%s", this.GetAddress("%s"));"""
 
 if __name__ == "__main__":
-    run()
+    run(*(sys.argv[1:]))
 
 
 
