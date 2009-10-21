@@ -4,7 +4,7 @@
 
 // these are here because:
 // (1) I can't DllImport from msvcr90.dll (sxs is ignored, apparently)
-// (2) this is slightly easier than forwarding to msvcr90, because there's no messing around with .defs and foo@4s
+// (2) this is slightly easier than forwarding to msvcr90
 
 FILE* IC__fdopen(int fd, const char *mode)
 {

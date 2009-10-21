@@ -40,9 +40,9 @@ class BuildStubTest(TestCase):
 
             retVal = spawn("ipy", "tools/buildstub.py", *extraArgs)
             self.assertEquals(retVal, 0, "process ended badly")
-            cPath = os.path.join(ourTempDir, "stub.generated.c")
+            cPath = os.path.join(ourTempDir, "stubinit.generated.c")
             self.assertTrue(os.path.exists(cPath))
-            asmPath = os.path.join(ourTempDir, "stub.generated.asm")
+            asmPath = os.path.join(ourTempDir, "jumps.generated.asm")
             self.assertTrue(os.path.exists(asmPath))
 
         testGenerates(inputPath, ourTempDir)
