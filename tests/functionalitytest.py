@@ -82,7 +82,7 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             "uncompressed": bz2_test_text})
 
 
-    def testNumPySciPyMatPlotLibH5Stuff(self):
+    def testNumPySciPyH5Py(self):
         # combine several tests into one, so we don't have to wait for multiple reloads
         file_path = os.path.abspath(os.path.join('tests', 'data', 'text.txt'))
         file_contents = list(open(file_path).read())
@@ -112,17 +112,6 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             assert_equals((1+3j), np.complex128(1+3j))
             
             #=====================================================
-            # test can do trivial mpl plot without crashing
-            
-            #import matplotlib as mpl
-            #mpl.use('ps')
-            #import pylab
-
-            #t = np.arange(0.0, 1.0 + 0.01, 0.01)
-            #s = np.cos(4 * np.pi * t)
-            #pylab.plot(t, s)
-            
-            #=====================================================
             # test matrices probably work
             
             m = np.matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
@@ -130,6 +119,7 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             
             #=====================================================
             # test memmap when patched
+            
             ironclad.patch_native_filenos()
             f = np.core.memmap(%r)
             assert map(chr, f) == %r
@@ -172,7 +162,6 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             assert 'h5py.h5t._sync' not in sys.modules # .py dupes
             
             """ % (file_path, file_contents)), insert_args='-X:Frames')
-        self.fail("matplotlib tests are commented out")
 
 
     def testPatchNativeFilenos(self):
