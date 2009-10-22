@@ -86,18 +86,18 @@ tools_sources = (
     'dispatcherinputs.py dispatchersnippets.py generatedispatcher.py platform.py '
     '_mgd_api_functions _mgd_api_functions _all_api_functions')
 dispatcher_sources = pathmap('tools', tools_sources) + pathmap('stub', '_mgd_functions _ignore_symbols')
-dispatcher_basenames = 'Delegates Dispatcher MagicMethods Python25Api'
+dispatcher_basenames = 'Delegates Dispatcher MagicMethods PythonApi'
 dispatcher_outputs = pathmap('src', submap('%s.Generated.cs', dispatcher_basenames))
 managed.Command(dispatcher_outputs, dispatcher_sources, '$IPY tools/generatedispatcher.py src')
 
 mapper_basenames = 'exceptions fill_types numbers_convert_c2py numbers_convert_py2c operator store_dispatch'.split()
-mapper_sources = pathmap('src/python25mapper_components', mapper_basenames)
-mapper_outputs = pathmap('src', map((lambda x: 'Python25Mapper_%s.Generated.cs' % x), mapper_basenames))
-managed.Command(mapper_outputs, mapper_sources, '$IPY tools/generatepython25mapper.py src/python25mapper_components src')
+mapper_sources = pathmap('src/pythonmapper_components', mapper_basenames)
+mapper_outputs = pathmap('src', map((lambda x: 'PythonMapper_%s.Generated.cs' % x), mapper_basenames))
+managed.Command(mapper_outputs, mapper_sources, '$IPY tools/generatepythonmapper.py src/pythonmapper_components src')
 
 def CodeSnippet(name, src):
     target = 'src/CodeSnippets_%s.Generated.cs' % name
-    sources = pathmap('src/python25mapper_components', [('CodeSnippets_%s.cs.src' % name), ('%s.py' % src)])
+    sources = pathmap('src/pythonmapper_components', [('CodeSnippets_%s.cs.src' % name), ('%s.py' % src)])
     managed.Insert(target, sources)
 CodeSnippet('ihooks', 'import_code')
 CodeSnippet('kindaDictProxy', 'kindadictproxy')
@@ -186,7 +186,7 @@ if WIN32:
 
 before_test(native.Dll('tests/data/setvalue.pyd', native.Obj('tests/data/src/setvalue.c')))
 before_test(native.Dll('tests/data/exportsymbols', native.Obj('tests/data/src/exportsymbols.c')))
-before_test(native.Dll('tests/data/fakepython25', native.Obj('tests/data/src/fakepython25.c')))
+before_test(native.Dll('tests/data/fakepython', native.Obj('tests/data/src/fakepython.c')))
 
 if WIN32:
     # Some tests will load and unload dlls which depend on msvcr90; if msvcr90's ref count

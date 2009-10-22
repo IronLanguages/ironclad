@@ -1,6 +1,6 @@
 
 from System import IntPtr
-from Ironclad import Python25Mapper
+from Ironclad import PythonMapper
 
 
 def MakeAndAddEmptyModule(mapper):

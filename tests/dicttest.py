@@ -9,7 +9,7 @@ from tests.utils.testcase import TestCase, WithMapper
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, dgt_int_ptrptrptr, Python25Mapper
+from Ironclad import CPyMarshal, dgt_int_ptrptrptr, PythonMapper
 from Ironclad.Structs import PyObject, PyTypeObject
 
 
@@ -18,7 +18,7 @@ class DictTest(TestCase):
     def testPyDict_New(self):
         allocs = []
         frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
     
         del allocs[:]
@@ -102,7 +102,7 @@ class DictTest(TestCase):
 
     def testPyDict_GetItemStringSuccess(self):
         frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
+        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
         deallocTypes = CreateTypes(mapper)
         dictPtr = mapper.Store({"abcde": 12345})
         
@@ -128,7 +128,7 @@ class DictTest(TestCase):
 
     def testPyDict_GetItemSuccess(self):
         frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
+        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
         deallocTypes = CreateTypes(mapper)
         dictPtr = mapper.Store({12345: 67890})
         

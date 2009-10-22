@@ -8,7 +8,7 @@ from tests.utils.typetestcase import TypeTestCase
 
 from System import Array, Byte, Char, IntPtr, UInt32
 from System.Runtime.InteropServices import Marshal
-from Ironclad import CPyMarshal, dgt_size_ptrsizeptr, dgt_size_ptrptr, dgt_ptr_ptrptr, Python25Mapper
+from Ironclad import CPyMarshal, dgt_size_ptrsizeptr, dgt_size_ptrptr, dgt_ptr_ptrptr, PythonMapper
 from Ironclad.Structs import PyStringObject, PyTypeObject, PyBufferProcs, PySequenceMethods, Py_TPFLAGS
 
 
@@ -149,7 +149,7 @@ class PyString_FromString_Test(PyString_TestCase):
 
     def testCreatesString(self):
         allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
         del allocs[:]
 
@@ -290,7 +290,7 @@ class PyString_FromStringAndSize_Test(PyString_TestCase):
 
     def testCreateEmptyString(self):
         allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
         del allocs[:]
 
@@ -318,7 +318,7 @@ class PyString_FromStringAndSize_Test(PyString_TestCase):
 
     def testCreateStringWithData(self):
         allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
         del allocs[:]
 
@@ -344,7 +344,7 @@ class _PyString_Resize_Test(PyString_TestCase):
     def testErrorHandling(self):
         allocs = []
         frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
         del allocs[:]
 
@@ -365,7 +365,7 @@ class _PyString_Resize_Test(PyString_TestCase):
     def testShrink(self):
         allocs = []
         frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
         del allocs[:]
 
@@ -394,7 +394,7 @@ class _PyString_Resize_Test(PyString_TestCase):
     def testGrow(self):
         allocs = []
         frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
         del allocs[:]
 
@@ -567,7 +567,7 @@ class PyStringStoreTest(PyString_TestCase):
     
     def testStoreStringCreatesStringType(self):
         allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
         del allocs[:]
 

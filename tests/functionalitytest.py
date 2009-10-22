@@ -8,7 +8,7 @@ from tests.utils.runtest import automakesuite, run
 from tests.utils.testcase import TestCase
 from tests.utils.functionaltestcase import FunctionalTestCase
 
-from Ironclad import Python25Mapper
+from Ironclad import PythonMapper
 
 
 bz2_doc = """The python bz2 module provides a comprehensive interface for
@@ -51,7 +51,7 @@ def ModuleTestCase(module):
     class _ModuleTestCase(TestCase):
         __name__ = module + 'Test'
         def assertRuns(self, test_code=''): 
-            mapper = Python25Mapper(DLL_PATH)
+            mapper = PythonMapper(DLL_PATH)
             try:
                 exec '\n'.join([import_code, test_code]) in globals(), locals_
             finally:
@@ -458,7 +458,7 @@ class PyFileTest(FunctionalTestCase):
     
     def testPyFile(self):
         # this is the CPython file type, interpreted just like an extension type
-        mapper = Python25Mapper(DLL_PATH)
+        mapper = PythonMapper(DLL_PATH)
         try:
             f1 = mapper.CPyFileClass(os.path.join(self.testDir, 'newFile'), 'w')
             f1.write("hello!")

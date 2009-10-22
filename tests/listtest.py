@@ -10,7 +10,7 @@ from tests.utils.typetestcase import TypeTestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, dgt_void_ptr, Python25Mapper
+from Ironclad import CPyMarshal, dgt_void_ptr, PythonMapper
 from Ironclad.Structs import PyObject, PyListObject, PyTypeObject
 
 
@@ -19,7 +19,7 @@ class PyList_Type_Test(TypeTestCase):
 
     def testPyListTypeField_tp_dealloc(self):
         calls = []
-        class MyPM(Python25Mapper):
+        class MyPM(PythonMapper):
             def IC_PyList_Dealloc(self, listPtr):
                 calls.append(listPtr)
         
@@ -44,7 +44,7 @@ class PyList_Type_Test(TypeTestCase):
     def testPyList_Dealloc(self):
         frees = []
         def CreateMapper():
-            return Python25Mapper(GetAllocatingTestAllocator([], frees))
+            return PythonMapper(GetAllocatingTestAllocator([], frees))
         
         itemPtrs = []
         def CreateInstance(mapper, calls):
@@ -65,7 +65,7 @@ class PyList_Type_Test(TypeTestCase):
 
     def testPyList_DeallocDecRefsItemsAndCallsCorrectFreeFunction(self):
         frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
+        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
         deallocTypes = CreateTypes(mapper)
         
         calls = []
@@ -113,7 +113,7 @@ class ListFunctionsTest(TestCase):
     
     def testPyList_New_ZeroLength(self):
         allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
         
         del allocs[:]
@@ -134,7 +134,7 @@ class ListFunctionsTest(TestCase):
     
     def testPyList_New_NonZeroLength(self):
         allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
         del allocs[:]
         
@@ -164,7 +164,7 @@ class ListFunctionsTest(TestCase):
     def testPyList_Append(self):
         allocs = []
         deallocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, deallocs))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, deallocs))
         deallocTypes = CreateTypes(mapper)
         
         del allocs[:]
@@ -312,7 +312,7 @@ class ListFunctionsTest(TestCase):
 
     def testDeleteList(self):
         deallocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator([], deallocs))
+        mapper = PythonMapper(GetAllocatingTestAllocator([], deallocs))
         deallocTypes = CreateTypes(mapper)
         
         item1 = object()

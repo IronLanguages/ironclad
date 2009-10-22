@@ -3,12 +3,12 @@ from tests.utils.runtest import makesuite, run
 
 from tests.utils.cpython import MakeItemsTablePtr, MakeMethodDef, MakeTypePtr
 from tests.utils.memory import CreateTypes
-from tests.utils.python25mapper import MakeAndAddEmptyModule
+from tests.utils.pythonmapper import MakeAndAddEmptyModule
 from tests.utils.testcase import TestCase, WithMapper, WithMapperSubclass
 
 from System import IntPtr
 
-from Ironclad import Dispatcher, Python25Mapper
+from Ironclad import Dispatcher, PythonMapper
 from Ironclad.Structs import METH
 
 
@@ -51,7 +51,7 @@ class Py_InitModule4_Test(TestCase):
 
 
     def test_Py_InitModule4_CreatesPopulatedModule(self):
-        mapper = Python25Mapper()
+        mapper = PythonMapper()
         method, deallocMethod = MakeMethodDef(
             "harold", lambda _, __: IntPtr.Zero, METH.VARARGS, "harold's documentation")
         
@@ -70,7 +70,7 @@ class Py_InitModule4_Test(TestCase):
         
 
     def test_Py_InitModule4_NoArgsFunction(self):
-        mapper = Python25Mapper()
+        mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         result = object()
         resultPtr = mapper.Store(result)
@@ -90,7 +90,7 @@ class Py_InitModule4_Test(TestCase):
 
 
     def test_Py_InitModule4_OldargsFunction_OneArg(self):
-        mapper = Python25Mapper()
+        mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         arg = object()
         result = object()
@@ -112,7 +112,7 @@ class Py_InitModule4_Test(TestCase):
 
 
     def test_Py_InitModule4_OldargsFunction_SomeArgs(self):
-        mapper = Python25Mapper()
+        mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         args = (object(), object())
         result = object()
@@ -134,7 +134,7 @@ class Py_InitModule4_Test(TestCase):
 
 
     def test_Py_InitModule4_ObjargFunction(self):
-        mapper = Python25Mapper()
+        mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         arg = object()
         result = object()
@@ -156,7 +156,7 @@ class Py_InitModule4_Test(TestCase):
 
 
     def test_Py_InitModule4_VarargsFunction(self):
-        mapper = Python25Mapper()
+        mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         args = (object(), object())
         result = object()
@@ -178,7 +178,7 @@ class Py_InitModule4_Test(TestCase):
 
 
     def test_Py_InitModule4_VarargsKwargsFunction(self):
-        mapper = Python25Mapper()
+        mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         args = (object(), object())
         kwargs = {'a': object(), 'b': object()}

@@ -7,7 +7,7 @@ from System import IntPtr
 from Ironclad.Structs import METH, PyMethodDef
 
 
-class Python25StructsTest(TestCase):
+class PythonStructsTest(TestCase):
 
     def testConstructPyMethodDef(self):
         pmd = PyMethodDef(
@@ -22,7 +22,7 @@ class Python25StructsTest(TestCase):
         self.assertEquals(pmd.ml_doc, "jennifer's docs", "field not remembered")
 
 
-suite = makesuite(Python25StructsTest)
+suite = makesuite(PythonStructsTest)
 
 if __name__ == '__main__':
     run(suite)

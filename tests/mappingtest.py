@@ -8,7 +8,7 @@ from tests.utils.testcase import TestCase, WithMapper
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, Python25Mapper
+from Ironclad import CPyMarshal, PythonMapper
 from Ironclad.Structs import PyObject, PyTypeObject
 
 

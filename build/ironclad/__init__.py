@@ -19,9 +19,9 @@ if Marshal.SizeOf(Int32) != Marshal.SizeOf(IntPtr):
     raise ImportError("Ironclad is currently 32-bit only")
 
 clr.AddReference(Assembly.LoadFile(os.path.join(_dirname, "ironclad.dll")))
-from Ironclad import CPyMarshal, Python25Mapper
+from Ironclad import CPyMarshal, PythonMapper
 from Ironclad.Structs import PyObject, PyVarObject, PyTypeObject
-_mapper = Python25Mapper(os.path.join(_dirname, "python26.dll"))
+_mapper = PythonMapper(os.path.join(_dirname, "python26.dll"))
 
 def gcwait():
     for _ in range(4):

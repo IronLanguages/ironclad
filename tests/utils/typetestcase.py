@@ -2,7 +2,7 @@
 from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase
 
-from Ironclad import CPyMarshal, dgt_void_ptr, Python25Mapper
+from Ironclad import CPyMarshal, dgt_void_ptr, PythonMapper
 from Ironclad.Structs import PyTypeObject
 
 
@@ -29,7 +29,7 @@ class TypeTestCase(TestCase):
     
     
     def assertUsual_tp_free(self, typename):
-        mapper = Python25Mapper()
+        mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         
         tp_freePtr = CPyMarshal.ReadPtrField(
@@ -41,7 +41,7 @@ class TypeTestCase(TestCase):
     
     
     def assertUsual_tp_dealloc(self, typename):
-        mapper = Python25Mapper()
+        mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         
         tp_deallocPtr = CPyMarshal.ReadPtrField(

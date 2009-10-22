@@ -7,11 +7,11 @@ namespace Ironclad
     // not well named :(
     internal class ThreadLocalDict
     {
-        private Python25Mapper mapper;
+        private PythonMapper mapper;
         private PythonDictionary dict;
         private IntPtr ptr;
         
-        public ThreadLocalDict(Python25Mapper mapper)
+        public ThreadLocalDict(PythonMapper mapper)
         {
             this.mapper = mapper;
             this.dict = new PythonDictionary();

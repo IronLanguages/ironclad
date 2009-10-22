@@ -7,7 +7,7 @@ using Ironclad.Structs;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : Python25Api
+    public partial class PythonMapper : PythonApi
     {
         public override IntPtr
         PyMethod_New(IntPtr funcPtr, IntPtr selfPtr, IntPtr klassPtr)

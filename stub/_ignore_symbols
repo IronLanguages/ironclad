@@ -3,7 +3,7 @@
 # Symbols in this file will NOT have any of the following generated:
 #
 # * jumptable redirections to managed code
-# * virtual methods on Python25Api
+# * virtual methods on PythonApi
 # * GetAddress/SetData registration calls or handlers
 #
 

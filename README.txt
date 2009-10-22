@@ -3,7 +3,7 @@ expected in later releases.
 
 To use ironclad, make sure that the 'build' directory (or wherever you have put
 the ironclad package) is on your sys.path, and 'import ironclad' from IronPython
-2.0. Once it has been imported, you should be able to import and (perhaps) use
+2.06. Once it has been imported, you should be able to import and (perhaps) use
 any compiled CPython extensions accessible from your sys.path.
 
 If you have any problems, please ask for help at
@@ -14,15 +14,5 @@ it's not as fast as it is on CPython (and some parts are unbelievably, hideously
 slow) but the benefits are generally still noticeable when working with 
 sufficiently large datasets.
 
-Similarly, parts of matplotlib now work: the 'ps' backend should work out of the
-box, and the 'pdf' and 'svg' backends appear to work if you install zlib for 
-IronPython. PIL and h5py also work pretty well.
-
-TROUBLESHOOTING NOTE:
-
-  If you encounter errors involving 'msvcr71.dll' or 'msvcp71.dll', it means that
-  certain required libraries are not on your PATH. To fix this problem, see 
-  build/support/purpose.txt
-
-Slightly more detailed information, including development notes, is available in
-the 'doc' directory.
+Slightly more detailed information, including build and development notes, is 
+available in the 'doc' directory.

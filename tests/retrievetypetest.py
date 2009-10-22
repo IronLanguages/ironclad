@@ -11,7 +11,7 @@ from tests.utils.testcase import TestCase, WithMapper
 from System import IntPtr, Int32, UInt32, WeakReference
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, HGlobalAllocator, Python25Mapper
+from Ironclad import CPyMarshal, HGlobalAllocator, PythonMapper
 from Ironclad.Structs import (
     MemberT, METH, PyMemberDef, PyNumberMethods, PyStringObject, 
     PyIntObject, PyObject, PyMappingMethods, PySequenceMethods, PyTypeObject
@@ -177,7 +177,7 @@ class InheritanceTest(TestCase):
         # to dealloc klass, and will complain if it wasn't allocated in the first place. this is 
         # probably not going to work in the long term
         allocator = HGlobalAllocator()
-        mapper = Python25Mapper(allocator)
+        mapper = PythonMapper(allocator)
         deallocTypes = CreateTypes(mapper)
         
         metaclassPtr, deallocMC = MakeTypePtr(mapper, {'tp_name': 'metaclass'})
@@ -198,7 +198,7 @@ class InheritanceTest(TestCase):
         # to dealloc klass, and will complain if it wasn't allocated in the first place. this is 
         # probably not going to work in the long term
         allocator = HGlobalAllocator()
-        mapper = Python25Mapper(allocator)
+        mapper = PythonMapper(allocator)
         deallocTypes = CreateTypes(mapper)
         
         metaclassPtr, deallocMC = MakeTypePtr(mapper, {'tp_name': 'metaclass'})

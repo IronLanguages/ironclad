@@ -10,16 +10,16 @@ namespace Ironclad
     public partial class Dispatcher
     {
         // just pretend this is written in Python
-        public Python25Mapper mapper;
+        public PythonMapper mapper;
         public PythonDictionary table;
         private IntPtr modulePtr;
         
-        public Dispatcher(Python25Mapper inMapper, PythonDictionary inTable) :
+        public Dispatcher(PythonMapper inMapper, PythonDictionary inTable) :
             this(inMapper, inTable, IntPtr.Zero)
         {
         }
         
-        public Dispatcher(Python25Mapper inMapper, PythonDictionary inTable, IntPtr module)
+        public Dispatcher(PythonMapper inMapper, PythonDictionary inTable, IntPtr module)
         {
             this.mapper = inMapper;
             this.table = inTable;

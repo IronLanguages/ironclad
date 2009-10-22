@@ -12,7 +12,7 @@ from tests.utils.typetestcase import TypeTestCase
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, dgt_void_ptr, Python25Mapper
+from Ironclad import CPyMarshal, dgt_void_ptr, PythonMapper
 from Ironclad.Structs import PyTupleObject, PyTypeObject
 
 
@@ -39,7 +39,7 @@ class PyTuple_Type_Test(TypeTestCase):
     def testPyTuple_Dealloc(self):
         frees = []
         def CreateMapper():
-            return Python25Mapper(GetAllocatingTestAllocator([], frees))
+            return PythonMapper(GetAllocatingTestAllocator([], frees))
         
         model = (1, 2, 3)
         itemPtrs = []
@@ -64,7 +64,7 @@ class PyTuple_Type_Test(TypeTestCase):
 
     def testPyTuple_DeallocDecRefsItemsAndCallsCorrectFreeFunction(self):
         frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
+        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
         deallocTypes = CreateTypes(mapper)
         
         calls = []
@@ -91,7 +91,7 @@ class TupleTest(TestCase):
     
     def assertPyTuple_New_Works(self, length):
         allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
 
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         mapper.SetData("PyTuple_Type", typeBlock)
@@ -136,7 +136,7 @@ class TupleTest(TestCase):
 
     def test_PyTuple_Resize(self):
         allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
         tuplePtrPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
         
         oldTuplePtr = mapper.PyTuple_New(1)
@@ -170,7 +170,7 @@ class TupleTest(TestCase):
 
     def testStoreTupleCreatesTupleType(self):
         allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         mapper.SetData("PyTuple_Type", typeBlock)

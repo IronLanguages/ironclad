@@ -5,7 +5,7 @@ from tests.utils.memory import CreateTypes
 
 from System import IntPtr
 
-from Ironclad import Python25Mapper
+from Ironclad import PythonMapper
 from Ironclad.Structs import EvalToken
 
 class ExecTest(TestCase):

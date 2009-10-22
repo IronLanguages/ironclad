@@ -9,7 +9,7 @@ from tests.utils.allocators import GetAllocatingTestAllocator
 
 from System import IntPtr
 
-from Ironclad import Python25Mapper
+from Ironclad import PythonMapper
 
 def GetMallocTest(MALLOC_NAME):
     class MallocTest(TestCase):
@@ -17,7 +17,7 @@ def GetMallocTest(MALLOC_NAME):
         
         def testNonZero(self):
             allocs = []
-            mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+            mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
             
             resultPtr = getattr(mapper, MALLOC_NAME)(123)
             self.assertEquals(allocs, [(resultPtr, 123)], "bad alloc")
@@ -25,7 +25,7 @@ def GetMallocTest(MALLOC_NAME):
             
         def testZero(self):
             allocs = []
-            mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+            mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
             
             resultPtr = getattr(mapper, MALLOC_NAME)(0)
             self.assertEquals(allocs, [(resultPtr, 1)], "bad alloc")
@@ -47,7 +47,7 @@ def GetReallocTest(MALLOC_NAME, REALLOC_NAME):
         def testNullPtr(self):
             allocs = []
             frees = []
-            mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+            mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
             
             mem = getattr(mapper, REALLOC_NAME)(IntPtr.Zero, 4)
             self.assertEquals(frees, [])
@@ -58,7 +58,7 @@ def GetReallocTest(MALLOC_NAME, REALLOC_NAME):
         def testZeroBytes(self):
             allocs = []
             frees = []
-            mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+            mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
             
             mem1 = getattr(mapper, MALLOC_NAME)(4)
             del allocs[:]
@@ -72,7 +72,7 @@ def GetReallocTest(MALLOC_NAME, REALLOC_NAME):
         def testTooBig(self):
             allocs = []
             frees = []
-            mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+            mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
             
             deallocTypes = CreateTypes(mapper)
             mapper.EnsureGIL()
@@ -92,7 +92,7 @@ def GetReallocTest(MALLOC_NAME, REALLOC_NAME):
         def testEasy(self):
             allocs = []
             frees = []
-            mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, frees))
+            mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
             
             mem1 = getattr(mapper, MALLOC_NAME)(4)
             del allocs[:]
@@ -108,7 +108,7 @@ class PyMem_Free_Test(TestCase):
     
     def testPyMem_Free_NonNull(self):
         frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
+        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
         
         ptr = mapper.PyMem_Malloc(123)
         mapper.PyMem_Free(ptr)
@@ -118,7 +118,7 @@ class PyMem_Free_Test(TestCase):
 
     def testPyMem_Free_Null(self):
         frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
+        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
         
         mapper.PyMem_Free(IntPtr.Zero)
         self.assertEquals(frees, [], "freed inappropriately")
