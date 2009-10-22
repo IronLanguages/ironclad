@@ -65,8 +65,8 @@ sys.path.extend(extrapaths)
 #### native fileno patches (optional)
 
 file = _mapper.CPyFileClass
-def open(*args):
-    return file(*args)
+def open(*args, **kwargs):
+    return file(*args, **kwargs)
 
 class NativeFilenoPatch(object):
     

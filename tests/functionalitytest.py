@@ -173,9 +173,9 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             
             ironclad.patch_native_filenos()
             
-            # numpytests and scipytests both call this;
-            # not worth testing what actually happens,
-            # just that they can be unpatched
+            # check kwargs propagated
+            f = open(%r, mode='r')
+            f.close()
             
             ironclad.unpatch_native_filenos()
             
@@ -184,7 +184,7 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             for k, v in osBefore.items():
                 assert sys.modules['os'].__dict__[k] is v
             
-            """))
+            """ % __file__))
 
 class BZ2Test(ModuleTestCase('bz2')):
 
