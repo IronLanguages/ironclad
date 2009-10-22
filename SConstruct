@@ -1,5 +1,3 @@
-
-
 #===============================================================================
 # Various useful functions
 
@@ -24,10 +22,6 @@ def pathmap(base, files):
 def submap(template, inserts):
     return map(lambda x: template % x, inserts)
 
-def source_appender(appendee):
-    def append(target, source, env):
-        return target, source + appendee
-    return append
 
 #===============================================================================
 # PLATFORM-SPECIFIC GLOBALS
@@ -53,8 +47,8 @@ if WIN32:
     COPY_CMD = 'copy $SOURCE $TARGET'
     DLLTOOL_CMD = 'dlltool -D $NAME -d $SOURCE -l $TARGET'
     LINK_MSVCR90_FLAGS = '-specs=stub/use-msvcr90.spec'
-    MINGW_LIB = 'C:\\Program Files\\MinGW\\lib' # TODO: surely we can find this one out from the tools choice somehow..?
-    MSVCR90_DLL = 'C:\\Windows\\winsxs\\x86_Microsoft.VC90.CRT_1fc8b3b9a1e18e3b_9.0.21022.8_x-ww_d08d0375\\msvcr90.dll'
+    MINGW_LIB = 'C:\\MinGW\\lib' # TODO: surely we can find this one out from the tools choice somehow..?
+    MSVCR90_DLL = 'C:\\Windows\\winsxs\\x86_Microsoft.VC90.CRT_1fc8b3b9a1e18e3b_9.0.21022.8_none_bcb86ed6ac711f91\\msvcr90.dll'
     PEXPORTS_CMD = 'pexports $SOURCE > $TARGET'
     RES_CMD = 'windres --input $SOURCE --output $TARGET --output-format=coff'
 
@@ -71,6 +65,8 @@ PYTHON26OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
 PYTHON26DLL_CMD = DLL_CMD + ' -export-all-symbols'
 COMMON = dict(IPY=IPY, IPY_DIR=IPY_DIR)
 
+test_deps = []
+before_test = test_deps.append
 
 #===============================================================================
 #===============================================================================
@@ -80,7 +76,7 @@ COMMON = dict(IPY=IPY, IPY_DIR=IPY_DIR)
 managed = Environment(CSC=CSC, **COMMON)
 ipy_dlls = 'IronPython IronPython.Modules Microsoft.Dynamic Microsoft.Scripting Microsoft.Scripting.Core'
 ipy_refs = ' '.join(map(lambda x: IPY_REF_TEMPLATE % x, ipy_dlls.split()))
-managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, REFERENCES=ipy_refs)
+managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix='.dll', REFERENCES=ipy_refs)
 managed['BUILDERS']['Insert'] = Builder(action=INSERT_CMD)
 
 #===============================================================================
@@ -107,8 +103,10 @@ CodeSnippet('ihooks', 'import_code')
 CodeSnippet('kindaDictProxy', 'kindadictproxy')
 CodeSnippet('kindaSeqIter', 'kindaseqiter')
 
+#===============================================================================
 # Build the actual managed library
-managed.Dll('build/ironclad/ironclad.dll', Glob('src/*.cs'))
+
+before_test(managed.Dll('build/ironclad/ironclad', Glob('src/*.cs')))
 
 
 #===============================================================================
@@ -125,10 +123,10 @@ native['BUILDERS']['Python26Dll'] = native['BUILDERS']['Dll']
 
 if WIN32:
     # If, RIGHT NOW*, no backup of libmsvcr90.a exists, create one
-    # * At runtime, not at build time
-    
+    # * That is to say: at runtime, not at build time
     in_mingw_lib = lambda x: os.path.join(MINGW_LIB, x)
     original, backup = map(in_mingw_lib, ['libmsvcr90.a', 'libmsvcr90.a.orig'])
+    
     if os.path.exists(original) and not os.path.exists(backup):
         print 
         print 'Hi! Building Ironclad will patch your MinGW install. The affected file will be moved safely out of the way.'
@@ -140,7 +138,6 @@ if WIN32:
         import shutil
         shutil.move(original, backup)
         
-    
     # Brutally patch mingw/lib/libmsvcr90.a
     native.Command('stub/msvcr90.def', MSVCR90_DLL, PEXPORTS_CMD)
     patch_importlib = native.Command(original, 'stub/msvcr90.def', DLLTOOL_CMD, NAME='msvcr90.dll')
@@ -152,7 +149,8 @@ if WIN32:
     native.Depends(depend_msvcr90, patch_importlib)
     
     # These builders should ensure that their targets correctly link with msvcr90.dll
-    append_depend = source_appender(depend_msvcr90)
+    def append_depend(target, source, env):
+        return target, source + depend_msvcr90
     native['BUILDERS']['Msvcr90Dll'] = Builder(
         action=DLL_CMD, suffix='.dll', emitter=append_depend, CCFLAGS=LINK_MSVCR90_FLAGS)
     native['BUILDERS']['Python26Dll'] = Builder(
@@ -177,21 +175,30 @@ Depends(stubmain_obj, pathmap('stub', 'stubinit.generated.c ironclad-data.c iron
 cpy_src_dirs = 'Modules Objects Parser Python'
 cpy_srcs = glommap(lambda x: Glob('stub/%s/*.c' % x), cpy_src_dirs)
 cpy_objs = glommap(native.Python26Obj, cpy_srcs)
-native.Python26Dll('build/ironclad/python26.dll', stubmain_obj + jumps_obj + cpy_objs)
+before_test(native.Python26Dll('build/ironclad/python26', stubmain_obj + jumps_obj + cpy_objs))
 
 if WIN32:
     # This dll redirects various msvcr90 functions so we can DllImport them in C#
-    native.Msvcr90Dll('build/ironclad/ic_msvcr90.dll', native.Obj('stub/ic_msvcr90.c'))
+    before_test(native.Msvcr90Dll('build/ironclad/ic_msvcr90', native.Obj('stub/ic_msvcr90.c')))
 
 #===============================================================================
 # Test data
 
-native.Dll('tests/data/setvalue.pyd', native.Obj('tests/data/src/setvalue.c'))
-native.Dll('tests/data/exportsymbols', native.Obj('tests/data/src/exportsymbols.c'))
-native.Dll('tests/data/fakepython25', native.Obj('tests/data/src/fakepython25.c'))
+before_test(native.Dll('tests/data/setvalue.pyd', native.Obj('tests/data/src/setvalue.c')))
+before_test(native.Dll('tests/data/exportsymbols', native.Obj('tests/data/src/exportsymbols.c')))
+before_test(native.Dll('tests/data/fakepython25', native.Obj('tests/data/src/fakepython25.c')))
 
 if WIN32:
     # Some tests will load and unload dlls which depend on msvcr90; if msvcr90's ref count
     # hits 0 and it gets reloaded, bad things happen. The test framework loads this dll, and
     # keeps it loaded, to prevent aforesaid bad things.
-    native.Msvcr90Dll('tests/data/implicit-load-msvcr90', native.Obj('tests/data/src/empty.c'))
+    before_test(native.Msvcr90Dll('tests/data/implicit-load-msvcr90', native.Obj('tests/data/src/empty.c')))
+
+
+#===============================================================================
+#===============================================================================
+# This section runs the tests, assuming you've run 'scons test'
+#===============================================================================
+
+tests = Environment(ENV=os.environ)
+tests.AlwaysBuild(tests.Alias('test', test_deps, 'ipy runtests.py'))
