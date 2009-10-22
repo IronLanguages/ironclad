@@ -9,7 +9,7 @@ using Ironclad.Structs;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : Python25Api
+    public partial class PythonMapper : PythonApi
     {
         public override void 
         IC_PyList_Dealloc(IntPtr listPtr)
@@ -248,7 +248,7 @@ namespace Ironclad
         {
             if (this.listsBeingActualised.ContainsKey(ptr))
             {
-                throw new Exception("Fatal error: Python25Mapper.listsBeingActualised is somehow corrupt");
+                throw new Exception("Fatal error: PythonMapper.listsBeingActualised is somehow corrupt");
             }
             
             List newList = new List();

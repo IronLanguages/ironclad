@@ -12,7 +12,7 @@ from tests.utils.testcase import TestCase, WithMapper
 from System import Byte, IntPtr, UInt32, WeakReference
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CannotInterpretException, CPyMarshal, dgt_ptr_ptrptrptr, HGlobalAllocator, Python25Mapper, OpaquePyCell
+from Ironclad import CannotInterpretException, CPyMarshal, dgt_ptr_ptrptrptr, HGlobalAllocator, PythonMapper, OpaquePyCell
 from Ironclad.Structs import *
 
 class ItemEnumeratorThing(object):
@@ -266,7 +266,7 @@ class Types_Test(TestCase):
         }
         
         allocator = HGlobalAllocator()
-        mapper = Python25Mapper(allocator)
+        mapper = PythonMapper(allocator)
         deallocTypes = CreateTypes(mapper)
         
         # delay deallocs to avoid types with the same addresses causing confusion
@@ -421,7 +421,7 @@ class PyType_GenericAlloc_Test(TestCase):
 
     def testNoItems(self):
         allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
         typeSpec = {
             "tp_basicsize": 32,
@@ -452,7 +452,7 @@ class PyType_GenericAlloc_Test(TestCase):
 
     def testSomeItems(self):
         allocs = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator(allocs, []))
+        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
         deallocTypes = CreateTypes(mapper)
         typeSpec = {
             "tp_basicsize": 32,

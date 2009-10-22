@@ -13,7 +13,7 @@ namespace Ironclad
     // if you can work out how to remove the dependence on this.scratchContext,
     // then this can become the static utility class it so obviously and desperately
     // wants to be
-    public partial class Python25Mapper : Python25Api
+    public partial class PythonMapper : PythonApi
     {
         public BigInteger
         MakeBigInteger(object obj)

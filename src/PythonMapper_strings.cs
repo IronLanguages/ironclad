@@ -13,7 +13,7 @@ using IronPython.Runtime.Types;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : Python25Api
+    public partial class PythonMapper : PythonApi
     {
         public override IntPtr
         IC_PyString_Concat_Core(IntPtr str1Ptr, IntPtr str2Ptr)

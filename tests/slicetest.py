@@ -7,7 +7,7 @@ from tests.utils.testcase import TestCase, WithMapper
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, dgt_void_ptr, Python25Mapper
+from Ironclad import CPyMarshal, dgt_void_ptr, PythonMapper
 from Ironclad.Structs import PyObject, PySliceObject, PyTypeObject
 
         
@@ -41,7 +41,7 @@ class SliceTest(TestCase):
 
     def testPySlice_DeallocDecRefsItemsAndCallsCorrectFreeFunction(self):
         frees = []
-        mapper = Python25Mapper(GetAllocatingTestAllocator([], frees))
+        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
         deallocTypes = CreateTypes(mapper)
         
         calls = []

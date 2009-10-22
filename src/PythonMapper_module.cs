@@ -16,7 +16,7 @@ using Microsoft.Scripting.Runtime;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : Python25Api
+    public partial class PythonMapper : PythonApi
     {
         public override IntPtr 
         Py_InitModule4(string name, IntPtr methodsPtr, string doc, IntPtr selfPtr, int apiver)

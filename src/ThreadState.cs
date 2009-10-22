@@ -12,10 +12,10 @@ namespace Ironclad
 {
     internal class ThreadState
     {
-        private Python25Mapper mapper;
+        private PythonMapper mapper;
         private IntPtr ptr;
         
-        public ThreadState(Python25Mapper mapper)
+        public ThreadState(PythonMapper mapper)
         {
             this.mapper = mapper;
             uint size = (uint)Marshal.SizeOf(typeof(PyThreadState));

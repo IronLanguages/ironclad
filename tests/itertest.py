@@ -7,7 +7,7 @@ from tests.utils.memory import CreateTypes
 
 from System import IntPtr
 
-from Ironclad import Python25Mapper
+from Ironclad import PythonMapper
 from Ironclad.Structs import Py_TPFLAGS, PySequenceMethods
 
 class IterationTest(TestCase):

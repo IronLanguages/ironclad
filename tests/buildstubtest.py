@@ -50,9 +50,9 @@ class BuildStubTest(TestCase):
         shutil.rmtree(tempDir)
 
 
-class Python25StubTest(TestCase):
+class PythonStubTest(TestCase):
 
-    def testPython25Stub(self):
+    def testPythonStub(self):
         path = os.path.join('tests', 'data', 'python26-pexports')
         python26exports = set(read_interesting_lines(path))
         generatedExports = GetPexportsLines("build/ironclad/python26.dll")

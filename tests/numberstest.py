@@ -8,7 +8,7 @@ from tests.utils.numbers import NumberI, NumberL, NumberF, NUMBER_VALUE
 from System import Int32, Int64, IntPtr, UInt32, UInt64
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, dgt_ptr_ptrptrptr, Python25Mapper
+from Ironclad import CPyMarshal, dgt_ptr_ptrptrptr, PythonMapper
 from Ironclad.Structs import Py_complex, PyObject, PyIntObject, PyFloatObject, PyComplexObject, PyTypeObject
         
 

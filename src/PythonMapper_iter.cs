@@ -10,7 +10,7 @@ using IronPython.Runtime.Types;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : Python25Api
+    public partial class PythonMapper : PythonApi
     {
 
         public override IntPtr

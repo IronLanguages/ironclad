@@ -3,7 +3,7 @@ using System;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : Python25Api
+    public partial class PythonMapper : PythonApi
     {
         public override IntPtr
         PyMem_Malloc(uint size)

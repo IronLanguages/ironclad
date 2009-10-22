@@ -6,9 +6,9 @@ import tests.utils.loadassemblies
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
 
-from Ironclad import Python25Mapper
+from Ironclad import PythonMapper
 
-class TrivialP25MSubclass(Python25Mapper):
+class TrivialMapperSubclass(PythonMapper):
     pass
 
 
@@ -25,8 +25,8 @@ def _WithMapper(func, mapperCls):
                 dealloc()
     return patched
 
-WithMapper = lambda f: _WithMapper(f, Python25Mapper)
-WithMapperSubclass = lambda f: _WithMapper(f, TrivialP25MSubclass)
+WithMapper = lambda f: _WithMapper(f, PythonMapper)
+WithMapperSubclass = lambda f: _WithMapper(f, TrivialMapperSubclass)
 
 
 class my_stderr(object):

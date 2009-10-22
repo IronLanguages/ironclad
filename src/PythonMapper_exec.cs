@@ -12,7 +12,7 @@ using Ironclad.Structs;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : Python25Api
+    public partial class PythonMapper : PythonApi
     {
         public override IntPtr
         PyRun_StringFlags(string code, int mode, IntPtr globalsPtr, IntPtr localsPtr, IntPtr flagsPtr)

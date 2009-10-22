@@ -12,7 +12,7 @@ from System import IntPtr
 from System.IO import FileStream
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, dgt_void_ptr, Python25Api, Python25Mapper, Unmanaged
+from Ironclad import CPyMarshal, dgt_void_ptr, PythonApi, PythonMapper, Unmanaged
 from Ironclad.Structs import PyFileObject, PyObject, PyStringObject, PyTypeObject
 
 

@@ -43,7 +43,7 @@ namespace Ironclad
 
     internal delegate void ActualiseDelegate(IntPtr typePtr);
 
-    public partial class Python25Mapper : Python25Api, IDisposable
+    public partial class PythonMapper : PythonApi, IDisposable
     {
         private PythonContext python;
         private StubReference stub;
@@ -81,37 +81,37 @@ namespace Ironclad
         public Stack<string> importFiles = new Stack<string>();
         
         
-        public Python25Mapper(CodeContext context): 
+        public PythonMapper(CodeContext context): 
           this(context, null, new HGlobalAllocator())
         {
         }
         
-        public Python25Mapper(CodeContext context, string stubPath): 
+        public PythonMapper(CodeContext context, string stubPath): 
           this(context, stubPath, new HGlobalAllocator())
         {
         }
         
-        public Python25Mapper(CodeContext context, IAllocator allocator):
+        public PythonMapper(CodeContext context, IAllocator allocator):
           this(context, null, allocator)
         {
         }
 
-        public Python25Mapper(CodeContext context, string stubPath, IAllocator allocator):
+        public PythonMapper(CodeContext context, string stubPath, IAllocator allocator):
           this(context.LanguageContext, stubPath, allocator)
         {
         }
 
-        public Python25Mapper(PythonContext python, string stubPath, IAllocator allocator)
+        public PythonMapper(PythonContext python, string stubPath, IAllocator allocator)
         {
             this.Init(python, stubPath, allocator);
         }
         
-        ~Python25Mapper()
+        ~PythonMapper()
         {
             // alive check is here so that we don't crash hard on failed construct
             if (this.alive)
             {
-                throw new Exception("Python25Mappers need to be Disposed manually. Please don't just leave them lying around.");
+                throw new Exception("PythonMappers need to be Disposed manually. Please don't just leave them lying around.");
             }
         }
 

@@ -15,7 +15,7 @@ using Ironclad.Structs;
 namespace Ironclad
 {
 
-    public partial class Python25Mapper
+    public partial class PythonMapper
     {
         public override IntPtr 
         PyType_GenericNew(IntPtr typePtr, IntPtr args, IntPtr kwargs)

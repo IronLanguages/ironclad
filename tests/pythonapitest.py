@@ -6,7 +6,7 @@ from tests.utils.testcase import TestCase
 
 from System import IntPtr, Int64, UInt32, UInt64
 from System.Runtime.InteropServices import Marshal
-from Ironclad import CPyMarshal, Python25Api
+from Ironclad import CPyMarshal, PythonApi
 from Ironclad.Structs import Py_complex, PyObject, PyTypeObject
 
 TEST_NUMBER = 1359
@@ -83,10 +83,10 @@ TYPES = (
     "_PyWeakref_CallableProxyType",
 )
 
-class Python25ApiTest(TestCase):
+class PythonApiTest(TestCase):
 
     def testDataSetterDoesNotWriteForUnrecognisedSymbols(self):
-        pm = Python25Api()
+        pm = PythonApi()
         pm.SetData("This_symbol_is_not_exported_either_I_sincerely_hope", IntPtr.Zero)
         # had we written to IntPtr.Zero, we would have crashed
 
@@ -103,14 +103,14 @@ class Python25ApiTest(TestCase):
 
 
     def testFinds_Py_NoneStruct(self):
-        class MyPM(Python25Api):
+        class MyPM(PythonApi):
             def Fill__Py_NoneStruct(self, address):
                 WritePyObject(address)
         self.assertDataSetterSetsAndRemembers(MyPM, "_Py_NoneStruct", Marshal.SizeOf(PyObject), TestWrotePyObject)
 
 
     def testFinds_Py_NotImplementedStruct(self):
-        class MyPM(Python25Api):
+        class MyPM(PythonApi):
             def Fill__Py_NotImplementedStruct(self, address):
                 WritePyObject(address)
         self.assertDataSetterSetsAndRemembers(MyPM, "_Py_NotImplementedStruct", Marshal.SizeOf(PyObject), TestWrotePyObject)
@@ -119,14 +119,14 @@ class Python25ApiTest(TestCase):
     def testFinds_PyExc_OverflowError(self):
         # and, by assertion, all other error types
         # TODO: improve ;)
-        class MyPM(Python25Api):
+        class MyPM(PythonApi):
             def Fill_PyExc_OverflowError(self, address):
                 WritePtr(address)
         self.assertDataSetterSetsAndRemembers(MyPM, "PyExc_OverflowError", Marshal.SizeOf(PyObject), TestWrotePtr)
         
 
     def assertFindsType(self, name):
-        class MyPM(Python25Api):
+        class MyPM(PythonApi):
             def fillmethod(self, address):
                 WritePyTypeObject(address)
         setattr(MyPM, "Fill_" + name, getattr(MyPM, "fillmethod"))
@@ -139,13 +139,13 @@ class Python25ApiTest(TestCase):
         
 
     def testUninitialisedTypesAreNull(self):
-        pm = Python25Api()
+        pm = PythonApi()
         for _type in TYPES:
             self.assertEquals(getattr(pm, _type), IntPtr.Zero, "unexpected")
 
 
     def testAddressGetterFailsCleanly(self):
-        pm = Python25Api()
+        pm = PythonApi()
         addressGetter = pm.GetAddress
 
         self.assertEquals(addressGetter("This_symbol_is_not_exported_by_any_version_of_Python_so_far_as_I_know"),
@@ -154,7 +154,7 @@ class Python25ApiTest(TestCase):
 
 
 suite = makesuite(
-    Python25ApiTest,
+    PythonApiTest,
 )
 
 if __name__ == '__main__':

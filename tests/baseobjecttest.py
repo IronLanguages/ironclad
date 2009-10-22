@@ -13,7 +13,7 @@ from tests.utils.typetestcase import TypeTestCase
 from System import IntPtr, UInt32
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CPyMarshal, dgt_void_ptr, Python25Api, Python25Mapper
+from Ironclad import CPyMarshal, dgt_void_ptr, PythonApi, PythonMapper
 from Ironclad.Structs import CMP, PyObject, PyTypeObject
 
 
@@ -535,7 +535,7 @@ class NewInitFunctionsTest(TestCase):
     @WithMapper
     def testIC_PyBaseObject_Init(self, mapper, _):
         "this function shouldn't do anything..."
-        mapper = Python25Mapper()
+        mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         
         self.assertEquals(mapper.IC_PyBaseObject_Init(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero), 0)
@@ -547,7 +547,7 @@ class NewInitFunctionsTest(TestCase):
     def test_PyObject_New(self):
         allocs = []
         allocator = GetAllocatingTestAllocator(allocs, [])
-        mapper = Python25Mapper(allocator)
+        mapper = PythonMapper(allocator)
         deallocTypes = CreateTypes(mapper)
         
         typeObjSize = Marshal.SizeOf(PyTypeObject)

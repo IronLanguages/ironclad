@@ -17,7 +17,7 @@ using Ironclad.Structs;
 
 namespace Ironclad
 {
-    public partial class Python25Mapper : Python25Api
+    public partial class PythonMapper : PythonApi
     {
         private object
         GenerateClass(IntPtr typePtr)

@@ -1,5 +1,5 @@
 
-# these are Python25Api method names; they may or may not
+# these are PythonApi method names; they may or may not
 # be part of the real CPython API, but they all need to be
 # called by the stub for one reason or another.
 
