@@ -41,6 +41,10 @@ if WIN32:
     NATIVE_TOOLS = ['mingw', 'nasm']
     PYTHON_DLL = '"C:\\windows\\system32\\python26.dll"'
     
+    OBJ_SUFFIX = '.o'
+    DLL_SUFFIX = '.dll'
+    MGD_DLL_SUFFIX = '.dll'
+    
     #==================================================================
     # These variables should only be necessary on win32
     
@@ -76,7 +80,7 @@ before_test = test_deps.append
 managed = Environment(CSC=CSC, **COMMON)
 ipy_dlls = 'IronPython IronPython.Modules Microsoft.Dynamic Microsoft.Scripting Microsoft.Scripting.Core'
 ipy_refs = ' '.join(map(lambda x: IPY_REF_TEMPLATE % x, ipy_dlls.split()))
-managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix='.dll', REFERENCES=ipy_refs)
+managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX, REFERENCES=ipy_refs)
 managed['BUILDERS']['Insert'] = Builder(action=INSERT_CMD)
 
 #===============================================================================
@@ -116,17 +120,17 @@ before_test(managed.Dll('build/ironclad/ironclad', Glob('src/*.cs')))
 #===============================================================================
 
 native = Environment(tools=NATIVE_TOOLS, ASFLAGS=ASFLAGS, PYTHON_DLL=PYTHON_DLL, **COMMON)
-native['BUILDERS']['Obj'] = Builder(action=OBJ_CMD, suffix='.o')
-native['BUILDERS']['Python26Obj'] = Builder(action=PYTHON26OBJ_CMD, suffix='.o', CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include')
-native['BUILDERS']['Dll'] = Builder(action=DLL_CMD, suffix='.dll')
+native['BUILDERS']['Obj'] = Builder(action=OBJ_CMD, suffix=OBJ_SUFFIX)
+native['BUILDERS']['Python26Obj'] = Builder(action=PYTHON26OBJ_CMD, suffix=OBJ_SUFFIX, CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include')
+native['BUILDERS']['Dll'] = Builder(action=DLL_CMD, suffix=DLL_SUFFIX)
 native['BUILDERS']['Python26Dll'] = native['BUILDERS']['Dll']
 
 if WIN32:
     # If, RIGHT NOW*, no backup of libmsvcr90.a exists, create one
     # * That is to say: at runtime, not at build time
+    
     in_mingw_lib = lambda x: os.path.join(MINGW_LIB, x)
     original, backup = map(in_mingw_lib, ['libmsvcr90.a', 'libmsvcr90.a.orig'])
-    
     if os.path.exists(original) and not os.path.exists(backup):
         print 
         print 'Hi! Building Ironclad will patch your MinGW install. The affected file will be moved safely out of the way.'
@@ -152,9 +156,9 @@ if WIN32:
     def append_depend(target, source, env):
         return target, source + depend_msvcr90
     native['BUILDERS']['Msvcr90Dll'] = Builder(
-        action=DLL_CMD, suffix='.dll', emitter=append_depend, CCFLAGS=LINK_MSVCR90_FLAGS)
+        action=DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR90_FLAGS)
     native['BUILDERS']['Python26Dll'] = Builder(
-        action=PYTHON26DLL_CMD, suffix='.dll', emitter=append_depend, CCFLAGS=LINK_MSVCR90_FLAGS)
+        action=PYTHON26DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR90_FLAGS)
 
 #===============================================================================
 # Unmanaged libraries for build/ironclad
