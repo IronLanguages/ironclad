@@ -1,101 +1,129 @@
 ###############################################################################
 #### known failures, worth looking into
 
-core.test_records.TestFromrecords.test_recarray_conflict_fields # just plain wrong
-core.test_records.TestFromrecords.test_recarray_from_repr # overflow (wrong runtime?)
+# (core)
 
-core.test_regression.TestRegression.test_for_object_scalar_creation # np.object_(): object not set to an instance of an object
-core.test_regression.TestRegression.test_mem_custom_float_to_array # __float__ returned non-float -- not sure why it works in cpy
+test_defmatrix.TestCtor.test_basic
+test_defmatrix.TestCtor.test_bmat_nondefault_str
 
-lib.test__iotools.TestStringConverter.test_string_to_object # weird
+test_records.TestFromrecords.test_method_array # out of memory error 
+test_records.TestFromrecords.test_recarray_conflict_fields # just plain wrong
+test_records.TestFromrecords.test_recarray_from_repr # overflow (wrong runtime?)
+
+test_regression.TestRegression.test_for_object_scalar_creation # np.object_(): object not set to an instance of an object
+test_regression.TestRegression.test_mem_custom_float_to_array # __float__ returned non-float -- not sure why it works in cpy
+
+test_scalarmath.TestConversion.test_int_from_long # bad cast
+
+test_umath.TestComplexFunctions.test_against_cmath # wrong
+
+# (lib)
+
+test__iotools.TestStringConverter.test_string_to_object # weird
 
 # out of memory during run
-lib.test_recfunctions.TestAppendFields.test_append_double
-lib.test_recfunctions.TestMergeArrays.test_flatten
-lib.test_recfunctions.TestMergeArrays.test_flatten_wflexible
-lib.test_recfunctions.TestMergeArrays.test_solo_w_flatten
-lib.test_recfunctions.TestMergeArrays.test_standard
-lib.test_recfunctions.TestMergeArrays.test_w_shorter_flex
-lib.test_recfunctions.TestMergeArrays.test_w_singlefield
-lib.test_recfunctions.TestMergeArrays.test_wmasked_arrays
+test_recfunctions.TestAppendFields.test_append_double
+test_recfunctions.TestMergeArrays.test_flatten
+test_recfunctions.TestMergeArrays.test_flatten_wflexible
+test_recfunctions.TestMergeArrays.test_solo_w_flatten
+test_recfunctions.TestMergeArrays.test_standard
+test_recfunctions.TestMergeArrays.test_w_shorter_flex
+test_recfunctions.TestMergeArrays.test_w_singlefield
+test_recfunctions.TestMergeArrays.test_wmasked_arrays
 
-linalg.test_linalg._TestNorm.test_vector # TypeError
+# (linalg)
 
-ma.test_core.TestMaskedArrayArithmetic.test_methods_with_output # array not writeable
-ma.test_core.TestMaskedArrayFunctions.test_choose_with_out # wrong results (byteswapped?)
+test_linalg._TestNorm.test_vector # TypeError
 
-ma.test_extras.TestMedian.test_2d # unreliable
+# (ma)
 
-ma.test_mrecords.TestMRecords.test_set_fields # wrong results
-ma.test_mrecords.TestMRecordsImport.test_fromtextfile # can't convert scalar to int
+test_core.TestMaskedArrayArithmetic.test_methods_with_output # array not writeable
+test_core.TestMaskedArrayFunctions.test_choose_with_out # wrong results (byteswapped?)
+
+test_extras.TestMedian.test_2d # unreliable
+
+test_mrecords.TestMRecords.test_filled # wrong results
+test_mrecords.TestMRecords.test_fromrecords # wrong results
+test_mrecords.TestMRecords.test_set_fields # wrong results
+test_mrecords.TestMRecordsImport.test_fromtextfile # can't convert scalar to int
 
 ###############################################################################
 #### pass, but are too slow to run every time
 
-core.test_ufunc.TestUfunc.test_matrix_multiply
+# (core)
+test_ufunc.TestUfunc.test_matrix_multiply
 
-lib.test_machar.TestMachAr.test_underlow
+# (core) no point disabling: the bit that takes ages is a decorator. grr.
+# test_umath.TestComplexFunctions.test_loss_of_precision_longcomplex 
+
+# (lib)
+test_machar.TestMachAr.test_underlow
 
 ###############################################################################
 #### known failures, low priority
 
-# binascii.crc32
-lib.test_io.TestSavezLoad 
+# (core) gzip module
+test_regression.TestRegression.test_char_dump
 
-# even with fixed subprocess, scary fortran problems
-linalg.test_build
+# (lib) binascii.crc32
+test_io
 
-# sys.getframe
-core.test_defmatrix.TestCtor.test_basic
-core.test_defmatrix.TestCtor.test_bmat_nondefault_str
-lib.test_polynomial.TestDocs.test_doctests
+# (linalg) eek, fortran
+test_build
 
-# parser.expr
-lib.test_io.TestSaveLoad.test_1D
-lib.test_io.TestSaveLoad.test_array
-lib.test_io.TestSaveLoad.test_record
+# (lib) parser.expr
+test_io.TestSaveLoad.test_1D
+test_io.TestSaveLoad.test_array
+test_io.TestSaveLoad.test_record
 
-# reference counting differences
-core.test_multiarray.TestResize.test_check_reference
-core.test_regression.TestRegression.test_refcount_vdot
-core.test_regression.TestRegression.test_refcount_vectorize
-core.test_regression.TestRegression.test_errobj_reference_leak
+# (core) reference counting differences
+test_multiarray.TestResize.test_check_reference
+test_regression.TestRegression.test_refcount_vdot
+test_regression.TestRegression.test_refcount_vectorize
+test_regression.TestRegression.test_errobj_reference_leak
+test_regression.TestRegression.test_object_array_refcounting
 
-# no unicode support
-core.test_unicode
-core.test_numerictypes.test_create_values_nested_multiple
-core.test_numerictypes.test_create_values_nested_single
-core.test_numerictypes.test_read_values_nested_multiple
-core.test_numerictypes.test_read_values_nested_single
-core.test_regression.TestRegression.test_unaligned_unicode_access
-core.test_regression.TestRegression.test_unicode_scalar
-core.test_regression.TestRegression.test_unicode_string_comparison
-core.test_regression.TestRegression.test_unicode_swapping
-lib.test_format
+# (core) unicode
+test_unicode
+test_numerictypes.test_create_values_nested_multiple
+test_numerictypes.test_create_values_nested_single
+test_numerictypes.test_read_values_nested_multiple
+test_numerictypes.test_read_values_nested_single
+test_regression.TestRegression.test_unaligned_unicode_access
+test_regression.TestRegression.test_unicode_scalar
+test_regression.TestRegression.test_unicode_string_comparison
+test_regression.TestRegression.test_unicode_swapping
 
-# _compiled_base.add_docstring doesn't work
-core.test_umath.TestAttributes.test_attributes
+# (lib) unicode
+test_format
 
-# cannot reload
-lib.test_getlimits
+# (numpy) unicode
+test_utils.TestEqual.test_generic_rank1
+test_utils.TestEqual.test_generic_rank3
 
-# known failures on windows
-core.test_multiarray.TestFromToFile.test_file
-lib.test_io.TestSaveLoad.test_mmap
+# (core) _compiled_base.add_docstring doesn't work
+test_umath.TestAttributes.test_attributes
 
-# differences in string representation
-core.test_print.TestPrint.test_double
-core.test_print.TestPrint.test_longdouble
-core.test_print.TestPrint.test_complex_double
-core.test_print.TestPrint.test_complex_float
-core.test_print.TestPrint.test_complex_longdouble
-core.test_regression.TestRegression.test_startswith
+# (lib) cannot reload
+test_getlimits
 
-# stupid tedious shutil.rmtree problems (run on thier own, they usually work...)
-lib.test__datasource.TestDataSourceOpen.test_ValidFile
-lib.test__datasource.TestDataSourceOpen.test_ValidGzipFile
-lib.test__datasource.TestDataSourceOpen.test_ValidHTTP
-lib.test__datasource.TestOpenFunc.test_DataSourceOpen
+# (core) known failures on windows
+test_multiarray.TestFromToFile.test_file
+test_umath.TestComplexFunctions.test_branch_cuts_failing
 
-# assumes that del immediately deletes
-core.test_memmap.TestMemmap.test_open_with_filename
+# (lib) known failures on windows
+test_io.TestSaveLoad.test_mmap
+
+# (core) differences in string representation
+test_print
+test_regression.TestRegression.test_startswith
+
+# (lib) stupid tedious shutil.rmtree problems (run on thier own, they usually work...)
+test__datasource.TestDataSourceOpen.test_ValidFile
+test__datasource.TestDataSourceOpen.test_ValidGzipFile
+test__datasource.TestDataSourceOpen.test_ValidHTTP
+test__datasource.TestOpenFunc.test_DataSourceOpen
+
+# (core) assumes that del immediately deletes
+test_memmap.TestMemmap.test_open_with_filename
+test_multiarray.TestIO
