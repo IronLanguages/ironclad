@@ -3,7 +3,7 @@
 #ifdef IRONCLAD // redirection macros
 
 #include "Python.h"
-#include "../_mgd_functions"
+#include "_mgd_function_prototypes.generated.h"
 
 const int IRONCLAD_MAGIC_FILE = -2;
 const char *IRONCLAD_ERR_MSG =

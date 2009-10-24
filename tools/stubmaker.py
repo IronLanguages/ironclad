@@ -88,20 +88,21 @@ class StubMaker(object):
                 return read_interesting_lines(path)
             return []
 
-        ignores = set(tryread("_ignore_symbols"))
+        ignores = set(tryread("_dont_register_symbols"))
         self.functions = [f for f in self.functions if f not in ignores]
         
-        self.mgd_functions = tryread("_mgd_functions")
+        self.mgd_functions = tryread("_mgd_function_prototypes")
         self.functions.extend(map(extract_funcname, self.mgd_functions))
         
-        self.data |= set(tryread("_extra_data"))
+        self.data |= set(tryread("_always_register_data_symbols"))
         self.data -= ignores
-        self.ordered_data = tryread("_ordered_data")
+        self.ordered_data = tryread("_register_data_symbol_priority")
         self.data -= set(self.ordered_data)
         
                 
     def generate_c(self):
-        _boilerplate = 'void *jumptable[%d];\n\nvoid init(void*(*address_getter)(char*), void(*data_setter)(char*, void*)) {\n'
+        _init_proto = 'void init(void*(*address_getter)(char*), void(*data_setter)(char*, void*))'
+        _boilerplate = 'void *jumptable[%%d];\n\n%s {\n' % _init_proto
         _init_data = '    data_setter("%s", &%s);\n'
         _init_function = '    jumptable[%s] = address_getter("%s");\n'
 
@@ -110,9 +111,7 @@ class StubMaker(object):
         result.extend([_init_data % (s, s) for s in self.data])
         for i, name in enumerate(self.functions):
             result.append(_init_function % (i, name))
-        result.append('}\n\n')
-        result.append('\n'.join(self.mgd_functions))
-        result.append('\n')
+        result.append('}\n')
         return ''.join(result)
 
 
@@ -130,3 +129,5 @@ class StubMaker(object):
         result.extend(implementations)
         return ''.join(result)
 
+    def generate_header(self):
+        return '\n'.join(self.mgd_functions)

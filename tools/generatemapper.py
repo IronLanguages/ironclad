@@ -75,7 +75,7 @@ class MapperGenerator(object):
     
     def generate_mapper(self, srcname, *args, **kwargs):
         src = os.path.join(self.src, srcname)
-        dst = os.path.join(self.dst, 'PythonMapper_%s.Generated.cs' % srcname)
+        dst = os.path.join(self.dst, 'PythonMapper%s.Generated.cs' % srcname)
         stitch=kwargs.get('stitch', stitch_default)
         extract=kwargs.get('extract', extract_columns)
         
@@ -90,23 +90,23 @@ class MapperGenerator(object):
     def run(self):
         self.generate_codesnippets()
         
-        self.generate_mapper("exceptions",
+        self.generate_mapper("_exceptions",
             ('name',), EXCEPTION_TEMPLATE)
         
-        self.generate_mapper("operator",
+        self.generate_mapper("_operator",
             ("name", "operator"), OPERATOR_TEMPLATE)
         
-        self.generate_mapper("numbers_convert_c2py",
+        self.generate_mapper("_numbers_convert_c2py",
             ("name", "type", "cast"), C2PY_TEMPLATE)
         
-        self.generate_mapper("numbers_convert_py2c",
+        self.generate_mapper("_numbers_convert_py2c",
             ("name", "converter", "type", "default", "coerce"), PY2C_TEMPLATE)
         
-        self.generate_mapper("store_dispatch",
+        self.generate_mapper("_store_dispatch",
             ('type',), STORE_TYPE_TEMPLATE,
             stitch=stitch_store)
         
-        self.generate_mapper("fill_types",
+        self.generate_mapper("_fill_types",
             FILL_TYPES_TEMPLATE,
             extract=extract_fill_type)
 

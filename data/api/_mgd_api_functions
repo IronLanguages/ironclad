@@ -1,10 +1,12 @@
 
-# these are PythonApi method names; they may or may not
+# this file maps PythonMapper method names to delegate types.
+# they may or may not
 # be part of the real CPython API, but they all need to be
-# called by the stub for one reason or another.
+# represented as unmanaged function pointers for one reason
+# or another.
 
-    # functions which need to be used by unmanaged code, and hence
-    # need to use the GetAddress mechanism:
+#===============================================================================
+# just PythonMapper methods, not actual API functions:
 
 IC_PyBaseObject_Dealloc void_ptr
 IC_PyBaseObject_Init int_ptrptrptr
@@ -23,7 +25,8 @@ IC_str_getreadbuffer size_ptrsizeptr
 IC_str_getwritebuffer size_ptrsizeptr
 IC_str_getsegcount size_ptrptr
 
-    # CPython API:
+#===============================================================================
+# CPython API:
 
 _PyLong_Sign int_ptr
 _PyObject_New ptr_ptr
@@ -78,7 +81,7 @@ PyInt_AsLong long_ptr
 PyInt_AsSsize_t size_ptr
 PyInt_AsUnsignedLongMask ulong_ptr
 PyInt_FromLong ptr_long
-PyInt_FromSize_t ptr_size # It may possibly be the case that size_t and Py_Ssize_t
+PyInt_FromSize_t ptr_size #  It may possibly be the case that size_t and Py_Ssize_t
 PyInt_FromSsize_t ptr_size # are different, but I'm assuming they're not
     
 PyIter_Next ptr_ptr
@@ -179,7 +182,7 @@ PySequence_Tuple ptr_ptr
     
 PySlice_New ptr_ptrptrptr
     
-    # the use of ptrs instead of strs here is entirely deliberate
+# the use of ptrs instead of strs here is entirely deliberate
 PyString_AsString ptr_ptr
 PyString_AsStringAndSize int_ptrptrptr
 PyString_Concat void_ptrptr
@@ -193,7 +196,7 @@ PyString_Size size_ptr
     
 PySys_GetObject ptr_str
     
-    # not sure ptrs here are really ptrs
+# not sure ptrs here are really ptrs
 PyThread_acquire_lock int_ptrint
 PyThread_allocate_lock ptr_void
 PyThread_free_lock void_ptr
