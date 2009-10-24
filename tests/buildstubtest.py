@@ -44,11 +44,12 @@ class BuildStubTest(TestCase):
             self.assertTrue(os.path.exists(cPath))
             asmPath = os.path.join(ourTempDir, "jumps.generated.asm")
             self.assertTrue(os.path.exists(asmPath))
+            headerPath = os.path.join(ourTempDir, 'Include', '_mgd_function_prototypes.generated.h')
+            self.assertTrue(os.path.exists(headerPath))
 
         testGenerates(inputPath, ourTempDir)
         testGenerates(inputPath, ourTempDir, overridePath)
         shutil.rmtree(tempDir)
-
 
 class PythonStubTest(TestCase):
 

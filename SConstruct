@@ -86,21 +86,20 @@ managed['BUILDERS']['Insert'] = Builder(action=INSERT_CMD)
 #===============================================================================
 # Generated code: note whole heaps of ugly explicit dependencies
 
-tools_names = (
-    'dispatcherinputs.py dispatchersnippets.py platform.py '
-    '_mgd_api_functions _mgd_api_functions _all_api_functions')
-dispatcher_src = pathmap('tools', tools_names) + pathmap('stub', '_mgd_functions _ignore_symbols')
+tools_names = 'dispatcherinputs.py dispatchersnippets.py platform.py'
+api_names = '_all_api_functions _mgd_api_data _mgd_api_functions _mgd_function_prototypes _dont_register_symbols'
+dispatcher_src = pathmap('tools', tools_names) + pathmap('data/api', api_names)
 dispatcher_names = 'Delegates Dispatcher MagicMethods PythonApi'
 dispatcher_out = pathmap('src', submap('%s.Generated.cs', dispatcher_names))
 managed.Command(dispatcher_out, dispatcher_src,
     '$IPY tools/generatedispatcher.py src')
 
-mapper_names = 'exceptions fill_types numbers_convert_c2py numbers_convert_py2c operator store_dispatch'
+mapper_names = '_exceptions _fill_types _numbers_convert_c2py _numbers_convert_py2c _operator _store_dispatch'
 mapper_src = pathmap('data/mapper', mapper_names)
-mapper_out = submap('src/PythonMapper_%s.Generated.cs', mapper_names)
+mapper_out = submap('src/PythonMapper%s.Generated.cs', mapper_names)
 snippets_src = Glob('data/mapper/*.py')
 snippets_out = ['src/CodeSnippets.Generated.cs']
-managed.Command(mapper_out + snippets_out , mapper_src + snippets_src,
+managed.Command(mapper_out + snippets_out, mapper_src + snippets_src,
     '$IPY tools/generatemapper.py data/mapper src')
 
 #===============================================================================
@@ -160,17 +159,19 @@ if WIN32:
 # Unmanaged libraries for build/ironclad
 
 # Generate stub code
-buildstub_src = pathmap('stub', '_ordered_data _mgd_functions _ignore_symbols _extra_data')
-buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c')
+buildstub_names = '_always_register_data_symbols _dont_register_symbols _mgd_function_prototypes _register_data_symbol_priority'
+buildstub_src = pathmap('data/api', buildstub_names)
+buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_mgd_function_prototypes.generated.h')
 native.Command(buildstub_out, buildstub_src,
-    '$IPY tools/buildstub.py $PYTHON_DLL stub stub')
+    '$IPY tools/buildstub.py $PYTHON_DLL stub data/api')
 
 # Compile stub code
 # NOTE: nasm Object seems to work fine out of the box
 # TODO: use scanner instead of explicit dependency for stubmain.c?
 jumps_obj = native.Object('stub/jumps.generated.asm')
 stubmain_obj = native.Python26Obj('stub/stubmain.c')
-Depends(stubmain_obj, pathmap('stub', 'stubinit.generated.c ironclad-data.c ironclad-functions.c'))
+stub_depends = 'stubinit.generated.c ironclad-data.c ironclad-functions.c Include/_mgd_function_prototypes.generated.h'
+Depends(stubmain_obj, pathmap('stub', stub_depends))
 
 # Build and link python26.dll
 cpy_src_dirs = 'Modules Objects Parser Python'

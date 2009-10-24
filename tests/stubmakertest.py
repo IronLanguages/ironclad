@@ -7,7 +7,7 @@ from textwrap import dedent
 from tools.stubmaker import StubMaker
 
 
-class StubMakerInitTest(TestCase):
+class StubMakerTest(TestCase):
 
     def testInitEmpty(self):
         sm = StubMaker()
@@ -31,8 +31,6 @@ class StubMakerInitTest(TestCase):
         self.assertEquals(sm.ordered_data, ['MeFirst', 'AnotherExportedSymbol'])
 
 
-class StubMakerGenerateCTest(TestCase):
-
     def testGenerateCWritesBareMinimum(self):
         sm = StubMaker()
         sm.functions = ['FUNC1', 'FUNC2']
@@ -51,8 +49,6 @@ class StubMakerGenerateCTest(TestCase):
             jumptable[0] = address_getter("FUNC1");
             jumptable[1] = address_getter("FUNC2");
         }
-        
-        void FUNC2();
         """)
         self.assertEquals(sm.generate_c(), expected)
 
@@ -81,8 +77,11 @@ class StubMakerGenerateCTest(TestCase):
                      'could not find expected output')
 
 
+    def testGenerateHeader(self):
+        sm = StubMaker()
+        sm.mgd_functions = ['some', 'random stuff', 'blah blah blah']
+        self.assertEquals(sm.generate_header(), '\n'.join(sm.mgd_functions))
 
-class StubMakerGenerateAsmTest(TestCase):
 
     def testGenerateAsmCreatesLabelsForNonOverriddenFunctions(self):
         sm = StubMaker()
@@ -110,9 +109,7 @@ class StubMakerGenerateAsmTest(TestCase):
 
 
 suite = makesuite(
-    StubMakerInitTest,
-    StubMakerGenerateCTest,
-    StubMakerGenerateAsmTest,
+    StubMakerTest,
 )
 
 if __name__ == '__main__':

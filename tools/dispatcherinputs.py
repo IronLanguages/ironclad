@@ -6,8 +6,6 @@ from tools.dispatchersnippets import *
 from tools.c_utils import name_spec_from_c
 from tools.utils import read_interesting_lines
 
-_in_this_dir = lambda name: os.path.join(os.path.dirname(__file__), name)
-
 #==============================================================================
 # Dispatcher inputs
 
@@ -185,21 +183,15 @@ PROTOCOL_FIELD_TYPES = (
 
 #==============================================================================
 
-mgd_api_functions_file = _in_this_dir("_mgd_api_functions")
-MGD_API_FUNCTIONS = set(map(lambda x: tuple(x.split()), read_interesting_lines(mgd_api_functions_file)))
+read_data_file = lambda name: read_interesting_lines(os.path.join('data/api', name))
 
-mgd_nonapi_c_functions_file = "stub/_mgd_functions"
-MGD_NONAPI_C_FUNCTIONS = set(map(name_spec_from_c, read_interesting_lines(mgd_nonapi_c_functions_file)))
+MGD_API_FUNCTIONS = set(map(lambda x: tuple(x.split()), read_data_file("_mgd_api_functions")))
+MGD_NONAPI_C_FUNCTIONS = set(map(name_spec_from_c, read_data_file("_mgd_function_prototypes")))
+ALL_API_FUNCTIONS = set(read_data_file("_all_api_functions"))
+PURE_C_SYMBOLS = set(read_data_file("_dont_register_symbols"))
 
-all_api_functions_file = _in_this_dir("_all_api_functions")
-ALL_API_FUNCTIONS = set(read_interesting_lines(all_api_functions_file))
-
-pure_c_symbols_file = "stub/_ignore_symbols"
-PURE_C_SYMBOLS = set(read_interesting_lines(pure_c_symbols_file))
-
-mgd_api_data_file = _in_this_dir("_mgd_api_data")
 MGD_API_DATA = []
-for symbol in read_interesting_lines(mgd_api_data_file):
+for symbol in read_data_file("_mgd_api_data"):
     if symbol not in PURE_C_SYMBOLS:
         MGD_API_DATA.append({"symbol": symbol})
 

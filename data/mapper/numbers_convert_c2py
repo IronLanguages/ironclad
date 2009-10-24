@@ -1,9 +1,0 @@
-PyInt_FromLong int 
-PyInt_FromSize_t uint
-PyInt_FromSsize_t uint
-PyLong_FromDouble double (BigInteger)
-PyLong_FromLong int (BigInteger)
-PyLong_FromLongLong long (BigInteger)
-PyLong_FromUnsignedLong uint (BigInteger)
-PyLong_FromUnsignedLongLong ulong (BigInteger)
-PyFloat_FromDouble double

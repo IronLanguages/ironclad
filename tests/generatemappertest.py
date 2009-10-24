@@ -27,12 +27,12 @@ class GenerateMapperTest(TestCase):
         src = tempfile.mkdtemp()
         for (name, contents) in SNIPPETS_FILES.items():
             write(src, name, contents)
-        write(src, "exceptions", EXCEPTIONS)
-        write(src, "store_dispatch", STORE)
-        write(src, "operator", OPERATOR)
-        write(src, "numbers_convert_c2py", NUMBERS_CONVERT_C2PY)
-        write(src, "numbers_convert_py2c", NUMBERS_CONVERT_PY2C)
-        write(src, "fill_types", FILL_TYPES)
+        write(src, "_exceptions", EXCEPTIONS)
+        write(src, "_fill_types", FILL_TYPES)
+        write(src, "_numbers_convert_c2py", NUMBERS_CONVERT_C2PY)
+        write(src, "_numbers_convert_py2c", NUMBERS_CONVERT_PY2C)
+        write(src, "_operator", OPERATOR)
+        write(src, "_store_dispatch", STORE)
 
         dst = tempfile.mkdtemp()
         result = spawn("ipy", "tools/generatemapper.py", src, dst)

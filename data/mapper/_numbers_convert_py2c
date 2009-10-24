@@ -1,0 +1,7 @@
+PyInt_AsLong MakeBigInteger int -1 .ToInt32()
+PyInt_AsSsize_t MakeBigInteger uint UInt32.MaxValue .ToUInt32()
+PyFloat_AsDouble MakeFloat double -1.0
+PyLong_AsLong MakeBigInteger int -1 .ToInt32()
+PyLong_AsUnsignedLong MakeBigInteger uint UInt32.MaxValue .ToUInt32()
+PyLong_AsLongLong MakeBigInteger long -1 .ToInt64()
+PyLong_AsUnsignedLongLong MakeUnsignedBigInteger ulong UInt64.MaxValue .ToUInt64()
