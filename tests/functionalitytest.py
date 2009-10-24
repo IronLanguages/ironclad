@@ -184,7 +184,7 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             for k, v in osBefore.items():
                 assert sys.modules['os'].__dict__[k] is v
             
-            """ % __file__))
+            """ % os.path.abspath(__file__)))
 
 class BZ2Test(ModuleTestCase('bz2')):
 

@@ -79,33 +79,29 @@ before_test = test_deps.append
 
 managed = Environment(CSC=CSC, **COMMON)
 ipy_dlls = 'IronPython IronPython.Modules Microsoft.Dynamic Microsoft.Scripting Microsoft.Scripting.Core'
-ipy_refs = ' '.join(map(lambda x: IPY_REF_TEMPLATE % x, ipy_dlls.split()))
+ipy_refs = ' '.join(submap(IPY_REF_TEMPLATE, ipy_dlls))
 managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX, REFERENCES=ipy_refs)
 managed['BUILDERS']['Insert'] = Builder(action=INSERT_CMD)
 
 #===============================================================================
 # Generated code: note whole heaps of ugly explicit dependencies
 
-tools_sources = (
-    'dispatcherinputs.py dispatchersnippets.py generatedispatcher.py platform.py '
+tools_names = (
+    'dispatcherinputs.py dispatchersnippets.py platform.py '
     '_mgd_api_functions _mgd_api_functions _all_api_functions')
-dispatcher_sources = pathmap('tools', tools_sources) + pathmap('stub', '_mgd_functions _ignore_symbols')
-dispatcher_basenames = 'Delegates Dispatcher MagicMethods PythonApi'
-dispatcher_outputs = pathmap('src', submap('%s.Generated.cs', dispatcher_basenames))
-managed.Command(dispatcher_outputs, dispatcher_sources, '$IPY tools/generatedispatcher.py src')
+dispatcher_src = pathmap('tools', tools_names) + pathmap('stub', '_mgd_functions _ignore_symbols')
+dispatcher_names = 'Delegates Dispatcher MagicMethods PythonApi'
+dispatcher_out = pathmap('src', submap('%s.Generated.cs', dispatcher_names))
+managed.Command(dispatcher_out, dispatcher_src,
+    '$IPY tools/generatedispatcher.py src')
 
-mapper_basenames = 'exceptions fill_types numbers_convert_c2py numbers_convert_py2c operator store_dispatch'.split()
-mapper_sources = pathmap('data/mapper', mapper_basenames)
-mapper_outputs = pathmap('src', map((lambda x: 'PythonMapper_%s.Generated.cs' % x), mapper_basenames))
-managed.Command(mapper_outputs, mapper_sources, '$IPY tools/generatepythonmapper.py data/mapper src')
-
-def CodeSnippet(name, src):
-    target = 'src/CodeSnippets_%s.Generated.cs' % name
-    sources = pathmap('data/mapper', [('CodeSnippets_%s.cs.src' % name), ('%s.py' % src)])
-    managed.Insert(target, sources)
-CodeSnippet('ihooks', 'import_code')
-CodeSnippet('kindaDictProxy', 'kindadictproxy')
-CodeSnippet('kindaSeqIter', 'kindaseqiter')
+mapper_names = 'exceptions fill_types numbers_convert_c2py numbers_convert_py2c operator store_dispatch'
+mapper_src = pathmap('data/mapper', mapper_names)
+mapper_out = submap('src/PythonMapper_%s.Generated.cs', mapper_names)
+snippets_src = Glob('data/mapper/*.py')
+snippets_out = ['src/CodeSnippets.Generated.cs']
+managed.Command(mapper_out + snippets_out , mapper_src + snippets_src,
+    '$IPY tools/generatemapper.py data/mapper src')
 
 #===============================================================================
 # Build the actual managed library
@@ -164,9 +160,10 @@ if WIN32:
 # Unmanaged libraries for build/ironclad
 
 # Generate stub code
-buildstub_sources = pathmap('stub', '_ordered_data _mgd_functions _ignore_symbols _extra_data')
-buildstub_outputs = pathmap('stub', 'jumps.generated.asm stubinit.generated.c')
-native.Command(buildstub_outputs, buildstub_sources, '$IPY tools/buildstub.py $PYTHON_DLL stub stub')
+buildstub_src = pathmap('stub', '_ordered_data _mgd_functions _ignore_symbols _extra_data')
+buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c')
+native.Command(buildstub_out, buildstub_src,
+    '$IPY tools/buildstub.py $PYTHON_DLL stub stub')
 
 # Compile stub code
 # NOTE: nasm Object seems to work fine out of the box
@@ -204,5 +201,6 @@ if WIN32:
 # This section runs the tests, assuming you've run 'scons test'
 #===============================================================================
 
-tests = Environment(ENV=os.environ)
-tests.AlwaysBuild(tests.Alias('test', test_deps, 'ipy runtests.py'))
+tests = Environment(ENV=os.environ, **COMMON)
+tests.AlwaysBuild(tests.Alias('test', test_deps,
+    '$IPY runtests.py'))

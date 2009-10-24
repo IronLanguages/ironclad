@@ -1,8 +1,0 @@
-namespace Ironclad
-{
-    internal partial class CodeSnippets
-    {
-        // inserted import_code.py
-        public const string INSTALL_IMPORT_HOOK_CODE = @"%s";
-    }
-}

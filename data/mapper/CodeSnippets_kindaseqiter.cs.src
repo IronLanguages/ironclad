@@ -1,8 +1,0 @@
-namespace Ironclad
-{
-    internal partial class CodeSnippets
-    {
-        // kindaseqiter.py is inserted here
-        public const string KINDA_SEQ_ITER_CODE = @"%s";
-    }
-}
