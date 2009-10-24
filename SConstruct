@@ -88,7 +88,8 @@ managed['BUILDERS']['Insert'] = Builder(action=INSERT_CMD)
 
 tools_names = 'dispatcherinputs.py dispatchersnippets.py platform.py'
 api_names = '_all_api_functions _mgd_api_data _mgd_api_functions _mgd_function_prototypes _dont_register_symbols'
-dispatcher_src = pathmap('tools', tools_names) + pathmap('data/api', api_names)
+dispatcher_src = pathmap('tools', tools_names)
+dispatcher_src += pathmap('data/api', api_names)
 dispatcher_names = 'Delegates Dispatcher MagicMethods PythonApi'
 dispatcher_out = pathmap('src', submap('%s.Generated.cs', dispatcher_names))
 managed.Command(dispatcher_out, dispatcher_src,
@@ -97,10 +98,13 @@ managed.Command(dispatcher_out, dispatcher_src,
 mapper_names = '_exceptions _fill_types _numbers_convert_c2py _numbers_convert_py2c _operator _store_dispatch'
 mapper_src = pathmap('data/mapper', mapper_names)
 mapper_out = submap('src/PythonMapper%s.Generated.cs', mapper_names)
-snippets_src = Glob('data/mapper/*.py')
-snippets_out = ['src/CodeSnippets.Generated.cs']
-managed.Command(mapper_out + snippets_out, mapper_src + snippets_src,
+managed.Command(mapper_out, mapper_src,
     '$IPY tools/generatemapper.py data/mapper src')
+
+snippets_src = Glob('data/snippets/py2cs/*.py')
+snippets_out = ['src/CodeSnippets.Generated.cs']
+managed.Command(snippets_out, snippets_src,
+    '$IPY tools/generatesnippets.py data/snippets/py2cs src')
 
 #===============================================================================
 # Build the actual managed library
@@ -163,7 +167,7 @@ buildstub_names = '_always_register_data_symbols _dont_register_symbols _mgd_fun
 buildstub_src = pathmap('data/api', buildstub_names)
 buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_mgd_function_prototypes.generated.h')
 native.Command(buildstub_out, buildstub_src,
-    '$IPY tools/buildstub.py $PYTHON_DLL stub data/api')
+    '$IPY tools/generatestub.py $PYTHON_DLL data/api stub')
 
 # Compile stub code
 # NOTE: nasm Object seems to work fine out of the box

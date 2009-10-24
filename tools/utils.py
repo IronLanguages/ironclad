@@ -12,6 +12,9 @@ def popen(executable, arguments):
     return file(process.StandardOutput.BaseStream, "r")
 
 
+
+import os, sys
+
 def starstarmap(func, items):
     for (args, kwargs) in items:
         yield func(*args, **kwargs)
@@ -30,10 +33,34 @@ def multi_update(dict_, names, values):
         dict_[k] = v  
 
 
-def read_interesting_lines(name):
-    f = open(name)
+def read(*args):
+    f = open(os.path.join(*args))
+    try:
+        return f.read()
+    finally:
+        f.close()
+
+
+def read_interesting_lines(*args):
+    f = open(os.path.join(*args))
     try:
         return filter(None, [l.split('#')[0].strip() for l in f.readlines()])
     finally:
         f.close()
 
+BADGED = """/*
+ * This tool was generated with the following command:
+ *   %s %s
+ */
+%%s
+""" % (sys.executable, ' '.join(sys.argv))
+
+def write(dir_, name, text, badge=False):
+    f = open(os.path.join(dir_, name), "w")
+    try:
+        if badge:
+            text = BADGED % text
+        f.write(text)
+    finally:
+        f.close()
+    

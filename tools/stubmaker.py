@@ -130,4 +130,4 @@ class StubMaker(object):
         return ''.join(result)
 
     def generate_header(self):
-        return '\n'.join(self.mgd_functions)
+        return '\n'.join(self.mgd_functions) + '\n'
