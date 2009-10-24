@@ -2,47 +2,33 @@
 import os
 import shutil
 import tempfile
+
 from tests.utils.process import spawn
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
 
-def write(dir_, name, text):
-    f = open(os.path.join(dir_, name), 'w')
-    try:
-        f.write(text)
-    finally:
-        f.close()
-
-def read(dir_, name):
-    f = open(os.path.join(dir_, name))
-    try:
-        return f.read()
-    finally:
-        f.close()
+from tools.utils import read, write
 
 
 class GenerateMapperTest(TestCase):
 
     def testCreatesComponents(self):
         src = tempfile.mkdtemp()
-        for (name, contents) in SNIPPETS_FILES.items():
-            write(src, name, contents)
-        write(src, "_exceptions", EXCEPTIONS)
-        write(src, "_fill_types", FILL_TYPES)
-        write(src, "_numbers_convert_c2py", NUMBERS_CONVERT_C2PY)
-        write(src, "_numbers_convert_py2c", NUMBERS_CONVERT_PY2C)
-        write(src, "_operator", OPERATOR)
-        write(src, "_store_dispatch", STORE)
+        write(src, '_exceptions', EXCEPTIONS)
+        write(src, '_fill_types', FILL_TYPES)
+        write(src, '_numbers_convert_c2py', NUMBERS_CONVERT_C2PY)
+        write(src, '_numbers_convert_py2c', NUMBERS_CONVERT_PY2C)
+        write(src, '_operator', OPERATOR)
+        write(src, '_store_dispatch', STORE)
 
         dst = tempfile.mkdtemp()
-        result = spawn("ipy", "tools/generatemapper.py", src, dst)
-        self.assertEquals(result, 0, "process ended badly")
+        result = spawn('ipy', 'tools/generatemapper.py', src, dst)
+        self.assertEquals(result, 0, 'process ended badly')
 
         def assertFinds(name, expected):
             text = read(dst, '%s.Generated.cs' % name)
-            self.assertNotEquals(text.find(expected), -1, "generated: >>>%s<<<" % text)
+            self.assertNotEquals(text.find(expected), -1, 'generated: >>>%s<<<' % text)
         
-        assertFinds('CodeSnippets', EXPECTED_SNIPPETS)
         assertFinds('PythonMapper_exceptions', EXPECTED_EXCEPTIONS)
         assertFinds('PythonMapper_fill_types', EXPECTED_FILL_TYPES)
         assertFinds('PythonMapper_numbers_convert_c2py', EXPECTED_NUMBERS_CONVERT_C2PY)
@@ -253,23 +239,6 @@ namespace Ironclad
 
             this.map.Associate(ptr, TypeCache.Baz);
         }
-    }
-}
-"""
-
-SNIPPETS_FILES = {
-    'FOO.py': 'some random pile of code',
-    'BAR.py': 'some random pile of code, with "double" quotes',
-}
-
-EXPECTED_SNIPPETS = """
-namespace Ironclad
-{
-    internal partial class CodeSnippets
-    {
-        public const string BAR = @"some random pile of code, with ""double"" quotes";
-
-        public const string FOO = @"some random pile of code";
     }
 }
 """

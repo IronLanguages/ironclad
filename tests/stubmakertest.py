@@ -80,7 +80,7 @@ class StubMakerTest(TestCase):
     def testGenerateHeader(self):
         sm = StubMaker()
         sm.mgd_functions = ['some', 'random stuff', 'blah blah blah']
-        self.assertEquals(sm.generate_header(), '\n'.join(sm.mgd_functions))
+        self.assertEquals(sm.generate_header(), '\n'.join(sm.mgd_functions) + '\n')
 
 
     def testGenerateAsmCreatesLabelsForNonOverriddenFunctions(self):
