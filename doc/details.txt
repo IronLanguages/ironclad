@@ -54,7 +54,7 @@ several smaller classes, but the dividing lines remain unclear. It also holds th
 Global Interpreter Lock, without which object destruction becomes exceedingly 
 error-prone.
 
-Some parts of this file are also generated from src/pythonmapper_components,
+Some parts of this file are also generated from the contents of data/mapper,
 specifically: mappings for exception types; basic setup for builtin types;
 various parts of the PyNumber API; and, the StoreDispatch method which redirects 
 calls to public Store(object obj) to private Store(actual-type-of-obj obj).
