@@ -51,8 +51,8 @@ if WIN32:
     COPY_CMD = 'copy $SOURCE $TARGET'
     DLLTOOL_CMD = 'dlltool -D $NAME -d $SOURCE -l $TARGET'
     LINK_MSVCR90_FLAGS = '-specs=stub/use-msvcr90.spec'
-    MINGW_LIB = 'C:\\MinGW\\lib' # TODO: surely we can find this one out from the tools choice somehow..?
-    MSVCR90_DLL = 'C:\\Windows\\winsxs\\x86_Microsoft.VC90.CRT_1fc8b3b9a1e18e3b_9.0.21022.8_none_bcb86ed6ac711f91\\msvcr90.dll'
+    MINGW_LIB = 'C:\\Program Files\\MinGW\\lib' # TODO: surely we can find this one out from the tools choice somehow..?
+    MSVCR90_DLL = 'C:\\Windows\\winsxs\\x86_Microsoft.VC90.CRT_1fc8b3b9a1e18e3b_9.0.21022.8_x-ww_d08d0375\\msvcr90.dll'
     PEXPORTS_CMD = 'pexports $SOURCE > $TARGET'
     RES_CMD = 'windres --input $SOURCE --output $TARGET --output-format=coff'
 
@@ -95,13 +95,13 @@ dispatcher_outputs = pathmap('src', submap('%s.Generated.cs', dispatcher_basenam
 managed.Command(dispatcher_outputs, dispatcher_sources, '$IPY tools/generatedispatcher.py src')
 
 mapper_basenames = 'exceptions fill_types numbers_convert_c2py numbers_convert_py2c operator store_dispatch'.split()
-mapper_sources = pathmap('src/pythonmapper_components', mapper_basenames)
+mapper_sources = pathmap('data/mapper', mapper_basenames)
 mapper_outputs = pathmap('src', map((lambda x: 'PythonMapper_%s.Generated.cs' % x), mapper_basenames))
-managed.Command(mapper_outputs, mapper_sources, '$IPY tools/generatepythonmapper.py src/pythonmapper_components src')
+managed.Command(mapper_outputs, mapper_sources, '$IPY tools/generatepythonmapper.py data/mapper src')
 
 def CodeSnippet(name, src):
     target = 'src/CodeSnippets_%s.Generated.cs' % name
-    sources = pathmap('src/pythonmapper_components', [('CodeSnippets_%s.cs.src' % name), ('%s.py' % src)])
+    sources = pathmap('data/mapper', [('CodeSnippets_%s.cs.src' % name), ('%s.py' % src)])
     managed.Insert(target, sources)
 CodeSnippet('ihooks', 'import_code')
 CodeSnippet('kindaDictProxy', 'kindadictproxy')
