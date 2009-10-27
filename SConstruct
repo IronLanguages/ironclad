@@ -84,16 +84,13 @@ managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX, REFE
 managed['BUILDERS']['Insert'] = Builder(action=INSERT_CMD)
 
 #===============================================================================
-# Generated code: note whole heaps of ugly explicit dependencies
+# Generated C#
 
-tools_names = 'dispatcherinputs.py dispatchersnippets.py platform.py'
-api_names = '_all_api_functions _mgd_api_data _mgd_api_functions _mgd_function_prototypes _dont_register_symbols'
-dispatcher_src = pathmap('tools', tools_names)
-dispatcher_src += pathmap('data/api', api_names)
-dispatcher_names = 'Delegates Dispatcher MagicMethods PythonApi'
-dispatcher_out = pathmap('src', submap('%s.Generated.cs', dispatcher_names))
-managed.Command(dispatcher_out, dispatcher_src,
-    '$IPY tools/generatedispatcher.py src')
+api_src = Glob('data/api/*')
+api_out_names = 'Delegates Dispatcher MagicMethods PythonApi'
+api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
+managed.Command(api_out, api_src,
+    '$IPY tools/generateapi.py data/api src')
 
 mapper_names = '_exceptions _fill_types _numbers_convert_c2py _numbers_convert_py2c _operator _store_dispatch'
 mapper_src = pathmap('data/mapper', mapper_names)
@@ -101,10 +98,10 @@ mapper_out = submap('src/PythonMapper%s.Generated.cs', mapper_names)
 managed.Command(mapper_out, mapper_src,
     '$IPY tools/generatemapper.py data/mapper src')
 
-snippets_src = Glob('data/snippets/py2cs/*.py')
+snippets_src = Glob('data/snippets/py/*.py')
 snippets_out = ['src/CodeSnippets.Generated.cs']
 managed.Command(snippets_out, snippets_src,
-    '$IPY tools/generatesnippets.py data/snippets/py2cs src')
+    '$IPY tools/generatesnippets.py data/snippets/py src')
 
 #===============================================================================
 # Build the actual managed library
