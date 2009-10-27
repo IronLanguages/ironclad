@@ -2,6 +2,7 @@
 # Various useful functions
 
 import operator, os, sys
+from SCons.Scanner.C import CScanner
 
 def splitstring(f):
     def g(_, s):
@@ -116,8 +117,9 @@ before_test(managed.Dll('build/ironclad/ironclad', Glob('src/*.cs')))
 #===============================================================================
 
 native = Environment(tools=NATIVE_TOOLS, ASFLAGS=ASFLAGS, PYTHON_DLL=PYTHON_DLL, **COMMON)
-native['BUILDERS']['Obj'] = Builder(action=OBJ_CMD, suffix=OBJ_SUFFIX)
-native['BUILDERS']['Python26Obj'] = Builder(action=PYTHON26OBJ_CMD, suffix=OBJ_SUFFIX, CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include')
+c_obj_kwargs = dict(source_scanner=CScanner(), suffix=OBJ_SUFFIX)
+native['BUILDERS']['Obj'] = Builder(action=OBJ_CMD, **c_obj_kwargs)
+native['BUILDERS']['Python26Obj'] = Builder(action=PYTHON26OBJ_CMD, CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include', **c_obj_kwargs)
 native['BUILDERS']['Dll'] = Builder(action=DLL_CMD, suffix=DLL_SUFFIX)
 native['BUILDERS']['Python26Dll'] = native['BUILDERS']['Dll']
 
@@ -167,12 +169,8 @@ native.Command(buildstub_out, buildstub_src,
     '$IPY tools/generatestub.py $PYTHON_DLL data/api stub')
 
 # Compile stub code
-# NOTE: nasm Object seems to work fine out of the box
-# TODO: use scanner instead of explicit dependency for stubmain.c?
 jumps_obj = native.Object('stub/jumps.generated.asm')
 stubmain_obj = native.Python26Obj('stub/stubmain.c')
-stub_depends = 'stubinit.generated.c ironclad-data.c ironclad-functions.c Include/_mgd_function_prototypes.generated.h'
-Depends(stubmain_obj, pathmap('stub', stub_depends))
 
 # Build and link python26.dll
 cpy_src_dirs = 'Modules Objects Parser Python'
