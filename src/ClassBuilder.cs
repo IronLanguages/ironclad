@@ -75,7 +75,7 @@ namespace Ironclad
         GenerateClass()
         {
             string __doc__ = CPyMarshal.ReadCStringField(this.ptr, typeof(PyTypeObject), "tp_doc").Replace("\\", "\\\\");
-            this.code.Append(String.Format(CodeSnippets.CLASS_CODE, this.__name__, this.__module__, __doc__));
+            this.code.Append(String.Format(CodeSnippets.CLASS_TEMPLATE, this.__name__, this.__module__, __doc__));
             this.ConnectTypeField("tp_new", typeof(dgt_ptr_ptrptrptr));
         }
 
@@ -140,7 +140,7 @@ namespace Ironclad
             if (getset.get != IntPtr.Zero)
             {
                 getname = String.Format("__get_{0}", getset.name);
-                this.code.Append(String.Format(CodeSnippets.GETTER_METHOD_CODE, getname, this.tablePrefix, getset.closure));
+                this.code.Append(String.Format(CodeSnippets.GETTER_METHOD_TEMPLATE, getname, this.tablePrefix, getset.closure));
 
                 dgt_ptr_ptrptr dgt = (dgt_ptr_ptrptr)
                     Marshal.GetDelegateForFunctionPointer(
@@ -151,7 +151,7 @@ namespace Ironclad
             if (getset.set != IntPtr.Zero)
             {
                 setname = String.Format("__set_{0}", getset.name);
-                this.code.Append(String.Format(CodeSnippets.SETTER_METHOD_CODE, setname, this.tablePrefix, getset.closure));
+                this.code.Append(String.Format(CodeSnippets.SETTER_METHOD_TEMPLATE, setname, this.tablePrefix, getset.closure));
 
                 dgt_int_ptrptrptr dgt = (dgt_int_ptrptrptr)
                     Marshal.GetDelegateForFunctionPointer(
@@ -211,13 +211,13 @@ namespace Ironclad
             if (TryGetMemberMethodInfix(member.type, ref infix))
             {
                 string getname = String.Format("__get_{0}", member.name);
-                this.code.Append(String.Format(CodeSnippets.MEMBER_GETTER_CODE, getname, member.offset, infix));
+                this.code.Append(String.Format(CodeSnippets.MEMBER_GETTER_TEMPLATE, getname, member.offset, infix));
 
                 string setname = "None";
                 if ((member.flags & 1) == 0 && member.type != MemberT.STRING)
                 {
                     setname = String.Format("__set_{0}", member.name);
-                    this.code.Append(String.Format(CodeSnippets.MEMBER_SETTER_CODE, setname, member.offset, infix));
+                    this.code.Append(String.Format(CodeSnippets.MEMBER_SETTER_TEMPLATE, setname, member.offset, infix));
                 }
                 this.code.Append(String.Format(CodeSnippets.PROPERTY_CODE, member.name, member.doc));
             }
@@ -269,7 +269,7 @@ namespace Ironclad
         {
             if (CPyMarshal.ReadPtrField(this.ptr, typeof(PyTypeObject), "tp_richcompare") != IntPtr.Zero)
             {
-                this.code.Append(String.Format(CodeSnippets.RICHCMP_METHOD_CODE, tablePrefix));
+                this.code.Append(String.Format(CodeSnippets.RICHCMP_METHOD_TEMPLATE, tablePrefix));
                 this.ConnectTypeField("tp_richcompare", typeof(dgt_ptr_ptrptrint));
             }
         }

@@ -15,11 +15,11 @@ namespace Ironclad
         {
             GenerateCallablesFromMethodDefs(
                 code, methods, methodTable, "",
-                CodeSnippets.OLDARGS_FUNCTION_CODE,
-                CodeSnippets.NOARGS_FUNCTION_CODE,
-                CodeSnippets.OBJARG_FUNCTION_CODE,
-                CodeSnippets.VARARGS_FUNCTION_CODE,
-                CodeSnippets.VARARGS_KWARGS_FUNCTION_CODE);
+                CodeSnippets.OLDARGS_FUNCTION_TEMPLATE,
+                CodeSnippets.NOARGS_FUNCTION_TEMPLATE,
+                CodeSnippets.OBJARG_FUNCTION_TEMPLATE,
+                CodeSnippets.VARARGS_FUNCTION_TEMPLATE,
+                CodeSnippets.VARARGS_KWARGS_FUNCTION_TEMPLATE);
         }
 
         public static void
@@ -49,11 +49,11 @@ namespace Ironclad
         {
             GenerateCallablesFromMethodDefs(
                 code, methods, methodTable, tablePrefix,
-                CodeSnippets.OLDARGS_METHOD_CODE,
-                CodeSnippets.NOARGS_METHOD_CODE,
-                CodeSnippets.OBJARG_METHOD_CODE,
-                CodeSnippets.VARARGS_METHOD_CODE,
-                CodeSnippets.VARARGS_KWARGS_METHOD_CODE);
+                CodeSnippets.OLDARGS_METHOD_TEMPLATE,
+                CodeSnippets.NOARGS_METHOD_TEMPLATE,
+                CodeSnippets.OBJARG_METHOD_TEMPLATE,
+                CodeSnippets.VARARGS_METHOD_TEMPLATE,
+                CodeSnippets.VARARGS_KWARGS_METHOD_TEMPLATE);
         }
 
         public static void
