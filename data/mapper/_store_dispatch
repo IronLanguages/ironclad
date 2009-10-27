@@ -15,3 +15,4 @@ PythonFunction
 Method
 OldClass
 OldInstance
+PythonExceptions.BaseException
