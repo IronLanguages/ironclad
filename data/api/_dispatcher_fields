@@ -1,0 +1,12 @@
+# columns in order: 
+# typename | C# type | CPyMarshal method suffix
+
+# optional dict in 4th col tweaks codegen
+
+int         int         Int
+uint        uint        UInt
+long        int         Int
+ulong       uint        UInt
+double      double      Double
+ubyte       byte        Byte
+char        string      Byte    {'gettweak': 'Builtin.chr', 'settweak': '(byte)Builtin.ord'}

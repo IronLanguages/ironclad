@@ -3,20 +3,7 @@ import os, sys
 
 from tools.utils import read, write
 
-
-CODESNIPPETS_FILE_TEMPLATE = """
-namespace Ironclad
-{
-    internal partial class CodeSnippets
-    {
-%s
-    }
-}
-"""
-
-CODESNIPPET_TEMPLATE = """\
-        public const string %(name)s = @"%(code)s";"""
-
+from data.snippets.cs.codesnippets import *
 
 
 def read_dir(src):

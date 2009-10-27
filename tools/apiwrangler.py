@@ -1,11 +1,32 @@
 
-from tools.dispatchersnippets import *
 from tools.platform import type_codes
-from tools.utils import glom_templates, multi_update, read_interesting_lines, starstarmap
+from tools.utils import read_interesting_lines
 
+from data.snippets.cs.dgttype import *
+from data.snippets.cs.dispatcher import *
+from data.snippets.cs.magicmethods import *
+from data.snippets.cs.pythonapi import *
 
 #===============================================================================================================
 # Utility functions
+
+def starstarmap(func, items):
+    for (args, kwargs) in items:
+        yield func(*args, **kwargs)
+
+
+def glom_templates(joiner, *args):
+    output = []
+    for (template, infos) in args:
+        for info in infos:
+            output.append(template % info)
+    return joiner.join(output)
+
+
+def multi_update(dict_, names, values):
+    for (k, v) in zip(names, values):
+        dict_[k] = v
+
 
 def get_callarg((index, code)):
     if code == 'obj':
@@ -13,8 +34,13 @@ def get_callarg((index, code)):
     return 'arg%d' % index
 
 
+SPECIAL_ARGS = {
+    'null': NULL_ARG,
+    'module': MODULE_ARG,
+}
+
 def isnormalarg(arg):
-    return arg not in ('null', 'module')
+    return arg not in SPECIAL_ARGS
 
 
 def unpack_args(args, argtweak):
@@ -24,10 +50,8 @@ def unpack_args(args, argtweak):
         callargs = [None] * len(argtweak)
         inargs = [None] * len(filter(isnormalarg, argtweak))
         for calli, callarg in enumerate(argtweak):
-            if callarg == 'null':
-                callargs[calli] = 'IntPtr.Zero'
-            elif callarg == 'module':
-                callargs[calli] = 'this.modulePtr'
+            if callarg in SPECIAL_ARGS:
+                callargs[calli] = SPECIAL_ARGS[callarg]
             else:
                 inargs[callarg] = args[callarg]
                 callargs[calli] = get_callarg((callarg, args[callarg]))
@@ -75,9 +99,9 @@ def generate_ret_handling(ret, rettweak):
     if ret == 'void':
         return '', rettweak, ''
     elif ret == 'obj':
-        return 'IntPtr retptr = ', (rettweak or DEFAULT_HANDLE_RETPTR), 'return ret;'
+        return ASSIGN_RETPTR, (rettweak or DEFAULT_HANDLE_RETPTR), SIMPLE_RETURN
     else:
-        return '%s ret = ' % type_codes[ret], rettweak, 'return ret;'
+        return ASSIGN_RET_TEMPLATE % type_codes[ret], rettweak, SIMPLE_RETURN
 
 
 def generate_magicmethod_template(functype, inargs, template):
@@ -122,24 +146,27 @@ class ApiWrangler(object):
         self.dgttypes = set()
         self.output = {}
         
+        # Order of the following operations is important!
+        
         self.output['dispatcher_code'] = self.generate_dispatcher(
-            input['DISPATCHER_FIELD_TYPES'], 
+            input['DISPATCHER_FIELDS'], 
             input['DISPATCHER_METHODS'])
-        
+            
         self.output['magicmethods_code'] = self.generate_magic_methods(
-            input['PROTOCOL_FIELD_TYPES'])
-        
+            input['MAGICMETHODS'])
+            
         self.output['pythonapi_code'] = self.generate_pythonapi(
             input['MGD_API_FUNCTIONS'], 
             input['MGD_NONAPI_C_FUNCTIONS'], 
             input['ALL_API_FUNCTIONS'], 
             input['PURE_C_SYMBOLS'], 
             input['MGD_API_DATA'])
+            
+        self.output['dgttype_code'] = self.generate_dgts(
+            input['EXTRA_DGTTYPES'])
 
-        self.output['dgttype_code'] = self.generate_dgts()
 
-
-    def unpack_spec(self, spec):
+    def _unpack_spec(self, spec):
         args = []
         dgttype = spec.replace('obj', 'ptr')
         self.dgttypes.add(dgttype)
@@ -158,8 +185,8 @@ class ApiWrangler(object):
         return dgttype, ret, tuple(args) 
 
 
-    def unpack_apifunc(self, name, dgt_type):
-        _, ret, args = self.unpack_spec(dgt_type)
+    def _unpack_apifunc(self, name, dgt_type):
+        _, ret, args = self._unpack_spec(dgt_type)
         return {
             "symbol": name,
             "dgt_type": dgt_type,
@@ -168,8 +195,8 @@ class ApiWrangler(object):
         }
 
 
-    def generate_dgttype(self, dgttype):
-        _, ret, args = self.unpack_spec(dgttype)
+    def _generate_dgttype(self, dgttype):
+        _, ret, args = self._unpack_spec(dgttype)
         return DGTTYPE_TEMPLATE % {
             'name': dgttype,
             'rettype': type_codes[ret], 
@@ -177,8 +204,8 @@ class ApiWrangler(object):
         }
 
 
-    def generate_dispatcher_method(self, name, spec, argtweak=None, rettweak='', nullablekwargs=None):
-        dgttype, ret, args = self.unpack_spec(spec)
+    def _generate_dispatcher_method(self, name, spec, argtweak=None, rettweak='', nullablekwargs=None):
+        dgttype, ret, args = self._unpack_spec(spec)
         inargs, callargs = unpack_args(args, argtweak)
         self.callmap[name] = (inargs, dgttype)
         info = {
@@ -192,34 +219,6 @@ class ApiWrangler(object):
         return METHOD_TEMPLATE % info
 
 
-    def generate_dispatcher(self, field_types, method_types):
-        dispatcher_fields = '\n'.join(starstarmap(generate_dispatcher_field, field_types))
-        dispatcher_methods = '\n'.join(starstarmap(self.generate_dispatcher_method, method_types))
-        return FILE_TEMPLATE % DISPATCHER_TEMPLATE % '\n\n'.join((dispatcher_fields, dispatcher_methods))
-
-
-    def generate_magic_methods(self, protocol_field_types):
-        # this depends on self.callmap having been populated (by dispatcher generation)
-        normal_magic_methods = []
-        swapped_magic_methods = []
-        def generate_magic_method(cslotname, functype, pyslotname, swapped=None, template=MAGICMETHOD_TEMPLATE_TEMPLATE, swappedtemplate=MAGICMETHOD_TEMPLATE_TEMPLATE):
-            inargs, dgttype = self.callmap[functype]
-            needswap = ''
-            if swapped:
-                needswap = 'needGetSwappedInfo = true;'
-            template = generate_magicmethod_template(functype, inargs, template)
-            normal_magic_methods.append(MAGIC_METHOD_CASE % (cslotname, pyslotname, template, dgttype, needswap))
-            if not swapped:
-                return
-            swappedtemplate = generate_magicmethod_swapped_template(functype, inargs, swappedtemplate)
-            swapped_magic_methods.append(MAGIC_METHOD_CASE % (cslotname, swapped, swappedtemplate, dgttype, ''))
-        
-        for (args, kwargs) in protocol_field_types:
-            generate_magic_method(*args, **kwargs)
-        
-        return FILE_TEMPLATE % MAGICMETHODS_TEMPLATE % ('\n'.join(normal_magic_methods), '\n'.join(swapped_magic_methods))
-
-
     def generate_pythonapi(self, mgd_pythonapi_functions, mgd_nonapi_c_functions, all_api_functions, pure_c_symbols, mgd_data):
         all_mgd_functions = mgd_pythonapi_functions | mgd_nonapi_c_functions
         not_implemented_functions = all_api_functions - pure_c_symbols
@@ -228,7 +227,7 @@ class ApiWrangler(object):
         for (name, dgt_type) in all_mgd_functions:
             if name in not_implemented_functions:
                 not_implemented_functions.remove(name)
-            methods.append(self.unpack_apifunc(name, dgt_type))
+            methods.append(self._unpack_apifunc(name, dgt_type))
             
         not_implemented_methods = [{"symbol": s} for s in not_implemented_functions]
         methods_code = glom_templates('\n\n',
@@ -243,14 +242,40 @@ class ApiWrangler(object):
         data_items_code = glom_templates("\n\n", (PYTHONAPI_DATA_ITEM_TEMPLATE, mgd_data))
         data_items_switch = glom_templates("\n", (PYTHONAPI_DATA_ITEM_CASE, mgd_data))
 
-        return FILE_TEMPLATE % PYTHONAPI_TEMPLATE % (
+        return PYTHONAPI_FILE_TEMPLATE % (
             methods_code, methods_switch,
             data_items_code, data_items_switch)
+
+
+    def generate_dispatcher(self, field_types, method_types):
+        dispatcher_fields = '\n\n'.join(starstarmap(generate_dispatcher_field, field_types))
+        dispatcher_methods = '\n\n'.join(starstarmap(self._generate_dispatcher_method, method_types))
+        return DISPATCHER_FILE_TEMPLATE % '\n\n'.join((dispatcher_fields, dispatcher_methods))
+
+
+    def generate_magic_methods(self, protocol_field_types):
+        # this depends on self.callmap having been populated (by dispatcher generation)
+        normal_magic_methods = []
+        swapped_magic_methods = []
+        def generate_magic_method(cslotname, functype, pyslotname, swappedname=None, template=MAGICMETHOD_TEMPLATE_TEMPLATE, swappedtemplate=MAGICMETHOD_TEMPLATE_TEMPLATE):
+            inargs, dgttype = self.callmap[functype]
+            needswap = MAGICMETHOD_NEEDSWAP_NO
+            if swappedname is not None:
+                swappedtemplate = generate_magicmethod_swapped_template(functype, inargs, swappedtemplate)
+                swapped_magic_methods.append(MAGICMETHOD_CASE % (cslotname, swappedname, MAGICMETHOD_NEEDSWAP_NO, dgttype, swappedtemplate))
+                needswap = MAGICMETHOD_NEEDSWAP_YES
+            template = generate_magicmethod_template(functype, inargs, template)
+            normal_magic_methods.append(MAGICMETHOD_CASE % (cslotname, pyslotname, needswap, dgttype, template))
+        
+        for (args, kwargs) in protocol_field_types:
+            generate_magic_method(*args, **kwargs)
+        
+        return MAGICMETHODS_FILE_TEMPLATE % ('\n\n'.join(normal_magic_methods), '\n\n'.join(swapped_magic_methods))
             
 
-    def generate_dgts(self):
+    def generate_dgts(self, extratypes):
         # this depends on self.dgttypes having been populated (by dispatcher and pythonapi construction)
-        return FILE_TEMPLATE % '\n'.join(map(self.generate_dgttype, sorted(self.dgttypes)))
+        return FILE_TEMPLATE % '\n'.join(map(self._generate_dgttype, sorted(self.dgttypes | extratypes)))
 
 
 

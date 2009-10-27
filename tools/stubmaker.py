@@ -2,7 +2,7 @@
 import os
 import sys
 
-from utils import popen, read_interesting_lines
+from tools.utils import popen, read_interesting_lines
 
 
 def extract_funcname(c_func):

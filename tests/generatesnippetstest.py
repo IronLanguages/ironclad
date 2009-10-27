@@ -39,7 +39,7 @@ SNIPPETS_FILES = {
 EXPECTED_SNIPPETS = """
 namespace Ironclad
 {
-    internal partial class CodeSnippets
+    internal class CodeSnippets
     {
         public const string BAR = @"some random pile of code, with ""double"" quotes";
 
