@@ -6,8 +6,10 @@ import System
 from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal
+from Ironclad.Structs import PyObject
 
-class LastExceptionTest(TestCase):
+
+class ErrorsTest(TestCase):
 
     @WithMapper
     def testException(self, mapper, _):
@@ -18,9 +20,15 @@ class LastExceptionTest(TestCase):
                           "get should retrieve last set exception")
         self.assertEquals(str(mapper.LastException), "doozy",
                           "get should retrieve last set exception")
+    
+    
+    @WithMapper
+    def testStore(self, mapper, _):
+        for type_ in (TypeError, ValueError, IOError):
+            excPtr = mapper.Store(type_('whatever'))
+            typePtr = CPyMarshal.ReadPtrField(excPtr, PyObject, 'ob_type')
+            self.assertEquals(mapper.Retrieve(typePtr), type_)
 
-
-class ErrFunctionsTest(TestCase):
 
     @WithMapper
     @WithPatchedStdErr
