@@ -57,7 +57,7 @@ namespace Ironclad
         public override IntPtr
         PyImport_GetModuleDict()
         {
-            IntPtr modulesPtr = this.Store(this.python.SystemState.__dict__["modules"]);
+            IntPtr modulesPtr = this.Store(this.python.SystemState.Get__dict__()["modules"]);
             this.DecRefLater(modulesPtr);
             return modulesPtr;
         }
@@ -134,7 +134,7 @@ namespace Ironclad
             if (module == null)
             {
                 module = new PythonModule();
-                module.__dict__["__name__"] = name;
+                module.Get__dict__()["__name__"] = name;
                 this.AddModule(name, module);
             }
             return module;
@@ -149,7 +149,7 @@ namespace Ironclad
             {
                 this.CreateModulesContaining(name.Substring(0, lastDot));
                 PythonModule outer = this.GetModule(name.Substring(0, lastDot));
-                outer.__dict__[name.Substring(lastDot + 1)] = inner;
+                outer.Get__dict__()[name.Substring(lastDot + 1)] = inner;
             }
         }
     }

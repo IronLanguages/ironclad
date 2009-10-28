@@ -28,7 +28,7 @@ namespace Ironclad
             this.AddModule(name, module);
             this.CreateModulesContaining(name);
 
-            PythonDictionary __dict__ = module.__dict__;
+            PythonDictionary __dict__ = module.Get__dict__();
             __dict__["__doc__"] = doc;
             __dict__["__name__"] = name;
             string __file__ = this.importFiles.Peek();
@@ -53,7 +53,7 @@ namespace Ironclad
         PyEval_GetBuiltins()
         {
             PythonModule __builtin__ = this.GetModule("__builtin__");
-            return this.Store(__builtin__.__dict__);
+            return this.Store(__builtin__.Get__dict__());
         }
         
         public override IntPtr
@@ -61,7 +61,7 @@ namespace Ironclad
         {
             try
             {
-                return this.Store(this.python.SystemState.__dict__[name]);
+                return this.Store(this.python.SystemState.Get__dict__()[name]);
             }
             catch (Exception e)
             {
@@ -74,8 +74,8 @@ namespace Ironclad
         PyModule_New(string name)
         {
             PythonModule module = new PythonModule();
-            module.__dict__["__name__"] = name;
-            module.__dict__["__doc__"] = "";
+            module.Get__dict__()["__name__"] = name;
+            module.Get__dict__()["__doc__"] = "";
             return this.Store(module);
         }
 
@@ -83,7 +83,7 @@ namespace Ironclad
         PyModule_GetDict(IntPtr modulePtr)
         {
             PythonModule module = (PythonModule)this.Retrieve(modulePtr);
-            return this.Store(module.__dict__);
+            return this.Store(module.Get__dict__());
         }
 
         private int 
@@ -94,7 +94,7 @@ namespace Ironclad
                 return -1;
             }
             PythonModule module = (PythonModule)this.Retrieve(modulePtr);
-            module.__setattr__(name, value);
+            module.__setattr__(scratchContext, name, value);
             return 0;
         }
         
@@ -126,20 +126,20 @@ namespace Ironclad
         ExecInModule(string code, PythonModule module)
         {
             SourceUnit script = this.python.CreateSnippet(code, SourceCodeKind.Statements);
-            script.Execute(new Scope(module.__dict__));
+            script.Execute(new Scope(module.Get__dict__()));
         }
         
         public void
         AddModule(string name, PythonModule module)
         {
-            PythonDictionary modules = (PythonDictionary)this.python.SystemState.__dict__["modules"];
+            PythonDictionary modules = (PythonDictionary)this.python.SystemState.Get__dict__()["modules"];
             modules[name] = module;
         }
 
         public PythonModule
         GetModule(string name)
         {
-            PythonDictionary modules = (PythonDictionary)this.python.SystemState.__dict__["modules"];
+            PythonDictionary modules = (PythonDictionary)this.python.SystemState.Get__dict__()["modules"];
             if (modules.has_key(name))
             {
                 return (PythonModule)modules[name];
@@ -151,10 +151,10 @@ namespace Ironclad
         CreateScratchModule()
         {
             this.scratchModule = new PythonModule();
-            this.scratchModule.__dict__["_mapper"] = this;
+            this.scratchModule.Get__dict__()["_mapper"] = this;
 
             this.ExecInModule(CodeSnippets.USEFUL_IMPORTS, this.scratchModule);
-            this.scratchContext = new ModuleContext(this.scratchModule.__dict__, this.python).GlobalContext;
+            this.scratchContext = new ModuleContext(this.scratchModule.Get__dict__(), this.python).GlobalContext;
         }
     }
 }

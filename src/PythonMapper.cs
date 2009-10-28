@@ -208,7 +208,7 @@ namespace Ironclad
                 this.exitfuncs.Pop()();
             }
 
-            PythonDictionary modules = (PythonDictionary)this.python.SystemState.__dict__["modules"];
+            PythonDictionary modules = (PythonDictionary)this.python.SystemState.Get__dict__()["modules"];
             if (!modules.Contains("numpy"))
             {
                 // TODO: FIXME?
@@ -660,7 +660,7 @@ namespace Ironclad
         private object CreateFromSnippet(string code, string key)
         {
             this.ExecInModule(code, this.scratchModule);
-            return this.scratchModule.__dict__[key];
+            return this.scratchModule.Get__dict__()[key];
         }
     }
 
