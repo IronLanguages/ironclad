@@ -33,11 +33,11 @@ namespace Ironclad
             this.IncRef(ob_typePtr);
             object ob_type = this.Retrieve(ob_typePtr);
 
-            this.scratchModule.__dict__["_ironclad_metaclass"] = ob_type;
-            this.scratchModule.__dict__["_ironclad_bases"] = tp_bases;
+            this.scratchModule.Get__dict__()["_ironclad_metaclass"] = ob_type;
+            this.scratchModule.Get__dict__()["_ironclad_bases"] = tp_bases;
             this.ExecInModule(cb.code.ToString(), this.scratchModule);
-            object klass = this.scratchModule.__dict__["_ironclad_class"];
-            object klass_stub = this.scratchModule.__dict__["_ironclad_class_stub"];
+            object klass = this.scratchModule.Get__dict__()["_ironclad_class"];
+            object klass_stub = this.scratchModule.Get__dict__()["_ironclad_class_stub"];
 
             this.classStubs[typePtr] = klass_stub;
             Builtin.setattr(this.scratchContext, klass, "_dispatcher", new Dispatcher(this, cb.methodTable));

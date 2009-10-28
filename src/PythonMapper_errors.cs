@@ -27,7 +27,7 @@ namespace Ironclad
         internal void
         PrintToStdErr(object obj)
         {
-            object stderr = this.python.SystemState.__dict__["stderr"];
+            object stderr = this.python.SystemState.Get__dict__()["stderr"];
             PythonOps.PrintWithDest(this.scratchContext, stderr, obj);
         }
 

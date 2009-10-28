@@ -387,10 +387,10 @@ namespace Ironclad
                 CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_bases", this.Store(tp_bases));
             }
 
-            this.scratchModule.__dict__["_ironclad_bases"] = tp_bases;
-            this.scratchModule.__dict__["_ironclad_metaclass"] = ob_type;
+            this.scratchModule.Get__dict__()["_ironclad_bases"] = tp_bases;
+            this.scratchModule.Get__dict__()["_ironclad_metaclass"] = ob_type;
             this.ExecInModule(CodeSnippets.CLASS_STUB_CODE, this.scratchModule);
-            this.classStubs[typePtr] = this.scratchModule.__dict__["_ironclad_class_stub"];
+            this.classStubs[typePtr] = this.scratchModule.Get__dict__()["_ironclad_class_stub"];
 
             this.actualisableTypes[typePtr] = new ActualiseDelegate(this.ActualiseArbitraryObject);
             this.map.Associate(typePtr, _type);

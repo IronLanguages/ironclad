@@ -159,7 +159,7 @@ namespace Ironclad
             {
                 object obj = this.Retrieve(objPtr);
 
-                PythonDictionary builtins = this.GetModule("__builtin__").__dict__;
+                PythonDictionary builtins = this.GetModule("__builtin__").Get__dict__();
                 if (obj == TypeCache.PythonFile || obj == builtins["open"])
                 {
                     obj = this.cFileClass;
