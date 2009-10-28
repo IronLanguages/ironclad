@@ -43,8 +43,8 @@ test_core.TestMaskedArrayFunctions.test_choose_with_out # wrong results (byteswa
 test_extras.TestMedian.test_2d # unreliable
 
 test_mrecords.TestMRecords.test_filled # wrong results
-test_mrecords.TestMRecords.test_fromrecords # wrong results
 test_mrecords.TestMRecords.test_set_fields # wrong results
+test_mrecords.TestMRecordsImport.test_fromrecords # wrong results
 test_mrecords.TestMRecordsImport.test_fromtextfile # can't convert scalar to int
 
 ###############################################################################
@@ -53,20 +53,16 @@ test_mrecords.TestMRecordsImport.test_fromtextfile # can't convert scalar to int
 # (core)
 test_ufunc.TestUfunc.test_matrix_multiply
 
-# (core) no point disabling: the bit that takes ages is a decorator. grr.
-# test_umath.TestComplexFunctions.test_loss_of_precision_longcomplex 
-
 # (lib)
 test_machar.TestMachAr.test_underlow
 
 ###############################################################################
 #### known failures, low priority
 
-# (core) gzip module
+# gzip module
+lib\tests\test_io.py
+# (core)
 test_regression.TestRegression.test_char_dump
-
-# (lib) binascii.crc32
-test_io
 
 # (linalg) eek, fortran
 test_build
@@ -94,8 +90,8 @@ test_regression.TestRegression.test_unicode_scalar
 test_regression.TestRegression.test_unicode_string_comparison
 test_regression.TestRegression.test_unicode_swapping
 
-# (lib) unicode
-test_format
+# PyObject_Unicode on import
+lib\tests\test_format.py
 
 # (numpy) unicode
 test_utils.TestEqual.test_generic_rank1
@@ -118,7 +114,7 @@ test_io.TestSaveLoad.test_mmap
 test_print
 test_regression.TestRegression.test_startswith
 
-# (lib) stupid tedious shutil.rmtree problems (run on thier own, they usually work...)
+# (lib) stupid tedious shutil.rmtree problems (run on their own, they usually work...)
 test__datasource.TestDataSourceOpen.test_ValidFile
 test__datasource.TestDataSourceOpen.test_ValidGzipFile
 test__datasource.TestDataSourceOpen.test_ValidHTTP
