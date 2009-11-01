@@ -1,9 +1,15 @@
-PyInt_FromLong int 
-PyInt_FromSize_t uint
-PyInt_FromSsize_t uint
-PyLong_FromDouble double (BigInteger)
-PyLong_FromLong int (BigInteger)
-PyLong_FromLongLong long (BigInteger)
-PyLong_FromUnsignedLong uint (BigInteger)
-PyLong_FromUnsignedLongLong ulong (BigInteger)
-PyFloat_FromDouble double
+# This file is used by tools/generatemapper.py
+
+# columns in order:
+# API function name | input type | (optional) cast for Store
+
+
+PyInt_FromLong                  int 
+PyInt_FromSize_t                uint
+PyInt_FromSsize_t               uint
+PyLong_FromDouble               double          (BigInteger)
+PyLong_FromLong                 int             (BigInteger)
+PyLong_FromLongLong             long            (BigInteger)
+PyLong_FromUnsignedLong         uint            (BigInteger)
+PyLong_FromUnsignedLongLong     ulong           (BigInteger)
+PyFloat_FromDouble              double

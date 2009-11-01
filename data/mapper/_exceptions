@@ -1,3 +1,6 @@
+# This file is used by tools/generatemapper.py
+
+# Maps exception types from one runtime to another
 
 EnvironmentError
 SyntaxError

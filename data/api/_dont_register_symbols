@@ -1,12 +1,11 @@
-# This file is used by tools/dispatcherinputs.py and tools/stubmaker.py
-#
+# This file is used by tools/generateapi.py and tools/generatestub.py
+
 # Symbols in this file will NOT have any of the following generated:
-#
 # * jumptable redirections to managed code
 # * virtual methods on PythonApi
 # * GetAddress/SetData registration calls or handlers
-#
 
+#==============================================================================
 # These are here because, when we happen to see an object of one of
 # these types, we can just interpret it as we would any other: there's
 # no obvious ipy type to map to (buffer exists but isn't good for much yet).
@@ -15,12 +14,14 @@ PyBuffer_Type
 PyCFunction_Type
 PyCObject_Type
 
+#==============================================================================
 # These are static data and aren't bothering anybody, so there is no
 # need to register them with the managed side.
 
 _Py_SwappedOp
 _PyLong_DigitValue
 
+#==============================================================================
 # All the rest are functions implemented somewhere amongst the C code
 
 # Objects/abstract.c
