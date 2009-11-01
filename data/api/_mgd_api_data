@@ -1,3 +1,5 @@
+# This file is used by tools/generateapi.py
+
 PyBool_Type 
 PyCell_Type 
 PyClass_Type 

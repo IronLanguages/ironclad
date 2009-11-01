@@ -1,4 +1,6 @@
-# we sometimes need to create delegates with the following signatures,
+# This file is used by tools/generateapi.py
+
+# We sometimes need to create delegates with the following signatures,
 # even though they aren't explicitly mentioned in the API
 
 # destructor2 from cobject.c: only ever used internally, when destroying PyCObjects

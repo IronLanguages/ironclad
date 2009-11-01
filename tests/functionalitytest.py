@@ -152,17 +152,17 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             # test for no dupe h5 imports
             # we still have dupe .py imports from .pyds for some reason
             
-            import h5py
-            import sys
-            assert 'h5py.h5g.h5' not in sys.modules # .pyd dupes
-            assert 'h5py.h5i.h5' not in sys.modules # .pyd dupes
-            assert 'h5py.h5t.h5' not in sys.modules # .pyd dupes
-            assert 'h5py.h5g._sync' not in sys.modules # .py dupes
-            assert 'h5py.h5i._sync' not in sys.modules # .py dupes
-            assert 'h5py.h5t._sync' not in sys.modules # .py dupes
+            #import h5py
+            #import sys
+            #assert 'h5py.h5g.h5' not in sys.modules # .pyd dupes
+            #assert 'h5py.h5i.h5' not in sys.modules # .pyd dupes
+            #assert 'h5py.h5t.h5' not in sys.modules # .pyd dupes
+            #assert 'h5py.h5g._sync' not in sys.modules # .py dupes
+            #assert 'h5py.h5i._sync' not in sys.modules # .py dupes
+            #assert 'h5py.h5t._sync' not in sys.modules # .py dupes
             
             """ % (file_path, file_contents)), insert_args='-X:Frames')
-
+        self.fail('h5py broken')
 
     def testPatchNativeFilenos(self):
         self.assertRuns(dedent("""\

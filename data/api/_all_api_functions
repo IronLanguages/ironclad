@@ -1,3 +1,9 @@
+# This file is used by tools/generateapi.py
+
+# This is almost certainly out of date, and really should be
+# generated from the python headers.
+
+
 PyObject_Cmp
 PyCallable_Check
 PyObject_Call
