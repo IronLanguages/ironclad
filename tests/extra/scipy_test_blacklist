@@ -21,7 +21,9 @@ test_integrate.TestOde.test_zvode # fails, not yet analysed
 
 # (io)
 test_array_import.TestReadArray # deprecated, fail unpredictably due to 'file being used by another process'
-test_array_import.TestReadArray.test_complex # this one exposes different problem: PyFloat_FromString needs implementing
+test_array_import.TestReadArray.test_complex # PyFloat_FromString
+io\matlab\tests\test_mio.py # import gzip
+
 
 # (odr)
 test_odr.TestODR.test_explicit # segfault
@@ -77,3 +79,10 @@ test_distance.TestPdist.test_pdist_seuclidean_iris_nonC
 test_distance.TestPdist.test_pdist_sokalmichener_match
 test_distance.TestPdist.test_pdist_sokalsneath_match
 test_distance.TestPdist.test_pdist_yule_match
+
+# (stats) most parts of these files work, but they take *forever*
+# also, it's tricky to disable individual ones, whether failing or just slow
+stats\tests\test_continuous_basic.py
+stats\tests\test_continuous_extra.py
+stats\tests\test_discrete_basic.py
+stats\tests\test_distributions.py
