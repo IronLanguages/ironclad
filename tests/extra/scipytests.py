@@ -1,27 +1,26 @@
-import os.path
-import sys
-from tests.utils.schnoz import Schnoz
+
+sp_path = r'C:\Program Files\IronPython 2.6\lib\site-packages\scipy\sparse\tests\test_base.py'
+sp_blacklist = r'tests\extra\scipy_test_blacklist'
+
+import re, sys
+sys.path.append('build')
+
+import ironclad
+ironclad.patch_native_filenos()
+
+from tests.utils.blacklists import BlacklistConfig
+config = BlacklistConfig(sp_blacklist)
+
+import nose
+nose.run(defaultTest=sp_path, config=config)
 
 
-if sys.platform == 'cli':
-    # we expect this to be run from project root
-    sys.path.insert(0, "build")
-    import ironclad
-    ironclad.patch_native_filenos()
-
-
-import scipy
-import scipy.misc
-scipy_path = r"C:\Python25\Lib\site-packages\scipy"
-dirs = [
-    'cluster', 'fftpack', 'integrate', 'io', 'maxentropy', 'misc', 
-    'ndimage', 'odr', 'optimize', 'sparse', 'spatial', 'special', 'stats'
-]
-# 'interpolate', 'signal', # cannot import factorial from scipy
-
-
-
-if __name__ == "__main__":
-    scipytester = Schnoz(name="scipy", lib_path=scipy_path, data_dir=os.path.dirname(__file__))
-    scipytester.main(dirs, 2)
-
+# interpolate: cannot import factorial
+# io: cannot import zlib
+# lib: 176 tests, 39 errors
+# linalg: 402 tests, 51 errors
+# misc: needs PIL
+# signal: cannot import factorial
+# sparse: 418 tests, 19 errors
+# stats: (wedged after many passes and some errors)
+# weave: cannot import zlib

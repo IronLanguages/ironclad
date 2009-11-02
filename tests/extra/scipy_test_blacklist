@@ -1,111 +1,79 @@
 ###############################################################################
 #### failures, probably worth worrying about
 
-# scarybad failures, after long waits
-cluster.test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5A
-cluster.test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5B
-cluster.test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5C
-cluster.test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6A
-cluster.test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6B
-cluster.test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6C
+# weird failures
+# (cluster)
+test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5A
+test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5B
+test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5C
+test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6A
+test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6B
+test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6C
 
-cluster.test_vq.TestKMean.test_kmeans2_init # occasional horror
+# (cluster)
+test_vq.TestKMean.test_kmeans2_init # occasional horror
 
-fftpack.test_pseudo_diffs # almost all just fail -- mostly arrays of zeros
+# (fftpack)
+test_pseudo_diffs # almost all just fail -- mostly arrays of zeros
 
-integrate.test_integrate.TestOde.test_zvode # fails, not yet analysed
+# (integrate)
+test_integrate.TestOde.test_zvode # fails, not yet analysed
 
-io.test_array_import.TestReadArray # deprecated, fail unpredictably due to 'file being used by another process'
-io.test_array_import.TestReadArray.test_complex # this one exposes different problem: PyFloat_FromString needs implementing
+# (io)
+test_array_import.TestReadArray # deprecated, fail unpredictably due to 'file being used by another process'
+test_array_import.TestReadArray.test_complex # this one exposes different problem: PyFloat_FromString needs implementing
 
-odr.test_odr.TestODR.test_explicit # 100% cpu for ever (well; 16 hours at least)
+# (odr)
+test_odr.TestODR.test_explicit # segfault
 
-optimize.test_zeros.TestBasic # x4: in _bisect: ValueError: f(a) and f(b) must have different signs
-optimize.test_optimize.TestOptimize.test_fminbound # import_nose(): TypeError: Object is not callable
+# (optimize)
+test_zeros.TestBasic # x4: in _bisect: ValueError: f(a) and f(b) must have different signs
 
-# import_nose()
-sparse.test_base.TestBSR.test_invalid_shapes
-sparse.test_base.TestBSR.test_matmat_sparse
-sparse.test_base.TestBSR.test_matvec
-sparse.test_base.TestCOO.test_invalid_shapes
-sparse.test_base.TestCOO.test_matmat_sparse
-sparse.test_base.TestCOO.test_matvec
-sparse.test_base.TestCSC.test_getelement
-sparse.test_base.TestCSC.test_invalid_shapes
-sparse.test_base.TestCSC.test_matmat_sparse
-sparse.test_base.TestCSC.test_matvec
-sparse.test_base.TestCSC.test_setelement
-sparse.test_base.TestCSR.test_getelement
-sparse.test_base.TestCSR.test_invalid_shapes
-sparse.test_base.TestCSR.test_matmat_sparse
-sparse.test_base.TestCSR.test_matvec
-sparse.test_base.TestCSR.test_setelement
-sparse.test_base.TestDIA.test_invalid_shapes
-sparse.test_base.TestDIA.test_matmat_sparse
-sparse.test_base.TestDIA.test_matvec
-sparse.test_base.TestDOK.test_getelement
-sparse.test_base.TestDOK.test_invalid_shapes
-sparse.test_base.TestDOK.test_matmat_sparse
-sparse.test_base.TestDOK.test_matvec
-sparse.test_base.TestDOK.test_setelement
-sparse.test_base.TestLIL.test_getelement
-sparse.test_base.TestLIL.test_invalid_shapes
-sparse.test_base.TestLIL.test_matmat_sparse
-sparse.test_base.TestLIL.test_matvec
-sparse.test_base.TestLIL.test_setelement
+# (sparse) something returns null
+test_base.TestCSC.test_solve
+test_base.TestCSR.test_solve
+test_base.TestDOK.test_solve
+test_base.TestLIL.test_solve
 
-# something returns null
-sparse.test_base.TestCSC.test_solve
-sparse.test_base.TestCSR.test_solve
-sparse.test_base.TestDOK.test_solve
-sparse.test_base.TestLIL.test_solve
+# (special)
+test_basic.TestBessel.test_ynp_zeros_large_order # KnownFailure
+test_basic.TestBessel.test_yv_cephes_vs_amos # KnownFailure
 
-special.test_basic.TestBessel.test_ynp_zeros_large_order # KnownFailure
-special.test_basic.TestBessel.test_yv_cephes_vs_amos # KnownFailure
-
-stats.test_mstats_basic.TestCorr.test_pearsonr # divide by 0 in wrong runtime (if it happened in C code, we'd be fine)
+# (stats)
+test_mstats_basic.TestCorr.test_pearsonr # divide by 0 in wrong runtime (if it happened in C code, we'd be fine)
 
 
 ###############################################################################
 #### work fine, but take way too long (>>30s each)
 
-sparse.test_base.TestBSR.test_add_sub
-sparse.test_base.TestBSR.test_mu
+# (sparse)
+test_construct.TestConstructUtils.test_kron # very long
+test_construct.TestConstructUtils.test_kronsum # very long
+test_spfuncs.TestSparseFunctions.test_count_blocks
 
-sparse.test_base.TestCSC.test_add_sub
-sparse.test_base.TestCSC.test_mu
+# only *some* test_add_sub and test_mu methods take ages; sadly, nose 
+# doesn't report them in a way that lets me disable them precisely
+test_base._TestArithmetic.test_add_sub
+test_base._TestArithmetic.test_mu
 
-sparse.test_base.TestCSR.test_add_sub # very long
-sparse.test_base.TestCSR.test_mu # very long
-
-sparse.test_base.TestDIA.test_add_sub # very long
-sparse.test_base.TestDIA.test_mu # very long
-
-sparse.test_base.TestLIL.test_add_sub # very long
-sparse.test_base.TestLIL.test_mu # very long
-
-sparse.test_construct.TestConstructUtils.test_kron # very long
-sparse.test_construct.TestConstructUtils.test_kronsum # very long
-
-sparse.test_spfuncs.TestSparseFunctions.test_count_blocks
-
-spatial.test_distance.TestPdist.test_pdist_canberra_match
-spatial.test_distance.TestPdist.test_pdist_chebychev_iris_nonC
-spatial.test_distance.TestPdist.test_pdist_chebychev_random_nonC
-spatial.test_distance.TestPdist.test_pdist_cityblock_iris_nonC
-spatial.test_distance.TestPdist.test_pdist_correlation_iris_nonC
-spatial.test_distance.TestPdist.test_pdist_cosine_iris_nonC
-spatial.test_distance.TestPdist.test_pdist_dhamming_random_nonC
-spatial.test_distance.TestPdist.test_pdist_dice_match
-spatial.test_distance.TestPdist.test_pdist_djaccard_random_nonC
-spatial.test_distance.TestPdist.test_pdist_euclidean_iris_nonC
-spatial.test_distance.TestPdist.test_pdist_jaccard_match
-spatial.test_distance.TestPdist.test_pdist_kulsinski_match
-spatial.test_distance.TestPdist.test_pdist_matching_match
-spatial.test_distance.TestPdist.test_pdist_minkowski_iris_nonC # note: there are 2 tests with this name
-spatial.test_distance.TestPdist.test_pdist_rogerstanimoto_match
-spatial.test_distance.TestPdist.test_pdist_russellrao_match
-spatial.test_distance.TestPdist.test_pdist_seuclidean_iris_nonC
-spatial.test_distance.TestPdist.test_pdist_sokalmichener_match
-spatial.test_distance.TestPdist.test_pdist_sokalsneath_match
-spatial.test_distance.TestPdist.test_pdist_yule_match
+# (spatial)
+test_distance.TestPdist.test_pdist_canberra_match
+test_distance.TestPdist.test_pdist_chebychev_iris_nonC
+test_distance.TestPdist.test_pdist_chebychev_random_nonC
+test_distance.TestPdist.test_pdist_cityblock_iris_nonC
+test_distance.TestPdist.test_pdist_correlation_iris_nonC
+test_distance.TestPdist.test_pdist_cosine_iris_nonC
+test_distance.TestPdist.test_pdist_dhamming_random_nonC
+test_distance.TestPdist.test_pdist_dice_match
+test_distance.TestPdist.test_pdist_djaccard_random_nonC
+test_distance.TestPdist.test_pdist_euclidean_iris_nonC
+test_distance.TestPdist.test_pdist_jaccard_match
+test_distance.TestPdist.test_pdist_kulsinski_match
+test_distance.TestPdist.test_pdist_matching_match
+test_distance.TestPdist.test_pdist_minkowski_iris_nonC # note: there are 2 tests with this name
+test_distance.TestPdist.test_pdist_rogerstanimoto_match
+test_distance.TestPdist.test_pdist_russellrao_match
+test_distance.TestPdist.test_pdist_seuclidean_iris_nonC
+test_distance.TestPdist.test_pdist_sokalmichener_match
+test_distance.TestPdist.test_pdist_sokalsneath_match
+test_distance.TestPdist.test_pdist_yule_match
