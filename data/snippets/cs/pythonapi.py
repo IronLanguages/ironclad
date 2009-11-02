@@ -47,7 +47,8 @@ PYTHONAPI_FILE_TEMPLATE = FILE_TEMPLATE % PYTHONAPI_TEMPLATE
 PYTHONAPI_METHOD_TEMPLATE = """\
         public virtual %(return_type)s %(symbol)s(%(arglist)s)
         {
-            throw new NotImplementedException("called %(symbol)s");
+            Console.WriteLine("Error: %(symbol)s is not yet implemented");
+            throw new NotImplementedException("%(symbol)s");
         }"""
         
 PYTHONAPI_METHOD_CASE = """\

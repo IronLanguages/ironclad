@@ -117,14 +117,13 @@ namespace Ironclad
             try
             {
                 // TODO: yes, on inspection, I'm sure this is a stupid way to do it
-                this.ExecInModule(String.Format("import {0}", name), this.scratchModule);
+                this.ExecInModule(String.Format("import {0}; result = {0}", name), this.scratchModule);
+                return (PythonModule)this.scratchModule.Get__dict__()["result"];
             }
             finally
             {
                 this.importNames.Pop();
             }
-    
-            return this.GetModule(name);
         }
         
         private PythonModule
