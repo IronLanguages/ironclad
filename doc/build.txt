@@ -47,7 +47,7 @@ process, the test command inherits its environment from the system. I have
 successfully used the following environment on win32:
 
 * Python 2.6.2
-* IronPython 2.6 RC2 with site-packages:
+* IronPython 2.6 RC2 with Jeff Hardy's zlib for ipy, plus site-packages:
     subprocess.py (by Jeff Hardy)
     csv.py (copied from Python26 Lib)
     sqlite3 (copied from Python26 Lib)
