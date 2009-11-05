@@ -16,6 +16,7 @@ test_regression.TestRegression.test_mem_custom_float_to_array # __float__ return
 test_scalarmath.TestConversion.test_int_from_long # bad cast
 
 test_umath.TestComplexFunctions.test_against_cmath # wrong
+test_umath.TestComplexFunctions.test_loss_of_precision_longcomplex # don't really get this one
 
 # (lib)
 

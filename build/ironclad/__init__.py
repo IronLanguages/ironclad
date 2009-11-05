@@ -80,6 +80,8 @@ class NativeFilenoPatch(object):
         return (modname, name, oldvalue)
 
     def _patch_all(self):
+        oldopen = sys.modules['__builtin__'].open
+        
         patch = lambda *args: self._patches.append(self._apply_patch(*args))
         patch('__builtin__', 'open', open)
         patch('__builtin__', 'file', _mapper.CPyFileClass)
@@ -87,6 +89,11 @@ class NativeFilenoPatch(object):
         import os, posix
         for name in 'close fdopen fstat open read tmpfile write'.split():
             patch('os', name, getattr(posix, name))
+        
+        # using cpy files with linecache generates too much noise when
+        # trying to figure out failing tests for scipy (et al)
+        import linecache
+        linecache.open = oldopen
     
     def _unpatch_all(self):
         while len(self._patches):
