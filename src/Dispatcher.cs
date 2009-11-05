@@ -92,7 +92,7 @@ namespace Ironclad
             }
         }
 
-        public void ic_destroy(object arg0)
+        public void ic_destroy(string name, object arg0)
         {
             if (!this.mapper.Alive)
             {
@@ -100,9 +100,10 @@ namespace Ironclad
             }
             
             this.mapper.EnsureGIL();
+            IntPtr ptr0 = IntPtr.Zero; // scoping for catch
             try
             {
-                IntPtr ptr0 = this.mapper.Store(arg0);
+                ptr0 = this.mapper.Store(arg0);
                 int refcnt = this.mapper.RefCount(ptr0);
                 if (refcnt != 2)
                 {
@@ -120,7 +121,7 @@ namespace Ironclad
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error on dispose: {0}", e);
+                Console.WriteLine("Error disposing {1} object at {2}: {0}", e, name, ptr0.ToString("x"));
             }
             finally
             {

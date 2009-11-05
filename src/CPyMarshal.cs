@@ -46,6 +46,12 @@ namespace Ironclad
         public static void
         Log(IntPtr start, int bytes)
         {
+            if (start == IntPtr.Zero)
+            {
+                Console.WriteLine("I refuse to attempt to read from 0x00000000");
+                return;
+            }
+            
             for (int i = 0; i < bytes/CPyMarshal.IntSize; i++)
             {
                 if (i % 4 == 0)
@@ -118,6 +124,14 @@ namespace Ironclad
         {
             IntPtr readAddr = CPyMarshal.GetField(addr, type, field);
             return CPyMarshal.ReadDouble(readAddr);
+        }
+        
+        public static void
+        WriteCStringField(IntPtr addr, Type type, string field, string value)
+        {
+            // TODO: *maybe* free existing string???
+            IntPtr valuePtr = Marshal.StringToHGlobalAnsi(value);
+            CPyMarshal.WritePtrField(addr, type, field, valuePtr);
         }
         
         public static string

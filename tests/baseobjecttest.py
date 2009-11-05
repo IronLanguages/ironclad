@@ -564,6 +564,29 @@ class NewInitFunctionsTest(TestCase):
         
         mapper.Dispose()
         deallocTypes()
+
+    
+    def test_PyObject_NewVar(self):
+        allocs = []
+        allocator = GetAllocatingTestAllocator(allocs, [])
+        mapper = PythonMapper(allocator)
+        deallocTypes = CreateTypes(mapper)
+        
+        typeObjSize = Marshal.SizeOf(PyTypeObject)
+        typePtr = Marshal.AllocHGlobal(typeObjSize)
+        CPyMarshal.Zero(typePtr, typeObjSize)
+        CPyMarshal.WriteIntField(typePtr, PyTypeObject, "tp_basicsize", 31337)
+        CPyMarshal.WriteIntField(typePtr, PyTypeObject, "tp_itemsize", 1337)
+        
+        del allocs[:]
+        objPtr = mapper._PyObject_NewVar(typePtr, 123)
+        self.assertEquals(allocs, [(objPtr, 31337 + (1337 * 123))])
+        self.assertEquals(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_type'), typePtr)
+        self.assertEquals(CPyMarshal.ReadIntField(objPtr, PyObject, 'ob_refcnt'), 1)
+        self.assertEquals(mapper.HasPtr(objPtr), False)
+        
+        mapper.Dispose()
+        deallocTypes()
         
 
 suite = makesuite(

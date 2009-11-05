@@ -11,7 +11,7 @@ test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6B
 test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6C
 
 # (cluster)
-test_vq.TestKMean.test_kmeans2_init # occasional horror
+#test_vq.TestKMean.test_kmeans2_init # occasional horror
 
 # (fftpack)
 test_pseudo_diffs # almost all just fail -- mostly arrays of zeros
@@ -22,8 +22,7 @@ test_integrate.TestOde.test_zvode # fails, not yet analysed
 # (io)
 test_array_import.TestReadArray # deprecated, fail unpredictably due to 'file being used by another process'
 test_array_import.TestReadArray.test_complex # PyFloat_FromString
-io\matlab\tests\test_mio.py # import gzip
-
+io\matlab\tests\test_mio.py # even with gzip, many errors, some serious enough that I can't call this 'supported'
 
 # (odr)
 test_odr.TestODR.test_explicit # segfault
@@ -86,3 +85,4 @@ stats\tests\test_continuous_basic.py
 stats\tests\test_continuous_extra.py
 stats\tests\test_discrete_basic.py
 stats\tests\test_distributions.py
+

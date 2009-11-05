@@ -34,8 +34,11 @@ namespace Ironclad
             {
                 if (this.logErrors)
                 {
-                    Console.WriteLine(value);
+                    Console.WriteLine();
+                    Console.WriteLine("Error: {0}", value);
+                    Console.WriteLine();
                     Console.WriteLine(Environment.StackTrace);
+                    Console.WriteLine();
                 }
                 this.ts.LastException = value;
             }

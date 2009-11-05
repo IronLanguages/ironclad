@@ -29,6 +29,7 @@ IC_str_getsegcount              size_ptrptr
 
 _PyLong_Sign                    int_ptr
 _PyObject_New                   ptr_ptr
+_PyObject_NewVar                ptr_ptrsize
 _PyString_Resize                int_ptrsize
 _PyTuple_Resize                 int_ptrsize
     

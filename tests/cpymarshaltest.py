@@ -137,6 +137,17 @@ class CPyMarshalTest_32(TestCase):
         Marshal.FreeHGlobal(data)
     
     
+    def testWriteCStringField(self):
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        string = "Hey, I am a string. I have tricksy \\escapes\\."
+        CPyMarshal.WriteCStringField(data, PyTypeObject, "tp_doc", string)
+        
+        self.assertEquals(CPyMarshal.ReadCStringField(data, PyTypeObject, "tp_doc"), string, "failed to read correctly")
+        Marshal.FreeHGlobal(CPyMarshal.ReadPtrField(data, PyTypeObject, "tp_doc"))
+        Marshal.FreeHGlobal(data)
+    
+    
     def testReadCStringField(self):
         data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))

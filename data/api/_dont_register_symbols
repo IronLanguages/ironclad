@@ -13,6 +13,9 @@
 PyBuffer_Type
 PyCFunction_Type
 PyCObject_Type
+PyCode_Type
+PyFrame_Type
+PyTraceBack_Type
 
 #==============================================================================
 # These are static data and aren't bothering anybody, so there is no
@@ -62,6 +65,11 @@ PyCObject_Import
 PyCObject_SetVoidPtr
 PyCFunction_ClearFreeList
 
+# Objects/codeobject.c
+PyCode_Addr2Line
+PyCode_CheckLineNumber
+PyCode_New
+
 # Objects/fileobject.c
 PyFile_FromString
 PyFile_SetBufSize
@@ -77,6 +85,10 @@ PyFile_WriteString
 PyObject_AsFileDescriptor
 PyFile_IncUseCount
 PyFile_DecUseCount
+
+# Objects/frameobject.c
+_PyFrame_Init
+PyFrame_New
 
 # Objects/listobject.c
 PyList_Size
@@ -119,6 +131,14 @@ PyType_Modified
 # Objects/unicodeobject.c, sorry about the mangling, not sure how to deal with that
 PyUnicodeUCS2_GetDefaultEncoding
 PyUnicodeUCS2_SetDefaultEncoding
+
+# Parser/intrcheck.c
+PyErr_SetInterrupt
+PyErr_CheckSignals
+PyOS_InitInterrupts
+PyOS_FiniInterrupts
+PyOS_InterruptOccurred
+PyOS_AfterFork
 
 # Python/ceval.c
 PyEval_CallObject
@@ -197,13 +217,8 @@ PyThreadState_Get
 PyThreadState_GetDict
 PyThreadState_Swap
 
-# Parser/intrcheck.c
-PyErr_SetInterrupt
-PyErr_CheckSignals
-PyOS_InitInterrupts
-PyOS_FiniInterrupts
-PyOS_InterruptOccurred
-PyOS_AfterFork
+# Python/traceback.c
+PyTraceBack_Here
 
 ##################################################
 # in ironclad-hacks.c for various reasons, alluded to therein
@@ -214,10 +229,6 @@ _PyObject_GC_NewVar
 PyObject_GC_Del
 PyObject_GC_Track
 PyObject_GC_UnTrack
-
-PyCode_New
-PyFrame_New
-PyTraceBack_Here
 
 Py_Initialize
 Py_InitializeEx

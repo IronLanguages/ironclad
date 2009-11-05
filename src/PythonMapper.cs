@@ -392,8 +392,8 @@ namespace Ironclad
 
             if (!this.actualisableTypes.ContainsKey(typePtr))
             {
-                throw new CannotInterpretException(
-                    String.Format("cannot map object at {0} with type at {1}", ptr.ToString("x"), typePtr.ToString("x")));
+                string msg = "cannot map object at {0} with type at {1}";
+                throw new CannotInterpretException(String.Format(msg, ptr.ToString("x"), typePtr.ToString("x")));
             }
             
             this.actualisableTypes[typePtr](ptr);

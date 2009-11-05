@@ -2,9 +2,6 @@
 # note: I strongly recommend that you change core/tests/test_umath.py
 # such that is_longdouble_finfo_bogus returns True -- otherwise it will
 # take several minutes to import the file, and look as if it's wedged.
-# You could return False instead, but then the wait just happens in
-# TestComplexFunctions.test_loss_of_precision_longcomplex. It will
-# (should) pass, but it takes a long time to do so.
 
 np_path = r'C:\Program Files\IronPython 2.6\lib\site-packages\numpy'
 np_blacklist = r'tests\extra\numpy_test_blacklist'

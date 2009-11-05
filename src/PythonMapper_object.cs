@@ -26,6 +26,17 @@ namespace Ironclad
         }
         
         public override IntPtr
+        _PyObject_NewVar(IntPtr typePtr, uint nitems)
+        {
+            uint tp_basicsize = CPyMarshal.ReadUIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
+            uint tp_itemsize = CPyMarshal.ReadUIntField(typePtr, typeof(PyTypeObject), "tp_itemsize");
+            uint size = tp_basicsize + nitems * tp_itemsize;
+            IntPtr objPtr = this.allocator.Alloc(size);
+            CPyMarshal.Zero(objPtr, size);
+            return this.PyObject_Init(objPtr, typePtr);
+        }
+        
+        public override IntPtr
         PyObject_Init(IntPtr objPtr, IntPtr typePtr)
         {
             CPyMarshal.WriteIntField(objPtr, typeof(PyObject), "ob_refcnt", 1);
@@ -437,7 +448,6 @@ namespace Ironclad
                 return UInt32.MaxValue;
             }
         }
-        
         
         public override int
         PyObject_Hash(IntPtr objPtr)
