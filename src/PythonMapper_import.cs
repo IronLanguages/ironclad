@@ -116,9 +116,9 @@ namespace Ironclad
             this.importNames.Push(name);
             try
             {
-                // TODO: yes, on inspection, I'm sure this is a stupid way to do it
-                this.ExecInModule(String.Format("import {0}; result = {0}", name), this.scratchModule);
-                return (PythonModule)this.scratchModule.Get__dict__()["result"];
+                // TODO: there must be a better way to do this
+                return (PythonModule)this.CreateFromSnippet(
+                    String.Format(CodeSnippets.IMPORT_TEMPLATE, name), "_ironclad_module");
             }
             finally
             {
