@@ -60,11 +60,12 @@ class BlacklistSelector(Selector):
 
 def _read_blacklist(f):
     tests, files = set(), set()
-    for line in read_interesting_lines(f):
-        if line.endswith('.py'):
-            files.add(line)
-        else:
-            tests.add(tuple(line.split('.')))
+    if f:
+        for line in read_interesting_lines(f):
+            if line.endswith('.py'):
+                files.add(line)
+            else:
+                tests.add(tuple(line.split('.')))
     return tests, files
 
 
