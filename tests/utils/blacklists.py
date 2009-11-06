@@ -41,7 +41,7 @@ class BlacklistSelector(Selector):
         
     @if_wanted
     def wantModule(self, m):
-        self.mod = m.__name__
+        self.mod = m.__name__.split('.')[-1]
         return self._want(self.mod)
         
     @if_wanted

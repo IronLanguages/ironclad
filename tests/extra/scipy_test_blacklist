@@ -1,7 +1,16 @@
 ###############################################################################
-#### failures, probably worth worrying about
+#### serious errors
 
-# weird failures
+# (odr)
+test_odr.TestODR.test_explicit # segfault, often takes process down
+
+# (signal)
+test_signaltools.TestLinearFilterDecimal # errors then crash
+
+
+###############################################################################
+#### work fine, but take way too long (>>30s each)
+
 # (cluster)
 test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5A
 test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5B
@@ -10,42 +19,11 @@ test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6A
 test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6B
 test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6C
 
-# (cluster)
-#test_vq.TestKMean.test_kmeans2_init # occasional horror
+# (linalg)
+test_iterative.TestIterative.test_precond
 
-# (fftpack)
-test_pseudo_diffs # almost all just fail -- mostly arrays of zeros
-
-# (integrate)
-test_integrate.TestOde.test_zvode # fails, not yet analysed
-
-# (io)
-test_array_import.TestReadArray # deprecated, fail unpredictably due to 'file being used by another process'
-test_array_import.TestReadArray.test_complex # PyFloat_FromString
-io\matlab\tests\test_mio.py # even with gzip, many errors, some serious enough that I can't call this 'supported'
-
-# (odr)
-test_odr.TestODR.test_explicit # segfault
-
-# (optimize)
-test_zeros.TestBasic # x4: in _bisect: ValueError: f(a) and f(b) must have different signs
-
-# (sparse) something returns null
-test_base.TestCSC.test_solve
-test_base.TestCSR.test_solve
-test_base.TestDOK.test_solve
-test_base.TestLIL.test_solve
-
-# (special)
-test_basic.TestBessel.test_ynp_zeros_large_order # KnownFailure
-test_basic.TestBessel.test_yv_cephes_vs_amos # KnownFailure
-
-# (stats)
-test_mstats_basic.TestCorr.test_pearsonr # divide by 0 in wrong runtime (if it happened in C code, we'd be fine)
-
-
-###############################################################################
-#### work fine, but take way too long (>>30s each)
+# (signal)
+test_filter_design.TestTf2zpk.test_bad_filter
 
 # (sparse)
 test_construct.TestConstructUtils.test_kron # very long
@@ -79,8 +57,14 @@ test_distance.TestPdist.test_pdist_sokalmichener_match
 test_distance.TestPdist.test_pdist_sokalsneath_match
 test_distance.TestPdist.test_pdist_yule_match
 
+test_kdtree.test_count_neighbors
+test_kdtree.test_sparse_distance_matrix.test_consistency_with_neighbors
+test_kdtree.test_two_random_trees
+test_kdtree.test_two_random_trees_far
+test_kdtree.test_two_random_trees_linf
+
 # (stats) most parts of these files work, but they take *forever*
-# also, it's tricky to disable individual ones, whether failing or just slow
+# also, it's tricky to disable individual ones
 stats\tests\test_continuous_basic.py
 stats\tests\test_continuous_extra.py
 stats\tests\test_discrete_basic.py
