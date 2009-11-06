@@ -1,27 +1,8 @@
 
-.test_h5a.TestH5A.test_delete # fails
-.test_h5a.TestH5A.test_iterate # explodes
+tests.testinfo # not really a test
 
-.test_h5f.TestH5F.test_get_obj_ids # can't delete file
-
-.test_h5g.TestH5G.test_iterate # explodes
-
-.test_h5i.TestH5I.test_get_file_id # can't delete file
-
-.test_h5t.TestH5T.test_create # attempt to raise non-BaseException
-
-.test_highlevel.TestFile.test_unicode # unreliable -- sometimes hangs
-
-# test_write_strings fails outright; 
-# most others frequently print upsetting console messages; occasionally hang
-.test_vlen.TestVlen
-
-
-
-
-
-
-
-
-
-
+# these deadlock frequently; I believe it to be a problem with h5py
+# hopefully it will soon be built against a threadsafe hdf5, and can
+# lose the PHIL
+test_highlevel.TestFile
+test_vlen.TestVlen

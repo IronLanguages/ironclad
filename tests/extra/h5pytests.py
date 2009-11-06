@@ -1,17 +1,21 @@
-import os
-import sys
-from tests.utils.schnoz import Schnoz
 
+# remember -X:Frames
+# expect 152 tests, 4 errors, 1 fail
 
-if sys.platform == 'cli':
-    # we expect this to be run from project root
-    sys.path.insert(0, "build")
-    import ironclad
-    ironclad.patch_native_filenos()
+import os, sys
+sys.path.append('build')
 
+import ironclad
+ironclad.patch_native_filenos()
 
-import h5py
+from tests.utils.blacklists import BlacklistConfig
+blacklist = r'tests\extra\h5py_test_blacklist'
+config = BlacklistConfig(blacklist)
 
-if __name__ == "__main__":
-    h5pytester = Schnoz(name="h5py", lib_path= r"C:\Python25\Lib\site-packages\h5py", data_dir=os.path.dirname(__file__))
-    h5pytester.main([""], 2)
+path = r'C:\Program Files\IronPython 2.6\lib\site-packages\h5py'
+if len(sys.argv) > 1:
+    path = os.path.join(path, *(sys.argv[1:]))
+    sys.argv = sys.argv[:1]
+
+import nose
+nose.run(defaultTest=path, config=config)
