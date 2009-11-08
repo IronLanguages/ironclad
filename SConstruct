@@ -73,42 +73,6 @@ COMMON = dict(IPY=IPY, IPY_DIR=IPY_DIR)
 test_deps = []
 before_test = test_deps.append
 
-#===============================================================================
-#===============================================================================
-# This section builds the CLR part
-#===============================================================================
-
-managed = Environment(CSC=CSC, **COMMON)
-ipy_dlls = 'IronPython IronPython.Modules Microsoft.Dynamic Microsoft.Scripting Microsoft.Scripting.Core'
-ipy_refs = ' '.join(submap(IPY_REF_TEMPLATE, ipy_dlls))
-managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX, REFERENCES=ipy_refs)
-managed['BUILDERS']['Insert'] = Builder(action=INSERT_CMD)
-
-#===============================================================================
-# Generated C#
-
-api_src = Glob('data/api/*')
-api_out_names = 'Delegates Dispatcher MagicMethods PythonApi'
-api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
-managed.Command(api_out, api_src,
-    '$IPY tools/generateapi.py data/api src')
-
-mapper_names = '_exceptions _fill_types _numbers_convert_c2py _numbers_convert_py2c _operator _store_dispatch'
-mapper_src = pathmap('data/mapper', mapper_names)
-mapper_out = submap('src/PythonMapper%s.Generated.cs', mapper_names)
-managed.Command(mapper_out, mapper_src,
-    '$IPY tools/generatemapper.py data/mapper src')
-
-snippets_src = Glob('data/snippets/py/*.py')
-snippets_out = ['src/CodeSnippets.Generated.cs']
-managed.Command(snippets_out, snippets_src,
-    '$IPY tools/generatesnippets.py data/snippets/py src')
-
-#===============================================================================
-# Build the actual managed library
-
-before_test(managed.Dll('build/ironclad/ironclad', Glob('src/*.cs')))
-
 
 #===============================================================================
 #===============================================================================
@@ -161,12 +125,17 @@ if WIN32:
 #===============================================================================
 # Unmanaged libraries for build/ironclad
 
+# Generate data from prebuilt python dll
+visible_out = pathmap('data/api', '_visible_api_functions.generated _visible_api_data.generated')
+native.Command(visible_out, [],
+    '$IPY tools/generateexports.py $PYTHON_DLL data/api')
+
 # Generate stub code
 buildstub_names = '_always_register_data_symbols _dont_register_symbols _mgd_function_prototypes _register_data_symbol_priority'
-buildstub_src = pathmap('data/api', buildstub_names)
+buildstub_src = visible_out + pathmap('data/api', buildstub_names)
 buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_mgd_function_prototypes.generated.h')
 native.Command(buildstub_out, buildstub_src,
-    '$IPY tools/generatestub.py $PYTHON_DLL data/api stub')
+    '$IPY tools/generatestub.py data/api stub')
 
 # Compile stub code
 jumps_obj = native.Object('stub/jumps.generated.asm')
@@ -183,7 +152,7 @@ if WIN32:
     before_test(native.Msvcr90Dll('build/ironclad/ic_msvcr90', native.Obj('stub/ic_msvcr90.c')))
 
 #===============================================================================
-# Test data
+# Unmanaged test data
 
 before_test(native.Dll('tests/data/setvalue.pyd', native.Obj('tests/data/src/setvalue.c')))
 before_test(native.Dll('tests/data/exportsymbols', native.Obj('tests/data/src/exportsymbols.c')))
@@ -194,6 +163,42 @@ if WIN32:
     # hits 0 and it gets reloaded, bad things happen. The test framework loads this dll, and
     # keeps it loaded, to prevent aforesaid bad things.
     before_test(native.Msvcr90Dll('tests/data/implicit-load-msvcr90', native.Obj('tests/data/src/empty.c')))
+
+#===============================================================================
+#===============================================================================
+# This section builds the CLR part
+#===============================================================================
+
+managed = Environment(CSC=CSC, **COMMON)
+ipy_dlls = 'IronPython IronPython.Modules Microsoft.Dynamic Microsoft.Scripting Microsoft.Scripting.Core'
+ipy_refs = ' '.join(submap(IPY_REF_TEMPLATE, ipy_dlls))
+managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX, REFERENCES=ipy_refs)
+managed['BUILDERS']['Insert'] = Builder(action=INSERT_CMD)
+
+#===============================================================================
+# Generated C#
+
+api_src = visible_out + Glob('data/api/*') # TODO: why doesn't Glob pick up items in visible_out?
+api_out_names = 'Delegates Dispatcher MagicMethods PythonApi'
+api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
+managed.Command(api_out, api_src,
+    '$IPY tools/generateapi.py data/api src')
+
+mapper_names = '_exceptions _fill_types _numbers_convert_c2py _numbers_convert_py2c _operator _store_dispatch'
+mapper_src = pathmap('data/mapper', mapper_names)
+mapper_out = submap('src/PythonMapper%s.Generated.cs', mapper_names)
+managed.Command(mapper_out, mapper_src,
+    '$IPY tools/generatemapper.py data/mapper src')
+
+snippets_src = Glob('data/snippets/py/*.py')
+snippets_out = ['src/CodeSnippets.Generated.cs']
+managed.Command(snippets_out, snippets_src,
+    '$IPY tools/generatesnippets.py data/snippets/py src')
+
+#===============================================================================
+# Build the actual managed library
+
+before_test(managed.Dll('build/ironclad/ironclad', Glob('src/*.cs')))
 
 
 #===============================================================================

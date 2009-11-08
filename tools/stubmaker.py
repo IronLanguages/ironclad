@@ -2,7 +2,7 @@
 import os
 import sys
 
-from tools.utils import popen, read_interesting_lines
+from tools.utils import read_interesting_lines
 
 
 def extract_funcname(c_func):
@@ -12,82 +12,29 @@ def extract_funcname(c_func):
 
 class StubMaker(object):
 
-    def __init__(self, sourceLibrary=None, overrideDir=None):
+    def __init__(self, inputDir=None):
         self.data = set()
         self.ordered_data = []
         self.functions = []
         self.mgd_functions = []
-
-        if sourceLibrary is not None:
-            self._read_symbol_table(sourceLibrary)
-
-        if overrideDir is not None:
-            self._read_overrides(overrideDir)
+        
+        if inputDir is not None:
+            self._read_input(inputDir)
 
 
-    def _read_symbol_table(self, source):
-        if os.name == 'nt':
-            self._read_symbol_table_pexports(source)
-        elif os.name == 'posix':
-            self._read_symbol_table_objdump(source)
-        else:
-            print 'Platform', os.name, 'is not supported'
-            sys.exit(1)
-
-
-    def _read_symbol_table_pexports(self, source):
-        f = popen("pexports", source)
-        try:
-            for line in f:
-                if line.strip() == 'EXPORTS':
-                    break
-            for line in f:
-                line = line.strip()
-                parts = line.split(' ')
-                if len(parts) == 1:
-                    self.functions.append(parts[0])
-                else:
-                    self.data.add(parts[0])
-        finally:
-            f.close()
-
-
-    def _read_symbol_table_objdump(self, source):
-        f = popen('objdump', '-T %s' % source)
-        try:
-            for line in f:
-                if line.strip() == 'DYNAMIC SYMBOL TABLE:':
-                    break
-            for line in f:
-                line = line.strip()
-                if not line:
-                    break
-                flag = line[15]
-                fields = line[17:].split()
-                if len(fields) == 3:
-                    section, size, name = fields
-                if len(fields) == 4:
-                    section, size, version, name = fields
-                if section not in ('.bss', '.data', '.text'):
-                    continue
-                if flag == 'F':
-                    self.functions.append(name)
-                if flag == 'O':
-                    self.data.add(name)
-        finally:
-            f.close()
-
-
-    def _read_overrides(self, overrideDir):
-        if not os.path.exists(overrideDir):
+    def _read_input(self, inputDir):
+        if not os.path.exists(inputDir):
             return
 
         def tryread(filename):
-            path = os.path.join(overrideDir, filename)
+            path = os.path.join(inputDir, filename)
             if os.path.isfile(path):
                 return read_interesting_lines(path)
             return []
-
+        
+        self.functions = tryread("_visible_api_functions.generated")
+        self.data = set(tryread("_visible_api_data.generated"))
+        
         ignores = set(tryread("_dont_register_symbols"))
         self.functions = [f for f in self.functions if f not in ignores]
         

@@ -22,4 +22,5 @@ PyObject * IC_file_iternext(PyFileObject *f);
 int IC_PyFile_WriteObject(PyObject *v, PyObject *f, int flags);
 int IC_PyFile_WriteString(const char *s, PyObject *f);
 
+# Just in case this is ever called, set up a redirect into mgd code
 PyObject *PyModule_GetWarningsModule(void);

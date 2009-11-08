@@ -9,22 +9,8 @@ from tools.stubmaker import StubMaker
 
 class StubMakerTest(TestCase):
 
-    def testInitEmpty(self):
-        sm = StubMaker()
-        self.assertEquals(sm.functions, [], 'bad init')
-        self.assertEquals(sm.mgd_functions, [], 'bad init')
-        self.assertEquals(sm.data, set(), 'bad init')
-        self.assertEquals(sm.ordered_data, [], 'bad init')
-
-
-    def testInitCollects(self):
-        sm = StubMaker('tests/data/exportsymbols.dll')
-        self.assertEquals(sm.functions, ['Func', 'Funk', 'Jazz'])
-        self.assertEquals(sm.data, set(['Alphabetised', 'AnotherExportedSymbol', 'ExportedSymbol']))
-
-
-    def testInitIgnoresIgnoresAndAddsExtrasOrderedDataAndMgdFunctions(self):
-        sm = StubMaker('tests/data/exportsymbols.dll', 'tests/data/stub')
+    def testInit(self):
+        sm = StubMaker('tests/data/stub')
         self.assertEquals(sm.functions, ['Func', 'Jazz', 'Bebop'])
         self.assertEquals(sm.mgd_functions, ['void Bebop(foo this, bar* that);'])
         self.assertEquals(sm.data, set(['ExportedSymbol', 'ExtraSymbol']))
