@@ -16,28 +16,6 @@ def GetPexportsLines(path):
     finally:
         stream.close()
 
-
-class GenerateStubTest(TestCase):
-
-    def testGenerateStubCreatesOutputFiles(self):
-        src_dll = 'tests/data/exportsymbols.dll'
-        src = 'tests/data/stub'
-        
-        tmp = tempfile.mkdtemp()
-        dst = os.path.join(tmp, 'stub'); os.mkdir(dst)
-        dst_include = os.path.join(dst, 'Include'); os.mkdir(dst_include)
-
-        result = spawn('ipy', 'tools/generatestub.py', src_dll, src, dst)
-        self.assertEquals(result, 0, 'process ended badly')
-        
-        def assertExists(dir_, name):
-            self.assertTrue(os.path.exists(os.path.join(dir_, name)))
-        assertExists(dst, 'stubinit.generated.c')
-        assertExists(dst, 'jumps.generated.asm')
-        assertExists(dst_include, '_mgd_function_prototypes.generated.h')
-
-        shutil.rmtree(tmp)
-
 class PythonStubTest(TestCase):
 
     def testPythonStub(self):

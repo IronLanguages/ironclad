@@ -45,11 +45,15 @@ BADGE = (
 )
 ASM_BADGE = '; %s\n; %s\n\n' % BADGE
 C_BADGE = '/*\n * %s\n * %s\n */\n\n' % BADGE
+GEN_BADGE = '# %s\n# %s\n\n' % BADGE
 
 
 def _get_badge(name):
     _, ext = os.path.splitext(name)
-    return {'.asm': ASM_BADGE}.get(ext, C_BADGE)
+    return {
+        '.asm': ASM_BADGE,
+        '.generated': GEN_BADGE,
+    }.get(ext, C_BADGE)
 
 
 def write(dir_, name, text, badge=False):
