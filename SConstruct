@@ -63,7 +63,6 @@ if WIN32:
 # If any turn out to need to be platform-specific, please move them
 
 COMPILE_IRONCLAD_FLAGS = '-DIRONCLAD -DPy_BUILD_CORE'
-INSERT_CMD = '$IPY tools/insertfiles.py $SOURCES > $TARGET'
 OBJ_CMD = '$CC $CCFLAGS -o $TARGET -c $SOURCE'
 DLL_CMD = '$CC $CCFLAGS -shared -o $TARGET $SOURCES'
 PYTHON26OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
@@ -173,7 +172,6 @@ managed = Environment(CSC=CSC, **COMMON)
 ipy_dlls = 'IronPython IronPython.Modules Microsoft.Dynamic Microsoft.Scripting Microsoft.Scripting.Core'
 ipy_refs = ' '.join(submap(IPY_REF_TEMPLATE, ipy_dlls))
 managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX, REFERENCES=ipy_refs)
-managed['BUILDERS']['Insert'] = Builder(action=INSERT_CMD)
 
 #===============================================================================
 # Generated C#
