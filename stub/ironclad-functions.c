@@ -4,7 +4,7 @@
 PyObject *
 _PyObject_GC_Malloc(size_t basicsize)
 {
-    return PyObject_Malloc(basicsize);
+    return (PyObject*)PyObject_Malloc(basicsize);
 }
 
 PyObject *
@@ -58,6 +58,7 @@ PyType_Modified(PyTypeObject *type)
 // _off_t and time_t are both 32-bit. OTOH, the users don't seem to look in
 // those parts of the struct, so we may continue to get away with it for a
 // while...
+extern int _fstat32(int fd, struct stat* buffer);
 int fstat(int fd, struct stat* buffer)
 {
 	return _fstat32(fd, buffer);

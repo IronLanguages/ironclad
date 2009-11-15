@@ -48,7 +48,7 @@ class StubMaker(object):
         
                 
     def generate_c(self):
-        _init_proto = 'void init(void*(*address_getter)(char*), void(*data_setter)(char*, void*))'
+        _init_proto = 'void init(void*(*address_getter)(const char*), void(*data_setter)(const char*, const void*))'
         _boilerplate = 'void *jumptable[%%d];\n\n%s {\n' % _init_proto
         _init_data = '    data_setter("%s", &%s);\n'
         _init_function = '    jumptable[%s] = address_getter("%s");\n'

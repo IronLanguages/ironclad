@@ -27,7 +27,7 @@ class StubMakerTest(TestCase):
         expected = dedent("""\
         void *jumptable[2];
 
-        void init(void*(*address_getter)(char*), void(*data_setter)(char*, void*)) {
+        void init(void*(*address_getter)(const char*), void(*data_setter)(const char*, const void*)) {
             data_setter("DATA3", &DATA3);
             data_setter("DATA4", &DATA4);
             data_setter("DATA1", &DATA1);
@@ -53,7 +53,7 @@ class StubMakerTest(TestCase):
         sm.functions = ['a', 'b', 'd', 'e']
 
         expected = dedent("""\
-        void init(void*(*address_getter)(char*), void(*data_setter)(char*, void*)) {
+        void init(void*(*address_getter)(const char*), void(*data_setter)(const char*, const void*)) {
             jumptable[0] = address_getter("a");
             jumptable[1] = address_getter("b");
             jumptable[2] = address_getter("d");

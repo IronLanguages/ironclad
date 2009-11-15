@@ -34,13 +34,14 @@ if WIN32:
     # These variables will be needed on any platform, I think
     
     ASFLAGS = '-f win32'
-    CSC = 'C:\\windows\\Microsoft.NET\\Framework\\v2.0.50727\\csc.exe'
+    CSC = r'C:\windows\Microsoft.NET\Framework\v2.0.50727\csc.exe'
     CSC_CMD = '$CSC /nologo /out:$TARGET /t:library $REFERENCES $SOURCES'
-    IPY = '"C:\\Program Files\\IronPython 2.6\\ipy.exe"'
-    IPY_DIR = '"C:\\Program Files\\IronPython 2.6"'
-    IPY_REF_TEMPLATE = '/r:$IPY_DIR\\%s.dll'
+    GCCXML_CC1PLUS = r'"C:\Program Files\GCC_XML\bin\gccxml_cc1plus.exe"'
+    IPY = r'"C:\Program Files\IronPython 2.6\ipy.exe"'
+    IPY_DIR = r'"C:\Program Files\IronPython 2.6"'
+    IPY_REF_TEMPLATE = r'/r:$IPY_DIR\%s.dll'
     NATIVE_TOOLS = ['mingw', 'nasm']
-    PYTHON_DLL = '"C:\\windows\\system32\\python26.dll"'
+    PYTHON_DLL = r'C:\windows\system32\python26.dll'
     
     OBJ_SUFFIX = '.o'
     DLL_SUFFIX = '.dll'
@@ -52,10 +53,15 @@ if WIN32:
     COPY_CMD = 'copy $SOURCE $TARGET'
     DLLTOOL_CMD = 'dlltool -D $NAME -d $SOURCE -l $TARGET'
     LINK_MSVCR90_FLAGS = '-specs=stub/use-msvcr90.spec'
-    MINGW_LIB = 'C:\\Program Files\\MinGW\\lib' # TODO: surely we can find this one out from the tools choice somehow..?
-    MSVCR90_DLL = 'C:\\Windows\\winsxs\\x86_Microsoft.VC90.CRT_1fc8b3b9a1e18e3b_9.0.21022.8_x-ww_d08d0375\\msvcr90.dll'
+    MSVCR90_DLL = r'C:\Windows\winsxs\x86_Microsoft.VC90.CRT_1fc8b3b9a1e18e3b_9.0.21022.8_x-ww_d08d0375\msvcr90.dll'
     PEXPORTS_CMD = 'pexports $SOURCE > $TARGET'
     RES_CMD = 'windres --input $SOURCE --output $TARGET --output-format=coff'
+    
+    # TODO: can we find MINGW_DIR from the environment..?
+    MINGW_DIR = r'C:\Program Files\MinGW' 
+    MINGW_LIB = os.path.join(MINGW_DIR, 'lib')
+    MINGW_INCLUDE = os.path.join(MINGW_DIR, 'include')
+    GCCXML_INSERT = '-isystem "%s" -isystem "%s"' % (MINGW_INCLUDE, os.path.join(MINGW_LIB, 'gcc', 'mingw32', '3.4.5', 'include'))
 
 
 #===============================================================================
@@ -65,6 +71,7 @@ if WIN32:
 COMPILE_IRONCLAD_FLAGS = '-DIRONCLAD -DPy_BUILD_CORE'
 OBJ_CMD = '$CC $CCFLAGS -o $TARGET -c $SOURCE'
 DLL_CMD = '$CC $CCFLAGS -shared -o $TARGET $SOURCES'
+GCCXML_CMD = ' '.join((GCCXML_CC1PLUS, COMPILE_IRONCLAD_FLAGS, '$INCLUDES -D__GNUC__ %s $INPUT_FILE -fxml="$TARGET"' % GCCXML_INSERT))
 PYTHON26OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
 PYTHON26DLL_CMD = DLL_CMD + ' -export-all-symbols'
 COMMON = dict(IPY=IPY, IPY_DIR=IPY_DIR)
@@ -85,6 +92,7 @@ native['BUILDERS']['Obj'] = Builder(action=OBJ_CMD, **c_obj_kwargs)
 native['BUILDERS']['Python26Obj'] = Builder(action=PYTHON26OBJ_CMD, CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include', **c_obj_kwargs)
 native['BUILDERS']['Dll'] = Builder(action=DLL_CMD, suffix=DLL_SUFFIX)
 native['BUILDERS']['Python26Dll'] = native['BUILDERS']['Dll']
+native['BUILDERS']['GccXml'] = Builder(action=GCCXML_CMD, INCLUDES='-Istub/Include')
 
 if WIN32:
     # If, RIGHT NOW*, no backup of libmsvcr90.a exists, create one
@@ -135,6 +143,11 @@ buildstub_src = visible_out + pathmap('data/api', buildstub_names)
 buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_mgd_function_prototypes.generated.h')
 native.Command(buildstub_out, buildstub_src,
     '$IPY tools/generatestub.py data/api stub')
+
+# Generate information about stub
+# NOTE: this step's output is not yet used by anything else
+# feel free to comment it out if it gives you trouble
+native.GccXml('data/api/stubinfo.generated.xml', buildstub_out, INPUT_FILE='stub/stubmain.c')
 
 # Compile stub code
 jumps_obj = native.Object('stub/jumps.generated.asm')

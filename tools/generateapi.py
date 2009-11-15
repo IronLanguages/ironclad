@@ -3,8 +3,8 @@ import sys
 src, dst = sys.argv[1:]
 
 from tools.apiwrangler import ApiWrangler
-from tools.c_utils import name_spec_from_c
 from tools.utils import eval_dict_item, read_interesting_lines, write
+from tools.utils_c import name_spec_from_c
 
 #==============================================================================
 
