@@ -28,17 +28,18 @@ def write_output(key, name):
 
 DISPATCHER_FIELDS = read_args_kwargs('_dispatcher_fields', 3)
 DISPATCHER_METHODS = read_args_kwargs('_dispatcher_methods', 2, 'data.snippets.cs.dispatcher')
+
 MAGICMETHODS = read_args_kwargs('_magicmethods', 3, 'data.snippets.cs.magicmethods')
+
 ALL_API_FUNCTIONS = set(read_data('_visible_api_functions.generated'))
 PURE_C_SYMBOLS = set(read_data('_dont_register_symbols'))
-MGD_API_DATA = [{'symbol': s} for s in read_data('_mgd_api_data') if s not in PURE_C_SYMBOLS]
+MGD_API_DATA = [{'symbol': s} for s in read_data('_mgd_api_data')]
 
 global_ = read_gccxml('data/api/_api.generated.xml')
-MGD_NONAPI_FUNCTIONS = set(generate_api_signatures(global_.free_functions(prefixed('IC_'))))
-MGD_NONAPI_FUNCTIONS |= set(generate_api_signatures(global_.variables(prefixed('IC_'))))
-
 mgd_api_function_names = set(read_data('_mgd_api_functions'))
-MGD_API_FUNCTIONS = set(generate_api_signatures(global_.free_functions(in_set(mgd_api_function_names))))
+ALL_MGD_FUNCTIONS = set(generate_api_signatures(global_.free_functions(in_set(mgd_api_function_names))))
+ALL_MGD_FUNCTIONS |= set(generate_api_signatures(global_.free_functions(prefixed('IC_'))))
+ALL_MGD_FUNCTIONS |= set(generate_api_signatures(global_.variables(prefixed('IC_'))))
 
 mgd_api_struct_names = set(read_data('_mgd_api_structs'))
 MGD_API_STRUCTS = set(generate_api_structs(global_.classes(in_set(mgd_api_struct_names))))

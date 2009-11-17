@@ -1,7 +1,7 @@
 # This file is used by tools/generateapi.py
 
 # columns in order: 
-# method name | delegate type
+# dispatcher method name | delegate type
 
 # optional dict in 3rd col tweaks codegen
 # eval in context of data.snippets.cs.dispatcher
@@ -9,16 +9,16 @@
 #================================================================================================
 # These first few are for dispatcher methods used to call functions found in PyMethodDefs
 
-ic_function_noargs      obj_objobj              {'argtweak': ('module', 'null')}
-ic_method_noargs        obj_objobj              {'argtweak': (0, 'null')}
-ic_function_objarg      obj_objobj              {'argtweak': ('module', 0)}
+ic_function_noargs      obj_objobj              {'arg_tweak': ('module', 'null')}
+ic_method_noargs        obj_objobj              {'arg_tweak': (0, 'null')}
+ic_function_objarg      obj_objobj              {'arg_tweak': ('module', 0)}
 ic_method_objarg        obj_objobj
-ic_function_varargs     obj_objobj              {'argtweak': ('module', 0)}
+ic_function_varargs     obj_objobj              {'arg_tweak': ('module', 0)}
 ic_method_varargs       obj_objobj
-ic_function_kwargs      obj_objobjobj           {'argtweak': ('module', 0, 1), 'nullablekwargs': 1}
-ic_method_kwargs        obj_objobjobj           {'nullablekwargs': 2}
+ic_function_kwargs      obj_objobjobj           {'arg_tweak': ('module', 0, 1), 'nullable_kwargs': 1}
+ic_method_kwargs        obj_objobjobj           {'nullable_kwargs': 2}
 ic_getter_method        obj_objptr
-ic_setter_method        int_objobjptr           {'rettweak': THROW_RET_NEGATIVE}
+ic_setter_method        int_objobjptr           {'ret_tweak': THROW_RET_NEGATIVE}
 
 #================================================================================================
 # These may or may not be called; all been mindlessly copied from the cpython source code
@@ -36,9 +36,9 @@ ssizeargfunc            obj_objssize
 ssizessizeargfunc       obj_objssizessize
 intobjargproc           int_objintobj
 intintobjargproc        int_objintintobj
-ssizeobjargproc         int_objssizeobj         {'rettweak': THROW_RET_NEGATIVE}
-ssizessizeobjargproc    int_objssizessizeobj    {'rettweak': THROW_RET_NEGATIVE}
-objobjargproc           int_objobjobj           {'rettweak': THROW_RET_NEGATIVE}
+ssizeobjargproc         int_objssizeobj         {'ret_tweak': THROW_RET_NEGATIVE}
+ssizessizeobjargproc    int_objssizessizeobj    {'ret_tweak': THROW_RET_NEGATIVE}
+objobjargproc           int_objobjobj           {'ret_tweak': THROW_RET_NEGATIVE}
 
 getreadbufferproc       int_objintptr
 getwritebufferproc      int_objintptr
@@ -54,7 +54,7 @@ visitproc               int_objptr
 traverseproc            int_objptrptr
     
 freefunc                void_ptr
-destructor              void_obj            {'rettweak': HANDLE_RET_DESTRUCTOR}
+destructor              void_obj            {'ret_tweak': HANDLE_RET_DESTRUCTOR}
 printfunc               int_objptrint
 getattrfunc             obj_objstr
 getattrofunc            obj_objobj
@@ -65,9 +65,9 @@ reprfunc                obj_obj
 hashfunc                long_obj
 richcmpfunc             obj_objobjint
 getiterfunc             obj_obj
-iternextfunc            obj_obj             {'rettweak': ITERNEXT_HANDLE_RETPTR}
+iternextfunc            obj_obj             {'ret_tweak': ITERNEXT_HANDLE_RETPTR}
 descrgetfunc            obj_objobjobj
 descrsetfunc            int_objobjobj
-initproc                int_objobjobj       {'rettweak': THROW_RET_NEGATIVE, 'nullablekwargs': 2}
-newfunc                 obj_objobjobj       {'nullablekwargs': 2}
+initproc                int_objobjobj       {'ret_tweak': THROW_RET_NEGATIVE, 'nullable_kwargs': 2}
+newfunc                 obj_objobjobj       {'nullable_kwargs': 2}
 allocfunc               obj_objssize

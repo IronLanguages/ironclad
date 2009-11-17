@@ -14,14 +14,14 @@ DISPATCHER_FILE_TEMPLATE = FILE_TEMPLATE % DISPATCHER_TEMPLATE
 #================================================================================================
 
 FIELD_TEMPLATE = """\
-        public %(cstype)s get_%(name)s_field(object instance, int offset)
+        public %(mgd_type)s get_%(name)s_field(object instance, int offset)
         {
             this.mapper.EnsureGIL();
             try
             {
                 IntPtr instancePtr = this.mapper.Store(instance);
                 IntPtr address = CPyMarshal.Offset(instancePtr, offset);
-                %(cstype)s ret = %(gettweak)s(CPyMarshal.Read%(cpmtype)s(address));
+                %(mgd_type)s ret = %(get_tweak)s(CPyMarshal.Read%(cpm_suffix)s(address));
                 this.mapper.DecRef(instancePtr);
                 return ret;
             }
@@ -30,14 +30,14 @@ FIELD_TEMPLATE = """\
                 this.mapper.ReleaseGIL();
             }
         }
-        public void set_%(name)s_field(object instance, int offset, %(cstype)s value)
+        public void set_%(name)s_field(object instance, int offset, %(mgd_type)s value)
         {
             this.mapper.EnsureGIL();
             try
             {
                 IntPtr instancePtr = this.mapper.Store(instance);
                 IntPtr address = CPyMarshal.Offset(instancePtr, offset);
-                CPyMarshal.Write%(cpmtype)s(address, %(settweak)s(value));
+                CPyMarshal.Write%(cpm_suffix)s(address, %(set_tweak)s(value));
                 this.mapper.DecRef(instancePtr);
             }
             finally
@@ -79,7 +79,7 @@ CALL_TEMPLATE = "((dgt_%(dgttype)s)(this.table[key]))(%(arglist)s);"
 TRANSLATE_OBJ_TEMPLATE = """\
                 IntPtr ptr%(index)d = this.mapper.Store(arg%(index)d);"""
 
-TRANSLATE_NULLABLEKWARGS_TEMPLATE = """\
+TRANSLATE_NULLABLE_KWARGS_TEMPLATE = """\
                 IntPtr ptr%(index)d = IntPtr.Zero;
                 if (Builtin.len(arg%(index)d) > 0)
                 {
