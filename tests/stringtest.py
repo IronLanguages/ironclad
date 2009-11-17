@@ -8,7 +8,7 @@ from tests.utils.typetestcase import TypeTestCase
 
 from System import Array, Byte, Char, IntPtr, UInt32
 from System.Runtime.InteropServices import Marshal
-from Ironclad import CPyMarshal, dgt_size_ptrsizeptr, dgt_size_ptrptr, dgt_ptr_ptrptr, PythonMapper
+from Ironclad import CPyMarshal, dgt_int_ptrintptr, dgt_int_ptrptr, dgt_ptr_ptrptr, PythonMapper
 from Ironclad.Structs import PyStringObject, PyTypeObject, PyBufferProcs, PySequenceMethods, Py_TPFLAGS
 
 
@@ -120,10 +120,10 @@ class PyString_Type_Test(TypeTestCase):
         
         bufPtr = CPyMarshal.ReadPtrField(strPtr, PyTypeObject, 'tp_as_buffer')
         self.assertNotEquals(bufPtr, IntPtr.Zero)
-        getreadbuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getreadbuffer', dgt_size_ptrsizeptr)
-        getwritebuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getwritebuffer', dgt_size_ptrsizeptr)
-        getcharbuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getcharbuffer', dgt_size_ptrsizeptr)
-        getsegcount = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getsegcount', dgt_size_ptrptr)
+        getreadbuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getreadbuffer', dgt_int_ptrintptr)
+        getwritebuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getwritebuffer', dgt_int_ptrintptr)
+        getcharbuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getcharbuffer', dgt_int_ptrintptr)
+        getsegcount = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getsegcount', dgt_int_ptrptr)
         
         ptrptr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
         later(lambda: Marshal.FreeHGlobal(ptrptr))
@@ -132,10 +132,10 @@ class PyString_Type_Test(TypeTestCase):
         for getter in (getreadbuffer, getcharbuffer):
             self.assertEquals(getter(strptr, 0, ptrptr), 5)
             self.assertEquals(CPyMarshal.ReadPtr(ptrptr), CPyMarshal.GetField(strptr, PyStringObject, 'ob_sval'))
-            self.assertEquals(getter(strptr, 1, ptrptr), UInt32.MaxValue)
+            self.assertEquals(getter(strptr, 1, ptrptr), -1)
             self.assertMapperHasError(mapper, SystemError)
         
-        self.assertEquals(getwritebuffer(strptr, 0, ptrptr), UInt32.MaxValue)
+        self.assertEquals(getwritebuffer(strptr, 0, ptrptr), -1)
         self.assertMapperHasError(mapper, SystemError)
         
         self.assertEquals(getsegcount(strptr, ptrptr), 1)

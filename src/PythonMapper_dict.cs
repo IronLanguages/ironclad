@@ -40,16 +40,16 @@ namespace Ironclad
             return dictPtr;
         }
         
-        public override uint
+        public override int
         PyDict_Size(IntPtr dictPtr)
         {
             IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
             if (dict is DictProxy)
             {
                 DictProxy proxy = (DictProxy)dict;
-                return (uint)proxy.__len__(this.scratchContext);
+                return proxy.__len__(this.scratchContext);
             }
-            return (uint)dict.Keys.Count;
+            return dict.Keys.Count;
         }
         
         public override int

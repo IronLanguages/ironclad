@@ -77,7 +77,7 @@ namespace Ironclad
         }
         
         public override IntPtr
-        PyString_FromStringAndSize(IntPtr stringData, uint length)
+        PyString_FromStringAndSize(IntPtr stringData, int length)
         {
             if (stringData == IntPtr.Zero)
             {
@@ -88,7 +88,7 @@ namespace Ironclad
             else
             {
                 byte[] bytes = new byte[length];
-                Marshal.Copy(stringData, bytes, 0, (int)length);
+                Marshal.Copy(stringData, bytes, 0, length);
                 // note: NOT Associate
                 // couldn't figure out to test this directly
                 // without this, h5py tests get horribly screwy in PHIL contextmanager
@@ -161,10 +161,10 @@ namespace Ironclad
                 IntPtr dataPtr = CPyMarshal.GetField(strPtr, typeof(PyStringObject), "ob_sval");
                 CPyMarshal.WritePtr(dataPtrPtr, dataPtr);
                 
-                uint length = CPyMarshal.ReadUIntField(strPtr, typeof(PyStringObject), "ob_size");
+                int length = CPyMarshal.ReadIntField(strPtr, typeof(PyStringObject), "ob_size");
                 if (sizePtr == IntPtr.Zero)
                 {
-                    for (uint i = 0; i < length; ++i)
+                    for (int i = 0; i < length; ++i)
                     {
                         if (CPyMarshal.ReadByte(CPyMarshal.Offset(dataPtr, i)) == 0)
                         {
@@ -174,7 +174,7 @@ namespace Ironclad
                 }
                 else
                 {
-                    CPyMarshal.WriteUInt(sizePtr, length);
+                    CPyMarshal.WriteInt(sizePtr, length);
                 }
                 return 0;
             }
@@ -201,13 +201,13 @@ namespace Ironclad
         }
         
         private int
-        IC__PyString_Resize_Grow(IntPtr strPtrPtr, uint newSize)
+        IC__PyString_Resize_Grow(IntPtr strPtrPtr, int newSize)
         {
             IntPtr oldStr = CPyMarshal.ReadPtr(strPtrPtr);
             IntPtr newStr = IntPtr.Zero;
             try
             {
-                newStr = this.allocator.Realloc(oldStr, (uint)Marshal.SizeOf(typeof(PyStringObject)) + newSize);
+                newStr = this.allocator.Realloc(oldStr, (uint)(Marshal.SizeOf(typeof(PyStringObject)) + newSize));
             }
             catch (OutOfMemoryException e)
             {
@@ -222,11 +222,9 @@ namespace Ironclad
         }
         
         private int
-        IC__PyString_Resize_NoGrow(IntPtr strPtr, uint newSize)
+        IC__PyString_Resize_NoGrow(IntPtr strPtr, int newSize)
         {
-            IntPtr ob_sizePtr = CPyMarshal.Offset(
-                strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_size"));
-            CPyMarshal.WriteUInt(ob_sizePtr, newSize);
+            CPyMarshal.WriteIntField(strPtr, typeof(PyStringObject), "ob_size", newSize);
             IntPtr bufPtr = CPyMarshal.Offset(
                 strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
             IntPtr terminatorPtr = CPyMarshal.Offset(
@@ -237,11 +235,11 @@ namespace Ironclad
         
         
         public override int
-        _PyString_Resize(IntPtr strPtrPtr, uint newSize)
+        _PyString_Resize(IntPtr strPtrPtr, int newSize)
         {
             IntPtr strPtr = CPyMarshal.ReadPtr(strPtrPtr);
-            PyStringObject str = (PyStringObject)Marshal.PtrToStructure(strPtr, typeof(PyStringObject));
-            if (str.ob_size < newSize)
+            int size = CPyMarshal.ReadIntField(strPtr, typeof(PyStringObject), "ob_size");
+            if (size < newSize)
             {
                 return this.IC__PyString_Resize_Grow(strPtrPtr, newSize);
             }
@@ -251,22 +249,22 @@ namespace Ironclad
             }
         }
         
-        public override uint
+        public override int
         PyString_Size(IntPtr strPtr)
         {
-            return CPyMarshal.ReadUIntField(strPtr, typeof(PyStringObject), "ob_size");
+            return CPyMarshal.ReadIntField(strPtr, typeof(PyStringObject), "ob_size");
         }
         
         private IntPtr 
-        AllocPyString(uint length)
+        AllocPyString(int length)
         {
-            uint size = (uint)Marshal.SizeOf(typeof(PyStringObject)) + length;
+            uint size = (uint)(Marshal.SizeOf(typeof(PyStringObject)) + length);
             IntPtr data = this.allocator.Alloc(size);
             
             PyStringObject s = new PyStringObject();
             s.ob_refcnt = 1;
             s.ob_type = this.PyString_Type;
-            s.ob_size = length;
+            s.ob_size = (uint)length;
             s.ob_shash = -1;
             s.ob_sstate = 0;
             Marshal.StructureToPtr(s, data, false);
@@ -300,7 +298,7 @@ namespace Ironclad
         private IntPtr
         CreatePyStringWithBytes(byte[] bytes)
         {
-            IntPtr strPtr = this.AllocPyString((uint)bytes.Length);
+            IntPtr strPtr = this.AllocPyString(bytes.Length);
             IntPtr bufPtr = CPyMarshal.Offset(
                 strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
             Marshal.Copy(bytes, 0, bufPtr, bytes.Length);
@@ -358,13 +356,13 @@ namespace Ironclad
         }
         
         
-        public override uint
-        IC_str_getreadbuffer(IntPtr strPtr, uint seg, IntPtr bufPtrPtr)
+        public override int
+        IC_str_getreadbuffer(IntPtr strPtr, int seg, IntPtr bufPtrPtr)
         {
             if (seg != 0)
             {
                 this.LastException = PythonOps.SystemError("string buffers have only 1 segment");
-                return UInt32.MaxValue; // -1
+                return -1;
             }
             
             IntPtr bufPtr = CPyMarshal.GetField(strPtr, typeof(PyStringObject), "ob_sval");
@@ -374,20 +372,20 @@ namespace Ironclad
         }
         
         
-        public override uint
-        IC_str_getwritebuffer(IntPtr strPtr, uint seg, IntPtr bufPtrPtr)
+        public override int
+        IC_str_getwritebuffer(IntPtr strPtr, int seg, IntPtr bufPtrPtr)
         {
             this.LastException = PythonOps.SystemError("string buffers are not writable");
-            return UInt32.MaxValue; // -1
+            return -1;
         }
         
         
-        public override uint
+        public override int
         IC_str_getsegcount(IntPtr strPtr, IntPtr lenPtr)
         {
             if (lenPtr != IntPtr.Zero)
             {
-                CPyMarshal.WriteUInt(lenPtr, this.PyString_Size(strPtr));
+                CPyMarshal.WriteInt(lenPtr, this.PyString_Size(strPtr));
             }
             return 1;
         }

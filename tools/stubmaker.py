@@ -5,10 +5,11 @@ import sys
 from tools.utils import read_interesting_lines
 
 
-def extract_funcname(c_func):
+def _extract_funcname(c_func):
     # hacka hacka hacka
-    return c_func.split('(')[0].split(' ')[-1].replace('*', '')
-
+    if '(' in c_func:
+        return c_func.split('(')[0].split()[-1].replace('*', '')
+    return c_func.split(';')[0].split()[-1]
 
 class StubMaker(object):
 
@@ -39,7 +40,7 @@ class StubMaker(object):
         self.functions = [f for f in self.functions if f not in ignores]
         
         self.mgd_functions = tryread("_mgd_function_prototypes")
-        self.functions.extend(map(extract_funcname, self.mgd_functions))
+        self.functions.extend(map(_extract_funcname, self.mgd_functions))
         
         self.data |= set(tryread("_always_register_data_symbols"))
         self.data -= ignores

@@ -42,7 +42,7 @@ class SequenceFunctionsTest(TestCase):
         for notseq in (object, object(), 37):
             notseqPtr = mapper.Store(notseq)
             mapper.LastException = None
-            self.assertEquals(mapper.PySequence_Size(notseqPtr), UInt32.MaxValue)
+            self.assertEquals(mapper.PySequence_Size(notseqPtr), -1)
             self.assertMapperHasError(mapper, TypeError)
             mapper.DecRef(notseqPtr)
 

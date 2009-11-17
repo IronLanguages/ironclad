@@ -7,6 +7,7 @@
 #include "structmember.h"
 #include "frameobject.h"
 #include "pygetopt.h"
+#include "pythread.h"
 #include "abstract.h"
 #include "token.h"
 #include "osdefs.h"

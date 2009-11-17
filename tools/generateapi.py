@@ -4,7 +4,7 @@ src, dst = sys.argv[1:]
 
 from tools.apiwrangler import ApiWrangler
 from tools.utils import eval_dict_item, read_interesting_lines, write
-from tools.utils_c import name_spec_from_c
+from tools.utils_gccxml import generate_api_signatures, in_set, prefixed, read_gccxml
 
 #==============================================================================
 
@@ -24,15 +24,20 @@ def write_output(key, name):
 
 #==============================================================================
 
+
 DISPATCHER_FIELDS = read_args_kwargs('_dispatcher_fields', 3)
 DISPATCHER_METHODS = read_args_kwargs('_dispatcher_methods', 2, 'data.snippets.cs.dispatcher')
 MAGICMETHODS = read_args_kwargs('_magicmethods', 3, 'data.snippets.cs.magicmethods')
-MGD_API_FUNCTIONS = set(map(lambda x: tuple(x.split()), read_data("_mgd_api_functions")))
-MGD_NONAPI_C_FUNCTIONS = set(map(name_spec_from_c, read_data("_mgd_function_prototypes")))
 ALL_API_FUNCTIONS = set(read_data("_visible_api_functions.generated"))
 PURE_C_SYMBOLS = set(read_data("_dont_register_symbols"))
 MGD_API_DATA = [{'symbol': s} for s in read_data("_mgd_api_data") if s not in PURE_C_SYMBOLS]
-EXTRA_DGTTYPES = set(read_data("_extra_dgttypes"))
+
+global_ = read_gccxml('data/api/_api.generated.xml')
+MGD_NONAPI_FUNCTIONS = set(generate_api_signatures(global_.free_functions, prefixed('IC_')))
+MGD_NONAPI_FUNCTIONS |= set(generate_api_signatures(global_.variables, prefixed('IC_')))
+
+mgd_api_function_names = set(read_data("_mgd_api_functions"))
+MGD_API_FUNCTIONS = set(generate_api_signatures(global_.free_functions, in_set(mgd_api_function_names)))
 
 wrangler = ApiWrangler(locals())
 

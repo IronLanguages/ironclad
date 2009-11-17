@@ -71,7 +71,7 @@ if WIN32:
 COMPILE_IRONCLAD_FLAGS = '-DIRONCLAD -DPy_BUILD_CORE'
 OBJ_CMD = '$CC $CCFLAGS -o $TARGET -c $SOURCE'
 DLL_CMD = '$CC $CCFLAGS -shared -o $TARGET $SOURCES'
-GCCXML_CMD = ' '.join((GCCXML_CC1PLUS, COMPILE_IRONCLAD_FLAGS, '$INCLUDES -D__GNUC__ %s $INPUT_FILE -fxml="$TARGET"' % GCCXML_INSERT))
+GCCXML_CMD = ' '.join((GCCXML_CC1PLUS, COMPILE_IRONCLAD_FLAGS, '$INCLUDES -D__GNUC__ %s $SOURCE -fxml="$TARGET"' % GCCXML_INSERT))
 PYTHON26OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
 PYTHON26DLL_CMD = DLL_CMD + ' -export-all-symbols'
 COMMON = dict(IPY=IPY, IPY_DIR=IPY_DIR)
@@ -92,7 +92,7 @@ native['BUILDERS']['Obj'] = Builder(action=OBJ_CMD, **c_obj_kwargs)
 native['BUILDERS']['Python26Obj'] = Builder(action=PYTHON26OBJ_CMD, CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include', **c_obj_kwargs)
 native['BUILDERS']['Dll'] = Builder(action=DLL_CMD, suffix=DLL_SUFFIX)
 native['BUILDERS']['Python26Dll'] = native['BUILDERS']['Dll']
-native['BUILDERS']['GccXml'] = Builder(action=GCCXML_CMD, INCLUDES='-Istub/Include')
+native['BUILDERS']['GccXml'] = Builder(action=GCCXML_CMD, INCLUDES='-Istub/Include', source_scanner=CScanner())
 
 if WIN32:
     # If, RIGHT NOW*, no backup of libmsvcr90.a exists, create one
@@ -144,10 +144,8 @@ buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Includ
 native.Command(buildstub_out, buildstub_src,
     '$IPY tools/generatestub.py data/api stub')
 
-# Generate information about stub
-# NOTE: this step's output is not yet used by anything else
-# feel free to comment it out if it gives you trouble
-native.GccXml('data/api/stubinfo.generated.xml', buildstub_out, INPUT_FILE='stub/stubmain.c')
+# Generate information from python headers etc
+api_xml = native.GccXml('data/api/_api.generated.xml', 'stub/stubmain.c')
 
 # Compile stub code
 jumps_obj = native.Object('stub/jumps.generated.asm')
@@ -189,7 +187,7 @@ managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX, REFE
 #===============================================================================
 # Generated C#
 
-api_src = visible_out + Glob('data/api/*') # TODO: why doesn't Glob pick up items in visible_out?
+api_src = api_xml + visible_out + Glob('data/api/*') # TODO: why doesn't Glob pick up items in api_xml, visible_out?
 api_out_names = 'Delegates Dispatcher MagicMethods PythonApi'
 api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
 managed.Command(api_out, api_src,

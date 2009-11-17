@@ -25,7 +25,7 @@ _mapper = PythonMapper(os.path.join(_dirname, "python26.dll"))
 
 def gcwait():
     for _ in range(4):
-        _mapper.ForceCleanup()
+        _mapper.DemandCleanup()
         GC.Collect()
         GC.WaitForPendingFinalizers()
 
