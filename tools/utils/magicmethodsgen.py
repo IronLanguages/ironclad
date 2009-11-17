@@ -1,6 +1,6 @@
 
 
-def template(functype, inargs, template):
+def normal_template(functype, inargs, template):
     args = ', '.join(['_%d' % i for i in xrange(len(inargs))])
     return template % {
         'arglist': args,

@@ -28,7 +28,7 @@ _DECL_HANDLERS = {
 }
 
 def _handle_declarated(dec):
-    return _DECL_HANDLERS.get(str(dec), '?declarated %s?' % dec)
+    return _DECL_HANDLERS.get(str(dec), '?%s?' % dec)
 
 def _handle_ptr(ptr):
     base = str(ptr.base)

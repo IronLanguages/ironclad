@@ -6,9 +6,9 @@ def generate_arglist(arg_types, type_dict):
 
 #===============================================
 
-def _slurp_argstr(set_, argstr):
+def _slurp_argstr(types, argstr):
     while len(argstr):
-        for key in set_:
+        for key in types:
             if argstr.startswith(key):
                 argstr = argstr[len(key):]
                 yield key
@@ -16,10 +16,10 @@ def _slurp_argstr(set_, argstr):
         else:
             raise Exception('could not understand arg type: "%s"' % argstr)
 
-def _unpack_argstr(set_, argstr):
+def _unpack_argstr(types, argstr):
     if argstr == 'void':
         return ()
-    return tuple(_slurp_argstr(set_, argstr))
+    return tuple(_slurp_argstr(types, argstr))
 
 def unpack_spec(spec, types):
     ret, argstr = spec.split('_')

@@ -5,8 +5,8 @@
 # by anything else, but it serves as a note of what util_gccxml can 
 # produce
 
-#   ctype           |   comes from actual C language type(s)
-_KNOWN_CTYPES = set((
+#   ictype           |   comes from actual C language type(s)
+_KNOWN_ICTYPES = set((
     'obj',          #   Py(*?)Object* 
     'str',          #   (const?) char*
     'ptr',          #   (other)* 
@@ -30,8 +30,8 @@ _KNOWN_CTYPES = set((
 #====================================================================
 # this is specific to C# with 32-bit python
 
-#   ctype         | actual target platform type
-CTYPE_2_MGDTYPE = {
+#   ictype         | actual target platform type
+ICTYPE_2_MGDTYPE = {
     'obj':          'object',
     'ptr':          'IntPtr',
     'str':          'string',
@@ -49,16 +49,15 @@ CTYPE_2_MGDTYPE = {
     'cpx':          'Py_complex',
 }
 
-CTYPES = set(CTYPE_2_MGDTYPE.keys())
+ICTYPES = set(ICTYPE_2_MGDTYPE.keys())
 
 #====================================================================
-# delegates wrap unmanaged calls, which always take pointers (not objects)
 
-CTYPE_2_DGTTYPE = {
+ICTYPE_2_NATIVETYPE = {
     'obj': 'ptr',
 }
 
-# the following code builds the rest of CTYPE_2_DGTTYPE so as to avoid
+# the following code builds the complete ICTYPE_2_NATIVETYPE so as to avoid
 # generating multiple delegate types with identical signatures (these are
 # a problem because we can't freely convert between them in C#)
 
@@ -69,29 +68,31 @@ def _invert_dict(dict_):
         bin.append(key)
     return bins
 
-ctype_2_mgdtype_copy = dict(CTYPE_2_MGDTYPE)
-del ctype_2_mgdtype_copy['obj']
-mgdtype_2_ctypes = _invert_dict(ctype_2_mgdtype_copy)
+_ictype_2_mgdtype = dict([
+    (k, v) 
+    for (k, v) in ICTYPE_2_MGDTYPE.items()
+    if k != 'obj'])
+mgdtype_2_ictypes = _invert_dict(_ictype_2_mgdtype)
 
-_dgttype_priority = 'int uint long ulong llong ullong'.split()
-def _best_dgttype(ctypes):
-    if len(ctypes) > 1:
-        for good_dgttype in _dgttype_priority:
-            if good_dgttype in ctypes:
-                return good_dgttype
-    return sorted(ctypes)[0]
+_nativetype_priority = 'int uint long ulong llong ullong'.split()
+def _best_nativetype(ictypes):
+    if len(ictypes) > 1:
+        for good_nativetype in _nativetype_priority:
+            if good_nativetype in ictypes:
+                return good_nativetype
+    return sorted(ictypes)[0]
 
-for _, ctypes in mgdtype_2_ctypes.items():
-    dgttype = _best_dgttype(ctypes)
-    for ctype in ctypes:
-        CTYPE_2_DGTTYPE[ctype] = dgttype
+for _, ictypes in mgdtype_2_ictypes.items():
+    nativetype = _best_nativetype(ictypes)
+    for ictype in ictypes:
+        ICTYPE_2_NATIVETYPE[ictype] = nativetype
 
 
 #====================================================================
-# acceptable types for use in dgt_specs
+# acceptable types for use in native context
 
-DGTTYPES = set(CTYPE_2_DGTTYPE.values())
+NATIVETYPES = set(ICTYPE_2_NATIVETYPE.values())
 
-DGTTYPE_2_MGDTYPE = dict([(k, v)
-    for (k, v) in CTYPE_2_MGDTYPE.items()
-    if k in DGTTYPES])
+NATIVETYPE_2_MGDTYPE = dict([(k, v)
+    for (k, v) in ICTYPE_2_MGDTYPE.items()
+    if k in NATIVETYPES])
