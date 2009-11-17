@@ -379,14 +379,15 @@ class PyFloat_Test(TestCase):
 class PyComplex_Test(TestCase):
 
     @WithMapper
-    def testStoreFloat(self, mapper, _):
+    def testStoreComplex(self, mapper, _):
         for value in (0 + 0j, 1 + 3.3e33j, -3.3e-33 - 1j):
             ptr = mapper.Store(value)
             self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
             self.assertEquals(CPyMarshal.ReadIntField(ptr, PyComplexObject, "ob_refcnt"), 1)
             self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyComplexObject, "ob_type"), mapper.PyComplex_Type)
-            self.assertEquals(CPyMarshal.ReadDoubleField(ptr, PyComplexObject, "real"), value.real)
-            self.assertEquals(CPyMarshal.ReadDoubleField(ptr, PyComplexObject, "imag"), value.imag)
+            cpxptr = CPyMarshal.GetField(ptr, PyComplexObject, "cval")
+            self.assertEquals(CPyMarshal.ReadDoubleField(cpxptr, Py_complex, "real"), value.real)
+            self.assertEquals(CPyMarshal.ReadDoubleField(cpxptr, Py_complex, "imag"), value.imag)
             mapper.DecRef(ptr)
 
 

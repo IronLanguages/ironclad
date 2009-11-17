@@ -44,8 +44,8 @@ namespace Ironclad
             PyListObject listStruct = new PyListObject();
             listStruct.ob_refcnt = 1;
             listStruct.ob_type = this.PyList_Type;
-            listStruct.ob_size = (uint)length;
-            listStruct.allocated = (uint)length;
+            listStruct.ob_size = length;
+            listStruct.allocated = length;
 
             uint bytes = (uint)length * CPyMarshal.PtrSize;
             IntPtr data = this.allocator.Alloc(bytes);
@@ -90,8 +90,8 @@ namespace Ironclad
             PyListObject list = new PyListObject();
             list.ob_refcnt = 1;
             list.ob_type = this.PyList_Type;
-            list.ob_size = (uint)length;
-            list.allocated = (uint)length;
+            list.ob_size = length;
+            list.allocated = length;
             
             int bytes = length * CPyMarshal.PtrSize;
             list.ob_item = this.allocator.Alloc((uint)bytes);
@@ -118,14 +118,15 @@ namespace Ironclad
         private void 
         IC_PyList_Append_NonEmpty(IntPtr listPtr, ref PyListObject listStruct, IntPtr itemPtr)
         {
-            uint oldAllocated = listStruct.allocated;
-            uint oldAllocatedBytes = oldAllocated * CPyMarshal.PtrSize;
+            int oldAllocated = listStruct.allocated;
+            int oldAllocatedBytes = oldAllocated * CPyMarshal.PtrSize;
             listStruct.ob_size += 1;
             listStruct.allocated += 1;
             IntPtr oldDataStore = listStruct.ob_item;
-            
-            listStruct.ob_item = this.allocator.Alloc(listStruct.allocated * CPyMarshal.PtrSize);
-            Unmanaged.memcpy(listStruct.ob_item, oldDataStore, oldAllocatedBytes);
+
+            int newAllocatedBytes = listStruct.allocated * CPyMarshal.PtrSize;
+            listStruct.ob_item = this.allocator.Alloc((uint)newAllocatedBytes);
+            Unmanaged.memcpy(listStruct.ob_item, oldDataStore, (uint)oldAllocatedBytes);
             this.allocator.Free(oldDataStore);
             
             CPyMarshal.WritePtr(CPyMarshal.Offset(listStruct.ob_item, oldAllocatedBytes), itemPtr);

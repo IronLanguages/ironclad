@@ -53,7 +53,10 @@ namespace Ironclad
             {
                 this.LastException = e;
             }
-            return new Py_complex(real, imag);
+            Py_complex result = new Py_complex();
+            result.real = real;
+            result.imag = imag;
+            return result;
         }
         
         public override IntPtr
@@ -281,8 +284,9 @@ namespace Ironclad
             IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyComplexObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyComplexObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyComplexObject), "ob_type", this.PyComplex_Type);
-            CPyMarshal.WriteDoubleField(ptr, typeof(PyComplexObject), "real", value.Real);
-            CPyMarshal.WriteDoubleField(ptr, typeof(PyComplexObject), "imag", value.Imag);
+            IntPtr cpxptr = CPyMarshal.GetField(ptr, typeof(PyComplexObject), "cval");
+            CPyMarshal.WriteDoubleField(cpxptr, typeof(Py_complex), "real", value.Real);
+            CPyMarshal.WriteDoubleField(cpxptr, typeof(Py_complex), "imag", value.Imag);
             this.map.Associate(ptr, value);
             return ptr;
         }

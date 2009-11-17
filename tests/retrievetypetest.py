@@ -3,7 +3,7 @@ import sys
 
 from tests.utils.runtest import automakesuite, run
     
-from tests.utils.cpython import MakeGetSetDef, MakeMethodDef, MakeNumSeqMapMethods, MakeTypePtr
+from tests.utils.cpython import MakeGetSetDef, MakeMethodDef, MakeMemberDef, MakeNumSeqMapMethods, MakeTypePtr
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
 from tests.utils.testcase import TestCase, WithMapper
@@ -370,7 +370,8 @@ class TypeDictTest(TestCase):
 OFFSET = 32
 BIG_ENOUGH = 64
 def MakeInstanceWithField(type_, readonly, mapper, addToCleanUp):
-    member = PyMemberDef('attr', type_, OFFSET, readonly, "doc")
+    member, cleanupMember = MakeMemberDef('attr', type_, OFFSET, readonly, "doc")
+    addToCleanUp(cleanupMember)
     typeSpec = {
         'tp_basicsize': BIG_ENOUGH,
         'tp_members': [member],

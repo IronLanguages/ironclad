@@ -264,7 +264,7 @@ namespace Ironclad
             PyStringObject s = new PyStringObject();
             s.ob_refcnt = 1;
             s.ob_type = this.PyString_Type;
-            s.ob_size = (uint)length;
+            s.ob_size = length;
             s.ob_shash = -1;
             s.ob_sstate = 0;
             Marshal.StructureToPtr(s, data, false);

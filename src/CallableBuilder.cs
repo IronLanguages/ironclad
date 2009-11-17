@@ -83,7 +83,7 @@ namespace Ironclad
 
                 // COEXIST flag ignored; which method is chosen depends on order of calls in ClassBuilder.
                 bool unsupportedFlags = false;
-                METH flags = thisMethod.ml_flags & ~METH.COEXIST;
+                METH flags = (METH)thisMethod.ml_flags & ~METH.COEXIST;
                 switch (flags)
                 {
                     case METH.OLDARGS:

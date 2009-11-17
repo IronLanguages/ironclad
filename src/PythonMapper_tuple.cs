@@ -92,7 +92,7 @@ namespace Ironclad
             PyTupleObject tuple = new PyTupleObject();
             tuple.ob_refcnt = 1;
             tuple.ob_type = this.PyTuple_Type;
-            tuple.ob_size = (uint)size;
+            tuple.ob_size = size;
 
             int baseSize = Marshal.SizeOf(typeof(PyTupleObject));
             int extraSize = (CPyMarshal.PtrSize * (size - 1));
