@@ -1202,8 +1202,8 @@ class SequenceMethodsTest(MethodConnectionTestCase):
         result = object()
         def Getslice(p1, s1, s2):
             self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(s1, UInt32.MaxValue)
-            self.assertEquals(s2, UInt32.MaxValue)
+            self.assertEquals(s1, -1)
+            self.assertEquals(s2, -1)
             return self.mapper.Store(result)
         def Length(_):
             return 0
@@ -1243,8 +1243,8 @@ class SequenceMethodsTest(MethodConnectionTestCase):
         value = object()
         def Setslice(p1, s1, s2, p2):
             self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(s1, UInt32.MaxValue)
-            self.assertEquals(s2, UInt32.MaxValue)
+            self.assertEquals(s1, -1)
+            self.assertEquals(s2, -1)
             self.assertEquals(self.mapper.Retrieve(p2), value)
             return self.result
         def Length(_):

@@ -20,29 +20,29 @@ namespace Ironclad
         public override IntPtr 
         PyType_GenericNew(IntPtr typePtr, IntPtr args, IntPtr kwargs)
         {
-            dgt_ptr_ptrsize dgt = (dgt_ptr_ptrsize)CPyMarshal.ReadFunctionPtrField(
-                typePtr, typeof(PyTypeObject), "tp_alloc", typeof(dgt_ptr_ptrsize));
+            dgt_ptr_ptrint dgt = (dgt_ptr_ptrint)CPyMarshal.ReadFunctionPtrField(
+                typePtr, typeof(PyTypeObject), "tp_alloc", typeof(dgt_ptr_ptrint));
             return dgt(typePtr, 0);
         }
         
         public override IntPtr 
-        PyType_GenericAlloc(IntPtr typePtr, uint nItems)
+        PyType_GenericAlloc(IntPtr typePtr, int nItems)
         {
-            uint size = CPyMarshal.ReadUIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
+            int size = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
             if (nItems > 0)
             {
-                uint itemsize = CPyMarshal.ReadUIntField(typePtr, typeof(PyTypeObject), "tp_itemsize");
+                int itemsize = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_itemsize");
                 size += (nItems * itemsize);
             }
             
-            IntPtr newInstance = this.allocator.Alloc(size);
+            IntPtr newInstance = this.allocator.Alloc((uint)size);
             CPyMarshal.Zero(newInstance, size);
             CPyMarshal.WriteUIntField(newInstance, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(newInstance, typeof(PyObject), "ob_type", typePtr);
 
             if (nItems > 0)
             {
-                CPyMarshal.WriteUIntField(newInstance, typeof(PyVarObject), "ob_size", nItems);
+                CPyMarshal.WriteIntField(newInstance, typeof(PyVarObject), "ob_size", nItems);
             }
 
             return newInstance;

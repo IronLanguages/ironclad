@@ -80,7 +80,7 @@ namespace Ironclad
         }
 
         public override IntPtr 
-        PyList_New(uint length)
+        PyList_New(int length)
         {
             if (length == 0)
             {
@@ -90,11 +90,11 @@ namespace Ironclad
             PyListObject list = new PyListObject();
             list.ob_refcnt = 1;
             list.ob_type = this.PyList_Type;
-            list.ob_size = length;
-            list.allocated = length;
+            list.ob_size = (uint)length;
+            list.allocated = (uint)length;
             
-            uint bytes = length * CPyMarshal.PtrSize;
-            list.ob_item = this.allocator.Alloc(bytes);
+            int bytes = length * CPyMarshal.PtrSize;
+            list.ob_item = this.allocator.Alloc((uint)bytes);
             CPyMarshal.Zero(list.ob_item, bytes);
             
             IntPtr listPtr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyListObject)));
@@ -154,7 +154,7 @@ namespace Ironclad
         
         
         public override int
-        PyList_SetItem(IntPtr listPtr, uint index, IntPtr itemPtr)
+        PyList_SetItem(IntPtr listPtr, int index, IntPtr itemPtr)
         {
             if (!this.HasPtr(listPtr))
             {
@@ -195,12 +195,12 @@ namespace Ironclad
         
         
         public override IntPtr
-        PyList_GetSlice(IntPtr listPtr, uint start, uint stop)
+        PyList_GetSlice(IntPtr listPtr, int start, int stop)
         {
             try
             {
                 List list = (List)this.Retrieve(listPtr);
-                List sliced = (List)list[new Slice((int)start, (int)stop)];
+                List sliced = (List)list[new Slice(start, stop)];
                 return this.Store(sliced);
             }
             catch (Exception e)
@@ -212,7 +212,7 @@ namespace Ironclad
 
 
         public override IntPtr
-        PyList_GetItem(IntPtr listPtr, uint idx)
+        PyList_GetItem(IntPtr listPtr, int idx)
         {
             try
             {

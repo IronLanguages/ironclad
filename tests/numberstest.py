@@ -72,30 +72,33 @@ class PyInt_Test(TestCase):
     
     @WithMapper
     def testPyInt_FromSsize_t(self, mapper, _):
-        for kallable in (mapper.PyInt_FromSsize_t, mapper.PyInt_FromSize_t):
-            for value in (0, Int32.MaxValue):
-                ptr = kallable(value)
-                self.assertEquals(mapper.Retrieve(ptr), value)
-                self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
-                self.assertEquals(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
-                mapper.DecRef(ptr)
+        for value in (0, Int32.MaxValue, Int32.MinValue):
+            ptr = mapper.PyInt_FromSsize_t(value)
+            self.assertEquals(mapper.Retrieve(ptr), value)
+            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
+            self.assertEquals(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
+            mapper.DecRef(ptr)
                 
-            ptr = kallable(UInt32.MaxValue)
-            self.assertEquals(mapper.Retrieve(ptr), UInt32.MaxValue)
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type)
+    
+    @WithMapper
+    def testPyInt_FromSize_t(self, mapper, _):
+        for value in (0, UInt32.MaxValue):
+            ptr = mapper.PyInt_FromSize_t(value)
+            self.assertEquals(mapper.Retrieve(ptr), value)
+            # don't bother to check type, could be an int or a long
             mapper.DecRef(ptr)
 
 
     @WithMapper
     def testPyInt_AsSsize_t(self, mapper, _):
-        for value in (0, UInt32.MaxValue):
+        for value in (0, Int32.MaxValue, Int32.MinValue):
             result = mapper.PyInt_AsSsize_t(mapper.Store(value))
             self.assertEquals(result, value, "failed to map back")
             self.assertMapperHasError(mapper, None)
             
-        for (value, error) in ((UInt32.MaxValue + 1, OverflowError), (-1, OverflowError), (object(), TypeError)):
+        for (value, error) in ((Int32.MaxValue + 1, OverflowError), (Int32.MinValue - 1, OverflowError), (object(), TypeError)):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.PyInt_AsSsize_t(ptr), UInt32.MaxValue)
+            self.assertEquals(mapper.PyInt_AsSsize_t(ptr), -1)
             self.assertMapperHasError(mapper, error)
 
         for cls in (NumberI, NumberL, NumberF):

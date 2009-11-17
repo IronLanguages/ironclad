@@ -248,29 +248,6 @@ class ObjectFunctionsTest(TestCase):
 
 
     @WithMapper
-    def testPyObject_GetItemString(self, mapper, _):
-        result = object()
-        class Subscriptable(object):
-            def __getitem__(self, key):
-                return result
-        
-        objPtr = mapper.Store(Subscriptable())
-        resultPtr = mapper.Store(result)
-        
-        self.assertEquals(mapper.PyObject_GetItemString(objPtr, 'hello'), resultPtr)
-        self.assertEquals(mapper.RefCount(resultPtr), 2, "failed to incref return value")
-
-
-    @WithMapper
-    def testPyObject_GetItemString_Failure(self, mapper, _):
-        obj = object()
-        objPtr = mapper.Store(obj)
-        
-        self.assertEquals(mapper.PyObject_GetItemString(objPtr, 'hello'), IntPtr.Zero)
-        self.assertMapperHasError(mapper, TypeError)
-
-
-    @WithMapper
     def testPyObject_SetItem(self, mapper, _):
         result = object()
         sets = {}
@@ -359,7 +336,7 @@ class ObjectFunctionsTest(TestCase):
         for badval in (0, 0.0, False, object, object()):
             ptr = mapper.Store(badval)
             mapper.LastException = None
-            self.assertEquals(mapper.PyObject_Size(ptr), UInt32.MaxValue)
+            self.assertEquals(mapper.PyObject_Size(ptr), -1)
             self.assertMapperHasError(mapper, TypeError)
             mapper.DecRef(ptr)
 

@@ -547,7 +547,7 @@ namespace Ironclad
         }
         
         public void
-        ForceCleanup()
+        DemandCleanup()
         {
             if (!this.alive)
             {
