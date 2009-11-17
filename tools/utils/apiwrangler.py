@@ -1,10 +1,10 @@
 
-import tools.dispatchergen as DGen
-import tools.magicmethodgen as MMGen
+from tools.utils import dispatchergen as DGen
+from tools.utils import magicmethodgen as MMGen
 
-from tools.type_codes import CTYPES, CTYPE_2_DGTTYPE, DGTTYPES, DGTTYPE_2_MGDTYPE
-from tools.utils import glom_templates, multi_update, read_interesting_lines, starstarmap
-from tools.utils_codegen import generate_arglist, pack_spec, unpack_spec
+from tools.utils.codegen import generate_arglist, glom_templates, multi_update, pack_spec, unpack_spec, starstarmap
+from tools.utils.file import read_interesting_lines
+from tools.utils.type_codes import CTYPES, CTYPE_2_DGTTYPE, DGTTYPES, DGTTYPE_2_MGDTYPE
 
 from data.snippets.cs.dgttype import *
 from data.snippets.cs.dispatcher import *

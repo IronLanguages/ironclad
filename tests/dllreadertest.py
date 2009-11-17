@@ -2,7 +2,7 @@
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
 
-from tools.dllreader import DllReader
+from tools.utils.dllreader import DllReader
 
 
 class DllReaderTest(TestCase):

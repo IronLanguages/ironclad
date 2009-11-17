@@ -1,8 +1,8 @@
 
 import os, sys
 
-from tools.stubmaker import StubMaker
-from tools.utils import write
+from tools.utils.file import write
+from tools.utils.stubmaker import StubMaker
 
 src, dst = sys.argv[1:]
 dst_include = os.path.join(dst, 'Include')

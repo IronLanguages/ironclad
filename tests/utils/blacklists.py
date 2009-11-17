@@ -1,5 +1,5 @@
 
-from tools.utils import read_interesting_lines
+from tools.utils.file import read_interesting_lines
 
 import re
 
@@ -9,9 +9,9 @@ from nose.selector import Selector
 from nose.plugins import Plugin
 from nose.plugins.manager import DefaultPluginManager
 
-trim = (len('<unbound method '), -1)
+trim = slice(len('<unbound method '), -1)
 def extract_ubm_names(ubm):
-    r = repr(ubm)[slice(*trim)]
+    r = repr(ubm)[trim]
     return r.split('.')
 
 def if_wanted(f):

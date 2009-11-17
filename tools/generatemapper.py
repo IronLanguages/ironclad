@@ -1,8 +1,8 @@
 
 import sys
 
-from tools.mapperfilegenerator import MapperFileGenerator
-from tools.utils import write
+from tools.utils.file import write
+from tools.utils.mapperfilegenerator import MapperFileGenerator
 
 src, dst = sys.argv[1:]
 mfg = MapperFileGenerator(src)

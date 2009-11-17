@@ -1,7 +1,7 @@
 
 import os
 
-from tools.utils import popen
+from tools.utils.subprocess import popen
 
 class DllReader(object):
     

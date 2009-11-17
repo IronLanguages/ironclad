@@ -1,6 +1,6 @@
 
 #====================================================================
-# this information is implicit in tools.utils_gccxml
+# this information is implicit in tools.utils.gccxml
 # this set is not used, and not all of the entries in it are handled
 # by anything else, but it serves as a note of what util_gccxml can 
 # produce
@@ -72,18 +72,18 @@ ctype_2_mgdtype_copy = dict(CTYPE_2_MGDTYPE)
 del ctype_2_mgdtype_copy['obj']
 mgdtype_2_ctypes = _invert_dict(ctype_2_mgdtype_copy)
 
-_ctype_priority = 'int uint long ulong llong ullong'.split()
-def _choose_ctype(ctypes):
+_dgttype_priority = 'int uint long ulong llong ullong'.split()
+def _best_dgttype(ctypes):
     if len(ctypes) > 1:
-        for preferred_name in _ctype_priority:
-            if preferred_name in ctypes:
-                return preferred_name
+        for good_dgttype in _dgttype_priority:
+            if good_dgttype in ctypes:
+                return good_dgttype
     return sorted(ctypes)[0]
 
 for _, ctypes in mgdtype_2_ctypes.items():
-    best = _choose_ctype(ctypes)
+    dgttype = _best_dgttype(ctypes)
     for ctype in ctypes:
-        CTYPE_2_DGTTYPE[ctype] = best
+        CTYPE_2_DGTTYPE[ctype] = dgttype
 
 
 #====================================================================

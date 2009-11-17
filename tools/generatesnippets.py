@@ -1,7 +1,7 @@
 
 import os, sys
 
-from tools.utils import read, write
+from tools.utils.file import read, write
 
 from data.snippets.cs.codesnippets import *
 
