@@ -1,8 +1,8 @@
 
 import os, sys
 
-from tools.dllreader import DllReader
-from tools.utils import write
+from tools.utils.dllreader import DllReader
+from tools.utils.file import write
 
 src, dst = sys.argv[1:]
 

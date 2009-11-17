@@ -7,7 +7,8 @@ from tests.utils.process import spawn
 from tests.utils.runtest import automakesuite, run
 from tests.utils.testcase import TestCase
 
-from tools.utils import popen, read_interesting_lines
+from tools.utils.subprocess import popen
+from tools.utils.file import read_interesting_lines
 
 def GetPexportsLines(path):
     stream = popen("pexports", path.replace('/cygdrive/c', 'c:'))

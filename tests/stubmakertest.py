@@ -4,7 +4,7 @@ from tests.utils.testcase import TestCase
 
 from textwrap import dedent
 
-from tools.stubmaker import StubMaker
+from tools.utils.stubmaker import StubMaker
 
 
 class StubMakerTest(TestCase):

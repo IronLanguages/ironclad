@@ -2,9 +2,10 @@
 import sys
 src, dst = sys.argv[1:]
 
-from tools.apiwrangler import ApiWrangler
-from tools.utils import eval_dict_item, read_interesting_lines, write
-from tools.utils_gccxml import generate_api_signatures, in_set, prefixed, read_gccxml
+from tools.utils.apiwrangler import ApiWrangler
+from tools.utils.codegen import eval_dict_item
+from tools.utils.file import read_interesting_lines, write
+from tools.utils.gccxml import generate_api_signatures, in_set, prefixed, read_gccxml
 
 #==============================================================================
 

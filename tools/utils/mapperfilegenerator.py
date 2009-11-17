@@ -2,7 +2,8 @@
 import os, sys
 from itertools import starmap
 
-from tools.utils import eval_dict_item, read, read_interesting_lines, write
+from tools.utils.codegen import eval_dict_item
+from tools.utils.file import read, read_interesting_lines, write
 
 from data.snippets.cs.pythonmapper import *
 

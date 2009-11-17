@@ -1,8 +1,8 @@
 
 from data.snippets.cs.dispatcher import *
 
-from tools.type_codes import CTYPE_2_MGDTYPE
-from tools.utils_codegen import generate_arglist
+from tools.utils.type_codes import CTYPE_2_MGDTYPE
+from tools.utils.codegen import generate_arglist
 
 #===============================================
 # expand_args
