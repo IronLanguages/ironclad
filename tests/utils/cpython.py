@@ -4,9 +4,24 @@ from System.Runtime.InteropServices import Marshal
 
 import Ironclad
 from Ironclad import CPyMarshal
-from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMethodDef, PyTypeObject
+from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMemberDef, PyMethodDef, PyTypeObject
 
 from tests.utils.memory import OffsetPtr
+        
+def _new_struct(type_, fields, *values):
+    struct = type_()
+    for field, value in zip(fields, values):
+        getattr(type_, field).SetValue(struct, value)
+    return struct
+
+_meth_fields = 'ml_name ml_meth ml_flags ml_doc'.split()
+new_PyMethodDef = lambda *args: _new_struct(PyMethodDef, _meth_fields, *args)
+
+_getset_fields = 'name get set doc closure'.split()
+new_PyGetSetDef = lambda *args: _new_struct(PyGetSetDef, _getset_fields, *args)
+
+_member_fields = 'name type offset flags doc'.split()
+new_PyMemberDef = lambda *args: _new_struct(PyMemberDef, _member_fields, *args)
 
 gc_fooler = []
 def GC_NotYet(dgt):
@@ -27,7 +42,7 @@ for (k, v) in DELEGATE_TYPES.items():
     DELEGATE_TYPES[k | METH.COEXIST] = v
 def MakeMethodDef(name, implementation, flags, doc="doc"):
     dgt = DELEGATE_TYPES[flags](implementation)
-    return PyMethodDef(name, Marshal.GetFunctionPointerForDelegate(dgt), flags, doc), GC_NotYet(dgt)
+    return new_PyMethodDef(name, Marshal.GetFunctionPointerForDelegate(dgt), int(flags), doc), GC_NotYet(dgt)
 
 
 def MakeGetSetDef(name, get, set, doc, closure=IntPtr.Zero):
@@ -42,7 +57,12 @@ def MakeGetSetDef(name, get, set, doc, closure=IntPtr.Zero):
         setdgt = Ironclad.dgt_int_ptrptrptr(set)
         _set = Marshal.GetFunctionPointerForDelegate(setdgt)
         deallocs.append(GC_NotYet(setdgt))
-    return PyGetSetDef(name, _get, _set, doc, closure), lambda: map(apply, deallocs)
+    return new_PyGetSetDef(name, _get, _set, doc, closure), lambda: map(apply, deallocs)
+
+
+def MakeMemberDef(name, type_, offset, flags, doc="doc"):
+    return new_PyMemberDef(name, int(type_), offset, flags, doc), lambda: None
+    
 
 
 MAKETYPEPTR_DEFAULTS = {

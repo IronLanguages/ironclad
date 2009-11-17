@@ -8,7 +8,7 @@ from System import IntPtr, Int32, UInt32
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, dgt_int_ptrptrptr, DoubleStruct
-from Ironclad.Structs import PyFloatObject, PyIntObject, PyListObject, PyTypeObject
+from Ironclad.Structs import PyObject, PyFloatObject, PyIntObject, PyListObject, PyTypeObject
 
 class CPyMarshalTest_32(TestCase):
 
@@ -50,12 +50,12 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testWritePtrField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyObject))
         
-        CPyMarshal.WritePtrField(data, PyTypeObject, "tp_doc", IntPtr(12345))
-        dataStruct = Marshal.PtrToStructure(data, PyTypeObject)
-        self.assertEquals(dataStruct.tp_doc, IntPtr(12345), "failed to write")
+        CPyMarshal.WritePtrField(data, PyObject, "ob_type", IntPtr(12345))
+        dataStruct = Marshal.PtrToStructure(data, PyObject)
+        self.assertEquals(dataStruct.ob_type, IntPtr(12345), "failed to write")
         
         Marshal.FreeHGlobal(data)
     
@@ -94,24 +94,24 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testWriteUIntField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyListObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyListObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
         
         for value in (UInt32.MaxValue, UInt32.MinValue):
-            CPyMarshal.WriteUIntField(data, PyListObject, "ob_size", value)
-            dataStruct = Marshal.PtrToStructure(data, PyListObject)
-            self.assertEquals(dataStruct.ob_size, value, "failed to write")
+            CPyMarshal.WriteUIntField(data, PyTypeObject, "tp_version_tag", value)
+            dataStruct = Marshal.PtrToStructure(data, PyTypeObject)
+            self.assertEquals(dataStruct.tp_version_tag, value, "failed to write")
         
         Marshal.FreeHGlobal(data)
     
     
     def testReadUIntField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyListObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyListObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
         
         for value in (UInt32.MaxValue, UInt32.MinValue):
-            CPyMarshal.WriteUIntField(data, PyListObject, "ob_size", value)
-            self.assertEquals(CPyMarshal.ReadUIntField(data, PyListObject, "ob_size"), value, "failed to read")
+            CPyMarshal.WriteUIntField(data, PyTypeObject, "tp_version_tag", value)
+            self.assertEquals(CPyMarshal.ReadUIntField(data, PyTypeObject, "tp_version_tag"), value, "failed to read")
         
         Marshal.FreeHGlobal(data)
     

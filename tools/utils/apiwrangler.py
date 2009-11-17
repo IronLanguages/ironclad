@@ -4,12 +4,14 @@ from tools.utils import magicmethodgen as MMGen
 
 from tools.utils.codegen import generate_arglist, glom_templates, multi_update, pack_spec, unpack_spec, starstarmap
 from tools.utils.file import read_interesting_lines
+from tools.utils.structgen import generate_struct
 from tools.utils.type_codes import CTYPES, CTYPE_2_DGTTYPE, DGTTYPES, DGTTYPE_2_MGDTYPE
 
 from data.snippets.cs.dgttype import *
 from data.snippets.cs.dispatcher import *
 from data.snippets.cs.magicmethods import *
 from data.snippets.cs.pythonapi import *
+from data.snippets.cs.structs import *
 
 class ApiWrangler(object):
 
@@ -19,6 +21,9 @@ class ApiWrangler(object):
         self.output = {}
         
         # Order of the following operations is important!
+        
+        self.output['structs_code'] = self.generate_structs(
+            input['MGD_API_STRUCTS'])
         
         self.output['dispatcher_code'] = self.generate_dispatcher(
             input['DISPATCHER_FIELDS'], 
@@ -80,32 +85,8 @@ class ApiWrangler(object):
         return METHOD_TEMPLATE % info
 
 
-    def generate_pythonapi(self, mgd_pythonapi_functions, mgd_nonapi_c_functions, all_api_functions, pure_c_symbols, mgd_data):
-        all_mgd_functions = mgd_pythonapi_functions | mgd_nonapi_c_functions
-        not_implemented_functions = all_api_functions - pure_c_symbols
-        
-        methods = []
-        for (name, c_spec) in all_mgd_functions:
-            if name in not_implemented_functions:
-                not_implemented_functions.remove(name)
-            methods.append(self._unpack_apifunc(name, c_spec))
-            
-        not_implemented_methods = [{"symbol": s} for s in not_implemented_functions]
-        methods_code = glom_templates('\n\n',
-            (PYTHONAPI_METHOD_TEMPLATE, methods), 
-            (PYTHONAPI_NOT_IMPLEMENTED_METHOD_TEMPLATE, not_implemented_methods),
-        )
-        methods_switch = glom_templates('\n',
-            (PYTHONAPI_METHOD_CASE, methods),
-            (PYTHONAPI_NOT_IMPLEMENTED_METHOD_CASE, not_implemented_methods),
-        )
-
-        data_items_code = glom_templates("\n\n", (PYTHONAPI_DATA_ITEM_TEMPLATE, mgd_data))
-        data_items_switch = glom_templates("\n", (PYTHONAPI_DATA_ITEM_CASE, mgd_data))
-
-        return PYTHONAPI_FILE_TEMPLATE % (
-            methods_code, methods_switch,
-            data_items_code, data_items_switch)
+    def generate_structs(self, struct_specs):
+        return STRUCTS_FILE_TEMPLATE % '\n\n'.join(map(generate_struct, struct_specs))
 
 
     def generate_dispatcher(self, field_types, method_types):
@@ -132,11 +113,38 @@ class ApiWrangler(object):
             generate_magic_method(*args, **kwargs)
         
         return MAGICMETHODS_FILE_TEMPLATE % ('\n\n'.join(normal_magic_methods), '\n\n'.join(swapped_magic_methods))
+
+
+    def generate_pythonapi(self, mgd_pythonapi_functions, mgd_nonapi_c_functions, all_api_functions, pure_c_symbols, mgd_data):
+        all_mgd_functions = mgd_pythonapi_functions | mgd_nonapi_c_functions
+        not_implemented_functions = all_api_functions - pure_c_symbols
+        
+        methods = []
+        for (name, c_spec) in all_mgd_functions:
+            if name in not_implemented_functions:
+                not_implemented_functions.remove(name)
+            methods.append(self._unpack_apifunc(name, c_spec))
+            
+        not_implemented_methods = [{"symbol": s} for s in not_implemented_functions]
+        methods_code = glom_templates('\n\n',
+            (PYTHONAPI_METHOD_TEMPLATE, methods), 
+            (PYTHONAPI_NOT_IMPLEMENTED_METHOD_TEMPLATE, not_implemented_methods),
+        )
+        methods_switch = glom_templates('\n',
+            (PYTHONAPI_METHOD_CASE, methods),
+            (PYTHONAPI_NOT_IMPLEMENTED_METHOD_CASE, not_implemented_methods),
+        )
+
+        data_items_code = glom_templates("\n\n", (PYTHONAPI_DATA_ITEM_TEMPLATE, mgd_data))
+        data_items_switch = glom_templates("\n", (PYTHONAPI_DATA_ITEM_CASE, mgd_data))
+
+        return PYTHONAPI_FILE_TEMPLATE % (
+            methods_code, methods_switch,
+            data_items_code, data_items_switch)
             
 
     def generate_dgts(self):
         # this depends on self.dgt_specs having been populated (by dispatcher and pythonapi construction)
         return FILE_TEMPLATE % '\n'.join(map(self._generate_dgttype, sorted(self.dgt_specs)))
-
 
 

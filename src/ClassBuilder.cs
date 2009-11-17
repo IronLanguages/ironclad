@@ -208,13 +208,13 @@ namespace Ironclad
             this.code.Append(CodeSnippets.CLEAR_GETTER_SETTER_CODE);
 
             string infix = null;
-            if (TryGetMemberMethodInfix(member.type, ref infix))
+            if (TryGetMemberMethodInfix((MemberT)member.type, ref infix))
             {
                 string getname = String.Format("__get_{0}", member.name);
                 this.code.Append(String.Format(CodeSnippets.MEMBER_GETTER_TEMPLATE, getname, member.offset, infix));
 
                 string setname = "None";
-                if ((member.flags & 1) == 0 && member.type != MemberT.STRING)
+                if ((member.flags & 1) == 0 && (MemberT)member.type != MemberT.STRING)
                 {
                     setname = String.Format("__set_{0}", member.name);
                     this.code.Append(String.Format(CodeSnippets.MEMBER_SETTER_TEMPLATE, setname, member.offset, infix));

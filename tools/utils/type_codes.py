@@ -36,6 +36,7 @@ CTYPE_2_MGDTYPE = {
     'ptr':          'IntPtr',
     'str':          'string',
     'void':         'void',
+    'char':         'byte',
     'int':          'int',
     'uint':         'uint',
     'long':         'int',
