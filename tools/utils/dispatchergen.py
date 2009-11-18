@@ -1,11 +1,11 @@
 
 from data.snippets.cs.dispatcher import *
 
+from tools.utils.apiplumbing import ApiPlumbingGenerator
+from tools.utils.codegen import generate_arglist, multi_update, starstarmap
 from tools.utils.type_codes import ICTYPE_2_MGDTYPE
-from tools.utils.codegen import generate_arglist
 
-#===============================================
-# expand_args
+#==========================================================================
 
 def _get_native_argname((index, code)):
     return {'obj': 'ptr%d'}.get(code, 'arg%d') % index
@@ -18,7 +18,7 @@ SPECIAL_DISPATCHER_ARG_NAMES = {
 def _is_normal_arg(arg):
     return arg not in SPECIAL_DISPATCHER_ARG_NAMES
 
-def expand_args(ic_args, arg_tweak=None):
+def _expand_args(ic_args, arg_tweak=None):
     if arg_tweak:
         named_args = SPECIAL_DISPATCHER_ARG_NAMES
         mgd_args = [None] * len(filter(_is_normal_arg, arg_tweak))
@@ -38,9 +38,9 @@ def expand_args(ic_args, arg_tweak=None):
     
     return mgd_args, native_arg_names
 
-#===============================================
+#==========================================================================
 
-def method_signature(name, ic_ret, mgd_args):
+def _generate_method_signature(name, ic_ret, mgd_args):
     arglist = 'string key'
     arglist_end = generate_arglist(mgd_args, ICTYPE_2_MGDTYPE)
     if arglist_end:
@@ -52,10 +52,9 @@ def method_signature(name, ic_ret, mgd_args):
         'rettype': ICTYPE_2_MGDTYPE[ic_ret],
     }
 
+#==========================================================================
 
-#===============================================
-
-def method_obj_translation(c_arg_types, nullable_kwargs):
+def _generate_method_obj_translation(c_arg_types, nullable_kwargs):
     cleanups = []
     translates = []
     for (i, arg_type) in enumerate(c_arg_types):
@@ -67,19 +66,17 @@ def method_obj_translation(c_arg_types, nullable_kwargs):
             cleanups.append(CLEANUP_OBJ_TEMPLATE % {'index': i})
     return '\n'.join(translates), '\n'.join(cleanups)
 
+#==========================================================================
 
-#===============================================
-
-def method_dgt_call(dgt_spec, callargs):
+def _generate_method_dgt_call(dgt_spec, callargs):
     return CALL_TEMPLATE % {
         'dgttype': dgt_spec, 
         'arglist': ', '.join(callargs)
     }
 
+#==========================================================================
 
-#===============================================
-
-def method_ret_handling(ret_type, ret_tweak):
+def _generate_method_ret_handling(ret_type, ret_tweak):
     if ret_type == 'void':
         return '', ret_tweak, ''
     elif ret_type == 'obj':
@@ -87,10 +84,9 @@ def method_ret_handling(ret_type, ret_tweak):
     else:
         return ASSIGN_RET_TEMPLATE % ICTYPE_2_MGDTYPE[ret_type], ret_tweak, SIMPLE_RETURN
 
+#==========================================================================
 
-#===============================================
-
-def field(name, mgd_type, cpm_suffix, get_tweak='', set_tweak=''):
+def _generate_field(name, mgd_type, cpm_suffix, get_tweak='', set_tweak=''):
     return FIELD_TEMPLATE % {
         'name': name,
         'mgd_type': mgd_type,
@@ -98,3 +94,40 @@ def field(name, mgd_type, cpm_suffix, get_tweak='', set_tweak=''):
         'get_tweak': get_tweak,
         'set_tweak': set_tweak,
     }
+
+#==========================================================================
+
+class DispatcherGenerator(ApiPlumbingGenerator):
+    # populates self.context.dgt_specs
+    # populates self.context.dispatcher_methods
+    
+    RUN_INPUTS = 'DISPATCHER_FIELDS DISPATCHER_METHODS'
+    def _run(self, field_types, method_types):
+        dispatcher_fields = '\n\n'.join(
+            starstarmap(_generate_field, field_types))
+        dispatcher_methods = '\n\n'.join(
+            starstarmap(self._generate_method, method_types))
+        return DISPATCHER_FILE_TEMPLATE % '\n\n'.join(
+            (dispatcher_fields, dispatcher_methods))
+
+
+    def _generate_method(self, name, ic_spec, arg_tweak=None, ret_tweak='', nullable_kwargs=None):
+        native_spec, ic_ret, ic_args = self._unpack_ic_spec(ic_spec)
+        mgd_args, native_arg_names = _expand_args(ic_args, arg_tweak)
+        
+        self.context.dispatcher_methods[name] = (mgd_args, native_spec)
+        info = {
+            'signature':    _generate_method_signature(name, ic_ret, mgd_args),
+            'call':         _generate_method_dgt_call(native_spec, native_arg_names),
+        }
+        multi_update(info, 
+            ('translate_objs', 'cleanup_objs'), 
+            _generate_method_obj_translation(mgd_args, nullable_kwargs)
+        )
+        multi_update(info, 
+            ('store_ret', 'handle_ret', 'return_ret'), 
+            _generate_method_ret_handling(ic_ret, ret_tweak)
+        )
+        return METHOD_TEMPLATE % info
+
+
