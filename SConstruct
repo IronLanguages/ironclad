@@ -191,7 +191,7 @@ api_src = api_xml + visible_out + Glob('data/api/*') # TODO: why doesn't Glob pi
 api_out_names = 'Delegates Dispatcher MagicMethods PythonApi PythonStructs'
 api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
 managed.Command(api_out, api_src,
-    '$IPY tools/generateapi.py data/api src')
+    '$IPY tools/generateapiplumbing.py data/api src')
 
 mapper_names = '_exceptions _fill_types _numbers_convert_c2py _numbers_convert_py2c _operator _store_dispatch'
 mapper_src = pathmap('data/mapper', mapper_names)
