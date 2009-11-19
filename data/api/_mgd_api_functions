@@ -6,6 +6,9 @@
 # suitable stub method to be added to the generated PythonApi, which you 
 # can then override in PythonMapper.
 
+# optional dict in second column for functions whose char* arguments should 
+# be left as pointers rather than automatically marshalled as strings
+
 
 _PyLong_Sign                    
 _PyObject_New               
@@ -161,13 +164,13 @@ PySequence_Tuple
     
 PySlice_New
     
-PyString_AsString
+PyString_AsString                       {'unstring': True}
 PyString_AsStringAndSize
 PyString_Concat
 PyString_ConcatAndDel
-PyString_FromString
-PyString_FromStringAndSize
-PyString_InternFromString
+PyString_FromString                     {'unstring': True}
+PyString_FromStringAndSize              {'unstring': True}
+PyString_InternFromString               {'unstring': True}
 PyString_InternInPlace
 PyString_Repr
 PyString_Size

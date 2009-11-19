@@ -1,5 +1,5 @@
 
-from tools.utils.file import read_interesting_lines
+from tools.utils.io import read_interesting_lines
 
 import re
 

@@ -15,8 +15,8 @@ ic_function_objarg      obj_objobj              {'arg_tweak': ('module', 0)}
 ic_method_objarg        obj_objobj
 ic_function_varargs     obj_objobj              {'arg_tweak': ('module', 0)}
 ic_method_varargs       obj_objobj
-ic_function_kwargs      obj_objobjobj           {'arg_tweak': ('module', 0, 1), 'nullable_kwargs': 1}
-ic_method_kwargs        obj_objobjobj           {'nullable_kwargs': 2}
+ic_function_kwargs      obj_objobjobj           {'arg_tweak': ('module', 0, 1), 'nullable_kwargs_index': 1}
+ic_method_kwargs        obj_objobjobj           {'nullable_kwargs_index': 2}
 ic_getter_method        obj_objptr
 ic_setter_method        int_objobjptr           {'ret_tweak': THROW_RET_NEGATIVE}
 
@@ -68,6 +68,6 @@ getiterfunc             obj_obj
 iternextfunc            obj_obj             {'ret_tweak': ITERNEXT_HANDLE_RETPTR}
 descrgetfunc            obj_objobjobj
 descrsetfunc            int_objobjobj
-initproc                int_objobjobj       {'ret_tweak': THROW_RET_NEGATIVE, 'nullable_kwargs': 2}
-newfunc                 obj_objobjobj       {'nullable_kwargs': 2}
+initproc                int_objobjobj       {'ret_tweak': THROW_RET_NEGATIVE, 'nullable_kwargs_index': 2}
+newfunc                 obj_objobjobj       {'nullable_kwargs_index': 2}
 allocfunc               obj_objssize

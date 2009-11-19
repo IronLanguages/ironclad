@@ -1,14 +1,17 @@
 
 import os, sys
 
-from tools.utils.file import write
+from tools.utils.io import write
 from tools.utils.stubmaker import StubMaker
 
-src, dst = sys.argv[1:]
-dst_include = os.path.join(dst, 'Include')
+#==========================================================================
 
-sm = StubMaker(src)
-write(dst, "stubinit.generated.c", sm.generate_c(), badge=True)
-write(dst, "jumps.generated.asm", sm.generate_asm(), badge=True)
-write(dst_include, "_mgd_function_prototypes.generated.h", sm.generate_header(), badge=True)
+if __name__ == '__main__':
+    src, dst = sys.argv[1:]
+    dst_include = os.path.join(dst, 'Include')
+    sm = StubMaker(src)
+    
+    write(dst, "stubinit.generated.c", sm.generate_c(), badge=True)
+    write(dst, "jumps.generated.asm", sm.generate_asm(), badge=True)
+    write(dst_include, "_mgd_function_prototypes.generated.h", sm.generate_header(), badge=True)
 

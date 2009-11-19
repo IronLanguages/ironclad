@@ -2,23 +2,24 @@
 from data.snippets.cs.delegates import *
 
 from tools.utils.apiplumbing import ApiPlumbingGenerator
-from tools.utils.codegen import generate_arglist, unpack_spec
-from tools.utils.type_codes import NATIVETYPES, NATIVETYPE_2_MGDTYPE
 
 
-def _generate_dgt_type(native_spec):
-    native_ret, native_args = unpack_spec(native_spec, NATIVETYPES)
-    return DGTTYPE_TEMPLATE % {
-        'name': native_spec,
-        'rettype': NATIVETYPE_2_MGDTYPE[native_ret], 
-        'arglist': generate_arglist(native_args, NATIVETYPE_2_MGDTYPE)
+#==========================================================================
+
+def _generate_delegate_code(spec):
+    return DELEGATE_TEMPLATE % {
+        'name': spec,
+        'rettype': spec.mgd_ret, 
+        'arglist': spec.mgd_arglist,
     }
 
+
+#==========================================================================
 
 class DelegatesGenerator(ApiPlumbingGenerator):
     # requires populated self.context.dgt_specs
 
     def _run(self):
-        dgt_types = '\n'.join(map(_generate_dgt_type, sorted(self.context.dgt_specs)))
-        return DELEGATES_FILE_TEMPLATE % dgt_types
+        return DELEGATES_FILE_TEMPLATE % '\n\n'.join(
+            map(_generate_delegate_code, self.context.dgt_specs))
 

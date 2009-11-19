@@ -2,49 +2,63 @@
 from data.snippets.cs.pythonapi import *
 
 from tools.utils.apiplumbing import ApiPlumbingGenerator
-from tools.utils.codegen import generate_arglist, glom_templates, unpack_spec
-from tools.utils.type_codes import NATIVETYPES, NATIVETYPE_2_MGDTYPE
 
+
+#==========================================================================
+
+def _glom_templates(joiner, *args):
+    output = []
+    for (template, inputs) in args:
+        for input in inputs:
+            output.append(template % input)
+    return joiner.join(output)
+
+
+#==========================================================================
 
 class PythonApiGenerator(ApiPlumbingGenerator):
     # populates self.context.dgt_specs
     
     RUN_INPUTS = 'ALL_MGD_FUNCTIONS ALL_API_FUNCTIONS PURE_C_SYMBOLS MGD_API_DATA'
+    
     def _run(self, all_mgd_functions, all_api_functions, pure_c_symbols, mgd_data):
-        not_implemented_functions = all_api_functions - pure_c_symbols
+        method_infos = []
+        not_implemented = all_api_functions - pure_c_symbols
+        for (name, spec) in all_mgd_functions:
+            if name in not_implemented:
+                not_implemented.remove(name)
+            method_infos.append(self._generate_method_info(name, spec))
+        not_implemented_methods = [{"symbol": s} for s in not_implemented]
         
-        methods = []
-        for (name, c_spec) in all_mgd_functions:
-            if name in not_implemented_functions:
-                not_implemented_functions.remove(name)
-            methods.append(self._unpack_apifunc(name, c_spec))
-            
-        not_implemented_methods = [{"symbol": s} for s in not_implemented_functions]
-        methods_code = glom_templates('\n\n',
-            (PYTHONAPI_METHOD_TEMPLATE, methods), 
-            (PYTHONAPI_NOT_IMPLEMENTED_METHOD_TEMPLATE, not_implemented_methods),
+        methods_code = _glom_templates('\n\n',
+            (METHOD_TEMPLATE, method_infos), 
+            (METHOD_NOT_IMPL_TEMPLATE, not_implemented_methods),
         )
-        methods_switch = glom_templates('\n',
-            (PYTHONAPI_METHOD_CASE, methods),
-            (PYTHONAPI_NOT_IMPLEMENTED_METHOD_CASE, not_implemented_methods),
+        
+        methods_switch_code = _glom_templates('\n',
+            (GETADDRESS_CASE_TEMPLATE, method_infos),
+            (GETADDRESS_CASE_NOT_IMPL_TEMPLATE, not_implemented_methods),
         )
 
-        data_items_code = glom_templates("\n\n",
-            (PYTHONAPI_DATA_ITEM_TEMPLATE, mgd_data))
-        data_items_switch = glom_templates("\n",
-            (PYTHONAPI_DATA_ITEM_CASE, mgd_data))
+        data_code = _glom_templates("\n\n",
+            (DATA_PROPERTY_TEMPLATE, mgd_data))
+        
+        data_switch_code = _glom_templates("\n",
+            (SETDATA_CASE_TEMPLATE, mgd_data))
 
         return PYTHONAPI_FILE_TEMPLATE % (
-            methods_code, methods_switch,
-            data_items_code, data_items_switch)
+            methods_code, methods_switch_code, data_code, data_switch_code)
         
         
-    def _unpack_apifunc(self, name, ic_spec):
-        native_spec, ic_ret, ic_args = self._unpack_ic_spec(ic_spec)
-        native_ret, native_args = unpack_spec(native_spec, NATIVETYPES)
+    def _generate_method_info(self, name, spec):
+        native = spec.native
+        self.context.dgt_specs.add(native)
         return {
             "symbol": name,
-            "dgt_type": native_spec,
-            "return_type": NATIVETYPE_2_MGDTYPE[native_ret],
-            "arglist": generate_arglist(native_args, NATIVETYPE_2_MGDTYPE)
+            "dgt_type": native,
+            "return_type": native.mgd_ret,
+            "arglist": native.mgd_arglist
         }
+
+
+
