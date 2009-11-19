@@ -16,14 +16,19 @@ def _generate_field_code(fieldspec):
         # ...but it has been in all the cases we've seen
         ictype = 'ptr'
     
-    mgdtype = ICTYPE_2_MGDTYPE[native_ictype(ictype)]
-    return STRUCT_FIELD_TEMPLATE % (mgdtype, name)
+    return STRUCT_FIELD_TEMPLATE % {
+        'name': name,
+        'type': ICTYPE_2_MGDTYPE[native_ictype(ictype)], 
+    }
 
 def _generate_struct_code(structspec):
     name, fields = structspec
     fields_code = '\n'.join(
         map(_generate_field_code, fields))
-    return STRUCT_TEMPLATE % (name, fields_code)
+    return STRUCT_TEMPLATE % {
+        'name': name, 
+        'fields': fields_code
+    }
 
 def _generate_structs_code(structspecs):
     return STRUCTS_FILE_TEMPLATE % '\n\n'.join(
@@ -43,4 +48,6 @@ class PythonStructsGenerator(ApiPlumbingGenerator):
             self.GCCXML.typedefs(in_set(self.MGD_API_STRUCTS)))
         
         return _generate_structs_code(structspecs)
+    
 
+#==========================================================================

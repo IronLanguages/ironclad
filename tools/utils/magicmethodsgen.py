@@ -24,37 +24,55 @@ def _generate_swapped_template(template2, functype, inargs):
 
 #==========================================================================
 
+def _generate_has_swapped_version_code(has_swapped_version):
+    if has_swapped_version:
+        return SWAP_YES_CODE
+    return SWAP_NO_CODE
+
+def _generate_case_code(c_field, py_field, has_swapped_version, dgt_spec, template):
+    swapped_code = _generate_has_swapped_version_code(has_swapped_version)
+    return MAGICMETHOD_CASE_TEMPLATE % {
+        'c_field': c_field, 
+        'py_field': py_field, 
+        'has_swapped_version_code': swapped_code, 
+        'dgt_spec': dgt_spec, 
+        'template': template,
+    }
+
+#==========================================================================
+
 class MagicMethodsGenerator(ApiPlumbingGenerator):
     # requires populated self.context.dispatcher_methods
 
     INPUTS = 'MAGICMETHODS'
     
     def _run(self):
-        self._normal_magicmethods = []
-        self._swapped_magicmethods = []
+        self._normal_cases = []
+        self._swapped_cases = []
         for (args, kwargs) in self.MAGICMETHODS:
-            self._generate_magicmethod(*args, **kwargs)
+            self._generate_cases(*args, **kwargs)
         
-        return MAGICMETHODS_FILE_TEMPLATE % (
-            '\n\n'.join(self._normal_magicmethods), 
-            '\n\n'.join(self._swapped_magicmethods))
+        return MAGICMETHODS_FILE_TEMPLATE % {
+            'normal_cases': '\n\n'.join(self._normal_cases), 
+            'swapped_cases': '\n\n'.join(self._swapped_cases)
+        }
     
+    def _generate_cases(self, c_field, dispatcher_method, py_field, 
+            py_swapped_field=None,
+            template2=MAGICMETHOD_TEMPLATE2,
+            swapped_template2=MAGICMETHOD_TEMPLATE2):
+        
+        has_swapped_version =  py_swapped_field is not None
+        mgd_args, dgt_spec = self.context.dispatcher_methods[dispatcher_method]
+        
+        template = _generate_normal_template(template2, dispatcher_method, mgd_args)
+        self._normal_cases.append(_generate_case_code(
+            c_field, py_field, has_swapped_version, dgt_spec, template))
+        
+        if has_swapped_version:
+            swapped_template = _generate_swapped_template(swapped_template2, dispatcher_method, mgd_args)
+            self._swapped_cases.append(_generate_case_code(
+                c_field, py_swapped_field, False, dgt_spec, swapped_template))
     
-    def _generate_magicmethod(self, c_field_name, dispatcher_method_name, py_field_name, 
-            py_swapped_field_name=None,
-            template2=MAGICMETHOD_TEMPLATE_TEMPLATE,
-            swapped_template2=MAGICMETHOD_TEMPLATE_TEMPLATE):
-        
-        mgd_args, native_spec = self.context.dispatcher_methods[dispatcher_method_name]
-        needswap = MAGICMETHOD_NEEDSWAP_NO
-        
-        if py_swapped_field_name is not None:
-            needswap = MAGICMETHOD_NEEDSWAP_YES
-            swapped_template = _generate_swapped_template(swapped_template2, dispatcher_method_name, mgd_args)
-            self._swapped_magicmethods.append(MAGICMETHOD_CASE % (
-                c_field_name, py_swapped_field_name, MAGICMETHOD_NEEDSWAP_NO, native_spec, swapped_template))
-        
-        template = _generate_normal_template(template2, dispatcher_method_name, mgd_args)
-        self._normal_magicmethods.append(MAGICMETHOD_CASE % (
-            c_field_name, py_field_name, needswap, native_spec, template))
 
+#==========================================================================

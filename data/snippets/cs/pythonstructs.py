@@ -11,14 +11,18 @@ STRUCTS_TEMPLATE = """\
 
 STRUCTS_FILE_TEMPLATE = FILE_TEMPLATE % STRUCTS_TEMPLATE
 
+
 #================================================================================================
 
 STRUCT_TEMPLATE = """\
         [StructLayout(LayoutKind.Sequential, Pack=1)]
-        public struct %s
+        public struct %(name)s
         {
-%s
+%(fields)s
         }"""
 
 STRUCT_FIELD_TEMPLATE = """\
-            public %s %s;"""
+            public %(type)s %(name)s;"""
+
+
+#================================================================================================

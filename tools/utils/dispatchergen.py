@@ -1,4 +1,6 @@
 
+from itertools import chain
+
 from data.snippets.cs.dispatcher import *
 
 from tools.utils.apiplumbing import ApiPlumbingGenerator
@@ -8,13 +10,12 @@ from tools.utils.ictypes import ICTYPE_2_MGDTYPE
 
 #==========================================================================
 
-def _starstarmap(func, items):
-    for (args, kwargs) in items:
-        yield func(*args, **kwargs)
-
-def _multi_update(dict_, names, values):
-    for (name, value) in zip(names, values):
-        dict_[name] = value
+def _return_dict(*keys):
+    def decorator(f):
+        def g(*_, **__):
+            return dict(zip(keys, f(*_, **__)))
+        return g
+    return decorator
 
 
 #==========================================================================
@@ -50,7 +51,7 @@ def _tweak_args(base_mgd_args, arg_tweak=None):
 
 #==========================================================================
 
-def _generate_signature_code(name, spec):
+def _generate_signature_snippet(name, spec):
     arglist = '%s key' % ICTYPE_2_MGDTYPE['str']
     arglist_rest = spec.mgd_arglist
     if arglist_rest:
@@ -65,7 +66,8 @@ def _generate_signature_code(name, spec):
 
 #==========================================================================
 
-def _generate_translate_cleanup_code(args, nullable_kwargs_index):
+@_return_dict('translate_objs', 'cleanup_objs')
+def _generate_translate_snippets(args, nullable_kwargs_index):
     cleanups = []
     translates = []
     for (i, arg) in enumerate(args):
@@ -80,7 +82,7 @@ def _generate_translate_cleanup_code(args, nullable_kwargs_index):
 
 #==========================================================================
 
-def _generate_call_dgt_code(spec, arg_names):
+def _generate_call_dgt_snippet(spec, arg_names):
     return CALL_DGT_TEMPLATE % {
         'spec': spec, 
         'arglist': ', '.join(arg_names)
@@ -89,7 +91,8 @@ def _generate_call_dgt_code(spec, arg_names):
 
 #==========================================================================
 
-def _generate_ret_handling_code(spec, ret_tweak):
+@_return_dict('assign_ret', 'handle_ret', 'return_ret')
+def _generate_ret_snippets(spec, ret_tweak):
     if spec.ret == 'void':
         return '', ret_tweak, ''
     elif spec.ret == 'obj':
@@ -112,6 +115,10 @@ def _generate_field_code(name, mgd_type, cpm_suffix, get_tweak='', set_tweak='')
 
 #==========================================================================
 
+def _starstarmap(func, items):
+    for (args, kwargs) in items:
+        yield func(*args, **kwargs)
+
 class DispatcherGenerator(ApiPlumbingGenerator):
     # populates self.context.dgt_specs
     # populates self.context.dispatcher_methods
@@ -119,21 +126,21 @@ class DispatcherGenerator(ApiPlumbingGenerator):
     INPUTS = 'DISPATCHER_FIELDS DISPATCHER_METHODS GCCXML'
     
     def _run(self):
-        dispatcher_fields_code = '\n\n'.join(
-            _starstarmap(_generate_field_code, self.DISPATCHER_FIELDS))
-        
-        dispatcher_methods_code = '\n\n'.join(
-            _starstarmap(self._generate_method_code, self.DISPATCHER_METHODS))
-        
-        return DISPATCHER_FILE_TEMPLATE % '\n\n'.join(
-            (dispatcher_fields_code, dispatcher_methods_code))
+        return DISPATCHER_FILE_TEMPLATE % '\n\n'.join(chain(
+            _starstarmap(_generate_field_code, self.DISPATCHER_FIELDS),
+            _starstarmap(self._generate_method_code, self.DISPATCHER_METHODS)))
 
     def _get_spec(self, name):
         _, spec = get_funcspecs(
             self.GCCXML.typedefs(equal(name))).pop()
         return spec
 
-    def _generate_method_code(self, name, spec_from=None, arg_tweak=None, ret_tweak='', nullable_kwargs_index=None):
+    def _generate_method_code(self, name,
+            spec_from=None, 
+            arg_tweak=None, 
+            ret_tweak='', 
+            nullable_kwargs_index=None):
+        
         base = self._get_spec(spec_from or name)
         native = base.native
         self.context.dgt_specs.add(native)
@@ -143,17 +150,13 @@ class DispatcherGenerator(ApiPlumbingGenerator):
         self.context.dispatcher_methods[name] = (mgd.args, native)
         
         info = {
-            'signature':    _generate_signature_code(name, mgd),
-            'call_dgt':     _generate_call_dgt_code(native, native_arg_names),
+            'signature':    _generate_signature_snippet(name, mgd),
+            'call_dgt':     _generate_call_dgt_snippet(native, native_arg_names),
         }
-        _multi_update(info, 
-            ('translate_objs', 'cleanup_objs'), 
-            _generate_translate_cleanup_code(mgd.args, nullable_kwargs_index)
-        )
-        _multi_update(info, 
-            ('store_ret', 'handle_ret', 'return_ret'), 
-            _generate_ret_handling_code(base, ret_tweak)
-        )
+        info.update(_generate_translate_snippets(mgd.args, nullable_kwargs_index))
+        info.update(_generate_ret_snippets(base, ret_tweak))
+        
         return METHOD_TEMPLATE % info
+    
 
-
+#==========================================================================

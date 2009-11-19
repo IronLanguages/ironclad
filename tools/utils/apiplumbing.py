@@ -1,4 +1,5 @@
 
+#==========================================================================
 
 class ApiPlumbingContext(object):
 
@@ -48,4 +49,6 @@ def generate_apiplumbing(inputs):
     def _generate_file(generator_type):
         return generator_type.output_name(), generator_type(context).run(inputs)
     return map(_generate_file, _acceptable_generator_order)
+    
 
+#==========================================================================

@@ -1,9 +1,10 @@
 
-import os
-import sys
+import os, sys
 
 from tools.utils.io import read_interesting_lines
+    
 
+#==========================================================================
 
 def _extract_funcname(c_func):
     # hacka hacka hacka
@@ -47,7 +48,6 @@ class StubMaker(object):
         self.ordered_data = tryread("_register_data_priority")
         self.data -= set(self.ordered_data)
         
-                
     def generate_c(self):
         _init_proto = 'void init(void*(*address_getter)(const char*), void(*data_setter)(const char*, const void*))'
         _boilerplate = 'void *jumptable[%%d];\n\n%s {\n' % _init_proto
@@ -61,7 +61,6 @@ class StubMaker(object):
             result.append(_init_function % (i, name))
         result.append('}\n')
         return ''.join(result)
-
 
     def generate_asm(self):
         _header = 'extern _jumptable\n\nsection .code\n\n'
@@ -79,3 +78,6 @@ class StubMaker(object):
 
     def generate_header(self):
         return '\n'.join(self.mgd_functions) + '\n'
+    
+
+#==========================================================================

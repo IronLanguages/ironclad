@@ -2,6 +2,9 @@
 import os
 
 from tools.utils.subprocess import popen
+    
+
+#==========================================================================
 
 class DllReader(object):
     
@@ -64,5 +67,6 @@ class DllReader(object):
                     self.data.append(name)
         finally:
             f.close()
+    
 
-
+#==========================================================================

@@ -58,8 +58,7 @@ METHOD_TEMPLATE = """\
             try
             {
 %(translate_objs)s
-%(store_ret)s
-%(call_dgt)s
+%(assign_ret)s %(call_dgt)s
 %(cleanup_objs)s
 %(handle_ret)s
                 PythonExceptions.BaseException error = (PythonExceptions.BaseException)this.mapper.LastException;
@@ -85,20 +84,8 @@ SIGNATURE_TEMPLATE = """\
 
 #================================================================================================
 
-CALL_DGT_TEMPLATE = """\
-                    ((dgt_%(spec)s)(this.table[key]))(%(arglist)s);"""
-
-
-#================================================================================================
-
 TRANSLATE_OBJ_TEMPLATE = """\
                 IntPtr ptr%(index)d = this.mapper.Store(arg%(index)d);"""
-
-CLEANUP_OBJ_TEMPLATE = """\
-                if (ptr%(index)d != IntPtr.Zero)
-                {
-                    this.mapper.DecRef(ptr%(index)d);
-                }"""
 
 TRANSLATE_NULLABLE_KWARGS_TEMPLATE = """\
                 IntPtr ptr%(index)d = IntPtr.Zero;
@@ -110,24 +97,47 @@ TRANSLATE_NULLABLE_KWARGS_TEMPLATE = """\
 
 #================================================================================================
 
-NULL_ARG = 'IntPtr.Zero'
+ASSIGN_RETPTR = """\
+                IntPtr retptr ="""
 
-MODULE_ARG = 'this.modulePtr'
+ASSIGN_RET_TEMPLATE = """\
+                %s ret ="""
 
 
 #================================================================================================
 
-ASSIGN_RETPTR = """\
-                IntPtr retptr = """
+NULL_ARG = 'IntPtr.Zero'
 
-ASSIGN_RET_TEMPLATE = """\
-                %s ret = """
+MODULE_ARG = 'this.modulePtr'
+
+CALL_DGT_TEMPLATE = '((dgt_%(spec)s)(this.table[key]))(%(arglist)s);'
+
+
+#================================================================================================
+
+CLEANUP_OBJ_TEMPLATE = """\
+                if (ptr%(index)d != IntPtr.Zero)
+                {
+                    this.mapper.DecRef(ptr%(index)d);
+                }"""
 
 
 #================================================================================================
 
 SIMPLE_RETURN = """\
                 return ret;"""
+                
+
+#================================================================================================
+
+THROW_RET_NEGATIVE = """\
+                if (ret < 0)
+                {
+                    if (this.mapper.LastException == null)
+                    {
+                        this.mapper.LastException = new Exception(key);
+                    }
+                }"""
 
 
 #================================================================================================
@@ -150,18 +160,6 @@ HANDLE_RET_NULL = """\
 DEFAULT_HANDLE_RETPTR = HANDLE_RET_NULL % 'new NullReferenceException(key)'
 
 ITERNEXT_HANDLE_RETPTR = HANDLE_RET_NULL % 'PythonOps.StopIteration()'
-                
-
-#================================================================================================
-
-THROW_RET_NEGATIVE = """\
-                if (ret < 0)
-                {
-                    if (this.mapper.LastException == null)
-                    {
-                        this.mapper.LastException = new Exception(key);
-                    }
-                }"""
 
 
 #================================================================================================
@@ -171,3 +169,4 @@ HANDLE_RET_DESTRUCTOR = """\
                 this.mapper.Unmap(ptr0);"""
 
 
+#================================================================================================

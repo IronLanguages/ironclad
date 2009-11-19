@@ -28,3 +28,6 @@ if __name__ == '__main__':
     code = read_dir(src)
     
     write(dst, 'CodeSnippets.Generated.cs', code, badge=True)
+
+
+#==========================================================================
