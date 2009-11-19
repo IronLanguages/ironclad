@@ -13,5 +13,5 @@ if __name__ == '__main__':
     
     write(dst, "stubinit.generated.c", sm.generate_c(), badge=True)
     write(dst, "jumps.generated.asm", sm.generate_asm(), badge=True)
-    write(dst_include, "_mgd_function_prototypes.generated.h", sm.generate_header(), badge=True)
+    write(dst_include, "_extra_functions.generated.h", sm.generate_header(), badge=True)
 

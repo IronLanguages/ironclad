@@ -33,18 +33,18 @@ class StubMaker(object):
                 return read_interesting_lines(path)
             return []
         
-        self.functions = tryread("_visible_api_functions.generated")
-        self.data = set(tryread("_visible_api_data.generated"))
+        self.functions = tryread("_exported_functions.generated")
+        self.data = set(tryread("_exported_data.generated"))
         
-        ignores = set(tryread("_dont_register_symbols"))
+        ignores = set(tryread("_pure_c_symbols"))
         self.functions = [f for f in self.functions if f not in ignores]
         
-        self.mgd_functions = tryread("_mgd_function_prototypes")
+        self.mgd_functions = tryread("_extra_functions")
         self.functions.extend(map(_extract_funcname, self.mgd_functions))
         
-        self.data |= set(tryread("_always_register_data_symbols"))
+        self.data |= set(tryread("_extra_data"))
         self.data -= ignores
-        self.ordered_data = tryread("_register_data_symbol_priority")
+        self.ordered_data = tryread("_register_data_priority")
         self.data -= set(self.ordered_data)
         
                 

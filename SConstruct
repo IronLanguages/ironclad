@@ -133,14 +133,14 @@ if WIN32:
 # Unmanaged libraries for build/ironclad
 
 # Generate data from prebuilt python dll
-visible_out = pathmap('data/api', '_visible_api_functions.generated _visible_api_data.generated')
-native.Command(visible_out, [],
+exported_out = pathmap('data/api', '_exported_functions.generated _exported_data.generated')
+native.Command(exported_out, [],
     '$IPY tools/generateexports.py $PYTHON_DLL data/api')
 
 # Generate stub code
-buildstub_names = '_always_register_data_symbols _dont_register_symbols _mgd_function_prototypes _register_data_symbol_priority'
-buildstub_src = visible_out + pathmap('data/api', buildstub_names)
-buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_mgd_function_prototypes.generated.h')
+buildstub_names = '_extra_data _pure_c_symbols _extra_functions _register_data_priority'
+buildstub_src = exported_out + pathmap('data/api', buildstub_names)
+buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_extra_functions.generated.h')
 native.Command(buildstub_out, buildstub_src,
     '$IPY tools/generatestub.py data/api stub')
 
@@ -187,7 +187,7 @@ managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX, REFE
 #===============================================================================
 # Generated C#
 
-api_src = api_xml + visible_out + Glob('data/api/*') # TODO: why doesn't Glob pick up items in api_xml, visible_out?
+api_src = api_xml + exported_out + Glob('data/api/*') # TODO: why doesn't Glob pick up items in api_xml, exported_out?
 api_out_names = 'Delegates Dispatcher MagicMethods PythonApi PythonStructs'
 api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
 managed.Command(api_out, api_src,

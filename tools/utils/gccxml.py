@@ -51,6 +51,7 @@ def _make_querymaker(decider):
     
     return querymaker
 
+equal = _make_querymaker(str.__eq__)
 prefixed = _make_querymaker(str.startswith)
 containing = _make_querymaker(str.__contains__)
 in_set = _make_querymaker(lambda name, target: name in target)
@@ -75,6 +76,8 @@ def _handle_ptr(ptr):
     base = str(ptr.base)
     if base in ('char', 'char const'):
         return 'str'
+    if base == '_typeobject':
+        return 'obj'
     if base.startswith('Py') and base.endswith('Object'):
         return 'obj'
     return 'ptr'
@@ -113,21 +116,40 @@ def _get_ictype(t):
 
 
 #===============================================================================
+# decorator for generate_ functions to allow simpler calls
+
+def _combine_calls(f):
+    def g(*args):
+        getresult = lambda x: set(f(x))
+        return reduce(operator.or_, map(getresult, args), set())
+    return g
+
+
+#===============================================================================
 # convert pygccxml functions into FuncSpecs
+
+def _func_from_typedef(t):
+    if not isinstance(t.type, decl.pointer_t):
+        return
+    return t.type.base
 
 _FUNC_HANDLERS = {
     decl.free_function_t:   lambda f: f.function_type(),
     decl.variable_t:        lambda v: v.type.declaration.type.base,
+    decl.typedef_t:         _func_from_typedef,
 }
 
 def _get_funcspec(func):
     func_type = _FUNC_HANDLERS[type(func)](func)
+    if not func_type:
+        return
     ret = _get_ictype(func_type.return_type)
     args = map(_get_ictype, func_type.arguments_types)
     return func.name, FuncSpec(ret, args)
 
-def generate_api_funcspecs(items):
-    return map(_get_funcspec, items)
+@_combine_calls
+def get_funcspecs(items):
+    return filter(None, map(_get_funcspec, items))
 
 
 #===============================================================================
@@ -138,7 +160,7 @@ _STRUCT_HANDLERS = {
     decl.typedef_t:         lambda t: t.type.declaration.get_members(),
 }
 
-def _get_struct_info(struct):
+def _get_structspec(struct):
     struct_members = _STRUCT_HANDLERS[type(struct)](struct)
     members = [m for m in struct_members if isinstance(m, decl.variable_t)]
     struct_spec = []
@@ -146,8 +168,9 @@ def _get_struct_info(struct):
         struct_spec.append((member.name, _get_ictype(member.type)))
     return struct.name, tuple(struct_spec)
 
-def generate_api_structs(structs):
-    return map(_get_struct_info, structs)
+@_combine_calls
+def get_structspecs(structs):
+    return map(_get_structspec, structs)
 
 
 

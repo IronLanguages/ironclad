@@ -1,73 +1,53 @@
 # This file is used by tools/generateapi.py
 
-# columns in order: 
-# dispatcher method name | delegate type
+# A Dispatcher method will be generated for every name in the first column of this file,
+# with custom codegen controlled by the kwargs column.
 
-# optional dict in 3rd col tweaks codegen
-# eval in context of data.snippets.cs.dispatcher
+# If the name isn't typedeffed in the C code somewhere, make sure the kwargs column 
+# has a 'spec_from' which is.
 
 #================================================================================================
 # These first few are for dispatcher methods used to call functions found in PyMethodDefs
 
-ic_function_noargs      obj_objobj              {'arg_tweak': ('module', 'null')}
-ic_method_noargs        obj_objobj              {'arg_tweak': (0, 'null')}
-ic_function_objarg      obj_objobj              {'arg_tweak': ('module', 0)}
-ic_method_objarg        obj_objobj
-ic_function_varargs     obj_objobj              {'arg_tweak': ('module', 0)}
-ic_method_varargs       obj_objobj
-ic_function_kwargs      obj_objobjobj           {'arg_tweak': ('module', 0, 1), 'nullable_kwargs_index': 1}
-ic_method_kwargs        obj_objobjobj           {'nullable_kwargs_index': 2}
-ic_getter_method        obj_objptr
-ic_setter_method        int_objobjptr           {'ret_tweak': THROW_RET_NEGATIVE}
+ic_method_noargs        {'spec_from': 'binaryfunc', 'arg_tweak': (0, 'null')}
+ic_method_objarg        {'spec_from': 'binaryfunc'}
+ic_method_varargs       {'spec_from': 'binaryfunc'}
+ic_method_kwargs        {'spec_from': 'ternaryfunc', 'nullable_kwargs_index': 2}
+ic_function_noargs      {'spec_from': 'binaryfunc', 'arg_tweak': ('module', 'null')}
+ic_function_objarg      {'spec_from': 'binaryfunc', 'arg_tweak': ('module', 0)}
+ic_function_varargs     {'spec_from': 'binaryfunc', 'arg_tweak': ('module', 0)}
+ic_function_kwargs      {'spec_from': 'ternaryfunc', 'arg_tweak': ('module', 0, 1), 'nullable_kwargs_index': 1}
+
 
 #================================================================================================
-# These may or may not be called; all been mindlessly copied from the cpython source code
+# The rest are the actual function typedefs we care about
+
+# descrobject.h
+getter
+setter                  {'ret_tweak': THROW_RET_NEGATIVE}
 
 # object.h
-unaryfunc               obj_obj
-binaryfunc              obj_objobj
-ternaryfunc             obj_objobjobj
-inquiry                 int_obj
-lenfunc                 ssize_obj
-coercion                int_ptrptr
-intargfunc              obj_objint
-intintargfunc           obj_objintint
-ssizeargfunc            obj_objssize
-ssizessizeargfunc       obj_objssizessize
-intobjargproc           int_objintobj
-intintobjargproc        int_objintintobj
-ssizeobjargproc         int_objssizeobj         {'ret_tweak': THROW_RET_NEGATIVE}
-ssizessizeobjargproc    int_objssizessizeobj    {'ret_tweak': THROW_RET_NEGATIVE}
-objobjargproc           int_objobjobj           {'ret_tweak': THROW_RET_NEGATIVE}
-
-getreadbufferproc       int_objintptr
-getwritebufferproc      int_objintptr
-getsegcountproc         int_objptr
-getcharbufferproc       int_objintptr
-readbufferproc          ssize_objssizeptr
-writebufferproc         ssize_objssizeptr
-segcountproc            ssize_objptr
-charbufferproc          ssize_objssizeptr
+unaryfunc
+binaryfunc
+ternaryfunc
+inquiry
+lenfunc
+ssizeargfunc
+ssizessizeargfunc
+ssizeobjargproc         {'ret_tweak': THROW_RET_NEGATIVE}
+ssizessizeobjargproc    {'ret_tweak': THROW_RET_NEGATIVE}
+objobjargproc           {'ret_tweak': THROW_RET_NEGATIVE}
     
-objobjproc              int_objobj
-visitproc               int_objptr
-traverseproc            int_objptrptr
+objobjproc
     
-freefunc                void_ptr
-destructor              void_obj            {'ret_tweak': HANDLE_RET_DESTRUCTOR}
-printfunc               int_objptrint
-getattrfunc             obj_objstr
-getattrofunc            obj_objobj
-setattrfunc             int_objstrobj
-setattrofunc            int_objobjobj
-cmpfunc                 int_objobj
-reprfunc                obj_obj
-hashfunc                long_obj
-richcmpfunc             obj_objobjint
-getiterfunc             obj_obj
-iternextfunc            obj_obj             {'ret_tweak': ITERNEXT_HANDLE_RETPTR}
-descrgetfunc            obj_objobjobj
-descrsetfunc            int_objobjobj
-initproc                int_objobjobj       {'ret_tweak': THROW_RET_NEGATIVE, 'nullable_kwargs_index': 2}
-newfunc                 obj_objobjobj       {'nullable_kwargs_index': 2}
-allocfunc               obj_objssize
+destructor              {'ret_tweak': HANDLE_RET_DESTRUCTOR}
+getattrfunc
+setattrfunc
+cmpfunc
+reprfunc
+hashfunc
+richcmpfunc
+getiterfunc
+iternextfunc            {'ret_tweak': ITERNEXT_HANDLE_RETPTR}
+initproc                {'ret_tweak': THROW_RET_NEGATIVE, 'nullable_kwargs_index': 2}
+newfunc                 {'nullable_kwargs_index': 2}

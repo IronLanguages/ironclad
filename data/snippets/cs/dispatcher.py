@@ -31,6 +31,7 @@ FIELD_TEMPLATE = """\
                 this.mapper.ReleaseGIL();
             }
         }
+
         public void set_%(name)s_field(object instance, int offset, %(mgd_type)s value)
         {
             this.mapper.EnsureGIL();

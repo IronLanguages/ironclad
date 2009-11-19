@@ -11,7 +11,7 @@ class ApiPlumbingContext(object):
 
 class ApiPlumbingGenerator(object):
 
-    RUN_INPUTS = ''
+    INPUTS = ''
 
     @classmethod
     def output_name(cls):
@@ -21,9 +21,9 @@ class ApiPlumbingGenerator(object):
         self.context = context
 
     def run(self, inputs):
-        keys = self.RUN_INPUTS.split()
-        args = [inputs[key] for key in keys]
-        return self._run(*args)
+        for attr in self.INPUTS.split():
+            setattr(self, attr, inputs[attr])
+        return self._run()
 
 
 #==========================================================================
