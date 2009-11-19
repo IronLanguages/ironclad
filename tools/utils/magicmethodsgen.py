@@ -4,27 +4,31 @@ from data.snippets.cs.magicmethods import *
 from tools.utils.apiplumbing import ApiPlumbingGenerator
 
 
-def _normal_template(functype, inargs, template):
-    args = ', '.join(['_%d' % i for i in xrange(len(inargs))])
-    return template % {
-        'arglist': args,
-        'callargs': args,
+#==========================================================================
+
+def _generate_template(template2, functype, inargs, callargs):
+    return template2 % {
         'functype': functype,
+        'arglist': ', '.join(inargs),
+        'callargs': ', '.join(callargs),
     }
 
-def _swapped_template(functype, inargs, template):
+def _generate_normal_template(template2, functype, inargs):
     args = ['_%d' % i for i in xrange(len(inargs))]
-    return template % {
-        'arglist': ', '.join(args),
-        'callargs': ', '.join(args[::-1]),
-        'functype': functype,
-    }
+    return _generate_template(template2, functype, args, args)
 
+def _generate_swapped_template(template2, functype, inargs):
+    args = ['_%d' % i for i in xrange(len(inargs))]
+    return _generate_template(template2, functype, args, args[::-1])
+
+
+#==========================================================================
 
 class MagicMethodsGenerator(ApiPlumbingGenerator):
     # requires populated self.context.dispatcher_methods
 
     RUN_INPUTS = 'MAGICMETHODS'
+    
     def _run(self, magicmethods_info):
         self._normal_magicmethods = []
         self._swapped_magicmethods = []
@@ -47,11 +51,11 @@ class MagicMethodsGenerator(ApiPlumbingGenerator):
         
         if py_swapped_field_name is not None:
             needswap = MAGICMETHOD_NEEDSWAP_YES
-            swapped_template = _swapped_template(dispatcher_method_name, mgd_args, swapped_template2)
+            swapped_template = _generate_swapped_template(swapped_template2, dispatcher_method_name, mgd_args)
             self._swapped_magicmethods.append(MAGICMETHOD_CASE % (
                 c_field_name, py_swapped_field_name, MAGICMETHOD_NEEDSWAP_NO, native_spec, swapped_template))
         
-        template = _normal_template(dispatcher_method_name, mgd_args, template2)
+        template = _generate_normal_template(template2, dispatcher_method_name, mgd_args)
         self._normal_magicmethods.append(MAGICMETHOD_CASE % (
             c_field_name, py_field_name, needswap, native_spec, template))
 

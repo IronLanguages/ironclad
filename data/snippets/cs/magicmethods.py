@@ -1,6 +1,7 @@
 
 from common import FILE_TEMPLATE
 
+
 #================================================================================================
 
 MAGICMETHODS_TEMPLATE = """\
@@ -32,19 +33,22 @@ MAGICMETHODS_TEMPLATE = """\
 
 MAGICMETHODS_FILE_TEMPLATE = FILE_TEMPLATE % MAGICMETHODS_TEMPLATE
 
+
 #================================================================================================
 
 MAGICMETHOD_CASE = """\
                 case "%s":
-                    name = "%s";%s
+                    name = "%s";
+%s
                     dgtType = typeof(dgt_%s);
                     template = @"%s";
                     break;"""
 
 MAGICMETHOD_NEEDSWAP_NO = ''
 
-MAGICMETHOD_NEEDSWAP_YES = """
+MAGICMETHOD_NEEDSWAP_YES = """\
                     needGetSwappedInfo = true;"""
+
 
 #================================================================================================
 
@@ -71,3 +75,4 @@ def {0}(self, *args, **kwargs):
     '''{1}'''
     return self._dispatcher.%(functype)s('{2}{0}', self, args, kwargs)
 _ironclad_class_attrs['{0}'] = {0}"""
+

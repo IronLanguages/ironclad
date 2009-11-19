@@ -11,6 +11,7 @@ DISPATCHER_TEMPLATE = """\
 
 DISPATCHER_FILE_TEMPLATE = FILE_TEMPLATE % DISPATCHER_TEMPLATE
 
+
 #================================================================================================
 
 FIELD_TEMPLATE = """\
@@ -46,25 +47,27 @@ FIELD_TEMPLATE = """\
             }
         }"""
 
+
 #================================================================================================
 
 METHOD_TEMPLATE = """\
-        %(signature)s
+%(signature)s
         {
             this.mapper.EnsureGIL();
             try
             {
 %(translate_objs)s
-                %(store_ret)s%(call)s
+%(store_ret)s
+%(call_dgt)s
 %(cleanup_objs)s
-                %(handle_ret)s
+%(handle_ret)s
                 PythonExceptions.BaseException error = (PythonExceptions.BaseException)this.mapper.LastException;
                 if (error != null)
                 {
                     this.mapper.LastException = null;
                     throw error.clsException;
                 }
-                %(return_ret)s
+%(return_ret)s
             }
             finally
             {
@@ -72,12 +75,29 @@ METHOD_TEMPLATE = """\
             }
         }"""
 
-SIGNATURE_TEMPLATE = "public %(rettype)s %(name)s(%(arglist)s)"
 
-CALL_TEMPLATE = "((dgt_%(dgttype)s)(this.table[key]))(%(arglist)s);"
+#================================================================================================
+
+SIGNATURE_TEMPLATE = """\
+        public %(rettype)s %(name)s(%(arglist)s)"""
+
+
+#================================================================================================
+
+CALL_DGT_TEMPLATE = """\
+                    ((dgt_%(spec)s)(this.table[key]))(%(arglist)s);"""
+
+
+#================================================================================================
 
 TRANSLATE_OBJ_TEMPLATE = """\
                 IntPtr ptr%(index)d = this.mapper.Store(arg%(index)d);"""
+
+CLEANUP_OBJ_TEMPLATE = """\
+                if (ptr%(index)d != IntPtr.Zero)
+                {
+                    this.mapper.DecRef(ptr%(index)d);
+                }"""
 
 TRANSLATE_NULLABLE_KWARGS_TEMPLATE = """\
                 IntPtr ptr%(index)d = IntPtr.Zero;
@@ -86,21 +106,33 @@ TRANSLATE_NULLABLE_KWARGS_TEMPLATE = """\
                     ptr%(index)d = this.mapper.Store(arg%(index)d);
                 }"""
 
-CLEANUP_OBJ_TEMPLATE = """\
-                if (ptr%(index)d != IntPtr.Zero)
-                {
-                    this.mapper.DecRef(ptr%(index)d);
-                }"""
+
+#================================================================================================
 
 NULL_ARG = 'IntPtr.Zero'
 
 MODULE_ARG = 'this.modulePtr'
 
-ASSIGN_RETPTR = 'IntPtr retptr = '
 
-ASSIGN_RET_TEMPLATE = '%s ret = '
+#================================================================================================
 
-HANDLE_RET_NULL = """object ret = null;
+ASSIGN_RETPTR = """\
+                IntPtr retptr = """
+
+ASSIGN_RET_TEMPLATE = """\
+                %s ret = """
+
+
+#================================================================================================
+
+SIMPLE_RETURN = """\
+                return ret;"""
+
+
+#================================================================================================
+
+HANDLE_RET_NULL = """\
+                object ret = null;
                 if (retptr == IntPtr.Zero)
                 {
                     if (this.mapper.LastException == null)
@@ -118,7 +150,11 @@ DEFAULT_HANDLE_RETPTR = HANDLE_RET_NULL % 'new NullReferenceException(key)'
 
 ITERNEXT_HANDLE_RETPTR = HANDLE_RET_NULL % 'PythonOps.StopIteration()'
                 
-THROW_RET_NEGATIVE = """if (ret < 0)
+
+#================================================================================================
+
+THROW_RET_NEGATIVE = """\
+                if (ret < 0)
                 {
                     if (this.mapper.LastException == null)
                     {
@@ -126,7 +162,11 @@ THROW_RET_NEGATIVE = """if (ret < 0)
                     }
                 }"""
 
-HANDLE_RET_DESTRUCTOR = """this.mapper.DecRef(ptr0);
+
+#================================================================================================
+
+HANDLE_RET_DESTRUCTOR = """\
+                this.mapper.DecRef(ptr0);
                 this.mapper.Unmap(ptr0);"""
 
-SIMPLE_RETURN = 'return ret;'
+

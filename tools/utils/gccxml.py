@@ -7,6 +7,9 @@ from pygccxml import declarations as decl
 from pygccxml.parser.config import config_t
 from pygccxml.parser.source_reader import source_reader_t
 
+from tools.utils.funcspec import FuncSpec
+
+
 #===============================================================================
 # ugly patch
 
@@ -14,14 +17,52 @@ if sys.platform == 'cli':
     # we're not trying to invoke gccxml anyway, so this shouldn't matter
     pygccxml.parser.config.gccxml_configuration_t.raise_on_wrong_settings = lambda _: None
 
+
 #===============================================================================
-# convert pygccxml types into intermediate representation
-# suitable for later conversion as defined in platform.py
+# read generated xml
+
+def read_gccxml(path):
+    return source_reader_t(config_t()).read_xml_file(path)[0]
+
+
+#===============================================================================
+# moderately cute name-matcher-factory and products
+# example usage:
+#     ns.free_functions(prefixed('PyString'))
+#     ns.free_functions(prefixed('PyString PyList'))
+#     ns.free_functions(containing('StringAnd InitModule'))
+
+def _make_querymaker(decider):
+    def _get_match(target):
+        return lambda obj: decider(obj.name, target)
+    
+    def querymaker(targets):
+        if isinstance(targets, basestring):
+            matches = map(_get_match, targets.split())
+        else:
+            matches = [_get_match(targets)]
+        
+        def query(target):
+            for match in matches:
+                if match(target):
+                    return True
+        
+        return query
+    
+    return querymaker
+
+prefixed = _make_querymaker(str.startswith)
+containing = _make_querymaker(str.__contains__)
+in_set = _make_querymaker(lambda name, target: name in target)
+
+
+#===============================================================================
+# convert pygccxml types into ictypes
 
 _DECL_HANDLERS = {
     'Py_complex':           'cpx',
     'PyGILState_STATE':     'int', # has worked well enough so far
-    'Py_UNICODE':           'uchar',
+    'Py_UNICODE':           'ucchar',
     'PyThread_type_lock':   'ptr', # has worked well enough so far
     'size_t':               'size',
     'Py_ssize_t':           'ssize',
@@ -65,21 +106,32 @@ _TYPE_HANDLERS = {
     decl.ellipsis_t:                _ret('...'),
 }
 
-def _get_type_name(t):
+def _get_ictype(t):
     default = _ret('?%s %s?' % (type(t), t))
     handler = _TYPE_HANDLERS.get(type(t), default)
     return handler(t)
+
+
+#===============================================================================
+# convert pygccxml functions into FuncSpecs
 
 _FUNC_HANDLERS = {
     decl.free_function_t:   lambda f: f.function_type(),
     decl.variable_t:        lambda v: v.type.declaration.type.base,
 }
 
-def _get_func_info(func):
+def _get_funcspec(func):
     func_type = _FUNC_HANDLERS[type(func)](func)
-    ret_type = _get_type_name(func_type.return_type)
-    arg_types = ''.join(map(_get_type_name, func_type.arguments_types)) or 'void'
-    return func.name, '_'.join((ret_type, arg_types))
+    ret = _get_ictype(func_type.return_type)
+    args = map(_get_ictype, func_type.arguments_types)
+    return func.name, FuncSpec(ret, args)
+
+def generate_api_funcspecs(items):
+    return map(_get_funcspec, items)
+
+
+#===============================================================================
+# convert pygccxml structs into struct specs
 
 _STRUCT_HANDLERS = {
     decl.class_t:           lambda f: f.get_members(),
@@ -91,55 +143,11 @@ def _get_struct_info(struct):
     members = [m for m in struct_members if isinstance(m, decl.variable_t)]
     struct_spec = []
     for member in members:
-        struct_spec.append((member.name, _get_type_name(member.type)))
+        struct_spec.append((member.name, _get_ictype(member.type)))
     return struct.name, tuple(struct_spec)
-
-#===============================================================================
-# moderately cute name-matcher-factory
-
-def makequerymaker(decider):
-    def _get_match(target):
-        return lambda obj: decider(obj.name, target)
-    def querymaker(targets):
-        if isinstance(targets, basestring):
-            matches = map(_get_match, targets.split())
-        else:
-            matches = [_get_match(targets)]
-        def query(target):
-            for match in matches:
-                if match(target):
-                    return True
-        return query
-    return querymaker
-
-prefixed = makequerymaker(str.startswith)
-containing = makequerymaker(str.__contains__)
-in_set = makequerymaker(lambda name, target: name in target)
-
-# example usage:
-#     ns.free_functions(prefixed('PyString'))
-#     ns.free_functions(prefixed('PyString PyList'))
-#     ns.free_functions(containing('StringAnd InitModule'))
-
-
-#===============================================================================
-# read generated xml
-
-def read_gccxml(path):
-    return source_reader_t(config_t()).read_xml_file(path)[0]
-
-#===============================================================================
-
-def generate_api_signatures(items):
-    signatures = dict(map(_get_func_info, items))
-    for name in signatures.keys():
-        if 'PyString' in name:
-            # we don't want these particular char* arguments to be marshalled automatically
-            signatures[name] = signatures[name].replace('str', 'ptr')
-    return signatures.items()
-
-#===============================================================================
 
 def generate_api_structs(structs):
     return map(_get_struct_info, structs)
+
+
 

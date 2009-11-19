@@ -2,30 +2,40 @@
 from data.snippets.cs.pythonstructs import *
 
 from tools.utils.apiplumbing import ApiPlumbingGenerator
-from tools.utils.type_codes import ICTYPE_2_NATIVETYPE, NATIVETYPE_2_MGDTYPE
+from tools.utils.ictypes import native_ictype, VALID_ICTYPES
+from tools.utils.platform import ICTYPE_2_MGDTYPE
 
 
-def _extract_field(field_spec):
-    name, ic_type = field_spec
-    # FIXME? we just assume anything we don't recognise is a typedeffed function ptr
-    dgt_type = ICTYPE_2_NATIVETYPE.get(ic_type, 'ptr')
-    actual_type = NATIVETYPE_2_MGDTYPE[dgt_type]
-    return STRUCT_FIELD_TEMPLATE % (actual_type, name)
+#==========================================================================
 
-def _generate_struct(struct_spec):
+def _generate_field_code(field_spec):
+    name, ictype = field_spec
+    if ictype not in VALID_ICTYPES:
+        # FIXME: this is not necessarily a function ptr
+        # ...but it has been in all the cases we've seen
+        ictype = 'ptr'
+    
+    field_type = ICTYPE_2_MGDTYPE[native_ictype(ictype)]
+    return STRUCT_FIELD_TEMPLATE % (field_type, name)
+
+def _generate_struct_code(struct_spec):
     name, fields = struct_spec
-    fields_code = '\n'.join(map(_extract_field, fields))
+    fields_code = '\n'.join(
+        map(_generate_field_code, fields))
     return STRUCT_TEMPLATE % (name, fields_code)
 
-def _generate_structs(struct_specs):
+def _generate_structs_code(struct_specs):
     return STRUCTS_FILE_TEMPLATE % '\n\n'.join(
-        map(_generate_struct, sorted(struct_specs)))
+        map(_generate_struct_code, sorted(struct_specs)))
     
+
+#==========================================================================
 
 class PythonStructsGenerator(ApiPlumbingGenerator):
     # no self.context dependencies
     
     RUN_INPUTS = 'MGD_API_STRUCTS'
+    
     def _run(self, mgd_api_structs):
-        return _generate_structs(mgd_api_structs)
+        return _generate_structs_code(mgd_api_structs)
 

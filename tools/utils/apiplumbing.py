@@ -1,7 +1,4 @@
 
-from tools.utils.codegen import pack_spec, unpack_spec
-from tools.utils.type_codes import ICTYPES, ICTYPE_2_NATIVETYPE
-
 
 class ApiPlumbingContext(object):
 
@@ -9,6 +6,8 @@ class ApiPlumbingContext(object):
         self.dgt_specs = set()
         self.dispatcher_methods = {}
 
+
+#==========================================================================
 
 class ApiPlumbingGenerator(object):
 
@@ -25,12 +24,6 @@ class ApiPlumbingGenerator(object):
         keys = self.RUN_INPUTS.split()
         args = [inputs[key] for key in keys]
         return self._run(*args)
-    
-    def _unpack_ic_spec(self, ic_spec):
-        ic_ret, ic_args = unpack_spec(ic_spec, ICTYPES)
-        native_spec = pack_spec(ic_ret, ic_args, ICTYPE_2_NATIVETYPE)
-        self.context.dgt_specs.add(native_spec)
-        return native_spec, ic_ret, ic_args
 
 
 #==========================================================================
@@ -50,7 +43,7 @@ _acceptable_generator_order = (
     DelegatesGenerator,     # requires Dispatcher, PythonApi
 )
 
-def generate_api_plumbing(inputs):
+def generate_apiplumbing(inputs):
     context = ApiPlumbingContext()
     def _generate_file(generator_type):
         return generator_type.output_name(), generator_type(context).run(inputs)

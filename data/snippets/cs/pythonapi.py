@@ -1,6 +1,7 @@
 
 from common import FILE_TEMPLATE
 
+
 #================================================================================================
 
 PYTHONAPI_TEMPLATE = """\
@@ -42,37 +43,40 @@ PYTHONAPI_TEMPLATE = """\
 
 PYTHONAPI_FILE_TEMPLATE = FILE_TEMPLATE % PYTHONAPI_TEMPLATE
 
+
 #================================================================================================
 
-PYTHONAPI_METHOD_TEMPLATE = """\
+METHOD_TEMPLATE = """\
         public virtual %(return_type)s %(symbol)s(%(arglist)s)
         {
             Console.WriteLine("Error: %(symbol)s is not yet implemented");
             throw new NotImplementedException("%(symbol)s");
         }"""
         
-PYTHONAPI_METHOD_CASE = """\
-                case "%(symbol)s":
-                    this.dgtMap[name] = new dgt_%(dgt_type)s(this.%(symbol)s);
-                    break;"""
-
-#================================================================================================
-        
-PYTHONAPI_NOT_IMPLEMENTED_METHOD_TEMPLATE = """\
+METHOD_NOT_IMPL_TEMPLATE = """\
         public void %(symbol)s()
         {
             Console.WriteLine("Error: %(symbol)s is not yet implemented");
             throw new NotImplementedException("%(symbol)s");
         }"""
+
+
+#================================================================================================
+        
+GETADDRESS_CASE_TEMPLATE = """\
+                case "%(symbol)s":
+                    this.dgtMap[name] = new dgt_%(dgt_type)s(this.%(symbol)s);
+                    break;"""
                     
-PYTHONAPI_NOT_IMPLEMENTED_METHOD_CASE = """\
+GETADDRESS_CASE_NOT_IMPL_TEMPLATE = """\
                 case "%(symbol)s":
                     this.dgtMap[name] = new dgt_void_void(this.%(symbol)s);
                     break;"""
 
+
 #================================================================================================
 
-PYTHONAPI_DATA_ITEM_TEMPLATE = """\
+DATA_PROPERTY_TEMPLATE = """\
         public virtual void Fill_%(symbol)s(IntPtr address) { ; }
         public IntPtr %(symbol)s
         {
@@ -87,8 +91,14 @@ PYTHONAPI_DATA_ITEM_TEMPLATE = """\
             }
         }"""
 
-PYTHONAPI_DATA_ITEM_CASE = """\
+
+#================================================================================================
+
+SETDATA_CASE_TEMPLATE = """\
                 case "%(symbol)s":
                     this.Fill_%(symbol)s(address);
                     this.dataMap["%(symbol)s"] = address;
                     break;"""
+
+
+

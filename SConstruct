@@ -71,7 +71,7 @@ if WIN32:
 COMPILE_IRONCLAD_FLAGS = '-DIRONCLAD -DPy_BUILD_CORE'
 OBJ_CMD = '$CC $CCFLAGS -o $TARGET -c $SOURCE'
 DLL_CMD = '$CC $CCFLAGS -shared -o $TARGET $SOURCES'
-GCCXML_CMD = ' '.join((GCCXML_CC1PLUS, COMPILE_IRONCLAD_FLAGS, '$INCLUDES -D__GNUC__ %s $SOURCE -fxml="$TARGET"' % GCCXML_INSERT))
+GCCXML_CMD = ' '.join((GCCXML_CC1PLUS, COMPILE_IRONCLAD_FLAGS, '-I$CPPPATH -D__GNUC__ %s $SOURCE -fxml="$TARGET"' % GCCXML_INSERT))
 PYTHON26OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
 PYTHON26DLL_CMD = DLL_CMD + ' -export-all-symbols'
 COMMON = dict(IPY=IPY, IPY_DIR=IPY_DIR)
@@ -92,7 +92,7 @@ native['BUILDERS']['Obj'] = Builder(action=OBJ_CMD, **c_obj_kwargs)
 native['BUILDERS']['Python26Obj'] = Builder(action=PYTHON26OBJ_CMD, CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include', **c_obj_kwargs)
 native['BUILDERS']['Dll'] = Builder(action=DLL_CMD, suffix=DLL_SUFFIX)
 native['BUILDERS']['Python26Dll'] = native['BUILDERS']['Dll']
-native['BUILDERS']['GccXml'] = Builder(action=GCCXML_CMD, INCLUDES='-Istub/Include', source_scanner=CScanner())
+native['BUILDERS']['GccXml'] = Builder(action=GCCXML_CMD, CPPPATH='stub/Include', source_scanner=CScanner())
 
 if WIN32:
     # If, RIGHT NOW*, no backup of libmsvcr90.a exists, create one
@@ -144,12 +144,12 @@ buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Includ
 native.Command(buildstub_out, buildstub_src,
     '$IPY tools/generatestub.py data/api stub')
 
-# Generate information from python headers etc
-api_xml = native.GccXml('data/api/_api.generated.xml', 'stub/stubmain.c')
-
 # Compile stub code
 jumps_obj = native.Object('stub/jumps.generated.asm')
 stubmain_obj = native.Python26Obj('stub/stubmain.c')
+
+# Generate information from python headers etc
+api_xml = native.GccXml('data/api/_api.generated.xml', 'stub/stubmain.c')
 
 # Build and link python26.dll
 cpy_src_dirs = 'Modules Objects Parser Python'
@@ -193,7 +193,7 @@ api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
 managed.Command(api_out, api_src,
     '$IPY tools/generateapiplumbing.py data/api src')
 
-mapper_names = '_exceptions _fill_types _numbers_convert_c2py _numbers_convert_py2c _operator _store_dispatch'
+mapper_names = [name for name in os.listdir('data/mapper') if name.startswith('_')]
 mapper_src = pathmap('data/mapper', mapper_names)
 mapper_out = submap('src/PythonMapper%s.Generated.cs', mapper_names)
 managed.Command(mapper_out, mapper_src,
@@ -208,7 +208,6 @@ managed.Command(snippets_out, snippets_src,
 # Build the actual managed library
 
 before_test(managed.Dll('build/ironclad/ironclad', Glob('src/*.cs')))
-
 
 #===============================================================================
 #===============================================================================

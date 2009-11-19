@@ -1,6 +1,7 @@
 
 from common import FILE_TEMPLATE
 
+
 #================================================================================================
 
 PYTHONMAPPER_TEMPLATE = """\
@@ -11,6 +12,7 @@ PYTHONMAPPER_TEMPLATE = """\
 
 PYTHONMAPPER_FILE_TEMPLATE = FILE_TEMPLATE % PYTHONMAPPER_TEMPLATE
 
+
 #================================================================================================
 
 EXCEPTION_TEMPLATE = """\
@@ -20,17 +22,19 @@ EXCEPTION_TEMPLATE = """\
             CPyMarshal.WritePtr(addr, value);
         }"""
 
+
 #================================================================================================
 
-STORE_METHOD_TEMPLATE = """\
+STOREDISPATCH_TEMPLATE = """\
         private IntPtr StoreDispatch(object obj)
         {
 %s
             return this.StoreObject(obj);
         }"""
 
-STORE_TYPE_TEMPLATE = """\
+STOREDISPATCH_TYPE_TEMPLATE = """\
             if (obj is %(type)s) { return this.StoreTyped((%(type)s)obj); }"""
+
 
 #================================================================================================
 
@@ -50,6 +54,7 @@ OPERATOR_TEMPLATE = """\
             }
         }"""
 
+
 #================================================================================================
 
 C2PY_TEMPLATE = """\
@@ -58,6 +63,7 @@ C2PY_TEMPLATE = """\
         {
             return this.Store(%(cast)svalue);
         }"""
+
 
 #================================================================================================
 
@@ -75,6 +81,7 @@ PY2C_TEMPLATE = """\
                 return %(default)s;
             }
         }"""
+
 
 #================================================================================================
 

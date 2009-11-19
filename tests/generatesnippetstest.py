@@ -7,7 +7,7 @@ from tests.utils.process import spawn
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
 
-from tools.utils.file import read, write
+from tools.utils.io import read, write
 
 
 class GenerateMapperTest(TestCase):

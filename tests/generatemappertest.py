@@ -7,7 +7,7 @@ from tests.utils.process import spawn
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
 
-from tools.utils.file import read, write
+from tools.utils.io import read, write
 
 
 class GenerateMapperTest(TestCase):
@@ -16,10 +16,10 @@ class GenerateMapperTest(TestCase):
         src = tempfile.mkdtemp()
         write(src, '_exceptions', EXCEPTIONS)
         write(src, '_fill_types', FILL_TYPES)
-        write(src, '_numbers_convert_c2py', NUMBERS_CONVERT_C2PY)
-        write(src, '_numbers_convert_py2c', NUMBERS_CONVERT_PY2C)
+        write(src, '_numbers_c2py', NUMBERS_C2PY)
+        write(src, '_numbers_py2c', NUMBERS_PY2C)
         write(src, '_operator', OPERATOR)
-        write(src, '_store_dispatch', STORE)
+        write(src, '_storedispatch', STOREDISPATCH)
 
         dst = tempfile.mkdtemp()
         result = spawn('ipy', 'tools/generatemapper.py', src, dst)
@@ -31,10 +31,10 @@ class GenerateMapperTest(TestCase):
         
         assertFinds('PythonMapper_exceptions', EXPECTED_EXCEPTIONS)
         assertFinds('PythonMapper_fill_types', EXPECTED_FILL_TYPES)
-        assertFinds('PythonMapper_numbers_convert_c2py', EXPECTED_NUMBERS_CONVERT_C2PY)
-        assertFinds('PythonMapper_numbers_convert_py2c', EXPECTED_NUMBERS_CONVERT_PY2C)
+        assertFinds('PythonMapper_numbers_c2py', EXPECTED_NUMBERS_C2PY)
+        assertFinds('PythonMapper_numbers_py2c', EXPECTED_NUMBERS_PY2C)
         assertFinds('PythonMapper_operator', EXPECTED_OPERATOR)
-        assertFinds('PythonMapper_store_dispatch', EXPECTED_STORE)
+        assertFinds('PythonMapper_storedispatch', EXPECTED_STOREDISPATCH)
 
         shutil.rmtree(src)
         shutil.rmtree(dst)
@@ -64,13 +64,13 @@ namespace Ironclad
 }
 """
 
-STORE = """
+STOREDISPATCH = """
 string
 Tuple
 Dict
 """
 
-EXPECTED_STORE = """
+EXPECTED_STOREDISPATCH = """
 namespace Ironclad
 {
     public partial class PythonMapper : PythonApi
@@ -129,13 +129,13 @@ namespace Ironclad
 }
 """
 
-NUMBERS_CONVERT_C2PY = """
+NUMBERS_C2PY = """
 
 PyInt_FromLong int
 PyLong_FromLongLong long (BigInteger)
 """
 
-EXPECTED_NUMBERS_CONVERT_C2PY = """
+EXPECTED_NUMBERS_C2PY = """
 namespace Ironclad
 {
     public partial class PythonMapper : PythonApi
@@ -155,13 +155,13 @@ namespace Ironclad
 }
 """
 
-NUMBERS_CONVERT_PY2C = """
+NUMBERS_PY2C = """
 
 PyFoo_AsBar MakeSomething double -1.0
 PyPing_AsPong MakeSomethingElse pong bat .ToPong()
 """
 
-EXPECTED_NUMBERS_CONVERT_PY2C = """
+EXPECTED_NUMBERS_PY2C = """
 namespace Ironclad
 {
     public partial class PythonMapper : PythonApi
