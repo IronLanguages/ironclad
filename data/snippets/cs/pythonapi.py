@@ -10,7 +10,7 @@ PYTHONAPI_TEMPLATE = """\
         protected Dictionary<string, Delegate> dgtMap = new Dictionary<string, Delegate>();
         private Dictionary<string, IntPtr> dataMap = new Dictionary<string, IntPtr>();
 
-%s
+%(api_methods)s
 
         public virtual IntPtr GetAddress(string name)
         {
@@ -21,7 +21,7 @@ PYTHONAPI_TEMPLATE = """\
 
             switch (name)
             {
-%s
+%(getaddress_cases)s
 
                 default:
                     return IntPtr.Zero;
@@ -29,14 +29,13 @@ PYTHONAPI_TEMPLATE = """\
             return Marshal.GetFunctionPointerForDelegate(this.dgtMap[name]);
         }
 
-
-%s
+%(data_properties)s
 
         public void SetData(string name, IntPtr address)
         {
             switch (name)
             {
-%s
+%(setdata_cases)s
             }
         }
     }"""
@@ -101,4 +100,4 @@ SETDATA_CASE_TEMPLATE = """\
                     break;"""
 
 
-
+#================================================================================================

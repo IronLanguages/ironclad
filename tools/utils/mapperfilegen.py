@@ -83,4 +83,6 @@ class MapperFileGenerator(object):
         
         self._generate_mapper_file_code("_fill_types",
             extract=extract_fill_type)
+    
 
+#==========================================================================

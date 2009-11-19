@@ -4,8 +4,6 @@
 # to be called from the stub library. It's used to generate a header for 
 # inclusion by C code, and in PythonApi generation.
 
-# managed implementations need not exist
-
 destructor IC_PyBaseObject_Dealloc;
 destructor IC_PyInstance_Dealloc;
 destructor IC_PyList_Dealloc;

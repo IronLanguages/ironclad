@@ -12,12 +12,12 @@
 # PyTypeObject
 # tp_new, tp_del and tp_richcmp are handled elsewhere
 
-tp_init                 initproc                __init__        {'template2': SQUISHKWARGS_TEMPLATE_TEMPLATE}
+tp_init                 initproc                __init__        {'template2': SQUISHKWARGS_TEMPLATE2}
 tp_iter                 getiterfunc             __iter__
 tp_iternext             iternextfunc            next
 tp_str                  reprfunc                __str__
 tp_repr                 reprfunc                __repr__
-tp_call                 ternaryfunc             __call__        {'template2': SQUISHKWARGS_TEMPLATE_TEMPLATE}
+tp_call                 ternaryfunc             __call__        {'template2': SQUISHKWARGS_TEMPLATE2}
 tp_hash                 hashfunc                __hash__
 tp_compare              cmpfunc                 __cmp__
 tp_getattr              getattrfunc             __getattr__     # tweaks needed eventually? (getattro)
@@ -26,23 +26,23 @@ tp_getattr              getattrfunc             __getattr__     # tweaks needed 
 #================================================================================================
 # PyNumberMethods
 
-nb_add                  binaryfunc              __add__         {'py_swapped_field_name': '__radd__'}
-nb_subtract             binaryfunc              __sub__         {'py_swapped_field_name': '__rsub__'}
-nb_multiply             binaryfunc              __mul__         {'py_swapped_field_name': '__rmul__'}
-nb_divide               binaryfunc              __div__         {'py_swapped_field_name': '__rdiv__'}
-nb_remainder            binaryfunc              __mod__         {'py_swapped_field_name': '__rmod__'}
-nb_divmod               binaryfunc              __divmod__      {'py_swapped_field_name': '__rdivmod__'}
-nb_power                ternaryfunc             __pow__         {'py_swapped_field_name': '__rpow__', 'template2': POW_TEMPLATE_TEMPLATE, 'swapped_template2': POW_SWAPPED_TEMPLATE_TEMPLATE}
+nb_add                  binaryfunc              __add__         {'py_swapped_field': '__radd__'}
+nb_subtract             binaryfunc              __sub__         {'py_swapped_field': '__rsub__'}
+nb_multiply             binaryfunc              __mul__         {'py_swapped_field': '__rmul__'}
+nb_divide               binaryfunc              __div__         {'py_swapped_field': '__rdiv__'}
+nb_remainder            binaryfunc              __mod__         {'py_swapped_field': '__rmod__'}
+nb_divmod               binaryfunc              __divmod__      {'py_swapped_field': '__rdivmod__'}
+nb_power                ternaryfunc             __pow__         {'py_swapped_field': '__rpow__', 'template2': POW_TEMPLATE2, 'swapped_template2': POW_SWAPPED_TEMPLATE2}
 nb_negative             unaryfunc               __neg__
 nb_positive             unaryfunc               __pos__
 nb_absolute             unaryfunc               __abs__
 nb_nonzero              inquiry                 __nonzero__
 nb_invert               unaryfunc               __invert__
-nb_lshift               binaryfunc              __lshift__      {'py_swapped_field_name': '__rlshift__'}
-nb_rshift               binaryfunc              __rshift__      {'py_swapped_field_name': '__rrshift__'}
-nb_and                  binaryfunc              __and__         {'py_swapped_field_name': '__rand__'}
-nb_xor                  binaryfunc              __xor__         {'py_swapped_field_name': '__rxor__'}
-nb_or                   binaryfunc              __or__          {'py_swapped_field_name': '__ror__'}
+nb_lshift               binaryfunc              __lshift__      {'py_swapped_field': '__rlshift__'}
+nb_rshift               binaryfunc              __rshift__      {'py_swapped_field': '__rrshift__'}
+nb_and                  binaryfunc              __and__         {'py_swapped_field': '__rand__'}
+nb_xor                  binaryfunc              __xor__         {'py_swapped_field': '__rxor__'}
+nb_or                   binaryfunc              __or__          {'py_swapped_field': '__ror__'}
 nb_int                  unaryfunc               __int__
 nb_long                 unaryfunc               __long__
 nb_float                unaryfunc               __float__
@@ -53,14 +53,14 @@ nb_inplace_subtract     binaryfunc              __isub__
 nb_inplace_multiply     binaryfunc              __imul__
 nb_inplace_divide       binaryfunc              __idiv__
 nb_inplace_remainder    binaryfunc              __imod__
-nb_inplace_power        ternaryfunc             __ipow__        {'template2': POW_TEMPLATE_TEMPLATE}
+nb_inplace_power        ternaryfunc             __ipow__        {'template2': POW_TEMPLATE2}
 nb_inplace_lshift       binaryfunc              __ilshift__
 nb_inplace_rshift       binaryfunc              __irshift__
 nb_inplace_and          binaryfunc              __iand__
 nb_inplace_xor          binaryfunc              __ixor__
 nb_inplace_or           binaryfunc              __ior__
-nb_true_divide          binaryfunc              __truediv__     {'py_swapped_field_name': '__rtruediv__'}
-nb_floor_divide         binaryfunc              __floordiv__    {'py_swapped_field_name': '__rfloordiv__'}
+nb_true_divide          binaryfunc              __truediv__     {'py_swapped_field': '__rtruediv__'}
+nb_floor_divide         binaryfunc              __floordiv__    {'py_swapped_field': '__rfloordiv__'}
 nb_inplace_true_divide  binaryfunc              __itruediv__
 nb_inplace_floor_divide binaryfunc              __ifloordiv__
 nb_index                unaryfunc               __index__

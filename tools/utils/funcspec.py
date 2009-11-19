@@ -99,4 +99,6 @@ def _get_funcspec_data(input):
 
 def FuncSpec(*args):
     return _FuncSpec(_get_funcspec_data(args)).canonical
+    
 
+#==========================================================================

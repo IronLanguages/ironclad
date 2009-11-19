@@ -171,6 +171,9 @@ def _get_structspec(struct):
 @_combine_calls
 def get_structspecs(structs):
     return map(_get_structspec, structs)
+    
+
+#==========================================================================
 
 
 

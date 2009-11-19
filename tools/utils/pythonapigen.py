@@ -63,23 +63,27 @@ class PythonApiGenerator(ApiPlumbingGenerator):
             method_infos.append(self._generate_method_info(name, spec))
         not_implemented_method_infos = _symbol_dicts(not_implemented)
         
-        methods_code = _glom_templates('\n\n',
+        api_methods_code = _glom_templates('\n\n',
             (METHOD_TEMPLATE, method_infos), 
             (METHOD_NOT_IMPL_TEMPLATE, not_implemented_method_infos),
         )
-        methods_switch_code = _glom_templates('\n',
+        getaddress_cases_code = _glom_templates('\n',
             (GETADDRESS_CASE_TEMPLATE, method_infos),
             (GETADDRESS_CASE_NOT_IMPL_TEMPLATE, not_implemented_method_infos),
         )
 
         mgd_data_infos = _symbol_dicts(self.MGD_API_DATA)
-        data_code = _glom_templates("\n\n",
+        data_properties_code = _glom_templates("\n\n",
             (DATA_PROPERTY_TEMPLATE, mgd_data_infos))
-        data_switch_code = _glom_templates("\n",
+        setdata_cases_code = _glom_templates("\n",
             (SETDATA_CASE_TEMPLATE, mgd_data_infos))
 
-        return PYTHONAPI_FILE_TEMPLATE % (
-            methods_code, methods_switch_code, data_code, data_switch_code)
+        return PYTHONAPI_FILE_TEMPLATE % {
+            'api_methods': api_methods_code, 
+            'getaddress_cases': getaddress_cases_code, 
+            'data_properties': data_properties_code, 
+            'setdata_cases': setdata_cases_code
+        }
 
     def _generate_method_info(self, name, spec):
         native = spec.native
@@ -90,6 +94,6 @@ class PythonApiGenerator(ApiPlumbingGenerator):
             "return_type": native.mgd_ret,
             "arglist": native.mgd_arglist
         }
+    
 
-
-
+#==========================================================================
