@@ -12,8 +12,8 @@
 #include "token.h"
 #include "osdefs.h"
 
-// prototypes for managed functions called in C code
-#include "_mgd_function_prototypes.generated.h"
+// prototypes for managed functions which could be called from C code
+#include "_extra_functions.generated.h"
 
 // definitions for missing data
 #include "ironclad-data.c"

@@ -2,7 +2,7 @@
 from data.snippets.cs.dispatcher import *
 
 from tools.utils.apiplumbing import ApiPlumbingGenerator
-from tools.utils.funcspec import FuncSpec
+from tools.utils.gccxml import get_funcspecs, equal
 from tools.utils.ictypes import ICTYPE_2_MGDTYPE
 
 
@@ -55,6 +55,7 @@ def _generate_signature_code(name, spec):
     arglist_rest = spec.mgd_arglist
     if arglist_rest:
         arglist = ', '.join((arglist, arglist_rest))
+    
     return SIGNATURE_TEMPLATE % {
         'name': name,
         'arglist': arglist,
@@ -115,21 +116,25 @@ class DispatcherGenerator(ApiPlumbingGenerator):
     # populates self.context.dgt_specs
     # populates self.context.dispatcher_methods
     
-    RUN_INPUTS = 'DISPATCHER_FIELDS DISPATCHER_METHODS'
+    INPUTS = 'DISPATCHER_FIELDS DISPATCHER_METHODS GCCXML'
     
-    def _run(self, field_types, method_types):
-        dispatcher_fields = '\n\n'.join(
-            _starstarmap(_generate_field_code, field_types))
+    def _run(self):
+        dispatcher_fields_code = '\n\n'.join(
+            _starstarmap(_generate_field_code, self.DISPATCHER_FIELDS))
         
-        dispatcher_methods = '\n\n'.join(
-            _starstarmap(self._generate_method_code, method_types))
+        dispatcher_methods_code = '\n\n'.join(
+            _starstarmap(self._generate_method_code, self.DISPATCHER_METHODS))
         
         return DISPATCHER_FILE_TEMPLATE % '\n\n'.join(
-            (dispatcher_fields, dispatcher_methods))
+            (dispatcher_fields_code, dispatcher_methods_code))
 
+    def _get_spec(self, name):
+        _, spec = get_funcspecs(
+            self.GCCXML.typedefs(equal(name))).pop()
+        return spec
 
-    def _generate_method_code(self, name, spec, arg_tweak=None, ret_tweak='', nullable_kwargs_index=None):
-        base = FuncSpec(spec)
+    def _generate_method_code(self, name, spec_from=None, arg_tweak=None, ret_tweak='', nullable_kwargs_index=None):
+        base = self._get_spec(spec_from or name)
         native = base.native
         self.context.dgt_specs.add(native)
         

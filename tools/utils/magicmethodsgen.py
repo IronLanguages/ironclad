@@ -27,13 +27,12 @@ def _generate_swapped_template(template2, functype, inargs):
 class MagicMethodsGenerator(ApiPlumbingGenerator):
     # requires populated self.context.dispatcher_methods
 
-    RUN_INPUTS = 'MAGICMETHODS'
+    INPUTS = 'MAGICMETHODS'
     
-    def _run(self, magicmethods_info):
+    def _run(self):
         self._normal_magicmethods = []
         self._swapped_magicmethods = []
-        
-        for (args, kwargs) in magicmethods_info:
+        for (args, kwargs) in self.MAGICMETHODS:
             self._generate_magicmethod(*args, **kwargs)
         
         return MAGICMETHODS_FILE_TEMPLATE % (
