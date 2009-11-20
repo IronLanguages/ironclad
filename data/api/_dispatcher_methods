@@ -1,4 +1,4 @@
-# This file is used by tools/generateapi.py
+# This file is used by tools/generateapiplumbing.py
 
 # A Dispatcher method will be generated for every name in the first column of this file,
 # with custom codegen controlled by the kwargs column.

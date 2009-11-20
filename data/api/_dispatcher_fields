@@ -1,4 +1,4 @@
-# This file is used by tools/generateapi.py
+# This file is used by tools/generateapiplumbing.py
 
 # columns in order: 
 # get_/set_ name | C# type got/set | CPyMarshal method suffix

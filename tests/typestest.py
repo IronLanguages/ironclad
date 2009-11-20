@@ -38,7 +38,6 @@ BUILTIN_TYPES = {
     "PyNone_Type": types.NoneType,
     "PyNotImplemented_Type": types.NotImplementedType,
     "PySeqIter_Type": ItemEnumeratorType,
-    "PyCell_Type": OpaquePyCell,
     "PyFunction_Type": types.FunctionType,
     "PyMethod_Type": types.MethodType,
     "PyClass_Type": types.ClassType,
@@ -179,9 +178,8 @@ class Types_Test(TestCase):
             typePtr = getattr(mapper, _type)
             basePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base")
             
-            if typePtr not in (mapper.PySeqIter_Type, mapper.PyCell_Type):
+            if typePtr != mapper.PySeqIter_Type:
                 # PySeqIter_Type is suprrisingly tedious to turn into a proper PythonType in C#
-                # OpaquePyCellObject probably shouldn't even exist, and I don't expect it to ever be used.
                 tp_dict = mapper.Retrieve(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_dict"))
                 self.assertEquals(mapper.Retrieve(typePtr).__dict__, tp_dict)
 

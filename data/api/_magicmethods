@@ -1,4 +1,4 @@
-# This file is used by tools/generateapi.py
+# This file is used by tools/generateapiplumbing.py
 
 # columns in order: 
 # struct field | dispatcher method | python method name

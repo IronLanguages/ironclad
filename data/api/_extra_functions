@@ -1,4 +1,4 @@
-# This file is used by tools/generateapi.py and tools/generatestub.py
+# This file is used by tools/generatestub.py
 
 # this file contains C function prototypes for managed functions that need
 # to be called from the stub library. It's used to generate a header for 

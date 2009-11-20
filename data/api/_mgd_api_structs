@@ -1,4 +1,6 @@
-# this file contains the names of structs we want to translate to managed code
+# This file is used by tools/generateapiplumbing.py
+
+# names of C structs we want to translate to managed code
 
 Py_complex
 PyThreadState

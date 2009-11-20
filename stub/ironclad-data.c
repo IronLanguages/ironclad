@@ -6,7 +6,6 @@
 
 PyTypeObject PyType_Type;
 PyTypeObject PyBaseObject_Type;
-PyTypeObject PyCell_Type;
 PyTypeObject PyClass_Type;
 PyTypeObject PyInstance_Type;
 PyTypeObject PyMethod_Type;
