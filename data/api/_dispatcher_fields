@@ -1,14 +1,14 @@
 # This file is used by tools/generateapi.py
 
 # columns in order: 
-# field-reader/-writer method name | C# type got/set | CPyMarshal method suffix
+# get_/set_ name | C# type got/set | CPyMarshal method suffix
 
 # optional dict in 4th col tweaks codegen
 
-int         int         Int
-uint        uint        UInt
-long        int         Int
-ulong       uint        UInt
-double      double      Double
-ubyte       byte        Byte
-char        string      Byte    {'get_tweak': 'Builtin.chr', 'set_tweak': '(byte)Builtin.ord'}
+int                 int                 Int
+uint                uint                UInt
+long                int                 Int
+ulong               uint                UInt
+double              double              Double
+ubyte               byte                Byte
+char                string              Byte            {'get_tweak': 'Builtin.chr', 'set_tweak': '(byte)Builtin.ord'}

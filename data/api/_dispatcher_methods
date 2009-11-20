@@ -39,8 +39,7 @@ ssizessizeobjargproc    {'ret_tweak': THROW_RET_NEGATIVE}
 objobjargproc           {'ret_tweak': THROW_RET_NEGATIVE}
     
 objobjproc
-    
-destructor              {'ret_tweak': HANDLE_RET_DESTRUCTOR}
+
 getattrfunc
 setattrfunc
 cmpfunc
