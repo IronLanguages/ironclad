@@ -15,7 +15,7 @@ DISPATCHER_FILE_TEMPLATE = FILE_TEMPLATE % DISPATCHER_TEMPLATE
 #================================================================================================
 
 FIELD_TEMPLATE = """\
-        public %(mgd_type)s get_%(name)s_field(object instance, int offset)
+        public %(mgd_type)s get_%(name)s(object instance, int offset)
         {
             this.mapper.EnsureGIL();
             try
@@ -32,7 +32,7 @@ FIELD_TEMPLATE = """\
             }
         }
 
-        public void set_%(name)s_field(object instance, int offset, %(mgd_type)s value)
+        public void set_%(name)s(object instance, int offset, %(mgd_type)s value)
         {
             this.mapper.EnsureGIL();
             try
@@ -61,6 +61,7 @@ METHOD_TEMPLATE = """\
 %(assign_ret)s %(call_dgt)s
 %(cleanup_objs)s
 %(handle_ret)s
+
                 PythonExceptions.BaseException error = (PythonExceptions.BaseException)this.mapper.LastException;
                 if (error != null)
                 {
@@ -160,13 +161,6 @@ HANDLE_RET_NULL = """\
 DEFAULT_HANDLE_RETPTR = HANDLE_RET_NULL % 'new NullReferenceException(key)'
 
 ITERNEXT_HANDLE_RETPTR = HANDLE_RET_NULL % 'PythonOps.StopIteration()'
-
-
-#================================================================================================
-
-HANDLE_RET_DESTRUCTOR = """\
-                this.mapper.DecRef(ptr0);
-                this.mapper.Unmap(ptr0);"""
 
 
 #================================================================================================

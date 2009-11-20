@@ -26,7 +26,7 @@ namespace Ironclad
             this.modulePtr = module;
         }
         
-        public object get_object_field(object instance, int offset)
+        public object get_object(object instance, int offset)
         {
             this.mapper.EnsureGIL();
             try
@@ -48,7 +48,7 @@ namespace Ironclad
             }
         }
         
-        public object get_string_field(object instance, int offset)
+        public object get_string(object instance, int offset)
         {
             this.mapper.EnsureGIL();
             try
@@ -70,7 +70,7 @@ namespace Ironclad
             }
         }
         
-        public void set_object_field(object instance, int offset, object value)
+        public void set_object(object instance, int offset, object value)
         {
             this.mapper.EnsureGIL();
             try
