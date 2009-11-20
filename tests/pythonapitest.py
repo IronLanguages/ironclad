@@ -40,7 +40,6 @@ TestWrotePtr = GetTestWroteBytes(Marshal.SizeOf(IntPtr))
 
 TYPES = (
     "PyBool_Type",
-    "PyCell_Type",
     "PyClass_Type",
     "PyInstance_Type",
     "PyMethod_Type",

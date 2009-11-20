@@ -1,4 +1,4 @@
-# This file is used by tools/generateapi.py and tools/generatestub.py
+# This file is used by tools/generatestub.py and tools/generateapiplumbing.py
 
 # Symbols in this file will NOT have any of the following generated:
 # * jumptable redirections to managed code
@@ -11,6 +11,7 @@
 # no obvious ipy type to map to (buffer exists but isn't good for much yet).
 
 PyBuffer_Type
+PyCell_Type 
 PyCFunction_Type
 PyCObject_Type
 PyCode_Type
@@ -55,6 +56,11 @@ PyBuffer_FromReadWriteObject
 PyBuffer_FromMemory
 PyBuffer_FromReadWriteMemory
 PyBuffer_New
+
+# Objects/cellobject.c
+PyCell_New
+PyCell_Get
+PyCell_Set
 
 # Objects/cobject.c
 PyCObject_FromVoidPtr

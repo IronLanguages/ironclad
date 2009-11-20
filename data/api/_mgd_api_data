@@ -1,11 +1,14 @@
-# This file is used by tools/generateapi.py
+# This file is used by tools/generateapiplumbing.py
+
+# These symbols will be handled by SetData, and have Fill_ methods generated
+# Note that it wouldn't be unreasonable to have a symbol here that is fully
+# implemented in C: we could still abuse (or rename and use) the Fill_ method
+# to set up a mapping without filling anything at all.
 
 PyBool_Type 
-PyCell_Type 
 PyClass_Type 
 PyInstance_Type 
 PyMethod_Type 
-PyCode_Type 
 PyComplex_Type 
 PyWrapperDescr_Type 
 PyProperty_Type 
@@ -14,7 +17,6 @@ PyEnum_Type
 PyReversed_Type 
 PyFile_Type 
 PyFloat_Type 
-PyFrame_Type 
 PyFunction_Type 
 PyClassMethod_Type 
 PyStaticMethod_Type 
@@ -24,7 +26,6 @@ PySeqIter_Type
 PyCallIter_Type 
 PyList_Type 
 PyLong_Type 
-PyCFunction_Type 
 PyModule_Type 
 PyType_Type 
 PyBaseObject_Type 
@@ -37,7 +38,6 @@ PyBaseString_Type
 PySTEntry_Type 
 PyString_Type 
 PySymtableEntry_Type 
-PyTraceBack_Type 
 PyTuple_Type 
 PyUnicode_Type 
 PyNone_Type 
