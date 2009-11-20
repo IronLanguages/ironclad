@@ -153,7 +153,7 @@ api_xml = native.GccXml('data/api/_api.generated.xml', 'stub/stubmain.c')
 
 # Build and link python26.dll
 cpy_src_dirs = 'Modules Objects Parser Python'
-cpy_srcs = glommap(lambda x: Glob('stub/%s/*.c' % x), cpy_src_dirs)
+cpy_srcs = glommap(lambda x: native.Glob('stub/%s/*.c' % x), cpy_src_dirs)
 cpy_objs = glommap(native.Python26Obj, cpy_srcs)
 before_test(native.Python26Dll('build/ironclad/python26', stubmain_obj + jumps_obj + cpy_objs))
 
@@ -187,7 +187,7 @@ managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX, REFE
 #===============================================================================
 # Generated C#
 
-api_src = api_xml + exported_out + Glob('data/api/*') # TODO: why doesn't Glob pick up items in api_xml, exported_out?
+api_src = api_xml + exported_out + managed.Glob('data/api/*') # TODO: why doesn't Glob pick up items in api_xml, exported_out?
 api_out_names = 'Delegates Dispatcher MagicMethods PythonApi PythonStructs'
 api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
 managed.Command(api_out, api_src,
@@ -195,11 +195,11 @@ managed.Command(api_out, api_src,
 
 mapper_names = [name for name in os.listdir('data/mapper') if name.startswith('_')]
 mapper_src = pathmap('data/mapper', mapper_names)
-mapper_out = submap('src/PythonMapper%s.Generated.cs', mapper_names)
+mapper_out = submap('src/mapper/PythonMapper%s.Generated.cs', mapper_names)
 managed.Command(mapper_out, mapper_src,
-    '$IPY tools/generatemapper.py data/mapper src')
+    '$IPY tools/generatemapper.py data/mapper src/mapper')
 
-snippets_src = Glob('data/snippets/py/*.py')
+snippets_src = managed.Glob('data/snippets/py/*.py')
 snippets_out = ['src/CodeSnippets.Generated.cs']
 managed.Command(snippets_out, snippets_src,
     '$IPY tools/generatesnippets.py data/snippets/py src')
@@ -207,7 +207,8 @@ managed.Command(snippets_out, snippets_src,
 #===============================================================================
 # Build the actual managed library
 
-before_test(managed.Dll('build/ironclad/ironclad', Glob('src/*.cs')))
+ironclad_dll_src = map(managed.Glob, ('src/*.cs', 'src/mapper/*.cs'))
+before_test(managed.Dll('build/ironclad/ironclad', ironclad_dll_src))
 
 #===============================================================================
 #===============================================================================
