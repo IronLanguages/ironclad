@@ -222,22 +222,22 @@ namespace Ironclad
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "tp_basicsize", Marshal.SizeOf(typeof(PyStringObject)) - 1);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "tp_itemsize", 1);
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_str", this.GetAddress("IC_PyString_Str"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_repr", this.GetAddress("PyObject_Repr"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_str", this.GetFuncPtr("IC_PyString_Str"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_repr", this.GetFuncPtr("PyObject_Repr"));
 
             uint sqSize = (uint)Marshal.SizeOf(typeof(PySequenceMethods));
             IntPtr sqPtr = this.allocator.Alloc(sqSize);
             CPyMarshal.Zero(sqPtr, sqSize);
-            CPyMarshal.WritePtrField(sqPtr, typeof(PySequenceMethods), "sq_concat", this.GetAddress("IC_PyString_Concat_Core"));
+            CPyMarshal.WritePtrField(sqPtr, typeof(PySequenceMethods), "sq_concat", this.GetFuncPtr("IC_PyString_Concat_Core"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_as_sequence", sqPtr);
 
             uint bfSize = (uint)Marshal.SizeOf(typeof(PyBufferProcs));
             IntPtr bfPtr = this.allocator.Alloc(bfSize);
             CPyMarshal.Zero(bfPtr, bfSize);
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getreadbuffer", this.GetAddress("IC_str_getreadbuffer"));
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getwritebuffer", this.GetAddress("IC_str_getwritebuffer"));
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getsegcount", this.GetAddress("IC_str_getsegcount"));
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getcharbuffer", this.GetAddress("IC_str_getreadbuffer"));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getreadbuffer", this.GetFuncPtr("IC_str_getreadbuffer"));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getwritebuffer", this.GetFuncPtr("IC_str_getwritebuffer"));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getsegcount", this.GetFuncPtr("IC_str_getsegcount"));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getcharbuffer", this.GetFuncPtr("IC_str_getreadbuffer"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_as_buffer", bfPtr);
             
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "tp_flags", (Int32)Py_TPFLAGS.HAVE_GETCHARBUFFER);
@@ -262,10 +262,10 @@ namespace Ironclad
             IntPtr nmPtr = this.allocator.Alloc(nmSize);
             CPyMarshal.Zero(nmPtr, nmSize);
 
-            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_int", this.GetAddress("PyNumber_Int"));
-            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_long", this.GetAddress("PyNumber_Long"));
-            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_float", this.GetAddress("PyNumber_Float"));
-            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_multiply", this.GetAddress("PyNumber_Multiply"));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_int", this.GetFuncPtr("PyNumber_Int"));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_long", this.GetFuncPtr("PyNumber_Long"));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_float", this.GetFuncPtr("PyNumber_Float"));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_multiply", this.GetFuncPtr("PyNumber_Multiply"));
 
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_as_number", nmPtr);
         }
@@ -275,7 +275,7 @@ namespace Ironclad
         {
             this.AddNumberMethodsWithoutIndex(typePtr);
             IntPtr nmPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_as_number");
-            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_index", this.GetAddress("PyNumber_Index"));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_index", this.GetFuncPtr("PyNumber_Index"));
             
             Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
             flags |= Py_TPFLAGS.HAVE_INDEX;

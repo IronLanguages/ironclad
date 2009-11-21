@@ -1,28 +1,10 @@
 
-import sys
+import os, sys
 import operator
 
-import pygccxml
 from pygccxml import declarations as decl
-from pygccxml.parser.config import config_t
-from pygccxml.parser.source_reader import source_reader_t
 
 from tools.utils.funcspec import FuncSpec
-
-
-#===============================================================================
-# ugly patch
-
-if sys.platform == 'cli':
-    # we're not trying to invoke gccxml anyway, so this shouldn't matter
-    pygccxml.parser.config.gccxml_configuration_t.raise_on_wrong_settings = lambda _: None
-
-
-#===============================================================================
-# read generated xml
-
-def read_gccxml(path):
-    return source_reader_t(config_t()).read_xml_file(path)[0]
 
 
 #===============================================================================
@@ -85,32 +67,31 @@ def _handle_ptr(ptr):
 def _handle_array(array):
     if array.size != 1:
         raise NotImplementedError('array with more than one element')
-    base = array.base
-    return _TYPE_HANDLERS[type(base)](base)
+    return _get_ictype(array.base)
 
-def _ret(result):
+def _ictype(result):
     return lambda _: result
 
 _TYPE_HANDLERS = {
     decl.pointer_t:                 _handle_ptr,
     decl.declarated_t:              _handle_declarated,
     decl.array_t:                   _handle_array,
-    decl.void_t:                    _ret('void'),
-    decl.bool_t:                    _ret('bool'),
-    decl.char_t:                    _ret('char'),
-    decl.wchar_t:                   _ret('wchar'),
-    decl.int_t:                     _ret('int'),
-    decl.unsigned_int_t:            _ret('uint'),
-    decl.long_int_t:                _ret('long'),
-    decl.long_unsigned_int_t:       _ret('ulong'),
-    decl.long_long_int_t:           _ret('llong'),
-    decl.long_long_unsigned_int_t:  _ret('ullong'),
-    decl.double_t:                  _ret('double'),
-    decl.ellipsis_t:                _ret('...'),
+    decl.void_t:                    _ictype('void'),
+    decl.bool_t:                    _ictype('bool'),
+    decl.char_t:                    _ictype('char'),
+    decl.wchar_t:                   _ictype('wchar'),
+    decl.int_t:                     _ictype('int'),
+    decl.unsigned_int_t:            _ictype('uint'),
+    decl.long_int_t:                _ictype('long'),
+    decl.long_unsigned_int_t:       _ictype('ulong'),
+    decl.long_long_int_t:           _ictype('llong'),
+    decl.long_long_unsigned_int_t:  _ictype('ullong'),
+    decl.double_t:                  _ictype('double'),
+    decl.ellipsis_t:                _ictype('...'),
 }
 
 def _get_ictype(t):
-    default = _ret('?%s %s?' % (type(t), t))
+    default = _ictype('?%s %s?' % (type(t), t))
     handler = _TYPE_HANDLERS.get(type(t), default)
     return handler(t)
 

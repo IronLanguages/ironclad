@@ -2,17 +2,11 @@
 from data.snippets.cs.pythonapi import *
 
 from tools.utils.apiplumbing import ApiPlumbingGenerator
+from tools.utils.codegen import glom_templates
 from tools.utils.gccxml import get_funcspecs, in_set, prefixed
 
 
 #==========================================================================
-
-def _glom_templates(joiner, *args):
-    output = []
-    for (template, inputs) in args:
-        for input in inputs:
-            output.append(template % input)
-    return joiner.join(output)
 
 def _symbol_dicts(it):
     return [{'symbol': s} for s in sorted(it)]
@@ -57,25 +51,25 @@ class PythonApiGenerator(ApiPlumbingGenerator):
     
         method_infos = []
         not_implemented = self.EXPORTED_FUNCTIONS - self.PURE_C_SYMBOLS
-        for (name, spec) in all_mgd_functions:
+        for (name, spec) in sorted(all_mgd_functions):
             if name in not_implemented:
                 not_implemented.remove(name)
             method_infos.append(self._generate_method_info(name, spec))
         not_implemented_method_infos = _symbol_dicts(not_implemented)
         
-        api_methods_code = _glom_templates('\n\n',
+        api_methods_code = glom_templates('\n\n',
             (METHOD_TEMPLATE, method_infos), 
             (METHOD_NOT_IMPL_TEMPLATE, not_implemented_method_infos),
         )
-        getaddress_cases_code = _glom_templates('\n',
+        getaddress_cases_code = glom_templates('\n',
             (GETADDRESS_CASE_TEMPLATE, method_infos),
             (GETADDRESS_CASE_NOT_IMPL_TEMPLATE, not_implemented_method_infos),
         )
 
         mgd_data_infos = _symbol_dicts(self.MGD_API_DATA)
-        data_properties_code = _glom_templates("\n\n",
+        data_properties_code = glom_templates("\n\n",
             (DATA_PROPERTY_TEMPLATE, mgd_data_infos))
-        setdata_cases_code = _glom_templates("\n",
+        setdata_cases_code = glom_templates("\n",
             (SETDATA_CASE_TEMPLATE, mgd_data_infos))
 
         return PYTHONAPI_FILE_TEMPLATE % {

@@ -30,7 +30,7 @@ class PyFile_Type_Test(TestCase):
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         addToCleanUp(lambda: Marshal.FreeHGlobal(typeBlock))
         
-        mapper.SetData("PyFile_Type", typeBlock)
+        mapper.RegisterData("PyFile_Type", typeBlock)
         self.assertEquals(mapper.PyFile_Type, typeBlock, "type address not stored")
         self.assertEquals(mapper.Retrieve(typeBlock), file, "type not mapped")
         

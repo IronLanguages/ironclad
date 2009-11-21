@@ -3,7 +3,10 @@
 # Symbols in this file will NOT have any of the following generated:
 # * jumptable redirections to managed code
 # * virtual methods on PythonApi
-# * GetAddress/SetData registration calls or handlers
+# * GetFuncPtr entries/calls
+
+# RegisterData calls to these symbols can still be generated, if necessary;
+# just add lines to _mgd_api_data.
 
 #==============================================================================
 # These are here because, when we happen to see an object of one of
@@ -27,6 +30,7 @@ _PyLong_DigitValue
 
 #==============================================================================
 # All the rest are functions implemented somewhere amongst the C code
+# (could we/should be be generating them..?)
 
 # Objects/abstract.c
 PyObject_Cmp

@@ -532,12 +532,12 @@ class PythonMapper_References_Test(TestCase):
 
 
 
-class PythonMapper_GetAddress_NonApi_Test(TestCase):
+class PythonMapper_GetFuncPtr_NonApi_Test(TestCase):
     
     @WithMapper
-    def assertGetAddressWorks(self, name, mapper, _):
-        fp1 = mapper.GetAddress(name)
-        fp2 = mapper.GetAddress(name)
+    def assertGetFuncPtrWorks(self, name, mapper, _):
+        fp1 = mapper.GetFuncPtr(name)
+        fp2 = mapper.GetFuncPtr(name)
         self.assertNotEquals(fp1, IntPtr.Zero, "did not get address")
         self.assertEquals(fp1, fp2, "did not remember func ptrs")
 
@@ -561,7 +561,7 @@ class PythonMapper_GetAddress_NonApi_Test(TestCase):
             "IC_PyInstance_Dealloc",
         )
         for method in methods:
-            self.assertGetAddressWorks(method)
+            self.assertGetFuncPtrWorks(method)
 
 
 class PythonMapper_NoneTest(TestCase):
@@ -610,7 +610,7 @@ class PythonMapper_Py_OptimizeFlag_Test(TestCase):
         # for now. also, fixing it would be hard ;).
         flagPtr = Marshal.AllocHGlobal(Marshal.SizeOf(Int32))
         addToCleanUp(lambda: Marshal.FreeHGlobal(flagPtr))
-        mapper.SetData("Py_OptimizeFlag", flagPtr)
+        mapper.RegisterData("Py_OptimizeFlag", flagPtr)
         
         self.assertEquals(CPyMarshal.ReadInt(flagPtr), 2)
 
@@ -619,7 +619,7 @@ class PythonMapper_Py_OptimizeFlag_Test(TestCase):
 suite = makesuite(
     PythonMapper_CreateDestroy_Test,
     PythonMapper_References_Test,
-    PythonMapper_GetAddress_NonApi_Test,
+    PythonMapper_GetFuncPtr_NonApi_Test,
     PythonMapper_NoneTest,
     PythonMapper_NotImplementedTest,
     PythonMapper_Py_OptimizeFlag_Test,

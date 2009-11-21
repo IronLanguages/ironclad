@@ -7,16 +7,16 @@ from common import FILE_TEMPLATE
 PYTHONAPI_TEMPLATE = """\
     public class PythonApi
     {
-        protected Dictionary<string, Delegate> dgtMap = new Dictionary<string, Delegate>();
-        private Dictionary<string, IntPtr> dataMap = new Dictionary<string, IntPtr>();
+        private Dictionary<string, Delegate> dgts = new Dictionary<string, Delegate>();
+        private Dictionary<string, IntPtr> data = new Dictionary<string, IntPtr>();
 
 %(api_methods)s
 
-        public virtual IntPtr GetAddress(string name)
+        public IntPtr GetFuncPtr(string name)
         {
-            if (this.dgtMap.ContainsKey(name))
+            if (this.dgts.ContainsKey(name))
             {
-                return Marshal.GetFunctionPointerForDelegate(this.dgtMap[name]);
+                return Marshal.GetFunctionPointerForDelegate(this.dgts[name]);
             }
 
             switch (name)
@@ -26,12 +26,12 @@ PYTHONAPI_TEMPLATE = """\
                 default:
                     return IntPtr.Zero;
             }
-            return Marshal.GetFunctionPointerForDelegate(this.dgtMap[name]);
+            return Marshal.GetFunctionPointerForDelegate(this.dgts[name]);
         }
 
 %(data_properties)s
 
-        public void SetData(string name, IntPtr address)
+        public void RegisterData(string name, IntPtr address)
         {
             switch (name)
             {
@@ -64,12 +64,12 @@ METHOD_NOT_IMPL_TEMPLATE = """\
         
 GETADDRESS_CASE_TEMPLATE = """\
                 case "%(symbol)s":
-                    this.dgtMap[name] = new dgt_%(dgt_type)s(this.%(symbol)s);
+                    this.dgts[name] = new dgt_%(dgt_type)s(this.%(symbol)s);
                     break;"""
                     
 GETADDRESS_CASE_NOT_IMPL_TEMPLATE = """\
                 case "%(symbol)s":
-                    this.dgtMap[name] = new dgt_void_void(this.%(symbol)s);
+                    this.dgts[name] = new dgt_void_void(this.%(symbol)s);
                     break;"""
 
 
@@ -82,7 +82,7 @@ DATA_PROPERTY_TEMPLATE = """\
             get
             {
                 IntPtr address;
-                if (this.dataMap.TryGetValue("%(symbol)s", out address))
+                if (this.data.TryGetValue("%(symbol)s", out address))
                 {
                     return address;
                 }
@@ -96,7 +96,7 @@ DATA_PROPERTY_TEMPLATE = """\
 SETDATA_CASE_TEMPLATE = """\
                 case "%(symbol)s":
                     this.Fill_%(symbol)s(address);
-                    this.dataMap["%(symbol)s"] = address;
+                    this.data["%(symbol)s"] = address;
                     break;"""
 
 

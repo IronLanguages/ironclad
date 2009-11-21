@@ -102,7 +102,7 @@ FILL_TYPES_SIZE_TEMPLATE = """\
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "%(slot)s", Marshal.SizeOf(typeof(%(data)s)));"""
 
 FILL_TYPES_DEFAULT_TEMPLATE = """\
-            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "%(slot)s", this.GetAddress("%(data)s"));"""
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "%(slot)s", this.GetFuncPtr("%(data)s"));"""
 
 FILL_TYPES_SLOT_TEMPLATES = {
     "tp_as_number": FILL_TYPES_NUMBER_TEMPLATE,

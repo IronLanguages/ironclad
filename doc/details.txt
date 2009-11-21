@@ -34,12 +34,12 @@ PythonApi
 This class is generated from various files in stub/ and tools/. It has
 a property for every piece of data in the API and a method for every function,
 and maintains mappings from API names to pointers; it also defines the
-GetAddress and SetData functions which are passed to the StubReference.
+GetFuncPtr and RegisterData functions which are passed to the StubReference.
 
 StubReference
 
 Loads the redirection dll (python26.dll) and initialises it, passing function
-pointers to GetAddress and SetData. The init function calls these functions
+pointers to GetFuncPtr and RegisterData. The init function calls these functions
 repeatedly, passing in the names of the symbols it exports; once all the data
 has been filled in, the redirection should work.
 

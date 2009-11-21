@@ -76,8 +76,8 @@ def CreateTypes(mapper, readyTypes=True):
         block = Marshal.AllocHGlobal(size)
         if name == 'PyFile_Type':
             CPyMarshal.Zero(block, size);
-            CPyMarshal.WritePtrField(block, PyTypeObject, 'tp_dealloc', mapper.GetAddress('IC_file_dealloc'))
-        mapper.SetData(name, block)
+            CPyMarshal.WritePtrField(block, PyTypeObject, 'tp_dealloc', mapper.GetFuncPtr('IC_file_dealloc'))
+        mapper.RegisterData(name, block)
         blocks.append(block)
     
     for _type in _types:

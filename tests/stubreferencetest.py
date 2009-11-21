@@ -5,7 +5,7 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.gc import gcwait
 from tests.utils.testcase import TestCase
 
-from Ironclad import AddressGetterDelegate, DataSetterDelegate, Unmanaged, StubReference
+from Ironclad import dgt_getfuncptr, dgt_registerdata, Unmanaged, StubReference
 from System import IntPtr
 
 class StubReferenceTest(TestCase):
@@ -18,17 +18,19 @@ class StubReferenceTest(TestCase):
         self.assertNotEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
                           "library not mapped by construction")
 
-        addressCalls = []
-        def AddressGetter(name):
-            addressCalls.append(name)
+        fpCalls = []
+        @dgt_getfuncptr
+        def GetFuncPtr(name):
+            fpCalls.append(name)
             return IntPtr.Zero
 
         dataCalls = []
-        def DataSetter(name, _):
+        @dgt_registerdata
+        def RegisterData(name, _):
             dataCalls.append(name)
 
-        sr.Init(AddressGetterDelegate(AddressGetter), DataSetterDelegate(DataSetter))
-        self.assertEquals(len(addressCalls) > 0, True, "did not get any addresses")
+        sr.Init(GetFuncPtr, RegisterData)
+        self.assertEquals(len(fpCalls) > 0, True, "did not get any addresses")
         self.assertEquals(len(dataCalls) > 0, True, "did not set any data")
 
         sr.Dispose()

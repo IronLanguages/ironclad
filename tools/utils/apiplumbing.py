@@ -1,4 +1,6 @@
 
+from tools.utils.codegen import CodeGenerator
+
 #==========================================================================
 
 class ApiPlumbingContext(object):
@@ -10,9 +12,7 @@ class ApiPlumbingContext(object):
 
 #==========================================================================
 
-class ApiPlumbingGenerator(object):
-
-    INPUTS = ''
+class ApiPlumbingGenerator(CodeGenerator):
 
     @classmethod
     def output_name(cls):
@@ -20,11 +20,6 @@ class ApiPlumbingGenerator(object):
 
     def __init__(self, context):
         self.context = context
-
-    def run(self, inputs):
-        for attr in self.INPUTS.split():
-            setattr(self, attr, inputs[attr])
-        return self._run()
 
 
 #==========================================================================

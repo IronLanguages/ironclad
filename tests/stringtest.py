@@ -92,11 +92,11 @@ class PyString_Type_Test(TypeTestCase):
 
     @WithMapper
     def testStringifiers(self, mapper, _):
-        IC_PyString_Str = mapper.GetAddress("IC_PyString_Str")
+        IC_PyString_Str = mapper.GetFuncPtr("IC_PyString_Str")
         tp_str = CPyMarshal.ReadPtrField(mapper.PyString_Type, PyTypeObject, "tp_str")
         self.assertEquals(tp_str, IC_PyString_Str)
         
-        PyObject_Repr = mapper.GetAddress("PyObject_Repr")
+        PyObject_Repr = mapper.GetFuncPtr("PyObject_Repr")
         tp_repr = CPyMarshal.ReadPtrField(mapper.PyString_Type, PyTypeObject, "tp_repr")
         self.assertEquals(tp_repr, PyObject_Repr)
 
@@ -109,7 +109,7 @@ class PyString_Type_Test(TypeTestCase):
         self.assertNotEquals(seqPtr, IntPtr.Zero)
         concatPtr = CPyMarshal.ReadPtrField(seqPtr, PySequenceMethods, 'sq_concat')
         # concat_core tested further down
-        self.assertEquals(concatPtr, mapper.GetAddress('IC_PyString_Concat_Core'))
+        self.assertEquals(concatPtr, mapper.GetFuncPtr('IC_PyString_Concat_Core'))
         
         
     @WithMapper

@@ -94,7 +94,7 @@ class TupleTest(TestCase):
         mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
 
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        mapper.SetData("PyTuple_Type", typeBlock)
+        mapper.RegisterData("PyTuple_Type", typeBlock)
         tuplePtr = mapper.PyTuple_New(length)
         expectedSize = Marshal.SizeOf(PyTupleObject) + (CPyMarshal.PtrSize * (length - 1))
         self.assertEquals(allocs, [(tuplePtr, expectedSize)], "bad alloc")
@@ -173,7 +173,7 @@ class TupleTest(TestCase):
         mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        mapper.SetData("PyTuple_Type", typeBlock)
+        mapper.RegisterData("PyTuple_Type", typeBlock)
 
         theTuple = (0, 1, 2)
         tuplePtr = mapper.Store(theTuple)

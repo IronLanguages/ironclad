@@ -34,7 +34,7 @@ class TypeTestCase(TestCase):
         
         tp_freePtr = CPyMarshal.ReadPtrField(
             getattr(mapper, typename), PyTypeObject, "tp_free")
-        self.assertEquals(tp_freePtr, mapper.GetAddress("PyObject_Free"), "wrong tp_free for " + typename)
+        self.assertEquals(tp_freePtr, mapper.GetFuncPtr("PyObject_Free"), "wrong tp_free for " + typename)
         
         mapper.Dispose()
         deallocTypes()
@@ -46,7 +46,7 @@ class TypeTestCase(TestCase):
         
         tp_deallocPtr = CPyMarshal.ReadPtrField(
             getattr(mapper, typename), PyTypeObject, "tp_dealloc")
-        self.assertEquals(tp_deallocPtr, mapper.GetAddress("IC_PyBaseObject_Dealloc"), "wrong tp_dealloc for " + typename)
+        self.assertEquals(tp_deallocPtr, mapper.GetFuncPtr("IC_PyBaseObject_Dealloc"), "wrong tp_dealloc for " + typename)
         
         mapper.Dispose()
         deallocTypes()

@@ -2,14 +2,14 @@
 import os, sys
 
 from tools.utils.apiplumbing import generate_apiplumbing
-from tools.utils.io import eval_kwargs_column, read_interesting_lines, write
-from tools.utils.gccxml import read_gccxml
+from tools.utils.codegen import eval_kwargs_column, filter_keys_uppercase
+from tools.utils.io import read_gccxml, read_interesting_lines, write
 
 
 #==========================================================================
 
 def read_all_inputs(src):
-    GCCXML = read_gccxml(os.path.join(src, '_api.generated.xml'))
+    GCCXML = read_gccxml(src, '_api.generated.xml')
     
     def read_data(name):
         return set(read_interesting_lines(src, name))
@@ -31,7 +31,7 @@ def read_all_inputs(src):
     DISPATCHER_METHODS = read_args_kwargs('_dispatcher_methods', 1, 'data.snippets.cs.dispatcher')
     MAGICMETHODS = read_args_kwargs('_magicmethods', 3, 'data.snippets.cs.magicmethods')
 
-    return dict((k, v) for (k, v) in locals().items() if k == k.upper())
+    return filter_keys_uppercase(locals())
 
 
 #==========================================================================
@@ -39,9 +39,7 @@ def read_all_inputs(src):
 if __name__ == '__main__':
     src, dst = sys.argv[1:]
     inputs = read_all_inputs(src)
-    files = generate_apiplumbing(inputs)
-    
-    for (name, code) in files:
+    for (name, code) in generate_apiplumbing(inputs):
         write(dst, name + '.Generated.cs', code, badge=True)
 
 

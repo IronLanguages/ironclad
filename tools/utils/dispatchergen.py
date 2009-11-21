@@ -4,18 +4,16 @@ from itertools import chain
 from data.snippets.cs.dispatcher import *
 
 from tools.utils.apiplumbing import ApiPlumbingGenerator
+from tools.utils.codegen import return_dict
 from tools.utils.gccxml import get_funcspecs, equal
 from tools.utils.ictypes import ICTYPE_2_MGDTYPE
 
 
 #==========================================================================
 
-def _return_dict(*keys):
-    def decorator(f):
-        def g(*_, **__):
-            return dict(zip(keys, f(*_, **__)))
-        return g
-    return decorator
+def _starstarmap(func, items):
+    for (args, kwargs) in items:
+        yield func(*args, **kwargs)
 
 
 #==========================================================================
@@ -51,22 +49,24 @@ def _tweak_args(base_mgd_args, arg_tweak=None):
 
 #==========================================================================
 
-def _generate_signature_snippet(name, spec):
+def _get_mgd_arglist(spec):
     arglist = '%s key' % ICTYPE_2_MGDTYPE['str']
     arglist_rest = spec.mgd_arglist
     if arglist_rest:
         arglist = ', '.join((arglist, arglist_rest))
-    
+    return arglist
+
+def _generate_signature_snippet(name, spec):
     return SIGNATURE_TEMPLATE % {
         'name': name,
-        'arglist': arglist,
         'rettype': spec.mgd_ret,
+        'arglist': _get_mgd_arglist(spec),
     }
 
 
 #==========================================================================
 
-@_return_dict('translate_objs', 'cleanup_objs')
+@return_dict('translate_objs cleanup_objs')
 def _generate_translate_snippets(args, nullable_kwargs_index):
     cleanups = []
     translates = []
@@ -91,7 +91,7 @@ def _generate_call_dgt_snippet(spec, arg_names):
 
 #==========================================================================
 
-@_return_dict('assign_ret', 'handle_ret', 'return_ret')
+@return_dict('assign_ret handle_ret return_ret')
 def _generate_ret_snippets(spec, ret_tweak):
     if spec.ret == 'void':
         return '', ret_tweak, ''
@@ -114,10 +114,6 @@ def _generate_field_code(name, mgd_type, cpm_suffix, get_tweak='', set_tweak='')
 
 
 #==========================================================================
-
-def _starstarmap(func, items):
-    for (args, kwargs) in items:
-        yield func(*args, **kwargs)
 
 class DispatcherGenerator(ApiPlumbingGenerator):
     # populates self.context.dgt_specs

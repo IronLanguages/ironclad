@@ -4,7 +4,8 @@ from itertools import starmap
 
 from data.snippets.cs.pythonmapper import *
 
-from tools.utils.io import eval_kwargs_column, read, read_interesting_lines, write
+from tools.utils.codegen import eval_kwargs_column
+from tools.utils.io import read, read_interesting_lines, write
 
 
 #================================================================================================
