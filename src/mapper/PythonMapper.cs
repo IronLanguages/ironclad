@@ -131,7 +131,7 @@ namespace Ironclad
             if (stubPath != null)
             {
                 this.stub = new StubReference(stubPath);
-                this.stub.Init(new AddressGetterDelegate(this.GetAddress), new DataSetterDelegate(this.SetData));
+                this.stub.Init(new dgt_getfuncptr(this.GetFuncPtr), new dgt_registerdata(this.RegisterData));
 
                 string path = Environment.GetEnvironmentVariable("PATH");
                 string newpath = path + ";" + Path.Combine(Path.GetDirectoryName(stubPath), "support");

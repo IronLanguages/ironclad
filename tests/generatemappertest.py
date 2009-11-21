@@ -215,9 +215,9 @@ namespace Ironclad
             CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "tp_basicsize", Marshal.SizeOf(typeof(PyFooObject)));
-            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetAddress("SomeInitMethod"));
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetFuncPtr("SomeInitMethod"));
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "tp_itemsize", Marshal.SizeOf(typeof(Byte)));
-            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_iter", this.GetAddress("SomeIterMethod"));
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_iter", this.GetFuncPtr("SomeIterMethod"));
             this.map.Associate(ptr, TypeCache.Foo);
         }
 
@@ -227,7 +227,7 @@ namespace Ironclad
             CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
             this.NumberSetupMethod(ptr);
-            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetAddress("SomeOtherInitMethod"));
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetFuncPtr("SomeOtherInitMethod"));
             this.map.Associate(ptr, TypeCache.Bar);
         }
 

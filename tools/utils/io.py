@@ -18,15 +18,27 @@ def read_interesting_lines(*args):
         f.close()
 
 
-#==========================================================================
+#===============================================================================
+# ugly but helpful
 
-def eval_kwargs_column(container, context=None):
-    if not container:
-        return {}
-    str_, ctx = container[0], {}
-    if context is not None:
-        ctx = __import__(context, fromlist=['*']).__dict__
-    return eval(str_, ctx)
+def _ignore_gccxml_settings(f):
+    # we only care about reading, not generating
+    def g(*args, **kwargs):
+        from pygccxml.parser.config import gccxml_configuration_t
+        orig = gccxml_configuration_t.raise_on_wrong_settings
+        gccxml_configuration_t.raise_on_wrong_settings = lambda _: None
+        try:
+            return f(*args, **kwargs)
+        finally:
+            gccxml_configuration_t.raise_on_wrong_settings = orig
+    return g
+
+@_ignore_gccxml_settings
+def read_gccxml(*args):
+    path = os.path.join(*args)
+    from pygccxml.parser.config import config_t
+    from pygccxml.parser.source_reader import source_reader_t
+    return source_reader_t(config_t()).read_xml_file(path)[0]
 
 
 #==========================================================================

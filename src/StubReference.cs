@@ -5,10 +5,10 @@ using System.Runtime.InteropServices;
 namespace Ironclad
 {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate IntPtr AddressGetterDelegate(string name);
+    public delegate IntPtr dgt_getfuncptr(string name);
     
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void DataSetterDelegate(string name, IntPtr address);
+    public delegate void dgt_registerdata(string name, IntPtr address);
     
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void InitDelegate(IntPtr addressGetter, IntPtr dataSetter);
@@ -29,7 +29,7 @@ namespace Ironclad
         }
     
         public void
-        Init(AddressGetterDelegate addressGetter, DataSetterDelegate dataSetter)
+        Init(dgt_getfuncptr addressGetter, dgt_registerdata dataSetter)
         {
             IntPtr initFP = Unmanaged.GetProcAddress(this.library, "init");
             InitDelegate initDgt = (InitDelegate)Marshal.GetDelegateForFunctionPointer(initFP, typeof(InitDelegate));

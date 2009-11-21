@@ -26,7 +26,7 @@ class PyList_Type_Test(TypeTestCase):
         mapper = MyPM()
         
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        mapper.SetData("PyList_Type", typeBlock)
+        mapper.RegisterData("PyList_Type", typeBlock)
         gcwait() # this will make the function pointers invalid if we forgot to store references to the delegates
 
         deallocDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_dealloc", dgt_void_ptr)

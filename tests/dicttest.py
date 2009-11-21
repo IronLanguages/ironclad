@@ -46,7 +46,7 @@ class DictTest(TestCase):
     def testStoreDictCreatesDictType(self, mapper, addToCleanUp):
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         addToCleanUp(lambda: Marshal.FreeHGlobal(typeBlock))
-        mapper.SetData("PyDict_Type", typeBlock)
+        mapper.RegisterData("PyDict_Type", typeBlock)
         
         dictPtr = mapper.Store({0: 1, 2: 3})
         self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), typeBlock, "wrong type")
@@ -56,7 +56,7 @@ class DictTest(TestCase):
     def testStoreTypeDictCreatesDictTypeWhichWorks(self, mapper, addToCleanUp):
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
         addToCleanUp(lambda: Marshal.FreeHGlobal(typeBlock))
-        mapper.SetData("PyDict_Type", typeBlock)
+        mapper.RegisterData("PyDict_Type", typeBlock)
         
         class klass(object):
             pass

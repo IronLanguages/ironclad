@@ -80,8 +80,8 @@ class SliceTest(TestCase):
         ellipsisPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
         addToCleanUp(lambda: Marshal.FreeHGlobal(ellipsisPtr))
 
-        mapper.SetData("PyEllipsis_Type", ellipsisTypePtr)
-        mapper.SetData("_Py_EllipsisObject", ellipsisPtr)
+        mapper.RegisterData("PyEllipsis_Type", ellipsisTypePtr)
+        mapper.RegisterData("_Py_EllipsisObject", ellipsisPtr)
         
         self.assertEquals(CPyMarshal.ReadPtrField(ellipsisPtr, PyObject, "ob_type"), mapper.PyEllipsis_Type)
         self.assertEquals(CPyMarshal.ReadIntField(ellipsisPtr, PyObject, "ob_refcnt"), 1)

@@ -456,13 +456,13 @@ class PyBaseObject_Type_Test(TypeTestCase):
             self.assertNotEquals(field, IntPtr.Zero)
             self.assertEquals(field, value)
         
-        AssertPtrField("tp_new", mapper.GetAddress("PyType_GenericNew"))
-        AssertPtrField("tp_alloc", mapper.GetAddress("PyType_GenericAlloc"))
-        AssertPtrField("tp_init", mapper.GetAddress("IC_PyBaseObject_Init"))
-        AssertPtrField("tp_dealloc", mapper.GetAddress("IC_PyBaseObject_Dealloc"))
-        AssertPtrField("tp_free", mapper.GetAddress("PyObject_Free"))
+        AssertPtrField("tp_new", mapper.GetFuncPtr("PyType_GenericNew"))
+        AssertPtrField("tp_alloc", mapper.GetFuncPtr("PyType_GenericAlloc"))
+        AssertPtrField("tp_init", mapper.GetFuncPtr("IC_PyBaseObject_Init"))
+        AssertPtrField("tp_dealloc", mapper.GetFuncPtr("IC_PyBaseObject_Dealloc"))
+        AssertPtrField("tp_free", mapper.GetFuncPtr("PyObject_Free"))
         
-        AssertPtrField("tp_str", mapper.GetAddress("PyObject_Str"))
+        AssertPtrField("tp_str", mapper.GetFuncPtr("PyObject_Str"))
 
 
     def testPyBaseObject_Type_tp_dealloc(self):

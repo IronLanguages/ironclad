@@ -82,8 +82,7 @@ TYPES = (
 class PythonApiTest(TestCase):
 
     def testDataSetterDoesNotWriteForUnrecognisedSymbols(self):
-        pm = PythonApi()
-        pm.SetData("This_symbol_is_not_exported_either_I_sincerely_hope", IntPtr.Zero)
+        PythonApi().RegisterData("This_symbol_is_not_exported_either_I_sincerely_hope", IntPtr.Zero)
         # had we written to IntPtr.Zero, we would have crashed
 
 
@@ -91,7 +90,7 @@ class PythonApiTest(TestCase):
         dataPtr = Marshal.AllocHGlobal(allocSize)
         
         mapper = mapperSubclass()
-        mapper.SetData(dataSymbol, dataPtr)
+        mapper.RegisterData(dataSymbol, dataPtr)
         memoryTest(dataPtr)
         self.assertEquals(getattr(mapper, dataSymbol), dataPtr, "failed to remember pointer")
         
@@ -135,18 +134,13 @@ class PythonApiTest(TestCase):
         
 
     def testUninitialisedTypesAreNull(self):
-        pm = PythonApi()
+        pa = PythonApi()
         for _type in TYPES:
-            self.assertEquals(getattr(pm, _type), IntPtr.Zero, "unexpected")
+            self.assertEquals(getattr(pa, _type), IntPtr.Zero, "unexpected")
 
 
     def testAddressGetterFailsCleanly(self):
-        pm = PythonApi()
-        addressGetter = pm.GetAddress
-
-        self.assertEquals(addressGetter("This_symbol_is_not_exported_by_any_version_of_Python_so_far_as_I_know"),
-                          IntPtr.Zero,
-                          "bad result for nonsense symbol")
+        self.assertEquals(PythonApi().GetFuncPtr("_nonsenx%vQ#*7&"), IntPtr.Zero)
 
 
 suite = makesuite(

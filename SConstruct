@@ -138,7 +138,7 @@ native.Command(exported_out, [],
     '$IPY tools/generateexports.py $PYTHON_DLL data/api')
 
 # Generate stub code
-buildstub_names = '_extra_data _pure_c_symbols _extra_functions _register_data_priority'
+buildstub_names = '_extra_functions _mgd_api_data _pure_c_symbols'
 buildstub_src = exported_out + pathmap('data/api', buildstub_names)
 buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_extra_functions.generated.h')
 native.Command(buildstub_out, buildstub_src,
