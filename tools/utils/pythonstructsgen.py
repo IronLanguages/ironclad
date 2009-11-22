@@ -38,7 +38,7 @@ class PythonStructsGenerator(CodeGenerator):
     
     INPUTS = 'MGD_API_STRUCTS STUBMAIN'
     
-    @return_dict('PythonStructs.Generated.cs')
+    @return_dict('PYTHONSTRUCTS')
     def _run(self):
         structspecs = get_structspecs(
             self.STUBMAIN.classes(in_set(self.MGD_API_STRUCTS)),

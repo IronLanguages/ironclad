@@ -59,9 +59,9 @@ int FUNC4(void);
 """
 
 EXPECT_OUTPUT = {
-    'Include/_extra_functions.generated.h': EXPECT_HEADER,
-    'stubinit.generated.c': EXPECT_STUBINIT,
-    'jumps.generated.asm': EXPECT_JUMPS,
+    'STUBINIT': EXPECT_STUBINIT,
+    'HEADER': EXPECT_HEADER,
+    'JUMPS': EXPECT_JUMPS,
 }
 
 suite = makesuite(

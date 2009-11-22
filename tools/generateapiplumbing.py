@@ -2,45 +2,33 @@
 import os, sys
 
 from tools.utils.apiplumbinggen import ApiPlumbingGenerator
-from tools.utils.codegen import eval_kwargs_column, filter_keys_uppercase
-from tools.utils.io import read_gccxml, read_interesting_lines, write_files
+from tools.utils.io import read_args_kwargs, read_gccxml, read_set, run_generator
 
 
 #==========================================================================
 
-def read_all_inputs(src):
-    STUBMAIN = read_gccxml(src, '_stubmain.generated.xml')
-    
-    def read_data(name):
-        return set(read_interesting_lines(src, name))
+INPUTS = (
+    ('_exported_functions.generated',       read_set),
+    ('_mgd_api_data',                       read_set),
+    ('_mgd_api_structs',                    read_set),
+    ('_pure_c_symbols',                     read_set),
+    ('_stubmain.generated.xml',             read_gccxml),
+    ('_mgd_api_functions',                  read_args_kwargs, 1),
+    ('_dispatcher_methods',                 read_args_kwargs, 1, 'data.snippets.cs.dispatcher'),
+    ('_dispatcher_fields',                  read_args_kwargs, 3, 'data.snippets.cs.dispatcher'),
+    ('_magicmethods',                       read_args_kwargs, 3, 'data.snippets.cs.magicmethods'),
+)
 
-    MGD_API_DATA = read_data('_mgd_api_data')
-    MGD_API_STRUCTS = read_data('_mgd_api_structs')
-    PURE_C_SYMBOLS = read_data('_pure_c_symbols')
-    EXPORTED_FUNCTIONS = read_data('_exported_functions.generated')
-
-    def read_args_kwargs(name, argcount, context=None):
-        result = []
-        for line in read_data(name):
-            _input = line.split(None, argcount)
-            result.append((_input[:argcount], eval_kwargs_column(_input[argcount:], context)))
-        return result
-
-    MGD_API_FUNCTIONS = read_args_kwargs('_mgd_api_functions', 1)
-    DISPATCHER_FIELDS = read_args_kwargs('_dispatcher_fields', 3)
-    DISPATCHER_METHODS = read_args_kwargs('_dispatcher_methods', 1, 'data.snippets.cs.dispatcher')
-    MAGICMETHODS = read_args_kwargs('_magicmethods', 3, 'data.snippets.cs.magicmethods')
-
-    return filter_keys_uppercase(locals())
-
-
-#==========================================================================
+OUTPUTS = (
+    ('Delegates.Generated.cs',              'DELEGATES'),
+    ('Dispatcher.Generated.cs',             'DISPATCHER'),
+    ('MagicMethods.Generated.cs',           'MAGICMETHODS'),
+    ('PythonApi.Generated.cs',              'PYTHONAPI'),
+    ('PythonStructs.Generated.cs',          'PYTHONSTRUCTS'),
+)
 
 if __name__ == '__main__':
-    src, dst = sys.argv[1:]
-    inputs = read_all_inputs(src)
-    files = ApiPlumbingGenerator().run(inputs)
-    write_files(dst, files)
+    run_generator(ApiPlumbingGenerator, INPUTS, OUTPUTS)
 
 
 #==========================================================================

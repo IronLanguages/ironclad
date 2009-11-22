@@ -120,7 +120,7 @@ class DispatcherGenerator(CodeGenerator):
     
     INPUTS = 'DISPATCHER_FIELDS DISPATCHER_METHODS STUBMAIN'
     
-    @return_dict('Dispatcher.Generated.cs')
+    @return_dict('DISPATCHER')
     def _run(self):
         return DISPATCHER_FILE_TEMPLATE % '\n\n'.join(chain(
             _starstarmap(_generate_field_code, self.DISPATCHER_FIELDS),

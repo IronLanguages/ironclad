@@ -19,7 +19,7 @@ def _generate_delegate_code(spec):
 class DelegatesGenerator(CodeGenerator):
     # requires populated self.context.dgt_specs
 
-    @return_dict('Delegates.Generated.cs')
+    @return_dict('DELEGATES')
     def _run(self):
         return DELEGATES_FILE_TEMPLATE % '\n\n'.join(
             map(_generate_delegate_code, self.context.dgt_specs))

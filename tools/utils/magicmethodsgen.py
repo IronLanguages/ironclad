@@ -46,7 +46,7 @@ class MagicMethodsGenerator(CodeGenerator):
 
     INPUTS = 'MAGICMETHODS'
     
-    @return_dict('MagicMethods.Generated.cs')
+    @return_dict('MAGICMETHODS')
     def _run(self):
         self._normal_cases = []
         self._swapped_cases = []

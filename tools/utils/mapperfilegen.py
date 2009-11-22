@@ -5,7 +5,7 @@ from itertools import starmap
 from data.snippets.cs.pythonmapper import *
 
 from tools.utils.codegen import eval_kwargs_column
-from tools.utils.io import read, read_interesting_lines, write
+from tools.utils.io import read_lines
 
 
 #================================================================================================
@@ -62,7 +62,7 @@ class MapperFileGenerator(object):
         stitch=kwargs.get('stitch', '\n\n'.join)
         extract=kwargs.get('extract', extract_columns)
         
-        snippets = extract(read_interesting_lines(src), *args)
+        snippets = extract(read_lines(src), *args)
         self.output[dstname] = PYTHONMAPPER_FILE_TEMPLATE % stitch(snippets)
     
     def run(self):
