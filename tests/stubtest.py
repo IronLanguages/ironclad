@@ -8,7 +8,7 @@ from tests.utils.runtest import automakesuite, run
 from tests.utils.testcase import TestCase
 
 from tools.utils.subprocess import popen
-from tools.utils.io import read_interesting_lines
+from tools.utils.io import read_set
 
 def GetPexportsLines(path):
     stream = popen("pexports", path.replace('/cygdrive/c', 'c:'))
@@ -21,7 +21,7 @@ class PythonStubTest(TestCase):
 
     def testPythonStub(self):
         path = os.path.join('tests', 'data', 'python26-pexports')
-        python26exports = set(read_interesting_lines(path))
+        python26exports = read_set(path)
         generatedExports = GetPexportsLines("build/ironclad/python26.dll")
         self.assertEquals(python26exports - generatedExports, set())
 

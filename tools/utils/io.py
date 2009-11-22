@@ -1,6 +1,9 @@
 
 import os, sys
 
+from tools.utils.codegen import eval_kwargs_column
+
+
 #====================================================================
 
 def read(*args):
@@ -10,12 +13,31 @@ def read(*args):
     finally:
         f.close()
 
-def read_interesting_lines(*args):
+
+#====================================================================
+
+def read_lines(*args):
     f = open(os.path.join(*args))
     try:
         return filter(None, [l.split('#')[0].strip() for l in f.readlines()])
     finally:
         f.close()
+
+
+#====================================================================
+
+def read_set(*args):
+    return set(read_lines(*args))
+
+
+#===============================================================================
+
+def read_args_kwargs(dir_, name, argcount, context=None):
+    result = []
+    for line in read_set(dir_, name):
+        _input = line.split(None, argcount)
+        result.append((_input[:argcount], eval_kwargs_column(_input[argcount:], context)))
+    return result
 
 
 #===============================================================================
@@ -67,9 +89,33 @@ def write(dir_, name, text, badge=False):
     finally:
         f.close()
 
-def write_files(dir_, files):
+
+#==========================================================================
+
+def _rename(name):
+    return name[1:].split('.')[0].upper()
+
+def _read_files(src, files):
+    result = {}
+    for info in files:
+        name, reader = info[:2]
+        extra_args = info[2:]
+        result[_rename(name)] = reader(src, name, *extra_args)
+    return result
+
+def _write_files(dir_, files):
     for (path, text) in files.items():
         write(dir_, path, text, badge=True)
+
+def _change_keys(orig, new_keys):
+    return dict((name, orig[key]) for (name, key) in new_keys)
+
+def run_generator(cls, input_info, output_names):
+    src, dst = sys.argv[1:]
+    inputs = _read_files(src, input_info)
+    outputs = cls().run(inputs)
+    files = _change_keys(outputs, output_names)
+    _write_files(dst, files)
 
 
 #==========================================================================

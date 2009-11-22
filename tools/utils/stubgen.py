@@ -3,8 +3,7 @@ import os, sys
 
 from data.snippets.stub import *
 
-from tools.utils.codegen import CodeGenerator, filter_keys_uppercase, glom_templates, return_dict
-from tools.utils.io import read_interesting_lines
+from tools.utils.codegen import CodeGenerator, glom_templates, return_dict
     
 
 #==========================================================================
@@ -67,9 +66,9 @@ class StubGenerator(CodeGenerator):
         functions = filter(needs_jump, self.EXPORTED_FUNCTIONS)
         functions += map(_extract_funcname, self.EXTRA_FUNCTIONS)
         return {
-            'Include/_extra_functions.generated.h':     generate_header(self.EXTRA_FUNCTIONS),
-            'stubinit.generated.c':                     generate_stubinit(functions, self.MGD_API_DATA),
-            'jumps.generated.asm':                      generate_jumps(functions),
+            'STUBINIT':     generate_stubinit(functions, self.MGD_API_DATA),
+            'HEADER':       generate_header(self.EXTRA_FUNCTIONS),
+            'JUMPS':        generate_jumps(functions),
         }
 
 

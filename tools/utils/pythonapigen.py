@@ -41,7 +41,7 @@ class PythonApiGenerator(CodeGenerator):
     
     INPUTS = 'MGD_API_FUNCTIONS EXPORTED_FUNCTIONS PURE_C_SYMBOLS MGD_API_DATA STUBMAIN'
     
-    @return_dict('PythonApi.Generated.cs')
+    @return_dict('PYTHONAPI')
     def _run(self):
         mgd_api_function_names, unstring_names = _unpack_mgd_api_functions(self.MGD_API_FUNCTIONS)
         all_mgd_functions = get_funcspecs(

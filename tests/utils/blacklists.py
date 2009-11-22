@@ -1,5 +1,5 @@
 
-from tools.utils.io import read_interesting_lines
+from tools.utils.io import read_lines
 
 import re
 
@@ -61,7 +61,7 @@ class BlacklistSelector(Selector):
 def _read_blacklist(f):
     tests, files = set(), set()
     if f:
-        for line in read_interesting_lines(f):
+        for line in read_lines(f):
             if line.endswith('.py'):
                 files.add(line)
             else:

@@ -1,5 +1,4 @@
 
-
 #==========================================================================
 
 class CodeGenerator(object):
@@ -28,12 +27,6 @@ def eval_kwargs_column(container, context=None):
 
 #==========================================================================
 
-def filter_keys_uppercase(d):
-    return dict((k, v) for (k, v) in d.items() if k == k.upper())
-
-
-#==========================================================================
-
 def glom_templates(joiner, *args):
     output = []
     for (template, inputs) in args:
@@ -56,5 +49,6 @@ def return_dict(keys):
             return _dictify(keys, f(*_, **__))
         return g
     return decorator
+
 
 #==========================================================================
