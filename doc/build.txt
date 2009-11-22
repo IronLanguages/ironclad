@@ -2,11 +2,11 @@
 32-BIT WINDOWS REQUIREMENTS:
 
 * Python 2.6
-* IronPython 2.6
-* pygccxml (accessible to ipy) (**)
 * SCons 1.2.0
-* mingw 5.16 (with gcc)
 * GCCXML 0.6.0
+* IronPython 2.6 RC3
+* pygccxml 1.0.0 (accessible to ipy) (**)
+* mingw 5.16 (with gcc)
 * nasm 2.01 (installed into MinGW/bin)
 * pexports 0.43 (installed into MinGW/bin)
 * .NET 2.0 Service Pack 1 (csc, specifically) (***)
