@@ -67,5 +67,9 @@ def write(dir_, name, text, badge=False):
     finally:
         f.close()
 
+def write_files(dir_, files):
+    for (path, text) in files.items():
+        write(dir_, path, text, badge=True)
+
 
 #==========================================================================

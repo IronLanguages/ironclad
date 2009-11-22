@@ -1,7 +1,7 @@
 
 from data.snippets.cs.pythonstructs import *
 
-from tools.utils.apiplumbing import ApiPlumbingGenerator
+from tools.utils.codegen import CodeGenerator, return_dict
 from tools.utils.ictypes import native_ictype, VALID_ICTYPES
 from tools.utils.gccxml import get_structspecs, in_set
 from tools.utils.platform import ICTYPE_2_MGDTYPE
@@ -29,25 +29,23 @@ def _generate_struct_code(structspec):
         'name': name, 
         'fields': fields_code
     }
-
-def _generate_structs_code(structspecs):
-    return STRUCTS_FILE_TEMPLATE % '\n\n'.join(
-        map(_generate_struct_code, sorted(structspecs)))
     
 
 #==========================================================================
 
-class PythonStructsGenerator(ApiPlumbingGenerator):
+class PythonStructsGenerator(CodeGenerator):
     # no self.context dependencies
     
-    INPUTS = 'MGD_API_STRUCTS GCCXML'
+    INPUTS = 'MGD_API_STRUCTS STUBMAIN'
     
+    @return_dict('PythonStructs.Generated.cs')
     def _run(self):
         structspecs = get_structspecs(
-            self.GCCXML.classes(in_set(self.MGD_API_STRUCTS)),
-            self.GCCXML.typedefs(in_set(self.MGD_API_STRUCTS)))
+            self.STUBMAIN.classes(in_set(self.MGD_API_STRUCTS)),
+            self.STUBMAIN.typedefs(in_set(self.MGD_API_STRUCTS)))
         
-        return _generate_structs_code(structspecs)
+        return STRUCTS_FILE_TEMPLATE % '\n\n'.join(
+            map(_generate_struct_code, sorted(structspecs)))
     
 
 #==========================================================================

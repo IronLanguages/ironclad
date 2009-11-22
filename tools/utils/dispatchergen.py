@@ -3,8 +3,7 @@ from itertools import chain
 
 from data.snippets.cs.dispatcher import *
 
-from tools.utils.apiplumbing import ApiPlumbingGenerator
-from tools.utils.codegen import return_dict
+from tools.utils.codegen import CodeGenerator, return_dict
 from tools.utils.gccxml import get_funcspecs, equal
 from tools.utils.ictypes import ICTYPE_2_MGDTYPE
 
@@ -115,12 +114,13 @@ def _generate_field_code(name, mgd_type, cpm_suffix, get_tweak='', set_tweak='')
 
 #==========================================================================
 
-class DispatcherGenerator(ApiPlumbingGenerator):
+class DispatcherGenerator(CodeGenerator):
     # populates self.context.dgt_specs
     # populates self.context.dispatcher_methods
     
-    INPUTS = 'DISPATCHER_FIELDS DISPATCHER_METHODS GCCXML'
+    INPUTS = 'DISPATCHER_FIELDS DISPATCHER_METHODS STUBMAIN'
     
+    @return_dict('Dispatcher.Generated.cs')
     def _run(self):
         return DISPATCHER_FILE_TEMPLATE % '\n\n'.join(chain(
             _starstarmap(_generate_field_code, self.DISPATCHER_FIELDS),
@@ -128,7 +128,7 @@ class DispatcherGenerator(ApiPlumbingGenerator):
 
     def _get_spec(self, name):
         _, spec = get_funcspecs(
-            self.GCCXML.typedefs(equal(name))).pop()
+            self.STUBMAIN.typedefs(equal(name))).pop()
         return spec
 
     def _generate_method_code(self, name,
