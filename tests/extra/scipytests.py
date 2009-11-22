@@ -23,14 +23,14 @@ if len(sys.argv) > 1:
 import nose
 nose.run(defaultTest=path, config=config)
 
-# last full run had 2681 tests, 143 errors, 17 failures
-# blacklist has had some slow tests added since then
+# last full run had 2632 tests, 153 errors, 17 failures
 
+# individual package results, moderately out of date:
 # cluster: 159 tests ok
 # fftpack: 45 tests, 16 failures
 # integrate: 17 tests, 1 failure
 # interpolate: with factorial import from misc in polyint.py: 125 tests, 16 errors
-# io: 36 tests, 4(?) errors
+# io: 120 tests, 25 errors
 # lib: 176 tests, 39 errors
 # linalg: 402 tests, 51 errors
 # maxentropy: 2 tests ok
