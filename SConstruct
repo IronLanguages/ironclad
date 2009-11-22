@@ -133,13 +133,12 @@ if WIN32:
 # Unmanaged libraries for build/ironclad
 
 # Generate data from prebuilt python dll
-exported_out = pathmap('data/api', '_exported_functions.generated _exported_data.generated')
-native.Command(exported_out, [],
+exports = native.Command('data/api/_exported_functions.generated', [],
     '$IPY tools/generateexports.py $PYTHON_DLL data/api')
 
 # Generate stub code
 buildstub_names = '_extra_functions _mgd_api_data _pure_c_symbols'
-buildstub_src = exported_out + pathmap('data/api', buildstub_names)
+buildstub_src = exports + pathmap('data/api', buildstub_names)
 buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_extra_functions.generated.h')
 native.Command(buildstub_out, buildstub_src,
     '$IPY tools/generatestub.py data/api stub')
@@ -149,7 +148,7 @@ jumps_obj = native.Object('stub/jumps.generated.asm')
 stubmain_obj = native.Python26Obj('stub/stubmain.c')
 
 # Generate information from python headers etc
-api_xml = native.GccXml('data/api/_api.generated.xml', 'stub/stubmain.c')
+stubmain_xml = native.GccXml('data/api/_stubmain.generated.xml', 'stub/stubmain.c')
 
 # Build and link python26.dll
 cpy_src_dirs = 'Modules Objects Parser Python'
@@ -187,7 +186,7 @@ managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX, REFE
 #===============================================================================
 # Generated C#
 
-api_src = api_xml + exported_out + managed.Glob('data/api/*') # TODO: why doesn't Glob pick up items in api_xml, exported_out?
+api_src = stubmain_xml + exports + managed.Glob('data/api/*') # TODO: why doesn't Glob pick up items in stubmain_xml, exports?
 api_out_names = 'Delegates Dispatcher MagicMethods PythonApi PythonStructs'
 api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
 managed.Command(api_out, api_src,

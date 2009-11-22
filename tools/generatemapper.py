@@ -11,8 +11,8 @@ if __name__ == '__main__':
     src, dst = sys.argv[1:]
     mfg = MapperFileGenerator(src)
     
-    for (name, text) in mfg.output.items():
-        write(dst, name, text, badge=True)
+    for (path, code) in mfg.output.items():
+        write(dst, path, code, badge=True)
 
 
 #==========================================================================

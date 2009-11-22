@@ -1,15 +1,15 @@
 
 import os, sys
 
-from tools.utils.apiplumbing import generate_apiplumbing
+from tools.utils.apiplumbinggen import ApiPlumbingGenerator
 from tools.utils.codegen import eval_kwargs_column, filter_keys_uppercase
-from tools.utils.io import read_gccxml, read_interesting_lines, write
+from tools.utils.io import read_gccxml, read_interesting_lines, write_files
 
 
 #==========================================================================
 
 def read_all_inputs(src):
-    GCCXML = read_gccxml(src, '_api.generated.xml')
+    STUBMAIN = read_gccxml(src, '_stubmain.generated.xml')
     
     def read_data(name):
         return set(read_interesting_lines(src, name))
@@ -39,8 +39,8 @@ def read_all_inputs(src):
 if __name__ == '__main__':
     src, dst = sys.argv[1:]
     inputs = read_all_inputs(src)
-    for (name, code) in generate_apiplumbing(inputs):
-        write(dst, name + '.Generated.cs', code, badge=True)
+    files = ApiPlumbingGenerator().run(inputs)
+    write_files(dst, files)
 
 
 #==========================================================================

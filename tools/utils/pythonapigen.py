@@ -1,8 +1,8 @@
 
 from data.snippets.cs.pythonapi import *
 
-from tools.utils.apiplumbing import ApiPlumbingGenerator
-from tools.utils.codegen import glom_templates
+
+from tools.utils.codegen import CodeGenerator, glom_templates, return_dict
 from tools.utils.gccxml import get_funcspecs, in_set, prefixed
 
 
@@ -36,17 +36,18 @@ def _unstring_mgd_api_functions(mgd_api_functions, unstring_names):
 
 #==========================================================================
 
-class PythonApiGenerator(ApiPlumbingGenerator):
+class PythonApiGenerator(CodeGenerator):
     # populates self.context.dgt_specs
     
-    INPUTS = 'MGD_API_FUNCTIONS EXPORTED_FUNCTIONS PURE_C_SYMBOLS MGD_API_DATA GCCXML'
+    INPUTS = 'MGD_API_FUNCTIONS EXPORTED_FUNCTIONS PURE_C_SYMBOLS MGD_API_DATA STUBMAIN'
     
+    @return_dict('PythonApi.Generated.cs')
     def _run(self):
         mgd_api_function_names, unstring_names = _unpack_mgd_api_functions(self.MGD_API_FUNCTIONS)
         all_mgd_functions = get_funcspecs(
-            self.GCCXML.free_functions(in_set(mgd_api_function_names)),
-            self.GCCXML.free_functions(prefixed('IC_')),
-            self.GCCXML.variables(prefixed('IC_')))
+            self.STUBMAIN.free_functions(in_set(mgd_api_function_names)),
+            self.STUBMAIN.free_functions(prefixed('IC_')),
+            self.STUBMAIN.variables(prefixed('IC_')))
         all_mgd_functions = _unstring_mgd_api_functions(all_mgd_functions, unstring_names)
     
         method_infos = []

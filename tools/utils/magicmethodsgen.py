@@ -1,7 +1,7 @@
 
 from data.snippets.cs.magicmethods import *
 
-from tools.utils.apiplumbing import ApiPlumbingGenerator
+from tools.utils.codegen import CodeGenerator, return_dict
 
 
 #==========================================================================
@@ -41,11 +41,12 @@ def _generate_case_code(c_field, py_field, has_swapped_version, dgt_spec, templa
 
 #==========================================================================
 
-class MagicMethodsGenerator(ApiPlumbingGenerator):
+class MagicMethodsGenerator(CodeGenerator):
     # requires populated self.context.dispatcher_methods
 
     INPUTS = 'MAGICMETHODS'
     
+    @return_dict('MagicMethods.Generated.cs')
     def _run(self):
         self._normal_cases = []
         self._swapped_cases = []
