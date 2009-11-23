@@ -1,5 +1,6 @@
 
 # remember -X:FullFrames
+# expect 2632 tests, 153 errors, 17 failures
 
 # I strongly recommend you change line 2 of scipy/interpolate/polyint.py
 # to import factorial from scipy.misc (not just scipy). Not sure the true
@@ -23,9 +24,8 @@ if len(sys.argv) > 1:
 import nose
 nose.run(defaultTest=path, config=config)
 
-# last full run had 2632 tests, 153 errors, 17 failures
 
-# individual package results, moderately out of date:
+# individual package results, moderately out of date(?):
 # cluster: 159 tests ok
 # fftpack: 45 tests, 16 failures
 # integrate: 17 tests, 1 failure
