@@ -6,6 +6,7 @@ from tools.utils.magicmethodsgen import MagicMethodsGenerator
 from tools.utils.pythonapigen import PythonApiGenerator
 from tools.utils.pythonstructsgen import PythonStructsGenerator
 
+
 #==========================================================================
 
 def _merge_dicts(d1, d2):

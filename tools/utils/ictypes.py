@@ -20,9 +20,10 @@ def _choose_best_name(equivalents, priority):
 
 def _get_equivalent_key_mapping(d, priority=''):
     equivalent_keys = _invert_dict(d).values()
+    priorities = priority.split()
     result = {}
     for keys in equivalent_keys:
-        best = _choose_best_name(keys, priority.split())
+        best = _choose_best_name(keys, priorities)
         for key in keys:
             result[key] = best
     return result

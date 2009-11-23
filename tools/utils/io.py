@@ -124,13 +124,15 @@ def _read_these_files(src, files):
     for info in files:
         name, reader = info[:2]
         extra_args = info[2:]
-        result[scrunch_filename(name)] = reader(src, name, *extra_args)
+        key = scrunch_filename(name)
+        result[key] = reader(src, name, *extra_args)
     return result
 
 @return_dict('ALL_FILES')
 def _read_all_files(src):
     return tuple(
-        (scrunch_filename(name), read(src, name)) for name in os.listdir(src)
+        (scrunch_filename(name), read(src, name))
+        for name in os.listdir(src)
         if os.path.isfile(os.path.join(src, name))
     )
 
