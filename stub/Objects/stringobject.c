@@ -4299,6 +4299,8 @@ _PyString_Resize(PyObject **pv, Py_ssize_t newsize)
 	return 0;
 }
 
+#endif // IRONCLAD
+
 /* Helpers for formatstring */
 
 Py_LOCAL_INLINE(PyObject *)
@@ -5126,6 +5128,8 @@ PyString_Format(PyObject *format, PyObject *args)
 	}
 	return NULL;
 }
+
+#ifndef IRONCLAD
 
 void
 PyString_InternInPlace(PyObject **p)

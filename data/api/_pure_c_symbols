@@ -125,6 +125,8 @@ _Py_HashPointer
 PyString_FromFormat
 PyString_FromFormatV
 _PyString_Eq
+PyString_Format
+_PyString_FormatLong
 
 # Objects/structseq.c
 PyStructSequence_New
