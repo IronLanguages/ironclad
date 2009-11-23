@@ -3,16 +3,9 @@ from itertools import chain
 
 from data.snippets.cs.dispatcher import *
 
-from tools.utils.codegen import CodeGenerator, return_dict
+from tools.utils.codegen import CodeGenerator, return_dict, starstarmap
 from tools.utils.gccxml import get_funcspecs, equal
 from tools.utils.ictypes import ICTYPE_2_MGDTYPE
-
-
-#==========================================================================
-
-def _starstarmap(func, items):
-    for (args, kwargs) in items:
-        yield func(*args, **kwargs)
 
 
 #==========================================================================
@@ -123,8 +116,8 @@ class DispatcherGenerator(CodeGenerator):
     @return_dict('DISPATCHER')
     def _run(self):
         return DISPATCHER_FILE_TEMPLATE % '\n\n'.join(chain(
-            _starstarmap(_generate_field_code, self.DISPATCHER_FIELDS),
-            _starstarmap(self._generate_method_code, self.DISPATCHER_METHODS)))
+            starstarmap(_generate_field_code, self.DISPATCHER_FIELDS),
+            starstarmap(self._generate_method_code, self.DISPATCHER_METHODS)))
 
     def _get_spec(self, name):
         _, spec = get_funcspecs(

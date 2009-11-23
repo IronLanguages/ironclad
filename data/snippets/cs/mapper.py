@@ -4,13 +4,13 @@ from common import FILE_TEMPLATE
 
 #================================================================================================
 
-PYTHONMAPPER_TEMPLATE = """\
+MAPPER_TEMPLATE = """\
     public partial class PythonMapper : PythonApi
     {
 %s
     }"""
 
-PYTHONMAPPER_FILE_TEMPLATE = FILE_TEMPLATE % PYTHONMAPPER_TEMPLATE
+MAPPER_FILE_TEMPLATE = FILE_TEMPLATE % MAPPER_TEMPLATE
 
 
 #================================================================================================
@@ -31,6 +31,8 @@ STOREDISPATCH_TEMPLATE = """\
 %s
             return this.StoreObject(obj);
         }"""
+
+STOREDISPATCH_FILE_TEMPLATE = MAPPER_FILE_TEMPLATE % STOREDISPATCH_TEMPLATE
 
 STOREDISPATCH_TYPE_TEMPLATE = """\
             if (obj is %(type)s) { return this.StoreTyped((%(type)s)obj); }"""
@@ -57,7 +59,7 @@ OPERATOR_TEMPLATE = """\
 
 #================================================================================================
 
-C2PY_TEMPLATE = """\
+NUMBERS_C2PY_TEMPLATE = """\
         public override IntPtr
         %(name)s(%(type)s value)
         {
@@ -67,7 +69,7 @@ C2PY_TEMPLATE = """\
 
 #================================================================================================
 
-PY2C_TEMPLATE = """\
+NUMBERS_PY2C_TEMPLATE = """\
         public override %(type)s
         %(name)s(IntPtr valuePtr)
         {

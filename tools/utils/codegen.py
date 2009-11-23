@@ -16,17 +16,6 @@ class CodeGenerator(object):
 
 #==========================================================================
 
-def eval_kwargs_column(container, context=None):
-    if not container:
-        return {}
-    str_, ctx = container[0], {}
-    if context is not None:
-        ctx = __import__(context, fromlist=['*']).__dict__
-    return eval(str_, ctx)
-
-
-#==========================================================================
-
 def glom_templates(joiner, *args):
     output = []
     for (template, inputs) in args:
@@ -49,6 +38,19 @@ def return_dict(keys):
             return _dictify(keys, f(*_, **__))
         return g
     return decorator
+
+
+#==========================================================================
+
+def starstarmap(func, items):
+    for (args, kwargs) in items:
+        yield func(*args, **kwargs)
+
+
+#==========================================================================
+
+def scrunch_filename(name):
+    return name[1:].split('.')[0].upper()
 
 
 #==========================================================================
