@@ -1,7 +1,8 @@
 
 import os, sys
+from itertools import starmap
 
-from tools.utils.codegen import eval_kwargs_column
+from tools.utils.codegen import scrunch_filename
 
 
 #====================================================================
@@ -30,14 +31,38 @@ def read_set(*args):
     return set(read_lines(*args))
 
 
+#====================================================================
+
+def _forever_split(s):
+    for part in s.split():
+        yield part
+    while True:
+        yield ''
+
+def read_cols(dir_, name, cols):
+    columns = cols.split()
+    def extract(line):
+        return dict(zip(columns, _forever_split(line)))
+    return map(extract, read_lines(dir_, name))
+
+
 #===============================================================================
 
+def _eval_kwargs_column(container, context=None):
+    if not container:
+        return {}
+    str_, ctx = container[0], {}
+    if context is not None:
+        ctx = __import__(context, fromlist=['*']).__dict__
+    return eval(str_, ctx)
+
 def read_args_kwargs(dir_, name, argcount, context=None):
-    result = []
-    for line in read_set(dir_, name):
-        _input = line.split(None, argcount)
-        result.append((_input[:argcount], eval_kwargs_column(_input[argcount:], context)))
-    return result
+    def _get_args_kwargs(line):
+        args_kwargs = line.split(None, argcount)
+        args = args_kwargs[:argcount]
+        kwargs = _eval_kwargs_column(args_kwargs[argcount:], context)
+        return args, kwargs
+    return map(_get_args_kwargs, read_lines(dir_, name))
 
 
 #===============================================================================
@@ -92,15 +117,12 @@ def write(dir_, name, text, badge=False):
 
 #==========================================================================
 
-def _rename(name):
-    return name[1:].split('.')[0].upper()
-
 def _read_files(src, files):
     result = {}
     for info in files:
         name, reader = info[:2]
         extra_args = info[2:]
-        result[_rename(name)] = reader(src, name, *extra_args)
+        result[scrunch_filename(name)] = reader(src, name, *extra_args)
     return result
 
 def _write_files(dir_, files):
