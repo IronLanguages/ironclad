@@ -201,7 +201,7 @@ managed.Command(mapper_out, mapper_src,
 snippets_src = managed.Glob('data/snippets/py/*.py')
 snippets_out = ['src/CodeSnippets.Generated.cs']
 managed.Command(snippets_out, snippets_src,
-    '$IPY tools/generatesnippets.py data/snippets/py src')
+    '$IPY tools/generatecodesnippets.py data/snippets/py src')
 
 #===============================================================================
 # Build the actual managed library

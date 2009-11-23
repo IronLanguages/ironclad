@@ -1,4 +1,6 @@
 
+from itertools import starmap
+
 from data.snippets.cs.mapper import *
 
 from tools.utils.codegen import CodeGenerator, glom_templates, return_dict, starstarmap
@@ -6,20 +8,21 @@ from tools.utils.codegen import CodeGenerator, glom_templates, return_dict, star
 
 #================================================================================================
 
-def _fill_slot_template(args):
-    slot, data = args
+def _fill_slot_template(slot, data):
     template = FILL_TYPES_SLOT_TEMPLATES.get(slot, FILL_TYPES_DEFAULT_TEMPLATE)
-    return template % {'slot': slot, 'data': data}
+    return template % {
+        'slot': slot, 
+        'data': data
+    }
 
 @return_dict('name type extra')
-def _unpack_fill_type(args, kwargs):
-    name, type = args
+def _unpack_fill_type(name, type, kwargs):
     extra_items = sorted(kwargs.items())
-    extra = '\n'.join(map(_fill_slot_template, extra_items))
+    extra = '\n'.join(starmap(_fill_slot_template, extra_items))
     return name, type, extra
 
-def _generate_fill_type_method(*args, **kwargs):
-    return FILL_TYPES_TEMPLATE % _unpack_fill_type(args, kwargs)
+def _generate_fill_type_method(name, type, **kwargs):
+    return FILL_TYPES_TEMPLATE % _unpack_fill_type(name, type, kwargs)
 
 
 #================================================================================================
