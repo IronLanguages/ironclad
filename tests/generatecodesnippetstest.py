@@ -10,7 +10,7 @@ from tests.utils.testcase import TestCase
 from tools.utils.io import read, write
 
 
-class GenerateMapperTest(TestCase):
+class GenerateCodeSnippetsTest(TestCase):
 
     def testCreatesComponents(self):
         src = tempfile.mkdtemp()
@@ -18,7 +18,7 @@ class GenerateMapperTest(TestCase):
             write(src, name, contents)
 
         dst = tempfile.mkdtemp()
-        result = spawn("ipy", "tools/generatesnippets.py", src, dst)
+        result = spawn("ipy", "tools/generatecodesnippets.py", src, dst)
         self.assertEquals(result, 0, "process ended badly")
 
         def assertFinds(name, expected):
@@ -49,6 +49,6 @@ namespace Ironclad
 """
 
 
-suite = makesuite(GenerateMapperTest)
+suite = makesuite(GenerateCodeSnippetsTest)
 if __name__ == '__main__':
     run(suite)

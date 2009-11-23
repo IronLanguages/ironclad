@@ -2,7 +2,7 @@
 import os, sys
 from itertools import starmap
 
-from tools.utils.codegen import scrunch_filename
+from tools.utils.codegen import return_dict, scrunch_filename
 
 
 #====================================================================
@@ -117,13 +117,27 @@ def write(dir_, name, text, badge=False):
 
 #==========================================================================
 
-def _read_files(src, files):
+ALL_FILES = object()
+
+def _read_these_files(src, files):
     result = {}
     for info in files:
         name, reader = info[:2]
         extra_args = info[2:]
         result[scrunch_filename(name)] = reader(src, name, *extra_args)
     return result
+
+@return_dict('ALL_FILES')
+def _read_all_files(src):
+    return tuple(
+        (scrunch_filename(name), read(src, name)) for name in os.listdir(src)
+        if os.path.isfile(os.path.join(src, name))
+    )
+
+def _read_files(src, files):
+    if files is ALL_FILES:
+        return _read_all_files(src)
+    return _read_these_files(src, files)
 
 def _write_files(dir_, files):
     for (path, text) in files.items():

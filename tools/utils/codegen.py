@@ -50,7 +50,7 @@ def starstarmap(func, items):
 #==========================================================================
 
 def scrunch_filename(name):
-    return name[1:].split('.')[0].upper()
+    return name.strip('_').split('.')[0].upper()
 
 
 #==========================================================================

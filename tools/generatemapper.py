@@ -1,6 +1,4 @@
 
-import sys
-
 from tools.utils.codegen import scrunch_filename
 from tools.utils.io import read_args_kwargs, read_cols, run_generator
 from tools.utils.mappergen import MapperGenerator
