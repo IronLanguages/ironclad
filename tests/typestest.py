@@ -12,7 +12,7 @@ from tests.utils.testcase import TestCase, WithMapper
 from System import Byte, IntPtr, UInt32, WeakReference
 from System.Runtime.InteropServices import Marshal
 
-from Ironclad import CannotInterpretException, CPyMarshal, dgt_ptr_ptrptrptr, HGlobalAllocator, PythonMapper, OpaquePyCell
+from Ironclad import CannotInterpretException, CPyMarshal, dgt_ptr_ptrptrptr, HGlobalAllocator, PythonMapper
 from Ironclad.Structs import *
 
 class ItemEnumeratorThing(object):

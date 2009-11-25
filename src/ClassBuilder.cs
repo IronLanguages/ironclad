@@ -223,7 +223,7 @@ namespace Ironclad
             }
             else
             {
-                Console.WriteLine("detected unsupported member type {0}; ignoring", member.type);
+                Console.WriteLine("detected unsupported member type {0}; ignoring", (Py_TPFLAGS)member.type);
             }
         }
 

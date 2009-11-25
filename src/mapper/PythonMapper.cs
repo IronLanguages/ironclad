@@ -72,8 +72,8 @@ namespace Ironclad
         private List<IntPtr> tempObjects = new List<IntPtr>();
         private Stack<dgt_void_void> exitfuncs = new Stack<dgt_void_void>();
 
-        private LocalDataStoreSlot threadLockStore = Thread.AllocateDataSlot();
-        private LocalDataStoreSlot threadStateStore = Thread.AllocateDataSlot();
+        private LocalDataStoreSlot _lockCount = Thread.AllocateDataSlot();
+        private LocalDataStoreSlot _threadState = Thread.AllocateDataSlot();
 
         // TODO: must be a better way to handle imports...
         // public to allow manipulation from test code

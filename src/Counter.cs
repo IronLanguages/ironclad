@@ -4,12 +4,11 @@ using IronPython.Runtime;
 
 namespace Ironclad
 {
-    // not well named :(
-    internal class ThreadLocalCounter
+    internal class Counter
     {
         private int value = 0;
 
-        public int Count
+        public int Value
         {
             get { return this.value; }
         }

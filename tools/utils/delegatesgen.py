@@ -22,6 +22,6 @@ class DelegatesGenerator(CodeGenerator):
     @return_dict('DELEGATES')
     def _run(self):
         return DELEGATES_FILE_TEMPLATE % '\n\n'.join(
-            map(_generate_delegate_code, self.context.dgt_specs))
+            map(_generate_delegate_code, sorted(self.context.dgt_specs)))
 
 #==========================================================================
