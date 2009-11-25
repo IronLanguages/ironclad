@@ -5,21 +5,23 @@
 * SCons 1.2.0
 * GCCXML 0.6.0
 * IronPython 2.6 RC3
-* pygccxml 1.0.0 (accessible to ipy) (**)
-* mingw 5.16 (with gcc)
-* nasm 2.01 (installed into MinGW/bin)
-* pexports 0.43 (installed into MinGW/bin)
-* .NET 2.0 Service Pack 1 (csc, specifically) (***)
+* pygccxml 1.0.0 accessible to ipy (**)
+* mingw 5.16 with gcc
+* nasm 2.01 installed into MinGW/bin
+* pexports 0.43 installed into MinGW/bin
+* .NET 2.0 Service Pack 1 (***)
+
+Alternative versions of the above software may work, but have not
+been tested.
 
 (**) To make pygccxml work with ipy, you also need:
-  * Jeff Hardy's zlib for ipy
-  * implementation of gzip from Python26 Lib
+  * IronPython.Zlib.dll (by Jeff Hardy)
+  * gzip.py from Python26 Lib
   * pyexpat.py from FePy, saved as Lib/xml/parsers/expat.py
-  * implementation of xml.sax.expatreader from Python26 Lib
+  * xml.sax.expatreader.py from Python26 Lib
 
 (***) note that Vista users need to install Vista SP1, or .NET 3.5,
   to get .NET 2.0 SP1
-
 
 32-BIT LINUX REQUIREMENTS:
 
@@ -56,11 +58,11 @@ process, the test command inherits its environment from the system. I have
 successfully used the following environment on win32:
 
 * Python 2.6.2
-* IronPython 2.6 RC2 with Jeff Hardy's zlib for ipy, plus site-packages:
+* IronPython 2.6 RC2 with Jeff Hardy's IronPython.Zlib.dll, plus site-packages:
     subprocess.py (by Jeff Hardy)
-    csv.py (copied from Python26 Lib)
-    gzip.py (copied from Python26 Lib)
-    sqlite3 (copied from Python26 Lib)
+    csv.py (from Python26 Lib)
+    gzip.py (from Python26 Lib)
+    sqlite3 (from Python26 Lib)
     numpy 1.3.0
     scipy 0.7.1
     h5py 1.2.0

@@ -1,6 +1,0 @@
-
-Ironclad lives at http://code.google.com/p/ironclad/
-
-Ask questions at http://groups.google.com/group/c-extensions-for-ironpython
-
-Report bugs at http://code.google.com/p/ironclad/issues/list

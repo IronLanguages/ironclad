@@ -25,22 +25,22 @@ import nose
 nose.run(defaultTest=path, config=config)
 
 
-# individual package results, moderately out of date(?):
-# cluster: 159 tests ok
-# fftpack: 45 tests, 16 failures
-# integrate: 17 tests, 1 failure
-# interpolate: with factorial import from misc in polyint.py: 125 tests, 16 errors
-# io: 120 tests, 25 errors
-# lib: 176 tests, 39 errors
-# linalg: 402 tests, 51 errors
-# maxentropy: 2 tests ok
-# misc: tests need PIL, which doesn't work in ipy ATM
-# ndimage: 414 tests ok
-# odr: 4 tests ok
-# optimize: 33 tests, 4 errors
-# signal: with factorial import from misc in polyint.py: 40 tests ok
-# sparse: 418 tests, 19 errors
-# spatial: 229 tests ok (some pretty slow though)
-# special: 368 tests ok
-# stats: 215 tests ok
-# weave: needs signal (I believe this is signal, not scipy.signal)
+# individual package results, potentially out of date:
+# * cluster: 159 tests ok
+# * fftpack: 45 tests, 16 failures
+# * integrate: 17 tests, 1 failure
+# * interpolate: with factorial import from misc in polyint.py: 125 tests, 16 errors
+# * io: 120 tests, 25 errors
+# * lib: 176 tests, 39 errors
+# * linalg: 402 tests, 51 errors
+# * maxentropy: 2 tests ok
+# * misc: tests need PIL, which doesn't work in ipy ATM
+# * ndimage: 414 tests ok
+# * odr: 4 tests ok
+# * optimize: 33 tests, 4 errors
+# * signal: with factorial import from misc in polyint.py: 40 tests ok
+# * sparse: 418 tests, 19 errors
+# * spatial: 229 tests ok (some pretty slow though)
+# * special: 368 tests ok
+# * stats: 215 tests ok
+# * weave: needs signal (I believe this is signal, not scipy.signal)

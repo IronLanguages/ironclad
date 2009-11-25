@@ -9,18 +9,33 @@ namespace Ironclad
 {
     public partial class PythonMapper : PythonApi
     {
-        private ThreadState
-        ts
+        private Counter
+        lockCount
         {
             get
             {
-                ThreadState ts = (ThreadState)Thread.GetData(this.threadStateStore);
-                if (ts == null)
+                Counter lockCount = (Counter)Thread.GetData(this._lockCount);
+                if (lockCount == null)
                 {
-                    ts = new ThreadState(this);
-                    Thread.SetData(this.threadStateStore, ts);
+                    lockCount = new Counter();
+                    Thread.SetData(this._lockCount, lockCount);
                 }
-                return ts;
+                return lockCount;
+            }
+        }
+
+        private ThreadState
+        threadState
+        {
+            get
+            {
+                ThreadState threadState = (ThreadState)Thread.GetData(this._threadState);
+                if (threadState == null)
+                {
+                    threadState = new ThreadState(this);
+                    Thread.SetData(this._threadState, threadState);
+                }
+                return threadState;
             }
         }
         
@@ -28,7 +43,7 @@ namespace Ironclad
         {
             get
             {
-                return this.ts.LastException;
+                return this.threadState.LastException;
             }
             set
             {
@@ -40,7 +55,7 @@ namespace Ironclad
                     Console.WriteLine(Environment.StackTrace);
                     Console.WriteLine();
                 }
-                this.ts.LastException = value;
+                this.threadState.LastException = value;
             }
         }
 
@@ -97,14 +112,8 @@ namespace Ironclad
         public override IntPtr
         PyEval_SaveThread()
         {
-            ThreadLocalCounter threadLock = (ThreadLocalCounter)Thread.GetData(this.threadLockStore);
-            if (threadLock == null)
-            {
-                threadLock = new ThreadLocalCounter();
-                Thread.SetData(this.threadLockStore, threadLock);
-            }
-            threadLock.Increment();
-            if (threadLock.Count == 1)
+            this.lockCount.Increment();
+            if (lockCount.Value == 1)
             {
                 this.ReleaseGIL();
                 return new IntPtr(1);
@@ -115,12 +124,14 @@ namespace Ironclad
         public override void
         PyEval_RestoreThread(IntPtr token)
         {
-            // no check: if someone calls Restore before Save we may as well just explode
-            ThreadLocalCounter threadLock = (ThreadLocalCounter)Thread.GetData(this.threadLockStore);
-            threadLock.Decrement();
-            if (token != IntPtr.Zero || threadLock.Count == 0)
+            this.lockCount.Decrement();
+            if (this.lockCount.Value < 0)
             {
-                threadLock.Reset();
+                throw new Exception("Tried to restore a thread that wasn't saved?");
+            }
+            if (token != IntPtr.Zero || lockCount.Value == 0)
+            {
+                lockCount.Reset();
                 this.EnsureGIL();
             }
         }
@@ -147,7 +158,7 @@ namespace Ironclad
         {
             if (this.GIL.Acquire() == 1)
             {
-                CPyMarshal.WritePtr(this._PyThreadState_Current, this.ts.Ptr);
+                CPyMarshal.WritePtr(this._PyThreadState_Current, this.threadState.Ptr);
             }
         }
         
