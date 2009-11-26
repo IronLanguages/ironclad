@@ -53,6 +53,8 @@ PyObject_CallMethodObjArgs
 PyBuffer_FillContiguousStrides
 PyBuffer_FillInfo
 PyBuffer_Release
+PySequence_Fast
+PySequence_List
 
 # Objects/bufferobject.c
 PyBuffer_FromObject

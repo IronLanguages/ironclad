@@ -2208,6 +2208,8 @@ Fail:
 	return NULL;
 }
 
+#endif // IRONCLAD
+
 PyObject *
 PySequence_List(PyObject *v)
 {
@@ -2255,6 +2257,8 @@ PySequence_Fast(PyObject *v, const char *m)
 
 	return v;
 }
+
+#ifndef IRONCLAD
 
 /* Iterate over seq.  Result depends on the operation:
    PY_ITERSEARCH_COUNT:  -1 if error, else # of times obj appears in seq.
