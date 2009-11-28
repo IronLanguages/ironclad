@@ -62,31 +62,28 @@ namespace Ironclad
             return modulesPtr;
         }
 
-        public void 
-        LoadModule(string path, string name)
+        private PythonModule
+        Import(string name)
         {
-            this.EnsureGIL();
+            PythonModule module = this.GetModule(name);
+            if (module != null)
+            {
+                return module;
+            }
+
             this.importNames.Push(name);
-            this.importFiles.Push(path);
-
-            string dir = Path.GetDirectoryName(path);
-            string library = Path.GetFileName(path);
-            string previousDir = Environment.CurrentDirectory;
-
-            Environment.CurrentDirectory = dir;
             try
             {
-                this.importer.Load(library);
+                // TODO: there must be a better way to do this
+                return (PythonModule)this.CreateFromSnippet(
+                    String.Format(CodeSnippets.IMPORT_TEMPLATE, name), "_ironclad_module");
             }
             finally
             {
-                Environment.CurrentDirectory = previousDir;
                 this.importNames.Pop();
-                this.importFiles.Pop();
-                this.ReleaseGIL();
             }
         }
-    
+
         private string
         FixImportName(string name)
         {
@@ -102,54 +99,6 @@ namespace Ironclad
                 return importName;
             }
             return name;
-        }
-
-        private PythonModule
-        Import(string name)
-        {
-            PythonModule module = this.GetModule(name);
-            if (module != null)
-            {
-                return module;
-            }
-            
-            this.importNames.Push(name);
-            try
-            {
-                // TODO: there must be a better way to do this
-                return (PythonModule)this.CreateFromSnippet(
-                    String.Format(CodeSnippets.IMPORT_TEMPLATE, name), "_ironclad_module");
-            }
-            finally
-            {
-                this.importNames.Pop();
-            }
-        }
-        
-        private PythonModule
-        CreateModule(string name)
-        {
-            PythonModule module = this.GetModule(name);
-            if (module == null)
-            {
-                module = new PythonModule();
-                module.Get__dict__()["__name__"] = name;
-                this.AddModule(name, module);
-            }
-            return module;
-        }
-
-        private void
-        CreateModulesContaining(string name)
-        {
-            PythonModule inner = this.CreateModule(name);
-            int lastDot = name.LastIndexOf('.');
-            if (lastDot != -1)
-            {
-                this.CreateModulesContaining(name.Substring(0, lastDot));
-                PythonModule outer = this.GetModule(name.Substring(0, lastDot));
-                outer.Get__dict__()[name.Substring(lastDot + 1)] = inner;
-            }
         }
     }
 }
