@@ -10,13 +10,10 @@ using IronPython.Runtime.Types;
 
 namespace Ironclad
 {
-    // if you can work out how to remove the dependence on this.scratchContext,
-    // then this can become the static utility class it so obviously and desperately
-    // wants to be
-    public partial class PythonMapper : PythonApi
+    public class NumberMaker
     {
-        public BigInteger
-        MakeBigInteger(object obj)
+        public static BigInteger
+        MakeBigInteger(CodeContext ctx, object obj)
         {
             try
             {
@@ -28,26 +25,26 @@ namespace Ironclad
             }
             
             if ((!Builtin.isinstance(obj, TypeCache.PythonType)) &&
-                Builtin.hasattr(this.scratchContext, obj, "__int__"))
+                Builtin.hasattr(ctx, obj, "__int__"))
             {
                 object probablyInt = PythonCalls.Call(TypeCache.Int32, new object[] {obj});
-                return this.MakeBigInteger(probablyInt);
+                return MakeBigInteger(ctx, probablyInt);
             }
             
             if ((!Builtin.isinstance(obj, TypeCache.PythonType)) &&
-                Builtin.hasattr(this.scratchContext, obj, "__float__"))
+                Builtin.hasattr(ctx, obj, "__float__"))
             {
                 object probablyFloat = PythonCalls.Call(TypeCache.Double, new object[] {obj});
-                return this.MakeBigInteger(probablyFloat);
+                return MakeBigInteger(ctx, probablyFloat);
             }
             
             throw PythonOps.TypeError("could not make number sufficiently integeresque");
         }
         
-        public BigInteger
-        MakeUnsignedBigInteger(object obj)
+        public static BigInteger
+        MakeUnsignedBigInteger(CodeContext ctx, object obj)
         {
-            BigInteger result = this.MakeBigInteger(obj);
+            BigInteger result = MakeBigInteger(ctx, obj);
             
             if (result < 0)
             {
@@ -58,8 +55,8 @@ namespace Ironclad
         }
         
         
-        public double
-        MakeFloat(object obj)
+        public static double
+        MakeFloat(CodeContext ctx, object obj)
         {
             try
             {
@@ -71,17 +68,17 @@ namespace Ironclad
             }
             
             if ((!Builtin.isinstance(obj, TypeCache.PythonType)) &&
-                Builtin.hasattr(this.scratchContext, obj, "__int__"))
+                Builtin.hasattr(ctx, obj, "__int__"))
             {
                 object probablyInt = PythonCalls.Call(TypeCache.Int32, new object[] {obj});
-                return this.MakeFloat(probablyInt);
+                return MakeFloat(ctx, probablyInt);
             }
             
             if ((!Builtin.isinstance(obj, TypeCache.PythonType)) &&
-                Builtin.hasattr(this.scratchContext, obj, "__long__"))
+                Builtin.hasattr(ctx, obj, "__long__"))
             {
                 object probablyLong = PythonCalls.Call(TypeCache.BigInteger, new object[] {obj});
-                return this.MakeFloat(probablyLong);
+                return MakeFloat(ctx, probablyLong);
             }
             
             throw PythonOps.TypeError("could not make number sufficiently floatesque");

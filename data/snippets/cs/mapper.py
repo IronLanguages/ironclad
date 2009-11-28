@@ -75,7 +75,7 @@ NUMBERS_PY2C_TEMPLATE = """\
         {
             try
             {
-                return this.%(converter)s(this.Retrieve(valuePtr))%(coerce)s;
+                return NumberMaker.%(converter)s(this.scratchContext, this.Retrieve(valuePtr))%(coerce)s;
             }
             catch (Exception e)
             {

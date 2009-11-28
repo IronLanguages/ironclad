@@ -171,7 +171,7 @@ namespace Ironclad
         {
             try
             {
-                return this.MakeSomething(this.Retrieve(valuePtr));
+                return NumberMaker.MakeSomething(this.scratchContext, this.Retrieve(valuePtr));
             }
             catch (Exception e)
             {
@@ -185,7 +185,7 @@ namespace Ironclad
         {
             try
             {
-                return this.MakeSomethingElse(this.Retrieve(valuePtr)).ToPong();
+                return NumberMaker.MakeSomethingElse(this.scratchContext, this.Retrieve(valuePtr)).ToPong();
             }
             catch (Exception e)
             {
