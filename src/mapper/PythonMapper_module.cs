@@ -146,6 +146,57 @@ namespace Ironclad
             }
             return null;
         }
+
+        public void
+        LoadModule(string path, string name)
+        {
+            this.EnsureGIL();
+            this.importNames.Push(name);
+            this.importFiles.Push(path);
+
+            string dir = Path.GetDirectoryName(path);
+            string library = Path.GetFileName(path);
+            string previousDir = Environment.CurrentDirectory;
+
+            Environment.CurrentDirectory = dir;
+            try
+            {
+                this.importer.Load(library);
+            }
+            finally
+            {
+                Environment.CurrentDirectory = previousDir;
+                this.importNames.Pop();
+                this.importFiles.Pop();
+                this.ReleaseGIL();
+            }
+        }
+
+        private PythonModule
+        CreateModule(string name)
+        {
+            PythonModule module = this.GetModule(name);
+            if (module == null)
+            {
+                module = new PythonModule();
+                module.Get__dict__()["__name__"] = name;
+                this.AddModule(name, module);
+            }
+            return module;
+        }
+
+        private void
+        CreateModulesContaining(string name)
+        {
+            PythonModule inner = this.CreateModule(name);
+            int lastDot = name.LastIndexOf('.');
+            if (lastDot != -1)
+            {
+                this.CreateModulesContaining(name.Substring(0, lastDot));
+                PythonModule outer = this.GetModule(name.Substring(0, lastDot));
+                outer.Get__dict__()[name.Substring(lastDot + 1)] = inner;
+            }
+        }
         
         private void
         CreateScratchModule()
