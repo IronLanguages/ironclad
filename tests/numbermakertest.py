@@ -1,42 +1,41 @@
 
 
 from tests.utils.runtest import makesuite, run
-from tests.utils.testcase import TestCase, WithMapper
+from tests.utils.testcase import TestCase
 from tests.utils.numbers import NumberI, NumberL, NumberF, NUMBER_VALUE
 
-class ConvertTest(TestCase):
+from Ironclad import NumberMaker
 
-    @WithMapper
-    def testBigInteger(self, mapper, _):
+class NumberMakerTest(TestCase):
+
+    def testBigInteger(self):
         for cls in (NumberI, NumberL, NumberF):
-            result = mapper.MakeBigInteger(cls())
+            result = NumberMaker.MakeBigInteger(cls())
             self.assertEquals(isinstance(result, long), True)
             self.assertEquals(result, NUMBER_VALUE)
 
-        self.assertRaises(TypeError, lambda: mapper.MakeBigInteger(object()))
+        self.assertRaises(TypeError, lambda: NumberMaker.MakeBigInteger(object()))
 
-    @WithMapper
-    def testUnsignedBigInteger(self, mapper, _):
+    def testUnsignedBigInteger(self):
         class NumberNeg(object):
             def __int__(self):
                 return -1
-        self.assertRaises(TypeError, lambda: mapper.MakeUnsignedBigInteger(NumberNeg()))
+        self.assertRaises(TypeError, lambda: NumberMaker.MakeUnsignedBigInteger(NumberNeg()))
 
-        result = mapper.MakeBigInteger(NumberF())
+        result = NumberMaker.MakeBigInteger(NumberF())
         self.assertEquals(isinstance(result, long), True)
         self.assertEquals(result, NUMBER_VALUE)
 
-    @WithMapper
-    def testFloat(self, mapper, _):
+    def testFloat(self):
         for cls in (NumberI, NumberL, NumberF):
-            result = mapper.MakeFloat(cls())
+            result = NumberMaker.MakeFloat(cls())
             self.assertEquals(isinstance(result, float), True)
             self.assertEquals(result, NUMBER_VALUE)
 
-        self.assertRaises(TypeError, lambda: mapper.MakeFloat(object()))
+        self.assertRaises(TypeError, lambda: NumberMaker.MakeFloat(object()))
 
 
 
-suite = makesuite(ConvertTest)
+suite = makesuite(NumberMakerTest)
 if __name__ == '__main__':
     run(suite)

@@ -70,7 +70,7 @@ namespace Ironclad
         {
             try
             {
-                BigInteger unmasked = this.MakeBigInteger(this.Retrieve(valuePtr));
+                BigInteger unmasked = NumberMaker.MakeBigInteger(this.scratchContext, this.Retrieve(valuePtr));
                 BigInteger mask = new BigInteger(UInt32.MaxValue) + 1;
                 BigInteger masked = BigInteger.Mod(unmasked, mask);
                 if (masked < 0)
@@ -89,7 +89,7 @@ namespace Ironclad
         public override int
         _PyLong_Sign(IntPtr valuePtr)
         {
-            BigInteger value = this.MakeBigInteger(this.Retrieve(valuePtr));
+            BigInteger value = NumberMaker.MakeBigInteger(this.scratchContext, this.Retrieve(valuePtr));
             if (value > 0)
             {
                 return 1;
@@ -254,7 +254,7 @@ namespace Ironclad
             {
                 return this.Store((int)value);
             }
-            return this.Store(this.MakeBigInteger(value));
+            return this.Store(NumberMaker.MakeBigInteger(this.scratchContext, value));
         }
 
         private IntPtr
