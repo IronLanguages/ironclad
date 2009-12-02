@@ -94,6 +94,8 @@ FILL_TYPES_TEMPLATE = """\
             CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
 %(extra)s
+            string name = (string)Builtin.getattr(this.scratchContext, %(type)s, "__name__");
+            CPyMarshal.WriteCStringField(ptr, typeof(PyTypeObject), "tp_name", name);
             this.map.Associate(ptr, %(type)s);
         }"""
 

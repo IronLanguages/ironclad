@@ -55,7 +55,6 @@ namespace Ironclad
 
         private object removeSysHacks;
         private object kindaDictProxy;
-        private object kindaSeqIter;
         private object cFileClass;
         private Lock GIL;
 
@@ -126,7 +125,6 @@ namespace Ironclad
             
             this.CreateScratchModule();
             this.kindaDictProxy = this.CreateFromSnippet(CodeSnippets.KINDA_DICT_PROXY_CODE, "KindaDictProxy");
-            this.kindaSeqIter = this.CreateFromSnippet(CodeSnippets.KINDA_SEQ_ITER_CODE, "KindaSeqIter");
             
             if (stubPath != null)
             {

@@ -1,6 +1,7 @@
 
 # remember -X:Frames
-# expect 1702 tests, 142 errors, 17 failures
+# numpy 1.3: expect 1702 tests, 142 errors, 17 failures
+# numpy 1.4: expect 2158 tests, 184 errors, 51 failures
 
 # note: I strongly recommend that you change core/tests/test_umath.py
 # such that is_longdouble_finfo_bogus returns True -- otherwise it will

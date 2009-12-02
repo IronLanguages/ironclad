@@ -12,25 +12,6 @@ namespace Ironclad
 {
     public partial class PythonMapper : PythonApi
     {
-
-        public override IntPtr
-        PySeqIter_New(IntPtr seqPtr)
-        {
-            // I can't just use PythonOps.GetEnumerator here: that will call __iter__, which is a problem
-            // if seq is a bridged CPython type whose tp_iter method calls PySeqIter_New (stack overflow :))
-            try
-            {
-                object seq = this.Retrieve(seqPtr);
-                return this.Store(PythonCalls.Call(this.kindaSeqIter, new object[] { seq } ));
-            }
-            catch (Exception e)
-            {
-                this.LastException = e;
-                return IntPtr.Zero;
-            }
-        }
-
-
         public override IntPtr
         PyObject_SelfIter(IntPtr objPtr)
         {

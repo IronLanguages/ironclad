@@ -20,6 +20,8 @@ PyCObject_Type
 PyCode_Type
 PyFrame_Type
 PyTraceBack_Type
+PySeqIter_Type
+PyCallIter_Type
 
 #==============================================================================
 # These are static data and aren't bothering anybody, so there is no
@@ -101,6 +103,10 @@ PyFile_DecUseCount
 # Objects/frameobject.c
 _PyFrame_Init
 PyFrame_New
+
+# Objects/iterobject.c
+PySeqIter_New
+PyCallIter_New
 
 # Objects/listobject.c
 PyList_Size
