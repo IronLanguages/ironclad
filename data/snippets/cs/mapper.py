@@ -15,8 +15,8 @@ MAPPER_FILE_TEMPLATE = FILE_TEMPLATE % MAPPER_TEMPLATE
 
 #================================================================================================
 
-EXCEPTION_TEMPLATE = """\
-        public override void Fill_PyExc_%(name)s(IntPtr addr)
+REGISTER_EXCEPTION_TEMPLATE = """\
+        public override void Register_PyExc_%(name)s(IntPtr addr)
         {
             IntPtr value = this.Store(PythonExceptions.%(name)s);
             CPyMarshal.WritePtr(addr, value);
@@ -87,9 +87,9 @@ NUMBERS_PY2C_TEMPLATE = """\
 
 #================================================================================================
 
-FILL_TYPES_TEMPLATE = """\
+REGISTER_TYPES_TEMPLATE = """\
         public override void
-        Fill_%(name)s(IntPtr ptr)
+        Register_%(name)s(IntPtr ptr)
         {
             CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
@@ -99,19 +99,19 @@ FILL_TYPES_TEMPLATE = """\
             this.map.Associate(ptr, %(type)s);
         }"""
 
-FILL_TYPES_NUMBER_TEMPLATE = """\
+REGISTER_TYPES_NUMBER_TEMPLATE = """\
             this.%(data)s(ptr);"""
 
-FILL_TYPES_SIZE_TEMPLATE = """\
+REGISTER_TYPES_SIZE_TEMPLATE = """\
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "%(slot)s", Marshal.SizeOf(typeof(%(data)s)));"""
 
-FILL_TYPES_DEFAULT_TEMPLATE = """\
+REGISTER_TYPES_DEFAULT_TEMPLATE = """\
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "%(slot)s", this.GetFuncPtr("%(data)s"));"""
 
-FILL_TYPES_SLOT_TEMPLATES = {
-    "tp_as_number": FILL_TYPES_NUMBER_TEMPLATE,
-    "tp_basicsize": FILL_TYPES_SIZE_TEMPLATE,
-    "tp_itemsize": FILL_TYPES_SIZE_TEMPLATE,
+REGISTER_TYPES_SLOT_TEMPLATES = {
+    "tp_as_number": REGISTER_TYPES_NUMBER_TEMPLATE,
+    "tp_basicsize": REGISTER_TYPES_SIZE_TEMPLATE,
+    "tp_itemsize": REGISTER_TYPES_SIZE_TEMPLATE,
 }
 
 

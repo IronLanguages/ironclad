@@ -14,8 +14,8 @@ class GenerateMapperTest(TestCase):
 
     def testCreatesComponents(self):
         src = tempfile.mkdtemp()
-        write(src, '_exceptions', EXCEPTIONS)
-        write(src, '_fill_types', FILL_TYPES)
+        write(src, '_register_exceptions', REGISTER_EXCEPTIONS)
+        write(src, '_register_types', REGISTER_TYPES)
         write(src, '_numbers_c2py', NUMBERS_C2PY)
         write(src, '_numbers_py2c', NUMBERS_PY2C)
         write(src, '_operator', OPERATOR)
@@ -29,8 +29,8 @@ class GenerateMapperTest(TestCase):
             text = read(dst, '%s.Generated.cs' % name)
             self.assertNotEquals(text.find(expected), -1, 'generated: >>>%s<<<' % text)
         
-        assertFinds('PythonMapper_exceptions', EXPECTED_EXCEPTIONS)
-        assertFinds('PythonMapper_fill_types', EXPECTED_FILL_TYPES)
+        assertFinds('PythonMapper_register_exceptions', EXPECTED_REGISTER_EXCEPTIONS)
+        assertFinds('PythonMapper_register_types', EXPECTED_REGISTER_TYPES)
         assertFinds('PythonMapper_numbers_c2py', EXPECTED_NUMBERS_C2PY)
         assertFinds('PythonMapper_numbers_py2c', EXPECTED_NUMBERS_PY2C)
         assertFinds('PythonMapper_operator', EXPECTED_OPERATOR)
@@ -39,23 +39,23 @@ class GenerateMapperTest(TestCase):
         shutil.rmtree(src)
         shutil.rmtree(dst)
 
-EXCEPTIONS = """
+REGISTER_EXCEPTIONS = """
 SystemError
 OverflowError
 """
 
-EXPECTED_EXCEPTIONS = """
+EXPECTED_REGISTER_EXCEPTIONS = """
 namespace Ironclad
 {
     public partial class PythonMapper : PythonApi
     {
-        public override void Fill_PyExc_SystemError(IntPtr addr)
+        public override void Register_PyExc_SystemError(IntPtr addr)
         {
             IntPtr value = this.Store(PythonExceptions.SystemError);
             CPyMarshal.WritePtr(addr, value);
         }
 
-        public override void Fill_PyExc_OverflowError(IntPtr addr)
+        public override void Register_PyExc_OverflowError(IntPtr addr)
         {
             IntPtr value = this.Store(PythonExceptions.OverflowError);
             CPyMarshal.WritePtr(addr, value);
@@ -197,20 +197,20 @@ namespace Ironclad
 }
 """
 
-FILL_TYPES = """
+REGISTER_TYPES = """
 
 PyFoo_Type TypeCache.Foo {"tp_init": "SomeInitMethod", "tp_iter": "SomeIterMethod", "tp_basicsize": "PyFooObject", "tp_itemsize": "Byte"}
 PyBar_Type TypeCache.Bar {"tp_init": "SomeOtherInitMethod", "tp_as_number": "NumberSetupMethod"}
 PyBaz_Type TypeCache.Baz
 """
 
-EXPECTED_FILL_TYPES = """
+EXPECTED_REGISTER_TYPES = """
 namespace Ironclad
 {
     public partial class PythonMapper : PythonApi
     {
         public override void
-        Fill_PyFoo_Type(IntPtr ptr)
+        Register_PyFoo_Type(IntPtr ptr)
         {
             CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
@@ -224,7 +224,7 @@ namespace Ironclad
         }
 
         public override void
-        Fill_PyBar_Type(IntPtr ptr)
+        Register_PyBar_Type(IntPtr ptr)
         {
             CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
@@ -236,7 +236,7 @@ namespace Ironclad
         }
 
         public override void
-        Fill_PyBaz_Type(IntPtr ptr)
+        Register_PyBaz_Type(IntPtr ptr)
         {
             CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
