@@ -15,10 +15,6 @@ from System.Runtime.InteropServices import Marshal
 from Ironclad import CannotInterpretException, CPyMarshal, dgt_ptr_ptrptrptr, HGlobalAllocator, PythonMapper
 from Ironclad.Structs import *
 
-class ItemEnumeratorThing(object):
-    def __getitem__(self):
-        pass
-ItemEnumeratorType = type(iter(ItemEnumeratorThing()))
 
 BUILTIN_TYPES = {
     "PyType_Type": type,
@@ -37,7 +33,6 @@ BUILTIN_TYPES = {
     "PyEllipsis_Type": types.EllipsisType,
     "PyNone_Type": types.NoneType,
     "PyNotImplemented_Type": types.NotImplementedType,
-    "PySeqIter_Type": ItemEnumeratorType,
     "PyFunction_Type": types.FunctionType,
     "PyMethod_Type": types.MethodType,
     "PyClass_Type": types.ClassType,
@@ -62,6 +57,7 @@ class Types_Test(TestCase):
     def testTypeMappings(self, mapper, _):
         for (k, v) in BUILTIN_TYPES.items():
             typePtr = getattr(mapper, k)
+            self.assertEquals(CPyMarshal.ReadCStringField(typePtr, PyTypeObject, 'tp_name'), v.__name__)
             
             if typePtr == mapper.PyFile_Type:
                 self.assertNotEquals(mapper.Retrieve(typePtr), v, "failed to map PyFile_Type to something-that-isn't file")
@@ -266,23 +262,23 @@ class Types_Test(TestCase):
         allocator = HGlobalAllocator()
         mapper = PythonMapper(allocator)
         deallocTypes = CreateTypes(mapper)
-        
         # delay deallocs to avoid types with the same addresses causing confusion
         userTypeDeallocs = []
-        for (mode, TestFunc) in discoveryModes.items():
-            typePtr, deallocType = MakeTypePtr(mapper, {"tp_name": mode + "Class"})
-            userTypeDeallocs.append(deallocType)
-            objPtr = allocator.Alloc(Marshal.SizeOf(PyObject))
-            CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 2)
-            CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", typePtr)
-            
-            discoveryFunc = getattr(mapper, mode)
-            TestFunc(discoveryFunc, objPtr)
+        try:
+            for (mode, TestFunc) in discoveryModes.items():
+                typePtr, deallocType = MakeTypePtr(mapper, {"tp_name": mode + "Class"})
+                userTypeDeallocs.append(deallocType)
+                objPtr = allocator.Alloc(Marshal.SizeOf(PyObject))
+                CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 2)
+                CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", typePtr)
                 
-        mapper.Dispose()
-        for deallocFunc in userTypeDeallocs:
-            deallocFunc()
-        deallocTypes()
+                discoveryFunc = getattr(mapper, mode)
+                TestFunc(discoveryFunc, objPtr)
+        finally:
+            mapper.Dispose()
+            for deallocFunc in userTypeDeallocs:
+                deallocFunc()
+            deallocTypes()
 
 
     @WithMapper

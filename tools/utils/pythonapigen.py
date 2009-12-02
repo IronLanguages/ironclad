@@ -1,7 +1,6 @@
 
 from data.snippets.cs.pythonapi import *
 
-
 from tools.utils.codegen import CodeGenerator, glom_templates, return_dict
 from tools.utils.gccxml import get_funcspecs, in_set, prefixed
 

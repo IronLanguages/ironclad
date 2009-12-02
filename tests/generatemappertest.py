@@ -218,6 +218,8 @@ namespace Ironclad
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetFuncPtr("SomeInitMethod"));
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "tp_itemsize", Marshal.SizeOf(typeof(Byte)));
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_iter", this.GetFuncPtr("SomeIterMethod"));
+            string name = (string)Builtin.getattr(this.scratchContext, TypeCache.Foo, "__name__");
+            CPyMarshal.WriteCStringField(ptr, typeof(PyTypeObject), "tp_name", name);
             this.map.Associate(ptr, TypeCache.Foo);
         }
 
@@ -228,6 +230,8 @@ namespace Ironclad
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
             this.NumberSetupMethod(ptr);
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetFuncPtr("SomeOtherInitMethod"));
+            string name = (string)Builtin.getattr(this.scratchContext, TypeCache.Bar, "__name__");
+            CPyMarshal.WriteCStringField(ptr, typeof(PyTypeObject), "tp_name", name);
             this.map.Associate(ptr, TypeCache.Bar);
         }
 
@@ -237,6 +241,8 @@ namespace Ironclad
             CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
 
+            string name = (string)Builtin.getattr(this.scratchContext, TypeCache.Baz, "__name__");
+            CPyMarshal.WriteCStringField(ptr, typeof(PyTypeObject), "tp_name", name);
             this.map.Associate(ptr, TypeCache.Baz);
         }
     }

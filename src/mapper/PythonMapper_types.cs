@@ -83,7 +83,6 @@ namespace Ironclad
             {
                 return -1;
             }
-            
             Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
             if ((Int32)(flags & (Py_TPFLAGS.READY | Py_TPFLAGS.READYING)) != 0)
             {
@@ -189,6 +188,7 @@ namespace Ironclad
             // (but surely there's a better way to get the Ellipsis object...)
             CPyMarshal.Zero(address, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), "tp_name", "ellipsis");
             object ellipsisType = PythonCalls.Call(Builtin.type, new object[] { PythonOps.Ellipsis });
             this.map.Associate(address, ellipsisType);
         }
@@ -200,6 +200,7 @@ namespace Ironclad
             // (but surely there's a better way to get the NotImplemented object...)
             CPyMarshal.Zero(address, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), "tp_name", "NotImplementedType");
             object notImplementedType = PythonCalls.Call(Builtin.type, new object[] { PythonOps.NotImplemented });
             this.map.Associate(address, notImplementedType);
         }
@@ -211,6 +212,7 @@ namespace Ironclad
             CPyMarshal.Zero(address, Marshal.SizeOf(typeof(PyTypeObject)));
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_base", this.PyInt_Type);
+            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), "tp_name", "bool");
             this.map.Associate(address, TypeCache.Boolean);
         }
 
@@ -222,6 +224,7 @@ namespace Ironclad
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "tp_basicsize", Marshal.SizeOf(typeof(PyStringObject)) - 1);
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "tp_itemsize", 1);
+            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), "tp_name", "str");
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_str", this.GetFuncPtr("IC_PyString_Str"));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_repr", this.GetFuncPtr("PyObject_Repr"));
 
@@ -252,6 +255,7 @@ namespace Ironclad
             // we're using the cpy file type by default, with methods patched in C
             // to redirect into C# when ipy files turn up
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), "tp_name", "file");
             this.map.Associate(address, TypeCache.PythonFile);
         }
 
@@ -301,7 +305,6 @@ namespace Ironclad
             this.PyType_Ready(this.PySlice_Type);
             this.PyType_Ready(this.PyEllipsis_Type);
             this.PyType_Ready(this.PyNotImplemented_Type);
-            this.PyType_Ready(this.PySeqIter_Type);
             this.PyType_Ready(this.PyMethod_Type);
             this.PyType_Ready(this.PyFunction_Type);
             this.PyType_Ready(this.PyClass_Type);

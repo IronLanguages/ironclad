@@ -150,8 +150,6 @@ PyObject_Str
     
 PyRun_StringFlags
     
-PySeqIter_New
-    
 PySequence_Check
 PySequence_Concat
 PySequence_Contains

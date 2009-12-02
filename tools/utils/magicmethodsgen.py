@@ -39,6 +39,7 @@ def _generate_case_code(c_field, py_field, has_swapped_version, dgt_spec, templa
         'template': template,
     }
 
+
 #==========================================================================
 
 class MagicMethodsGenerator(CodeGenerator):
