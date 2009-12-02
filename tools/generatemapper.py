@@ -7,8 +7,8 @@ from tools.utils.mappergen import MapperGenerator
 #==========================================================================
 
 INPUTS = (
-    ('_fill_types',             read_args_kwargs, 2),
-    ('_exceptions',             read_cols, 'name'),
+    ('_register_types',         read_args_kwargs, 2),
+    ('_register_exceptions',    read_cols, 'name'),
     ('_operator',               read_cols, 'name operator'),
     ('_numbers_c2py',           read_cols, 'name type cast'),
     ('_numbers_py2c',           read_cols, 'name converter type default coerce'),

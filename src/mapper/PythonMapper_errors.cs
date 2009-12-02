@@ -16,14 +16,6 @@ namespace Ironclad
 {
     public partial class PythonMapper : PythonApi
     {
-        public override void
-         Fill_PyExc_BaseException(IntPtr addr)
-        {
-            // all the others autogenerate nicely
-            IntPtr value = this.Store(Builtin.BaseException);
-            CPyMarshal.WritePtr(addr, value);
-        }
-
         internal void
         PrintToStdErr(object obj)
         {

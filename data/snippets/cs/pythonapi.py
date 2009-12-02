@@ -76,7 +76,7 @@ GETADDRESS_CASE_NOT_IMPL_TEMPLATE = """\
 #================================================================================================
 
 DATA_PROPERTY_TEMPLATE = """\
-        public virtual void Fill_%(symbol)s(IntPtr address) { ; }
+        public virtual void Register_%(symbol)s(IntPtr address) { ; }
         public IntPtr %(symbol)s
         {
             get
@@ -95,7 +95,7 @@ DATA_PROPERTY_TEMPLATE = """\
 
 SETDATA_CASE_TEMPLATE = """\
                 case "%(symbol)s":
-                    this.Fill_%(symbol)s(address);
+                    this.Register_%(symbol)s(address);
                     this.data["%(symbol)s"] = address;
                     break;"""
 
