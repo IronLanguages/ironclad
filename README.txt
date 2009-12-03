@@ -36,7 +36,7 @@ STATUS
   contains 76 tests, of which 7 error and 1 fails. Most of the problems look
   pretty inconsequential, but there are 2 or 3 real problems.
 
-* h5py 1.2.1 will happily import if ipy is run with -X:Frames. Of the 133
+* h5py 1.2.1 will import if ipy is run with -X:Frames. Of the 133
   tests we run, 4 error and 1 fails. Notable issues follow:
   
   * Three test classes are blacklisted because they can deadlock. The proximate
