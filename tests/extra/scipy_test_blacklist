@@ -7,6 +7,7 @@ test_odr.TestODR.test_explicit # segfault, often takes process down
 # (signal)
 test_signaltools.TestLinearFilterDecimal # errors then crash
 
+linalg\tests\test_decomp.py # stack overflows at random points
 
 ###############################################################################
 #### work fine, but take way too long (>>30s each)

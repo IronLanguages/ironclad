@@ -23,20 +23,20 @@ namespace Ironclad
     
     public class InterestingPtrMap
     {
-        private Dictionary<IntPtr, object> ptr2id = new Dictionary<IntPtr, object>();
-        private Dictionary<object, IntPtr> id2ptr = new Dictionary<object, IntPtr>();
-        private Dictionary<object, object> id2obj = new Dictionary<object, object>();
-        
-        private Dictionary<object, WeakReference> id2wref = new Dictionary<object, WeakReference>();
-        private Dictionary<object, object> id2sref = new Dictionary<object, object>();
+        private Dictionary<IntPtr, long> ptr2id = new Dictionary<IntPtr, long>();
+        private Dictionary<long, IntPtr> id2ptr = new Dictionary<long, IntPtr>();
+        private Dictionary<long, object> id2obj = new Dictionary<long, object>();
+
+        private Dictionary<long, WeakReference> id2wref = new Dictionary<long, WeakReference>();
+        private Dictionary<long, object> id2sref = new Dictionary<long, object>();
         
         private int cbpCount = 0;
-        private int cbpRegulator = 500;
+        private int cbpRegulator = 50000;
     
         public void
         Associate(IntPtr ptr, object obj)
         {
-            object id = Builtin.id(obj);
+            long id = PythonOps.Id(obj);
             this.ptr2id[ptr] = id;
             this.id2ptr[id] = ptr;
             this.id2obj[id] = obj;
@@ -45,7 +45,7 @@ namespace Ironclad
         public void
         BridgeAssociate(IntPtr ptr, object obj)
         {
-            object id = Builtin.id(obj);
+            long id = PythonOps.Id(obj);
             this.ptr2id[ptr] = id;
             this.id2ptr[id] = ptr;
             
@@ -57,7 +57,7 @@ namespace Ironclad
         public void
         UpdateStrength(IntPtr ptr)
         {
-            object id = this.ptr2id[ptr];
+            long id = this.ptr2id[ptr];
             if (!this.id2wref.ContainsKey(id))
             {
                 return;
@@ -77,8 +77,9 @@ namespace Ironclad
         
         
         public void
-        LogMappingInfo(object id)
+        LogMappingInfo(object id_)
         {
+            long id = (long)id_;
             if (this.id2ptr.ContainsKey(id))
             {
                 IntPtr ptr = this.id2ptr[id];
@@ -121,7 +122,7 @@ namespace Ironclad
             Dictionary<object, int> scounts = new Dictionary<object, int>();
             Dictionary<object, int> wcounts = new Dictionary<object, int>();
             wcounts["ZOMBIE"] = 0;
-            foreach (object id in this.id2wref.Keys)
+            foreach (long id in this.id2wref.Keys)
             {
                 if (!this.id2sref.ContainsKey(id))
                 {
@@ -187,17 +188,15 @@ namespace Ironclad
                 }
                 this.cbpCount = 0;
             }
-            
             this.MapOverBridgePtrs(new PtrFunc(this.UpdateStrength));
-            GC.Collect();
         }
         
         public void
         MapOverBridgePtrs(PtrFunc f)
         {
-            object[] keys = new object[this.id2wref.Count];
+            long[] keys = new long[this.id2wref.Count];
             this.id2wref.Keys.CopyTo(keys, 0);
-            foreach (object id in keys)
+            foreach (long id in keys)
             {
                 f(this.id2ptr[id]);
             }
@@ -207,7 +206,7 @@ namespace Ironclad
         public void
         Strengthen(object obj)
         {
-            object id = Builtin.id(obj);
+            long id = PythonOps.Id(obj);
             if (this.id2wref.ContainsKey(id))
             {
                 if (this.id2sref.ContainsKey(id))
@@ -222,7 +221,7 @@ namespace Ironclad
         public void
         Weaken(object obj)
         {
-            object id = Builtin.id(obj);
+            long id = PythonOps.Id(obj);
             if (this.id2wref.ContainsKey(id))
             {
                 if (!this.id2sref.ContainsKey(id))
@@ -241,8 +240,8 @@ namespace Ironclad
             {
                 throw new BadMappingException(String.Format("Release: tried to release unmapped ptr {0}", ptr.ToString("x")));
             }
-            
-            object id = this.ptr2id[ptr];
+
+            long id = this.ptr2id[ptr];
             this.ptr2id.Remove(ptr);
             this.id2ptr.Remove(id);
 
@@ -267,7 +266,7 @@ namespace Ironclad
         public bool
         HasObj(object obj)
         {
-            if (this.id2ptr.ContainsKey(Builtin.id(obj)))
+            if (this.id2ptr.ContainsKey(PythonOps.Id(obj)))
             {
                 return true;
             }
@@ -277,7 +276,7 @@ namespace Ironclad
         public IntPtr
         GetPtr(object obj)
         {
-            object id = Builtin.id(obj);
+            long id = PythonOps.Id(obj);
             if (!this.id2ptr.ContainsKey(id))
             {
                 throw new BadMappingException(String.Format("GetPtr: No obj-to-ptr mapping for {0}", obj));
@@ -302,8 +301,8 @@ namespace Ironclad
             {
                 throw new BadMappingException(String.Format("GetObj: No ptr-to-obj mapping for {0}", ptr.ToString("x")));
             }
-            
-            object id = this.ptr2id[ptr];
+
+            long id = this.ptr2id[ptr];
             if (this.id2obj.ContainsKey(id))
             {
                 return this.id2obj[id];

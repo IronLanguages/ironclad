@@ -33,11 +33,11 @@ STATUS
   pass (the official test suite appears to be annoyingly platform-specific).
 
 * csv, as shipped with Python 2.6, will import; the official test suite 
-  contains 76 tests, of which 7 error and 1 fails. Most of the problems look
-  pretty inconsequential, but there are 2 or 3 real problems.
+  contains 76 tests, of which 7 error and 1 fails. Some of the problems look
+  pretty inconsequential, but there are a few real problems in specific cases.
 
 * h5py 1.2.1 will import if ipy is run with -X:Frames. Of the 133
-  tests we run, 4 error and 1 fails. Notable issues follow:
+  tests we run, 3 error and 1 fails. Notable issues follow:
   
   * Three test classes are blacklisted because they can deadlock. The proximate
     cause is that the tests make unwarranted assumptions about file cleanup; the 
@@ -50,7 +50,7 @@ STATUS
   with a manifest containing the <dependency> in stub/depend-msvcr90.manifest.
 
 * numpy 1.3.0 will import if ipy is run with -X:Frames. Of the 
-  1702 tests we run, 142 error and 17 fail. Notable issues follow:
+  1702 tests we run, 144 error and 17 fail. Notable issues follow:
   
   * One test is blacklisted because it fails hard enough to take the 
     process down.
@@ -74,7 +74,7 @@ STATUS
   with tests).
 
 * scipy 0.7.1 will happily import if ipy is run with -X:FullFrames. Of the
-  2632 tests we run, 153 error and 17 fail. Notable issues follow:
+  2427 tests we run, 140 error and 17 fail. Notable issues follow:
   
   * Several tests are blacklisted because they're tediously slow.
   * Two tests are blacklisted because they (can) fail hard enough to take
