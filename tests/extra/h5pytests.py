@@ -1,6 +1,6 @@
 
 # remember -X:Frames
-# expect 133 tests, 4 errors, 1 fail
+# expect 133 tests, 3 errors, 1 fail
 
 import os, sys
 sys.path.append('build')
