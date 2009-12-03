@@ -1,10 +1,11 @@
 
 # remember -X:FullFrames
-# expect 2632 tests, 153 errors, 17 failures
+# expect 2427 tests, 140 errors, 17 failures
 
 # I strongly recommend you change line 2 of scipy/interpolate/polyint.py
 # to import factorial from scipy.misc (not just scipy). Not sure the true
-# source of the problem, but doing this allows you run lots more tests.
+# source of the problem, but doing this allows you run lots more tests on
+# their own.
 
 import os, sys
 sys.path.append('build')
