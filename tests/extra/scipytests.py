@@ -33,7 +33,7 @@ nose.run(defaultTest=path, config=config)
 # * interpolate: with factorial import from misc in polyint.py: 125 tests, 16 errors
 # * io: 120 tests, 25 errors
 # * lib: 176 tests, 39 errors
-# * linalg: 402 tests, 51 errors
+# * linalg: 197 tests, 38 errors
 # * maxentropy: 2 tests ok
 # * misc: tests need PIL, which doesn't work in ipy ATM
 # * ndimage: 414 tests ok
