@@ -66,7 +66,7 @@ STATUS
   * Several errors and failures still represent real problems.
 
 * numpy 1.4.0RC1 will import if ipy is run with -X:Frames. Of the 
-  2158 tests we run, 184 error and 51 fail. Haven't investigated issues in 
+  2148 tests we run, 202 error and 49 fail. Haven't investigated issues in 
   any detail.
 
 * PIL doesn't work, because ipy 2.6 can't parse Image.py. When that's fixed, most

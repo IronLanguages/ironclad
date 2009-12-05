@@ -2,48 +2,51 @@
 
 # Maps exception types from one runtime to another
 
-EnvironmentError
-SyntaxError
-WindowsError
-SystemExit
-UnicodeTranslateError
+BaseException                   Builtin
 
-Exception
-StopIteration
-GeneratorExit
-StandardError
-ArithmeticError
-LookupError
-AssertionError
-AttributeError
-EOFError
-FloatingPointError
-IOError
-OSError
-ImportError
-IndexError
-KeyError
-KeyboardInterrupt
-MemoryError
-NameError
-OverflowError
-RuntimeError
-NotImplementedError
-IndentationError
-TabError
-ReferenceError
-SystemError
-TypeError
-UnboundLocalError
-UnicodeError
-ValueError
-ZeroDivisionError
-Warning
-UserWarning
-UnicodeWarning
-DeprecationWarning
-PendingDeprecationWarning
-SyntaxWarning
-RuntimeWarning
-FutureWarning
-ImportWarning
+EnvironmentError                PythonExceptions
+SyntaxError                     PythonExceptions
+WindowsError                    PythonExceptions
+SystemExit                      PythonExceptions
+UnicodeTranslateError           PythonExceptions
+
+Exception                       PythonExceptions
+StopIteration                   PythonExceptions
+GeneratorExit                   PythonExceptions
+StandardError                   PythonExceptions
+ArithmeticError                 PythonExceptions
+LookupError                     PythonExceptions
+AssertionError                  PythonExceptions
+AttributeError                  PythonExceptions
+EOFError                        PythonExceptions
+FloatingPointError              PythonExceptions
+IOError                         PythonExceptions
+OSError                         PythonExceptions
+ImportError                     PythonExceptions
+IndexError                      PythonExceptions
+KeyError                        PythonExceptions
+KeyboardInterrupt               PythonExceptions
+MemoryError                     PythonExceptions
+NameError                       PythonExceptions
+OverflowError                   PythonExceptions
+RuntimeError                    PythonExceptions
+NotImplementedError             PythonExceptions
+IndentationError                PythonExceptions
+TabError                        PythonExceptions
+ReferenceError                  PythonExceptions
+SystemError                     PythonExceptions
+TypeError                       PythonExceptions
+UnboundLocalError               PythonExceptions
+UnicodeError                    PythonExceptions
+ValueError                      PythonExceptions
+ZeroDivisionError               PythonExceptions
+
+Warning                         PythonExceptions
+UserWarning                     PythonExceptions
+UnicodeWarning                  PythonExceptions
+DeprecationWarning              PythonExceptions
+PendingDeprecationWarning       PythonExceptions
+SyntaxWarning                   PythonExceptions
+RuntimeWarning                  PythonExceptions
+FutureWarning                   PythonExceptions
+ImportWarning                   PythonExceptions

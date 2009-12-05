@@ -40,8 +40,8 @@ class GenerateMapperTest(TestCase):
         shutil.rmtree(dst)
 
 REGISTER_EXCEPTIONS = """
-SystemError
-OverflowError
+SystemError         Somewhere
+OverflowError       SomewhereElse
 """
 
 EXPECTED_REGISTER_EXCEPTIONS = """
@@ -51,14 +51,12 @@ namespace Ironclad
     {
         public override void Register_PyExc_SystemError(IntPtr addr)
         {
-            IntPtr value = this.Store(PythonExceptions.SystemError);
-            CPyMarshal.WritePtr(addr, value);
+            CPyMarshal.WritePtr(addr, this.Store(Somewhere.SystemError));
         }
 
         public override void Register_PyExc_OverflowError(IntPtr addr)
         {
-            IntPtr value = this.Store(PythonExceptions.OverflowError);
-            CPyMarshal.WritePtr(addr, value);
+            CPyMarshal.WritePtr(addr, this.Store(SomewhereElse.OverflowError));
         }
     }
 }
