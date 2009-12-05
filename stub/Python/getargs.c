@@ -1867,10 +1867,6 @@ _PyArg_NoKeywords(const char *funcname, PyObject *kw)
 	return 0;
 }
 
-#ifdef IRONCLAD // tidiness
-#undef FLAG_SIZE_T
-#endif // IRONCLAD
-
 #ifdef __cplusplus
 };
 #endif

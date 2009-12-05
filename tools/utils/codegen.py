@@ -32,10 +32,9 @@ def _dictify(keys, result):
     return dict(zip(keys, result))
 
 def return_dict(keys):
-    keys = keys.split()
     def decorator(f):
         def g(*_, **__):
-            return _dictify(keys, f(*_, **__))
+            return _dictify(keys.split(), f(*_, **__))
         return g
     return decorator
 
