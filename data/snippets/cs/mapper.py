@@ -18,8 +18,7 @@ MAPPER_FILE_TEMPLATE = FILE_TEMPLATE % MAPPER_TEMPLATE
 REGISTER_EXCEPTION_TEMPLATE = """\
         public override void Register_PyExc_%(name)s(IntPtr addr)
         {
-            IntPtr value = this.Store(PythonExceptions.%(name)s);
-            CPyMarshal.WritePtr(addr, value);
+            CPyMarshal.WritePtr(addr, this.Store(%(source)s.%(name)s));
         }"""
 
 

@@ -82,14 +82,6 @@ namespace Ironclad
         }
 
         public override void
-         Register_PyExc_BaseException(IntPtr addr)
-        {
-            // all the other exceptions autogenerate nicely
-            IntPtr value = this.Store(Builtin.BaseException);
-            CPyMarshal.WritePtr(addr, value);
-        }
-
-        public override void
         Register_PyEllipsis_Type(IntPtr address)
         {
             // not quite trivial to autogenerate
