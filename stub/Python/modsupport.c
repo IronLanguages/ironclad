@@ -648,9 +648,4 @@ PyModule_AddStringConstant(PyObject *m, const char *name, const char *value)
 	return -1;
 }
 
-
-#endif // IRONCLAD
-
-#ifdef IRONCLAD // tidiness
-#undef FLAG_SIZE_T
 #endif // IRONCLAD

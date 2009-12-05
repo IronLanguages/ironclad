@@ -93,12 +93,7 @@ extern "C" {
 #endif
 
 /* Free list for Unicode objects */
-#ifdef IRONCLAD
-static PyCFunctionObject *IC_unicode_free_list = NULL;
-#define free_list IC_unicode_free_list
-#else // IRONCLAD
 static PyUnicodeObject *free_list;
-#endif // IRONCLAD
 
 static int numfree;
 
@@ -9097,11 +9092,6 @@ _PyUnicode_Fini(void)
     (void)PyUnicode_ClearFreeList();
 }
 
-#endif // IRONCLAD
-
-
-#ifdef IRONCLAD // tidiness
-#undef free_list
 #endif // IRONCLAD
 
 #ifdef __cplusplus

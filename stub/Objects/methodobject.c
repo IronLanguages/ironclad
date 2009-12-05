@@ -7,12 +7,7 @@
 /* Free list for method objects to safe malloc/free overhead
  * The m_self element is used to chain the objects.
  */
-#ifdef IRONCLAD
-static PyCFunctionObject *IC_method_free_list = NULL;
-#define free_list IC_method_free_list
-#else // IRONCLAD
 static PyCFunctionObject *free_list = NULL;
-#endif // IRONCLAD
 
 static int numfree = 0;
 #ifndef PyCFunction_MAXFREELIST
