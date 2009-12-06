@@ -67,6 +67,21 @@ namespace Ironclad
                 return -1;
             }
         }
+
+        public override IntPtr
+        PyDict_Copy(IntPtr dictPtr)
+        {
+            try
+            {
+                PythonDictionary dict = (PythonDictionary)this.Retrieve(dictPtr);
+                return this.Store(dict.copy(this.scratchContext));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
         
         public override IntPtr
         PyDictProxy_New(IntPtr mappingPtr)

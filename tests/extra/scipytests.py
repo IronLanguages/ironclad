@@ -1,6 +1,6 @@
 
 # remember -X:FullFrames
-# expect 2427 tests, 140 errors, 17 failures
+# expect 2608 tests, 160 errors, 17 failures
 
 # I strongly recommend you change line 2 of scipy/interpolate/polyint.py
 # to import factorial from scipy.misc (not just scipy). Not sure the true
@@ -26,7 +26,7 @@ import nose
 nose.run(defaultTest=path, config=config)
 
 
-# individual package results, potentially out of date:
+# individual package results, mostly out of date:
 # * cluster: 159 tests ok
 # * fftpack: 45 tests, 16 failures
 # * integrate: 17 tests, 1 failure
@@ -39,7 +39,7 @@ nose.run(defaultTest=path, config=config)
 # * ndimage: 414 tests ok
 # * odr: 4 tests ok
 # * optimize: 33 tests, 4 errors
-# * signal: with factorial import from misc in polyint.py: 40 tests ok
+# * signal: with factorial import from misc in polyint.py: 46 tests, 4 errors
 # * sparse: 418 tests, 19 errors
 # * spatial: 229 tests ok (some pretty slow though)
 # * special: 368 tests ok

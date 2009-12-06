@@ -20,19 +20,20 @@ class DictTest(TestCase):
         frees = []
         mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
-    
-        del allocs[:]
-        dictPtr = mapper.PyDict_New()
-        self.assertEquals(mapper.RefCount(dictPtr), 1, "bad refcount")
-        self.assertEquals(allocs, [(dictPtr, Marshal.SizeOf(PyObject))], "did not allocate as expected")
-        self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), mapper.PyDict_Type, "wrong type")
-        dictObj = mapper.Retrieve(dictPtr)
-        self.assertEquals(dictObj, {}, "retrieved unexpected value")
-        
-        mapper.DecRef(dictPtr)
-        self.assertEquals(frees, [dictPtr], "did not release memory")
-        mapper.Dispose()
-        deallocTypes()
+        try:
+            del allocs[:]
+            dictPtr = mapper.PyDict_New()
+            self.assertEquals(mapper.RefCount(dictPtr), 1, "bad refcount")
+            self.assertEquals(allocs, [(dictPtr, Marshal.SizeOf(PyObject))], "did not allocate as expected")
+            self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), mapper.PyDict_Type, "wrong type")
+            dictObj = mapper.Retrieve(dictPtr)
+            self.assertEquals(dictObj, {}, "retrieved unexpected value")
+            
+            mapper.DecRef(dictPtr)
+            self.assertEquals(frees, [dictPtr], "did not release memory")
+        finally:
+            mapper.Dispose()
+            deallocTypes()
     
     
     @WithMapper
@@ -261,7 +262,18 @@ class DictTest(TestCase):
         
         self.assertEquals(mapper.PyDict_Update(mapper.Store(d1), mapper.Store(object)), -1)
         self.assertMapperHasError(mapper, TypeError)
+    
+    
+    @WithMapper
+    def testPyDict_Copy(self, mapper, _):
+        d1 = {1:2, 3:4}
+        d2 = mapper.Retrieve(mapper.PyDict_Copy(mapper.Store(d1)))
+        self.assertEquals(d1, d2)
+        d1[5] = 6
+        self.assertEquals(d2, {1:2, 3:4})
         
+        self.assertEquals(mapper.PyDict_Copy(mapper.Store(object())), IntPtr.Zero)
+        self.assertMapperHasError(mapper, TypeError)
 
 
 class PyDict_Next_Test(TestCase):
