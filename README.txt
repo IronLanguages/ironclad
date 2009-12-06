@@ -50,11 +50,8 @@ STATUS
   with a manifest containing the <dependency> in stub/depend-msvcr90.manifest.
 
 * numpy 1.3.0 will import if ipy is run with -X:Frames. Of the 
-  1702 tests we run, 144 error and 17 fail. Notable issues follow:
+  1704 tests we run, 143 error and 17 fail. Notable issues follow:
   
-  * One test is blacklisted because it fails hard enough to take the 
-    process down.
-  * One test is blacklisted because it's tediously slow.
   * There is no Unicode support whatsoever: ~90 of the errors are caused
     by attempts to call PyObject_Unicode.
   * ~20 tests error out on tearDown when they try to unlink temp files
@@ -66,7 +63,7 @@ STATUS
   * Several errors and failures still represent real problems.
 
 * numpy 1.4.0RC1 will import if ipy is run with -X:Frames. Of the 
-  2148 tests we run, 202 error and 49 fail. Haven't investigated issues in 
+  2160 tests we run, 182 error and 50 fail. Haven't investigated issues in 
   any detail.
 
 * PIL doesn't work, because ipy 2.6 can't parse Image.py. When that's fixed, most
@@ -74,7 +71,7 @@ STATUS
   with tests).
 
 * scipy 0.7.1 will happily import if ipy is run with -X:FullFrames. Of the
-  2427 tests we run, 140 error and 17 fail. Notable issues follow:
+  2608 tests we run, 160 error and 17 fail. Notable issues follow:
   
   * Several tests are blacklisted because they're tediously slow.
   * Two tests are blacklisted because they (can) fail hard enough to take

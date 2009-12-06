@@ -3,10 +3,4 @@
 # dangerous
 
 # (core) out of memory (suspect not really OOM)
-test_records.TestFromrecords.test_method_array
-
-########################################################
-# slow
-
-# (core)
-test_ufunc.TestUfunc.test_matrix_multiply
+#test_records.TestFromrecords.test_method_array

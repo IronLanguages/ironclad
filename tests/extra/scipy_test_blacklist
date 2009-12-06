@@ -2,69 +2,13 @@
 #### serious errors
 
 # (odr)
-test_odr.TestODR.test_explicit # segfault, often takes process down
+test_odr.TestODR.test_explicit # error; destabilises subsequent tests
 
-# (signal)
-test_signaltools.TestLinearFilterDecimal # errors then crash
-
+# (linalg)
 linalg\tests\test_decomp.py # stack overflows at random points
 
 ###############################################################################
-#### work fine, but take way too long (>>30s each)
-
-# (cluster)
-test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5A
-test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5B
-test_hierarchy.TestIsIsomorphic.test_is_isomorphic_5C
-test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6A
-test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6B
-test_hierarchy.TestIsIsomorphic.test_is_isomorphic_6C
-
-# (linalg)
-test_iterative.TestIterative.test_precond
-
-# (signal)
-test_filter_design.TestTf2zpk.test_bad_filter
-
-# (sparse)
-test_construct.TestConstructUtils.test_kron # very long
-test_construct.TestConstructUtils.test_kronsum # very long
-test_spfuncs.TestSparseFunctions.test_count_blocks
-
-# only *some* test_add_sub and test_mu methods take ages; sadly, nose 
-# doesn't report them in a way that lets me disable them precisely
-test_base._TestArithmetic.test_add_sub
-test_base._TestArithmetic.test_mu
-
-# (spatial)
-test_distance.TestPdist.test_pdist_canberra_match
-test_distance.TestPdist.test_pdist_chebychev_iris_nonC
-test_distance.TestPdist.test_pdist_chebychev_random_nonC
-test_distance.TestPdist.test_pdist_cityblock_iris_nonC
-test_distance.TestPdist.test_pdist_correlation_iris_nonC
-test_distance.TestPdist.test_pdist_cosine_iris_nonC
-test_distance.TestPdist.test_pdist_dhamming_random_nonC
-test_distance.TestPdist.test_pdist_dice_match
-test_distance.TestPdist.test_pdist_djaccard_random_nonC
-test_distance.TestPdist.test_pdist_euclidean_iris_nonC
-test_distance.TestPdist.test_pdist_jaccard_match
-test_distance.TestPdist.test_pdist_kulsinski_match
-test_distance.TestPdist.test_pdist_matching_match
-test_distance.TestPdist.test_pdist_minkowski_iris_nonC # note: there are 2 tests with this name
-test_distance.TestPdist.test_pdist_rogerstanimoto_match
-test_distance.TestPdist.test_pdist_russellrao_match
-test_distance.TestPdist.test_pdist_seuclidean_iris_nonC
-test_distance.TestPdist.test_pdist_sokalmichener_match
-test_distance.TestPdist.test_pdist_sokalsneath_match
-test_distance.TestPdist.test_pdist_yule_match
-
-test_kdtree.test_count_neighbors
-test_kdtree.test_sparse_distance_matrix.test_consistency_with_neighbors
-test_kdtree.test_two_random_trees
-test_kdtree.test_two_random_trees_far
-test_kdtree.test_two_random_trees_linf
-
-# (stats) most parts of these files work, but they take *forever*
+# most parts of these files work, but some tests take *forever*
 # also, it's tricky to disable individual ones
 stats\tests\test_continuous_basic.py
 stats\tests\test_continuous_extra.py

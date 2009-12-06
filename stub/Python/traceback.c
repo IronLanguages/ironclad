@@ -106,9 +106,6 @@ newtracebackobject(PyTracebackObject *next, PyFrameObject *frame)
 int
 PyTraceBack_Here(PyFrameObject *frame)
 {
-#ifdef IRONCLAD // ironclad ignores tracebacks anyway, so why bother?
-	return 0;
-#endif // IRONCLAD
 	PyThreadState *tstate = PyThreadState_GET();
 	PyTracebackObject *oldtb = (PyTracebackObject *) tstate->curexc_traceback;
 	PyTracebackObject *tb = newtracebackobject(oldtb, frame);

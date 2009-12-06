@@ -27,7 +27,8 @@ PyClass_New
     
 PyComplex_AsCComplex    
 PyComplex_FromDoubles   
-    
+
+PyDict_Copy
 PyDict_DelItem         
 PyDict_DelItemString    
 PyDict_GetItem       
