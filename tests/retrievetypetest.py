@@ -52,19 +52,25 @@ class LifetimeTest(TestCase):
         _type = mapper.Retrieve(typePtr)
         addToCleanUp(deallocType)
         
-        obj = _type()
-        objref = WeakReference(obj, True)
+        def do():
+            obj = _type()
+            objref = WeakReference(obj, True)
+            
+            # for unmanaged code to mess with ob_refcnt, it must have been passed a reference
+            # from managed code; this shouldn't happen without a Store (which will IncRef)
+            objptr = mapper.Store(obj)
+            self.assertEquals(mapper.RefCount(objptr), 2)
+            mapper.DecRef(objptr)
+            
+            # managed code forgets obj, no refs from unmanaged code
+            del obj
+            return objref
         
-        # for unmanaged code to mess with ob_refcnt, it must have been passed a reference
-        # from managed code; this shouldn't happen without a Store (which will IncRef)
-        objptr = mapper.Store(obj)
-        self.assertEquals(mapper.RefCount(objptr), 2)
-        mapper.DecRef(objptr)
-        
-        # managed code forgets obj, no refs from unmanaged code
-        del obj
+        objref = do()
+        mapper.ReleaseGIL()
         gcwait()
         gcwait()
+        mapper.EnsureGIL()
         self.assertEquals(objref.IsAlive, False, "object didn't die")
 
 

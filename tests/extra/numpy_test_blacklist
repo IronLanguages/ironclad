@@ -1,6 +1,1 @@
-
-########################################################
-# dangerous
-
-# (core) out of memory (suspect not really OOM)
-#test_records.TestFromrecords.test_method_array
+# I'm sure we'll need this again soon enough :/

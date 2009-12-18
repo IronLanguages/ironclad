@@ -342,9 +342,9 @@ class ImportTest(TestCase):
         self.assertEquals(modules is sys.modules, True)
         
         mapper.IncRef(modulesPtr)
-        mapper.EnsureGIL()
         mapper.ReleaseGIL()
         self.assertEquals(mapper.RefCount(modulesPtr), 1, 'borrowed reference not cleaned up')
+        mapper.EnsureGIL()
 
 
     @WithMapper

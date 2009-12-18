@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 
 using IronPython.Runtime;
+using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
 using Ironclad.Structs;
@@ -125,9 +126,7 @@ namespace Ironclad
             IntPtr oldDataStore = listStruct.ob_item;
 
             int newAllocatedBytes = listStruct.allocated * CPyMarshal.PtrSize;
-            listStruct.ob_item = this.allocator.Alloc((uint)newAllocatedBytes);
-            Unmanaged.memcpy(listStruct.ob_item, oldDataStore, (uint)oldAllocatedBytes);
-            this.allocator.Free(oldDataStore);
+            listStruct.ob_item = this.allocator.Realloc(listStruct.ob_item, (uint)newAllocatedBytes);
             
             CPyMarshal.WritePtr(CPyMarshal.Offset(listStruct.ob_item, oldAllocatedBytes), itemPtr);
             Marshal.StructureToPtr(listStruct, listPtr, false);
@@ -138,6 +137,12 @@ namespace Ironclad
         PyList_Append(IntPtr listPtr, IntPtr itemPtr)
         {
             PyListObject listStruct = (PyListObject)Marshal.PtrToStructure(listPtr, typeof(PyListObject));
+            if (listStruct.ob_type != this.PyList_Type)
+            {
+                this.LastException = PythonOps.TypeError("PyList_Append: not a list");
+                return -1;
+            }
+
             if (listStruct.ob_item == IntPtr.Zero)
             {
                 this.IC_PyList_Append_Empty(listPtr, ref listStruct, itemPtr);

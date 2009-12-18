@@ -205,7 +205,14 @@ class ListFunctionsTest(TestCase):
         
         mapper.Dispose()
         deallocTypes()
-        
+    
+    
+    @WithMapper
+    def testPyList_Append_NotList(self, mapper, _):
+        notListPtr = mapper.Store(object())
+        self.assertEquals(mapper.PyList_Append(notListPtr, mapper.Store(object())), -1)
+        self.assertMapperHasError(mapper, TypeError)
+    
         
     @WithMapper
     def testPyList_SetItem_RefCounting(self, mapper, _):

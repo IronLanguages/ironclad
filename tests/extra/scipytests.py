@@ -1,6 +1,6 @@
 
 # remember -X:FullFrames
-# expect 2608 tests, 160 errors, 17 failures
+# expect 2484 tests, 127 errors, 19 failures
 
 # I strongly recommend you change line 2 of scipy/interpolate/polyint.py
 # to import factorial from scipy.misc (not just scipy). Not sure the true
@@ -33,7 +33,7 @@ nose.run(defaultTest=path, config=config)
 # * interpolate: with factorial import from misc in polyint.py: 125 tests, 16 errors
 # * io: 120 tests, 25 errors
 # * lib: 176 tests, 39 errors
-# * linalg: 197 tests, 38 errors
+# * linalg: 197 tests, 32 errors
 # * maxentropy: 2 tests ok
 # * misc: tests need PIL, which doesn't work in ipy ATM
 # * ndimage: 414 tests ok

@@ -1,7 +1,6 @@
 
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase, WithMapper
-from tests.utils.gc import gcwait
 
 from System import IntPtr
 from System.Reflection import BindingFlags
@@ -136,6 +135,7 @@ class PyThreadStateTest(TestCase):
     
     @WithMapper
     def testUnmanagedThreadState(self, mapper, _):
+        mapper.ReleaseGIL()
         # current thread state should be null if nobody has the GIL
         self.assertEquals(CPyMarshal.ReadPtr(mapper._PyThreadState_Current), IntPtr.Zero)
         
@@ -160,6 +160,7 @@ class PyThreadStateTest(TestCase):
         thread = Thread(ThreadStart(CheckOtherThread))
         thread.Start()
         thread.Join()
+        mapper.EnsureGIL()
         
             
 
@@ -168,6 +169,7 @@ class PyEvalGILThreadTest(TestCase):
 
     @WithMapper
     def testMultipleSaveRestoreOneThread(self, mapper, _):
+        mapper.ReleaseGIL()
         lock = GetGIL(mapper)
         
         mapper.PyGILState_Ensure()
@@ -182,10 +184,12 @@ class PyEvalGILThreadTest(TestCase):
         self.assertEquals(lock.IsAcquired, True)
         self.assertRaises(Exception, mapper.PyEval_RestoreThread)
         mapper.PyGILState_Release(0)
+        mapper.EnsureGIL()
 
     
     @WithMapper
     def testMultipleSaveRestoreMultiThread(self, mapper, _):       # order of execution (intended)
+        mapper.ReleaseGIL()
         lock = GetGIL(mapper)
     
         oneThreadActed = AutoResetEvent(False)
@@ -261,7 +265,7 @@ class PyEvalGILThreadTest(TestCase):
         OneThread()
         t.Join()
     
-        mapper.Dispose()
+        mapper.EnsureGIL()
 
 
 

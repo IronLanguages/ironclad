@@ -36,21 +36,23 @@ STATUS
   contains 76 tests, of which 7 error and 1 fails. Some of the problems look
   pretty inconsequential, but there are a few real problems in specific cases.
 
-* h5py 1.2.1 will import if ipy is run with -X:Frames. Of the 133
-  tests we run, 3 error and 1 fails. Notable issues follow:
+* h5py 1.2.1 will import if ipy is run with -X:Frames, and most individual tests
+  will run without problems.
   
-  * Three test classes are blacklisted because they can deadlock. The proximate
-    cause is that the tests make unwarranted assumptions about file cleanup; the 
-    ultimate cause, as I understand it, appears to be deeper and hairier.
-    The problems do only seem to show up during heavy use and casual unreferencing
-    of multiple files, but it's probably unwise to depend on that.
+  Sadly, threading issues (which cause pretty regular deadlocks) mean I cannot 
+  recommend its use in production code; if you want to use it, try building a 
+  thread-safe HDF5, and then build h5py against that HDF5. If you can do that, 
+  try rebuilding h5py with PHIL deactivated; if that then works, please contact 
+  h5py at alfven dot org and inform him that his suppositions are correct, and 
+  that it would be awesome if he were to follow the same strategy for future 
+  releases of h5py.
 
 * matplotlib doesn't work, because the C extension modules have the wrong 
   manifests. You should be able to work around this by building your own ipy
   with a manifest containing the <dependency> in stub/depend-msvcr90.manifest.
 
 * numpy 1.3.0 will import if ipy is run with -X:Frames. Of the 
-  1704 tests we run, 143 error and 17 fail. Notable issues follow:
+  1704 tests we run, 143 error and 16 fail. Notable issues follow:
   
   * There is no Unicode support whatsoever: ~90 of the errors are caused
     by attempts to call PyObject_Unicode.
@@ -58,8 +60,6 @@ STATUS
     that aren't actually closed yet (because ipy doesn't use refcounting).
   * Some things fail or error in entirely trivial and uninteresting ways
     (e or E in float printing, for example).
-  * finfo(longdouble) is unbelievably, hideously, obscenely, mindbogglingly
-    slow. No idea why.
   * Several errors and failures still represent real problems.
 
 * numpy 1.4.0RC1 will import if ipy is run with -X:Frames. Of the 
@@ -71,10 +71,10 @@ STATUS
   with tests).
 
 * scipy 0.7.1 will happily import if ipy is run with -X:FullFrames. Of the
-  2608 tests we run, 160 error and 17 fail. Notable issues follow:
+  2484 tests we run, 127 error and 19 fail. Notable issues follow:
   
   * Several tests are blacklisted because they're tediously slow.
-  * Two tests are blacklisted because they (can) fail hard enough to take
+  * One test file is blacklisted because it (can) fail hard enough to take
     the process down.
   * There's some weirdness whereby scipy.factorial magically comes to exist
     when the whole suite is run, but certain packages can't be tested on 
