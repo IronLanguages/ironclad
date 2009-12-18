@@ -206,6 +206,7 @@ namespace Ironclad
             this.PyType_Ready(this.PyInstance_Type);
 
             this.actualisableTypes[this.PyType_Type] = new ActualiseDelegate(this.ActualiseType);
+            this.actualisableTypes[this.PyFloat_Type] = new ActualiseDelegate(this.ActualiseFloat);
             
             // now, let's corrupt the mapping in a useful way...
             this.cFileClass = this.GenerateClass(this.PyFile_Type);
@@ -333,6 +334,13 @@ namespace Ironclad
             
             this.map.Associate(ptr, inst);
             return ptr;
+        }
+
+        private void
+        ActualiseFloat(IntPtr fptr)
+        {
+            double value = CPyMarshal.ReadDoubleField(fptr, typeof(PyFloatObject), "ob_fval");
+            this.map.Associate(fptr, value);
         }
         
         private void 

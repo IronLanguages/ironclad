@@ -68,7 +68,7 @@ namespace Ironclad
         private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
         private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();
         private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
-        private List<IntPtr> tempObjects = new List<IntPtr>();
+        private Stack<List<IntPtr>> tempObjects = new Stack<List<IntPtr>>();
         private Stack<dgt_void_void> exitfuncs = new Stack<dgt_void_void>();
 
         private LocalDataStoreSlot _lockCount = Thread.AllocateDataSlot();
@@ -390,8 +390,9 @@ namespace Ironclad
 
             if (!this.actualisableTypes.ContainsKey(typePtr))
             {
-                string msg = "cannot map object at {0} with type at {1}";
-                throw new CannotInterpretException(String.Format(msg, ptr.ToString("x"), typePtr.ToString("x")));
+                string msg = "cannot map object at {0} with type at {1} ({2})";
+                string type_ = CPyMarshal.ReadCStringField(typePtr, typeof(PyTypeObject), "tp_name");
+                throw new CannotInterpretException(String.Format(msg, ptr.ToString("x"), typePtr.ToString("x"), type_));
             }
             
             this.actualisableTypes[typePtr](ptr);
@@ -579,7 +580,7 @@ namespace Ironclad
         public void
         DecRefLater(IntPtr ptr)
         {
-            this.tempObjects.Add(ptr);
+            this.tempObjects.Peek().Add(ptr);
         }
 
         public override int

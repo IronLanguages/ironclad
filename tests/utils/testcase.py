@@ -18,9 +18,11 @@ def _WithMapper(func, mapperCls):
         deallocTypes = CreateTypes(mapper)
         deallocs = [mapper.Dispose, deallocTypes]
         newArgs = args + (mapper, deallocs.append)
+        mapper.EnsureGIL()
         try:
             return func(*newArgs)
         finally:
+            mapper.ReleaseGIL()
             for dealloc in deallocs:
                 dealloc()
     return patched

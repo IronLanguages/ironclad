@@ -190,7 +190,7 @@ class Types_Test(TestCase):
 
     @WithMapper
     def testNotAutoActualisableTypes(self, mapper, _):
-        safeTypes = ("PyString_Type", "PyList_Type", "PyTuple_Type", "PyType_Type", "PyFile_Type")
+        safeTypes = "PyString_Type PyList_Type PyTuple_Type PyType_Type PyFile_Type PyFloat_Type".split()
         discoveryModes = ("IncRef", "Retrieve", "DecRef", "RefCount")
         for _type in filter(lambda s: s not in safeTypes, BUILTIN_TYPES):
             for mode in discoveryModes:

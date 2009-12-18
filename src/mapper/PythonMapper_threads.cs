@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 using IronPython.Runtime;
@@ -156,6 +157,7 @@ namespace Ironclad
         public void
         EnsureGIL()
         {
+            this.tempObjects.Push(new List<IntPtr>());
             if (this.GIL.Acquire() == 1)
             {
                 CPyMarshal.WritePtr(this._PyThreadState_Current, this.threadState.Ptr);
@@ -165,11 +167,11 @@ namespace Ironclad
         public void
         ReleaseGIL()
         {
-            foreach (IntPtr ptr in this.tempObjects)
+            List<IntPtr> safeTemps = this.tempObjects.Pop();
+            foreach (IntPtr ptr in safeTemps)
             {
                 this.DecRef(ptr);
             }
-            this.tempObjects.Clear();
             this.map.CheckBridgePtrs(false);
             
             if (this.GIL.CountAcquired == 1)
@@ -178,6 +180,5 @@ namespace Ironclad
             }
             this.GIL.Release();
         }
-        
     }
 }

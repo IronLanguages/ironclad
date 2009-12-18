@@ -376,6 +376,16 @@ class PyFloat_Test(TestCase):
             
 
 
+    @WithMapper
+    def testActualiseFloat(self, mapper, call_later):
+        fptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyFloatObject))
+        call_later(lambda: Marshal.FreeHGlobal(fptr))
+        CPyMarshal.WritePtrField(fptr, PyFloatObject, "ob_type", mapper.PyFloat_Type)
+        CPyMarshal.WriteIntField(fptr, PyFloatObject, "ob_refcnt", 1)
+        CPyMarshal.WriteDoubleField(fptr, PyFloatObject, "ob_fval", 1.234)
+        self.assertEquals(mapper.Retrieve(fptr), 1.234)
+
+
 class PyComplex_Test(TestCase):
 
     @WithMapper

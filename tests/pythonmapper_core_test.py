@@ -338,7 +338,7 @@ class PythonMapper_References_Test(TestCase):
             self.assertEquals(ref.IsAlive, False, "was not weakened by DecRef")
 
         finally:
-            # need to dealloc ptr ourselves, it doesn't hapen automatically
+            # need to dealloc ptr ourselves, it doesn't happen automatically
             # except for objects with Dispatchers
             mapper.IC_PyBaseObject_Dealloc(ptr)
             mapper.Dispose()
@@ -488,7 +488,6 @@ class PythonMapper_References_Test(TestCase):
         mapper.IncRef(tempObject1)
         mapper.IncRef(tempObject2)
 
-        mapper.EnsureGIL()
         mapper.ReleaseGIL()
         self.assertEquals(mapper.RefCount(tempObject1), 1,
                           "ReleaseGIL should decref temp objects rather than freeing them")
@@ -501,6 +500,7 @@ class PythonMapper_References_Test(TestCase):
                           "ReleaseGIL should clear list once called")
         self.assertEquals(mapper.RefCount(tempObject2), 1,
                           "ReleaseGIL should clear list once called")
+        mapper.EnsureGIL()
 
 
     @WithMapper

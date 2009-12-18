@@ -107,10 +107,10 @@ class DictTest(TestCase):
         deallocTypes = CreateTypes(mapper)
         dictPtr = mapper.Store({"abcde": 12345})
         
+        mapper.EnsureGIL()
         itemPtr = mapper.PyDict_GetItemString(dictPtr, "abcde")
         self.assertEquals(mapper.Retrieve(itemPtr), 12345, "failed to get item")
         self.assertEquals(mapper.RefCount(itemPtr), 1, "something is wrong")
-        mapper.EnsureGIL()
         mapper.ReleaseGIL()
         self.assertEquals(itemPtr in frees, True)
         
@@ -133,10 +133,10 @@ class DictTest(TestCase):
         deallocTypes = CreateTypes(mapper)
         dictPtr = mapper.Store({12345: 67890})
         
+        mapper.EnsureGIL()
         itemPtr = mapper.PyDict_GetItem(dictPtr, mapper.Store(12345))
         self.assertEquals(mapper.Retrieve(itemPtr), 67890, "failed to get item")
         self.assertEquals(mapper.RefCount(itemPtr), 1, "something is wrong")
-        mapper.EnsureGIL()
         mapper.ReleaseGIL()
         self.assertEquals(itemPtr in frees, True)
         
@@ -341,6 +341,7 @@ class PyDict_Next_Test(TestCase):
         
         d = dict(a=1)
         dPtr = mapper.Store(d)
+        mapper.EnsureGIL()
         mapper.PyDict_Next(dPtr, posPtr, keyPtrPtr, valuePtrPtr)
         
         keyPtr = CPyMarshal.ReadPtr(keyPtrPtr)
@@ -350,7 +351,6 @@ class PyDict_Next_Test(TestCase):
         mapper.IncRef(keyPtr)
         mapper.IncRef(valuePtr)
         
-        mapper.EnsureGIL()
         mapper.ReleaseGIL()
         
         # check refcount has dropped back to 1

@@ -4,7 +4,6 @@ import sys
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
-from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes, OffsetPtr
 from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
