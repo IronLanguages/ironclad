@@ -35,9 +35,12 @@ STATUS
 * csv, as shipped with Python 2.6, will import; the official test suite 
   contains 76 tests, of which 7 error and 1 fails. Some of the problems look
   pretty inconsequential, but there are a few real problems in specific cases.
+  
+  Note that the _csv module is built into Ironclad, so you should only need
+  to include csv.py from the CPython distribution.
 
 * h5py 1.2.1 will import if ipy is run with -X:Frames, and most individual tests
-  will run without problems.
+  will run without problems (We can reliably run 122, with 3 errors and 1 failure).
   
   Sadly, threading issues (which cause pretty regular deadlocks) mean I cannot 
   recommend its use in production code; if you want to use it, try building a 
@@ -50,6 +53,10 @@ STATUS
 * matplotlib doesn't work, because the C extension modules have the wrong 
   manifests. You should be able to work around this by building your own ipy
   with a manifest containing the <dependency> in stub/depend-msvcr90.manifest.
+
+* The mmap module is built into Ironclad, and works well enough that the numpy
+  memmap module passes its tests; to use it successfully, you need to call
+  ironclad.patch_native_filenos() as detailed above.
 
 * numpy 1.3.0 will import if ipy is run with -X:Frames. Of the 
   1704 tests we run, 143 error and 16 fail. Notable issues follow:

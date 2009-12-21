@@ -4,6 +4,5 @@ tests.testinfo # not really a test
 # these deadlock frequently; I believe it to be a problem with h5py
 # hopefully it will soon be built against a threadsafe hdf5, and can
 # lose the PHIL
-test_highlevel.TestFile
-test_highlevel.TestGroup
-test_vlen.TestVlen
+test_highlevel
+test_vlen
