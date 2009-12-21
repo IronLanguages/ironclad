@@ -31,7 +31,7 @@ marshalling and suchlike.
 
 When imported, creates a PythonMapper object (and consequently sets up import 
 hooks, object mapping, etc, sufficient to make everything work). Also contains 
-a few mildly useful functions.
+a few mildly useful functions; check their docstrings.
 
 
 CODE GENERATION
@@ -192,7 +192,8 @@ Win32 mutexen appear to have no such problem, so we use them instead.
 
 Essentially, a Dictionary<object, string> whose values are always "stupid"; much
 like a python set, but capable of holding "unhashable" objects. Not very
-interesting, but used in several places.
+interesting, and now only used in one place; would be good to get rid of it, since
+it doesn't even need to hold unhashable objects now.
 
 * InappropriateReflection
 
@@ -209,4 +210,5 @@ Keeps track of per-thread exception state.
 * Unmanaged
 
 Static utility class, with DllImports of various useful functions from 
-kernel32.dll and msvcr71.dll.
+kernel32.dll and msvcr90.dll (the latter via ic_msvcr90.dll; read about
+side-by-side assemblies if you want to know why that's neededs).
