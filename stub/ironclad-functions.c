@@ -53,6 +53,12 @@ PyType_Modified(PyTypeObject *type)
 	// with itself.
 }
 
+PyObject**
+_PyObject_GetDictPtr(PyObject *obj)
+{
+    return NULL;
+}
+
 
 // TODO: this will break, when you least expect it, because it assumes that
 // _off_t and time_t are both 32-bit. OTOH, the users don't seem to look in

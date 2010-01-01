@@ -1,1 +1,3 @@
-# I'm sure we'll need this again soon enough :/
+
+# in numpy 1.4.0rc2, fails assert in getargs.c
+test_regression.TestRegression.test_void_scalar_with_titles

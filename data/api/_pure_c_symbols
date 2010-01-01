@@ -128,6 +128,7 @@ PyCFunction_New
 
 # Objects/object.c
 _Py_HashPointer
+_PyObject_GetDictPtr
 
 # Objects/stringobject.c
 PyString_FromFormat
