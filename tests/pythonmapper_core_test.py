@@ -9,7 +9,8 @@ from tests.utils.memory import CreateTypes
 from tests.utils.pythonmapper import MakeAndAddEmptyModule
 from tests.utils.testcase import TestCase, WithMapper
 
-from System import Int32, IntPtr, NullReferenceException, WeakReference
+from System import Int32, IntPtr, InvalidOperationException, NullReferenceException, WeakReference
+from System.Collections.Generic import Stack, List
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import (
@@ -501,6 +502,60 @@ class PythonMapper_References_Test(TestCase):
         self.assertEquals(mapper.RefCount(tempObject2), 1,
                           "ReleaseGIL should clear list once called")
         mapper.EnsureGIL()
+
+
+    def testReleaseGilDoesntExplodeIfTempObjectsEmpty(self):
+        frees = []
+        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
+        mapper.tempObjects = Stack[List[IntPtr]]()
+        try:
+            mapper.ReleaseGIL()
+        except InvalidOperationException:
+            self.fail('ReleaseGIL should not throw StackEmpty if tempObjects is empty')
+        except Exception:
+            pass
+        finally:
+            mapper.Dispose()
+
+
+    def testReleaseGilDoesntExplodeIfTempObjectsContainsNull(self):
+        frees = []
+        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
+        mapper.tempObjects = Stack[List[IntPtr]]()
+        mapper.tempObjects.Push(None)
+        try:
+            mapper.ReleaseGIL()
+        except SystemError:
+            self.fail('ReleaseGIL should not throw NullReference if tempObjects contains None')
+        except Exception:
+            pass
+        finally:
+            mapper.Dispose()
+
+
+    def testDecRefLaterSurvivesEmptyStack(self):
+        frees = []
+        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
+        mapper.tempObjects = Stack[List[IntPtr]]()
+        try:
+            mapper.DecRefLater(IntPtr.Zero)
+        except InvalidOperationException:
+            self.fail('DecRefLater should not throw StackEmpty if tempObjects is empty')
+        finally:
+            mapper.Dispose()
+
+
+    def testDecRefLaterSurvivesNoneOnStack(self):
+        frees = []
+        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
+        mapper.tempObjects = Stack[List[IntPtr]]()
+        mapper.tempObjects.Push(None)
+        try:
+            mapper.DecRefLater(IntPtr.Zero)
+        except SystemError:
+            self.fail('DecRefLater should not throw NullReference if tempObjects contains None')
+        finally:
+            mapper.Dispose()
 
 
     @WithMapper

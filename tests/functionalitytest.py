@@ -185,6 +185,29 @@ class ExternalFunctionalityTest(FunctionalTestCase):
             
             """ % os.path.abspath(__file__)))
 
+
+class NumpyTest(FunctionalTestCase):
+
+    def testNumpyCrash(self):
+        self.assertRuns(dedent("""
+            import numpy
+            from System.Threading import Thread, ThreadStart
+            a = numpy.matrix([[1, 2], [3, 4]])
+            b = numpy.matrix([[1, 2], [3, 4]])
+
+            def multiInvert(a):
+                for ii in xrange(1000):
+                    a = a.I
+
+            t1 = Thread(ThreadStart(lambda: multiInvert(a)))
+            t2 = Thread(ThreadStart(lambda: multiInvert(b)))
+            t1.Start()
+            t2.Start()
+            t1.Join()
+            t2.Join()
+            """), insert_args='-X:Frames -X:Debug')
+
+
 class BZ2Test(ModuleTestCase('bz2')):
 
     def testFunctionsAndDocstringsExist(self):
@@ -376,7 +399,7 @@ class BZ2Test(ModuleTestCase('bz2')):
                     compressors[i].flush())
             
             assert current == %r
-            """) % (bz2_test_text, bz2_test_text))    
+            """) % (bz2_test_text, bz2_test_text))
     
     
     def testFileProperties(self):

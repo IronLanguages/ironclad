@@ -167,13 +167,17 @@ namespace Ironclad
         public void
         ReleaseGIL()
         {
-            List<IntPtr> safeTemps = this.tempObjects.Pop();
-            foreach (IntPtr ptr in safeTemps)
-            {
-                this.DecRef(ptr);
+            if (this.tempObjects.Count > 0) {
+                List<IntPtr> safeTemps = this.tempObjects.Pop();
+                if (safeTemps != null) {
+                    foreach (IntPtr ptr in safeTemps)
+                    {
+                        this.DecRef(ptr);
+                    }
+                }
             }
             this.map.CheckBridgePtrs(false);
-            
+
             if (this.GIL.CountAcquired == 1)
             {
                 CPyMarshal.WritePtr(this._PyThreadState_Current, IntPtr.Zero);
