@@ -68,11 +68,12 @@ namespace Ironclad
         private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
         private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();
         private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
-        private Stack<List<IntPtr>> tempObjects = new Stack<List<IntPtr>>();
         private Stack<dgt_void_void> exitfuncs = new Stack<dgt_void_void>();
 
         private LocalDataStoreSlot _lockCount = Thread.AllocateDataSlot();
         private LocalDataStoreSlot _threadState = Thread.AllocateDataSlot();
+
+        public Stack<List<IntPtr>> tempObjects = new Stack<List<IntPtr>>();
 
         // TODO: must be a better way to handle imports...
         // public to allow manipulation from test code
@@ -577,10 +578,13 @@ namespace Ironclad
             }
         }
 
-        public void
-        DecRefLater(IntPtr ptr)
+        public void DecRefLater(IntPtr ptr)
         {
-            this.tempObjects.Peek().Add(ptr);
+            if (this.tempObjects.Count > 0) {
+                if (this.tempObjects.Peek() != null) {
+                    this.tempObjects.Peek().Add(ptr);
+                }
+            }
         }
 
         public override int
