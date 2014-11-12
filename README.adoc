@@ -1,0 +1,25 @@
+= Overview =
+
+Ironclad's purpose is to allow IronPython to transparently import and use
+compiled CPython extensions.
+
+The original project https://code.google.com/p/ironclad is no longer
+active. The last known version works with Python 2.6. The idea here is
+to make it work with current version (2.7.x) of CPython and IronPython.
+
+At the moment it does compile using up to date components, but errors
+or fails most of the tests.
+
+
+== Building ==
+
+Up to date building instructions can be found at:
+https://github.com/paweljasinski/ironclad/wiki/building
+
+
+== Hacking ==
+
+Anybody who would like to help is welcome!
+
+See doc/details.txt
+
