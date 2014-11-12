@@ -7,7 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-using Microsoft.Scripting.Math;
+using System.Numerics;
 
 using IronPython.Modules;
 using IronPython.Runtime;

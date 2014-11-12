@@ -34,14 +34,14 @@ if WIN32:
     # These variables will be needed on any platform, I think
     
     ASFLAGS = '-f win32'
-    CSC = r'C:\windows\Microsoft.NET\Framework\v2.0.50727\csc.exe'
+    CSC = r'C:\windows\Microsoft.NET\Framework\v4.0.30319\csc.exe'
     CSC_CMD = '$CSC /nologo /out:$TARGET /t:library $REFERENCES $SOURCES'
-    GCCXML_CC1PLUS = r'"C:\Program Files\GCC_XML\bin\gccxml_cc1plus.exe"'
-    IPY = r'"C:\Program Files\IronPython 2.6\ipy.exe"'
-    IPY_DIR = r'"C:\Program Files\IronPython 2.6"'
+    GCCXML_CC1PLUS = r'"C:\Program Files (x86)\gccxml\bin\gccxml_cc1plus.exe"'
+    IPY = r'"C:\Program Files (x86)\IronPython 2.7\ipy.exe"'
+    IPY_DIR = r'"C:\Program Files (x86)\IronPython 2.7"'
     IPY_REF_TEMPLATE = r'/r:$IPY_DIR\%s.dll'
     NATIVE_TOOLS = ['mingw', 'nasm']
-    PYTHON_DLL = r'C:\windows\system32\python26.dll'
+    PYTHON_DLL = r'C:\windows\SysWOW64\python27.dll'
     
     OBJ_SUFFIX = '.o'
     DLL_SUFFIX = '.dll'
@@ -53,27 +53,30 @@ if WIN32:
     COPY_CMD = 'copy $SOURCE $TARGET'
     DLLTOOL_CMD = 'dlltool -D $NAME -d $SOURCE -l $TARGET'
     LINK_MSVCR90_FLAGS = '-specs=stub/use-msvcr90.spec'
-    MSVCR90_DLL = r'C:\Windows\winsxs\x86_Microsoft.VC90.CRT_1fc8b3b9a1e18e3b_9.0.21022.8_x-ww_d08d0375\msvcr90.dll'
+    MSVCR90_DLL = r'C:\Windows\winsxs\x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.6161_none_50934f2ebcb7eb57\msvcr90.dll'
     PEXPORTS_CMD = 'pexports $SOURCE > $TARGET'
     RES_CMD = 'windres --input $SOURCE --output $TARGET --output-format=coff'
     
     # TODO: can we find MINGW_DIR from the environment..?
-    MINGW_DIR = r'C:\Program Files\MinGW' 
+    MINGW_DIR = r'C:\MinGW'
     MINGW_LIB = os.path.join(MINGW_DIR, 'lib')
     MINGW_INCLUDE = os.path.join(MINGW_DIR, 'include')
-    GCCXML_INSERT = '-isystem "%s" -isystem "%s"' % (MINGW_INCLUDE, os.path.join(MINGW_LIB, 'gcc', 'mingw32', '3.4.5', 'include'))
+    GCCXML_INSERT = '-isystem "%s" -isystem "%s"' % (MINGW_INCLUDE, os.path.join(MINGW_LIB, 'gcc', 'mingw32', '4.8.1', 'include'))
 
 
 #===============================================================================
 # PLATFORM-AGNOSTIC GLOBALS
 # If any turn out to need to be platform-specific, please move them
+env_with_ippath = os.environ
+env_with_ippath['IRONPYTHONPATH'] = os.getcwd()
+# TODO: it should not be necessary to polute execution with entire os environment
 
 COMPILE_IRONCLAD_FLAGS = '-DIRONCLAD -DPy_BUILD_CORE'
 OBJ_CMD = '$CC $CCFLAGS -o $TARGET -c $SOURCE'
 DLL_CMD = '$CC $CCFLAGS -shared -o $TARGET $SOURCES'
 GCCXML_CMD = ' '.join((GCCXML_CC1PLUS, COMPILE_IRONCLAD_FLAGS, '-I$CPPPATH -D__GNUC__ %s $SOURCE -fxml="$TARGET"' % GCCXML_INSERT))
-PYTHON26OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
-PYTHON26DLL_CMD = DLL_CMD + ' -export-all-symbols'
+PYTHON27OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
+PYTHON27DLL_CMD = DLL_CMD + ' -export-all-symbols'
 COMMON = dict(IPY=IPY, IPY_DIR=IPY_DIR)
 
 test_deps = []
@@ -83,15 +86,15 @@ before_test = test_deps.append
 #===============================================================================
 #===============================================================================
 # This section builds all the unmanaged parts
-# (python26.dll, ic_msvcr90.dll, several test files)
+# (python27.dll, ic_msvcr90.dll, several test files)
 #===============================================================================
 
-native = Environment(tools=NATIVE_TOOLS, ASFLAGS=ASFLAGS, PYTHON_DLL=PYTHON_DLL, **COMMON)
+native = Environment(ENV=env_with_ippath, tools=NATIVE_TOOLS, ASFLAGS=ASFLAGS, PYTHON_DLL=PYTHON_DLL, **COMMON)
 c_obj_kwargs = dict(source_scanner=CScanner(), suffix=OBJ_SUFFIX)
 native['BUILDERS']['Obj'] = Builder(action=OBJ_CMD, **c_obj_kwargs)
-native['BUILDERS']['Python26Obj'] = Builder(action=PYTHON26OBJ_CMD, CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include', **c_obj_kwargs)
+native['BUILDERS']['Python27Obj'] = Builder(action=PYTHON27OBJ_CMD, CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include', **c_obj_kwargs)
 native['BUILDERS']['Dll'] = Builder(action=DLL_CMD, suffix=DLL_SUFFIX)
-native['BUILDERS']['Python26Dll'] = native['BUILDERS']['Dll']
+native['BUILDERS']['Python27Dll'] = native['BUILDERS']['Dll']
 native['BUILDERS']['GccXml'] = Builder(action=GCCXML_CMD, CPPPATH='stub/Include', source_scanner=CScanner())
 
 if WIN32:
@@ -126,8 +129,8 @@ if WIN32:
         return target, source + depend_msvcr90
     native['BUILDERS']['Msvcr90Dll'] = Builder(
         action=DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR90_FLAGS)
-    native['BUILDERS']['Python26Dll'] = Builder(
-        action=PYTHON26DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR90_FLAGS)
+    native['BUILDERS']['Python27Dll'] = Builder(
+        action=PYTHON27DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR90_FLAGS)
 
 #===============================================================================
 # Unmanaged libraries for build/ironclad
@@ -145,16 +148,16 @@ native.Command(buildstub_out, buildstub_src,
 
 # Compile stub code
 jumps_obj = native.Object('stub/jumps.generated.asm')
-stubmain_obj = native.Python26Obj('stub/stubmain.c')
+stubmain_obj = native.Python27Obj('stub/stubmain.c')
 
 # Generate information from python headers etc
 stubmain_xml = native.GccXml('data/api/_stubmain.generated.xml', 'stub/stubmain.c')
 
-# Build and link python26.dll
+# Build and link python27.dll
 cpy_src_dirs = 'Modules Objects Parser Python'
 cpy_srcs = glommap(lambda x: native.Glob('stub/%s/*.c' % x), cpy_src_dirs)
-cpy_objs = glommap(native.Python26Obj, cpy_srcs)
-before_test(native.Python26Dll('build/ironclad/python26', stubmain_obj + jumps_obj + cpy_objs))
+cpy_objs = glommap(native.Python27Obj, cpy_srcs)
+before_test(native.Python27Dll('build/ironclad/python27', stubmain_obj + jumps_obj + cpy_objs))
 
 if WIN32:
     # This dll redirects various msvcr90 functions so we can DllImport them in C#
@@ -177,11 +180,11 @@ if WIN32:
 #===============================================================================
 # This section builds the CLR part
 #===============================================================================
-
-managed = Environment(CSC=CSC, **COMMON)
-ipy_dlls = 'IronPython IronPython.Modules Microsoft.Dynamic Microsoft.Scripting Microsoft.Scripting.Core'
+managed = Environment(ENV=env_with_ippath, CSC=CSC, **COMMON)
+ipy_dlls = 'IronPython IronPython.Modules Microsoft.Dynamic Microsoft.Scripting Microsoft.Scripting.Metadata'
 ipy_refs = ' '.join(submap(IPY_REF_TEMPLATE, ipy_dlls))
-managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX, REFERENCES=ipy_refs)
+numeric_ref = r'/r:"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Numerics.dll"'
+managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX, REFERENCES=ipy_refs + ' ' + numeric_ref)
 
 #===============================================================================
 # Generated C#

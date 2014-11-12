@@ -1,13 +1,13 @@
 # This file is used by tools/generatemapper.py
 
 # columns in order:
-# API function name | coerce input | return type | error value | (optional) coerce output
+# API function name | coerce input | return type | error value | (optional) coerce output - changed to cast
 # TODO: error value, coerce output are annoying platform-specific
 
-PyInt_AsLong                MakeBigInteger              int     -1                  .ToInt32()
-PyInt_AsSsize_t             MakeBigInteger              int     -1                  .ToInt32()
+PyInt_AsLong                MakeBigInteger              int     -1                  (int)
+PyInt_AsSsize_t             MakeBigInteger              int     -1                  (int)
 PyFloat_AsDouble            MakeFloat                   double  -1.0
-PyLong_AsLong               MakeBigInteger              int     -1                  .ToInt32()
-PyLong_AsUnsignedLong       MakeBigInteger              uint    UInt32.MaxValue     .ToUInt32()
-PyLong_AsLongLong           MakeBigInteger              long    -1                  .ToInt64()
-PyLong_AsUnsignedLongLong   MakeUnsignedBigInteger      ulong   UInt64.MaxValue     .ToUInt64()
+PyLong_AsLong               MakeBigInteger              int     -1                  (int)
+PyLong_AsUnsignedLong       MakeBigInteger              uint    UInt32.MaxValue     (uint)
+PyLong_AsLongLong           MakeBigInteger              long    -1                  (long)
+PyLong_AsUnsignedLongLong   MakeUnsignedBigInteger      ulong   UInt64.MaxValue     (ulong)

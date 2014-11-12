@@ -11,4 +11,4 @@ long                int                 Int
 ulong               uint                UInt
 double              double              Double
 ubyte               byte                Byte
-char                string              Byte            {'get_tweak': 'Builtin.chr', 'set_tweak': '(byte)Builtin.ord'}
+char                string              Byte            {'get_tweak': '(string)Builtin.chr', 'set_tweak': '(byte)Builtin.ord'}

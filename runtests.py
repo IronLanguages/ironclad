@@ -14,10 +14,11 @@ for f in os.listdir("tests"):
     if f.endswith("test.py"):
         name = f[:-3]
         try:
+            print "adding: tests.%s" % name
             m = __import__("tests.%s" % name)
             suite.addTest(getattr(m, name).suite)
         except Exception, e:
             suite.addTest(GetFailedImportTestSuite(name, e))
 
 if __name__ == '__main__':
-    run(suite)
+    run(suite, verbosity=2)

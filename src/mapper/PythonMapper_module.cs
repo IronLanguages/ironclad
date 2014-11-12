@@ -16,6 +16,79 @@ using Microsoft.Scripting.Runtime;
 
 namespace Ironclad
 {
+    class DictionaryWrapper : IDictionary<string, object>
+    {
+        readonly IDictionary<object, object> inner;
+        public DictionaryWrapper(IDictionary<object, object> wrapped)
+        {
+            this.inner = wrapped;
+        }
+
+        #region IDictionary<string,object> Members
+
+        public void Add(string key, object value) { inner.Add(key, value); }
+        public bool ContainsKey(string key) { return inner.ContainsKey(key); }
+        public ICollection<string> Keys {
+            get
+            {
+                var ret = new List<string>(inner.Count);
+                foreach (var key in inner.Keys)
+                {
+                    ret.Add((string)key);
+                }
+                return ret;
+            }
+        }
+        public bool Remove(string key) { return inner.Remove(key); }
+        public bool TryGetValue(string key, out object value) { return inner.TryGetValue(key, out value); }
+        public ICollection<object> Values { get { return inner.Values; } }
+
+        public object this[string key]
+        {
+            get { return inner[key]; }
+            set { inner[key] = value; }
+        }
+
+        #endregion
+
+        #region ICollection<KeyValuePair<string,object>> Members
+
+        public void Add(KeyValuePair<string, object> item) { inner.Add(item.Key, item.Value); }
+        public void Clear() { inner.Clear(); }
+        public bool Contains(KeyValuePair<string, object> item) {
+            return inner.Contains(new KeyValuePair<object, object>(item.Key, item.Value)); }
+        public void CopyTo(KeyValuePair<string, object>[] array, int arrayIndex) { throw new NotImplementedException(); }
+        public int Count { get { return inner.Count; } }
+        public bool IsReadOnly { get { return false; } }
+        public bool Remove(KeyValuePair<string, object> item) { return inner.Remove(item.Key); }
+
+        #endregion
+
+        #region IEnumerable<KeyValuePair<string,object>> Members
+
+        public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+        {
+            foreach (var item in inner)
+            {
+                yield return new KeyValuePair<string, object>((string)item.Key, item.Value);
+            }
+        }
+
+        #endregion
+
+        #region IEnumerable Members
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            foreach (var item in inner)
+            {
+                yield return new KeyValuePair<string, object>((string)item.Key, item.Value);
+            }
+        }
+
+        #endregion
+    }
+
     public partial class PythonMapper : PythonApi
     {
         public override IntPtr 
@@ -126,7 +199,7 @@ namespace Ironclad
         ExecInModule(string code, PythonModule module)
         {
             SourceUnit script = this.python.CreateSnippet(code, SourceCodeKind.Statements);
-            script.Execute(new Scope(module.Get__dict__()));
+            script.Execute(new Scope(new DictionaryWrapper((IDictionary<object, object>)module.Get__dict__())));
         }
         
         public void

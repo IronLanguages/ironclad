@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-using Microsoft.Scripting.Math;
+using System.Numerics;
 
 using IronPython.Modules;
 using IronPython.Runtime;
@@ -38,11 +38,11 @@ namespace Ironclad
                 {
                     throw PythonOps.TypeError("PyComplex_AsCComplex: None cannot be turned into a complex");
                 }
-                if (obj.GetType() == typeof(Complex64))
+                if (obj.GetType() == typeof(Complex))
                 {
-                    Complex64 complex = (Complex64)obj;
+                    Complex complex = (Complex)obj;
                     real = complex.Real;
-                    imag = complex.Imag;
+                    imag = complex.Imaginary;
                 }
                 else
                 {
@@ -62,7 +62,7 @@ namespace Ironclad
         public override IntPtr
         PyComplex_FromDoubles(double real, double imag)
         {
-            return this.Store(new Complex64(real, imag));
+            return this.Store(new Complex(real, imag));
         }
         
         public override uint
@@ -72,12 +72,12 @@ namespace Ironclad
             {
                 BigInteger unmasked = NumberMaker.MakeBigInteger(this.scratchContext, this.Retrieve(valuePtr));
                 BigInteger mask = new BigInteger(UInt32.MaxValue) + 1;
-                BigInteger masked = BigInteger.Mod(unmasked, mask);
+                BigInteger masked = unmasked % mask;
                 if (masked < 0)
                 {
                     masked += mask;
                 }
-                return masked.ToUInt32();
+                return (uint)masked;
             }
             catch (Exception e)
             {
@@ -279,14 +279,14 @@ namespace Ironclad
         }
 
         private IntPtr
-        StoreTyped(Complex64 value)
+        StoreTyped(Complex value)
         {
             IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyComplexObject)));
             CPyMarshal.WriteIntField(ptr, typeof(PyComplexObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyComplexObject), "ob_type", this.PyComplex_Type);
             IntPtr cpxptr = CPyMarshal.GetField(ptr, typeof(PyComplexObject), "cval");
             CPyMarshal.WriteDoubleField(cpxptr, typeof(Py_complex), "real", value.Real);
-            CPyMarshal.WriteDoubleField(cpxptr, typeof(Py_complex), "imag", value.Imag);
+            CPyMarshal.WriteDoubleField(cpxptr, typeof(Py_complex), "imag", value.Imaginary);
             this.map.Associate(ptr, value);
             return ptr;
         }

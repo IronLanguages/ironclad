@@ -6,7 +6,7 @@ using IronPython.Runtime;
 using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
-using Microsoft.Scripting.Math;
+using System.Numerics;
 
 using Ironclad.Structs;
 

@@ -1,5 +1,5 @@
 
-from System import IntPtr
+from System import IntPtr, Type
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal
@@ -62,13 +62,15 @@ _types = (
     "_PyWeakref_ProxyType",
     "_PyWeakref_CallableProxyType"
 )
+
+sizeOfType = Marshal.SizeOf.Overloads[Type]
 _others = {
-    "_Py_NoneStruct": Marshal.SizeOf(PyObject),
-    "_Py_NotImplementedStruct": Marshal.SizeOf(PyObject),
-    "_Py_EllipsisObject": Marshal.SizeOf(PyObject),
-    "_Py_ZeroStruct": Marshal.SizeOf(PyIntObject),
-    "_Py_TrueStruct": Marshal.SizeOf(PyIntObject),
-    "_PyThreadState_Current": Marshal.SizeOf(IntPtr),
+    "_Py_NoneStruct": sizeOfType(PyObject),
+    "_Py_NotImplementedStruct": sizeOfType(PyObject),
+    "_Py_EllipsisObject": sizeOfType(PyObject),
+    "_Py_ZeroStruct": sizeOfType(PyIntObject),
+    "_Py_TrueStruct": sizeOfType(PyIntObject),
+    "_PyThreadState_Current": sizeOfType(IntPtr),
 }
 def CreateTypes(mapper, readyTypes=True):
     blocks = []

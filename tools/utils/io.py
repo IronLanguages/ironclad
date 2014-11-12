@@ -83,9 +83,9 @@ def _ignore_gccxml_settings(f):
 @_ignore_gccxml_settings
 def read_gccxml(*args):
     path = os.path.join(*args)
-    from pygccxml.parser.config import config_t
+    from pygccxml.parser.config import gccxml_configuration_t
     from pygccxml.parser.source_reader import source_reader_t
-    return source_reader_t(config_t()).read_xml_file(path)[0]
+    return source_reader_t(gccxml_configuration_t()).read_xml_file(path)[0]
 
 
 #==========================================================================

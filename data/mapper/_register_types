@@ -11,7 +11,7 @@ PySlice_Type        Builtin.slice           {"tp_dealloc": "IC_PySlice_Dealloc",
 PyInt_Type          TypeCache.Int32         {"tp_as_number": "AddNumberMethodsWithIndex", "tp_new": "IC_PyInt_New", "tp_basicsize": "PyIntObject"}
 PyLong_Type         TypeCache.BigInteger    {"tp_as_number": "AddNumberMethodsWithIndex"}
 PyFloat_Type        TypeCache.Double        {"tp_as_number": "AddNumberMethodsWithoutIndex", "tp_new": "IC_PyFloat_New", "tp_basicsize": "PyFloatObject"}
-PyComplex_Type      TypeCache.Complex64     {"tp_as_number": "AddNumberMethodsWithoutIndex", "tp_basicsize": "PyComplexObject"}
+PyComplex_Type      TypeCache.Complex       {"tp_as_number": "AddNumberMethodsWithoutIndex", "tp_basicsize": "PyComplexObject"}
 PyDict_Type         TypeCache.Dict          {"tp_init": "IC_PyDict_Init"}
 PyList_Type         TypeCache.List          {"tp_dealloc": "IC_PyList_Dealloc", "tp_basicsize": "PyListObject"}
 PyTuple_Type        TypeCache.PythonTuple   {"tp_dealloc": "IC_PyTuple_Dealloc", "tp_basicsize": "PyTupleObject", "tp_itemsize": "IntPtr"}

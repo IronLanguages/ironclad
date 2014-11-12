@@ -8,7 +8,7 @@ uint
 bool
 double
 BigInteger
-Complex64
+Complex
 string
 IDictionary
 PythonType

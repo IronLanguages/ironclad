@@ -1,6 +1,6 @@
 using System;
 
-using Microsoft.Scripting.Math;
+using System.Numerics;
 
 using IronPython.Modules;
 using IronPython.Runtime;
