@@ -27,7 +27,7 @@ class PyFile_Type_Test(TestCase):
 
     @WithMapper
     def testPyFile_Type(self, mapper, addToCleanUp):
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
         addToCleanUp(lambda: Marshal.FreeHGlobal(typeBlock))
         
         mapper.RegisterData("PyFile_Type", typeBlock)

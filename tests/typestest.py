@@ -135,7 +135,7 @@ class Types_Test(TestCase):
 
     @WithMapper
     def testPyType_IsSubtype_NullPtrs(self, mapper, CallLater):
-        type_size = Marshal.SizeOf(PyTypeObject)
+        type_size = Marshal.SizeOf(PyTypeObject())
         ptr = Marshal.AllocHGlobal(type_size)
         CallLater(lambda: Marshal.FreeHGlobal(ptr))
         CPyMarshal.Zero(ptr, type_size)
@@ -146,8 +146,8 @@ class Types_Test(TestCase):
 
     @WithMapper
     def testPyType_Ready(self, mapper, addToCleanUp):
-        typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        CPyMarshal.Zero(typePtr, Marshal.SizeOf(PyTypeObject))
+        typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
+        CPyMarshal.Zero(typePtr, Marshal.SizeOf(PyTypeObject()))
         addToCleanUp(lambda: Marshal.FreeHGlobal(typePtr))
 
         self.assertEquals(mapper.PyType_Ready(typePtr), 0, "wrong")
@@ -194,7 +194,7 @@ class Types_Test(TestCase):
         discoveryModes = ("IncRef", "Retrieve", "DecRef", "RefCount")
         for _type in filter(lambda s: s not in safeTypes, BUILTIN_TYPES):
             for mode in discoveryModes:
-                objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+                objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject()))
                 CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 2)
                 CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", getattr(mapper, _type))
                 self.assertRaises(CannotInterpretException, getattr(mapper, mode), objPtr)
@@ -268,7 +268,7 @@ class Types_Test(TestCase):
             for (mode, TestFunc) in discoveryModes.items():
                 typePtr, deallocType = MakeTypePtr(mapper, {"tp_name": mode + "Class"})
                 userTypeDeallocs.append(deallocType)
-                objPtr = allocator.Alloc(Marshal.SizeOf(PyObject))
+                objPtr = allocator.Alloc(Marshal.SizeOf(PyObject()))
                 CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 2)
                 CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", typePtr)
                 
@@ -298,7 +298,7 @@ class Types_Test(TestCase):
         baseFlags = CPyMarshal.ReadIntField(cPtr, PyTypeObject, "tp_flags")
         self.assertEquals(baseFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready newly-stored type")
         
-        instancePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        instancePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject()))
         CPyMarshal.WritePtrField(instancePtr, PyObject, "ob_type", cPtr)
         CPyMarshal.WriteIntField(instancePtr, PyObject, "ob_refcnt", 2)
         
@@ -324,18 +324,18 @@ class Types_Test(TestCase):
 
     @WithMapper
     def testSizes(self, mapper, _):
-        self.assertSizes(mapper.PyBaseObject_Type, Marshal.SizeOf(PyObject))
-        self.assertSizes(mapper.PyType_Type, Marshal.SizeOf(PyTypeObject))
-        self.assertSizes(mapper.PyTuple_Type, Marshal.SizeOf(PyTupleObject), Marshal.SizeOf(IntPtr)) # bigger than necessary
-        self.assertSizes(mapper.PyString_Type, Marshal.SizeOf(PyStringObject) - 1, Marshal.SizeOf(Byte))
-        self.assertSizes(mapper.PyList_Type, Marshal.SizeOf(PyListObject))
-        self.assertSizes(mapper.PySlice_Type, Marshal.SizeOf(PySliceObject))
-        self.assertSizes(mapper.PyMethod_Type, Marshal.SizeOf(PyMethodObject))
-        self.assertSizes(mapper.PyInt_Type, Marshal.SizeOf(PyIntObject))
-        self.assertSizes(mapper.PyFloat_Type, Marshal.SizeOf(PyFloatObject))
-        self.assertSizes(mapper.PyComplex_Type, Marshal.SizeOf(PyComplexObject))
-        self.assertSizes(mapper.PyClass_Type, Marshal.SizeOf(PyClassObject))
-        self.assertSizes(mapper.PyInstance_Type, Marshal.SizeOf(PyInstanceObject))
+        self.assertSizes(mapper.PyBaseObject_Type, Marshal.SizeOf(PyObject()))
+        self.assertSizes(mapper.PyType_Type, Marshal.SizeOf(PyTypeObject()))
+        self.assertSizes(mapper.PyTuple_Type, Marshal.SizeOf(PyTupleObject()), Marshal.SizeOf(IntPtr())) # bigger than necessary
+        self.assertSizes(mapper.PyString_Type, Marshal.SizeOf(PyStringObject()) - 1, Marshal.SizeOf(Byte()))
+        self.assertSizes(mapper.PyList_Type, Marshal.SizeOf(PyListObject()))
+        self.assertSizes(mapper.PySlice_Type, Marshal.SizeOf(PySliceObject()))
+        self.assertSizes(mapper.PyMethod_Type, Marshal.SizeOf(PyMethodObject()))
+        self.assertSizes(mapper.PyInt_Type, Marshal.SizeOf(PyIntObject()))
+        self.assertSizes(mapper.PyFloat_Type, Marshal.SizeOf(PyFloatObject()))
+        self.assertSizes(mapper.PyComplex_Type, Marshal.SizeOf(PyComplexObject()))
+        self.assertSizes(mapper.PyClass_Type, Marshal.SizeOf(PyClassObject()))
+        self.assertSizes(mapper.PyInstance_Type, Marshal.SizeOf(PyInstanceObject()))
 
 
 class OldStyle_Test(TestCase):
@@ -433,7 +433,7 @@ class PyType_GenericAlloc_Test(TestCase):
         instanceType = CPyMarshal.ReadPtrField(result, PyObject, "ob_type")
         self.assertEquals(instanceType, typePtr, "bad type ptr")
         
-        headerSize = Marshal.SizeOf(PyObject)
+        headerSize = Marshal.SizeOf(PyObject())
         zerosPtr = OffsetPtr(result, headerSize)
         for i in range(32 - headerSize):
             self.assertEquals(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
@@ -467,7 +467,7 @@ class PyType_GenericAlloc_Test(TestCase):
         size = CPyMarshal.ReadIntField(result, PyVarObject, "ob_size")
         self.assertEquals(size, 3, "bad ob_size")
         
-        headerSize = Marshal.SizeOf(PyVarObject)
+        headerSize = Marshal.SizeOf(PyVarObject())
         zerosPtr = OffsetPtr(result, headerSize)
         for i in range(224 - headerSize):
             self.assertEquals(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")

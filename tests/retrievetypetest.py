@@ -168,7 +168,7 @@ class InheritanceTest(TestCase):
         for base in bases:
             self.assertEquals(issubclass(klass, base), True)
 
-        unknownInstancePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
+        unknownInstancePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
         addToCleanUp(lambda: Marshal.FreeHGlobal(unknownInstancePtr))
 
         CPyMarshal.WriteIntField(unknownInstancePtr, PyObject, "ob_refcnt", 1)
@@ -244,7 +244,7 @@ class InheritanceTest(TestCase):
         metaclassSpec = CreateTypeSpec('metaclass')
         metaclassSpec['tp_base'] = mapper.PyType_Type
         metaclassSpec['tp_init'] = lambda _, __, ___: 0
-        metaclassSpec['tp_basicsize'] = Marshal.SizeOf(PyTypeObject)
+        metaclassSpec['tp_basicsize'] = Marshal.SizeOf(PyTypeObject())
         metaclassPtr, deallocMeta = MakeTypePtr(mapper, metaclassSpec)
         CallLater(deallocMeta)
         metaclass = mapper.Retrieve(metaclassPtr)
@@ -285,18 +285,18 @@ class BuiltinSubclassHorrorTest(TestCase):
         typeSpec = {
             'tp_name': 'klass',
             'tp_base': mapper.PyInt_Type,
-            'tp_basicsize': Marshal.SizeOf(PyIntObject)
+            'tp_basicsize': Marshal.SizeOf(PyIntObject())
         }
         klassPtr, deallocType = MakeTypePtr(mapper, typeSpec)
         deallocLater(deallocType)
         
-        _12Ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
+        _12Ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
         deallocLater(lambda: Marshal.FreeHGlobal(_12Ptr))
         CPyMarshal.WriteIntField(_12Ptr, PyIntObject, "ob_refcnt", 1)
         CPyMarshal.WritePtrField(_12Ptr, PyIntObject, "ob_type", klassPtr)
         CPyMarshal.WriteIntField(_12Ptr, PyIntObject, "ob_ival", 12)
         
-        _44Ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
+        _44Ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
         deallocLater(lambda: Marshal.FreeHGlobal(_44Ptr))
         CPyMarshal.WriteIntField(_44Ptr, PyIntObject, "ob_refcnt", 1)
         CPyMarshal.WritePtrField(_44Ptr, PyIntObject, "ob_type", klassPtr)
@@ -312,13 +312,13 @@ class BuiltinSubclassHorrorTest(TestCase):
         typeSpec = {
             'tp_name': 'klass',
             'tp_base': mapper.PyString_Type,
-            'tp_basicsize': Marshal.SizeOf(PyStringObject) - 1,
+            'tp_basicsize': Marshal.SizeOf(PyStringObject()) - 1,
             'tp_itemsize': 1,
         }
         klassPtr, deallocType = MakeTypePtr(mapper, typeSpec)
         deallocLater(deallocType)
         
-        _f0oSize = Marshal.SizeOf(PyStringObject) + 3
+        _f0oSize = Marshal.SizeOf(PyStringObject()) + 3
         _f0oPtr = Marshal.AllocHGlobal(_f0oSize)
         CPyMarshal.Zero(_f0oPtr, _f0oSize)
         deallocLater(lambda: Marshal.FreeHGlobal(_f0oPtr))
@@ -344,7 +344,7 @@ class BuiltinSubclassHorrorTest(TestCase):
         metaclassSpec = {
             'tp_name': 'meta',
             'tp_base': mapper.PyType_Type,
-            'tp_basicsize': Marshal.SizeOf(PyTypeObject)
+            'tp_basicsize': Marshal.SizeOf(PyTypeObject())
         }
         metaclassPtr, deallocMeta = MakeTypePtr(mapper, metaclassSpec)
         CallLater(deallocMeta)

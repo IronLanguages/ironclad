@@ -74,10 +74,10 @@ class SliceTest(TestCase):
 
     @WithMapper
     def testCreateEllipsis(self, mapper, addToCleanUp):
-        ellipsisTypePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        ellipsisTypePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
         addToCleanUp(lambda: Marshal.FreeHGlobal(ellipsisTypePtr))
 
-        ellipsisPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        ellipsisPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject()))
         addToCleanUp(lambda: Marshal.FreeHGlobal(ellipsisPtr))
 
         mapper.RegisterData("PyEllipsis_Type", ellipsisTypePtr)

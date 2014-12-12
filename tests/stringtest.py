@@ -125,7 +125,7 @@ class PyString_Type_Test(TypeTestCase):
         getcharbuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getcharbuffer', dgt_int_ptrintptr)
         getsegcount = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getsegcount', dgt_int_ptrptr)
         
-        ptrptr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        ptrptr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr()))
         later(lambda: Marshal.FreeHGlobal(ptrptr))
         
         strptr = mapper.Store("hullo")
@@ -155,7 +155,7 @@ class PyString_FromString_Test(PyString_TestCase):
         testData = self.ptrFromByteArray(bytes)
         try:
             strPtr = mapper.PyString_FromString(testData)
-            baseSize = Marshal.SizeOf(PyStringObject)
+            baseSize = Marshal.SizeOf(PyStringObject())
             self.assertEquals(allocs, [(strPtr, len(bytes) + baseSize)], "allocated wrong")
             self.assertStringObjectHasLength(strPtr, len(bytes))
             self.assertStringObjectHasDataBytes(strPtr, bytes)
@@ -175,7 +175,7 @@ class PyString_Concat_Test(PyString_TestCase):
         part2Ptr = mapper.Store(" three")
         startingRefCnt = mapper.RefCount(part1Ptr)
         
-        stringPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        stringPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr()))
         addToCleanup(lambda: Marshal.FreeHGlobal(stringPtrPtr))
         
         Marshal.WriteIntPtr(stringPtrPtr, part1Ptr)
@@ -196,7 +196,7 @@ class PyString_Concat_Test(PyString_TestCase):
         startingRefCnt = mapper.RefCount(part1Ptr)
         
         part2Ptr = mapper.Store(3)
-        stringPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        stringPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr()))
         addToCleanup(lambda: Marshal.FreeHGlobal(stringPtrPtr))
         
         Marshal.WriteIntPtr(stringPtrPtr, part1Ptr)
@@ -214,7 +214,7 @@ class PyString_Concat_Test(PyString_TestCase):
         startingRefCnt = mapper.RefCount(part1Ptr)
 
         part2Ptr = mapper.Store("three")
-        stringPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        stringPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr()))
         addToCleanup(lambda: Marshal.FreeHGlobal(stringPtrPtr))
         
         Marshal.WriteIntPtr(stringPtrPtr, part1Ptr)
@@ -237,7 +237,7 @@ class PyString_ConcatAndDel_Test(PyString_TestCase):
         mapper.IncRef(part2Ptr) # avoid garbage collection
         startingPart2RefCnt = mapper.RefCount(part2Ptr)
 
-        stringPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        stringPtrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr()))
         addToCleanup(lambda: Marshal.FreeHGlobal(stringPtrPtr))
         
         Marshal.WriteIntPtr(stringPtrPtr, part1Ptr)
@@ -272,7 +272,7 @@ class InternTest(PyString_TestCase):
         self.assertEquals(mapper.RefCount(sp2), 2, 'failed to grab extra reference to induce immortality')
         
         mapper.IncRef(sp1)
-        sp1p = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        sp1p = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr()))
         CPyMarshal.WritePtr(sp1p, sp1)
         mapper.PyString_InternInPlace(sp1p)
         sp1i = CPyMarshal.ReadPtr(sp1p)
@@ -295,7 +295,7 @@ class PyString_FromStringAndSize_Test(PyString_TestCase):
             testString = "we run the grease racket in this town" + self.getStringWithValues(0, 256)
             testLength = len(testString)
             strPtr = mapper.PyString_FromStringAndSize(IntPtr.Zero, testLength)
-            baseSize = Marshal.SizeOf(PyStringObject)
+            baseSize = Marshal.SizeOf(PyStringObject())
             self.assertEquals(allocs, [(strPtr, testLength + baseSize)], "allocated wrong")
             self.assertStringObjectHasLength(strPtr, testLength)
             self.assertHasStringType(strPtr, mapper)
@@ -326,7 +326,7 @@ class PyString_FromStringAndSize_Test(PyString_TestCase):
             testLength = len(testString)
 
             strPtr = mapper.PyString_FromStringAndSize(testData, testLength)
-            baseSize = Marshal.SizeOf(PyStringObject)
+            baseSize = Marshal.SizeOf(PyStringObject())
             self.assertEquals(allocs, [(strPtr, testLength + baseSize)], "allocated wrong")
             self.assertHasStringType(strPtr, mapper)
             self.assertStringObjectHasLength(strPtr, testLength)
@@ -345,12 +345,12 @@ class _PyString_Resize_Test(PyString_TestCase):
         mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
         deallocTypes = CreateTypes(mapper)
         del allocs[:]
-        ptrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        ptrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr()))
 
         try:
             data = mapper.PyString_FromStringAndSize(IntPtr.Zero, 365)
             Marshal.WriteIntPtr(ptrPtr, data)
-            baseSize = Marshal.SizeOf(PyStringObject)
+            baseSize = Marshal.SizeOf(PyStringObject())
             self.assertEquals(allocs, [(data, 365 + baseSize)], "allocated wrong")
             self.assertEquals(mapper._PyString_Resize(ptrPtr, 2000000000), -1, "bad return on error")
             self.assertEquals(type(mapper.LastException), MemoryError, "wrong exception type")
@@ -370,13 +370,13 @@ class _PyString_Resize_Test(PyString_TestCase):
 
         oldLength = 365
         newLength = 20
-        ptrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        ptrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr()))
 
         try:
             strPtr = mapper.PyString_FromStringAndSize(IntPtr.Zero, oldLength)
             Marshal.WriteIntPtr(ptrPtr, strPtr)
             
-            baseSize = Marshal.SizeOf(PyStringObject)
+            baseSize = Marshal.SizeOf(PyStringObject())
             self.assertEquals(allocs, [(strPtr, oldLength + baseSize)], "allocated wrong")
             self.assertEquals(mapper._PyString_Resize(ptrPtr, newLength), 0, "bad return on success")
             
@@ -403,13 +403,13 @@ class _PyString_Resize_Test(PyString_TestCase):
         newLength = len(testString)
 
         oldStrPtr = mapper.PyString_FromStringAndSize(IntPtr.Zero, oldLength)
-        ptrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr))
+        ptrPtr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr()))
         
         try:
             Marshal.WriteIntPtr(ptrPtr, oldStrPtr)
             newStrPtr = IntPtr.Zero
             
-            baseSize = Marshal.SizeOf(PyStringObject)
+            baseSize = Marshal.SizeOf(PyStringObject())
             self.assertEquals(allocs, [(oldStrPtr, oldLength + baseSize)], "allocated wrong")
             self.assertEquals(mapper._PyString_Resize(ptrPtr, newLength), 0, "bad return on success")
 
@@ -580,7 +580,7 @@ class PyStringStoreTest(PyString_TestCase):
 
         try:
             strPtr = mapper.Store(testString)
-            baseSize = Marshal.SizeOf(PyStringObject)
+            baseSize = Marshal.SizeOf(PyStringObject())
             
             self.assertEquals(allocs, [(strPtr, testLength + baseSize)], "allocated wrong")
             self.assertHasStringType(strPtr, mapper)

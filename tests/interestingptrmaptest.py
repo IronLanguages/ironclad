@@ -32,7 +32,7 @@ class InterestingPtrMapTest(TestCase):
     
     def getVars(self):
         obj = object()
-        ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject()))
         CPyMarshal.WriteIntField(ptr, PyObject, 'ob_refcnt', 1)
         self.ptrs.append(ptr)
         return InterestingPtrMap(), ptr, obj, WeakReference(obj)

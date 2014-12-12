@@ -74,6 +74,7 @@ _others = {
 }
 def CreateTypes(mapper, readyTypes=True):
     blocks = []
+
     def create(name, size):
         block = Marshal.AllocHGlobal(size)
         if name == 'PyFile_Type':
@@ -83,7 +84,7 @@ def CreateTypes(mapper, readyTypes=True):
         blocks.append(block)
     
     for _type in _types:
-        create(_type, Marshal.SizeOf(PyTypeObject))
+        create(_type, Marshal.SizeOf(PyTypeObject()))
     for (_other, size) in _others.items():
         create(_other, size)
         

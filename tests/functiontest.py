@@ -34,7 +34,7 @@ class FunctionTest(TestCase):
     @WithMapper
     def testStoreType(self, mapper, _):
         self.assertEquals(mapper.Retrieve(mapper.PyFunction_Type), FunctionType)
-        self.assertEquals(CPyMarshal.ReadIntField(mapper.PyFunction_Type, PyTypeObject, 'tp_basicsize'), Marshal.SizeOf(PyFunctionObject))
+        self.assertEquals(CPyMarshal.ReadIntField(mapper.PyFunction_Type, PyTypeObject, 'tp_basicsize'), Marshal.SizeOf(PyFunctionObject()))
 
 suite = makesuite(FunctionTest)
 if __name__ == '__main__':

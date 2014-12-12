@@ -24,7 +24,7 @@ class DictTest(TestCase):
             del allocs[:]
             dictPtr = mapper.PyDict_New()
             self.assertEquals(mapper.RefCount(dictPtr), 1, "bad refcount")
-            self.assertEquals(allocs, [(dictPtr, Marshal.SizeOf(PyObject))], "did not allocate as expected")
+            self.assertEquals(allocs, [(dictPtr, Marshal.SizeOf(PyObject()))], "did not allocate as expected")
             self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), mapper.PyDict_Type, "wrong type")
             dictObj = mapper.Retrieve(dictPtr)
             self.assertEquals(dictObj, {}, "retrieved unexpected value")
@@ -45,7 +45,7 @@ class DictTest(TestCase):
 
     @WithMapper
     def testStoreDictCreatesDictType(self, mapper, addToCleanUp):
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
         addToCleanUp(lambda: Marshal.FreeHGlobal(typeBlock))
         mapper.RegisterData("PyDict_Type", typeBlock)
         
@@ -55,7 +55,7 @@ class DictTest(TestCase):
 
     @WithMapper
     def testStoreTypeDictCreatesDictTypeWhichWorks(self, mapper, addToCleanUp):
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
         addToCleanUp(lambda: Marshal.FreeHGlobal(typeBlock))
         mapper.RegisterData("PyDict_Type", typeBlock)
         
