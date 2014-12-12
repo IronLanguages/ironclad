@@ -1,7 +1,7 @@
 ###############################################################################
 #### initialise mapper
 
-__version__ = '2.6.0RC1'
+__version__ = '2.7.0A1'
 
 import sys
 if sys.platform != 'cli':
@@ -15,13 +15,13 @@ from System import GC, Int32, IntPtr
 from System.Reflection import Assembly
 from System.Runtime.InteropServices import Marshal
 
-if Marshal.SizeOf(Int32) != Marshal.SizeOf(IntPtr):
+if Marshal.SizeOf(Int32()) != Marshal.SizeOf(IntPtr()):
     raise ImportError("Ironclad is currently 32-bit only")
 
 clr.AddReference(Assembly.LoadFile(os.path.join(_dirname, "ironclad.dll")))
 from Ironclad import CPyMarshal, PythonMapper
 from Ironclad.Structs import PyObject, PyVarObject, PyTypeObject
-_mapper = PythonMapper(os.path.join(_dirname, "python26.dll"))
+_mapper = PythonMapper(os.path.join(_dirname, "python27.dll"))
 
 def gcwait():
     """
