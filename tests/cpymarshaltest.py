@@ -50,8 +50,8 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testWritePtrField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject()))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyObject()))
         
         CPyMarshal.WritePtrField(data, PyObject, "ob_type", IntPtr(12345))
         dataStruct = Marshal.PtrToStructure(data, PyObject)
@@ -61,8 +61,8 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testReadPtrField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject()))
         
         CPyMarshal.WritePtrField(data, PyTypeObject, "tp_doc", IntPtr(12345))
         self.assertEquals(CPyMarshal.ReadPtrField(data, PyTypeObject, "tp_doc"), IntPtr(12345), "failed to read")
@@ -71,8 +71,8 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testWriteIntField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyIntObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyIntObject()))
         
         for value in (Int32.MaxValue, Int32.MinValue):
             CPyMarshal.WriteIntField(data, PyIntObject, "ob_ival", value)
@@ -83,8 +83,8 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testReadIntField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyIntObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyIntObject()))
         
         for value in (Int32.MaxValue, Int32.MinValue):
             CPyMarshal.WriteIntField(data, PyIntObject, "ob_ival", value)
@@ -94,8 +94,8 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testWriteUIntField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject()))
         
         for value in (UInt32.MaxValue, UInt32.MinValue):
             CPyMarshal.WriteUIntField(data, PyTypeObject, "tp_version_tag", value)
@@ -106,8 +106,8 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testReadUIntField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject()))
         
         for value in (UInt32.MaxValue, UInt32.MinValue):
             CPyMarshal.WriteUIntField(data, PyTypeObject, "tp_version_tag", value)
@@ -117,8 +117,8 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testWriteDoubleField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyFloatObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyFloatObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyFloatObject()))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyFloatObject()))
         
         CPyMarshal.WriteDoubleField(data, PyFloatObject, "ob_fval", 7.6e-5)
         dataStruct = Marshal.PtrToStructure(data, PyFloatObject)
@@ -128,8 +128,8 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testReadDoubleField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyFloatObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyFloatObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyFloatObject()))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyFloatObject()))
         
         CPyMarshal.WriteDoubleField(data, PyFloatObject, "ob_fval", -1.2e34)
         self.assertEquals(CPyMarshal.ReadDoubleField(data, PyFloatObject, "ob_fval"), -1.2e34)
@@ -138,8 +138,8 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testWriteCStringField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject()))
         string = "Hey, I am a string. I have tricksy \\escapes\\."
         CPyMarshal.WriteCStringField(data, PyTypeObject, "tp_doc", string)
         
@@ -149,8 +149,8 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testReadCStringField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject()))
         string = "Hey, I am a string. I have tricksy \\escapes\\."
         strPtr = Marshal.StringToHGlobalAnsi(string)
         CPyMarshal.WritePtrField(data, PyTypeObject, "tp_doc", strPtr)
@@ -162,8 +162,8 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testReadCStringFieldEmpty(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject()))
         CPyMarshal.WritePtrField(data, PyTypeObject, "tp_doc", IntPtr.Zero)
         
         self.assertEquals(CPyMarshal.ReadCStringField(data, PyTypeObject, "tp_doc"), "", "failed to read correctly")
@@ -172,8 +172,8 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testWriteFunctionPtrField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject()))
         
         calls = []
         def TestFunc(selfPtr, argsPtr, kwargsPtr):
@@ -191,8 +191,8 @@ class CPyMarshalTest_32(TestCase):
         
     
     def testReadFunctionPtrField(self):
-        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
-        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject))
+        data = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
+        CPyMarshal.Zero(data, Marshal.SizeOf(PyTypeObject()))
         
         calls = []
         def TestFunc(selfPtr, argsPtr, kwargsPtr):

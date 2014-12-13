@@ -16,7 +16,7 @@ class PyBool_Test(TestCase):
     
     @WithMapper
     def testTrueFalse(self, mapper, _):
-        truePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
+        truePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
         mapper.RegisterData("_Py_TrueStruct", truePtr)
         self.assertTrue(mapper.Retrieve(truePtr) is True)
         self.assertEquals(CPyMarshal.ReadPtrField(truePtr, PyIntObject, 'ob_type'), mapper.PyBool_Type)
@@ -26,7 +26,7 @@ class PyBool_Test(TestCase):
         self.assertEquals(truePtr2, truePtr)
         self.assertEquals(mapper.RefCount(truePtr), 2)
         
-        falsePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject))
+        falsePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
         mapper.RegisterData("_Py_ZeroStruct", falsePtr)
         self.assertTrue(mapper.Retrieve(falsePtr) is False)
         self.assertEquals(CPyMarshal.ReadPtrField(falsePtr, PyIntObject, 'ob_type'), mapper.PyBool_Type)
@@ -378,7 +378,7 @@ class PyFloat_Test(TestCase):
 
     @WithMapper
     def testActualiseFloat(self, mapper, call_later):
-        fptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyFloatObject))
+        fptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyFloatObject()))
         call_later(lambda: Marshal.FreeHGlobal(fptr))
         CPyMarshal.WritePtrField(fptr, PyFloatObject, "ob_type", mapper.PyFloat_Type)
         CPyMarshal.WriteIntField(fptr, PyFloatObject, "ob_refcnt", 1)

@@ -92,10 +92,10 @@ class TupleTest(TestCase):
         allocs = []
         mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
 
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
         mapper.RegisterData("PyTuple_Type", typeBlock)
         tuplePtr = mapper.PyTuple_New(length)
-        expectedSize = Marshal.SizeOf(PyTupleObject) + (CPyMarshal.PtrSize * (length - 1))
+        expectedSize = Marshal.SizeOf(PyTupleObject()) + (CPyMarshal.PtrSize * (length - 1))
         self.assertEquals(allocs, [(tuplePtr, expectedSize)], "bad alloc")
         tupleStruct = Marshal.PtrToStructure(tuplePtr, PyTupleObject)
         self.assertEquals(tupleStruct.ob_refcnt, 1, "bad refcount")
@@ -144,7 +144,7 @@ class TupleTest(TestCase):
         self.assertEquals(mapper._PyTuple_Resize(tuplePtrPtr, 100), 0)
 
         newTuplePtr = CPyMarshal.ReadPtr(tuplePtrPtr)
-        expectedSize = Marshal.SizeOf(PyTupleObject) + (CPyMarshal.PtrSize * (99))
+        expectedSize = Marshal.SizeOf(PyTupleObject()) + (CPyMarshal.PtrSize * (99))
         self.assertEquals(allocs, [(newTuplePtr, expectedSize)])
         
         tupleStruct = Marshal.PtrToStructure(newTuplePtr, PyTupleObject)
@@ -171,7 +171,7 @@ class TupleTest(TestCase):
         allocs = []
         mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
         
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
         mapper.RegisterData("PyTuple_Type", typeBlock)
 
         theTuple = (0, 1, 2)

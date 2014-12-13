@@ -25,7 +25,7 @@ class PyList_Type_Test(TypeTestCase):
         
         mapper = MyPM()
         
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
         mapper.RegisterData("PyList_Type", typeBlock)
         gcwait() # this will make the function pointers invalid if we forgot to store references to the delegates
 
@@ -118,7 +118,7 @@ class ListFunctionsTest(TestCase):
         
         del allocs[:]
         listPtr = mapper.PyList_New(0)
-        self.assertEquals(allocs, [(listPtr, Marshal.SizeOf(PyListObject))], "bad alloc")
+        self.assertEquals(allocs, [(listPtr, Marshal.SizeOf(PyListObject()))], "bad alloc")
 
         listStruct = Marshal.PtrToStructure(listPtr, PyListObject)
         self.assertEquals(listStruct.ob_refcnt, 1, "bad refcount")
@@ -150,7 +150,7 @@ class ListFunctionsTest(TestCase):
         dataPtr = listStruct.ob_item
         self.assertNotEquals(dataPtr, IntPtr.Zero, "failed to allocate space for data")
         
-        expectedAllocs = [(dataPtr, (SIZE * CPyMarshal.PtrSize)), (listPtr, Marshal.SizeOf(PyListObject))]
+        expectedAllocs = [(dataPtr, (SIZE * CPyMarshal.PtrSize)), (listPtr, Marshal.SizeOf(PyListObject()))]
         self.assertEquals(set(allocs), set(expectedAllocs), "allocated wrong")
         
         for _ in range(SIZE):
@@ -169,7 +169,7 @@ class ListFunctionsTest(TestCase):
         
         del allocs[:]
         listPtr = mapper.PyList_New(0)
-        self.assertEquals(allocs, [(listPtr, Marshal.SizeOf(PyListObject))], "bad alloc")
+        self.assertEquals(allocs, [(listPtr, Marshal.SizeOf(PyListObject()))], "bad alloc")
 
         item1 = object()
         item2 = object()

@@ -29,14 +29,14 @@ def GetWriteBytes(bytes):
             Marshal.WriteInt32(ptr, TEST_NUMBER)
     return WriteBytes
 
-WritePyTypeObject =  GetWriteBytes(Marshal.SizeOf(PyTypeObject))
-TestWrotePyTypeObject = GetTestWroteBytes(Marshal.SizeOf(PyTypeObject))
+WritePyTypeObject =  GetWriteBytes(Marshal.SizeOf(PyTypeObject()))
+TestWrotePyTypeObject = GetTestWroteBytes(Marshal.SizeOf(PyTypeObject()))
 
-WritePyObject = GetWriteBytes(Marshal.SizeOf(PyObject))
-TestWrotePyObject = GetTestWroteBytes(Marshal.SizeOf(PyObject))
+WritePyObject = GetWriteBytes(Marshal.SizeOf(PyObject()))
+TestWrotePyObject = GetTestWroteBytes(Marshal.SizeOf(PyObject()))
 
-WritePtr = GetWriteBytes(Marshal.SizeOf(IntPtr))
-TestWrotePtr = GetTestWroteBytes(Marshal.SizeOf(IntPtr))
+WritePtr = GetWriteBytes(Marshal.SizeOf(IntPtr()))
+TestWrotePtr = GetTestWroteBytes(Marshal.SizeOf(IntPtr()))
 
 TYPES = (
     "PyBool_Type",
@@ -101,14 +101,14 @@ class PythonApiTest(TestCase):
         class MyPM(PythonApi):
             def Register__Py_NoneStruct(self, address):
                 WritePyObject(address)
-        self.assertDataSetterSetsAndRemembers(MyPM, "_Py_NoneStruct", Marshal.SizeOf(PyObject), TestWrotePyObject)
+        self.assertDataSetterSetsAndRemembers(MyPM, "_Py_NoneStruct", Marshal.SizeOf(PyObject()), TestWrotePyObject)
 
 
     def testFinds_Py_NotImplementedStruct(self):
         class MyPM(PythonApi):
             def Register__Py_NotImplementedStruct(self, address):
                 WritePyObject(address)
-        self.assertDataSetterSetsAndRemembers(MyPM, "_Py_NotImplementedStruct", Marshal.SizeOf(PyObject), TestWrotePyObject)
+        self.assertDataSetterSetsAndRemembers(MyPM, "_Py_NotImplementedStruct", Marshal.SizeOf(PyObject()), TestWrotePyObject)
 
 
     def testFinds_PyExc_OverflowError(self):
@@ -117,7 +117,7 @@ class PythonApiTest(TestCase):
         class MyPM(PythonApi):
             def Register_PyExc_OverflowError(self, address):
                 WritePtr(address)
-        self.assertDataSetterSetsAndRemembers(MyPM, "PyExc_OverflowError", Marshal.SizeOf(PyObject), TestWrotePtr)
+        self.assertDataSetterSetsAndRemembers(MyPM, "PyExc_OverflowError", Marshal.SizeOf(PyObject()), TestWrotePtr)
         
 
     def assertFindsType(self, name):
@@ -125,7 +125,7 @@ class PythonApiTest(TestCase):
             def fillmethod(self, address):
                 WritePyTypeObject(address)
         setattr(MyPM, "Register_" + name, getattr(MyPM, "fillmethod"))
-        self.assertDataSetterSetsAndRemembers(MyPM, name, Marshal.SizeOf(PyTypeObject), TestWrotePyTypeObject)
+        self.assertDataSetterSetsAndRemembers(MyPM, name, Marshal.SizeOf(PyTypeObject()), TestWrotePyTypeObject)
 
 
     def testFindsTypes(self):

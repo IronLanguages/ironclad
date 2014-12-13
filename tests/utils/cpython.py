@@ -147,7 +147,7 @@ def MakeTypePtr(mapper, params, allocator=None):
     fields.update(params)
     
     deallocs = []
-    typeSize = Marshal.SizeOf(PyTypeObject)
+    typeSize = Marshal.SizeOf(PyTypeObject())
     if allocator:
         # pretend this was constructed by a C extension, using the mapper's allocator
         # hence mapper should do the deallocation itself

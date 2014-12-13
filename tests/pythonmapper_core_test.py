@@ -142,7 +142,7 @@ class PythonMapper_CreateDestroy_Test(TestCase):
     
     def testIgnoresBridgeObjectsNotAllocatedByAllocator(self):
         obj = object()
-        ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject()))
         CPyMarshal.WriteIntField(ptr, PyObject, 'ob_refcnt', 2)
         
         mapper = PythonMapper()
@@ -163,7 +163,7 @@ class PythonMapper_References_Test(TestCase):
         obj1 = object()
         ptr = mapper.Store(obj1)
         self.assertEquals(len(allocs), 1, "unexpected number of allocations")
-        self.assertEquals(allocs[0], (ptr, Marshal.SizeOf(PyObject)), "unexpected result")
+        self.assertEquals(allocs[0], (ptr, Marshal.SizeOf(PyObject())), "unexpected result")
         self.assertNotEquals(ptr, IntPtr.Zero, "did not store reference")
         self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
         self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), 
@@ -205,7 +205,7 @@ class PythonMapper_References_Test(TestCase):
         result1 = mapper.Store(obj1)
         result2 = mapper.Store(obj1)
         
-        self.assertEquals(allocs, [(result1, Marshal.SizeOf(PyObject))], "unexpected result")
+        self.assertEquals(allocs, [(result1, Marshal.SizeOf(PyObject()))], "unexpected result")
         self.assertEquals(result1, result2, "did not return same ptr")
         self.assertEquals(mapper.RefCount(result1), 2, "did not incref")
         
@@ -217,7 +217,7 @@ class PythonMapper_References_Test(TestCase):
         
         result3 = mapper.Store(obj1)
         self.assertEquals(allocs, 
-                          [(result1, Marshal.SizeOf(PyObject)), (result3, Marshal.SizeOf(PyObject))], 
+                          [(result1, Marshal.SizeOf(PyObject())), (result3, Marshal.SizeOf(PyObject()))], 
                           "unexpected result -- failed to clear reverse mapping?")
         mapper.Dispose()
         deallocTypes()
@@ -249,7 +249,7 @@ class PythonMapper_References_Test(TestCase):
         deallocTypes = CreateTypes(mapper)
         
         # need to use same allocator as mapper, otherwise it gets upset on shutdown
-        objPtr = allocator.Alloc(Marshal.SizeOf(PyObject))
+        objPtr = allocator.Alloc(Marshal.SizeOf(PyObject()))
         CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 0)
         CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", mapper.PyBaseObject_Type)
         mapper.StoreBridge(objPtr, object())
@@ -267,7 +267,7 @@ class PythonMapper_References_Test(TestCase):
         deallocDgt = dgt_void_ptr(TypeDealloc)
         deallocFP = Marshal.GetFunctionPointerForDelegate(deallocDgt)
         
-        typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
         deallocPtr = CPyMarshal.Offset(typePtr, Marshal.OffsetOf(PyTypeObject, "tp_dealloc"))
         CPyMarshal.WritePtr(deallocPtr, deallocFP)
         
@@ -287,7 +287,7 @@ class PythonMapper_References_Test(TestCase):
         mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
         deallocTypes = CreateTypes(mapper)
         
-        typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject))
+        typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
         CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_dealloc", IntPtr.Zero)
         
         obj = object()
@@ -310,7 +310,7 @@ class PythonMapper_References_Test(TestCase):
         mapper = PythonMapper(allocator)
         deallocTypes = CreateTypes(mapper)
         # need to use same allocator as mapper, otherwise it gets upset on shutdown
-        ptr = allocator.Alloc(Marshal.SizeOf(PyObject))
+        ptr = allocator.Alloc(Marshal.SizeOf(PyObject()))
         
         try:
             def do():
@@ -353,7 +353,7 @@ class PythonMapper_References_Test(TestCase):
         deallocTypes = CreateTypes(mapper)
 
         # need to use same allocator as mapper, otherwise it gets upset on shutdown
-        ptr = allocator.Alloc(Marshal.SizeOf(PyObject))
+        ptr = allocator.Alloc(Marshal.SizeOf(PyObject()))
         
         try:
             def do1():
@@ -398,7 +398,7 @@ class PythonMapper_References_Test(TestCase):
             obj = object()
             ref = WeakReference(obj)
             # need to use same allocator as mapper, otherwise it gets upset on shutdown
-            ptr = allocator.Alloc(Marshal.SizeOf(PyObject))
+            ptr = allocator.Alloc(Marshal.SizeOf(PyObject()))
             CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 2)
             CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
             mapper.StoreBridge(ptr, obj)
@@ -663,7 +663,7 @@ class PythonMapper_Py_OptimizeFlag_Test(TestCase):
         # TODO: if we set a lower value, numpy will crash inside arr_add_docstring
         # I consider docstrings to be low-priority-enough that it's OK to fudge this
         # for now. also, fixing it would be hard ;).
-        flagPtr = Marshal.AllocHGlobal(Marshal.SizeOf(Int32))
+        flagPtr = Marshal.AllocHGlobal(Marshal.SizeOf(Int32()))
         addToCleanUp(lambda: Marshal.FreeHGlobal(flagPtr))
         mapper.RegisterData("Py_OptimizeFlag", flagPtr)
         

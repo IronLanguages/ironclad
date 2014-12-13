@@ -482,7 +482,7 @@ class PyBaseObject_Type_Test(TypeTestCase):
         
         baseObjTypeBlock = mapper.PyBaseObject_Type
         objTypeBlock = mapper.PyDict_Type # type not actually important
-        objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject()))
         addToCleanUp(lambda: Marshal.FreeHGlobal(objPtr))
 
         CPyMarshal.WriteFunctionPtrField(objTypeBlock, PyTypeObject, "tp_free", self.freeDgt)
@@ -500,7 +500,7 @@ class NewInitFunctionsTest(TestCase):
         typePtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'FooType'})
         addToCleanUp(deallocType)
 
-        objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject))
+        objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject()))
         addToCleanUp(lambda: Marshal.FreeHGlobal(objPtr))
         
         self.assertEquals(mapper.PyObject_Init(objPtr, typePtr), objPtr, 'did not return the "new instance"')
@@ -527,7 +527,7 @@ class NewInitFunctionsTest(TestCase):
         mapper = PythonMapper(allocator)
         deallocTypes = CreateTypes(mapper)
         
-        typeObjSize = Marshal.SizeOf(PyTypeObject)
+        typeObjSize = Marshal.SizeOf(PyTypeObject())
         typePtr = Marshal.AllocHGlobal(typeObjSize)
         CPyMarshal.Zero(typePtr, typeObjSize)
         CPyMarshal.WriteIntField(typePtr, PyTypeObject, "tp_basicsize", 31337)
@@ -549,7 +549,7 @@ class NewInitFunctionsTest(TestCase):
         mapper = PythonMapper(allocator)
         deallocTypes = CreateTypes(mapper)
         
-        typeObjSize = Marshal.SizeOf(PyTypeObject)
+        typeObjSize = Marshal.SizeOf(PyTypeObject())
         typePtr = Marshal.AllocHGlobal(typeObjSize)
         CPyMarshal.Zero(typePtr, typeObjSize)
         CPyMarshal.WriteIntField(typePtr, PyTypeObject, "tp_basicsize", 31337)
