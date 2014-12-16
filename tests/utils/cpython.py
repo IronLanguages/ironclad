@@ -170,7 +170,7 @@ def MakeItemsTablePtr(items):
     if not items:
         return IntPtr.Zero, lambda: None
     itemtype = items[0].__class__
-    typesize = Marshal.SizeOf(itemtype)
+    typesize = Marshal.SizeOf(itemtype())
     size = typesize * (len(items) + 1)
     
     tablePtr = Marshal.AllocHGlobal(size)
@@ -241,7 +241,7 @@ NUMSEQMAP_METHODS = {
 }
 
 def MakeNumSeqMapMethods(_type, slots):
-    size = Marshal.SizeOf(_type)
+    size = Marshal.SizeOf(_type())
     ptr = Marshal.AllocHGlobal(size)
     CPyMarshal.Zero(ptr, size)
     deallocs = []
