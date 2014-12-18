@@ -4,11 +4,14 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.memory import OffsetPtr
 from tests.utils.testcase import TestCase
 
-from System import IntPtr, Int32, UInt32
+from System import IntPtr, Int32, UInt32, Type
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, dgt_int_ptrptrptr, DoubleStruct
 from Ironclad.Structs import PyObject, PyFloatObject, PyIntObject, PyListObject, PyTypeObject
+
+# make sure this particular overrload PtrToStructure(IntPtr, Type) is called
+PtrToStructure = Marshal.PtrToStructure.Overloads[IntPtr, Type]
 
 class CPyMarshalTest_32(TestCase):
 
@@ -54,7 +57,7 @@ class CPyMarshalTest_32(TestCase):
         CPyMarshal.Zero(data, Marshal.SizeOf(PyObject()))
         
         CPyMarshal.WritePtrField(data, PyObject, "ob_type", IntPtr(12345))
-        dataStruct = Marshal.PtrToStructure(data, PyObject)
+        dataStruct = PtrToStructure(data, PyObject)
         self.assertEquals(dataStruct.ob_type, IntPtr(12345), "failed to write")
         
         Marshal.FreeHGlobal(data)
@@ -76,7 +79,7 @@ class CPyMarshalTest_32(TestCase):
         
         for value in (Int32.MaxValue, Int32.MinValue):
             CPyMarshal.WriteIntField(data, PyIntObject, "ob_ival", value)
-            dataStruct = Marshal.PtrToStructure(data, PyIntObject)
+            dataStruct = PtrToStructure(data, PyIntObject)
             self.assertEquals(dataStruct.ob_ival, value, "failed to write")
         
         Marshal.FreeHGlobal(data)
@@ -99,7 +102,7 @@ class CPyMarshalTest_32(TestCase):
         
         for value in (UInt32.MaxValue, UInt32.MinValue):
             CPyMarshal.WriteUIntField(data, PyTypeObject, "tp_version_tag", value)
-            dataStruct = Marshal.PtrToStructure(data, PyTypeObject)
+            dataStruct = PtrToStructure(data, PyTypeObject)
             self.assertEquals(dataStruct.tp_version_tag, value, "failed to write")
         
         Marshal.FreeHGlobal(data)
@@ -121,7 +124,7 @@ class CPyMarshalTest_32(TestCase):
         CPyMarshal.Zero(data, Marshal.SizeOf(PyFloatObject()))
         
         CPyMarshal.WriteDoubleField(data, PyFloatObject, "ob_fval", 7.6e-5)
-        dataStruct = Marshal.PtrToStructure(data, PyFloatObject)
+        dataStruct = PtrToStructure(data, PyFloatObject)
         self.assertEquals(dataStruct.ob_fval, 7.6e-5)
         
         Marshal.FreeHGlobal(data)
@@ -284,7 +287,7 @@ class CPyMarshalTest_32(TestCase):
         data = Marshal.AllocHGlobal(CPyMarshal.DoubleSize)
         
         CPyMarshal.WriteDouble(data, 2.2e22)
-        doubleStruct = Marshal.PtrToStructure(data, DoubleStruct)
+        doubleStruct = PtrToStructure(data, DoubleStruct)
         self.assertEquals(doubleStruct.value, 2.2e22)
         
         Marshal.FreeHGlobal(data)
