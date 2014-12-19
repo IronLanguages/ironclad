@@ -2,7 +2,7 @@
 from tests.utils.runtest import automakesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
-from tests.utils.memory import OffsetPtr, CreateTypes
+from tests.utils.memory import OffsetPtr, CreateTypes, PtrToStructure
 from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
 
@@ -11,8 +11,6 @@ from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, dgt_int_ptrintptr, dgt_int_ptrptr, dgt_ptr_ptrptr, PythonMapper
 from Ironclad.Structs import PyStringObject, PyTypeObject, PyBufferProcs, PySequenceMethods, Py_TPFLAGS
 
-# make sure this particular overload PtrToStructure(IntPtr, Type) is called
-PtrToStructure = Marshal.PtrToStructure.Overloads[IntPtr, Type]
 
 class PyString_TestCase(TestCase):
 

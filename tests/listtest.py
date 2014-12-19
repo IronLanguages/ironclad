@@ -3,7 +3,7 @@ from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
 from tests.utils.gc import gcwait
-from tests.utils.memory import CreateTypes, OffsetPtr
+from tests.utils.memory import CreateTypes, OffsetPtr, PtrToStructure
 from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
 
@@ -13,8 +13,6 @@ from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, dgt_void_ptr, PythonMapper
 from Ironclad.Structs import PyObject, PyListObject, PyTypeObject
 
-# make sure this particular overload PtrToStructure(IntPtr, Type) is called
-PtrToStructure = Marshal.PtrToStructure.Overloads[IntPtr, Type]
 
 class PyList_Type_Test(TypeTestCase):
 

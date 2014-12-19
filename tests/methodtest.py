@@ -3,14 +3,13 @@ from types import MethodType
 
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase, WithMapper
+from tests.utils.memory import PtrToStructure
 
 from System import IntPtr, Type
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad.Structs import PyMethodObject
 
-# make sure this particular overload PtrToStructure(IntPtr, Type) is called
-PtrToStructure = Marshal.PtrToStructure.Overloads[IntPtr, Type]
 
 class MethodTest(TestCase):
 

@@ -1,17 +1,15 @@
 
 from tests.utils.runtest import makesuite, run
 
-from tests.utils.memory import OffsetPtr
+from tests.utils.memory import OffsetPtr, PtrToStructure
 from tests.utils.testcase import TestCase
 
-from System import IntPtr, Int32, UInt32, Type
+from System import IntPtr, Int32, UInt32
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, dgt_int_ptrptrptr, DoubleStruct
 from Ironclad.Structs import PyObject, PyFloatObject, PyIntObject, PyListObject, PyTypeObject
 
-# make sure this particular overrload PtrToStructure(IntPtr, Type) is called
-PtrToStructure = Marshal.PtrToStructure.Overloads[IntPtr, Type]
 
 class CPyMarshalTest_32(TestCase):
 

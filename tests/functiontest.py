@@ -3,8 +3,9 @@ from types import FunctionType
 
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase, WithMapper
+from tests.utils.memory import PtrToStructure
 
-from System import IntPtr, Type
+from System import IntPtr
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal
@@ -15,8 +16,6 @@ attrs = (
     'func_name', 'func_dict', 'func_weakreflist', 'func_module'
 )
 
-# make sure this particular overload PtrToStructure(IntPtr, Type) is called
-PtrToStructure = Marshal.PtrToStructure.Overloads[IntPtr, Type]
 
 class FunctionTest(TestCase):
 

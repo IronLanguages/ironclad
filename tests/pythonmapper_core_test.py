@@ -5,7 +5,7 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
 from tests.utils.cpython import MakeTypePtr
 from tests.utils.gc import gcwait
-from tests.utils.memory import CreateTypes
+from tests.utils.memory import CreateTypes, PtrToStructure
 from tests.utils.pythonmapper import MakeAndAddEmptyModule
 from tests.utils.testcase import TestCase, WithMapper
 
@@ -19,8 +19,6 @@ from Ironclad import (
 )
 from Ironclad.Structs import PyObject, PyTypeObject
 
-# make sure this particular overload PtrToStructure(IntPtr, Type) is called
-PtrToStructure = Marshal.PtrToStructure.Overloads[IntPtr, Type]
 
 class PythonMapper_CreateDestroy_Test(TestCase):
     

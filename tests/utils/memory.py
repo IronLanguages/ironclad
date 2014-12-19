@@ -64,6 +64,8 @@ _types = (
 )
 
 sizeOfType = Marshal.SizeOf.Overloads[Type]
+PtrToStructure = Marshal.PtrToStructure.Overloads[IntPtr, Type]
+
 _others = {
     "_Py_NoneStruct": sizeOfType(PyObject),
     "_Py_NotImplementedStruct": sizeOfType(PyObject),
