@@ -7,13 +7,14 @@ from tests.utils.memory import CreateTypes, OffsetPtr
 from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
 
-from System import IntPtr
+from System import IntPtr, Type
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, dgt_void_ptr, PythonMapper
 from Ironclad.Structs import PyObject, PyListObject, PyTypeObject
 
-
+# make sure this particular overload PtrToStructure(IntPtr, Type) is called
+PtrToStructure = Marshal.PtrToStructure.Overloads[IntPtr, Type]
 
 class PyList_Type_Test(TypeTestCase):
 
@@ -120,7 +121,7 @@ class ListFunctionsTest(TestCase):
         listPtr = mapper.PyList_New(0)
         self.assertEquals(allocs, [(listPtr, Marshal.SizeOf(PyListObject()))], "bad alloc")
 
-        listStruct = Marshal.PtrToStructure(listPtr, PyListObject)
+        listStruct = PtrToStructure(listPtr, PyListObject)
         self.assertEquals(listStruct.ob_refcnt, 1, "bad refcount")
         self.assertEquals(listStruct.ob_type, mapper.PyList_Type, "bad type")
         self.assertEquals(listStruct.ob_size, 0, "bad ob_size")
@@ -141,7 +142,7 @@ class ListFunctionsTest(TestCase):
         SIZE = 27
         listPtr = mapper.PyList_New(SIZE)
         
-        listStruct = Marshal.PtrToStructure(listPtr, PyListObject)
+        listStruct = PtrToStructure(listPtr, PyListObject)
         self.assertEquals(listStruct.ob_refcnt, 1, "bad refcount")
         self.assertEquals(listStruct.ob_type, mapper.PyList_Type, "bad type")
         self.assertEquals(listStruct.ob_size, SIZE, "bad ob_size")

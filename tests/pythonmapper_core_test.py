@@ -9,7 +9,7 @@ from tests.utils.memory import CreateTypes
 from tests.utils.pythonmapper import MakeAndAddEmptyModule
 from tests.utils.testcase import TestCase, WithMapper
 
-from System import Int32, IntPtr, InvalidOperationException, NullReferenceException, WeakReference
+from System import Int32, IntPtr, InvalidOperationException, NullReferenceException, Type, WeakReference
 from System.Collections.Generic import Stack, List
 from System.Runtime.InteropServices import Marshal
 
@@ -19,6 +19,8 @@ from Ironclad import (
 )
 from Ironclad.Structs import PyObject, PyTypeObject
 
+# make sure this particular overload PtrToStructure(IntPtr, Type) is called
+PtrToStructure = Marshal.PtrToStructure.Overloads[IntPtr, Type]
 
 class PythonMapper_CreateDestroy_Test(TestCase):
     
@@ -624,7 +626,7 @@ class PythonMapper_NoneTest(TestCase):
     @WithMapper
     def testFillNone(self, mapper, _):
         nonePtr = mapper._Py_NoneStruct
-        noneStruct = Marshal.PtrToStructure(nonePtr, PyObject)
+        noneStruct = PtrToStructure(nonePtr, PyObject)
         self.assertEquals(noneStruct.ob_refcnt, 1, "bad refcount")
         self.assertEquals(noneStruct.ob_type, mapper.PyNone_Type, "unexpected type")
 
@@ -642,7 +644,7 @@ class PythonMapper_NotImplementedTest(TestCase):
     @WithMapper
     def testFillNotImplemented(self, mapper, _):
         niPtr = mapper._Py_NotImplementedStruct
-        niStruct = Marshal.PtrToStructure(niPtr, PyObject)
+        niStruct = PtrToStructure(niPtr, PyObject)
         self.assertEquals(niStruct.ob_refcnt, 1, "bad refcount")
         self.assertEquals(niStruct.ob_type, mapper.PyNotImplemented_Type, "unexpected type")
 
