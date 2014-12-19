@@ -6,11 +6,13 @@ from tests.utils.memory import OffsetPtr, CreateTypes
 from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
 
-from System import Array, Byte, Char, IntPtr, UInt32
+from System import Array, Byte, Char, IntPtr, Type, UInt32
 from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, dgt_int_ptrintptr, dgt_int_ptrptr, dgt_ptr_ptrptr, PythonMapper
 from Ironclad.Structs import PyStringObject, PyTypeObject, PyBufferProcs, PySequenceMethods, Py_TPFLAGS
 
+# make sure this particular overload PtrToStructure(IntPtr, Type) is called
+PtrToStructure = Marshal.PtrToStructure.Overloads[IntPtr, Type]
 
 class PyString_TestCase(TestCase):
 
@@ -45,7 +47,7 @@ class PyString_TestCase(TestCase):
 
 
     def assertStringObjectHasLength(self, strPtr, length):
-        stringObject = Marshal.PtrToStructure(strPtr, PyStringObject)
+        stringObject = PtrToStructure(strPtr, PyStringObject)
         self.assertEquals(stringObject.ob_refcnt, 1, "unexpected refcount")
         self.assertEquals(stringObject.ob_size, length, "unexpected ob_size")
         self.assertEquals(stringObject.ob_shash, -1, "unexpected currently-useless-field")

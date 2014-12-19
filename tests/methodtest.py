@@ -4,11 +4,13 @@ from types import MethodType
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase, WithMapper
 
-from System import IntPtr
+from System import IntPtr, Type
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad.Structs import PyMethodObject
 
+# make sure this particular overload PtrToStructure(IntPtr, Type) is called
+PtrToStructure = Marshal.PtrToStructure.Overloads[IntPtr, Type]
 
 class MethodTest(TestCase):
 
@@ -29,7 +31,7 @@ class MethodTest(TestCase):
         meth = MethodType('foo', 'bar', 'baz')
         methPtr = mapper.Store(meth)
         
-        stored = Marshal.PtrToStructure(methPtr, PyMethodObject)
+        stored = PtrToStructure(methPtr, PyMethodObject)
         self.assertEquals(stored.ob_refcnt, 1)
         self.assertEquals(stored.ob_type, mapper.PyMethod_Type)
         self.assertEquals(stored.im_weakreflist, IntPtr.Zero)

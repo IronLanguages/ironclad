@@ -8,13 +8,14 @@ from tests.utils.memory import CreateTypes, OffsetPtr
 from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
 
-from System import IntPtr
+from System import IntPtr, Type
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, dgt_void_ptr, PythonMapper
 from Ironclad.Structs import PyTupleObject, PyTypeObject
 
-
+# make sure this particular overload PtrToStructure(IntPtr, Type) is called
+PtrToStructure = Marshal.PtrToStructure.Overloads[IntPtr, Type]
 
 def MakeTuple(mapper, model):
     tuplePtr = mapper.PyTuple_New(len(model))
@@ -97,7 +98,7 @@ class TupleTest(TestCase):
         tuplePtr = mapper.PyTuple_New(length)
         expectedSize = Marshal.SizeOf(PyTupleObject()) + (CPyMarshal.PtrSize * (length - 1))
         self.assertEquals(allocs, [(tuplePtr, expectedSize)], "bad alloc")
-        tupleStruct = Marshal.PtrToStructure(tuplePtr, PyTupleObject)
+        tupleStruct = PtrToStructure(tuplePtr, PyTupleObject)
         self.assertEquals(tupleStruct.ob_refcnt, 1, "bad refcount")
         self.assertEquals(tupleStruct.ob_type, mapper.PyTuple_Type, "bad type")
         self.assertEquals(tupleStruct.ob_size, length, "bad size")
@@ -147,7 +148,7 @@ class TupleTest(TestCase):
         expectedSize = Marshal.SizeOf(PyTupleObject()) + (CPyMarshal.PtrSize * (99))
         self.assertEquals(allocs, [(newTuplePtr, expectedSize)])
         
-        tupleStruct = Marshal.PtrToStructure(newTuplePtr, PyTupleObject)
+        tupleStruct = PtrToStructure(newTuplePtr, PyTupleObject)
         self.assertEquals(tupleStruct.ob_refcnt, 1)
         self.assertEquals(tupleStruct.ob_type, mapper.PyTuple_Type)
         self.assertEquals(tupleStruct.ob_size, 100)
