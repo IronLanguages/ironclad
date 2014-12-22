@@ -20,9 +20,9 @@ def GetPexportsLines(path):
 class PythonStubTest(TestCase):
 
     def testPythonStub(self):
-        path = os.path.join('tests', 'data', 'python26-pexports')
+        path = os.path.join('tests', 'data', 'python27-pexports')
         python26exports = read_set(path)
-        generatedExports = GetPexportsLines("build/ironclad/python26.dll")
+        generatedExports = GetPexportsLines("build/ironclad/python27.dll")
         self.assertEquals(python26exports - generatedExports, set())
 
 suite = automakesuite(locals())

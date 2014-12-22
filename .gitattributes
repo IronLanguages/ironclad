@@ -21,6 +21,9 @@
 *.vcxproj text eol=crlf
 *.vdproj text eol=crlf
 
+tests/data/python26-pexport text eol=crlf
+tests/data/python27-pexport text eol=crlf
+
 
 # Denote all files that are truly binary and should not be modified.
 *.png binary
