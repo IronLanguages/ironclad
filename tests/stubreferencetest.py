@@ -8,14 +8,17 @@ from tests.utils.testcase import TestCase
 from Ironclad import dgt_getfuncptr, dgt_registerdata, Unmanaged, StubReference
 from System import IntPtr
 
+PYTHON_DLL = "python27.dll"
+DLL_PATH = os.path.join("build", "ironclad", PYTHON_DLL)
+
 class StubReferenceTest(TestCase):
 
     def testMapInitUnmapLibrary(self):
-        self.assertEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
+        self.assertEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                           "library already mapped")
 
-        sr = StubReference(os.path.join("build", "ironclad", "python26.dll"))
-        self.assertNotEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
+        sr = StubReference(DLL_PATH)
+        self.assertNotEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                           "library not mapped by construction")
 
         fpCalls = []
@@ -34,7 +37,7 @@ class StubReferenceTest(TestCase):
         self.assertEquals(len(dataCalls) > 0, True, "did not set any data")
 
         sr.Dispose()
-        self.assertEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
+        self.assertEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                           "library not unmapped on dispose")
 
         sr.Dispose()
@@ -42,12 +45,12 @@ class StubReferenceTest(TestCase):
         
         
     def testUnmapsAutomagically(self):
-        sr = StubReference(os.path.join("build", "ironclad", "python26.dll"))
-        self.assertNotEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
+        sr = StubReference(DLL_PATH)
+        self.assertNotEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                           "library not mapped by construction")
         del sr
         gcwait()
-        self.assertEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
+        self.assertEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                           "library not unmapped on finalize")
         
 

@@ -20,6 +20,8 @@ from Ironclad import (
 )
 from Ironclad.Structs import PyObject, PyTypeObject
 
+PYTHON_DLL = "python27.dll"
+DLL_PATH = os.path.join("build", "ironclad", PYTHON_DLL)
 
 class PythonMapper_CreateDestroy_Test(TestCase):
     
@@ -33,9 +35,9 @@ class PythonMapper_CreateDestroy_Test(TestCase):
         
     
     def testLoadsStubWhenPassedPathAndUnloadsOnDispose(self):
-        mapper = PythonMapper(os.path.join("build", "ironclad", "python26.dll"))
+        mapper = PythonMapper(DLL_PATH)
         try:
-            self.assertNotEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
+            self.assertNotEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                                  "library not mapped by construction")
             self.assertNotEquals(PythonMapper._Py_NoneStruct, IntPtr.Zero,
                                  "mapping not set up")
@@ -44,14 +46,14 @@ class PythonMapper_CreateDestroy_Test(TestCase):
             self.assertEquals(CPyMarshal.ReadPtrField(mapper.PyLong_Type, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
 
             mapper.Dispose()
-            self.assertEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
+            self.assertEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                               "library not unmapped by Dispose")
         finally:
             mapper.Dispose()
         
     
     def testLoadsModuleAndUnloadsOnDispose(self):
-        mapper = PythonMapper(os.path.join("build", "ironclad", "python26.dll"))
+        mapper = PythonMapper(DLL_PATH)
         try:
             origcwd = os.getcwd()
             mapper.LoadModule(os.path.join("tests", "data", "setvalue.pyd"), "some.module")
@@ -62,14 +64,14 @@ class PythonMapper_CreateDestroy_Test(TestCase):
             mapper.Dispose()
             self.assertEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                               "library not unmapped by Dispose")
-            self.assertEquals(Unmanaged.GetModuleHandle("python26.dll"), IntPtr.Zero,
+            self.assertEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                               "library not unmapped by Dispose")
         finally:
             mapper.Dispose()
     
     
     def testRemovesMmapOnDispose(self):
-        mapper = PythonMapper(os.path.join("build", "ironclad", "python26.dll"))
+        mapper = PythonMapper(DLL_PATH)
         try:
             sys.modules['csv'] = object()
             mapper.Dispose()
