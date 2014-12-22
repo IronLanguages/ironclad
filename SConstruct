@@ -76,7 +76,7 @@ OBJ_CMD = '$CC $CCFLAGS -o $TARGET -c $SOURCE'
 DLL_CMD = '$CC $CCFLAGS -shared -o $TARGET $SOURCES'
 GCCXML_CMD = ' '.join((GCCXML_CC1PLUS, COMPILE_IRONCLAD_FLAGS, '-I$CPPPATH -D__GNUC__ %s $SOURCE -fxml="$TARGET"' % GCCXML_INSERT))
 PYTHON27OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
-PYTHON27DLL_CMD = DLL_CMD + ' -export-all-symbols'
+PYTHON27DLL_CMD = DLL_CMD + ' -Xlinker --export-all-symbols'
 COMMON = dict(IPY=IPY, IPY_DIR=IPY_DIR)
 
 test_deps = []
