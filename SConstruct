@@ -79,6 +79,11 @@ if WIN32:
     MINGW_INCLUDE = os.path.join(MINGW_DIR, 'include')
     GCCXML_INSERT = '-isystem "%s" -isystem "%s"' % (MINGW_INCLUDE, os.path.join(MINGW_LIB, 'gcc', 'mingw32', '4.8.1', 'include'))
 
+    # Calculate DLLs dir of cpython - assume this is run from the cpython
+    # If not, change to match your instalation, defaults to C:\Python27\DLLs
+    # Note: this has to be 32bit version of cpython
+    CPYTHON_DLLS = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "DLLs")
+
 
 #===============================================================================
 # PLATFORM-AGNOSTIC GLOBALS
@@ -233,6 +238,8 @@ before_test(managed.Dll('build/ironclad/ironclad', ironclad_dll_src))
 # This section runs the tests, assuming you've run 'scons test'
 #===============================================================================
 
-tests = Environment(ENV=os.environ, **COMMON)
+testenv = os.environ
+testenv['IRONPYTHONPATH'] = CPYTHON_DLLS
+tests = Environment(ENV=testenv, **COMMON)
 tests.AlwaysBuild(tests.Alias('test', test_deps,
     '$IPY runtests.py'))

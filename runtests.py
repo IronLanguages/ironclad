@@ -35,6 +35,11 @@ def CreateSuite():
 #
 # TODO: selecting decorated function does not work
 if __name__ == '__main__':
+    if 'IRONPYTHONPATH' not in os.environ:
+        print "*"*80
+        print "Warning: your IRONPYTHONPATH is not defined"
+        print "some of ironclad test assume DLLs dir of cpython is present in IRONPYTHONPATH"
+        print "*"*80
     if len(sys.argv) == 2:
         suite = unittest.defaultTestLoader.loadTestsFromName(sys.argv[1])
     else:
