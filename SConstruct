@@ -23,6 +23,13 @@ def pathmap(base, files):
 def submap(template, inserts):
     return map(lambda x: template % x, inserts)
 
+# to build in debug mode (for now c# only) use:
+# scons mode=debug
+mode = ARGUMENTS.get('mode', 'release')
+if not (mode in ['debug', 'release']):
+   print "Error: expected 'debug' or 'release', found: " + mode
+   Exit(1)
+
 
 #===============================================================================
 # PLATFORM-SPECIFIC GLOBALS
@@ -35,10 +42,19 @@ if WIN32:
     
     ASFLAGS = '-f win32'
     CSC = r'C:\windows\Microsoft.NET\Framework\v4.0.30319\csc.exe'
-    CSC_CMD = '$CSC /nologo /out:$TARGET /t:library $REFERENCES $SOURCES'
+    CSC_CMD = '$CSC '
+    if mode == 'debug':
+        CSC_CMD += '/debug '
+    CSC_CMD += '/nologo /out:$TARGET /t:library $REFERENCES $SOURCES'
     GCCXML_CC1PLUS = r'"C:\Program Files (x86)\gccxml\bin\gccxml_cc1plus.exe"'
+
+    # standard location
     IPY = r'"C:\Program Files (x86)\IronPython 2.7\ipy.exe"'
     IPY_DIR = r'"C:\Program Files (x86)\IronPython 2.7"'
+    # private build
+    # IPY = r'"C:\github\IronLanguages\bin\Debug\ipy.exe"'
+    # IPY_DIR = r'"C:\github\IronLanguages\bin\Debug"'
+
     IPY_REF_TEMPLATE = r'/r:$IPY_DIR\%s.dll'
     NATIVE_TOOLS = ['mingw', 'nasm']
     PYTHON_DLL = r'C:\windows\SysWOW64\python27.dll'
