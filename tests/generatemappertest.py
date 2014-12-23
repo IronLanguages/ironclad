@@ -1,6 +1,7 @@
 
 import os
 import shutil
+import sys
 import tempfile
 
 from tests.utils.process import spawn
@@ -22,7 +23,7 @@ class GenerateMapperTest(TestCase):
         write(src, '_storedispatch', STOREDISPATCH)
 
         dst = tempfile.mkdtemp()
-        result = spawn('ipy', 'tools/generatemapper.py', src, dst)
+        result = spawn(sys.executable, 'tools/generatemapper.py', src, dst)
         self.assertEquals(result, 0, 'process ended badly')
 
         def assertFinds(name, expected):

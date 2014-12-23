@@ -1,6 +1,7 @@
 
 import os
 import shutil
+import sys
 import tempfile
 
 from tests.utils.process import spawn
@@ -18,7 +19,7 @@ class GenerateCodeSnippetsTest(TestCase):
             write(src, name, contents)
 
         dst = tempfile.mkdtemp()
-        result = spawn("ipy", "tools/generatecodesnippets.py", src, dst)
+        result = spawn(sys.executable, "tools/generatecodesnippets.py", src, dst)
         self.assertEquals(result, 0, "process ended badly")
 
         def assertFinds(name, expected):
