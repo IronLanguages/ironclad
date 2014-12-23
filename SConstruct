@@ -239,7 +239,7 @@ before_test(managed.Dll('build/ironclad/ironclad', ironclad_dll_src))
 #===============================================================================
 
 testenv = os.environ
-testenv['IRONPYTHONPATH'] = CPYTHON_DLLS
+testenv['IRONPYTHONPATH'] = ".;" + CPYTHON_DLLS
 tests = Environment(ENV=testenv, **COMMON)
 tests.AlwaysBuild(tests.Alias('test', test_deps,
     '$IPY runtests.py'))
