@@ -13,9 +13,6 @@ class Number(object):
 
 class BugTest(TestCase):
 
-    def testDisplayhook(self):
-        self.assertEquals(hasattr(sys, '__displayhook__'), False, "ironclad.py and PythonMapper.MessWithSys may no longer need to set sys.__displayhook__ = sys.displayhook")
-
     def testLogWorksNow(self):
         math.log(Number())
         math.log10(Number())

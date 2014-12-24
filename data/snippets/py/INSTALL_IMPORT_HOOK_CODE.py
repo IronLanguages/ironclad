@@ -66,11 +66,9 @@ class Lifetime(object):
         import sys
         self.meta_importer = MetaImporter(loader, mapper)
         sys.meta_path.append(self.meta_importer)
-        sys.__displayhook__ = sys.displayhook
 
     def remove_sys_hacks(self):
         import sys
         sys.meta_path.remove(self.meta_importer)
-        del sys.__displayhook__
 
 remove_sys_hacks = Lifetime(Loader, _mapper).remove_sys_hacks
