@@ -157,7 +157,7 @@ namespace Ironclad
 NUMBERS_PY2C = """
 
 PyFoo_AsBar MakeSomething double -1.0
-PyPing_AsPong MakeSomethingElse pong bat .ToPong()
+PyPing_AsPong MakeSomethingElse pong bat (Pong)
 """
 
 EXPECTED_NUMBERS_PY2C = """
@@ -184,7 +184,7 @@ namespace Ironclad
         {
             try
             {
-                return NumberMaker.MakeSomethingElse(this.scratchContext, this.Retrieve(valuePtr)).ToPong();
+                return (Pong)NumberMaker.MakeSomethingElse(this.scratchContext, this.Retrieve(valuePtr));
             }
             catch (Exception e)
             {
