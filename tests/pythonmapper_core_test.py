@@ -1,7 +1,6 @@
 import os
 import sys
 
-from unittest import skip
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
@@ -285,6 +284,7 @@ class PythonMapper_References_Test(TestCase):
         mapper.DecRef(objPtr)
         self.assertEquals(calls, [objPtr], "not called when refcount hit 0")
 
+
     def testFinalDecRefComplainsAboutMissing_tp_dealloc(self):
         frees = []
         mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
@@ -306,7 +306,7 @@ class PythonMapper_References_Test(TestCase):
 
         mapper.Dispose()
         deallocTypes()
-    
+
 
     def testStoreBridge(self):
         allocator = HGlobalAllocator()
@@ -348,6 +348,7 @@ class PythonMapper_References_Test(TestCase):
             mapper.Dispose()
             deallocTypes()
     
+
     def testStrengthenWeakenUnmanagedInstance(self):
         frees = []
         allocator = GetAllocatingTestAllocator([], frees)
@@ -385,6 +386,7 @@ class PythonMapper_References_Test(TestCase):
             mapper.IC_PyBaseObject_Dealloc(ptr)
             mapper.Dispose()
             deallocTypes()
+
 
     def testReleaseGILChecksBridgePtrs(self):
         frees = []
@@ -432,36 +434,35 @@ class PythonMapper_References_Test(TestCase):
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyTupleObject))
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyListObject))
 
-    @skip("crashes test suite")
+
     def testRefCountIncRefDecRef(self):
-        try:
-            frees = []
-            allocator = GetAllocatingTestAllocator([], frees)
-            mapper = PythonMapper(allocator)
-            deallocTypes = CreateTypes(mapper)
+        frees = []
+        allocator = GetAllocatingTestAllocator([], frees)
+        mapper = PythonMapper(allocator)
+        deallocTypes = CreateTypes(mapper)
 
-            obj1 = object()
-            ptr = mapper.Store(obj1)
-            self.assertEquals(mapper.HasPtr(ptr), True)
+        obj1 = object()
+        ptr = mapper.Store(obj1)
+        self.assertEquals(mapper.HasPtr(ptr), True)
 
-            mapper.IncRef(ptr)
-            self.assertEquals(mapper.RefCount(ptr), 2, "unexpected refcount")
-            self.assertEquals(mapper.HasPtr(ptr), True)
+        mapper.IncRef(ptr)
+        self.assertEquals(mapper.RefCount(ptr), 2, "unexpected refcount")
+        self.assertEquals(mapper.HasPtr(ptr), True)
 
-            del frees[:]
-            mapper.DecRef(ptr)
-            self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
-            self.assertEquals(mapper.HasPtr(ptr), True)
-            self.assertEquals(frees, [], "unexpected deallocations")
+        del frees[:]
+        mapper.DecRef(ptr)
+        self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
+        self.assertEquals(mapper.HasPtr(ptr), True)
+        self.assertEquals(frees, [], "unexpected deallocations")
 
-            mapper.DecRef(ptr)
-            self.assertEquals(mapper.HasPtr(ptr), False)
-            self.assertEquals(frees, [ptr], "unexpected deallocations")
-            self.assertRaises(KeyError, lambda: mapper.PyObject_Free(ptr))
+        mapper.DecRef(ptr)
+        self.assertEquals(mapper.HasPtr(ptr), False)
+        self.assertEquals(frees, [ptr], "unexpected deallocations")
+        self.assertRaises(KeyError, lambda: mapper.PyObject_Free(ptr))
 
-        finally:
-            mapper.Dispose()
-            deallocTypes()
+        mapper.Dispose()
+        deallocTypes()
+
 
     def testNullPointers(self):
         allocator = GetDoNothingTestAllocator([])
@@ -505,7 +506,6 @@ class PythonMapper_References_Test(TestCase):
         mapper.EnsureGIL()
 
 
-    @skip("crashes test suite")
     def testReleaseGilDoesntExplodeIfTempObjectsEmpty(self):
         frees = []
         mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
@@ -519,7 +519,7 @@ class PythonMapper_References_Test(TestCase):
         finally:
             mapper.Dispose()
 
-    @skip("crashes test suite")
+
     def testReleaseGilDoesntExplodeIfTempObjectsContainsNull(self):
         frees = []
         mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
