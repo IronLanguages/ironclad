@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{4EF37F7B-2850-4E8C-AC83-B33289632C80}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Ironclad</RootNamespace>
+    <AssemblyName>Ironclad</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="IronPython">
+      <HintPath>..\..\IronLanguages\bin\Debug\IronPython.dll</HintPath>
+    </Reference>
+    <Reference Include="IronPython.Modules">
+      <HintPath>..\..\IronLanguages\bin\Debug\IronPython.Modules.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Dynamic">
+      <HintPath>..\..\IronLanguages\bin\Debug\Microsoft.Dynamic.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Scripting">
+      <HintPath>..\..\IronLanguages\bin\Debug\Microsoft.Scripting.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Allocator.cs" />
+    <Compile Include="CallableBuilder.cs" />
+    <Compile Include="ClassBuilder.cs" />
+    <Compile Include="CodeSnippets.Generated.cs" />
+    <Compile Include="Counter.cs" />
+    <Compile Include="CPyMarshal.cs" />
+    <Compile Include="Delegates.Generated.cs" />
+    <Compile Include="Dispatcher.cs" />
+    <Compile Include="Dispatcher.Generated.cs" />
+    <Compile Include="InappropriateReflection.cs" />
+    <Compile Include="InterestingPtrMap.cs" />
+    <Compile Include="Lock.cs" />
+    <Compile Include="MagicMethods.Generated.cs" />
+    <Compile Include="mapper\PythonMapper.cs" />
+    <Compile Include="mapper\PythonMapper_dict.cs" />
+    <Compile Include="mapper\PythonMapper_errors.cs" />
+    <Compile Include="mapper\PythonMapper_exec.cs" />
+    <Compile Include="mapper\PythonMapper_file.cs" />
+    <Compile Include="mapper\PythonMapper_function.cs" />
+    <Compile Include="mapper\PythonMapper_import.cs" />
+    <Compile Include="mapper\PythonMapper_iter.cs" />
+    <Compile Include="mapper\PythonMapper_list.cs" />
+    <Compile Include="mapper\PythonMapper_mapping.cs" />
+    <Compile Include="mapper\PythonMapper_memory.cs" />
+    <Compile Include="mapper\PythonMapper_methods.cs" />
+    <Compile Include="mapper\PythonMapper_module.cs" />
+    <Compile Include="mapper\PythonMapper_numbers.cs" />
+    <Compile Include="mapper\PythonMapper_numbers_c2py.Generated.cs" />
+    <Compile Include="mapper\PythonMapper_numbers_py2c.Generated.cs" />
+    <Compile Include="mapper\PythonMapper_object.cs" />
+    <Compile Include="mapper\PythonMapper_operator.Generated.cs" />
+    <Compile Include="mapper\PythonMapper_register.cs" />
+    <Compile Include="mapper\PythonMapper_register_exceptions.Generated.cs" />
+    <Compile Include="mapper\PythonMapper_register_types.Generated.cs" />
+    <Compile Include="mapper\PythonMapper_retrievetype.cs" />
+    <Compile Include="mapper\PythonMapper_sequence.cs" />
+    <Compile Include="mapper\PythonMapper_slice.cs" />
+    <Compile Include="mapper\PythonMapper_storedispatch.Generated.cs" />
+    <Compile Include="mapper\PythonMapper_strings.cs" />
+    <Compile Include="mapper\PythonMapper_threads.cs" />
+    <Compile Include="mapper\PythonMapper_tuple.cs" />
+    <Compile Include="mapper\PythonMapper_types.cs" />
+    <Compile Include="NumberMaker.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PydImporter.cs" />
+    <Compile Include="PythonApi.Generated.cs" />
+    <Compile Include="PythonEnums.cs" />
+    <Compile Include="PythonStructs.Generated.cs" />
+    <Compile Include="StubReference.cs" />
+    <Compile Include="StupidSet.cs" />
+    <Compile Include="ThreadState.cs" />
+    <Compile Include="Unmanaged.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
