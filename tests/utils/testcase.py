@@ -2,6 +2,7 @@
 import sys
 import unittest
 import tests.utils.loadassemblies
+import System
 
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
@@ -64,3 +65,14 @@ class TestCase(unittest.TestCase):
             mapper.LastException = None
         else:
             self.assertEquals(mapper.LastException, None)
+
+    def assertRaisesClr(self, ClrException, callable, *args, **kwargs):
+        # clr based exception without explicit python equivalent surface as Exception
+        # with clsException set to the original exception
+        try:
+            with self.assertRaises(Exception) as cm:
+                callable(*args, **kwargs)
+            if not issubclass(type(cm.exception.clsException), ClrException):
+                raise cm.exception
+        except TestCase.failureException:
+            raise self.failureException("{0} not raised".format(ClrException))

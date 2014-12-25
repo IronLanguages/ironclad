@@ -1,5 +1,6 @@
 import os
 import sys
+
 from unittest import skip
 from tests.utils.runtest import makesuite, run
 
@@ -247,21 +248,19 @@ class PythonMapper_References_Test(TestCase):
 
 
     def testDecRefObjectWithZeroRefCountFails(self):
-        try:
-            allocator = HGlobalAllocator()
-            mapper = PythonMapper(allocator)
-            deallocTypes = CreateTypes(mapper)
+        allocator = HGlobalAllocator()
+        mapper = PythonMapper(allocator)
+        deallocTypes = CreateTypes(mapper)
 
-            # need to use same allocator as mapper, otherwise it gets upset on shutdown
-            objPtr = allocator.Alloc(Marshal.SizeOf(PyObject()))
-            CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 0)
-            CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", mapper.PyBaseObject_Type)
-            mapper.StoreBridge(objPtr, object())
+        # need to use same allocator as mapper, otherwise it gets upset on shutdown
+        objPtr = allocator.Alloc(Marshal.SizeOf(PyObject()))
+        CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 0)
+        CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", mapper.PyBaseObject_Type)
+        mapper.StoreBridge(objPtr, object())
 
-            self.assertRaises(BadRefCountException, lambda: mapper.DecRef(objPtr))
-        finally:
-            mapper.Dispose()
-            deallocTypes()
+        self.assertRaisesClr(BadRefCountException, lambda: mapper.DecRef(objPtr))
+        mapper.Dispose()
+        deallocTypes()
 
 
     @WithMapper
@@ -286,31 +285,27 @@ class PythonMapper_References_Test(TestCase):
         mapper.DecRef(objPtr)
         self.assertEquals(calls, [objPtr], "not called when refcount hit 0")
 
-    @skip("crashes test suite")
     def testFinalDecRefComplainsAboutMissing_tp_dealloc(self):
-        try:
-            frees = []
-            mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
-            deallocTypes = CreateTypes(mapper)
+        frees = []
+        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
+        deallocTypes = CreateTypes(mapper)
 
-            typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
-            CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_dealloc", IntPtr.Zero)
+        typePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
+        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_dealloc", IntPtr.Zero)
 
-            obj = object()
-            objPtr = mapper.Store(obj)
-            CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", typePtr)
+        obj = object()
+        objPtr = mapper.Store(obj)
+        CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", typePtr)
 
-            mapper.IncRef(objPtr)
+        mapper.IncRef(objPtr)
 
-            del frees [:]
-            mapper.DecRef(objPtr)
-            self.assertEquals(frees, [], "freed prematurely")
-            self.assertRaises(CannotInterpretException, mapper.DecRef, objPtr)
-        except Exception as ex:
-            print sys.exc_info()
-        finally:
-            mapper.Dispose()
-            deallocTypes()
+        del frees [:]
+        mapper.DecRef(objPtr)
+        self.assertEquals(frees, [], "freed prematurely")
+        self.assertRaisesClr(CannotInterpretException, mapper.DecRef, objPtr)
+
+        mapper.Dispose()
+        deallocTypes()
     
 
     def testStoreBridge(self):
@@ -353,7 +348,6 @@ class PythonMapper_References_Test(TestCase):
             mapper.Dispose()
             deallocTypes()
     
-    @skip("srashes test suite")
     def testStrengthenWeakenUnmanagedInstance(self):
         frees = []
         allocator = GetAllocatingTestAllocator([], frees)
@@ -383,7 +377,7 @@ class PythonMapper_References_Test(TestCase):
                 del obj
             do2()
             gcwait()
-            self.assertRaises(NullReferenceException, mapper.Retrieve, ptr)
+            self.assertRaisesClr(NullReferenceException, mapper.Retrieve, ptr)
         
         finally:
             # need to dealloc ptr ourselves, it doesn't hapen automatically
@@ -392,47 +386,44 @@ class PythonMapper_References_Test(TestCase):
             mapper.Dispose()
             deallocTypes()
 
-    @skip("crashes test suite")
     def testReleaseGILChecksBridgePtrs(self):
-        try:
-            frees = []
-            allocator = GetAllocatingTestAllocator([], frees)
-            mapper = PythonMapper(allocator)
-            deallocTypes = CreateTypes(mapper)
+        frees = []
+        allocator = GetAllocatingTestAllocator([], frees)
+        mapper = PythonMapper(allocator)
+        deallocTypes = CreateTypes(mapper)
 
-            # force no throttling of cleanup
-            mapper.GCThreshold = 0
+        # force no throttling of cleanup
+        mapper.GCThreshold = 0
 
-            def do1():
-                obj = object()
-                ref = WeakReference(obj)
-                # need to use same allocator as mapper, otherwise it gets upset on shutdown
-                ptr = allocator.Alloc(Marshal.SizeOf(PyObject()))
-                CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 2)
-                CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
-                mapper.StoreBridge(ptr, obj)
+        def do1():
+            obj = object()
+            ref = WeakReference(obj)
+            # need to use same allocator as mapper, otherwise it gets upset on shutdown
+            ptr = allocator.Alloc(Marshal.SizeOf(PyObject()))
+            CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 2)
+            CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
+            mapper.StoreBridge(ptr, obj)
 
-                # refcount > 1 means ref should have been strengthened
-                del obj
-                return ref, ptr
-            ref, ptr = do1()
-            gcwait()
-            self.assertEquals(ref.IsAlive, True, "was reaped unexpectedly (refcount was 2)")
+            # refcount > 1 means ref should have been strengthened
+            del obj
+            return ref, ptr
+        ref, ptr = do1()
+        gcwait()
+        self.assertEquals(ref.IsAlive, True, "was reaped unexpectedly (refcount was 2)")
 
-            CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
-            mapper.EnsureGIL()
-            mapper.ReleaseGIL()
+        CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
+        mapper.EnsureGIL()
+        mapper.ReleaseGIL()
 
-            # refcount < 2 should have been weakened
-            gcwait()
-            self.assertRaises(NullReferenceException, mapper.Retrieve, ptr)
+        # refcount < 2 should have been weakened
+        gcwait()
+        self.assertRaisesClr(NullReferenceException, mapper.Retrieve, ptr)
 
-            # need to dealloc ptr ourselves, it doesn't hapen automatically
-            # except for objects with Dispatchers
-            mapper.IC_PyBaseObject_Dealloc(ptr)
-        finally:
-            mapper.Dispose()
-            deallocTypes()
+        # need to dealloc ptr ourselves, it doesn't hapen automatically
+        # except for objects with Dispatchers
+        mapper.IC_PyBaseObject_Dealloc(ptr)
+        mapper.Dispose()
+        deallocTypes()
 
 
     @WithMapper
@@ -472,20 +463,15 @@ class PythonMapper_References_Test(TestCase):
             mapper.Dispose()
             deallocTypes()
 
-
-    @skip("crases test suite")
     def testNullPointers(self):
-        try:
-            allocator = GetDoNothingTestAllocator([])
-            mapper = PythonMapper(allocator)
-
-            self.assertEquals(mapper.HasPtr(IntPtr.Zero), False)
-            self.assertRaises(CannotInterpretException, lambda: mapper.IncRef(IntPtr.Zero))
-            self.assertRaises(CannotInterpretException, lambda: mapper.DecRef(IntPtr.Zero))
-            self.assertRaises(CannotInterpretException, lambda: mapper.Retrieve(IntPtr.Zero))
-            self.assertRaises(CannotInterpretException, lambda: mapper.RefCount(IntPtr.Zero))
-        finally:
-            mapper.Dispose()
+        allocator = GetDoNothingTestAllocator([])
+        mapper = PythonMapper(allocator)
+        self.assertEquals(mapper.HasPtr(IntPtr.Zero), False)
+        self.assertRaisesClr(CannotInterpretException, lambda: mapper.IncRef(IntPtr.Zero))
+        self.assertRaisesClr(CannotInterpretException, lambda: mapper.DecRef(IntPtr.Zero))
+        self.assertRaisesClr(CannotInterpretException, lambda: mapper.Retrieve(IntPtr.Zero))
+        self.assertRaisesClr(CannotInterpretException, lambda: mapper.RefCount(IntPtr.Zero))
+        mapper.Dispose()
 
 
     @WithMapper
