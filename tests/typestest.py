@@ -197,7 +197,7 @@ class Types_Test(TestCase):
                 objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject()))
                 CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 2)
                 CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", getattr(mapper, _type))
-                self.assertRaises(CannotInterpretException, getattr(mapper, mode), objPtr)
+                self.assertRaisesClr(CannotInterpretException, getattr(mapper, mode), objPtr)
                 Marshal.FreeHGlobal(objPtr)
     
     
