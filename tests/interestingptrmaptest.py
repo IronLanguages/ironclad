@@ -72,7 +72,7 @@ class InterestingPtrMapTest(TestCase):
     
         self.assertEquals(map.HasPtr(ptr), False)
         self.assertEquals(ref.IsAlive, False, "failed to GC")
-        self.assertRaises(BadMappingException, map.GetObj, ptr)
+        self.assertRaisesClr(BadMappingException, map.GetObj, ptr)
         # can't really try to get the ptr, because we don't have the obj any more
     
     
@@ -106,7 +106,7 @@ class InterestingPtrMapTest(TestCase):
         gcwait()
         
         self.assertEquals(ref.IsAlive, False, "failed to GC")
-        self.assertRaises(NullReferenceException, map.GetObj, ptr)
+        self.assertRaisesClr(NullReferenceException, map.GetObj, ptr)
         map.Release(ptr)
     
     
