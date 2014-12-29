@@ -12,8 +12,17 @@ PyTypeObject PyMethod_Type;
 PyTypeObject PyCode_Type;
 PyTypeObject PyComplex_Type;
 PyTypeObject PyWrapperDescr_Type;
+PyTypeObject PyGetSetDescr_Type;
+PyTypeObject PyMemberDescr_Type;
 PyTypeObject PyProperty_Type;
 PyTypeObject PyDict_Type;
+PyTypeObject PyDictIterItem_Type;
+PyTypeObject PyDictValues_Type;
+PyTypeObject PyDictProxy_Type;
+PyTypeObject PyDictIterKey_Type;
+PyTypeObject PyDictIterValue_Type;
+PyTypeObject PyDictKeys_Type;
+PyTypeObject PyDictItems_Type;
 PyTypeObject PyEnum_Type;
 PyTypeObject PyReversed_Type;
 PyTypeObject PyFile_Type;
@@ -31,6 +40,7 @@ PyTypeObject PyList_Type;
 PyTypeObject PyLong_Type;
 PyTypeObject PyCFunction_Type;
 PyTypeObject PyModule_Type;
+PyTypeObject PyMemoryView_Type;
 PyTypeObject PySuper_Type;
 PyTypeObject PyRange_Type;
 PyTypeObject PySet_Type;
@@ -72,6 +82,8 @@ PyObject *_PyTrash_delete_later = NULL;
 PyIntObject _Py_ZeroStruct;
 PyIntObject _Py_TrueStruct;
 
+// Objects/bytearray.h
+char _PyByteArray_empty_string[2] = {0,0};
 
 // Objects/sliceobject.c
 PyObject _Py_EllipsisObject;
@@ -98,6 +110,7 @@ int _Py_CheckRecursionLimit = Py_DEFAULT_RECURSION_LIMIT;
 
 // Python/pythonrun.c
 int Py_NoUserSiteDirectory = 0;
+PyThreadState *_Py_Finalizing;
 
 
 // Python/frozen.c
@@ -122,6 +135,7 @@ int Py_InspectFlag = 0;
 int Py_OptimizeFlag = 2; // prevents numpy from crashing when trying to set docstrings
 int Py_UseClassExceptionsFlag = 1;
 int Py_DontWriteBytecodeFlag = 0;
+int Py_HashRandomizationFlag = 0; /* for -R and PYTHONHASHSEED */
 
 const char *Py_FileSystemDefaultEncoding = NULL;
 

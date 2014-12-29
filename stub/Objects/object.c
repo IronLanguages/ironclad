@@ -1110,6 +1110,8 @@ PyObject_HashNotImplemented(PyObject *self)
 	return -1;
 }
 
+_Py_HashSecret_t _Py_HashSecret;
+
 long
 PyObject_Hash(PyObject *v)
 {
