@@ -17,6 +17,7 @@ PyBuffer_Type
 PyCell_Type 
 PyCFunction_Type
 PyCObject_Type
+PyCapsule_Type
 PyCode_Type
 PyFrame_Type
 PyTraceBack_Type
@@ -83,6 +84,19 @@ PyCFunction_ClearFreeList
 PyCode_Addr2Line
 PyCode_CheckLineNumber
 PyCode_New
+
+# Objects/pycapsule.c
+PyCapsule_New
+PyCapsule_GetPointer
+PyCapsule_GetDestructor
+PyCapsule_GetName
+PyCapsule_GetContext
+PyCapsule_IsValid
+PyCapsule_SetPointer
+PyCapsule_SetDestructor
+PyCapsule_SetName
+PyCapsule_SetContext
+PyCapsule_Import
 
 # Objects/fileobject.c
 PyFile_FromString
