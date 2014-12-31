@@ -82,7 +82,7 @@ if WIN32:
     # Calculate DLLs dir of cpython - assume this is run from the cpython
     # If not, change to match your instalation, defaults to C:\Python27\DLLs
     # Note: this has to be 32bit version of cpython
-    CPYTHON_DLLS = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "DLLs")
+    CPYTHON_ROOT = os.path.dirname(os.path.abspath(sys.executable))
 
 
 #===============================================================================
@@ -239,7 +239,9 @@ before_test(managed.Dll('build/ironclad/ironclad', ironclad_dll_src))
 #===============================================================================
 
 testenv = os.environ
-testenv['IRONPYTHONPATH'] = ".;" + CPYTHON_DLLS
+testenv['IRONPYTHONPATH'] = "."
+testenv['IRONPYTHONPATH'] += ";" + os.path.join(CPYTHON_ROOT, "DLLs") # required to import/access dlls
+testenv['IRONPYTHONPATH'] += ";" + os.path.join(CPYTHON_ROOT, "Lib/site-packages") # pysvn test
 tests = Environment(ENV=testenv, **COMMON)
 tests.AlwaysBuild(tests.Alias('test', test_deps,
     '$IPY runtests.py'))
