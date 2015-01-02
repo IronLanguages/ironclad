@@ -1,3 +1,8 @@
+This original document for version 2.6.
+For up to date building and testing instruction, please check:
+https://github.com/IronLanguages/ironclad/wiki/building
+
+
 
 32-BIT WINDOWS REQUIREMENTS:
 

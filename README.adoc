@@ -7,14 +7,25 @@ The original project https://code.google.com/p/ironclad is no longer
 active. The last known version works with Python 2.6. The idea here is
 to make it work with current version (2.7.x) of CPython and IronPython.
 
-At the moment it does compile using up to date components, but errors
-or fails most of the tests.
+At the moment it does compile using up to date components and passes
+almost all internal tests.
 
+```
+Ran 479 tests in 135.893s
+FAILED (failures=2)
+scons: done building targets.
+```
+
+numpy is still failing on import.
 
 == Building ==
 
 Up to date building instructions can be found at:
-https://github.com/paweljasinski/ironclad/wiki/building
+https://github.com/IronLanguages/ironclad/wiki/building
+
+== Releases ==
+
+Hold on.
 
 
 == Hacking ==
