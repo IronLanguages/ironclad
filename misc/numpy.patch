@@ -1,0 +1,13 @@
+diff -rupN numpy.orig/lib/format.py numpy/lib/format.py
+--- numpy.orig/lib/format.py	2015-01-02 21:54:36.555287500 +0100
++++ numpy/lib/format.py	2014-12-31 17:09:21.892038900 +0100
+@@ -148,7 +148,7 @@ if sys.version_info[0] >= 3:
+ else:
+     import cPickle as pickle
+ 
+-MAGIC_PREFIX = asbytes('\x93NUMPY')
++MAGIC_PREFIX = asbytes(b'\x93NUMPY')
+ MAGIC_LEN = len(MAGIC_PREFIX) + 2
+ BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
+ 
+Binary files numpy.orig/lib/format.pyc and numpy/lib/format.pyc differ
