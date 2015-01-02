@@ -78,8 +78,17 @@ PyInstance_Type
 PyMethod_Type 
 PyComplex_Type 
 PyWrapperDescr_Type 
+PyGetSetDescr_Type
+PyMemberDescr_Type
 PyProperty_Type 
 PyDict_Type 
+PyDictIterItem_Type
+PyDictValues_Type
+PyDictProxy_Type
+PyDictIterKey_Type
+PyDictIterValue_Type
+PyDictKeys_Type
+PyDictItems_Type
 PyEnum_Type 
 PyReversed_Type 
 PyFile_Type 

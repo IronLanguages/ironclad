@@ -506,6 +506,16 @@ PyAPI_FUNC(void) Py_ReprLeave(PyObject *);
 PyAPI_FUNC(long) _Py_HashDouble(double);
 PyAPI_FUNC(long) _Py_HashPointer(void*);
 
+typedef struct {
+    long prefix;
+    long suffix;
+} _Py_HashSecret_t;
+PyAPI_DATA(_Py_HashSecret_t) _Py_HashSecret;
+
+#ifdef Py_DEBUG
+PyAPI_DATA(int) _Py_HashSecret_Initialized;
+#endif
+
 /* Helper for passing objects to printf and the like */
 #define PyObject_REPR(obj) PyString_AS_STRING(PyObject_Repr(obj))
 
