@@ -1,5 +1,5 @@
 
-from common import FILE_TEMPLATE
+from .common import FILE_TEMPLATE
 
 
 #================================================================================================

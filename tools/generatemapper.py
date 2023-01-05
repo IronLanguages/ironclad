@@ -17,7 +17,7 @@ INPUTS = (
 
 def _output_name(name):
     return 'PythonMapper%s.Generated.cs' % name, scrunch_filename(name)
-OUTPUTS = map(_output_name, [input[0] for input in INPUTS])
+OUTPUTS = list(map(_output_name, [input[0] for input in INPUTS]))
 
 if __name__ == '__main__':
     run_generator(MapperGenerator, INPUTS, OUTPUTS)

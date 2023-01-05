@@ -20,7 +20,22 @@ numpy is still failing on import.
 
 == Building ==
 
-Up to date building instructions can be found at:
+=== Building using Docker ===
+This repo contains a Dockerfile that sets up a dockerized build environment
+(requires Windows). Using PowerShell:
+```
+docker build -t ironclad-build:latest -m 2GB .
+docker run -it -v ${pwd}:C:\ironclad ironclad-build
+```
+In the container shell:
+```
+cd C:\ironclad
+scons
+```
+
+=== Previous build instructions ===
+
+Previous building instructions can be found at:
 https://github.com/IronLanguages/ironclad/wiki/building
 
 == Releases ==

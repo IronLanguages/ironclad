@@ -18,11 +18,12 @@ def _extract_funcname(c_func):
 #==========================================================================
 
 @return_dict('symbol offset')
-def _jump_info((index, name)):
+def _jump_info(index_name):
+    (index, name) = index_name
     return name, index * 4 # FIXME: 32-bit
 
 def generate_jumps(functions):
-    jump_infos = map(_jump_info, enumerate(functions))
+    jump_infos = list(map(_jump_info, enumerate(functions)))
     return JUMPS_FILE_TEMPLATE % glom_templates('\n', 
         (JUMP_DECLARE_TEMPLATE, jump_infos),
         (JUMP_DEFINE_TEMPLATE, jump_infos))
@@ -30,7 +31,8 @@ def generate_jumps(functions):
 
 #==========================================================================
 
-def _generate_stubinit_getfuncptr((index, name)):
+def _generate_stubinit_getfuncptr(index_name):
+    (index, name) = index_name
     return STUBINIT_GETFUNCPTR_TEMPLATE % {
         'index': index,
         'symbol': name,
@@ -63,8 +65,8 @@ class StubGenerator(CodeGenerator):
 
     def _run(self):
         needs_jump = lambda f: f not in self.PURE_C_SYMBOLS
-        functions = filter(needs_jump, self.EXPORTED_FUNCTIONS)
-        functions += map(_extract_funcname, self.EXTRA_FUNCTIONS)
+        functions = list(filter(needs_jump, self.EXPORTED_FUNCTIONS))
+        functions += list(map(_extract_funcname, self.EXTRA_FUNCTIONS))
         return {
             'STUBINIT':     generate_stubinit(functions, self.MGD_API_DATA),
             'HEADER':       generate_header(self.EXTRA_FUNCTIONS),

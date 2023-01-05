@@ -22,7 +22,7 @@ class DllReader(object):
         elif os.name == 'posix':
             self._read_symbol_table_objdump(source)
         else:
-            print 'Platform', os.name, 'is not supported'
+            print('Platform', os.name, 'is not supported')
             sys.exit(1)
 
 

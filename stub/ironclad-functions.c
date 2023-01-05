@@ -64,9 +64,9 @@ _PyObject_GetDictPtr(PyObject *obj)
 // _off_t and time_t are both 32-bit. OTOH, the users don't seem to look in
 // those parts of the struct, so we may continue to get away with it for a
 // while...
-extern int _fstat32(int fd, struct stat* buffer);
-int fstat(int fd, struct stat* buffer)
+//extern int _fstat32(int fd, struct stat* buffer);
+/*int fstat(int fd, struct stat* buffer)
 {
 	return _fstat32(fd, buffer);
 }
-
+*/

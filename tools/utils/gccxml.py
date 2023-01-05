@@ -1,4 +1,4 @@
-
+import functools
 import os, sys
 import operator
 
@@ -19,8 +19,8 @@ def _make_querymaker(decider):
         return lambda obj: decider(obj.name, target)
     
     def querymaker(targets):
-        if isinstance(targets, basestring):
-            matches = map(_get_match, targets.split())
+        if isinstance(targets, str):
+            matches = list(map(_get_match, targets.split()))
         else:
             matches = [_get_match(targets)]
         
@@ -58,7 +58,7 @@ def _handle_ptr(ptr):
     base = str(ptr.base)
     if base in ('char', 'char const'):
         return 'str'
-    if base == '_typeobject':
+    if base in ('_typeobject', 'struct ::_typeobject'):
         return 'obj'
     if base.startswith('Py') and base.endswith('Object'):
         return 'obj'
@@ -102,7 +102,7 @@ def _get_ictype(t):
 def _combine_calls(f):
     def g(*args):
         getresult = lambda x: set(f(x))
-        return reduce(operator.or_, map(getresult, args), set())
+        return functools.reduce(operator.or_, map(getresult, args), set())
     return g
 
 
@@ -110,13 +110,13 @@ def _combine_calls(f):
 # convert pygccxml functions into FuncSpecs
 
 def _func_from_typedef(t):
-    if not isinstance(t.type, decl.pointer_t):
+    if not isinstance(t.decl_type, decl.pointer_t):
         return
-    return t.type.base
+    return t.decl_type.base
 
 _FUNC_HANDLERS = {
     decl.free_function_t:   lambda f: f.function_type(),
-    decl.variable_t:        lambda v: v.type.declaration.type.base,
+    decl.variable_t:        lambda v: v.decl_type.declaration.decl_type.base,
     decl.typedef_t:         _func_from_typedef,
 }
 
@@ -125,12 +125,12 @@ def _get_funcspec(func):
     if not func_type:
         return
     ret = _get_ictype(func_type.return_type)
-    args = map(_get_ictype, func_type.arguments_types)
+    args = list(map(_get_ictype, func_type.arguments_types))
     return func.name, FuncSpec(ret, args)
 
 @_combine_calls
 def get_funcspecs(items):
-    return filter(None, map(_get_funcspec, items))
+    return list(filter(None, map(_get_funcspec, items)))
 
 
 #===============================================================================
@@ -138,7 +138,7 @@ def get_funcspecs(items):
 
 _STRUCT_HANDLERS = {
     decl.class_t:           lambda f: f.get_members(),
-    decl.typedef_t:         lambda t: t.type.declaration.get_members(),
+    decl.typedef_t:         lambda t: t.decl_type.base.declaration.get_members(),
 }
 
 def _get_structspec(struct):
@@ -146,12 +146,12 @@ def _get_structspec(struct):
     members = [m for m in struct_members if isinstance(m, decl.variable_t)]
     struct_spec = []
     for member in members:
-        struct_spec.append((member.name, _get_ictype(member.type)))
+        struct_spec.append((member.name, _get_ictype(member.decl_type)))
     return struct.name, tuple(struct_spec)
 
 @_combine_calls
 def get_structspecs(structs):
-    return map(_get_structspec, structs)
+    return list(map(_get_structspec, structs))
     
 
 #==========================================================================

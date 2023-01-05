@@ -20,7 +20,7 @@ def read(*args):
 def read_lines(*args):
     f = open(os.path.join(*args))
     try:
-        return filter(None, [l.split('#')[0].strip() for l in f.readlines()])
+        return list(filter(None, [l.split('#')[0].strip() for l in f.readlines()]))
     finally:
         f.close()
 
@@ -43,7 +43,7 @@ def read_cols(dir_, name, cols):
     columns = cols.split()
     def extract(line):
         return dict(zip(columns, _forever_split(line)))
-    return map(extract, read_lines(dir_, name))
+    return list(map(extract, read_lines(dir_, name)))
 
 
 #===============================================================================
@@ -62,7 +62,7 @@ def read_args_kwargs(dir_, name, argcount, context=None):
         args = args_kwargs[:argcount]
         kwargs = _eval_kwargs_column(args_kwargs[argcount:], context)
         return args, kwargs
-    return map(_get_args_kwargs, read_lines(dir_, name))
+    return list(map(_get_args_kwargs, read_lines(dir_, name)))
 
 
 #===============================================================================
@@ -71,21 +71,21 @@ def read_args_kwargs(dir_, name, argcount, context=None):
 def _ignore_gccxml_settings(f):
     # we only care about reading, not generating
     def g(*args, **kwargs):
-        from pygccxml.parser.config import gccxml_configuration_t
-        orig = gccxml_configuration_t.raise_on_wrong_settings
-        gccxml_configuration_t.raise_on_wrong_settings = lambda _: None
+        from pygccxml.parser.config import xml_generator_configuration_t
+        orig = xml_generator_configuration_t.raise_on_wrong_settings
+        xml_generator_configuration_t.raise_on_wrong_settings = lambda _: None
         try:
             return f(*args, **kwargs)
         finally:
-            gccxml_configuration_t.raise_on_wrong_settings = orig
+            xml_generator_configuration_t.raise_on_wrong_settings = orig
     return g
 
 @_ignore_gccxml_settings
 def read_gccxml(*args):
     path = os.path.join(*args)
-    from pygccxml.parser.config import gccxml_configuration_t
+    from pygccxml.parser.config import xml_generator_configuration_t
     from pygccxml.parser.source_reader import source_reader_t
-    return source_reader_t(gccxml_configuration_t()).read_xml_file(path)[0]
+    return source_reader_t(xml_generator_configuration_t()).read_xml_file(path)[0]
 
 
 #==========================================================================

@@ -1,3 +1,4 @@
+import functools
 
 from tools.utils.codegen import CodeGenerator
 from tools.utils.delegatesgen import DelegatesGenerator
@@ -42,7 +43,7 @@ class ApiPlumbingGenerator(CodeGenerator):
 
     def run(self, inputs):
         run = lambda g: g.run(inputs)
-        return reduce(_merge_dicts, map(run, self.subgens), {})
+        return functools.reduce(_merge_dicts, map(run, self.subgens), {})
 
 
 #==========================================================================

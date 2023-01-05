@@ -10,7 +10,8 @@ from tools.utils.ictypes import ICTYPE_2_MGDTYPE
 
 #==========================================================================
 
-def _native_argname((index, ictype)):
+def _native_argname(index_ictype):
+    (index, ictype) = index_ictype
     return {'obj': 'ptr%d'}.get(ictype, 'arg%d') % index
 
 _SPECIAL_ARGS = {
@@ -20,7 +21,7 @@ _SPECIAL_ARGS = {
 
 def _tweak_args(base_mgd_args, arg_tweak=None):
     if arg_tweak is None:
-        return base_mgd_args, map(_native_argname, enumerate(base_mgd_args))
+        return base_mgd_args, list(map(_native_argname, enumerate(base_mgd_args)))
     
     mgd_arg_count = len([a for a in arg_tweak if a not in _SPECIAL_ARGS])
     mgd_args = [None] * mgd_arg_count

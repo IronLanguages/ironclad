@@ -53,7 +53,7 @@ class MetaImporter(object):
             return
         
         self.patched_for_h5py = True
-        print 'ironclad: detected h5py, patching out sys.getfilesystemencoding'
+        print('ironclad: detected h5py, patching out sys.getfilesystemencoding')
         
         def getutf8():
             return 'utf-8'

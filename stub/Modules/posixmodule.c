@@ -220,7 +220,7 @@ extern char *getcwd(char *, int);
 extern char *strerror(int);
 extern int link(const char *, const char *);
 extern int rename(const char *, const char *);
-extern int stat(const char *, struct stat *);
+//extern int stat(const char *, struct stat *);
 extern int unlink(const char *);
 extern int pclose(FILE *);
 #ifdef HAVE_SYMLINK

@@ -30,7 +30,7 @@ def _unstring_mgd_api_functions(mgd_api_functions, unstring_names):
     for (name, spec) in mgd_api_functions:
         if name in unstring_names:
             tweaked[name] = spec.unstringed
-    return tweaked.items()
+    return list(tweaked.items())
 
 
 #==========================================================================

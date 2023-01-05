@@ -19,7 +19,7 @@ def _choose_best_name(equivalents, priority):
     return sorted(equivalents)[0]
 
 def _get_equivalent_key_mapping(d, priority=''):
-    equivalent_keys = _invert_dict(d).values()
+    equivalent_keys = list(_invert_dict(d).values())
     priorities = priority.split()
     result = {}
     for keys in equivalent_keys:

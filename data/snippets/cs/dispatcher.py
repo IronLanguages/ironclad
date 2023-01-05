@@ -1,5 +1,5 @@
 
-from common import FILE_TEMPLATE
+from .common import FILE_TEMPLATE
 
 #================================================================================================
 
@@ -90,7 +90,7 @@ TRANSLATE_OBJ_TEMPLATE = """\
 
 TRANSLATE_NULLABLE_KWARGS_TEMPLATE = """\
                 IntPtr ptr%(index)d = IntPtr.Zero;
-                if (Builtin.len(arg%(index)d) > 0)
+                if ((int)Builtin.len(arg%(index)d) > 0)
                 {
                     ptr%(index)d = this.mapper.Store(arg%(index)d);
                 }"""
