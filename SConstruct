@@ -47,10 +47,12 @@ if WIN32:
     
     ASFLAGS = '-f win32'
     CSC = r'C:\windows\Microsoft.NET\Framework\v4.0.30319\csc.exe'
-    CSC_CMD = '$CSC '
+    CSC_CMD = 'dotnet build '
     if mode == 'debug':
-        CSC_CMD += '/debug '
-    CSC_CMD += '/nologo /out:$TARGET /t:library $REFERENCES $SOURCES'
+        CSC_CMD += '--configuration Debug '
+    else:
+        CSC_CMD += '--configuration Release '
+    CSC_CMD += '--nologo --output build/ironclad src/Ironclad.csproj'
     CASTXML = r'castxml'
 
     # standard location
@@ -210,10 +212,7 @@ if WIN32:
 # This section builds the CLR part
 #===============================================================================
 managed = Environment(ENV=env_with_ippath, CSC=CSC, CPYTHON=CPYTHON, **COMMON)
-ipy_dlls = 'IronPython IronPython.Modules Microsoft.Dynamic Microsoft.Scripting'
-ipy_refs = ' '.join(submap(IPY_REF_TEMPLATE, ipy_dlls))
-numeric_ref = r'/r:"c:\Windows\Microsoft.NET\Framework\v4.0.30319\System.Numerics.dll"'
-managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX, REFERENCES=ipy_refs + ' ' + numeric_ref)
+managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX)
 
 #===============================================================================
 # Generated C#
