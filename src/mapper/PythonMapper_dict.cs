@@ -34,13 +34,13 @@ namespace Ironclad
             PyObject dict = new PyObject();
             dict.ob_refcnt = 1;
             dict.ob_type = this.PyDict_Type;
-            IntPtr dictPtr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyObject)));
+            IntPtr dictPtr = this.allocator.Alloc(Marshal.SizeOf<PyObject>());
             Marshal.StructureToPtr(dict, dictPtr, false);
             this.map.Associate(dictPtr, dictMgd);
             return dictPtr;
         }
         
-        public override int
+        public override nint
         PyDict_Size(IntPtr dictPtr)
         {
             IDictionary dict = (IDictionary)this.Retrieve(dictPtr);

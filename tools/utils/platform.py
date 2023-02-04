@@ -25,8 +25,8 @@ if TARGET_PLATFORM == 'ironpython' and SOURCE_PLATFORM == 'win32':
         'ulong':        'uint',
         'llong':        'long',
         'ullong':       'ulong',
-        'size':         'uint',
-        'ssize':        'int',
+        'size':         'nuint',
+        'ssize':        'nint',
         'double':       'double',
         'cpx':          'Py_complex',
     }

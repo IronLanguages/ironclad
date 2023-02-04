@@ -34,11 +34,11 @@ namespace Ironclad
         private IntPtr
         StoreTyped(Method meth)
         {
-            uint size = (uint)Marshal.SizeOf(typeof(PyMethodObject));
+            int size = Marshal.SizeOf<PyMethodObject>();
             IntPtr methPtr = this.allocator.Alloc(size);
             CPyMarshal.Zero(methPtr, size);
             
-            CPyMarshal.WriteIntField(methPtr, typeof(PyMethodObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), "ob_type", this.PyMethod_Type);
             CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), "im_func", this.Store(meth.im_func));
             CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), "im_self", this.Store(meth.im_self));
@@ -56,9 +56,7 @@ namespace Ironclad
             this.DecRef(CPyMarshal.ReadPtrField(objPtr, typeof(PyMethodObject), "im_class"));
             
             IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
-            dgt_void_ptr freeDgt = (dgt_void_ptr)
-                CPyMarshal.ReadFunctionPtrField(
-                    objType, typeof(PyTypeObject), "tp_free", typeof(dgt_void_ptr));
+            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(objType, typeof(PyTypeObject), "tp_free");
             freeDgt(objPtr);
         }
     }

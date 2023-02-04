@@ -530,13 +530,13 @@ class NewInitFunctionsTest(TestCase):
         typeObjSize = Marshal.SizeOf(PyTypeObject())
         typePtr = Marshal.AllocHGlobal(typeObjSize)
         CPyMarshal.Zero(typePtr, typeObjSize)
-        CPyMarshal.WriteIntField(typePtr, PyTypeObject, "tp_basicsize", 31337)
+        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_basicsize", 31337)
         
         del allocs[:]
         objPtr = mapper._PyObject_New(typePtr)
         self.assertEquals(allocs, [(objPtr, 31337)])
         self.assertEquals(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_type'), typePtr)
-        self.assertEquals(CPyMarshal.ReadIntField(objPtr, PyObject, 'ob_refcnt'), 1)
+        self.assertEquals(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_refcnt'), 1)
         self.assertEquals(mapper.HasPtr(objPtr), False)
         
         mapper.Dispose()
@@ -552,14 +552,14 @@ class NewInitFunctionsTest(TestCase):
         typeObjSize = Marshal.SizeOf(PyTypeObject())
         typePtr = Marshal.AllocHGlobal(typeObjSize)
         CPyMarshal.Zero(typePtr, typeObjSize)
-        CPyMarshal.WriteIntField(typePtr, PyTypeObject, "tp_basicsize", 31337)
-        CPyMarshal.WriteIntField(typePtr, PyTypeObject, "tp_itemsize", 1337)
+        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_basicsize", 31337)
+        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_itemsize", 1337)
         
         del allocs[:]
-        objPtr = mapper._PyObject_NewVar(typePtr, 123)
+        objPtr = mapper._PyObject_NewVar(typePtr, IntPtr(123))
         self.assertEquals(allocs, [(objPtr, 31337 + (1337 * 123))])
         self.assertEquals(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_type'), typePtr)
-        self.assertEquals(CPyMarshal.ReadIntField(objPtr, PyObject, 'ob_refcnt'), 1)
+        self.assertEquals(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_refcnt'), 1)
         self.assertEquals(mapper.HasPtr(objPtr), False)
         
         mapper.Dispose()

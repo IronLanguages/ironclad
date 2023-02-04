@@ -5,8 +5,8 @@
 
 
 PyInt_FromLong                  int 
-PyInt_FromSize_t                uint
-PyInt_FromSsize_t               int
+PyInt_FromSize_t                nuint           (uint)
+PyInt_FromSsize_t               nint            (int)
 PyLong_FromDouble               double          (BigInteger)
 PyLong_FromLong                 int             (BigInteger)
 PyLong_FromLongLong             long            (BigInteger)

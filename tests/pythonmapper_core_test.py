@@ -252,7 +252,7 @@ class PythonMapper_References_Test(TestCase):
         deallocTypes = CreateTypes(mapper)
 
         # need to use same allocator as mapper, otherwise it gets upset on shutdown
-        objPtr = allocator.Alloc(Marshal.SizeOf(PyObject()))
+        objPtr = allocator.Alloc(IntPtr(Marshal.SizeOf(PyObject())))
         CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 0)
         CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", mapper.PyBaseObject_Type)
         mapper.StoreBridge(objPtr, object())
@@ -313,7 +313,7 @@ class PythonMapper_References_Test(TestCase):
         mapper = PythonMapper(allocator)
         deallocTypes = CreateTypes(mapper)
         # need to use same allocator as mapper, otherwise it gets upset on shutdown
-        ptr = allocator.Alloc(Marshal.SizeOf(PyObject()))
+        ptr = allocator.Alloc(IntPtr(Marshal.SizeOf(PyObject())))
         
         try:
             def do():
@@ -356,7 +356,7 @@ class PythonMapper_References_Test(TestCase):
         deallocTypes = CreateTypes(mapper)
 
         # need to use same allocator as mapper, otherwise it gets upset on shutdown
-        ptr = allocator.Alloc(Marshal.SizeOf(PyObject()))
+        ptr = allocator.Alloc(IntPtr(Marshal.SizeOf(PyObject())))
         
         try:
             def do1():
@@ -401,7 +401,7 @@ class PythonMapper_References_Test(TestCase):
             obj = object()
             ref = WeakReference(obj)
             # need to use same allocator as mapper, otherwise it gets upset on shutdown
-            ptr = allocator.Alloc(Marshal.SizeOf(PyObject()))
+            ptr = allocator.Alloc(IntPtr(Marshal.SizeOf(PyObject())))
             CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 2)
             CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
             mapper.StoreBridge(ptr, obj)

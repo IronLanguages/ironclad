@@ -99,9 +99,9 @@ namespace Ironclad
         private IntPtr
         StoreTyped(PythonFile obj)
         {
-            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyFileObject)));
-            CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyFileObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyFileObject>());
+            CPyMarshal.Zero(ptr, Marshal.SizeOf<PyFileObject>());
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyFile_Type);
             CPyMarshal.WriteIntField(ptr, typeof(PyFileObject), "f_fp", -2);
             CPyMarshal.WritePtrField(ptr, typeof(PyFileObject), "f_name", this.Store(obj.name));
@@ -119,9 +119,7 @@ namespace Ironclad
                 this.FILEs.Remove(ptr);
             }
             IntPtr _type = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
-            dgt_void_ptr freeDgt = (dgt_void_ptr)
-                CPyMarshal.ReadFunctionPtrField(
-                    _type, typeof(PyTypeObject), "tp_free", typeof(dgt_void_ptr));
+            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(_type, typeof(PyTypeObject), "tp_free");
             freeDgt(ptr);
         }
         

@@ -12,10 +12,10 @@ namespace Ironclad
         private IntPtr
         StoreTyped(PythonFunction func)
         {
-            uint size = (uint)Marshal.SizeOf(typeof(PyFunctionObject));
+            int size = Marshal.SizeOf<PyFunctionObject>();
             IntPtr ptr = this.allocator.Alloc(size);
             CPyMarshal.Zero(ptr, size);
-            CPyMarshal.WriteIntField(ptr, typeof(PyIntObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), "ob_type", this.PyFunction_Type);
             this.map.Associate(ptr, func);
             return ptr;

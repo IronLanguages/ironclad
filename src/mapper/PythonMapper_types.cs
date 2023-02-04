@@ -20,29 +20,28 @@ namespace Ironclad
         public override IntPtr 
         PyType_GenericNew(IntPtr typePtr, IntPtr args, IntPtr kwargs)
         {
-            dgt_ptr_ptrint dgt = (dgt_ptr_ptrint)CPyMarshal.ReadFunctionPtrField(
-                typePtr, typeof(PyTypeObject), "tp_alloc", typeof(dgt_ptr_ptrint));
+            dgt_ptr_ptrssize dgt = CPyMarshal.ReadFunctionPtrField<dgt_ptr_ptrssize>(typePtr, typeof(PyTypeObject), "tp_alloc");
             return dgt(typePtr, 0);
         }
         
         public override IntPtr 
-        PyType_GenericAlloc(IntPtr typePtr, int nItems)
+        PyType_GenericAlloc(IntPtr typePtr, nint nItems)
         {
-            int size = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
+            nint size = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_basicsize");
             if (nItems > 0)
             {
-                int itemsize = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_itemsize");
+                nint itemsize = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_itemsize");
                 size += (nItems * itemsize);
             }
             
-            IntPtr newInstance = this.allocator.Alloc((uint)size);
+            IntPtr newInstance = this.allocator.Alloc(size);
             CPyMarshal.Zero(newInstance, size);
-            CPyMarshal.WriteUIntField(newInstance, typeof(PyObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(newInstance, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(newInstance, typeof(PyObject), "ob_type", typePtr);
 
             if (nItems > 0)
             {
-                CPyMarshal.WriteIntField(newInstance, typeof(PyVarObject), "ob_size", nItems);
+                CPyMarshal.WritePtrField(newInstance, typeof(PyVarObject), "ob_size", nItems);
             }
 
             return newInstance;
@@ -116,8 +115,8 @@ namespace Ironclad
             this.InheritPtrField(typePtr, "tp_as_sequence");
             this.InheritPtrField(typePtr, "tp_as_mapping");
             this.InheritPtrField(typePtr, "tp_as_buffer");
-            this.InheritIntField(typePtr, "tp_basicsize");
-            this.InheritIntField(typePtr, "tp_itemsize");
+            this.InheritPtrField(typePtr, "tp_basicsize");
+            this.InheritPtrField(typePtr, "tp_itemsize");
 
             if (!this.HasPtr(typePtr))
             {
@@ -265,11 +264,11 @@ namespace Ironclad
         private IntPtr
         StoreTyped(PythonType _type)
         {
-            uint typeSize = (uint)Marshal.SizeOf(typeof(PyTypeObject));
+            int typeSize = Marshal.SizeOf<PyTypeObject>();
             IntPtr typePtr = this.allocator.Alloc(typeSize);
             CPyMarshal.Zero(typePtr, typeSize);
             
-            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "ob_refcnt", 2);
+            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_refcnt", 2);
 
             object ob_type = PythonCalls.Call(this.scratchContext, Builtin.type, new object[] { _type });
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.Store(ob_type));
@@ -299,11 +298,11 @@ namespace Ironclad
         private IntPtr
         StoreTyped(OldClass cls)
         {
-            uint size = (uint)Marshal.SizeOf(typeof(PyClassObject));
+            int size = Marshal.SizeOf<PyClassObject>();
             IntPtr ptr = this.allocator.Alloc(size);
             CPyMarshal.Zero(ptr, size);
             
-            CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 2); // leak classes deliberately
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_refcnt", 2); // leak classes deliberately
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyClass_Type);
             
             CPyMarshal.WritePtrField(ptr, typeof(PyClassObject), "cl_bases", 
@@ -320,11 +319,11 @@ namespace Ironclad
         private IntPtr
         StoreTyped(OldInstance inst)
         {
-            uint size = (uint)Marshal.SizeOf(typeof(PyInstanceObject));
+            int size = Marshal.SizeOf<PyInstanceObject>();
             IntPtr ptr = this.allocator.Alloc(size);
             CPyMarshal.Zero(ptr, size);
             
-            CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyInstance_Type);
 
             CPyMarshal.WritePtrField(ptr, typeof(PyInstanceObject), "in_class", 

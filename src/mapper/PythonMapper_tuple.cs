@@ -11,9 +11,9 @@ namespace Ironclad
     public partial class PythonMapper : PythonApi
     {
         public override IntPtr
-        PyTuple_New(int size)
+        PyTuple_New(nint size)
         {
-            IntPtr tuplePtr = this.CreateTuple(size);
+            IntPtr tuplePtr = this.CreateTuple(checked((int)size));
             this.incompleteObjects[tuplePtr] = UnmanagedDataMarker.PyTupleObject;
             return tuplePtr;
         }
@@ -21,10 +21,10 @@ namespace Ironclad
         public override void 
         IC_PyTuple_Dealloc(IntPtr tuplePtr)
         {
-            int length = CPyMarshal.ReadIntField(tuplePtr, typeof(PyTupleObject), "ob_size");
+            nint length = CPyMarshal.ReadPtrField(tuplePtr, typeof(PyTupleObject), "ob_size");
             IntPtr itemsPtr = CPyMarshal.Offset(
                 tuplePtr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
-            for (int i = 0; i < length; i++)
+            for (nint i = 0; i < length; i++)
             {
                 IntPtr itemPtr = CPyMarshal.ReadPtr(
                     CPyMarshal.Offset(
@@ -34,14 +34,12 @@ namespace Ironclad
                     this.DecRef(itemPtr);
                 }
             }
-            dgt_void_ptr freeDgt = (dgt_void_ptr)
-                CPyMarshal.ReadFunctionPtrField(
-                    this.PyTuple_Type, typeof(PyTypeObject), "tp_free", typeof(dgt_void_ptr));
+            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(this.PyTuple_Type, typeof(PyTypeObject), "tp_free");
             freeDgt(tuplePtr);
         }
         
         public override int
-        _PyTuple_Resize(IntPtr tuplePtrPtr, int length)
+        _PyTuple_Resize(IntPtr tuplePtrPtr, nint length)
         {
             // note: make sure you don't actualise this
             try
@@ -49,9 +47,9 @@ namespace Ironclad
                 IntPtr tuplePtr = CPyMarshal.ReadPtr(tuplePtrPtr);
                 this.incompleteObjects.Remove(tuplePtr);
                 
-                uint newSize = (uint)Marshal.SizeOf(typeof(PyTupleObject)) + (uint)(CPyMarshal.PtrSize * (length - 1));
+                nint newSize = (nint)Marshal.SizeOf<PyTupleObject>() + (CPyMarshal.PtrSize * (length - 1));
                 tuplePtr = this.allocator.Realloc(tuplePtr, newSize);
-                CPyMarshal.WriteIntField(tuplePtr, typeof(PyTupleObject), "ob_size", length);
+                CPyMarshal.WritePtrField(tuplePtr, typeof(PyTupleObject), "ob_size", length);
                 this.incompleteObjects[tuplePtr] = UnmanagedDataMarker.PyTupleObject;
                 CPyMarshal.WritePtr(tuplePtrPtr, tuplePtr);
                 return 0;
@@ -64,19 +62,19 @@ namespace Ironclad
             }
         }
         
-        public override int
+        public override nint
         PyTuple_Size(IntPtr tuplePtr)
         {
-            return CPyMarshal.ReadIntField(tuplePtr, typeof(PyTupleObject), "ob_size");
+            return CPyMarshal.ReadPtrField(tuplePtr, typeof(PyTupleObject), "ob_size");
         }
         
         public override IntPtr
-        PyTuple_GetSlice(IntPtr tuplePtr, int start, int stop)
+        PyTuple_GetSlice(IntPtr tuplePtr, nint start, nint stop)
         {
             try
             {
                 PythonTuple tuple = (PythonTuple)this.Retrieve(tuplePtr);
-                PythonTuple sliced = (PythonTuple)tuple[new Slice(start, stop)];
+                PythonTuple sliced = (PythonTuple)tuple[new Slice(checked((int)start), checked((int)stop))];
                 return this.Store(sliced);
             }
             catch (Exception e)
@@ -94,9 +92,9 @@ namespace Ironclad
             tuple.ob_type = this.PyTuple_Type;
             tuple.ob_size = size;
 
-            int baseSize = Marshal.SizeOf(typeof(PyTupleObject));
+            int baseSize = Marshal.SizeOf<PyTupleObject>();
             int extraSize = (CPyMarshal.PtrSize * (size - 1));
-            IntPtr tuplePtr = this.allocator.Alloc((uint)(baseSize + extraSize));
+            IntPtr tuplePtr = this.allocator.Alloc(baseSize + extraSize);
             Marshal.StructureToPtr(tuple, tuplePtr, false);
 
             IntPtr itemsPtr = CPyMarshal.Offset(
@@ -124,7 +122,7 @@ namespace Ironclad
         private void
         ActualiseTuple(IntPtr ptr)
         {
-            int itemCount = CPyMarshal.ReadIntField(ptr, typeof(PyTupleObject), "ob_size");
+            nint itemCount = CPyMarshal.ReadPtrField(ptr, typeof(PyTupleObject), "ob_size");
             IntPtr itemAddressPtr = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
 
             object[] items = new object[itemCount];

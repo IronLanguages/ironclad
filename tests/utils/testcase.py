@@ -76,3 +76,18 @@ class TestCase(unittest.TestCase):
                 raise cm.exception
         except TestCase.failureException:
             raise self.failureException("{0} not raised".format(ClrException))
+
+    def assertEqual(self, first, second, msg=None):
+        if isinstance(first, System.IntPtr): first = first.ToInt64()
+        if isinstance(second, System.IntPtr): second = second.ToInt64()
+        if isinstance(first, System.UIntPtr): first = first.ToUInt64()
+        if isinstance(second, System.UIntPtr): second = second.ToUInt64()
+        if type(first) is type(second) and isinstance(first, (tuple, list)):
+            for i in range(len(first)):
+                self.assertEqual(first[i], second[i], msg)
+            return
+
+        super(TestCase, self).assertEqual(first, second, msg)
+
+    def assertEquals(self, first, second, msg=None):
+        self.assertEqual(first, second, msg)

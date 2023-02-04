@@ -139,7 +139,7 @@ namespace Ironclad
                         tablePrefix, name, thisMethod.ml_flags);
                 }
 
-                methodPtr = CPyMarshal.Offset(methodPtr, Marshal.SizeOf(typeof(PyMethodDef)));
+                methodPtr = CPyMarshal.Offset(methodPtr, Marshal.SizeOf<PyMethodDef>());
             }
         }
     }

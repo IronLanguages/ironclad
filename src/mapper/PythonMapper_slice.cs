@@ -12,8 +12,8 @@ namespace Ironclad
         private IntPtr
         StoreTyped(Slice slice)
         {
-            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PySliceObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PySliceObject), "ob_refcnt", 1);
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PySliceObject>());
+            CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), "ob_type", this.PySlice_Type);
             CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), "start", this.Store(slice.start));
             CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), "stop", this.Store(slice.stop));
@@ -29,9 +29,7 @@ namespace Ironclad
             this.DecRef(CPyMarshal.ReadPtrField(slicePtr, typeof(PySliceObject), "stop"));
             this.DecRef(CPyMarshal.ReadPtrField(slicePtr, typeof(PySliceObject), "step"));
 
-            dgt_void_ptr freeDgt = (dgt_void_ptr)
-                CPyMarshal.ReadFunctionPtrField(
-                    this.PySlice_Type, typeof(PyTypeObject), "tp_free", typeof(dgt_void_ptr));
+            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(this.PySlice_Type, typeof(PyTypeObject), "tp_free");
             freeDgt(slicePtr);
         }
 

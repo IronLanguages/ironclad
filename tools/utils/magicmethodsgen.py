@@ -15,7 +15,8 @@ def _generate_template(template2, functype, inargs, callargs):
 
 def _generate_normal_template(template2, functype, inargs):
     args = ['_%d' % i for i in range(len(inargs))]
-    return _generate_template(template2, functype, args, args)
+    callargs = [('IntPtr(_%d)' if arg == 'ssize' else '_%d') % i for i, arg in enumerate(inargs)]
+    return _generate_template(template2, functype, args, callargs)
 
 def _generate_swapped_template(template2, functype, inargs):
     args = ['_%d' % i for i in range(len(inargs))]

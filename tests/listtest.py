@@ -116,7 +116,7 @@ class ListFunctionsTest(TestCase):
         deallocTypes = CreateTypes(mapper)
         
         del allocs[:]
-        listPtr = mapper.PyList_New(0)
+        listPtr = mapper.PyList_New(IntPtr(0))
         self.assertEquals(allocs, [(listPtr, Marshal.SizeOf(PyListObject()))], "bad alloc")
 
         listStruct = PtrToStructure(listPtr, PyListObject)
@@ -138,7 +138,7 @@ class ListFunctionsTest(TestCase):
         del allocs[:]
         
         SIZE = 27
-        listPtr = mapper.PyList_New(SIZE)
+        listPtr = mapper.PyList_New(IntPtr(SIZE))
         
         listStruct = PtrToStructure(listPtr, PyListObject)
         self.assertEquals(listStruct.ob_refcnt, 1, "bad refcount")
@@ -150,7 +150,7 @@ class ListFunctionsTest(TestCase):
         self.assertNotEquals(dataPtr, IntPtr.Zero, "failed to allocate space for data")
         
         expectedAllocs = [(dataPtr, (SIZE * CPyMarshal.PtrSize)), (listPtr, Marshal.SizeOf(PyListObject()))]
-        self.assertEquals(set(allocs), set(expectedAllocs), "allocated wrong")
+        self.assertEquals(allocs, expectedAllocs, "allocated wrong")
         
         for _ in range(SIZE):
             self.assertEquals(CPyMarshal.ReadPtr(dataPtr), IntPtr.Zero, "failed to zero memory")
@@ -167,7 +167,7 @@ class ListFunctionsTest(TestCase):
         deallocTypes = CreateTypes(mapper)
         
         del allocs[:]
-        listPtr = mapper.PyList_New(0)
+        listPtr = mapper.PyList_New(IntPtr(0))
         self.assertEquals(allocs, [(listPtr, Marshal.SizeOf(PyListObject()))], "bad alloc")
 
         item1 = object()
@@ -215,26 +215,26 @@ class ListFunctionsTest(TestCase):
         
     @WithMapper
     def testPyList_SetItem_RefCounting(self, mapper, _):
-        listPtr = mapper.PyList_New(4)
+        listPtr = mapper.PyList_New(IntPtr(4))
         itemPtr1 = mapper.Store(object())
         itemPtr2 = mapper.Store(object())
         
-        self.assertEquals(mapper.PyList_SetItem(listPtr, 0, itemPtr1), 0, "returned error code")
+        self.assertEquals(mapper.PyList_SetItem(listPtr, IntPtr(0), itemPtr1), 0, "returned error code")
         self.assertEquals(mapper.RefCount(itemPtr1), 1, "reference count wrong")
         
         mapper.IncRef(itemPtr1) # reference was stolen a couple of lines ago
-        self.assertEquals(mapper.PyList_SetItem(listPtr, 0, itemPtr2), 0, "returned error code")
+        self.assertEquals(mapper.PyList_SetItem(listPtr, IntPtr(0), itemPtr2), 0, "returned error code")
         self.assertEquals(mapper.RefCount(itemPtr1), 1, "failed to decref replacee")
         self.assertEquals(mapper.RefCount(itemPtr2), 1, "reference count wrong")
         
         mapper.IncRef(itemPtr2) # reference was stolen a couple of lines ago
-        self.assertEquals(mapper.PyList_SetItem(listPtr, 0, IntPtr.Zero), 0, "returned error code")
+        self.assertEquals(mapper.PyList_SetItem(listPtr, IntPtr(0), IntPtr.Zero), 0, "returned error code")
         self.assertEquals(mapper.RefCount(itemPtr2), 1, "failed to decref replacee")
 
 
     @WithMapper
     def testPyList_SetItem_CompleteList(self, mapper, _):
-        listPtr = mapper.PyList_New(4)
+        listPtr = mapper.PyList_New(IntPtr(4))
         item1 = object()
         item2 = object()
         itemPtr1 = mapper.Store(item1)
@@ -242,10 +242,10 @@ class ListFunctionsTest(TestCase):
         mapper.IncRef(itemPtr1)
         mapper.IncRef(itemPtr2)
         
-        mapper.PyList_SetItem(listPtr, 0, itemPtr1)
-        mapper.PyList_SetItem(listPtr, 1, itemPtr2)
-        mapper.PyList_SetItem(listPtr, 2, itemPtr1)
-        mapper.PyList_SetItem(listPtr, 3, itemPtr2)
+        mapper.PyList_SetItem(listPtr, IntPtr(0), itemPtr1)
+        mapper.PyList_SetItem(listPtr, IntPtr(1), itemPtr2)
+        mapper.PyList_SetItem(listPtr, IntPtr(2), itemPtr1)
+        mapper.PyList_SetItem(listPtr, IntPtr(3), itemPtr2)
         
         self.assertEquals(mapper.Retrieve(listPtr), [item1, item2, item1, item2], "lists not synchronised")
 
@@ -253,18 +253,18 @@ class ListFunctionsTest(TestCase):
     @WithMapper
     def testPyList_SetItem_Failures(self, mapper, _):
         objPtr = mapper.Store(object())
-        listPtr = mapper.PyList_New(4)
+        listPtr = mapper.PyList_New(IntPtr(4))
         
         mapper.IncRef(objPtr) # failing PyList_SetItem will still steal a reference
-        self.assertEquals(mapper.PyList_SetItem(objPtr, 1, objPtr), -1, "did not detect non-list")
+        self.assertEquals(mapper.PyList_SetItem(objPtr, IntPtr(1), objPtr), -1, "did not detect non-list")
         self.assertEquals(mapper.RefCount(objPtr), 1, "reference not stolen")
         
         mapper.IncRef(objPtr)
-        self.assertEquals(mapper.PyList_SetItem(listPtr, 4, objPtr), -1, "did not detect set outside bounds")
+        self.assertEquals(mapper.PyList_SetItem(listPtr, IntPtr(4), objPtr), -1, "did not detect set outside bounds")
         self.assertEquals(mapper.RefCount(objPtr), 1, "reference not stolen")
         
         mapper.IncRef(objPtr)
-        self.assertEquals(mapper.PyList_SetItem(IntPtr.Zero, 1, objPtr), -1, "did not detect null list")
+        self.assertEquals(mapper.PyList_SetItem(IntPtr.Zero, IntPtr(1), objPtr), -1, "did not detect null list")
         self.assertEquals(mapper.RefCount(objPtr), 1, "reference not stolen")
     
         # list still contains uninitialised values
@@ -277,15 +277,15 @@ class ListFunctionsTest(TestCase):
         itemPtr = mapper.Store(item)
         listPtr = mapper.Store([1, 2, 3])
         
-        self.assertEquals(mapper.PyList_SetItem(listPtr, 1, itemPtr), 0, "did not report success")
+        self.assertEquals(mapper.PyList_SetItem(listPtr, IntPtr(1), itemPtr), 0, "did not report success")
         self.assertEquals(mapper.Retrieve(listPtr), [1, item, 3])
 
 
     @WithMapper
     def testRetrieveListContainingItself(self, mapper, _):
-        listPtr = mapper.PyList_New(1)
+        listPtr = mapper.PyList_New(IntPtr(1))
         
-        mapper.PyList_SetItem(listPtr, 0, listPtr)
+        mapper.PyList_SetItem(listPtr, IntPtr(0), listPtr)
         self.assertEquals(mapper.RefCount(listPtr), 1, "list should be the only thing owning a reference to it")
         realList = mapper.Retrieve(listPtr)
         self.assertEquals(len(realList), 1, "wrong size list")
@@ -295,13 +295,13 @@ class ListFunctionsTest(TestCase):
 
     @WithMapper
     def testRetrieveListContainingItselfIndirectly(self, mapper, _):
-        listPtr1 = mapper.PyList_New(1)
-        listPtr2 = mapper.PyList_New(1)
-        listPtr3 = mapper.PyList_New(1)
+        listPtr1 = mapper.PyList_New(IntPtr(1))
+        listPtr2 = mapper.PyList_New(IntPtr(1))
+        listPtr3 = mapper.PyList_New(IntPtr(1))
         
-        mapper.PyList_SetItem(listPtr1, 0, listPtr2)
-        mapper.PyList_SetItem(listPtr2, 0, listPtr3)
-        mapper.PyList_SetItem(listPtr3, 0, listPtr1)
+        mapper.PyList_SetItem(listPtr1, IntPtr(0), listPtr2)
+        mapper.PyList_SetItem(listPtr2, IntPtr(0), listPtr3)
+        mapper.PyList_SetItem(listPtr3, IntPtr(0), listPtr1)
         
         realList1 = mapper.Retrieve(listPtr1)
         realList2 = mapper.Retrieve(listPtr2)
@@ -326,7 +326,7 @@ class ListFunctionsTest(TestCase):
         itemPtr1 = mapper.Store(item1)
         itemPtr2 = mapper.Store(item2)
         
-        listPtr = mapper.PyList_New(0)
+        listPtr = mapper.PyList_New(IntPtr(0))
         
         mapper.PyList_Append(listPtr, itemPtr1)
         mapper.PyList_Append(listPtr, itemPtr2)
@@ -351,7 +351,7 @@ class ListFunctionsTest(TestCase):
     def testPyList_GetSlice(self, mapper, _):
         # this will fail badly when we fix API signednesses
         def TestSlice(originalListPtr, start, stop):
-            newListPtr = mapper.PyList_GetSlice(originalListPtr, start, stop)
+            newListPtr = mapper.PyList_GetSlice(originalListPtr, IntPtr(start), IntPtr(stop))
             self.assertMapperHasError(mapper, None)
             self.assertEquals(mapper.Retrieve(newListPtr), mapper.Retrieve(originalListPtr)[start:stop], "bad slice")
             mapper.DecRef(newListPtr)
@@ -366,7 +366,7 @@ class ListFunctionsTest(TestCase):
          
     @WithMapper
     def testPyList_GetSlice_error(self, mapper, _):
-        self.assertEquals(mapper.PyList_GetSlice(mapper.Store(object()), 1, 2), IntPtr.Zero)
+        self.assertEquals(mapper.PyList_GetSlice(mapper.Store(object()), IntPtr(1), IntPtr(2)), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
         
         
@@ -374,11 +374,11 @@ class ListFunctionsTest(TestCase):
     def testPyList_GetItem(self, mapper, _):
         listPtr = mapper.Store([1, 2, 3])
         for i in range(3):
-            result = mapper.Retrieve(mapper.PyList_GetItem(listPtr, i))
+            result = mapper.Retrieve(mapper.PyList_GetItem(listPtr, IntPtr(i)))
             self.assertEquals(result, i + 1)
         
         notListPtr = mapper.Store(object())
-        self.assertEquals(mapper.PyList_GetItem(notListPtr, 0), IntPtr.Zero)
+        self.assertEquals(mapper.PyList_GetItem(notListPtr, IntPtr(0)), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
     
     

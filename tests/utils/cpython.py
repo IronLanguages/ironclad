@@ -96,12 +96,12 @@ def GetMapperTypePtrDefaults(mapper):
         "tp_free": mapper.PyObject_Free,
     }
 
-PTR_ARGS = ("ob_type", "tp_base", "tp_bases", "tp_as_number", "tp_as_sequence", "tp_as_mapping")
-INT_ARGS = ("ob_refcnt", "tp_basicsize", "tp_itemsize", "tp_flags")
+PTR_ARGS = ("ob_refcnt", "ob_type", "tp_basicsize", "tp_itemsize", "tp_base", "tp_bases", "tp_as_number", "tp_as_sequence", "tp_as_mapping")
+INT_ARGS = ("tp_flags")
 STRING_ARGS = ("tp_name", "tp_doc")
 TABLE_ARGS = ("tp_methods", "tp_members", "tp_getset")
 FUNC_ARGS = {
-    "tp_alloc": Ironclad.dgt_ptr_ptrint,
+    "tp_alloc": Ironclad.dgt_ptr_ptrssize,
     "tp_new": Ironclad.dgt_ptr_ptrptrptr,
     "tp_init": Ironclad.dgt_int_ptrptrptr,
     "tp_dealloc": Ironclad.dgt_void_ptr,
@@ -147,7 +147,7 @@ def MakeTypePtr(mapper, params, allocator=None):
     fields.update(params)
     
     deallocs = []
-    typeSize = Marshal.SizeOf(PyTypeObject())
+    typeSize = IntPtr(Marshal.SizeOf(PyTypeObject()))
     if allocator:
         # pretend this was constructed by a C extension, using the mapper's allocator
         # hence mapper should do the deallocation itself
@@ -226,16 +226,16 @@ NUMSEQMAP_METHODS = {
     "nb_power": Ironclad.dgt_ptr_ptrptrptr, 
     "nb_inplace_power": Ironclad.dgt_ptr_ptrptrptr, 
     
-    "sq_item": Ironclad.dgt_ptr_ptrint,
+    "sq_item": Ironclad.dgt_ptr_ptrssize,
     "sq_concat": Ironclad.dgt_ptr_ptrptr,
-    "sq_repeat": Ironclad.dgt_ptr_ptrint,
-    "sq_slice": Ironclad.dgt_ptr_ptrintint,
-    "sq_ass_item": Ironclad.dgt_int_ptrintptr,
-    "sq_ass_slice": Ironclad.dgt_int_ptrintintptr,
-    "sq_length": Ironclad.dgt_int_ptr,
+    "sq_repeat": Ironclad.dgt_ptr_ptrssize,
+    "sq_slice": Ironclad.dgt_ptr_ptrssizessize,
+    "sq_ass_item": Ironclad.dgt_int_ptrssizeptr,
+    "sq_ass_slice": Ironclad.dgt_int_ptrssizessizeptr,
+    "sq_length": Ironclad.dgt_ssize_ptr,
     "sq_contains": Ironclad.dgt_int_ptrptr,
     
-    "mp_length": Ironclad.dgt_int_ptr,
+    "mp_length": Ironclad.dgt_ssize_ptr,
     "mp_subscript": Ironclad.dgt_ptr_ptrptr,
     "mp_ass_subscript": Ironclad.dgt_int_ptrptrptr,
 }

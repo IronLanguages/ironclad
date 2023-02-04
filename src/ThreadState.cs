@@ -18,7 +18,7 @@ namespace Ironclad
         public ThreadState(PythonMapper mapper)
         {
             this.mapper = mapper;
-            uint size = (uint)Marshal.SizeOf(typeof(PyThreadState));
+            uint size = unchecked((uint)Marshal.SizeOf<PyThreadState>());
             this.ptr = this.mapper.PyMem_Malloc(size); // leaka leaka leaka
             CPyMarshal.Zero(this.ptr, size);
         }

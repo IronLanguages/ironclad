@@ -211,11 +211,11 @@ namespace Ironclad
         public override void
         Register_PyFoo_Type(IntPtr ptr)
         {
-            CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "tp_basicsize", Marshal.SizeOf(typeof(PyFooObject)));
+            CPyMarshal.Zero(ptr, Marshal.SizeOf<PyTypeObject>());
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_basicsize", Marshal.SizeOf<PyFooObject>());
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetFuncPtr("SomeInitMethod"));
-            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "tp_itemsize", Marshal.SizeOf(typeof(Byte)));
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_itemsize", Marshal.SizeOf<Byte>());
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_iter", this.GetFuncPtr("SomeIterMethod"));
             string name = (string)Builtin.getattr(this.scratchContext, TypeCache.Foo, "__name__");
             CPyMarshal.WriteCStringField(ptr, typeof(PyTypeObject), "tp_name", name);
@@ -225,8 +225,8 @@ namespace Ironclad
         public override void
         Register_PyBar_Type(IntPtr ptr)
         {
-            CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.Zero(ptr, Marshal.SizeOf<PyTypeObject>());
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
             this.NumberSetupMethod(ptr);
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "tp_init", this.GetFuncPtr("SomeOtherInitMethod"));
             string name = (string)Builtin.getattr(this.scratchContext, TypeCache.Bar, "__name__");
@@ -237,8 +237,8 @@ namespace Ironclad
         public override void
         Register_PyBaz_Type(IntPtr ptr)
         {
-            CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.Zero(ptr, Marshal.SizeOf<PyTypeObject>());
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
 
             string name = (string)Builtin.getattr(this.scratchContext, TypeCache.Baz, "__name__");
             CPyMarshal.WriteCStringField(ptr, typeof(PyTypeObject), "tp_name", name);

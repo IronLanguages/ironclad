@@ -268,7 +268,7 @@ class Types_Test(TestCase):
             for (mode, TestFunc) in discoveryModes.items():
                 typePtr, deallocType = MakeTypePtr(mapper, {"tp_name": mode + "Class"})
                 userTypeDeallocs.append(deallocType)
-                objPtr = allocator.Alloc(Marshal.SizeOf(PyObject()))
+                objPtr = allocator.Alloc(IntPtr(Marshal.SizeOf(PyObject())))
                 CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 2)
                 CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", typePtr)
                 
@@ -424,7 +424,7 @@ class PyType_GenericAlloc_Test(TestCase):
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         
         del allocs[:]
-        result = mapper.PyType_GenericAlloc(typePtr, 0)
+        result = mapper.PyType_GenericAlloc(typePtr, IntPtr(0))
         self.assertEquals(allocs, [(result, 32)], "allocated wrong")
 
         refcount = CPyMarshal.ReadIntField(result, PyObject, "ob_refcnt")
@@ -455,7 +455,7 @@ class PyType_GenericAlloc_Test(TestCase):
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         
         del allocs[:]
-        result = mapper.PyType_GenericAlloc(typePtr, 3)
+        result = mapper.PyType_GenericAlloc(typePtr, IntPtr(3))
         self.assertEquals(allocs, [(result, 224)], "allocated wrong")
 
         refcount = CPyMarshal.ReadIntField(result, PyObject, "ob_refcnt")

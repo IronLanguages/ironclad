@@ -15,7 +15,7 @@ from Ironclad import CPyMarshal, dgt_void_ptr, PythonMapper
 from Ironclad.Structs import PyTupleObject, PyTypeObject
 
 def MakeTuple(mapper, model):
-    tuplePtr = mapper.PyTuple_New(len(model))
+    tuplePtr = mapper.PyTuple_New(IntPtr(len(model)))
     dataPtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_item"))
     itemPtrs = []
     for i in range(len(model)):
@@ -41,7 +41,7 @@ class PyTuple_Type_Test(TypeTestCase):
         model = (1, 2, 3)
         itemPtrs = []
         def CreateInstance(mapper, calls):
-            tuplePtr = mapper.PyTuple_New(len(model))
+            tuplePtr = mapper.PyTuple_New(IntPtr(len(model)))
             dataPtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_item"))
             for i in range(len(model)):
                 itemPtr = mapper.Store(model[i])
@@ -92,7 +92,7 @@ class TupleTest(TestCase):
 
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
         mapper.RegisterData("PyTuple_Type", typeBlock)
-        tuplePtr = mapper.PyTuple_New(length)
+        tuplePtr = mapper.PyTuple_New(IntPtr(length))
         expectedSize = Marshal.SizeOf(PyTupleObject()) + (CPyMarshal.PtrSize * (length - 1))
         self.assertEquals(allocs, [(tuplePtr, expectedSize)], "bad alloc")
         tupleStruct = PtrToStructure(tuplePtr, PyTupleObject)
@@ -127,7 +127,7 @@ class TupleTest(TestCase):
 
     @WithMapper
     def testCanSafelyFreeUninitialisedTuple(self, mapper, _):
-        markedPtr = mapper.PyTuple_New(2)
+        markedPtr = mapper.PyTuple_New(IntPtr(2))
         mapper.DecRef(markedPtr)
 
 
@@ -136,10 +136,10 @@ class TupleTest(TestCase):
         mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
         tuplePtrPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
         
-        oldTuplePtr = mapper.PyTuple_New(1)
+        oldTuplePtr = mapper.PyTuple_New(IntPtr(1))
         del allocs[:]
         CPyMarshal.WritePtr(tuplePtrPtr, oldTuplePtr)
-        self.assertEquals(mapper._PyTuple_Resize(tuplePtrPtr, 100), 0)
+        self.assertEquals(mapper._PyTuple_Resize(tuplePtrPtr, IntPtr(100)), 0)
 
         newTuplePtr = CPyMarshal.ReadPtr(tuplePtrPtr)
         expectedSize = Marshal.SizeOf(PyTupleObject()) + (CPyMarshal.PtrSize * (99))
@@ -159,9 +159,9 @@ class TupleTest(TestCase):
         tuplePtrPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
         addDealloc(lambda: Marshal.FreeHGlobal(tuplePtrPtr))
         
-        tuplePtr = mapper.PyTuple_New(1)
+        tuplePtr = mapper.PyTuple_New(IntPtr(1))
         CPyMarshal.WritePtr(tuplePtrPtr, tuplePtr)
-        self.assertEquals(mapper._PyTuple_Resize(tuplePtrPtr, 2000000000), -1)
+        self.assertEquals(mapper._PyTuple_Resize(tuplePtrPtr, IntPtr(2000000000)), -1)
         self.assertEquals(CPyMarshal.ReadPtr(tuplePtrPtr), IntPtr.Zero)
         
 
@@ -193,7 +193,7 @@ class TupleTest(TestCase):
     @WithMapper
     def testPyTuple_GetSlice(self, mapper, _):
         def TestSlice(originalTuplePtr, start, stop):
-            newTuplePtr = mapper.PyTuple_GetSlice(originalTuplePtr, start, stop)
+            newTuplePtr = mapper.PyTuple_GetSlice(originalTuplePtr, IntPtr(start), IntPtr(stop))
             self.assertMapperHasError(mapper, None)
             self.assertEquals(mapper.Retrieve(newTuplePtr), mapper.Retrieve(originalTuplePtr)[start:stop], "bad slice")
             mapper.DecRef(newTuplePtr)
@@ -208,7 +208,7 @@ class TupleTest(TestCase):
          
     @WithMapper
     def testPyTuple_GetSlice_error(self, mapper, _):
-        self.assertEquals(mapper.PyTuple_GetSlice(mapper.Store(object()), 1, 2), IntPtr.Zero)
+        self.assertEquals(mapper.PyTuple_GetSlice(mapper.Store(object()), IntPtr(1), IntPtr(2)), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
 
 

@@ -6,7 +6,7 @@ namespace Ironclad
     public partial class PythonMapper : PythonApi
     {
         public override IntPtr
-        PyMem_Malloc(uint size)
+        PyMem_Malloc(nuint size)
         {
             size = size == 0 ? 1 : size;
             try
@@ -20,7 +20,7 @@ namespace Ironclad
         }
 
         public override IntPtr
-        PyMem_Realloc(IntPtr oldPtr, uint size)
+        PyMem_Realloc(IntPtr oldPtr, nuint size)
         {
             size = size == 0 ? 1 : size;
             try
@@ -47,13 +47,13 @@ namespace Ironclad
         }
 
         public override IntPtr
-        PyObject_Malloc(uint size)
+        PyObject_Malloc(nuint size)
         {
             return this.PyMem_Malloc(size);
         }
 
         public override IntPtr
-        PyObject_Realloc(IntPtr oldPtr, uint size)
+        PyObject_Realloc(IntPtr oldPtr, nuint size)
         {
             return this.PyMem_Realloc(oldPtr, size);
         }

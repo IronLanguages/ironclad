@@ -91,7 +91,7 @@ namespace Ironclad
             while (CPyMarshal.ReadInt(getsetPtr) != 0)
             {
                 this.GenerateProperty(getsetPtr);
-                getsetPtr = CPyMarshal.Offset(getsetPtr, Marshal.SizeOf(typeof(PyGetSetDef)));
+                getsetPtr = CPyMarshal.Offset(getsetPtr, Marshal.SizeOf<PyGetSetDef>());
             }
         }
 
@@ -107,7 +107,7 @@ namespace Ironclad
             while (CPyMarshal.ReadInt(memberPtr) != 0)
             {
                 this.GenerateMember(memberPtr);
-                memberPtr = CPyMarshal.Offset(memberPtr, Marshal.SizeOf(typeof(PyMemberDef)));
+                memberPtr = CPyMarshal.Offset(memberPtr, Marshal.SizeOf<PyMemberDef>());
             }
         }
 

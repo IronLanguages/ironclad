@@ -90,8 +90,8 @@ REGISTER_TYPES_TEMPLATE = """\
         public override void
         Register_%(name)s(IntPtr ptr)
         {
-            CPyMarshal.Zero(ptr, Marshal.SizeOf(typeof(PyTypeObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.Zero(ptr, Marshal.SizeOf<PyTypeObject>());
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
 %(extra)s
             string name = (string)Builtin.getattr(this.scratchContext, %(type)s, "__name__");
             CPyMarshal.WriteCStringField(ptr, typeof(PyTypeObject), "tp_name", name);
@@ -102,7 +102,7 @@ REGISTER_TYPES_NUMBER_TEMPLATE = """\
             this.%(data)s(ptr);"""
 
 REGISTER_TYPES_SIZE_TEMPLATE = """\
-            CPyMarshal.WriteIntField(ptr, typeof(PyTypeObject), "%(slot)s", Marshal.SizeOf(typeof(%(data)s)));"""
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "%(slot)s", Marshal.SizeOf<%(data)s>());"""
 
 REGISTER_TYPES_DEFAULT_TEMPLATE = """\
             CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "%(slot)s", this.GetFuncPtr("%(data)s"));"""

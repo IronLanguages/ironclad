@@ -39,7 +39,7 @@ namespace Ironclad
             return 0;
         }
         
-        public override int
+        public override nint
         PySequence_Size(IntPtr objPtr)
         {
             try
@@ -54,14 +54,14 @@ namespace Ironclad
         }
         
         public override IntPtr
-        PySequence_GetItem(IntPtr objPtr, int idx)
+        PySequence_GetItem(IntPtr objPtr, nint idx)
         {
             try
             {
                 if (CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type") == this.PyTuple_Type)
                 {
                     IntPtr storagePtr = CPyMarshal.Offset(objPtr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
-                    int size = CPyMarshal.ReadIntField(objPtr, typeof(PyTupleObject), "ob_size");
+                    nint size = CPyMarshal.ReadPtrField(objPtr, typeof(PyTupleObject), "ob_size");
                     if (idx >= size)
                     {
                         throw PythonOps.IndexError("PySequence_GetItem: tuple index {0} out of range", idx);
@@ -69,8 +69,8 @@ namespace Ironclad
                     
                     IntPtr slotPtr = CPyMarshal.Offset(storagePtr, idx * CPyMarshal.PtrSize);
                     IntPtr itemPtr =  CPyMarshal.ReadPtr(slotPtr);
-                    uint refcnt = CPyMarshal.ReadUIntField(itemPtr, typeof(PyObject), "ob_refcnt");
-                    CPyMarshal.WriteUIntField(itemPtr, typeof(PyObject), "ob_refcnt", refcnt + 1);
+                    nint refcnt = CPyMarshal.ReadPtrField(itemPtr, typeof(PyObject), "ob_refcnt");
+                    CPyMarshal.WritePtrField(itemPtr, typeof(PyObject), "ob_refcnt", refcnt + 1);
                     return itemPtr;
                 }
             
@@ -78,7 +78,7 @@ namespace Ironclad
                 object getitem;
                 if (PythonOps.TryGetBoundAttr(sequence, "__getitem__", out getitem))
                 {
-                    return this.Store(PythonCalls.Call(getitem, idx));
+                    return this.Store(PythonCalls.Call(getitem, checked((int)idx)));
                 }
                 throw PythonOps.TypeError("PySequence_GetItem: failed to convert {0} to sequence", sequence);
             }
@@ -90,15 +90,15 @@ namespace Ironclad
         }
 
         public override int
-        PySequence_SetItem(IntPtr objPtr, int idx, IntPtr valuePtr)
+        PySequence_SetItem(IntPtr objPtr, nint idx, IntPtr valuePtr)
         {
             try
             {
                 IntPtr typePtr = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
                 if (typePtr == this.PyList_Type)
                 {
-                    int newIdx = idx;
-                    int length = CPyMarshal.ReadIntField(objPtr, typeof(PyListObject), "ob_size");
+                    nint newIdx = idx;
+                    nint length = CPyMarshal.ReadPtrField(objPtr, typeof(PyListObject), "ob_size");
                     if (newIdx < 0)
                     {
                         newIdx += length;
@@ -115,7 +115,7 @@ namespace Ironclad
                 object setitem;
                 if (PythonOps.TryGetBoundAttr(sequence, "__setitem__", out setitem))
                 {
-                    PythonCalls.Call(setitem, idx, this.Retrieve(valuePtr));
+                    PythonCalls.Call(setitem, checked((int)idx), this.Retrieve(valuePtr));
                     return 0;
                 }
                 throw PythonOps.TypeError("PySequence_SetItem: failed to convert {0} to sequence", sequence);
@@ -128,7 +128,7 @@ namespace Ironclad
         }
         
         public override IntPtr
-        PySequence_GetSlice(IntPtr objPtr, int start, int stop)
+        PySequence_GetSlice(IntPtr objPtr, nint start, nint stop)
         {
             try
             {
@@ -136,7 +136,7 @@ namespace Ironclad
                 object getitem;
                 if (PythonOps.TryGetBoundAttr(sequence, "__getitem__", out getitem))
                 {
-                    return this.Store(PythonCalls.Call(getitem, new Slice(start, stop)));
+                    return this.Store(PythonCalls.Call(getitem, new Slice(checked((int)start), checked((int)stop))));
                 }
                 throw PythonOps.TypeError("PySequence_GetItem: failed to slice {0}", sequence);
             }
@@ -148,7 +148,7 @@ namespace Ironclad
         }
         
         public override IntPtr
-        PySequence_Repeat(IntPtr objPtr, int count)
+        PySequence_Repeat(IntPtr objPtr, nint count)
         {
             try
             {
@@ -157,10 +157,9 @@ namespace Ironclad
                 if (seqPtr != IntPtr.Zero)
                 {
                     IntPtr sq_repeat = CPyMarshal.ReadPtrField(seqPtr, typeof(PySequenceMethods), "sq_repeat");
-                    if(sq_repeat != IntPtr.Zero)
+                    if (sq_repeat != IntPtr.Zero)
                     {
-                        dgt_ptr_ptrint dgt = (dgt_ptr_ptrint)CPyMarshal.ReadFunctionPtrField(
-                            seqPtr, typeof(PySequenceMethods), "sq_repeat", typeof(dgt_ptr_ptrint));
+                        dgt_ptr_ptrssize dgt = CPyMarshal.ReadFunctionPtrField<dgt_ptr_ptrssize>(seqPtr, typeof(PySequenceMethods), "sq_repeat");
                         return dgt(objPtr, count);
                     }
                 }
@@ -169,7 +168,7 @@ namespace Ironclad
                      Builtin.hasattr(this.scratchContext, obj, "__len__") &&
                      Builtin.hasattr(this.scratchContext, obj, "__getitem__"))
                 {
-                    return this.Store(PythonOperator.mul(this.scratchContext, obj, (int)count));
+                    return this.Store(PythonOperator.mul(this.scratchContext, obj, checked((int)count)));
                 }
                 throw PythonOps.TypeError("PySequence_Repeat: failed to convert {0} to sequence", obj);
             }                

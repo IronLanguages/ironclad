@@ -26,11 +26,11 @@ namespace Ironclad
         }
         
         public override IntPtr
-        _PyObject_NewVar(IntPtr typePtr, int nitems)
+        _PyObject_NewVar(IntPtr typePtr, nint nitems)
         {
-            int tp_basicsize = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_basicsize");
-            int tp_itemsize = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_itemsize");
-            uint size = (uint)(tp_basicsize + nitems * tp_itemsize);
+            nint tp_basicsize = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_basicsize");
+            nint tp_itemsize = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_itemsize");
+            nint size = tp_basicsize + nitems * tp_itemsize;
             IntPtr objPtr = this.allocator.Alloc(size);
             CPyMarshal.Zero(objPtr, size);
             return this.PyObject_Init(objPtr, typePtr);
@@ -39,7 +39,7 @@ namespace Ironclad
         public override IntPtr
         PyObject_Init(IntPtr objPtr, IntPtr typePtr)
         {
-            CPyMarshal.WriteIntField(objPtr, typeof(PyObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(objPtr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(objPtr, typeof(PyObject), "ob_type", typePtr);
             return objPtr;
         }
@@ -54,9 +54,7 @@ namespace Ironclad
         IC_PyBaseObject_Dealloc(IntPtr objPtr)
         {
             IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
-            dgt_void_ptr freeDgt = (dgt_void_ptr)
-                CPyMarshal.ReadFunctionPtrField(
-                    objType, typeof(PyTypeObject), "tp_free", typeof(dgt_void_ptr));
+            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(objType, typeof(PyTypeObject), "tp_free");
             freeDgt(objPtr);
         }
         
@@ -70,9 +68,7 @@ namespace Ironclad
             }
             
             IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
-            dgt_void_ptr freeDgt = (dgt_void_ptr)
-                CPyMarshal.ReadFunctionPtrField(
-                    objType, typeof(PyTypeObject), "tp_free", typeof(dgt_void_ptr));
+            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(objType, typeof(PyTypeObject), "tp_free");
             freeDgt(objPtr);
         }
         
@@ -421,7 +417,7 @@ namespace Ironclad
         }
         
         
-        public override int
+        public override nint
         PyObject_Size(IntPtr objPtr)
         {
             try

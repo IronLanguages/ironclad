@@ -172,9 +172,7 @@ namespace Ironclad
                     return;
                 }
                 
-                dgt_void_ptr dealloc = (dgt_void_ptr)
-                    CPyMarshal.ReadFunctionPtrField(
-                        typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(dgt_void_ptr));
+                dgt_void_ptr dealloc = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(typePtr, typeof(PyTypeObject), "tp_dealloc");
                 dealloc(ptr);
             }
             
@@ -341,8 +339,8 @@ namespace Ironclad
         private IntPtr
         StoreObject(object obj)
         {
-            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyObject>());
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyBaseObject_Type);
             this.map.Associate(ptr, obj);
             return ptr;
@@ -434,7 +432,7 @@ namespace Ironclad
             return this.map.GetObj(ptr);
         }
 
-        public int 
+        public int
         RefCount(IntPtr ptr)
         {
             this.AttemptToMap(ptr);
@@ -450,7 +448,7 @@ namespace Ironclad
                 this.map.UpdateStrength(ptr);
             }
             
-            return CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
+            return checked((int)CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_refcnt"));
         }
         
         public void 
@@ -464,8 +462,8 @@ namespace Ironclad
                     "IncRef: missing key in pointer map: {0}", ptr.ToString("x")));
             }
             
-            int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
-            CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count + 1);
+            nint count = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_refcnt");
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_refcnt", count + 1);
             
             if (this.map.HasPtr(ptr))
             {
@@ -484,7 +482,7 @@ namespace Ironclad
                     "DecRef: missing key in pointer map: {0}", ptr.ToString("x")));
             }
             
-            int count = CPyMarshal.ReadIntField(ptr, typeof(PyObject), "ob_refcnt");
+            nint count = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_refcnt");
             if (count == 0)
             {
                 throw new BadRefCountException("Trying to DecRef an object with ref count 0");
@@ -504,13 +502,12 @@ namespace Ironclad
                         "Cannot destroy object at {0} with type at {1}: no dealloc function", ptr.ToString("x"), typePtr.ToString("x")));
                 }
 
-                dgt_void_ptr deallocDgt = (dgt_void_ptr)CPyMarshal.ReadFunctionPtrField(
-                    typePtr, typeof(PyTypeObject), "tp_dealloc", typeof(dgt_void_ptr));
+                dgt_void_ptr deallocDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(typePtr, typeof(PyTypeObject), "tp_dealloc");
                 deallocDgt(ptr);
             }
             else
             {
-                CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", count - 1);
+                CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_refcnt", count - 1);
                 if (this.map.HasPtr(ptr))
                 {
                     this.map.UpdateStrength(ptr);

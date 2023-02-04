@@ -239,8 +239,8 @@ namespace Ironclad
         private IntPtr
         StoreTyped(int value)
         {
-            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyIntObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyIntObject), "ob_refcnt", 1);
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyIntObject>());
+            CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), "ob_type", this.PyInt_Type);
             CPyMarshal.WriteIntField(ptr, typeof(PyIntObject), "ob_ival", value);
             this.map.Associate(ptr, value);
@@ -260,8 +260,8 @@ namespace Ironclad
         private IntPtr
         StoreTyped(BigInteger value)
         {
-            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyObject), "ob_refcnt", 1);
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyObject>());
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyLong_Type);
             this.map.Associate(ptr, value);
             return ptr;
@@ -270,8 +270,8 @@ namespace Ironclad
         private IntPtr
         StoreTyped(double value)
         {
-            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyFloatObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyFloatObject), "ob_refcnt", 1);
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyFloatObject>());
+            CPyMarshal.WritePtrField(ptr, typeof(PyFloatObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyFloatObject), "ob_type", this.PyFloat_Type);
             CPyMarshal.WriteDoubleField(ptr, typeof(PyFloatObject), "ob_fval", value);
             this.map.Associate(ptr, value);
@@ -281,8 +281,8 @@ namespace Ironclad
         private IntPtr
         StoreTyped(Complex value)
         {
-            IntPtr ptr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyComplexObject)));
-            CPyMarshal.WriteIntField(ptr, typeof(PyComplexObject), "ob_refcnt", 1);
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyComplexObject>());
+            CPyMarshal.WritePtrField(ptr, typeof(PyComplexObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyComplexObject), "ob_type", this.PyComplex_Type);
             IntPtr cpxptr = CPyMarshal.GetField(ptr, typeof(PyComplexObject), "cval");
             CPyMarshal.WriteDoubleField(cpxptr, typeof(Py_complex), "real", value.Real);

@@ -2,6 +2,8 @@
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
 
+from System import IntPtr
+
 from Ironclad import CPyMarshal, HGlobalAllocator
 
 
@@ -11,7 +13,7 @@ class HGlobalAllocatorTest(TestCase):
     
     def testAllocFree(self):
         allocator = HGlobalAllocator()
-        ptr = allocator.Alloc(REASONABLE_SIZE)
+        ptr = allocator.Alloc(IntPtr(REASONABLE_SIZE))
         self.assertEquals(allocator.Contains(ptr), True)
         CPyMarshal.WriteInt(ptr, 123)
         
@@ -22,11 +24,11 @@ class HGlobalAllocatorTest(TestCase):
     
     def testAllocFreeAll(self):
         allocator = HGlobalAllocator()
-        ptr1 = allocator.Alloc(REASONABLE_SIZE)
+        ptr1 = allocator.Alloc(IntPtr(REASONABLE_SIZE))
         self.assertEquals(allocator.Contains(ptr1), True)
-        ptr2 = allocator.Alloc(REASONABLE_SIZE)
+        ptr2 = allocator.Alloc(IntPtr(REASONABLE_SIZE))
         self.assertEquals(allocator.Contains(ptr2), True)
-        ptr3 = allocator.Alloc(REASONABLE_SIZE)
+        ptr3 = allocator.Alloc(IntPtr(REASONABLE_SIZE))
         self.assertEquals(allocator.Contains(ptr3), True)
         
         allocator.Free(ptr1)
@@ -43,8 +45,8 @@ class HGlobalAllocatorTest(TestCase):
     def testRealloc(self):
         def DoTest(size):
             allocator = HGlobalAllocator()
-            ptr1 = allocator.Alloc(REASONABLE_SIZE)
-            ptr2 = allocator.Realloc(ptr1, REASONABLE_SIZE * (2 ** size))
+            ptr1 = allocator.Alloc(IntPtr(REASONABLE_SIZE))
+            ptr2 = allocator.Realloc(ptr1, IntPtr(REASONABLE_SIZE * (2 ** size)))
             if (ptr1 == ptr2):
                 return False
             

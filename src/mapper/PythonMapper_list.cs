@@ -31,9 +31,7 @@ namespace Ironclad
                 }
                 this.allocator.Free(listStruct.ob_item);
             }
-            dgt_void_ptr freeDgt = (dgt_void_ptr)
-                CPyMarshal.ReadFunctionPtrField(
-                    this.PyList_Type, typeof(PyTypeObject), "tp_free", typeof(dgt_void_ptr));
+            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(this.PyList_Type, typeof(PyTypeObject), "tp_free");
             freeDgt(listPtr);
         }
         
@@ -48,7 +46,7 @@ namespace Ironclad
             listStruct.ob_size = length;
             listStruct.allocated = length;
 
-            uint bytes = (uint)length * CPyMarshal.PtrSize;
+            nint bytes = length * CPyMarshal.PtrSize;
             IntPtr data = this.allocator.Alloc(bytes);
             listStruct.ob_item = data;
             for (int i = 0; i < length; i++)
@@ -57,7 +55,7 @@ namespace Ironclad
                 data = CPyMarshal.Offset(data, CPyMarshal.PtrSize);
             }
 
-            IntPtr listPtr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyListObject)));
+            IntPtr listPtr = this.allocator.Alloc(Marshal.SizeOf<PyListObject>());
             Marshal.StructureToPtr(listStruct, listPtr, false);
             this.map.Associate(listPtr, list);
             return listPtr;
@@ -74,14 +72,14 @@ namespace Ironclad
             list.allocated = 0;
             list.ob_item = IntPtr.Zero;
 
-            IntPtr listPtr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyListObject)));
+            IntPtr listPtr = this.allocator.Alloc(Marshal.SizeOf<PyListObject>());
             Marshal.StructureToPtr(list, listPtr, false);
             this.map.Associate(listPtr, new List());
             return listPtr;
         }
 
         public override IntPtr 
-        PyList_New(int length)
+        PyList_New(nint length)
         {
             if (length == 0)
             {
@@ -94,11 +92,11 @@ namespace Ironclad
             list.ob_size = length;
             list.allocated = length;
             
-            int bytes = length * CPyMarshal.PtrSize;
-            list.ob_item = this.allocator.Alloc((uint)bytes);
+            nint bytes = length * CPyMarshal.PtrSize;
+            list.ob_item = this.allocator.Alloc(bytes);
             CPyMarshal.Zero(list.ob_item, bytes);
             
-            IntPtr listPtr = this.allocator.Alloc((uint)Marshal.SizeOf(typeof(PyListObject)));
+            IntPtr listPtr = this.allocator.Alloc(Marshal.SizeOf<PyListObject>());
             Marshal.StructureToPtr(list, listPtr, false);
             this.incompleteObjects[listPtr] = UnmanagedDataMarker.PyListObject;
             return listPtr;
@@ -119,14 +117,14 @@ namespace Ironclad
         private void 
         IC_PyList_Append_NonEmpty(IntPtr listPtr, ref PyListObject listStruct, IntPtr itemPtr)
         {
-            int oldAllocated = listStruct.allocated;
-            int oldAllocatedBytes = oldAllocated * CPyMarshal.PtrSize;
+            nint oldAllocated = listStruct.allocated;
+            nint oldAllocatedBytes = oldAllocated * CPyMarshal.PtrSize;
             listStruct.ob_size += 1;
             listStruct.allocated += 1;
             IntPtr oldDataStore = listStruct.ob_item;
 
-            int newAllocatedBytes = listStruct.allocated * CPyMarshal.PtrSize;
-            listStruct.ob_item = this.allocator.Realloc(listStruct.ob_item, (uint)newAllocatedBytes);
+            nint newAllocatedBytes = listStruct.allocated * CPyMarshal.PtrSize;
+            listStruct.ob_item = this.allocator.Realloc(listStruct.ob_item, newAllocatedBytes);
             
             CPyMarshal.WritePtr(CPyMarshal.Offset(listStruct.ob_item, oldAllocatedBytes), itemPtr);
             Marshal.StructureToPtr(listStruct, listPtr, false);
@@ -160,7 +158,7 @@ namespace Ironclad
         
         
         public override int
-        PyList_SetItem(IntPtr listPtr, int index, IntPtr itemPtr)
+        PyList_SetItem(IntPtr listPtr, nint index, IntPtr itemPtr)
         {
             if (!this.HasPtr(listPtr))
             {
@@ -174,7 +172,7 @@ namespace Ironclad
                 return -1;
             }
             
-            uint length = CPyMarshal.ReadUIntField(listPtr, typeof(PyListObject), "ob_size");
+            nint length = CPyMarshal.ReadPtrField(listPtr, typeof(PyListObject), "ob_size");
             if (index < 0 || index >= length)
             {
                 this.DecRef(itemPtr);
@@ -194,19 +192,19 @@ namespace Ironclad
             {
                 object item = this.Retrieve(itemPtr);
                 List list = (List)this.Retrieve(listPtr);
-                list[index] = item;
+                list[checked((int)index)] = item;
             }      
             return 0;
         }
         
         
         public override IntPtr
-        PyList_GetSlice(IntPtr listPtr, int start, int stop)
+        PyList_GetSlice(IntPtr listPtr, nint start, nint stop)
         {
             try
             {
                 List list = (List)this.Retrieve(listPtr);
-                List sliced = (List)list[new Slice(start, stop)];
+                List sliced = (List)list[new Slice(checked((int)start), checked((int)stop))];
                 return this.Store(sliced);
             }
             catch (Exception e)
@@ -218,12 +216,12 @@ namespace Ironclad
 
 
         public override IntPtr
-        PyList_GetItem(IntPtr listPtr, int idx)
+        PyList_GetItem(IntPtr listPtr, nint idx)
         {
             try
             {
                 List list = (List)this.Retrieve(listPtr);
-                return this.Store(list[idx]);
+                return this.Store(list[checked((int)idx)]);
             }
             catch (Exception e)
             {
@@ -260,7 +258,7 @@ namespace Ironclad
             List newList = new List();
             this.listsBeingActualised[ptr] = newList;
             
-            int length = CPyMarshal.ReadIntField(ptr, typeof(PyListObject), "ob_size");
+            nint length = CPyMarshal.ReadPtrField(ptr, typeof(PyListObject), "ob_size");
             if (length != 0)
             {
                 IntPtr itemPtrPtr = CPyMarshal.ReadPtrField(ptr, typeof(PyListObject), "ob_item");
