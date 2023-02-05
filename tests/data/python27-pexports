@@ -1050,7 +1050,4 @@ _Py_dg_dtoa
 _Py_dg_freedtoa
 _Py_dg_strtod
 _Py_double_round
-_Py_hgidentifier
-_Py_hgversion
 _Py_parse_inf_or_nan
-_Py_svnversion

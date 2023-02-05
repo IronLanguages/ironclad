@@ -39,7 +39,7 @@ if not (mode in ['debug', 'release']):
 
 WIN32 = sys.platform == 'win32'
 
-CPYTHON = sys.executable
+CPYTHON = '"' + sys.executable + '"'
 
 if WIN32:
     #==================================================================
@@ -87,10 +87,9 @@ if WIN32:
     GCCXML_INSERT = '-isystem "%s" -isystem "%s"' % (MINGW_INCLUDE, os.path.join(MINGW_LIB, 'gcc', 'mingw32', '6.3.0', 'include'))
     GCCXML_INSERT = ''
 
-    # Calculate DLLs dir of cpython - assume this is run from the cpython
-    # If not, change to match your installation, defaults to C:\Python27\DLLs
+    # Root of CPython installation, used to find DLLs/packages for testing
     # Note: this has to be 32bit version of cpython
-    CPYTHON_ROOT = os.path.dirname(os.path.abspath(sys.executable))
+    CPYTHON_ROOT = r'C:\Python27'
 
 
 #===============================================================================

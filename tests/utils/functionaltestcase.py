@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 import tempfile
 
 from System.Diagnostics import Process
@@ -50,8 +51,10 @@ class FunctionalTestCase(TestCase):
             testFile.close()
 
 
-    def runCode(self, code, interpreter="ipy.exe", insert_args=''):
-        if interpreter == "ipy.exe":
+    def runCode(self, code, interpreter=None, insert_args=''):
+        if interpreter is None:
+            interpreter = os.path.basename(sys.executable)
+        if sys.implementation.name == "ironpython":
             code = self.TEMPLATE % code
         self.write("test-code.py", code)
         
@@ -72,6 +75,6 @@ class FunctionalTestCase(TestCase):
         return process.ExitCode, output, error
 
 
-    def assertRuns(self, code, interpreter="ipy.exe", insert_args=''):
+    def assertRuns(self, code, interpreter=None, insert_args=''):
         exit_code, output, error = self.runCode(code, interpreter, insert_args)
         self.assertEquals(exit_code, 0, "Execution failed: >>>%s<<<\n>>>%s<<<" % (output, error))
