@@ -269,7 +269,7 @@ class Types_Test(TestCase):
                 typePtr, deallocType = MakeTypePtr(mapper, {"tp_name": mode + "Class"})
                 userTypeDeallocs.append(deallocType)
                 objPtr = allocator.Alloc(IntPtr(Marshal.SizeOf(PyObject())))
-                CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 2)
+                CPyMarshal.WritePtrField(objPtr, PyObject, "ob_refcnt", 2)
                 CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", typePtr)
                 
                 discoveryFunc = getattr(mapper, mode)

@@ -45,7 +45,7 @@ if WIN32:
     #==================================================================
     # These variables will be needed on any platform, I think
     
-    ASFLAGS = '-f win32'
+    ASFLAGS = '-f win64'
     CSC = r'C:\windows\Microsoft.NET\Framework\v4.0.30319\csc.exe'
     CSC_CMD = 'dotnet build '
     if mode == 'debug':
@@ -56,7 +56,7 @@ if WIN32:
     CASTXML = r'castxml'
 
     # standard location
-    IPY = r'"C:\ProgramData\chocolatey\lib\ironpython\ipy32.exe"'
+    IPY = r'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
     IPY_DIR = r'"C:\ProgramData\chocolatey\lib\ironpython"'
     # private build
     # IPY = r'"C:\github\IronLanguages\bin\Debug\ipy.exe"'
@@ -65,6 +65,7 @@ if WIN32:
     IPY_REF_TEMPLATE = r'/r:$IPY_DIR\%s.dll'
     NATIVE_TOOLS = ['mingw', 'nasm']
     PYTHON_DLL = r'C:\Windows\SysWOW64\python27.dll'
+    PYTHON_DLL = r'C:\Windows\System32\python27.dll'
     
     OBJ_SUFFIX = '.o'
     DLL_SUFFIX = '.dll'
@@ -77,14 +78,14 @@ if WIN32:
     DLLTOOL_CMD = 'dlltool -D $NAME -d $SOURCE -l $TARGET'
     LINK_MSVCR90_FLAGS = '-specs=stub/use-msvcr90.spec'
     MSVCR90_DLL = r'C:\Windows\WinSxS\x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.9518_none_508db366bcbd18c4\msvcr90.dll'
+    MSVCR90_DLL = r'C:\Windows\WinSxS\amd64_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.9518_none_08e07c8fa840efbe\msvcr90.dll'
     PEXPORTS_CMD = 'pexports $SOURCE > $TARGET'
     RES_CMD = 'windres --input $SOURCE --output $TARGET --output-format=coff'
     
     # TODO: can we find MINGW_DIR from the environment..?
-    MINGW_DIR = r'C:\MinGW'
+    MINGW_DIR = r'C:\mingw64'
     MINGW_LIB = os.path.join(MINGW_DIR, 'lib')
     MINGW_INCLUDE = os.path.join(MINGW_DIR, 'include')
-    GCCXML_INSERT = '-isystem "%s" -isystem "%s"' % (MINGW_INCLUDE, os.path.join(MINGW_LIB, 'gcc', 'mingw32', '6.3.0', 'include'))
     GCCXML_INSERT = ''
 
     # Root of CPython installation, used to find DLLs/packages for testing
@@ -100,9 +101,9 @@ env_with_ippath['IRONPYTHONPATH'] = os.getcwd()
 env_with_ippath['PYTHONPATH'] = os.getcwd()
 # TODO: it should not be necessary to pollute execution with entire os environment
 
-COMPILE_IRONCLAD_FLAGS = '-m32 -DIRONCLAD -DPy_BUILD_CORE -D__MSVCRT_VERSION__=0x0900'
-OBJ_CMD = '$CC -m32 $CCFLAGS -o $TARGET -c $SOURCE'
-DLL_CMD = '$CC -m32 $CCFLAGS -shared -o $TARGET $SOURCES'
+COMPILE_IRONCLAD_FLAGS = '-DIRONCLAD -DPy_BUILD_CORE -D__MSVCRT_VERSION__=0x0900 -DMS_WIN64'
+OBJ_CMD = '$CC -m64 -fcommon $CCFLAGS -o $TARGET -c $SOURCE' # TODO: get rid of -fcommon
+DLL_CMD = '$CC -m64 $CCFLAGS -shared -o $TARGET $SOURCES'
 GCCXML_CMD = ' '.join((CASTXML, COMPILE_IRONCLAD_FLAGS, '-v -I$CPPPATH -D__GNUC__ %s $SOURCE -o "$TARGET" --castxml-output=1' % GCCXML_INSERT))
 PYTHON27OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
 PYTHON27DLL_CMD = DLL_CMD + ' -Xlinker --export-all-symbols'
@@ -130,6 +131,7 @@ if WIN32:
     # If, RIGHT NOW*, no backup of libmsvcr90.a exists, create one
     # * That is to say: at runtime, not at build time
     
+    # TODO: the path is wrong, do we actually need the hack?
     in_mingw_lib = lambda x: os.path.join(MINGW_LIB, x)
     original, backup = list(map(in_mingw_lib, ['libmsvcr90.a', 'libmsvcr90.a.orig']))
     if os.path.exists(original) and not os.path.exists(backup):

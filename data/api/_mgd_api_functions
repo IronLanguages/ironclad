@@ -17,7 +17,7 @@ _PyString_Resize
 _PyTuple_Resize    
     
 Py_AtExit               
-Py_InitModule4       
+Py_InitModule4_64
     
 PyBool_FromLong      
     

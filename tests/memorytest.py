@@ -7,9 +7,11 @@ from tests.utils.testcase import TestCase, WithMapper
 
 from tests.utils.allocators import GetAllocatingTestAllocator
 
-from System import IntPtr, UIntPtr
+from System import IntPtr, UIntPtr, UInt64
 
 from Ironclad import PythonMapper
+
+MAXSIZE = UInt64((1 << (IntPtr.Size * 8 - 1)) - 1) # bug in IronPython 2, cannot convert to UIntPtr from BigInteger
 
 def GetMallocTest(MALLOC_NAME):
     class MallocTest(TestCase):
@@ -30,11 +32,10 @@ def GetMallocTest(MALLOC_NAME):
             resultPtr = getattr(mapper, MALLOC_NAME)(UIntPtr(0))
             self.assertEquals(allocs, [(resultPtr, 1)], "bad alloc")
             mapper.Dispose()
-        
-        
+
         @WithMapper
         def testFailure(self, mapper, _):
-            resultPtr = getattr(mapper, MALLOC_NAME)(UIntPtr(sys.maxint))
+            resultPtr = getattr(mapper, MALLOC_NAME)(UIntPtr(MAXSIZE))
             self.assertEquals(resultPtr, IntPtr.Zero, "bad alloc")
             self.assertMapperHasError(mapper, None)
 
@@ -81,7 +82,7 @@ def GetReallocTest(MALLOC_NAME, REALLOC_NAME):
             
             mem1 = getattr(mapper, MALLOC_NAME)(UIntPtr(4))
             del allocs[:]
-            self.assertEquals(getattr(mapper, REALLOC_NAME)(mem1, UIntPtr(sys.maxint)), IntPtr.Zero)
+            self.assertEquals(getattr(mapper, REALLOC_NAME)(mem1, UIntPtr(MAXSIZE)), IntPtr.Zero)
             self.assertMapperHasError(mapper, None)
             
             self.assertEquals(frees, [])

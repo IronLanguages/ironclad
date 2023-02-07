@@ -5,12 +5,12 @@
 #include "Python.h"
 #include "_extra_functions.generated.h"
 
-const int IRONCLAD_MAGIC_FILE = -2;
+const intptr_t IRONCLAD_MAGIC_FILE = -2;
 const char *IRONCLAD_ERR_MSG =
     "Can't use an IronPython file here. Please use ironclad.open with this extension.";
 
 #define IRONCLAD_IS_MAGIC(fp) \
-    ((int)fp == IRONCLAD_MAGIC_FILE)
+    ((intptr_t)fp == IRONCLAD_MAGIC_FILE)
 
 #define IRONCLAD_FILE_CheckCPyFile(f) \
     (PyObject_TypeCheck(f, &PyFile_Type) && !IRONCLAD_IS_MAGIC(((PyFileObject *)f)->f_fp))

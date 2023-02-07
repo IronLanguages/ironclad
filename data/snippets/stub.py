@@ -2,18 +2,21 @@
 #================================================================================================
 
 JUMPS_FILE_TEMPLATE = """\
-extern _jumptable
+default rel
+bits 64
+
+extern jumptable
 
 section .code
 
 %s
 """
 
-JUMP_DECLARE_TEMPLATE = 'global _%(symbol)s'
+JUMP_DECLARE_TEMPLATE = 'global %(symbol)s'
 
 JUMP_DEFINE_TEMPLATE = """\
-_%(symbol)s:
-    jmp [_jumptable+%(offset)d]"""
+%(symbol)s:
+    jmp [jumptable+%(offset)d]"""
 
 
 #================================================================================================

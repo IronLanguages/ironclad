@@ -15,7 +15,7 @@ class CPyMarshalTest_32(TestCase):
 
     def testProperties(self):
         self.assertEquals(CPyMarshal.IntSize, 4)
-        self.assertEquals(CPyMarshal.PtrSize, 4)
+        self.assertEquals(CPyMarshal.PtrSize, IntPtr.Size)
 
 
     def testOffset(self):

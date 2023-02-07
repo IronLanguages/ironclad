@@ -93,7 +93,7 @@ class TupleTest(TestCase):
         typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
         mapper.RegisterData("PyTuple_Type", typeBlock)
         tuplePtr = mapper.PyTuple_New(IntPtr(length))
-        expectedSize = Marshal.SizeOf(PyTupleObject()) + (CPyMarshal.PtrSize * (length - 1))
+        expectedSize = Marshal.SizeOf(PyTupleObject()) + CPyMarshal.PtrSize * max(0, length - 1)
         self.assertEquals(allocs, [(tuplePtr, expectedSize)], "bad alloc")
         tupleStruct = PtrToStructure(tuplePtr, PyTupleObject)
         self.assertEquals(tupleStruct.ob_refcnt, 1, "bad refcount")

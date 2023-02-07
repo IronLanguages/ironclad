@@ -253,7 +253,7 @@ class PythonMapper_References_Test(TestCase):
 
         # need to use same allocator as mapper, otherwise it gets upset on shutdown
         objPtr = allocator.Alloc(IntPtr(Marshal.SizeOf(PyObject())))
-        CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 0)
+        CPyMarshal.WritePtrField(objPtr, PyObject, "ob_refcnt", 0)
         CPyMarshal.WritePtrField(objPtr, PyObject, "ob_type", mapper.PyBaseObject_Type)
         mapper.StoreBridge(objPtr, object())
 

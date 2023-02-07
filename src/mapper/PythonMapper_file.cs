@@ -103,7 +103,7 @@ namespace Ironclad
             CPyMarshal.Zero(ptr, Marshal.SizeOf<PyFileObject>());
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_refcnt", 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyFile_Type);
-            CPyMarshal.WriteIntField(ptr, typeof(PyFileObject), "f_fp", -2);
+            CPyMarshal.WritePtrField(ptr, typeof(PyFileObject), "f_fp", -2);
             CPyMarshal.WritePtrField(ptr, typeof(PyFileObject), "f_name", this.Store(obj.name));
             CPyMarshal.WritePtrField(ptr, typeof(PyFileObject), "f_mode", this.Store(obj.mode));
             this.map.Associate(ptr, obj);

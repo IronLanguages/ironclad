@@ -11,12 +11,12 @@ import os
 _dirname = os.path.dirname(__file__)
 
 import clr
-from System import GC, Int32, IntPtr
+from System import GC, Int64, IntPtr
 from System.Reflection import Assembly
 from System.Runtime.InteropServices import Marshal
 
-if Marshal.SizeOf(Int32()) != Marshal.SizeOf(IntPtr()):
-    raise ImportError("Ironclad is currently 32-bit only")
+if Marshal.SizeOf(Int64()) != Marshal.SizeOf(IntPtr()):
+    raise ImportError("Ironclad is currently 64-bit only")
 
 clr.AddReference(Assembly.LoadFile(os.path.join(_dirname, "ironclad.dll")))
 from Ironclad import CPyMarshal, PythonMapper

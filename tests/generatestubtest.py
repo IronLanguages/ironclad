@@ -38,19 +38,22 @@ void init(getfuncptr_fp getfuncptr, registerdata_fp registerdata)
 """
 
 EXPECT_JUMPS = """\
-extern _jumptable
+default rel
+bits 64
+
+extern jumptable
 
 section .code
 
-global _FUNC2
-global _FUNC3
-global _FUNC4
-_FUNC2:
-    jmp [_jumptable+0]
-_FUNC3:
-    jmp [_jumptable+4]
-_FUNC4:
-    jmp [_jumptable+8]
+global FUNC2
+global FUNC3
+global FUNC4
+FUNC2:
+    jmp [jumptable+0]
+FUNC3:
+    jmp [jumptable+8]
+FUNC4:
+    jmp [jumptable+16]
 """
 
 EXPECT_HEADER = """\

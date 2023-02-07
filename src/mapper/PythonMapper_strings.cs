@@ -258,7 +258,7 @@ namespace Ironclad
         private IntPtr 
         AllocPyString(int length)
         {
-            int size = Marshal.SizeOf<PyStringObject>() + length;
+            int size = Marshal.SizeOf<PyStringObject>() + length; // TODO: because of struct padding, this is more than we actually need...
             IntPtr data = this.allocator.Alloc(size);
             
             PyStringObject s = new PyStringObject();
@@ -269,8 +269,8 @@ namespace Ironclad
             s.ob_sstate = 0;
             Marshal.StructureToPtr(s, data, false);
             
-            IntPtr terminator = CPyMarshal.Offset(data, size - 1);
-            CPyMarshal.WriteByte(terminator, 0);
+            nint terminator_offset = Marshal.OffsetOf<PyStringObject>("ob_sval") + length;
+            CPyMarshal.Zero(data + terminator_offset, 1);
         
             return data;
         }

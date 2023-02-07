@@ -91,8 +91,12 @@ namespace Ironclad
 
     public partial class PythonMapper : PythonApi
     {
+        // uniform entry point for 32/64 bit testing
+        public IntPtr Py_InitModule4(string name, IntPtr methodsPtr, string doc, IntPtr selfPtr, int apiver)
+            => this.Py_InitModule4_64(name, methodsPtr, doc, selfPtr, apiver);
+
         public override IntPtr 
-        Py_InitModule4(string name, IntPtr methodsPtr, string doc, IntPtr selfPtr, int apiver)
+        Py_InitModule4_64(string name, IntPtr methodsPtr, string doc, IntPtr selfPtr, int apiver)
         {
             name = this.FixImportName(name);
             

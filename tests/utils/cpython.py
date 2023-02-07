@@ -70,8 +70,8 @@ MAKETYPEPTR_DEFAULTS = {
     "tp_doc": "Odysseus' reply to the blinded Cyclops",
     
     "ob_refcnt": 1,
-    "tp_basicsize": 8,
-    "tp_itemsize": 4,
+    "tp_basicsize": 2 * IntPtr.Size,
+    "tp_itemsize": IntPtr.Size,
     "tp_flags": Py_TPFLAGS.HAVE_CLASS,
     
     "tp_methods": None,

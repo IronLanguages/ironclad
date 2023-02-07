@@ -5,7 +5,7 @@ msvcr90
 -D__MSVCRT_VERSION__=0x0900
 
 *moldname:
-moldname90
+moldname
 
 *cpp:
 %(msvcrt_version) %{posix:-D_POSIX_SOURCE} %{mthreads:-D_MT}

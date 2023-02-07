@@ -14,15 +14,11 @@ RUN Invoke-WebRequest -UseBasicParsing https://aka.ms/vs/16/release/vs_buildtool
         --add Microsoft.VisualStudio.Component.Windows10SDK.19041' \
         -NoNewWindow -Wait
 
-RUN Invoke-WebRequest -UseBasicParsing -UserAgent "Wget" https://sourceforge.net/projects/mingw/files/Installer/mingw-get/mingw-get-0.6.2-beta-20131004-1/mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip/download -OutFile mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip; \
-    Expand-Archive mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip MinGW; \
-    C:\MinGW\bin\mingw-get.exe update; \
-    C:\MinGW\bin\mingw-get.exe install mingw32-base mingw32-gcc-g++ msys-base mingw32-pexports	
+RUN Invoke-WebRequest -UseBasicParsing https://github.com/brechtsanders/winlibs_mingw/releases/download/12.2.0-15.0.7-10.0.0-msvcrt-r4/winlibs-x86_64-posix-seh-gcc-12.2.0-mingw-w64msvcrt-10.0.0-r4.zip -OutFile winlibs.zip; \
+    Expand-Archive winlibs.zip -DestinationPath C:\; \
+    Remove-Item winlibs.zip
 
-RUN Invoke-WebRequest -UseBasicParsing https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/win32/nasm-2.16.01-installer-x86.exe -OutFile nasm-2.16.01-installer-x86.exe; \
-    C:\nasm-2.16.01-installer-x86.exe /S /AllUsers
-
-RUN setx /M PATH $($env:PATH + ';C:\MinGW\bin;C:\Program Files (x86)\NASM')
+RUN setx /M PATH $($env:PATH + ';C:\mingw64\bin')
 
 RUN Set-ExecutionPolicy Bypass -Scope Process -Force; \
     # ensure a minimum of TLS 1.2
@@ -32,5 +28,5 @@ RUN Set-ExecutionPolicy Bypass -Scope Process -Force; \
 
 RUN py -m pip install scons castxml pygccxml
 
-RUN choco install -y python2 -ForceX86; \
+RUN choco install -y python2; \
     choco install -y ironpython --version 2.7.12

@@ -476,7 +476,6 @@ PyNumber_ToBase
 PyNumber_TrueDivide
 PyNumber_Xor
 PyOS_AfterFork
-PyOS_CheckStack
 PyOS_FiniInterrupts
 PyOS_InitInterrupts
 PyOS_InputHook DATA
@@ -854,7 +853,7 @@ Py_GetVersion
 Py_HashRandomizationFlag DATA
 Py_IgnoreEnvironmentFlag DATA
 Py_IncRef
-Py_InitModule4
+Py_InitModule4_64
 Py_Initialize
 Py_InitializeEx
 Py_InspectFlag DATA

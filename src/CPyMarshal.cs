@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Ironclad
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential)]
     public struct DoubleStruct
     {
         public double value;
@@ -176,23 +176,14 @@ namespace Ironclad
             return Marshal.GetDelegateForFunctionPointer<T>(funcPtr);
         }
 
-        public static IntPtr
-        Offset(IntPtr start, Int32 offset)
-        {
-            return (IntPtr)(start.ToInt32() + offset);
-        }
+        public static IntPtr Offset(IntPtr start, Int32 offset)
+            => start + offset;
 
-        public static IntPtr
-        Offset(IntPtr start, UInt32 offset)
-        {
-            return (IntPtr)(start.ToInt32() + (int)offset);
-        }
+        public static IntPtr Offset(IntPtr start, UInt32 offset)
+            => Offset(start, checked((int)offset));
 
-        public static IntPtr
-        Offset(IntPtr start, IntPtr offset)
-        {
-            return (IntPtr)(start.ToInt32() + offset.ToInt32());
-        }
+        public static IntPtr Offset(IntPtr start, nint offset)
+            => start + offset;
         
         public static void
         WritePtr(IntPtr address, IntPtr value)

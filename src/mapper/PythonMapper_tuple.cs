@@ -93,7 +93,7 @@ namespace Ironclad
             tuple.ob_size = size;
 
             int baseSize = Marshal.SizeOf<PyTupleObject>();
-            int extraSize = (CPyMarshal.PtrSize * (size - 1));
+            int extraSize = CPyMarshal.PtrSize * Math.Max(0, size - 1);
             IntPtr tuplePtr = this.allocator.Alloc(baseSize + extraSize);
             Marshal.StructureToPtr(tuple, tuplePtr, false);
 

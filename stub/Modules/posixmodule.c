@@ -3828,7 +3828,7 @@ Return the current process id");
 static PyObject *
 posix_getpid(PyObject *self, PyObject *noargs)
 {
-	return PyInt_FromLong((long)getpid());
+	return PyInt_FromLong((long)_getpid());
 }
 
 

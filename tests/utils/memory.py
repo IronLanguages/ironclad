@@ -7,8 +7,8 @@ from Ironclad.Structs import PyIntObject, PyObject, PyTypeObject
 
 def OffsetPtr(ptr, offset):
     if type(offset) == IntPtr:
-        offset = offset.ToInt32()
-    return IntPtr(ptr.ToInt32() + offset)
+        offset = offset.ToInt64()
+    return IntPtr(ptr.ToInt64() + offset)
 
 # note: PyBuffer_Type, PyCObject_Type, PyCode_Type, PyFrame_Type PyTraceBack_Type and PyCFunction_Type
 # are not included, because they are implemented in pure C.
@@ -80,7 +80,7 @@ def CreateTypes(mapper, readyTypes=True):
     def create(name, size):
         block = Marshal.AllocHGlobal(size)
         if name == 'PyFile_Type':
-            CPyMarshal.Zero(block, size);
+            CPyMarshal.Zero(block, size)
             CPyMarshal.WritePtrField(block, PyTypeObject, 'tp_dealloc', mapper.GetFuncPtr('IC_file_dealloc'))
         mapper.RegisterData(name, block)
         blocks.append(block)

@@ -352,7 +352,7 @@ class _PyString_Resize_Test(PyString_TestCase):
             Marshal.WriteIntPtr(ptrPtr, data)
             baseSize = Marshal.SizeOf(PyStringObject())
             self.assertEquals(allocs, [(data, 365 + baseSize)], "allocated wrong")
-            self.assertEquals(mapper._PyString_Resize(ptrPtr, IntPtr(2000000000)), -1, "bad return on error")
+            self.assertEquals(mapper._PyString_Resize(ptrPtr, IntPtr(20000000000)), -1, "bad return on error")
             self.assertEquals(type(mapper.LastException), MemoryError, "wrong exception type")
             self.assertTrue(data in frees, "did not deallocate")    
         finally:
