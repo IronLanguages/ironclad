@@ -188,13 +188,6 @@ It appears that System.Threading.Monitor has some problems when trying to lock o
 the same object from STA and MTA threads (see IronPython-users list, early Nov 2008). 
 Win32 mutexen appear to have no such problem, so we use them instead.
 
-* StupidSet
-
-Essentially, a Dictionary<object, string> whose values are always "stupid"; much
-like a python set, but capable of holding "unhashable" objects. Not very
-interesting, and now only used in one place; would be good to get rid of it, since
-it doesn't even need to hold unhashable objects now.
-
 * InappropriateReflection
 
 Static utility class for messing with other classes' privates. Yes, I'm ashamed.

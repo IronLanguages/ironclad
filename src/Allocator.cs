@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace Ironclad
@@ -23,8 +25,16 @@ namespace Ironclad
 
     public class HGlobalAllocator : IAllocator
     {
-        private StupidSet allocated = new StupidSet();
+        private readonly HashSet<IntPtr> allocated = new HashSet<IntPtr>();
         
+        private void RemoveAllocated(IntPtr ptr)
+        {
+            if (!this.allocated.Remove(ptr))
+            {
+                throw new KeyNotFoundException(String.Format("{0} was not present in set, and hence could not be removed.", ptr));
+            }
+        }
+
         public virtual IntPtr 
         Alloc(nint bytes)
         {
@@ -37,7 +47,7 @@ namespace Ironclad
         Realloc(IntPtr oldptr, nint bytes)
         {
             IntPtr newptr = Marshal.ReAllocHGlobal(oldptr, bytes);
-            this.allocated.SetRemove(oldptr);        
+            RemoveAllocated(oldptr);
             this.allocated.Add(newptr);
             return newptr;
         }
@@ -51,17 +61,16 @@ namespace Ironclad
         public virtual void 
         Free(IntPtr ptr)
         {
-            this.allocated.SetRemove(ptr);
+            RemoveAllocated(ptr);
             Marshal.FreeHGlobal(ptr);
         }
         
         public virtual void 
         FreeAll()
         {
-            object[] elements = this.allocated.ElementsArray;
-            foreach (object ptr in elements)
+            foreach (var ptr in this.allocated.ToArray())
             {
-                this.Free((IntPtr)ptr);
+                Free(ptr);
             }
         }
     }
