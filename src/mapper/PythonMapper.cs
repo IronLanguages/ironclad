@@ -64,7 +64,7 @@ namespace Ironclad
         private Dictionary<IntPtr, ActualiseDelegate> actualisableTypes = new Dictionary<IntPtr, ActualiseDelegate>();
         private Dictionary<IntPtr, object> classStubs = new Dictionary<IntPtr, object>();
         private Dictionary<IntPtr, UnmanagedDataMarker> incompleteObjects = new Dictionary<IntPtr, UnmanagedDataMarker>();
-        private Dictionary<IntPtr, List> listsBeingActualised = new Dictionary<IntPtr, List>();
+        private Dictionary<IntPtr, PythonList> listsBeingActualised = new Dictionary<IntPtr, PythonList>();
         private Dictionary<string, IntPtr> internedStrings = new Dictionary<string, IntPtr>();
         private Dictionary<IntPtr, IntPtr> FILEs = new Dictionary<IntPtr, IntPtr>();
         private Stack<dgt_void_void> exitfuncs = new Stack<dgt_void_void>();

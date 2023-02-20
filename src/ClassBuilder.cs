@@ -284,8 +284,8 @@ namespace Ironclad
         private void
         UglyComplexHack()
         {
-            if (this.methodTable.has_key(this.tablePrefix + "__get_real") &&
-                this.methodTable.has_key(this.tablePrefix + "__get_imag"))
+            if (this.methodTable.ContainsKey(this.tablePrefix + "__get_real") &&
+                this.methodTable.ContainsKey(this.tablePrefix + "__get_imag"))
             {
                 this.code.Append(CodeSnippets.COMPLEX_HACK_CODE);
             }

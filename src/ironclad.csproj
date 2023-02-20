@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net452</TargetFramework>
+    <TargetFramework>net462</TargetFramework>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="IronPython" Version="2.7.12" IncludeAssets="compile" />
+    <PackageReference Include="IronPython" Version="3.4.0" IncludeAssets="compile" />
   </ItemGroup>
 
 </Project>

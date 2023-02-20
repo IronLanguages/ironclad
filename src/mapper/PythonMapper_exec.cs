@@ -4,6 +4,7 @@ using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
 using Microsoft.Scripting.Runtime;
 
+using IronPython.Modules;
 using IronPython.Runtime;
 using IronPython.Runtime.Operations;
 
@@ -38,7 +39,7 @@ namespace Ironclad
                 {
                     locals = this.Retrieve(localsPtr);
                 }
-                PythonOps.QualifiedExec(this.scratchContext, code, globals, locals);
+                Builtin.exec(this.scratchContext, code, globals, locals);
                 this.IncRef(this._Py_NoneStruct);
                 return this._Py_NoneStruct;
             }

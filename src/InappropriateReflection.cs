@@ -9,6 +9,7 @@ using Microsoft.Scripting.Runtime;
 
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
+using IronPython.Runtime.Operations;
 using IronPython.Runtime.Types;
 
 namespace Ironclad
@@ -16,10 +17,10 @@ namespace Ironclad
     internal class InappropriateReflection
     {
         public static PythonType
-        PythonTypeFromDictProxy(DictProxy proxy)
+        PythonTypeFromMappingProxy(MappingProxy proxy)
         {
             FieldInfo _typeField = (FieldInfo)(proxy.GetType().GetMember(
-                "_dt", BindingFlags.NonPublic | BindingFlags.Instance)[0]);
+                "type", BindingFlags.NonPublic | BindingFlags.Instance)[0]);
             return (PythonType)_typeField.GetValue(proxy);
         }
         
@@ -31,6 +32,32 @@ namespace Ironclad
             try
             {
                 return _toPythonMethod.Invoke(null, new object[] { clrException });
+            }
+            catch (Exception e)
+            {
+                throw e.GetBaseException();
+            }
+        }
+
+        public static void PrintWithDest(CodeContext context, object dest, object o)
+        {
+            MethodInfo _printWithDestMethod = typeof(PythonOps).GetMethod("PrintWithDest", BindingFlags.NonPublic | BindingFlags.Static);
+            try
+            {
+                _printWithDestMethod.Invoke(null, new object[] { context, dest, o });
+            }
+            catch (Exception e)
+            {
+                throw e.GetBaseException();
+            }
+        }
+
+        public static bool IsInstance(CodeContext context, object o, object typeinfo)
+        {
+            MethodInfo _isInstanceMethod = typeof(PythonOps).GetMethod("IsInstance", BindingFlags.NonPublic | BindingFlags.Static, null, new [] {typeof(CodeContext), typeof(object), typeof(object)}, null);
+            try
+            {
+                return (bool)_isInstanceMethod.Invoke(null, new object[] { context, o, typeinfo });
             }
             catch (Exception e)
             {

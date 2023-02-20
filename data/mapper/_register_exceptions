@@ -4,23 +4,19 @@
 
 BaseException                   Builtin
 
-EnvironmentError                PythonExceptions
 SyntaxError                     PythonExceptions
-WindowsError                    PythonExceptions
 SystemExit                      PythonExceptions
 UnicodeTranslateError           PythonExceptions
 
 Exception                       PythonExceptions
 StopIteration                   PythonExceptions
 GeneratorExit                   PythonExceptions
-StandardError                   PythonExceptions
 ArithmeticError                 PythonExceptions
 LookupError                     PythonExceptions
 AssertionError                  PythonExceptions
 AttributeError                  PythonExceptions
 EOFError                        PythonExceptions
 FloatingPointError              PythonExceptions
-IOError                         PythonExceptions
 OSError                         PythonExceptions
 ImportError                     PythonExceptions
 IndexError                      PythonExceptions

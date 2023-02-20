@@ -64,14 +64,6 @@ namespace Ironclad
             this.Unmap(ptr);
             this.allocator.Free(ptr);
         }
-        
-        
-        public override int
-        PyObject_Compare(IntPtr ptr1, IntPtr ptr2)
-        {
-            return Builtin.cmp(this.scratchContext, this.Retrieve(ptr1), this.Retrieve(ptr2));
-        }
-
 
         private object
         RichCompare(IntPtr ptr1, IntPtr ptr2, int opid)
@@ -133,7 +125,6 @@ namespace Ironclad
                 return IntPtr.Zero;
             }
         }
-        
         
         public override int
         PyCallable_Check(IntPtr objPtr)
@@ -240,7 +231,7 @@ namespace Ironclad
             {
                 object inst = this.Retrieve(instPtr);
                 object cls = this.Retrieve(clsPtr);
-                if (PythonOps.IsInstance(this.scratchContext, inst, cls))
+                if (InappropriateReflection.IsInstance(this.scratchContext, inst, cls))
                 {
                     return 1;
                 }
@@ -264,22 +255,11 @@ namespace Ironclad
                 // stupid casting rigmarole is because Builtin.issubclass gets
                 // issubclass(object, object) wrong if I don't force a more
                 // specific call.
-
-                PythonType subType = derived as PythonType;
-                if (subType != null)
-                {
-                    if (Builtin.issubclass(this.scratchContext, subType, cls))
-                    {
-                        return 1;
-                    }
-                    return 0;
-                }
-
-                // if this raises, it should have raised anyway
-                if (Builtin.issubclass(this.scratchContext, (OldClass)derived, cls))
+                if (derived is PythonType subType && Builtin.issubclass(this.scratchContext, subType, cls))
                 {
                     return 1;
                 }
+
                 return 0;
             }
             catch (Exception e)

@@ -44,9 +44,8 @@ namespace Ironclad
         PyDict_Size(IntPtr dictPtr)
         {
             IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
-            if (dict is DictProxy)
+            if (dict is MappingProxy proxy)
             {
-                DictProxy proxy = (DictProxy)dict;
                 return proxy.__len__(this.scratchContext);
             }
             return dict.Keys.Count;
@@ -122,9 +121,9 @@ namespace Ironclad
         IC_PyDict_Set(IntPtr dictPtr, object key, object item)
         {
             IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
-            if (dict is DictProxy)
+            if (dict is MappingProxy proxy)
             {
-                PythonType _type = InappropriateReflection.PythonTypeFromDictProxy((DictProxy)dict);
+                PythonType _type = InappropriateReflection.PythonTypeFromMappingProxy(proxy);
                 Builtin.setattr(this.scratchContext, _type, (string)key, item);
             }
             else
@@ -194,7 +193,7 @@ namespace Ironclad
         PyDict_Values(IntPtr dictPtr)
         {
             IDictionary dict = (IDictionary)this.Retrieve(dictPtr);
-            List values = new List();
+            PythonList values = new PythonList();
             values.__init__(dict.Values);
             return this.Store(values);
         }

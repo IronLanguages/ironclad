@@ -110,7 +110,7 @@ namespace Ironclad
             __dict__["__name__"] = name;
             string __file__ = this.importFiles.Peek();
             __dict__["__file__"] = __file__;
-            List __path__ = new List();
+            PythonList __path__ = new PythonList();
             if (__file__ != null)
             {
                 __path__.append(Path.GetDirectoryName(__file__));
@@ -217,7 +217,7 @@ namespace Ironclad
         GetModule(string name)
         {
             PythonDictionary modules = (PythonDictionary)this.python.SystemState.Get__dict__()["modules"];
-            if (modules.has_key(name))
+            if (modules.ContainsKey(name))
             {
                 return (PythonModule)modules[name];
             }

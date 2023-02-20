@@ -37,7 +37,7 @@ namespace Ironclad
         
         
         private IntPtr
-        StoreTyped(List list)
+        StoreTyped(PythonList list)
         {
             int length = list.__len__();
             PyListObject listStruct = new PyListObject();
@@ -74,7 +74,7 @@ namespace Ironclad
 
             IntPtr listPtr = this.allocator.Alloc(Marshal.SizeOf<PyListObject>());
             Marshal.StructureToPtr(list, listPtr, false);
-            this.map.Associate(listPtr, new List());
+            this.map.Associate(listPtr, new PythonList());
             return listPtr;
         }
 
@@ -150,7 +150,7 @@ namespace Ironclad
                 this.IC_PyList_Append_NonEmpty(listPtr, ref listStruct, itemPtr);
             }
             
-            List list = (List)this.Retrieve(listPtr);
+            PythonList list = (PythonList)this.Retrieve(listPtr);
             list.append(this.Retrieve(itemPtr));
             this.IncRef(itemPtr);
             return 0;
@@ -191,7 +191,7 @@ namespace Ironclad
             if (this.map.HasPtr(listPtr))
             {
                 object item = this.Retrieve(itemPtr);
-                List list = (List)this.Retrieve(listPtr);
+                PythonList list = (PythonList)this.Retrieve(listPtr);
                 list[checked((int)index)] = item;
             }      
             return 0;
@@ -203,8 +203,8 @@ namespace Ironclad
         {
             try
             {
-                List list = (List)this.Retrieve(listPtr);
-                List sliced = (List)list[new Slice(checked((int)start), checked((int)stop))];
+                PythonList list = (PythonList)this.Retrieve(listPtr);
+                PythonList sliced = (PythonList)list[new Slice(checked((int)start), checked((int)stop))];
                 return this.Store(sliced);
             }
             catch (Exception e)
@@ -220,7 +220,7 @@ namespace Ironclad
         {
             try
             {
-                List list = (List)this.Retrieve(listPtr);
+                PythonList list = (PythonList)this.Retrieve(listPtr);
                 return this.Store(list[checked((int)idx)]);
             }
             catch (Exception e)
@@ -255,7 +255,7 @@ namespace Ironclad
                 throw new Exception("Fatal error: PythonMapper.listsBeingActualised is somehow corrupt");
             }
             
-            List newList = new List();
+            PythonList newList = new PythonList();
             this.listsBeingActualised[ptr] = newList;
             
             nint length = CPyMarshal.ReadPtrField(ptr, typeof(PyListObject), nameof(PyListObject.ob_size));

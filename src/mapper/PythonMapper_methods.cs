@@ -22,13 +22,8 @@ namespace Ironclad
             {
                 self = this.Retrieve(selfPtr);
             }
-            object klass = null;
-            if (klassPtr != IntPtr.Zero)
-            {
-                klass = this.Retrieve(klassPtr);
-            }
 
-            return this.Store(new Method(func, self, klass));
+            return this.Store(new Method(func, self));
         }
         
         private IntPtr
@@ -40,9 +35,8 @@ namespace Ironclad
             
             CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), nameof(PyMethodObject.ob_refcnt), 1);
             CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), nameof(PyMethodObject.ob_type), this.PyMethod_Type);
-            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_func), this.Store(meth.im_func));
-            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_self), this.Store(meth.im_self));
-            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_class), this.Store(meth.im_class));
+            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_func), this.Store(meth.__func__));
+            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_self), this.Store(meth.__self__));
             
             this.map.Associate(methPtr, meth);
             return methPtr;
@@ -53,7 +47,6 @@ namespace Ironclad
         {
             this.DecRef(CPyMarshal.ReadPtrField(objPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_func)));
             this.DecRef(CPyMarshal.ReadPtrField(objPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_self)));
-            this.DecRef(CPyMarshal.ReadPtrField(objPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_class)));
             
             IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), nameof(PyObject.ob_type));
             dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(objType, typeof(PyTypeObject), nameof(PyTypeObject.tp_free));

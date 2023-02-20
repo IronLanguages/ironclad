@@ -6,7 +6,6 @@
 PyNumber_Add                add
 PyNumber_Subtract           sub
 PyNumber_Multiply           mul
-PyNumber_Divide             div
 PyNumber_TrueDivide         truediv
 PyNumber_FloorDivide        floordiv
 PyNumber_Remainder          mod

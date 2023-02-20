@@ -265,7 +265,7 @@ namespace Ironclad
             this.PyType_Ready(typePtr);
             return typePtr;
         }
-        
+
         private void
         ActualiseFloat(IntPtr fptr)
         {

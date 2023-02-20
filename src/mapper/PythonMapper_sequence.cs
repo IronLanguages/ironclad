@@ -18,7 +18,7 @@ namespace Ironclad
         PySequence_Check(IntPtr objPtr)
         {
             object obj = this.Retrieve(objPtr);
-            if (Builtin.isinstance(obj, Builtin.xrange))
+            if (Builtin.isinstance(obj, Builtin.range))
             {
                 return 1;
             }
