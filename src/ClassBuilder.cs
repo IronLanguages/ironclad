@@ -20,26 +20,32 @@ namespace Ironclad
         public string tp_name = null;
 
         private readonly string[] EASY_TYPE_FIELDS = new string[] { 
-            "tp_init", "tp_call", "tp_repr", "tp_str", "tp_compare", "tp_hash", 
-            "tp_getattr", "tp_iter", "tp_iternext"
+            nameof(PyTypeObject.tp_init), nameof(PyTypeObject.tp_call), nameof(PyTypeObject.tp_repr),
+            nameof(PyTypeObject.tp_str), nameof(PyTypeObject.tp_compare), nameof(PyTypeObject.tp_hash), 
+            nameof(PyTypeObject.tp_getattr), nameof(PyTypeObject.tp_iter), nameof(PyTypeObject.tp_iternext),
         };
         private readonly string[] MP_FIELDS = new string[] { 
-            "mp_subscript", "mp_ass_subscript", "mp_length" 
+            nameof(PyMappingMethods.mp_subscript), nameof(PyMappingMethods.mp_ass_subscript), nameof(PyMappingMethods.mp_length),
         };
         private readonly string[] SQ_FIELDS = new string[] { 
-            "sq_item", "sq_concat", "sq_ass_item", "sq_length", "sq_slice", "sq_ass_slice", "sq_contains" 
+            nameof(PySequenceMethods.sq_item), nameof(PySequenceMethods.sq_concat), nameof(PySequenceMethods.sq_ass_item),
+            nameof(PySequenceMethods.sq_length), nameof(PySequenceMethods.sq_slice), nameof(PySequenceMethods.sq_ass_slice),
+            nameof(PySequenceMethods.sq_contains),
         };
         private readonly string[] NB_FIELDS = new string[] { 
-            "nb_add", "nb_subtract", "nb_multiply", "nb_divide", "nb_true_divide", 
-              "nb_floor_divide", "nb_remainder", "nb_divmod", 
-            "nb_lshift", "nb_rshift", "nb_and", "nb_xor", "nb_or", 
-              "nb_inplace_add", "nb_inplace_subtract", "nb_inplace_multiply", "nb_inplace_divide", 
-              "nb_inplace_true_divide", "nb_inplace_floor_divide", "nb_inplace_remainder", 
-              "nb_inplace_lshift", "nb_inplace_rshift", "nb_inplace_and", "nb_inplace_xor", "nb_inplace_or", 
-            "nb_negative", "nb_positive", "nb_absolute", "nb_invert", "nb_int", "nb_long", "nb_float", 
-              "nb_oct", "nb_hex", "nb_index", 
-            "nb_nonzero",
-            "nb_power", "nb_inplace_power",
+            nameof(PyNumberMethods.nb_add), nameof(PyNumberMethods.nb_subtract), nameof(PyNumberMethods.nb_multiply),
+            nameof(PyNumberMethods.nb_divide), nameof(PyNumberMethods.nb_true_divide), nameof(PyNumberMethods.nb_floor_divide),
+            nameof(PyNumberMethods.nb_remainder), nameof(PyNumberMethods.nb_divmod), nameof(PyNumberMethods.nb_lshift),
+            nameof(PyNumberMethods.nb_rshift), nameof(PyNumberMethods.nb_and), nameof(PyNumberMethods.nb_xor),
+            nameof(PyNumberMethods.nb_or), nameof(PyNumberMethods.nb_inplace_add), nameof(PyNumberMethods.nb_inplace_subtract),
+            nameof(PyNumberMethods.nb_inplace_multiply), nameof(PyNumberMethods.nb_inplace_divide), nameof(PyNumberMethods.nb_inplace_true_divide),
+            nameof(PyNumberMethods.nb_inplace_floor_divide), nameof(PyNumberMethods.nb_inplace_remainder), nameof(PyNumberMethods.nb_inplace_lshift),
+            nameof(PyNumberMethods.nb_inplace_rshift), nameof(PyNumberMethods.nb_inplace_and), nameof(PyNumberMethods.nb_inplace_xor),
+            nameof(PyNumberMethods.nb_inplace_or), nameof(PyNumberMethods.nb_negative), nameof(PyNumberMethods.nb_positive),
+            nameof(PyNumberMethods.nb_absolute), nameof(PyNumberMethods.nb_invert), nameof(PyNumberMethods.nb_int),
+            nameof(PyNumberMethods.nb_long), nameof(PyNumberMethods.nb_float), nameof(PyNumberMethods.nb_oct),
+            nameof(PyNumberMethods.nb_hex), nameof(PyNumberMethods.nb_index), nameof(PyNumberMethods.nb_nonzero),
+            nameof(PyNumberMethods.nb_power), nameof(PyNumberMethods.nb_inplace_power),
         };
 
         public ClassBuilder(IntPtr typePtr)
@@ -122,9 +128,9 @@ namespace Ironclad
         GenerateMagicMethods()
         {
             this.GenerateProtocolMagicMethods(this.ptr, typeof(PyTypeObject), EASY_TYPE_FIELDS);
-            this.GenerateNamedProtocolMagicMethods("tp_as_sequence", typeof(PySequenceMethods), SQ_FIELDS);
-            this.GenerateNamedProtocolMagicMethods("tp_as_mapping", typeof(PyMappingMethods), MP_FIELDS);
-            this.GenerateNamedProtocolMagicMethods("tp_as_number", typeof(PyNumberMethods), NB_FIELDS);
+            this.GenerateNamedProtocolMagicMethods(nameof(PyTypeObject.tp_as_sequence), typeof(PySequenceMethods), SQ_FIELDS);
+            this.GenerateNamedProtocolMagicMethods(nameof(PyTypeObject.tp_as_mapping), typeof(PyMappingMethods), MP_FIELDS);
+            this.GenerateNamedProtocolMagicMethods(nameof(PyTypeObject.tp_as_number), typeof(PyNumberMethods), NB_FIELDS);
             this.GenerateRichcmpMethods();
             this.UglyComplexHack();
         }

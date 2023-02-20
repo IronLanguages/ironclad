@@ -105,18 +105,18 @@ namespace Ironclad
 
             PyType_Ready(typeBasePtr);
             this.InheritSubclassFlags(typePtr);
-            this.InheritPtrField(typePtr, "tp_alloc");
-            this.InheritPtrField(typePtr, "tp_new");
-            this.InheritPtrField(typePtr, "tp_dealloc");
-            this.InheritPtrField(typePtr, "tp_free");
-            this.InheritPtrField(typePtr, "tp_doc");
-            this.InheritPtrField(typePtr, "tp_call");
-            this.InheritPtrField(typePtr, "tp_as_number");
-            this.InheritPtrField(typePtr, "tp_as_sequence");
-            this.InheritPtrField(typePtr, "tp_as_mapping");
-            this.InheritPtrField(typePtr, "tp_as_buffer");
-            this.InheritPtrField(typePtr, "tp_basicsize");
-            this.InheritPtrField(typePtr, "tp_itemsize");
+            this.InheritPtrField(typePtr, nameof(PyTypeObject.tp_alloc));
+            this.InheritPtrField(typePtr, nameof(PyTypeObject.tp_new));
+            this.InheritPtrField(typePtr, nameof(PyTypeObject.tp_dealloc));
+            this.InheritPtrField(typePtr, nameof(PyTypeObject.tp_free));
+            this.InheritPtrField(typePtr, nameof(PyTypeObject.tp_doc));
+            this.InheritPtrField(typePtr, nameof(PyTypeObject.tp_call));
+            this.InheritPtrField(typePtr, nameof(PyTypeObject.tp_as_number));
+            this.InheritPtrField(typePtr, nameof(PyTypeObject.tp_as_sequence));
+            this.InheritPtrField(typePtr, nameof(PyTypeObject.tp_as_mapping));
+            this.InheritPtrField(typePtr, nameof(PyTypeObject.tp_as_buffer));
+            this.InheritPtrField(typePtr, nameof(PyTypeObject.tp_basicsize));
+            this.InheritPtrField(typePtr, nameof(PyTypeObject.tp_itemsize));
 
             if (!this.HasPtr(typePtr))
             {

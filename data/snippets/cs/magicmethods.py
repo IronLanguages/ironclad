@@ -37,7 +37,7 @@ MAGICMETHODS_FILE_TEMPLATE = FILE_TEMPLATE % MAGICMETHODS_TEMPLATE
 #================================================================================================
 
 MAGICMETHOD_CASE_TEMPLATE = """\
-                case "%(c_field)s":%(has_swapped_version_code)s
+                case nameof(%(c_field)s):%(has_swapped_version_code)s
                     name = "%(py_field)s";
                     dgtType = typeof(dgt_%(dgt_spec)s);
                     template = @"%(template)s";
