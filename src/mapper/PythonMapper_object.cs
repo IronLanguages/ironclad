@@ -19,7 +19,7 @@ namespace Ironclad
         public override IntPtr
         _PyObject_New(IntPtr typePtr)
         {
-            var tp_basicsize = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_basicsize");
+            var tp_basicsize = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_basicsize));
             IntPtr objPtr = this.allocator.Alloc(tp_basicsize);
             CPyMarshal.Zero(objPtr, tp_basicsize);
             return this.PyObject_Init(objPtr, typePtr);
@@ -28,8 +28,8 @@ namespace Ironclad
         public override IntPtr
         _PyObject_NewVar(IntPtr typePtr, nint nitems)
         {
-            nint tp_basicsize = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_basicsize");
-            nint tp_itemsize = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_itemsize");
+            nint tp_basicsize = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_basicsize));
+            nint tp_itemsize = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_itemsize));
             nint size = tp_basicsize + nitems * tp_itemsize;
             IntPtr objPtr = this.allocator.Alloc(size);
             CPyMarshal.Zero(objPtr, size);
@@ -39,8 +39,8 @@ namespace Ironclad
         public override IntPtr
         PyObject_Init(IntPtr objPtr, IntPtr typePtr)
         {
-            CPyMarshal.WritePtrField(objPtr, typeof(PyObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(objPtr, typeof(PyObject), "ob_type", typePtr);
+            CPyMarshal.WritePtrField(objPtr, typeof(PyObject), nameof(PyObject.ob_refcnt), 1);
+            CPyMarshal.WritePtrField(objPtr, typeof(PyObject), nameof(PyObject.ob_type), typePtr);
             return objPtr;
         }
         
@@ -53,22 +53,22 @@ namespace Ironclad
         public override void 
         IC_PyBaseObject_Dealloc(IntPtr objPtr)
         {
-            IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
-            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(objType, typeof(PyTypeObject), "tp_free");
+            IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), nameof(PyObject.ob_type));
+            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(objType, typeof(PyTypeObject), nameof(PyTypeObject.tp_free));
             freeDgt(objPtr);
         }
         
         public override void
         IC_PyInstance_Dealloc(IntPtr objPtr)
         {
-            IntPtr dictPtr = CPyMarshal.ReadPtrField(objPtr, typeof(PyInstanceObject), "in_dict");
+            IntPtr dictPtr = CPyMarshal.ReadPtrField(objPtr, typeof(PyInstanceObject), nameof(PyInstanceObject.in_dict));
             if (dictPtr != IntPtr.Zero)
             {
                 this.DecRef(dictPtr);
             }
             
-            IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
-            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(objType, typeof(PyTypeObject), "tp_free");
+            IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), nameof(PyObject.ob_type));
+            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(objType, typeof(PyTypeObject), nameof(PyTypeObject.tp_free));
             freeDgt(objPtr);
         }
         

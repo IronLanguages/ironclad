@@ -13,11 +13,11 @@ namespace Ironclad
         StoreTyped(Slice slice)
         {
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PySliceObject>());
-            CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), "ob_type", this.PySlice_Type);
-            CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), "start", this.Store(slice.start));
-            CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), "stop", this.Store(slice.stop));
-            CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), "step", this.Store(slice.step));
+            CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), nameof(PySliceObject.ob_refcnt), 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), nameof(PySliceObject.ob_type), this.PySlice_Type);
+            CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), nameof(PySliceObject.start), this.Store(slice.start));
+            CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), nameof(PySliceObject.stop), this.Store(slice.stop));
+            CPyMarshal.WritePtrField(ptr, typeof(PySliceObject), nameof(PySliceObject.step), this.Store(slice.step));
             this.map.Associate(ptr, slice);
             return ptr;
         }
@@ -25,11 +25,11 @@ namespace Ironclad
         public override void
         IC_PySlice_Dealloc(IntPtr slicePtr)
         {
-            this.DecRef(CPyMarshal.ReadPtrField(slicePtr, typeof(PySliceObject), "start"));
-            this.DecRef(CPyMarshal.ReadPtrField(slicePtr, typeof(PySliceObject), "stop"));
-            this.DecRef(CPyMarshal.ReadPtrField(slicePtr, typeof(PySliceObject), "step"));
+            this.DecRef(CPyMarshal.ReadPtrField(slicePtr, typeof(PySliceObject), nameof(PySliceObject.start)));
+            this.DecRef(CPyMarshal.ReadPtrField(slicePtr, typeof(PySliceObject), nameof(PySliceObject.stop)));
+            this.DecRef(CPyMarshal.ReadPtrField(slicePtr, typeof(PySliceObject), nameof(PySliceObject.step)));
 
-            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(this.PySlice_Type, typeof(PyTypeObject), "tp_free");
+            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(this.PySlice_Type, typeof(PyTypeObject), nameof(PyTypeObject.tp_free));
             freeDgt(slicePtr);
         }
 

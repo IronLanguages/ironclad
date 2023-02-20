@@ -39,9 +39,9 @@ namespace Ironclad
         StoreTyped(PythonExceptions.BaseException exc)
         {
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyObject>());
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_refcnt), 1);
             object type_ = PythonCalls.Call(Builtin.type, new object[] { exc });
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.Store(type_));
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_type), this.Store(type_));
             this.map.Associate(ptr, exc);
             return ptr;
         }

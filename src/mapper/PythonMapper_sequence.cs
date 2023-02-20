@@ -58,10 +58,10 @@ namespace Ironclad
         {
             try
             {
-                if (CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type") == this.PyTuple_Type)
+                if (CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), nameof(PyObject.ob_type)) == this.PyTuple_Type)
                 {
-                    IntPtr storagePtr = CPyMarshal.Offset(objPtr, Marshal.OffsetOf(typeof(PyTupleObject), "ob_item"));
-                    nint size = CPyMarshal.ReadPtrField(objPtr, typeof(PyTupleObject), "ob_size");
+                    IntPtr storagePtr = CPyMarshal.Offset(objPtr, Marshal.OffsetOf(typeof(PyTupleObject), nameof(PyTupleObject.ob_item)));
+                    nint size = CPyMarshal.ReadPtrField(objPtr, typeof(PyTupleObject), nameof(PyTupleObject.ob_size));
                     if (idx >= size)
                     {
                         throw PythonOps.IndexError("PySequence_GetItem: tuple index {0} out of range", idx);
@@ -69,8 +69,8 @@ namespace Ironclad
                     
                     IntPtr slotPtr = CPyMarshal.Offset(storagePtr, idx * CPyMarshal.PtrSize);
                     IntPtr itemPtr =  CPyMarshal.ReadPtr(slotPtr);
-                    nint refcnt = CPyMarshal.ReadPtrField(itemPtr, typeof(PyObject), "ob_refcnt");
-                    CPyMarshal.WritePtrField(itemPtr, typeof(PyObject), "ob_refcnt", refcnt + 1);
+                    nint refcnt = CPyMarshal.ReadPtrField(itemPtr, typeof(PyObject), nameof(PyObject.ob_refcnt));
+                    CPyMarshal.WritePtrField(itemPtr, typeof(PyObject), nameof(PyObject.ob_refcnt), refcnt + 1);
                     return itemPtr;
                 }
             
@@ -94,11 +94,11 @@ namespace Ironclad
         {
             try
             {
-                IntPtr typePtr = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
+                IntPtr typePtr = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), nameof(PyObject.ob_type));
                 if (typePtr == this.PyList_Type)
                 {
                     nint newIdx = idx;
-                    nint length = CPyMarshal.ReadPtrField(objPtr, typeof(PyListObject), "ob_size");
+                    nint length = CPyMarshal.ReadPtrField(objPtr, typeof(PyListObject), nameof(PyListObject.ob_size));
                     if (newIdx < 0)
                     {
                         newIdx += length;
@@ -152,14 +152,14 @@ namespace Ironclad
         {
             try
             {
-                IntPtr typePtr = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
-                IntPtr seqPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_as_sequence");
+                IntPtr typePtr = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), nameof(PyObject.ob_type));
+                IntPtr seqPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_as_sequence));
                 if (seqPtr != IntPtr.Zero)
                 {
-                    IntPtr sq_repeat = CPyMarshal.ReadPtrField(seqPtr, typeof(PySequenceMethods), "sq_repeat");
+                    IntPtr sq_repeat = CPyMarshal.ReadPtrField(seqPtr, typeof(PySequenceMethods), nameof(PySequenceMethods.sq_repeat));
                     if (sq_repeat != IntPtr.Zero)
                     {
-                        dgt_ptr_ptrssize dgt = CPyMarshal.ReadFunctionPtrField<dgt_ptr_ptrssize>(seqPtr, typeof(PySequenceMethods), "sq_repeat");
+                        dgt_ptr_ptrssize dgt = CPyMarshal.ReadFunctionPtrField<dgt_ptr_ptrssize>(seqPtr, typeof(PySequenceMethods), nameof(PySequenceMethods.sq_repeat));
                         return dgt(objPtr, count);
                     }
                 }
@@ -217,7 +217,7 @@ namespace Ironclad
         {
             try
             {
-                if (CPyMarshal.ReadPtrField(seqPtr, typeof(PyObject), "ob_type") == this.PyTuple_Type)
+                if (CPyMarshal.ReadPtrField(seqPtr, typeof(PyObject), nameof(PyObject.ob_type)) == this.PyTuple_Type)
                 {
                     this.IncRef(seqPtr);
                     return seqPtr;

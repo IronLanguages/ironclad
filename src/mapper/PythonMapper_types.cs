@@ -20,28 +20,28 @@ namespace Ironclad
         public override IntPtr 
         PyType_GenericNew(IntPtr typePtr, IntPtr args, IntPtr kwargs)
         {
-            dgt_ptr_ptrssize dgt = CPyMarshal.ReadFunctionPtrField<dgt_ptr_ptrssize>(typePtr, typeof(PyTypeObject), "tp_alloc");
+            dgt_ptr_ptrssize dgt = CPyMarshal.ReadFunctionPtrField<dgt_ptr_ptrssize>(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_alloc));
             return dgt(typePtr, 0);
         }
         
         public override IntPtr 
         PyType_GenericAlloc(IntPtr typePtr, nint nItems)
         {
-            nint size = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_basicsize");
+            nint size = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_basicsize));
             if (nItems > 0)
             {
-                nint itemsize = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_itemsize");
+                nint itemsize = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_itemsize));
                 size += (nItems * itemsize);
             }
             
             IntPtr newInstance = this.allocator.Alloc(size);
             CPyMarshal.Zero(newInstance, size);
-            CPyMarshal.WritePtrField(newInstance, typeof(PyObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(newInstance, typeof(PyObject), "ob_type", typePtr);
+            CPyMarshal.WritePtrField(newInstance, typeof(PyObject), nameof(PyObject.ob_refcnt), 1);
+            CPyMarshal.WritePtrField(newInstance, typeof(PyObject), nameof(PyObject.ob_type), typePtr);
 
             if (nItems > 0)
             {
-                CPyMarshal.WritePtrField(newInstance, typeof(PyVarObject), "ob_size", nItems);
+                CPyMarshal.WritePtrField(newInstance, typeof(PyVarObject), nameof(PyVarObject.ob_size), nItems);
             }
 
             return newInstance;
@@ -82,25 +82,25 @@ namespace Ironclad
             {
                 return -1;
             }
-            Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
+            Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags));
             if ((Int32)(flags & (Py_TPFLAGS.READY | Py_TPFLAGS.READYING)) != 0)
             {
                 return 0;
             }
             flags |= Py_TPFLAGS.READYING;
-            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
+            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags), (Int32)flags);
             
-            IntPtr typeTypePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "ob_type");
+            IntPtr typeTypePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.ob_type));
             if ((typeTypePtr == IntPtr.Zero) && (typePtr != this.PyType_Type))
             {
-                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.PyType_Type);
+                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.ob_type), this.PyType_Type);
             }
 
-            IntPtr typeBasePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
+            IntPtr typeBasePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_base));
             if ((typeBasePtr == IntPtr.Zero) && (typePtr != this.PyBaseObject_Type))
             {
                 typeBasePtr = this.PyBaseObject_Type;
-                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", typeBasePtr);
+                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_base), typeBasePtr);
             }
 
             PyType_Ready(typeBasePtr);
@@ -128,14 +128,14 @@ namespace Ironclad
                 if (Builtin.hasattr(this.scratchContext, klass, "__dict__"))
                 {
                     object typeDict = Builtin.getattr(this.scratchContext, klass, "__dict__");
-                    CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_dict", this.Store(typeDict));
+                    CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_dict), this.Store(typeDict));
                 }
             }
 
-            flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
+            flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags));
             flags |= Py_TPFLAGS.READY | Py_TPFLAGS.HAVE_CLASS;
             flags &= ~Py_TPFLAGS.READYING;
-            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
+            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags), (Int32)flags);
             return 0;
         }
 
@@ -220,7 +220,7 @@ namespace Ironclad
             IntPtr fieldPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), name);
             if (fieldPtr == IntPtr.Zero)
             {
-                IntPtr basePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
+                IntPtr basePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_base));
                 if (basePtr != IntPtr.Zero)
                 {
                     CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), name, 
@@ -235,7 +235,7 @@ namespace Ironclad
             int fieldVal = CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), name);
             if (fieldVal == 0)
             {
-                IntPtr basePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
+                IntPtr basePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_base));
                 if (basePtr != IntPtr.Zero)
                 {
                     CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), name,
@@ -247,7 +247,7 @@ namespace Ironclad
         private void
         InheritSubclassFlags(IntPtr typePtr)
         {
-            Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
+            Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags));
             
             if (this.PyType_IsSubtype(typePtr, this.PyInt_Type) != 0) { flags |= Py_TPFLAGS.INT_SUBCLASS; }
             if (this.PyType_IsSubtype(typePtr, this.PyLong_Type) != 0) { flags |= Py_TPFLAGS.LONG_SUBCLASS; }
@@ -258,7 +258,7 @@ namespace Ironclad
             if (this.PyType_IsSubtype(typePtr, this.PyType_Type) != 0) { flags |= Py_TPFLAGS.TYPE_SUBCLASS; }
             // TODO: PyExc_BaseException is tedious
             
-            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
+            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags), (Int32)flags);
         }
 
         private IntPtr
@@ -268,20 +268,20 @@ namespace Ironclad
             IntPtr typePtr = this.allocator.Alloc(typeSize);
             CPyMarshal.Zero(typePtr, typeSize);
             
-            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_refcnt", 2);
+            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.ob_refcnt), 2);
 
             object ob_type = PythonCalls.Call(this.scratchContext, Builtin.type, new object[] { _type });
-            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "ob_type", this.Store(ob_type));
+            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.ob_type), this.Store(ob_type));
             
             string tp_name = (string)_type.__getattribute__(this.scratchContext, "__name__");
-            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_name", this.Store(tp_name));
+            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_name), this.Store(tp_name));
             
             PythonTuple tp_bases = (PythonTuple)_type.__getattribute__(this.scratchContext, "__bases__");
             object tp_base = tp_bases[0];
-            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_base", this.Store(tp_base));
+            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_base), this.Store(tp_base));
             if (tp_bases.__len__() > 1)
             {
-                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_bases", this.Store(tp_bases));
+                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_bases), this.Store(tp_bases));
             }
 
             this.scratchModule.Get__dict__()["_ironclad_bases"] = tp_bases;
@@ -302,14 +302,14 @@ namespace Ironclad
             IntPtr ptr = this.allocator.Alloc(size);
             CPyMarshal.Zero(ptr, size);
             
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_refcnt", 2); // leak classes deliberately
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyClass_Type);
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_refcnt), 2); // leak classes deliberately
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_type), this.PyClass_Type);
             
-            CPyMarshal.WritePtrField(ptr, typeof(PyClassObject), "cl_bases", 
+            CPyMarshal.WritePtrField(ptr, typeof(PyClassObject), nameof(PyClassObject.cl_bases), 
                 this.Store(Builtin.getattr(this.scratchContext, cls, "__bases__")));
-            CPyMarshal.WritePtrField(ptr, typeof(PyClassObject), "cl_dict", 
+            CPyMarshal.WritePtrField(ptr, typeof(PyClassObject), nameof(PyClassObject.cl_dict), 
                 this.Store(Builtin.getattr(this.scratchContext, cls, "__dict__")));
-            CPyMarshal.WritePtrField(ptr, typeof(PyClassObject), "cl_name", 
+            CPyMarshal.WritePtrField(ptr, typeof(PyClassObject), nameof(PyClassObject.cl_name), 
                 this.Store(Builtin.getattr(this.scratchContext, cls, "__name__")));
             
             this.map.Associate(ptr, cls);
@@ -323,12 +323,12 @@ namespace Ironclad
             IntPtr ptr = this.allocator.Alloc(size);
             CPyMarshal.Zero(ptr, size);
             
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyInstance_Type);
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_refcnt), 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_type), this.PyInstance_Type);
 
-            CPyMarshal.WritePtrField(ptr, typeof(PyInstanceObject), "in_class", 
+            CPyMarshal.WritePtrField(ptr, typeof(PyInstanceObject), nameof(PyInstanceObject.in_class), 
                 this.Store(Builtin.getattr(this.scratchContext, inst, "__class__")));
-            CPyMarshal.WritePtrField(ptr, typeof(PyInstanceObject), "in_dict", 
+            CPyMarshal.WritePtrField(ptr, typeof(PyInstanceObject), nameof(PyInstanceObject.in_dict), 
                 this.Store(Builtin.getattr(this.scratchContext, inst, "__dict__")));
             
             this.map.Associate(ptr, inst);
@@ -338,7 +338,7 @@ namespace Ironclad
         private void
         ActualiseFloat(IntPtr fptr)
         {
-            double value = CPyMarshal.ReadDoubleField(fptr, typeof(PyFloatObject), "ob_fval");
+            double value = CPyMarshal.ReadDoubleField(fptr, typeof(PyFloatObject), nameof(PyFloatObject.ob_fval));
             this.map.Associate(fptr, value);
         }
         
@@ -356,17 +356,17 @@ namespace Ironclad
         private void
         ActualiseArbitraryObject(IntPtr ptr)
         {
-            IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
+            IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), nameof(PyObject.ob_type));
             PythonType type_ = (PythonType)this.Retrieve(typePtr);
             
             object[] args = new object[]{};
             if (Builtin.issubclass(this.scratchContext, type_, TypeCache.Int32))
             {
-                args = new object[] { CPyMarshal.ReadIntField(ptr, typeof(PyIntObject), "ob_ival") };
+                args = new object[] { CPyMarshal.ReadIntField(ptr, typeof(PyIntObject), nameof(PyIntObject.ob_ival)) };
             }
             if (Builtin.issubclass(this.scratchContext, type_, TypeCache.Double))
             {
-                args = new object[] { CPyMarshal.ReadDoubleField(ptr, typeof(PyFloatObject), "ob_fval") };
+                args = new object[] { CPyMarshal.ReadDoubleField(ptr, typeof(PyFloatObject), nameof(PyFloatObject.ob_fval)) };
             }
             if (Builtin.issubclass(this.scratchContext, type_, TypeCache.String))
             {
@@ -374,7 +374,7 @@ namespace Ironclad
             }
             if (Builtin.issubclass(this.scratchContext, type_, TypeCache.PythonType))
             {
-                string name = CPyMarshal.ReadCStringField(ptr, typeof(PyTypeObject), "tp_name");
+                string name = CPyMarshal.ReadCStringField(ptr, typeof(PyTypeObject), nameof(PyTypeObject.tp_name));
                 PythonTuple tp_bases = this.ExtractBases(typePtr);
                 args = new object[] { name, tp_bases, new PythonDictionary() };
             }

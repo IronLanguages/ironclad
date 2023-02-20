@@ -240,9 +240,9 @@ namespace Ironclad
         StoreTyped(int value)
         {
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyIntObject>());
-            CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), "ob_type", this.PyInt_Type);
-            CPyMarshal.WriteIntField(ptr, typeof(PyIntObject), "ob_ival", value);
+            CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), nameof(PyIntObject.ob_refcnt), 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), nameof(PyIntObject.ob_type), this.PyInt_Type);
+            CPyMarshal.WriteIntField(ptr, typeof(PyIntObject), nameof(PyIntObject.ob_ival), value);
             this.map.Associate(ptr, value);
             return ptr;
         }
@@ -261,8 +261,8 @@ namespace Ironclad
         StoreTyped(BigInteger value)
         {
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyObject>());
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyLong_Type);
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_refcnt), 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_type), this.PyLong_Type);
             this.map.Associate(ptr, value);
             return ptr;
         }
@@ -271,9 +271,9 @@ namespace Ironclad
         StoreTyped(double value)
         {
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyFloatObject>());
-            CPyMarshal.WritePtrField(ptr, typeof(PyFloatObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyFloatObject), "ob_type", this.PyFloat_Type);
-            CPyMarshal.WriteDoubleField(ptr, typeof(PyFloatObject), "ob_fval", value);
+            CPyMarshal.WritePtrField(ptr, typeof(PyFloatObject), nameof(PyFloatObject.ob_refcnt), 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyFloatObject), nameof(PyFloatObject.ob_type), this.PyFloat_Type);
+            CPyMarshal.WriteDoubleField(ptr, typeof(PyFloatObject), nameof(PyFloatObject.ob_fval), value);
             this.map.Associate(ptr, value);
             return ptr;
         }
@@ -282,11 +282,11 @@ namespace Ironclad
         StoreTyped(Complex value)
         {
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyComplexObject>());
-            CPyMarshal.WritePtrField(ptr, typeof(PyComplexObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyComplexObject), "ob_type", this.PyComplex_Type);
-            IntPtr cpxptr = CPyMarshal.GetField(ptr, typeof(PyComplexObject), "cval");
-            CPyMarshal.WriteDoubleField(cpxptr, typeof(Py_complex), "real", value.Real);
-            CPyMarshal.WriteDoubleField(cpxptr, typeof(Py_complex), "imag", value.Imaginary);
+            CPyMarshal.WritePtrField(ptr, typeof(PyComplexObject), nameof(PyComplexObject.ob_refcnt), 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyComplexObject), nameof(PyComplexObject.ob_type), this.PyComplex_Type);
+            IntPtr cpxptr = CPyMarshal.GetField(ptr, typeof(PyComplexObject), nameof(PyComplexObject.cval));
+            CPyMarshal.WriteDoubleField(cpxptr, typeof(Py_complex), nameof(Py_complex.real), value.Real);
+            CPyMarshal.WriteDoubleField(cpxptr, typeof(Py_complex), nameof(Py_complex.imag), value.Imaginary);
             this.map.Associate(ptr, value);
             return ptr;
         }

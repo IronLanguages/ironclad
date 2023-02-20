@@ -101,11 +101,11 @@ namespace Ironclad
         {
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyFileObject>());
             CPyMarshal.Zero(ptr, Marshal.SizeOf<PyFileObject>());
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), "ob_type", this.PyFile_Type);
-            CPyMarshal.WritePtrField(ptr, typeof(PyFileObject), "f_fp", -2);
-            CPyMarshal.WritePtrField(ptr, typeof(PyFileObject), "f_name", this.Store(obj.name));
-            CPyMarshal.WritePtrField(ptr, typeof(PyFileObject), "f_mode", this.Store(obj.mode));
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_refcnt), 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_type), this.PyFile_Type);
+            CPyMarshal.WritePtrField(ptr, typeof(PyFileObject), nameof(PyFileObject.f_fp), -2);
+            CPyMarshal.WritePtrField(ptr, typeof(PyFileObject), nameof(PyFileObject.f_name), this.Store(obj.name));
+            CPyMarshal.WritePtrField(ptr, typeof(PyFileObject), nameof(PyFileObject.f_mode), this.Store(obj.mode));
             this.map.Associate(ptr, obj);
             return ptr;
         }
@@ -118,8 +118,8 @@ namespace Ironclad
                 Unmanaged.fclose(this.FILEs[ptr]);
                 this.FILEs.Remove(ptr);
             }
-            IntPtr _type = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
-            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(_type, typeof(PyTypeObject), "tp_free");
+            IntPtr _type = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), nameof(PyObject.ob_type));
+            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(_type, typeof(PyTypeObject), nameof(PyTypeObject.tp_free));
             freeDgt(ptr);
         }
         

@@ -135,11 +135,11 @@ namespace Ironclad
         {
             try
             {
-                if (CPyMarshal.ReadPtrField(strPtr, typeof(PyObject), "ob_type") != this.PyString_Type)
+                if (CPyMarshal.ReadPtrField(strPtr, typeof(PyObject), nameof(PyObject.ob_type)) != this.PyString_Type)
                 {
                     throw PythonOps.TypeError("PyString_AsString: not a string");
                 }
-                return CPyMarshal.Offset(strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+                return CPyMarshal.Offset(strPtr, Marshal.OffsetOf(typeof(PyStringObject), nameof(PyStringObject.ob_sval)));
             }
             catch (Exception e)
             {
@@ -153,15 +153,15 @@ namespace Ironclad
         {
             try
             {
-                if (CPyMarshal.ReadPtrField(strPtr, typeof(PyObject), "ob_type") != this.PyString_Type)
+                if (CPyMarshal.ReadPtrField(strPtr, typeof(PyObject), nameof(PyObject.ob_type)) != this.PyString_Type)
                 {
                     throw PythonOps.TypeError("PyString_AsStringAndSize: not a string");
                 }
                 
-                IntPtr dataPtr = CPyMarshal.GetField(strPtr, typeof(PyStringObject), "ob_sval");
+                IntPtr dataPtr = CPyMarshal.GetField(strPtr, typeof(PyStringObject), nameof(PyStringObject.ob_sval));
                 CPyMarshal.WritePtr(dataPtrPtr, dataPtr);
                 
-                nint length = CPyMarshal.ReadPtrField(strPtr, typeof(PyStringObject), "ob_size");
+                nint length = CPyMarshal.ReadPtrField(strPtr, typeof(PyStringObject), nameof(PyStringObject.ob_size));
                 if (sizePtr == IntPtr.Zero)
                 {
                     for (nint i = 0; i < length; ++i)
@@ -224,9 +224,9 @@ namespace Ironclad
         private int
         IC__PyString_Resize_NoGrow(IntPtr strPtr, nint newSize)
         {
-            CPyMarshal.WritePtrField(strPtr, typeof(PyStringObject), "ob_size", newSize);
+            CPyMarshal.WritePtrField(strPtr, typeof(PyStringObject), nameof(PyStringObject.ob_size), newSize);
             IntPtr bufPtr = CPyMarshal.Offset(
-                strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+                strPtr, Marshal.OffsetOf(typeof(PyStringObject), nameof(PyStringObject.ob_sval)));
             IntPtr terminatorPtr = CPyMarshal.Offset(
                 bufPtr, newSize);
             CPyMarshal.WriteByte(terminatorPtr, 0);
@@ -238,7 +238,7 @@ namespace Ironclad
         _PyString_Resize(IntPtr strPtrPtr, nint newSize)
         {
             IntPtr strPtr = CPyMarshal.ReadPtr(strPtrPtr);
-            nint size = CPyMarshal.ReadPtrField(strPtr, typeof(PyStringObject), "ob_size");
+            nint size = CPyMarshal.ReadPtrField(strPtr, typeof(PyStringObject), nameof(PyStringObject.ob_size));
             if (size < newSize)
             {
                 return this.IC__PyString_Resize_Grow(strPtrPtr, newSize);
@@ -252,7 +252,7 @@ namespace Ironclad
         public override nint
         PyString_Size(IntPtr strPtr)
         {
-            return CPyMarshal.ReadPtrField(strPtr, typeof(PyStringObject), "ob_size");
+            return CPyMarshal.ReadPtrField(strPtr, typeof(PyStringObject), nameof(PyStringObject.ob_size));
         }
         
         private IntPtr 
@@ -269,7 +269,7 @@ namespace Ironclad
             s.ob_sstate = 0;
             Marshal.StructureToPtr(s, data, false);
             
-            nint terminator_offset = Marshal.OffsetOf<PyStringObject>("ob_sval") + length;
+            nint terminator_offset = Marshal.OffsetOf<PyStringObject>(nameof(PyStringObject.ob_sval)) + length;
             CPyMarshal.Zero(data + terminator_offset, 1);
         
             return data;
@@ -300,7 +300,7 @@ namespace Ironclad
         {
             IntPtr strPtr = this.AllocPyString(bytes.Length);
             IntPtr bufPtr = CPyMarshal.Offset(
-                strPtr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
+                strPtr, Marshal.OffsetOf(typeof(PyStringObject), nameof(PyStringObject.ob_sval)));
             Marshal.Copy(bytes, 0, bufPtr, bytes.Length);
             return strPtr;
         }
@@ -319,13 +319,13 @@ namespace Ironclad
         private string
         ReadPyString(IntPtr ptr)
         {
-            IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), "ob_type");
+            IntPtr typePtr = CPyMarshal.ReadPtrField(ptr, typeof(PyObject), nameof(PyObject.ob_type));
             if (PyType_IsSubtype(typePtr, this.PyString_Type) == 0)
             {
                 throw new ArgumentTypeException("ReadPyString: Expected a str, or subclass thereof");
             }
-            IntPtr buffer = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), "ob_sval"));
-            nint length = CPyMarshal.ReadPtrField(ptr, typeof(PyStringObject), "ob_size");
+            IntPtr buffer = CPyMarshal.Offset(ptr, Marshal.OffsetOf(typeof(PyStringObject), nameof(PyStringObject.ob_sval)));
+            nint length = CPyMarshal.ReadPtrField(ptr, typeof(PyStringObject), nameof(PyStringObject.ob_size));
             byte[] bytes = new byte[checked((int)length)];
             Marshal.Copy(buffer, bytes, 0, bytes.Length);
             char[] chars = Array.ConvertAll<byte, char>(
@@ -365,7 +365,7 @@ namespace Ironclad
                 return -1;
             }
             
-            IntPtr bufPtr = CPyMarshal.GetField(strPtr, typeof(PyStringObject), "ob_sval");
+            IntPtr bufPtr = CPyMarshal.GetField(strPtr, typeof(PyStringObject), nameof(PyStringObject.ob_sval));
             CPyMarshal.WritePtr(bufPtrPtr, bufPtr);
             
             return this.PyString_Size(strPtr);

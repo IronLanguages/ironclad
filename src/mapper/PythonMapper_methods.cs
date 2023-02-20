@@ -38,11 +38,11 @@ namespace Ironclad
             IntPtr methPtr = this.allocator.Alloc(size);
             CPyMarshal.Zero(methPtr, size);
             
-            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), "ob_type", this.PyMethod_Type);
-            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), "im_func", this.Store(meth.im_func));
-            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), "im_self", this.Store(meth.im_self));
-            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), "im_class", this.Store(meth.im_class));
+            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), nameof(PyMethodObject.ob_refcnt), 1);
+            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), nameof(PyMethodObject.ob_type), this.PyMethod_Type);
+            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_func), this.Store(meth.im_func));
+            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_self), this.Store(meth.im_self));
+            CPyMarshal.WritePtrField(methPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_class), this.Store(meth.im_class));
             
             this.map.Associate(methPtr, meth);
             return methPtr;
@@ -51,12 +51,12 @@ namespace Ironclad
         public override void
         IC_PyMethod_Dealloc(IntPtr objPtr)
         {
-            this.DecRef(CPyMarshal.ReadPtrField(objPtr, typeof(PyMethodObject), "im_func"));
-            this.DecRef(CPyMarshal.ReadPtrField(objPtr, typeof(PyMethodObject), "im_self"));
-            this.DecRef(CPyMarshal.ReadPtrField(objPtr, typeof(PyMethodObject), "im_class"));
+            this.DecRef(CPyMarshal.ReadPtrField(objPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_func)));
+            this.DecRef(CPyMarshal.ReadPtrField(objPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_self)));
+            this.DecRef(CPyMarshal.ReadPtrField(objPtr, typeof(PyMethodObject), nameof(PyMethodObject.im_class)));
             
-            IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), "ob_type");
-            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(objType, typeof(PyTypeObject), "tp_free");
+            IntPtr objType = CPyMarshal.ReadPtrField(objPtr, typeof(PyObject), nameof(PyObject.ob_type));
+            dgt_void_ptr freeDgt = CPyMarshal.ReadFunctionPtrField<dgt_void_ptr>(objType, typeof(PyTypeObject), nameof(PyTypeObject.tp_free));
             freeDgt(objPtr);
         }
     }

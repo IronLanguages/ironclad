@@ -91,10 +91,10 @@ REGISTER_TYPES_TEMPLATE = """\
         Register_%(name)s(IntPtr ptr)
         {
             CPyMarshal.Zero(ptr, Marshal.SizeOf<PyTypeObject>());
-            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "ob_refcnt", 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), nameof(PyTypeObject.ob_refcnt), 1);
 %(extra)s
             string name = (string)Builtin.getattr(this.scratchContext, %(type)s, "__name__");
-            CPyMarshal.WriteCStringField(ptr, typeof(PyTypeObject), "tp_name", name);
+            CPyMarshal.WriteCStringField(ptr, typeof(PyTypeObject), nameof(PyTypeObject.tp_name), name);
             this.map.Associate(ptr, %(type)s);
         }"""
 
@@ -102,10 +102,10 @@ REGISTER_TYPES_NUMBER_TEMPLATE = """\
             this.%(data)s(ptr);"""
 
 REGISTER_TYPES_SIZE_TEMPLATE = """\
-            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "%(slot)s", Marshal.SizeOf<%(data)s>());"""
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), nameof(PyTypeObject.%(slot)s), Marshal.SizeOf<%(data)s>());"""
 
 REGISTER_TYPES_DEFAULT_TEMPLATE = """\
-            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), "%(slot)s", this.GetFuncPtr("%(data)s"));"""
+            CPyMarshal.WritePtrField(ptr, typeof(PyTypeObject), nameof(PyTypeObject.%(slot)s), this.GetFuncPtr(nameof(%(data)s)));"""
 
 REGISTER_TYPES_SLOT_TEMPLATES = {
     "tp_as_number": REGISTER_TYPES_NUMBER_TEMPLATE,

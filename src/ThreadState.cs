@@ -33,11 +33,11 @@ namespace Ironclad
         {
             get
             {
-                IntPtr typePtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyThreadState), "curexc_type");
+                IntPtr typePtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyThreadState), nameof(PyThreadState.curexc_type));
                 if (typePtr != IntPtr.Zero)
                 {
                     object[] args = new object[0];
-                    IntPtr valuePtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyThreadState), "curexc_value");
+                    IntPtr valuePtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyThreadState), nameof(PyThreadState.curexc_value));
                     if (valuePtr != IntPtr.Zero)
                     {
                         args = new object[] { this.mapper.Retrieve(valuePtr) };
@@ -56,34 +56,34 @@ namespace Ironclad
                     value = InappropriateReflection.GetPythonException((Exception)value);
                 }
                 
-                IntPtr typePtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyThreadState), "curexc_type");
+                IntPtr typePtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyThreadState), nameof(PyThreadState.curexc_type));
                 if (typePtr != IntPtr.Zero)
                 {
                     this.mapper.DecRef(typePtr);
                 }
-                IntPtr valuePtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyThreadState), "curexc_value");
+                IntPtr valuePtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyThreadState), nameof(PyThreadState.curexc_value));
                 if (valuePtr != IntPtr.Zero)
                 {
                     this.mapper.DecRef(valuePtr);
                 }
-                IntPtr tracebackPtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyThreadState), "curexc_traceback");
+                IntPtr tracebackPtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyThreadState), nameof(PyThreadState.curexc_traceback));
                 if (tracebackPtr != IntPtr.Zero)
                 {
                     this.mapper.DecRef(tracebackPtr);
                 }
                 
                 // traceback almost completely ignored in ironclad
-                CPyMarshal.WritePtrField(this.ptr, typeof(PyThreadState), "curexc_traceback", IntPtr.Zero);
+                CPyMarshal.WritePtrField(this.ptr, typeof(PyThreadState), nameof(PyThreadState.curexc_traceback), IntPtr.Zero);
                 if (value == null)
                 {
-                    CPyMarshal.WritePtrField(this.ptr, typeof(PyThreadState), "curexc_type", IntPtr.Zero);
-                    CPyMarshal.WritePtrField(this.ptr, typeof(PyThreadState), "curexc_value", IntPtr.Zero);
+                    CPyMarshal.WritePtrField(this.ptr, typeof(PyThreadState), nameof(PyThreadState.curexc_type), IntPtr.Zero);
+                    CPyMarshal.WritePtrField(this.ptr, typeof(PyThreadState), nameof(PyThreadState.curexc_value), IntPtr.Zero);
                 }
                 else
                 {
                     object excType = PythonCalls.Call(Builtin.type, new object[] { value });
-                    CPyMarshal.WritePtrField(this.ptr, typeof(PyThreadState), "curexc_type", this.mapper.Store(excType));
-                    CPyMarshal.WritePtrField(this.ptr, typeof(PyThreadState), "curexc_value", this.mapper.Store(value.ToString()));
+                    CPyMarshal.WritePtrField(this.ptr, typeof(PyThreadState), nameof(PyThreadState.curexc_type), this.mapper.Store(excType));
+                    CPyMarshal.WritePtrField(this.ptr, typeof(PyThreadState), nameof(PyThreadState.curexc_value), this.mapper.Store(value.ToString()));
                 }
             }
         }

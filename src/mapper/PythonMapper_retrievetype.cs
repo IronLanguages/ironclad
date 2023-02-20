@@ -29,7 +29,7 @@ namespace Ironclad
                 this.UpdateMethodTableObj(cb.methodTable, _base);
             }
 
-            IntPtr ob_typePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyObject), "ob_type");
+            IntPtr ob_typePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyObject), nameof(PyObject.ob_type));
             this.IncRef(ob_typePtr);
             object ob_type = this.Retrieve(ob_typePtr);
 
@@ -42,7 +42,7 @@ namespace Ironclad
             this.classStubs[typePtr] = klass_stub;
             Builtin.setattr(this.scratchContext, klass, "_dispatcher", new Dispatcher(this, cb.methodTable));
             object typeDict = Builtin.getattr(this.scratchContext, klass, "__dict__");
-            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_dict", this.Store(typeDict));
+            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_dict), this.Store(typeDict));
             return klass;
         }
         
@@ -50,14 +50,14 @@ namespace Ironclad
         ExtractBases(IntPtr typePtr)
         {
             PythonTuple tp_bases = null;
-            IntPtr tp_basesPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_bases");
+            IntPtr tp_basesPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_bases));
             if (tp_basesPtr != IntPtr.Zero)
             {
                 tp_bases = (PythonTuple)this.Retrieve(tp_basesPtr);
             }
             if (tp_bases == null)
             {
-                IntPtr tp_basePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_base");
+                IntPtr tp_basePtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_base));
                 tp_bases = new PythonTuple(new object[] { this.Retrieve(tp_basePtr) });
             }
             return tp_bases;

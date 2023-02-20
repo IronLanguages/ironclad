@@ -87,8 +87,8 @@ namespace Ironclad
             // not quite trivial to autogenerate
             // (but surely there's a better way to get the Ellipsis object...)
             CPyMarshal.Zero(address, Marshal.SizeOf<PyTypeObject>());
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), "tp_name", "ellipsis");
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.ob_refcnt), 1);
+            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_name), "ellipsis");
             object ellipsisType = PythonCalls.Call(Builtin.type, new object[] { PythonOps.Ellipsis });
             this.map.Associate(address, ellipsisType);
         }
@@ -99,8 +99,8 @@ namespace Ironclad
             // not quite trivial to autogenerate
             // (but surely there's a better way to get the NotImplemented object...)
             CPyMarshal.Zero(address, Marshal.SizeOf<PyTypeObject>());
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), "tp_name", "NotImplementedType");
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.ob_refcnt), 1);
+            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_name), "NotImplementedType");
             object notImplementedType = PythonCalls.Call(Builtin.type, new object[] { PythonOps.NotImplemented });
             this.map.Associate(address, notImplementedType);
         }
@@ -110,9 +110,9 @@ namespace Ironclad
         {
             // not quite trivial to autogenerate
             CPyMarshal.Zero(address, Marshal.SizeOf<PyTypeObject>());
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_base", this.PyInt_Type);
-            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), "tp_name", "bool");
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.ob_refcnt), 1);
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_base), this.PyInt_Type);
+            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_name), "bool");
             this.map.Associate(address, TypeCache.Boolean);
         }
 
@@ -121,29 +121,29 @@ namespace Ironclad
         {
             // not quite trivial to autogenerate
             CPyMarshal.Zero(address, Marshal.SizeOf<PyTypeObject>());
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_basicsize", (nint)Marshal.SizeOf<PyStringObject>() - 1);
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_itemsize", 1);
-            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), "tp_name", "str");
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_str", this.GetFuncPtr("IC_PyString_Str"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_repr", this.GetFuncPtr("PyObject_Repr"));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.ob_refcnt), 1);
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_basicsize), (nint)Marshal.SizeOf<PyStringObject>() - 1);
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_itemsize), 1);
+            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_name), "str");
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_str), this.GetFuncPtr(nameof(IC_PyString_Str)));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_repr), this.GetFuncPtr(nameof(PyObject_Repr)));
 
             int sqSize = Marshal.SizeOf<PySequenceMethods>();
             IntPtr sqPtr = this.allocator.Alloc(sqSize);
             CPyMarshal.Zero(sqPtr, sqSize);
-            CPyMarshal.WritePtrField(sqPtr, typeof(PySequenceMethods), "sq_concat", this.GetFuncPtr("IC_PyString_Concat_Core"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_as_sequence", sqPtr);
+            CPyMarshal.WritePtrField(sqPtr, typeof(PySequenceMethods), nameof(PySequenceMethods.sq_concat), this.GetFuncPtr(nameof(IC_PyString_Concat_Core)));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_as_sequence), sqPtr);
 
             int bfSize = Marshal.SizeOf<PyBufferProcs>();
             IntPtr bfPtr = this.allocator.Alloc(bfSize);
             CPyMarshal.Zero(bfPtr, bfSize);
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getreadbuffer", this.GetFuncPtr("IC_str_getreadbuffer"));
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getwritebuffer", this.GetFuncPtr("IC_str_getwritebuffer"));
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getsegcount", this.GetFuncPtr("IC_str_getsegcount"));
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), "bf_getcharbuffer", this.GetFuncPtr("IC_str_getreadbuffer"));
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "tp_as_buffer", bfPtr);
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getreadbuffer), this.GetFuncPtr(nameof(IC_str_getreadbuffer)));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getwritebuffer), this.GetFuncPtr(nameof(IC_str_getwritebuffer)));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getsegcount), this.GetFuncPtr(nameof(IC_str_getsegcount)));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getcharbuffer), this.GetFuncPtr(nameof(IC_str_getreadbuffer)));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_as_buffer), bfPtr);
 
-            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), "tp_flags", (Int32)Py_TPFLAGS.HAVE_GETCHARBUFFER);
+            CPyMarshal.WriteIntField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags), (Int32)Py_TPFLAGS.HAVE_GETCHARBUFFER);
 
             this.map.Associate(address, TypeCache.String);
         }
@@ -154,8 +154,8 @@ namespace Ironclad
             // not worth autogenerating
             // we're using the cpy file type by default, with methods patched in C
             // to redirect into C# when ipy files turn up
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), "ob_refcnt", 1);
-            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), "tp_name", "file");
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.ob_refcnt), 1);
+            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_name), "file");
             this.map.Associate(address, TypeCache.PythonFile);
         }
 
@@ -166,24 +166,24 @@ namespace Ironclad
             IntPtr nmPtr = this.allocator.Alloc(nmSize);
             CPyMarshal.Zero(nmPtr, nmSize);
 
-            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_int", this.GetFuncPtr("PyNumber_Int"));
-            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_long", this.GetFuncPtr("PyNumber_Long"));
-            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_float", this.GetFuncPtr("PyNumber_Float"));
-            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_multiply", this.GetFuncPtr("PyNumber_Multiply"));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), nameof(PyNumberMethods.nb_int), this.GetFuncPtr(nameof(PyNumber_Int)));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), nameof(PyNumberMethods.nb_long), this.GetFuncPtr(nameof(PyNumber_Long)));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), nameof(PyNumberMethods.nb_float), this.GetFuncPtr(nameof(PyNumber_Float)));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), nameof(PyNumberMethods.nb_multiply), this.GetFuncPtr(nameof(PyNumber_Multiply)));
 
-            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), "tp_as_number", nmPtr);
+            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_as_number), nmPtr);
         }
 
         private void
         AddNumberMethodsWithIndex(IntPtr typePtr)
         {
             this.AddNumberMethodsWithoutIndex(typePtr);
-            IntPtr nmPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), "tp_as_number");
-            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), "nb_index", this.GetFuncPtr("PyNumber_Index"));
+            IntPtr nmPtr = CPyMarshal.ReadPtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_as_number));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), nameof(PyNumberMethods.nb_index), this.GetFuncPtr(nameof(PyNumber_Index)));
 
-            Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), "tp_flags");
+            Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags));
             flags |= Py_TPFLAGS.HAVE_INDEX;
-            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), "tp_flags", (Int32)flags);
+            CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags), (Int32)flags);
         }
     }
 }

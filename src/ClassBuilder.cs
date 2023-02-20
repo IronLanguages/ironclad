@@ -65,7 +65,7 @@ namespace Ironclad
         private void
         InitialiseScope()
         {
-            this.tp_name = CPyMarshal.ReadCStringField(this.ptr, typeof(PyTypeObject), "tp_name");
+            this.tp_name = CPyMarshal.ReadCStringField(this.ptr, typeof(PyTypeObject), nameof(PyTypeObject.tp_name));
             CallableBuilder.ExtractNameModule(this.tp_name, ref this.__name__, ref this.__module__);
             this.tablePrefix = this.__name__ + ".";
             this.code.Append("_ironclad_class_attrs = dict()");
@@ -74,7 +74,7 @@ namespace Ironclad
         private void
         GenerateClass()
         {
-            string __doc__ = CPyMarshal.ReadCStringField(this.ptr, typeof(PyTypeObject), "tp_doc").Replace("\\", "\\\\");
+            string __doc__ = CPyMarshal.ReadCStringField(this.ptr, typeof(PyTypeObject), nameof(PyTypeObject.tp_doc)).Replace("\\", "\\\\");
             this.code.Append(String.Format(CodeSnippets.CLASS_TEMPLATE, this.__name__, this.__module__, __doc__));
             this.ConnectTypeField("tp_new", typeof(dgt_ptr_ptrptrptr));
         }
@@ -82,7 +82,7 @@ namespace Ironclad
         private void
         GenerateProperties()
         {
-            IntPtr getsetPtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyTypeObject), "tp_getset");
+            IntPtr getsetPtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyTypeObject), nameof(PyTypeObject.tp_getset));
             if (getsetPtr == IntPtr.Zero)
             {
                 return;
@@ -98,7 +98,7 @@ namespace Ironclad
         private void
         GenerateMembers()
         {
-            IntPtr memberPtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyTypeObject), "tp_members");
+            IntPtr memberPtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyTypeObject), nameof(PyTypeObject.tp_members));
             if (memberPtr == IntPtr.Zero)
             {
                 return;
@@ -114,7 +114,7 @@ namespace Ironclad
         private void
         GenerateMethods()
         {
-            IntPtr methodsPtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyTypeObject), "tp_methods");
+            IntPtr methodsPtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyTypeObject), nameof(PyTypeObject.tp_methods));
             CallableBuilder.GenerateMethods(this.code, methodsPtr, this.methodTable, this.tablePrefix);
         }
 
@@ -267,7 +267,7 @@ namespace Ironclad
         private void
         GenerateRichcmpMethods()
         {
-            if (CPyMarshal.ReadPtrField(this.ptr, typeof(PyTypeObject), "tp_richcompare") != IntPtr.Zero)
+            if (CPyMarshal.ReadPtrField(this.ptr, typeof(PyTypeObject), nameof(PyTypeObject.tp_richcompare)) != IntPtr.Zero)
             {
                 this.code.Append(String.Format(CodeSnippets.RICHCMP_METHOD_TEMPLATE, tablePrefix));
                 this.ConnectTypeField("tp_richcompare", typeof(dgt_ptr_ptrptrint));
