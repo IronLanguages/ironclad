@@ -204,7 +204,7 @@ class SequenceFunctionsTest(TestCase):
                     mapper.Store(seq1), mapper.Store(seq2))
                 try:
                     result = seq1 + seq2
-                except Exception, e:
+                except Exception as e:
                     self.assertEqual(call(), IntPtr.Zero)
                     self.assertMapperHasError(mapper, type(e))
                 else:
@@ -220,7 +220,7 @@ class SequenceFunctionsTest(TestCase):
                 try:
                     error = None
                     result = int(val in seq)
-                except Exception, e:
+                except Exception as e:
                     error = type(e)
                     result = -1
                 self.assertEqual(mapper.PySequence_Contains(mapper.Store(seq), mapper.Store(val)), result)

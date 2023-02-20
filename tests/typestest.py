@@ -1,6 +1,8 @@
 
 import operator, types
 
+from functools import reduce
+
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.allocators import GetAllocatingTestAllocator
@@ -192,7 +194,7 @@ class Types_Test(TestCase):
     def testNotAutoActualisableTypes(self, mapper, _):
         safeTypes = "PyString_Type PyList_Type PyTuple_Type PyType_Type PyFile_Type PyFloat_Type".split()
         discoveryModes = ("IncRef", "Retrieve", "DecRef", "RefCount")
-        for _type in filter(lambda s: s not in safeTypes, BUILTIN_TYPES):
+        for _type in (s for s in BUILTIN_TYPES if s not in safeTypes):
             for mode in discoveryModes:
                 objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject()))
                 CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 2)

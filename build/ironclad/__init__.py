@@ -39,9 +39,9 @@ def _shutdown():
     try:
         _mapper.Dispose()
         _patch_lifetime._unpatch_all()
-    except Exception, e:
-        print 'error on ironclad shutdown:'
-        print e
+    except Exception as e:
+        print('error on ironclad shutdown:')
+        print(e)
     # gcwait's docstring still applies; its only value is to (hopefully) induce
     # shutdown crashes *now*, rather than later, so you have a chance of figuring
     # out their source. mostly useful for functional tests.
@@ -49,7 +49,7 @@ def _shutdown():
 atexit.register(_shutdown)
 
 def shutdown():
-    print 'shutdown no longer does anything'
+    print('shutdown no longer does anything')
 
 ###############################################################################
 #### basic attempt to respect .pth files
@@ -58,7 +58,7 @@ extrapaths = []
 for path in sys.path:
     if not os.path.isdir(path):
         continue
-    _, __, filenames = os.walk(path).next()
+    _, __, filenames = next(os.walk(path))
     for filename in filenames:
         if filename.endswith('.pth'):
             f = open(os.path.join(path, filename))
@@ -145,12 +145,12 @@ def log_info(obj, size=None):
     unmanaged representation to print; it is not generally useful or wise to make
     use of it.
     """
-    print 
-    print 'before storing:'
+    print()
+    print('before storing:')
     _mapper.LogMappingInfo(id(obj))
 
-    print 
-    print 'after storing:'
+    print()
+    print('after storing:')
     objPtr = _mapper.Store(obj)
     if size is None:
         typePtr = CPyMarshal.ReadPtrField(objPtr, PyObject, "ob_type")
@@ -159,9 +159,9 @@ def log_info(obj, size=None):
         if itemsize > 0:
             itemcount = CPyMarshal.ReadIntField(objPtr, PyVarObject, "ob_size")
             size += itemcount * itemsize
-    print 'printing %d bytes of object at %x' % (size, objPtr)
+    print('printing %d bytes of object at %x' % (size, objPtr))
     CPyMarshal.Log(objPtr, size)
-    print
+    print()
     _mapper.DecRef(objPtr)
 
 def log_refs():

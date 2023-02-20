@@ -304,7 +304,7 @@ class BuiltinSubclassHorrorTest(TestCase):
         
         SequenceLike()[mapper.Retrieve(_12Ptr):mapper.Retrieve(_44Ptr)]
         self.assertEqual(calls, [('__getslice__', 12, 44)])
-        self.assertEqual(map(type, calls[0]), [str, int, int])
+        self.assertEqual(list(map(type, calls[0])), [str, int, int])
     
     
     @WithMapper

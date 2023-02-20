@@ -364,8 +364,8 @@ class NastyImportDetailsTest(TestCase):
         mapper.importNames.Push('hungry.hungry.hippo')
         mapper.PyImport_AddModule("hippo")
         
-        self.assertEqual(sys.modules.has_key("hippo"), False)
-        self.assertEqual(sys.modules.has_key('hungry.hungry.hippo'), True)
+        self.assertNotIn("hippo", sys.modules)
+        self.assertIn('hungry.hungry.hippo', sys.modules)
         
         for key in sys.modules.keys():
             if key.startswith('hungry'):
@@ -378,8 +378,8 @@ class NastyImportDetailsTest(TestCase):
         mapper.importNames.Push('angry.angry.alligator')
         mapper.PyImport_AddModule("hippo")
         
-        self.assertEqual(sys.modules.has_key("hippo"), True)
-        self.assertEqual(sys.modules.has_key('angry.angry.alligator'), False)
+        self.assertIn("hippo", sys.modules)
+        self.assertNotIn('angry.angry.alligator', sys.modules)
     
         del sys.modules['hippo']
         
@@ -390,7 +390,7 @@ class NastyImportDetailsTest(TestCase):
         mapper.importNames.Push('hungry.hungry.hippo')
         mapper.Py_InitModule4("hippo", IntPtr.Zero, "test_docstring", IntPtr.Zero, 12345)
         
-        self.assertEqual(sys.modules.has_key("hippo"), False)
+        self.assertNotIn("hippo", sys.modules)
         self.assertEqual(sys.modules['hungry.hungry.hippo'].__doc__, 'test_docstring')
         self.assertEqual(sys.modules['hungry.hungry.hippo'].__file__, 'hippo_file')
         
@@ -404,8 +404,8 @@ class NastyImportDetailsTest(TestCase):
         mapper.importName = 'angry.angry.alligator'
         mapper.Py_InitModule4("hippo", IntPtr.Zero, "test_docstring", IntPtr.Zero, 12345)
         
-        self.assertEqual(sys.modules.has_key("hippo"), True)
-        self.assertEqual(sys.modules.has_key('angry.angry.alligator'), False)
+        self.assertIn("hippo", sys.modules)
+        self.assertNotIn('angry.angry.alligator', sys.modules)
     
         del sys.modules['hippo']
         

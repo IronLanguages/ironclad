@@ -164,7 +164,7 @@ class PyInt_Test(TestCase):
             error = None
             try:
                 int(bad_value)
-            except Exception, e:
+            except Exception as e:
                 error = type(e)
             self.assertMapperHasError(mapper, error)
     
@@ -370,7 +370,7 @@ class PyFloat_Test(TestCase):
             error = None
             try:
                 float(bad_value)
-            except Exception, e:
+            except Exception as e:
                 error = type(e)
             self.assertMapperHasError(mapper, error)
             
@@ -432,7 +432,7 @@ class PyNumber_Test(TestCase):
             error = None
             try:
                 result = ipyFunc(value)
-            except Exception, e:
+            except Exception as e:
                 error = e.__class__
             valuePtr = mapper.Store(value)
             mapper.LastException = None
@@ -457,7 +457,7 @@ class PyNumber_Test(TestCase):
                 error = None
                 try:
                     result = ipyFunc(values[i], values[j])
-                except Exception, e:
+                except Exception as e:
                     error = e.__class__
                 iptr = mapper.Store(values[i])
                 jptr = mapper.Store(values[j])
@@ -543,7 +543,7 @@ class PyNumber_Test(TestCase):
     @WithMapper
     def testPyNumber_Long(self, mapper, _):
         values = [0, 12345, 123456789012345, 123.45, '123']
-        values += map(float, values)
+        values += list(map(float, values))
         for value in values:
             ptr = mapper.Store(value)
             _long = mapper.Retrieve(mapper.PyNumber_Long(ptr))
@@ -560,7 +560,7 @@ class PyNumber_Test(TestCase):
             error = None
             try:
                 long(value)
-            except Exception, e:
+            except Exception as e:
                 error = type(e)
             self.assertMapperHasError(mapper, error)
             mapper.DecRef(ptr)
@@ -577,7 +577,7 @@ class PyNumber_Test(TestCase):
     @WithMapper
     def testPyNumber_Float(self, mapper, _):
         values = [0, 12345, 123456789012345, 123.45, "123.45"]
-        values += map(float, values)
+        values += list(map(float, values))
         for value in values:
             ptr = mapper.Store(value)
             _float = mapper.Retrieve(mapper.PyNumber_Float(ptr))
@@ -594,7 +594,7 @@ class PyNumber_Test(TestCase):
             error = None
             try:
                 float(value)
-            except Exception, e:
+            except Exception as e:
                 error = type(e)
             self.assertMapperHasError(mapper, error)
             mapper.DecRef(ptr)
@@ -603,7 +603,7 @@ class PyNumber_Test(TestCase):
     @WithMapper
     def testPyNumber_Int(self, mapper, _):        
         values = [0, 12345, 123456789012345, 123.45, "123"]
-        values += map(float, values)
+        values += list(map(float, values))
         for value in values:
             ptr = mapper.Store(value)
             _int = mapper.Retrieve(mapper.PyNumber_Int(ptr))
@@ -620,7 +620,7 @@ class PyNumber_Test(TestCase):
             error = None
             try:
                 int(value)
-            except Exception, e:
+            except Exception as e:
                 error = type(e)
             self.assertMapperHasError(mapper, error)
             mapper.DecRef(ptr)

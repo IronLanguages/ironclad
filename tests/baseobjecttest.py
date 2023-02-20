@@ -83,7 +83,7 @@ class ObjectFunctionsTest(TestCase):
         error = None
         try:
             expectint = op(ob1, ob2)
-        except Exception, e:
+        except Exception as e:
             error = e.__class__
 
         resultint = mapper.PyObject_RichCompareBool(mapper.Store(ob1), mapper.Store(ob2), int(opid))
@@ -395,7 +395,7 @@ class ObjectFunctionsTest(TestCase):
             expectException = None
             try:
                 expectResult = int(isinstance(inst, cls))
-            except Exception, e:
+            except Exception as e:
                 expectException = type(e)
             
             instPtr = mapper.Store(inst)
@@ -435,7 +435,7 @@ class ObjectFunctionsTest(TestCase):
             expectException = None
             try:
                 expectResult = int(issubclass(sub, cls))
-            except Exception, e:
+            except Exception as e:
                 expectException = type(e)
             
             subPtr = mapper.Store(sub)

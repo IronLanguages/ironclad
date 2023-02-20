@@ -89,7 +89,7 @@ def BlacklistConfig(blacklist_file, excludes=()):
     config = Config()
     config.verbosity = 3
     config.plugins = BlacklistPlugins(blacklist_file)
-    if excludes: config.exclude = map(re.compile, excludes)
+    if excludes: config.exclude = list(map(re.compile, excludes))
     return config
 
 

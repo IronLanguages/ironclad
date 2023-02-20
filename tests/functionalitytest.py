@@ -53,7 +53,7 @@ def ModuleTestCase(module):
         def assertRuns(self, test_code=''): 
             mapper = PythonMapper(DLL_PATH)
             try:
-                exec '\n'.join([import_code, test_code]) in globals(), locals_
+                exec('\n'.join([import_code, test_code]), globals(), locals_)
             finally:
                 mapper.Dispose()
                 if module in sys.modules:

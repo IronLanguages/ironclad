@@ -130,7 +130,7 @@ def _get_funcspec(func):
 
 @_combine_calls
 def get_funcspecs(items):
-    return list(filter(None, map(_get_funcspec, items)))
+    return [_f for _f in map(_get_funcspec, items) if _f]
 
 
 #===============================================================================

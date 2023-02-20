@@ -57,7 +57,7 @@ def MakeGetSetDef(name, get, set, doc, closure=IntPtr.Zero):
         setdgt = Ironclad.dgt_int_ptrptrptr(set)
         _set = Marshal.GetFunctionPointerForDelegate(setdgt)
         deallocs.append(GC_NotYet(setdgt))
-    return new_PyGetSetDef(name, _get, _set, doc, closure), lambda: map(apply, deallocs)
+    return new_PyGetSetDef(name, _get, _set, doc, closure), lambda: list(map(apply, deallocs))
 
 
 def MakeMemberDef(name, type_, offset, flags, doc="doc"):

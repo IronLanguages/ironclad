@@ -34,14 +34,14 @@ class CPyMarshalTest_32(TestCase):
         
         data = Marshal.AllocHGlobal(bufferlen)
         this = data
-        for _ in xrange(bufferlen):
+        for _ in range(bufferlen):
             CPyMarshal.WriteByte(this, 255)
             this = OffsetPtr(this, 1)
         
         CPyMarshal.Zero(data, zerolen)
         
         this = data
-        for i in xrange(bufferlen):
+        for i in range(bufferlen):
             actual = CPyMarshal.ReadByte(this)
             expected = (255, 0)[i < zerolen]
             self.assertEqual(actual, expected, "wrong value at %d (%d, %d)" % (i, actual, expected))

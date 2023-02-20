@@ -17,10 +17,10 @@ def CreateSuite():
         if f.endswith("test.py"):
             name = f[:-3]
             try:
-                print "adding: tests.%s" % name
+                print("adding: tests.%s" % name)
                 m = __import__("tests.%s" % name)
                 suite.addTest(getattr(m, name).suite)
-            except Exception, e:
+            except Exception as e:
                 suite.addTest(GetFailedImportTestSuite(name, e))
     return suite
 
@@ -36,11 +36,11 @@ def CreateSuite():
 # TODO: selecting decorated function does not work
 if __name__ == '__main__':
     if 'IRONPYTHONPATH' not in os.environ:
-        print "*"*80
-        print "WARNING: your IRONPYTHONPATH is not defined."
-        print "As absolute minimum, please set IRONPYTHONPATH=."
-        print "Some of ironclad test assume DLLs dir of cpython is present in IRONPYTHONPATH."
-        print "*"*80
+        print("*"*80)
+        print("WARNING: your IRONPYTHONPATH is not defined.")
+        print("As absolute minimum, please set IRONPYTHONPATH=.")
+        print("Some of ironclad test assume DLLs dir of cpython is present in IRONPYTHONPATH.")
+        print("*"*80)
     if len(sys.argv) == 2:
         suite = unittest.defaultTestLoader.loadTestsFromName(sys.argv[1])
     else:

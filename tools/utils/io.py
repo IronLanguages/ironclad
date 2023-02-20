@@ -20,7 +20,7 @@ def read(*args):
 def read_lines(*args):
     f = open(os.path.join(*args))
     try:
-        return list(filter(None, [l.split('#')[0].strip() for l in f.readlines()]))
+        return [_f for _f in [l.split('#')[0].strip() for l in f.readlines()] if _f]
     finally:
         f.close()
 

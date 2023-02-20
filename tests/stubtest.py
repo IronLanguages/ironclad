@@ -13,7 +13,7 @@ from tools.utils.io import read_set
 def GetPexportsLines(path):
     stream = popen("pexports", path.replace('/cygdrive/c', 'c:'))
     try:
-        return set(map(lambda s: s.strip(), stream.readlines()))
+        return {s.strip() for s in stream.readlines()}
     finally:
         stream.close()
 

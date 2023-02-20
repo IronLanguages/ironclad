@@ -40,7 +40,7 @@ class IterationTest(TestCase):
         objPtr = mapper.Store(obj)
         iterPtr = mapper.PyObject_GetIter(objPtr)
         _iter = mapper.Retrieve(iterPtr)
-        self.assertEqual(list(_iter), range(10))
+        self.assertEqual(list(_iter), list(range(10)))
         
         classPtr = mapper.Store(iterclass)
         self.assertEqual(mapper.PyObject_GetIter(classPtr), IntPtr.Zero)
@@ -95,7 +95,7 @@ class IterationTest(TestCase):
             raise mapper.LastException
         try:
             Raise()
-        except BorkedException, e:
+        except BorkedException as e:
             self.assertEqual(str(e), "Release the hounds!", "unexpected message")
         else:
             self.fail("wrong exception")

@@ -578,12 +578,12 @@ class PythonMapper_References_Test(TestCase):
             return None
         
         ptrs = {}
-        for i in xrange(100000):
+        for i in range(100000):
             obj = GetObject(i)
             ptr = mapper.Store(obj)
             ptrs[ptr] = obj
         
-        for k, v in ptrs.iteritems():
+        for k, v in ptrs.items():
             self.assertEqual(mapper.Retrieve(k), v, "failed to retrieve")
             mapper.DecRef(k)
 

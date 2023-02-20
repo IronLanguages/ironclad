@@ -1,9 +1,11 @@
 """ A 'temporary' replacement for nose."""
 
-from itertools import chain, takewhile
 import os
 import sys
 import types
+
+from itertools import chain, takewhile
+from functools import reduce
 from unittest import TestCase, TestSuite, TextTestRunner
 
 class Schnoz(object):
