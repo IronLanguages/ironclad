@@ -14,11 +14,11 @@ DLL_PATH = os.path.join("build", "ironclad", PYTHON_DLL)
 class StubReferenceTest(TestCase):
 
     def testMapInitUnmapLibrary(self):
-        self.assertEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+        self.assertEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                           "library already mapped")
 
         sr = StubReference(DLL_PATH)
-        self.assertNotEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+        self.assertNotEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                           "library not mapped by construction")
 
         fpCalls = []
@@ -33,11 +33,11 @@ class StubReferenceTest(TestCase):
             dataCalls.append(name)
 
         sr.Init(GetFuncPtr, RegisterData)
-        self.assertEquals(len(fpCalls) > 0, True, "did not get any addresses")
-        self.assertEquals(len(dataCalls) > 0, True, "did not set any data")
+        self.assertEqual(len(fpCalls) > 0, True, "did not get any addresses")
+        self.assertEqual(len(dataCalls) > 0, True, "did not set any data")
 
         sr.Dispose()
-        self.assertEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+        self.assertEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                           "library not unmapped on dispose")
 
         sr.Dispose()
@@ -46,11 +46,11 @@ class StubReferenceTest(TestCase):
         
     def testUnmapsAutomagically(self):
         sr = StubReference(DLL_PATH)
-        self.assertNotEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+        self.assertNotEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                           "library not mapped by construction")
         del sr
         gcwait()
-        self.assertEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+        self.assertEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                           "library not unmapped on finalize")
         
 

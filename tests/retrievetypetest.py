@@ -35,15 +35,15 @@ class LifetimeTest(TestCase):
         # for unmanaged code to mess with ob_refcnt, it must have been passed a reference
         # from managed code; this shouldn't happen without a Store (which will IncRef)
         objptr = mapper.Store(obj)
-        self.assertEquals(mapper.RefCount(objptr), 2)
+        self.assertEqual(mapper.RefCount(objptr), 2)
         CPyMarshal.WriteIntField(objptr, PyObject, 'ob_refcnt', 3)
         mapper.DecRef(objptr)
         
         # managed code forgets obj for a while, while unmanaged code still holds a reference
         del obj
         gcwait()
-        self.assertEquals(objref.IsAlive, True, "object died before its time")
-        self.assertEquals(mapper.Retrieve(objptr), objref.Target, "mapping broken")
+        self.assertEqual(objref.IsAlive, True, "object died before its time")
+        self.assertEqual(mapper.Retrieve(objptr), objref.Target, "mapping broken")
 
 
     @WithMapper
@@ -59,7 +59,7 @@ class LifetimeTest(TestCase):
             # for unmanaged code to mess with ob_refcnt, it must have been passed a reference
             # from managed code; this shouldn't happen without a Store (which will IncRef)
             objptr = mapper.Store(obj)
-            self.assertEquals(mapper.RefCount(objptr), 2)
+            self.assertEqual(mapper.RefCount(objptr), 2)
             mapper.DecRef(objptr)
             
             # managed code forgets obj, no refs from unmanaged code
@@ -71,7 +71,7 @@ class LifetimeTest(TestCase):
         gcwait()
         gcwait()
         mapper.EnsureGIL()
-        self.assertEquals(objref.IsAlive, False, "object didn't die")
+        self.assertEqual(objref.IsAlive, False, "object didn't die")
 
 
 class InheritanceTest(TestCase):
@@ -85,11 +85,11 @@ class InheritanceTest(TestCase):
         addToCleanUp(deallocType)
         
         klass = mapper.Retrieve(klassPtr)
-        self.assertEquals(issubclass(klass, mapper.Retrieve(basePtr)), True, "didn't notice klass's base class")
-        self.assertEquals(mapper.RefCount(mapper.PyType_Type), 5, "types did not keep references to TypeType")
-        self.assertEquals(mapper.RefCount(basePtr), 4, "subtype did not keep reference to base")
-        self.assertEquals(mapper.RefCount(mapper.PyBaseObject_Type), 3, "base type did not keep reference to its base (even if it wasn't set explicitly)")
-        self.assertEquals(CPyMarshal.ReadPtrField(basePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type")
+        self.assertEqual(issubclass(klass, mapper.Retrieve(basePtr)), True, "didn't notice klass's base class")
+        self.assertEqual(mapper.RefCount(mapper.PyType_Type), 5, "types did not keep references to TypeType")
+        self.assertEqual(mapper.RefCount(basePtr), 4, "subtype did not keep reference to base")
+        self.assertEqual(mapper.RefCount(mapper.PyBaseObject_Type), 3, "base type did not keep reference to its base (even if it wasn't set explicitly)")
+        self.assertEqual(CPyMarshal.ReadPtrField(basePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type")
 
     
     @WithMapper
@@ -102,7 +102,7 @@ class InheritanceTest(TestCase):
         klass = mapper.Retrieve(klassPtr)
         base = mapper.Retrieve(basePtr)
         for k, v in base._dispatcher.table.items():
-            self.assertEquals(klass._dispatcher.table[k], v)
+            self.assertEqual(klass._dispatcher.table[k], v)
 
     
     @WithMapper
@@ -120,11 +120,11 @@ class InheritanceTest(TestCase):
         
         klass = mapper.Retrieve(klassPtr)
         for base in bases:
-            self.assertEquals(issubclass(klass, base), True)
-        self.assertEquals(mapper.RefCount(base1Ptr), 6, "subtype did not keep reference to bases")
-        self.assertEquals(mapper.RefCount(base2Ptr), 6, "subtype did not keep reference to bases")
-        self.assertEquals(CPyMarshal.ReadPtrField(base1Ptr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type 1")
-        self.assertEquals(CPyMarshal.ReadPtrField(base2Ptr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type 2")
+            self.assertEqual(issubclass(klass, base), True)
+        self.assertEqual(mapper.RefCount(base1Ptr), 6, "subtype did not keep reference to bases")
+        self.assertEqual(mapper.RefCount(base2Ptr), 6, "subtype did not keep reference to bases")
+        self.assertEqual(CPyMarshal.ReadPtrField(base1Ptr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type 1")
+        self.assertEqual(CPyMarshal.ReadPtrField(base2Ptr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type 2")
     
     
     @WithMapper
@@ -145,7 +145,7 @@ class InheritanceTest(TestCase):
 
         for base in bases:
             for k, v in base._dispatcher.table.items():
-                self.assertEquals(klass._dispatcher.table[k], v)
+                self.assertEqual(klass._dispatcher.table[k], v)
 
     
     @WithMapper
@@ -166,7 +166,7 @@ class InheritanceTest(TestCase):
 
         klass = mapper.Retrieve(klassPtr)
         for base in bases:
-            self.assertEquals(issubclass(klass, base), True)
+            self.assertEqual(issubclass(klass, base), True)
 
         unknownInstancePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
         addToCleanUp(lambda: Marshal.FreeHGlobal(unknownInstancePtr))
@@ -175,7 +175,7 @@ class InheritanceTest(TestCase):
         CPyMarshal.WritePtrField(unknownInstancePtr, PyObject, "ob_type", klassPtr)
         CPyMarshal.WriteIntField(unknownInstancePtr, PyIntObject, "ob_ival", 123)
         unknownInstance = mapper.Retrieve(unknownInstancePtr)
-        self.assertEquals(isinstance(unknownInstance, klass), True)
+        self.assertEqual(isinstance(unknownInstance, klass), True)
 
     
     def testMetaclass(self):
@@ -190,7 +190,7 @@ class InheritanceTest(TestCase):
         klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': metaclassPtr}, allocator)
         
         klass = mapper.Retrieve(klassPtr)
-        self.assertEquals(type(klass), mapper.Retrieve(metaclassPtr), "didn't notice klass's type")
+        self.assertEqual(type(klass), mapper.Retrieve(metaclassPtr), "didn't notice klass's type")
         
         mapper.Dispose()
         deallocType()
@@ -213,7 +213,7 @@ class InheritanceTest(TestCase):
         klass = mapper.Retrieve(klassPtr)
         metaclass = mapper.Retrieve(metaclassPtr)
         for k, v in metaclass._dispatcher.table.items():
-            self.assertEquals(klass._dispatcher.table[k], v)
+            self.assertEqual(klass._dispatcher.table[k], v)
 
         mapper.Dispose()
         deallocType()
@@ -260,13 +260,13 @@ class InheritanceTest(TestCase):
         for clsname in ('unrelated', 'superclass', 'metaclass'):
             del calls [:]
             namespace[clsname]().method()
-            self.assertEquals(calls, [clsname])
+            self.assertEqual(calls, [clsname])
         
         del calls [:]
         u = unrelated()
         s = subclass(u)
         s.method(u)
-        self.assertEquals(calls, ['unrelated'])
+        self.assertEqual(calls, ['unrelated'])
 
 
 class BuiltinSubclassHorrorTest(TestCase):
@@ -303,8 +303,8 @@ class BuiltinSubclassHorrorTest(TestCase):
         CPyMarshal.WriteIntField(_44Ptr, PyIntObject, "ob_ival", 44)
         
         SequenceLike()[mapper.Retrieve(_12Ptr):mapper.Retrieve(_44Ptr)]
-        self.assertEquals(calls, [('__getslice__', 12, 44)])
-        self.assertEquals(map(type, calls[0]), [str, int, int])
+        self.assertEqual(calls, [('__getslice__', 12, 44)])
+        self.assertEqual(map(type, calls[0]), [str, int, int])
     
     
     @WithMapper
@@ -331,8 +331,8 @@ class BuiltinSubclassHorrorTest(TestCase):
             dataPtr = CPyMarshal.Offset(dataPtr, 1)
             
         _f0o = mapper.Retrieve(_f0oPtr)
-        self.assertEquals(_f0o == 'f\0o', True)
-        self.assertEquals('f\0o' == _f0o, True)
+        self.assertEqual(_f0o == 'f\0o', True)
+        self.assertEqual('f\0o' == _f0o, True)
 
 
     @WithMapper
@@ -370,7 +370,7 @@ class TypeDictTest(TestCase):
         
         _type = mapper.Retrieve(typePtr)
         _typeDictPtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_dict")
-        self.assertEquals(mapper.Retrieve(_typeDictPtr), _type.__dict__)
+        self.assertEqual(mapper.Retrieve(_typeDictPtr), _type.__dict__)
 
 
 OFFSET = 32
@@ -401,17 +401,17 @@ class FieldsTest(TestCase):
         self.assertRaises(AttributeError, Set)
         
         CPyMarshal.WriteInt(fieldPtr, -54321)
-        self.assertEquals(instance.attr, -54321)
+        self.assertEqual(instance.attr, -54321)
         
     @WithMapper
     def testIntFieldReadWrite(self, mapper, addToCleanUp):
         instance, fieldPtr = MakeInstanceWithField(MemberT.INT, 0, mapper, addToCleanUp)
         
         instance.attr = 1234567
-        self.assertEquals(CPyMarshal.ReadInt(fieldPtr), 1234567)
+        self.assertEqual(CPyMarshal.ReadInt(fieldPtr), 1234567)
         
         CPyMarshal.WriteInt(fieldPtr, -54321)
-        self.assertEquals(instance.attr, -54321)
+        self.assertEqual(instance.attr, -54321)
     
     @WithMapper
     def testUintFieldReadOnly(self, mapper, addToCleanUp):
@@ -422,17 +422,17 @@ class FieldsTest(TestCase):
         self.assertRaises(AttributeError, Set)
         
         CPyMarshal.WriteUInt(fieldPtr, sys.maxint + 1)
-        self.assertEquals(instance.attr, sys.maxint + 1)
+        self.assertEqual(instance.attr, sys.maxint + 1)
         
     @WithMapper
     def testUintFieldReadWrite(self, mapper, addToCleanUp):
         instance, fieldPtr = MakeInstanceWithField(MemberT.UINT, 0, mapper, addToCleanUp)
         
         instance.attr = sys.maxint + 1
-        self.assertEquals(CPyMarshal.ReadUInt(fieldPtr), sys.maxint + 1)
+        self.assertEqual(CPyMarshal.ReadUInt(fieldPtr), sys.maxint + 1)
         
         CPyMarshal.WriteUInt(fieldPtr, sys.maxint + 3)
-        self.assertEquals(instance.attr, sys.maxint + 3)
+        self.assertEqual(instance.attr, sys.maxint + 3)
     
     @WithMapper
     def testDoubleFieldReadOnly(self, mapper, addToCleanUp):
@@ -443,17 +443,17 @@ class FieldsTest(TestCase):
         self.assertRaises(AttributeError, Set)
         
         CPyMarshal.WriteDouble(fieldPtr, -54.321)
-        self.assertEquals(instance.attr, -54.321)
+        self.assertEqual(instance.attr, -54.321)
         
     @WithMapper
     def testDoubleFieldReadWrite(self, mapper, addToCleanUp):
         instance, fieldPtr = MakeInstanceWithField(MemberT.DOUBLE, 0, mapper, addToCleanUp)
         
         instance.attr = 1234.567
-        self.assertEquals(CPyMarshal.ReadDouble(fieldPtr), 1234.567)
+        self.assertEqual(CPyMarshal.ReadDouble(fieldPtr), 1234.567)
         
         CPyMarshal.WriteDouble(fieldPtr, -54.321)
-        self.assertEquals(instance.attr, -54.321)
+        self.assertEqual(instance.attr, -54.321)
     
     @WithMapper
     def testCharFieldReadOnly(self, mapper, addToCleanUp):
@@ -464,17 +464,17 @@ class FieldsTest(TestCase):
         self.assertRaises(AttributeError, Set)
         
         CPyMarshal.WriteByte(fieldPtr, ord('Y'))
-        self.assertEquals(instance.attr, 'Y')
+        self.assertEqual(instance.attr, 'Y')
         
     @WithMapper
     def testCharFieldReadWrite(self, mapper, addToCleanUp):
         instance, fieldPtr = MakeInstanceWithField(MemberT.CHAR, 0, mapper, addToCleanUp)
         
         instance.attr = 'A'
-        self.assertEquals(CPyMarshal.ReadByte(fieldPtr), ord('A'))
+        self.assertEqual(CPyMarshal.ReadByte(fieldPtr), ord('A'))
         
         CPyMarshal.WriteByte(fieldPtr, ord('B'))
-        self.assertEquals(instance.attr, 'B')
+        self.assertEqual(instance.attr, 'B')
     
     
     @WithMapper
@@ -486,17 +486,17 @@ class FieldsTest(TestCase):
         self.assertRaises(AttributeError, Set)
         
         CPyMarshal.WriteByte(fieldPtr, 192)
-        self.assertEquals(instance.attr, 192)
+        self.assertEqual(instance.attr, 192)
         
     @WithMapper
     def testUbyteFieldReadWrite(self, mapper, addToCleanUp):
         instance, fieldPtr = MakeInstanceWithField(MemberT.UBYTE, 0, mapper, addToCleanUp)
         
         instance.attr = 135
-        self.assertEquals(CPyMarshal.ReadByte(fieldPtr), 135)
+        self.assertEqual(CPyMarshal.ReadByte(fieldPtr), 135)
         
         CPyMarshal.WriteByte(fieldPtr, 222)
-        self.assertEquals(instance.attr, 222)
+        self.assertEqual(instance.attr, 222)
     
     
     @WithMapper
@@ -508,17 +508,17 @@ class FieldsTest(TestCase):
         self.assertRaises(AttributeError, Set)
         
         CPyMarshal.WriteUInt(fieldPtr, UInt32.MaxValue - 1)
-        self.assertEquals(instance.attr, UInt32.MaxValue - 1)
+        self.assertEqual(instance.attr, UInt32.MaxValue - 1)
         
     @WithMapper
     def testUlongFieldReadWrite(self, mapper, addToCleanUp):
         instance, fieldPtr = MakeInstanceWithField(MemberT.ULONG, 0, mapper, addToCleanUp)
         
         instance.attr = UInt32.MaxValue - 1
-        self.assertEquals(CPyMarshal.ReadUInt(fieldPtr), UInt32.MaxValue - 1)
+        self.assertEqual(CPyMarshal.ReadUInt(fieldPtr), UInt32.MaxValue - 1)
         
         CPyMarshal.WriteUInt(fieldPtr, UInt32.MaxValue - 2)
-        self.assertEquals(instance.attr, UInt32.MaxValue - 2)
+        self.assertEqual(instance.attr, UInt32.MaxValue - 2)
     
     
     @WithMapper
@@ -530,17 +530,17 @@ class FieldsTest(TestCase):
         self.assertRaises(AttributeError, Set)
         
         CPyMarshal.WriteInt(fieldPtr, Int32.MinValue + 1)
-        self.assertEquals(instance.attr, Int32.MinValue + 1)
+        self.assertEqual(instance.attr, Int32.MinValue + 1)
         
     @WithMapper
     def testLongFieldReadWrite(self, mapper, addToCleanUp):
         instance, fieldPtr = MakeInstanceWithField(MemberT.LONG, 0, mapper, addToCleanUp)
         
         instance.attr = Int32.MinValue + 1
-        self.assertEquals(CPyMarshal.ReadInt(fieldPtr), Int32.MinValue + 1)
+        self.assertEqual(CPyMarshal.ReadInt(fieldPtr), Int32.MinValue + 1)
         
         CPyMarshal.WriteInt(fieldPtr, Int32.MinValue + 2)
-        self.assertEquals(instance.attr, Int32.MinValue + 2)
+        self.assertEqual(instance.attr, Int32.MinValue + 2)
     
     
     @WithMapper
@@ -552,15 +552,15 @@ class FieldsTest(TestCase):
         self.assertRaises(AttributeError, Set)
         
         CPyMarshal.WritePtr(fieldPtr, IntPtr.Zero)
-        self.assertEquals(instance.attr, None)
+        self.assertEqual(instance.attr, None)
         
         value = object()
         valuePtr = mapper.Store(value)
         refcnt = mapper.RefCount(valuePtr)
         
         CPyMarshal.WritePtr(fieldPtr, valuePtr)
-        self.assertEquals(instance.attr, value)
-        self.assertEquals(mapper.RefCount(valuePtr), refcnt)
+        self.assertEqual(instance.attr, value)
+        self.assertEqual(mapper.RefCount(valuePtr), refcnt)
     
     
     @WithMapper
@@ -573,13 +573,13 @@ class FieldsTest(TestCase):
         refcnt = mapper.RefCount(valuePtr)
         
         instance.attr = value
-        self.assertEquals(instance.attr, value)
-        self.assertEquals(CPyMarshal.ReadPtr(fieldPtr), valuePtr)
-        self.assertEquals(mapper.RefCount(valuePtr), refcnt + 1)
+        self.assertEqual(instance.attr, value)
+        self.assertEqual(CPyMarshal.ReadPtr(fieldPtr), valuePtr)
+        self.assertEqual(mapper.RefCount(valuePtr), refcnt + 1)
         
         instance.attr = None # should this set fieldPtr to NULL, perhaps?
-        self.assertEquals(CPyMarshal.ReadPtr(fieldPtr), mapper.Store(None))
-        self.assertEquals(mapper.RefCount(valuePtr), refcnt)
+        self.assertEqual(CPyMarshal.ReadPtr(fieldPtr), mapper.Store(None))
+        self.assertEqual(mapper.RefCount(valuePtr), refcnt)
         
     @WithMapper
     def testStringField(self, mapper, addToCleanUp):
@@ -591,14 +591,14 @@ class FieldsTest(TestCase):
         self.assertRaises(AttributeError, Set)
         
         CPyMarshal.WritePtr(fieldPtr, IntPtr.Zero)
-        self.assertEquals(instance.attr, None)
+        self.assertEqual(instance.attr, None)
         
         str_ = 'hullo I am a test string'
         strPtr = Marshal.StringToHGlobalAnsi(str_)
         addToCleanUp(lambda: Marshal.FreeHGlobal(strPtr))
         
         CPyMarshal.WritePtr(fieldPtr, strPtr)
-        self.assertEquals(instance.attr, str_)
+        self.assertEqual(instance.attr, str_)
         
 
 class MethodConnectionTestCase(TestCase):
@@ -611,7 +611,7 @@ class MethodConnectionTestCase(TestCase):
         
         self.instance = mapper.Retrieve(typePtr)()
         method = getattr(self.instance, methodName)
-        self.assertEquals(method(*args, **kwargs), result)
+        self.assertEqual(method(*args, **kwargs), result)
 
     @WithMapper
     def assertTypeMethodRaises(self, typeSpec, methodName, args, kwargs, error, mapper, addToCleanUp):
@@ -630,7 +630,7 @@ class MethodConnectionTestCase(TestCase):
         addToCleanUp(deallocType)
         
         self.instance = mapper.Retrieve(typePtr)()
-        self.assertEquals(getattr(self.instance, attrName), result)
+        self.assertEqual(getattr(self.instance, attrName), result)
 
     @WithMapper
     def assertSetCall(self, typeSpec, attrName, value, mapper, addToCleanUp):
@@ -647,8 +647,8 @@ class MethodsTest(MethodConnectionTestCase):
     def testNoArgsMethod(self):
         result = object()
         def NoArgs(p1, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(p2, IntPtr.Zero)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(p2, IntPtr.Zero)
             return self.mapper.Store(result)
         
         methodDef, deallocMethod = MakeMethodDef("method", NoArgs, METH.NOARGS)
@@ -661,8 +661,8 @@ class MethodsTest(MethodConnectionTestCase):
         result = object()
         arg = object()
         def OldArgs(p1, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), arg)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), arg)
             return self.mapper.Store(result)
         
         methodDef, deallocMethod = MakeMethodDef("method", OldArgs, METH.OLDARGS)
@@ -675,8 +675,8 @@ class MethodsTest(MethodConnectionTestCase):
         result = object()
         args = (object(), object())
         def OldArgs(p1, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), args)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), args)
             return self.mapper.Store(result)
         
         methodDef, deallocMethod = MakeMethodDef("method", OldArgs, METH.OLDARGS)
@@ -689,8 +689,8 @@ class MethodsTest(MethodConnectionTestCase):
         result = object()
         arg = object()
         def ObjArg(p1, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), arg)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), arg)
             return self.mapper.Store(result)
         
         methodDef, deallocMethod = MakeMethodDef("method", ObjArg, METH.O)
@@ -703,8 +703,8 @@ class MethodsTest(MethodConnectionTestCase):
         result = object()
         args = (object(), object(), object())
         def VarArgs(p1, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), args)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), args)
             return self.mapper.Store(result)
         
         methodDef, deallocMethod = MakeMethodDef("method", VarArgs, METH.VARARGS)
@@ -718,9 +718,9 @@ class MethodsTest(MethodConnectionTestCase):
         args = (object(), object(), object())
         kwargs = {'x': object(), 'y': object()}
         def Kwargs(p1, p2, p3):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), args)
-            self.assertEquals(self.mapper.Retrieve(p3), kwargs)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), args)
+            self.assertEqual(self.mapper.Retrieve(p3), kwargs)
             return self.mapper.Store(result)
         
         methodDef, deallocMethod = MakeMethodDef("method", Kwargs, METH.VARARGS | METH.KEYWORDS)
@@ -734,9 +734,9 @@ class MethodsTest(MethodConnectionTestCase):
         args = (object(), object(), object())
         kwargs = {'x': object(), 'y': object()}
         def Kwargs(p1, p2, p3):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), args)
-            self.assertEquals(self.mapper.Retrieve(p3), kwargs)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), args)
+            self.assertEqual(self.mapper.Retrieve(p3), kwargs)
             return self.mapper.Store(result)
         
         # OLDARGS == 0, so it appears to just be KEYWORDS,
@@ -753,8 +753,8 @@ class GetsetsTest(MethodConnectionTestCase):
     def testGet(self):
         result = object()
         def Getter(p1, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(p2, MAGIC_CLOSURE_PTR)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(p2, MAGIC_CLOSURE_PTR)
             return self.mapper.Store(result)
         
         getsetDef, deallocGetset = MakeGetSetDef("attr", Getter, None, "doc", MAGIC_CLOSURE_PTR)
@@ -767,9 +767,9 @@ class GetsetsTest(MethodConnectionTestCase):
         value = object()
         def Setter(p1, p2, p3):
             self.didCall = True
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), value)
-            self.assertEquals(p3, MAGIC_CLOSURE_PTR)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), value)
+            self.assertEqual(p3, MAGIC_CLOSURE_PTR)
             return self.result
         
         getsetDef, deallocGetset = MakeGetSetDef("attr", None, Setter, "doc", MAGIC_CLOSURE_PTR)
@@ -778,12 +778,12 @@ class GetsetsTest(MethodConnectionTestCase):
         self.result = 0
         self.didCall = False
         self.assertSetCall(typeSpec, "attr", value)
-        self.assertEquals(self.didCall, True)
+        self.assertEqual(self.didCall, True)
         
         self.result = -1
         self.didCall = False
         self.assertRaises(Exception, self.assertSetCall, typeSpec, "attr", value)
-        self.assertEquals(self.didCall, True)
+        self.assertEqual(self.didCall, True)
         
         deallocGetset()
 
@@ -795,9 +795,9 @@ class TypeMethodsTest(MethodConnectionTestCase):
         args = (object(), object(), object())
         kwargs = {'x': object(), 'y': object()}
         def Call(p1, p2, p3):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), args)
-            self.assertEquals(self.mapper.Retrieve(p3), kwargs)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), args)
+            self.assertEqual(self.mapper.Retrieve(p3), kwargs)
             return self.mapper.Store(result)
         
         typeSpec = {"tp_call": Call}
@@ -811,9 +811,9 @@ class TypeMethodsTest(MethodConnectionTestCase):
         args = (object(), object(), object())
         kwargs = {'x': object(), 'y': object()}
         def Call(p1, p2, p3):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), args)
-            self.assertEquals(self.mapper.Retrieve(p3), kwargs)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), args)
+            self.assertEqual(self.mapper.Retrieve(p3), kwargs)
             return self.mapper.Store(result)
         
         methodDef, deallocMethod = MakeMethodDef("__call__", Call, METH.VARARGS | METH.KEYWORDS | METH.COEXIST)
@@ -829,9 +829,9 @@ class TypeMethodsTest(MethodConnectionTestCase):
             if self.firstCall:
                 self.firstCall = False
                 return 0
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), args)
-            self.assertEquals(self.mapper.Retrieve(p3), kwargs)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), args)
+            self.assertEqual(self.mapper.Retrieve(p3), kwargs)
             return 0
         
         typeSpec = {"tp_init": Init}
@@ -866,7 +866,7 @@ class TypeMethodsTest(MethodConnectionTestCase):
     def testStr(self):
         result = object()
         def Call(p1):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
             return self.mapper.Store(result)
         
         typeSpec = {"tp_str": Call}
@@ -875,7 +875,7 @@ class TypeMethodsTest(MethodConnectionTestCase):
     def testRepr(self):
         result = object()
         def Call(p1):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
             return self.mapper.Store(result)
         
         typeSpec = {"tp_repr": Call}
@@ -885,8 +885,8 @@ class TypeMethodsTest(MethodConnectionTestCase):
         arg = object()
         def Compare(p1, p2):
             # note: assertEquals inside __cmp__ causes stack overflow
-            self.assertEquals(self.mapper.Retrieve(p1) is self.instance, True)
-            self.assertEquals(self.mapper.Retrieve(p2), arg)
+            self.assertEqual(self.mapper.Retrieve(p1) is self.instance, True)
+            self.assertEqual(self.mapper.Retrieve(p2), arg)
             return 0
         
         typeSpec = {"tp_compare": Compare}
@@ -897,9 +897,9 @@ class TypeMethodsTest(MethodConnectionTestCase):
         result = object()
         def RichCompare(p1, p2, i1):
             # note: assertEquals inside __eq__ causes stack overflow
-            self.assertEquals(self.mapper.Retrieve(p1) is self.instance, True)
-            self.assertEquals(self.mapper.Retrieve(p2), arg)
-            self.assertEquals(i1, self.expectCode)
+            self.assertEqual(self.mapper.Retrieve(p1) is self.instance, True)
+            self.assertEqual(self.mapper.Retrieve(p2), arg)
+            self.assertEqual(i1, self.expectCode)
             return self.mapper.Store(result)
         
         typeSpec = {"tp_richcompare": RichCompare}
@@ -910,7 +910,7 @@ class TypeMethodsTest(MethodConnectionTestCase):
 
     def testHash(self):
         def Hash(p1):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
             return -1
         
         typeSpec = {"tp_hash": Hash}
@@ -920,8 +920,8 @@ class TypeMethodsTest(MethodConnectionTestCase):
         arg = "hugs_tiem"
         result = object()
         def Getattr(p1, str1):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(str1, arg)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(str1, arg)
             return self.mapper.Store(result)
         
         typeSpec = {"tp_getattr": Getattr}
@@ -930,7 +930,7 @@ class TypeMethodsTest(MethodConnectionTestCase):
     def testIter(self):
         result = object()
         def Iter(p1):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
             return self.mapper.Store(result)
         
         typeSpec = {"tp_iter": Iter}
@@ -939,7 +939,7 @@ class TypeMethodsTest(MethodConnectionTestCase):
     def testIternext(self):
         result = object()
         def Iternext(p1):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
             return self.mapper.Store(result)
         
         typeSpec = {"tp_iternext": Iternext}
@@ -947,7 +947,7 @@ class TypeMethodsTest(MethodConnectionTestCase):
 
     def testIternext_Finished(self):
         def Iternext(p1):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
             return IntPtr.Zero
         
         typeSpec = {"tp_iternext": Iternext}
@@ -959,7 +959,7 @@ class NumberMethodsTest(MethodConnectionTestCase):
     def assertUnaryFunc(self, cpyname, ipyname):
         result = object()
         def Unary(p1):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
             return self.mapper.Store(result)
         
         numbers, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {cpyname: Unary})
@@ -983,8 +983,8 @@ class NumberMethodsTest(MethodConnectionTestCase):
         arg = object()
         result = object()
         def Binary(p1, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), arg)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), arg)
             return self.mapper.Store(result)
         
         numbers, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {cpyname: Binary})
@@ -999,8 +999,8 @@ class NumberMethodsTest(MethodConnectionTestCase):
         arg = object()
         result = object()
         def Binary(p1, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), arg)
-            self.assertEquals(self.mapper.Retrieve(p2), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p1), arg)
+            self.assertEqual(self.mapper.Retrieve(p2), self.instance)
             return self.mapper.Store(result)
         
         numbers, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {cpyname: Binary})
@@ -1041,7 +1041,7 @@ class NumberMethodsTest(MethodConnectionTestCase):
     def testNonzero(self):
         result = 0
         def Nonzero(p1):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
             return result
         
         numbers, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {'nb_nonzero': Nonzero})
@@ -1054,9 +1054,9 @@ class NumberMethodsTest(MethodConnectionTestCase):
         modulus = object()
         result = object()
         def Ternary(p1, p2, p3):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), arg)
-            self.assertEquals(self.mapper.Retrieve(p3), self.expectModulus)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), arg)
+            self.assertEqual(self.mapper.Retrieve(p3), self.expectModulus)
             return self.mapper.Store(result)
         
         numbers, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {cpyname: Ternary})
@@ -1078,9 +1078,9 @@ class NumberMethodsTest(MethodConnectionTestCase):
         arg = object()
         result = object()
         def Ternary(p1, p2, p3):
-            self.assertEquals(self.mapper.Retrieve(p1), arg)
-            self.assertEquals(self.mapper.Retrieve(p2), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p3), None)
+            self.assertEqual(self.mapper.Retrieve(p1), arg)
+            self.assertEqual(self.mapper.Retrieve(p2), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p3), None)
             return self.mapper.Store(result)
         
         numbers, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {'nb_power': Ternary})
@@ -1104,7 +1104,7 @@ class NumberMethodsTest(MethodConnectionTestCase):
         }
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         instance = mapper.Retrieve(typePtr)()
-        self.assertEquals(instance.__complex__(), 123+456j)
+        self.assertEqual(instance.__complex__(), 123+456j)
 
 
 class SequenceMethodsTest(MethodConnectionTestCase):
@@ -1112,7 +1112,7 @@ class SequenceMethodsTest(MethodConnectionTestCase):
     def testLength(self):
         result = 0
         def Length(p1):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
             return result
         
         seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_length': Length})
@@ -1128,8 +1128,8 @@ class SequenceMethodsTest(MethodConnectionTestCase):
         arg = object()
         result = object()
         def Concat(p1, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), arg)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), arg)
             return self.mapper.Store(result)
         
         seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_concat': Concat})
@@ -1142,8 +1142,8 @@ class SequenceMethodsTest(MethodConnectionTestCase):
         arg = object()
         result = object()
         def Contains(p1, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), arg)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), arg)
             return 1
         
         seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_contains': Contains})
@@ -1156,8 +1156,8 @@ class SequenceMethodsTest(MethodConnectionTestCase):
         idx = 123
         result = object()
         def Getitem(p1, s1):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(s1, idx)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(s1, idx)
             return self.mapper.Store(result)
         
         seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_item': Getitem})
@@ -1170,9 +1170,9 @@ class SequenceMethodsTest(MethodConnectionTestCase):
         idx = 123
         value = object()
         def Setitem(p1, s1, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(s1, idx)
-            self.assertEquals(self.mapper.Retrieve(p2), value)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(s1, idx)
+            self.assertEqual(self.mapper.Retrieve(p2), value)
             return self.result
         
         seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_ass_item': Setitem})
@@ -1192,9 +1192,9 @@ class SequenceMethodsTest(MethodConnectionTestCase):
         stop_ = 456
         result = object()
         def Getslice(p1, s1, s2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(s1, start_)
-            self.assertEquals(s2, stop_)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(s1, start_)
+            self.assertEqual(s2, stop_)
             return self.mapper.Store(result)
         def Length(_):
             return 0
@@ -1208,9 +1208,9 @@ class SequenceMethodsTest(MethodConnectionTestCase):
     def testGetslice_NastyNumpyCase(self):
         result = object()
         def Getslice(p1, s1, s2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(s1, -1)
-            self.assertEquals(s2, -1)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(s1, -1)
+            self.assertEqual(s2, -1)
             return self.mapper.Store(result)
         def Length(_):
             return 0
@@ -1226,10 +1226,10 @@ class SequenceMethodsTest(MethodConnectionTestCase):
         stop_ = 456
         value = object()
         def Setslice(p1, s1, s2, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(s1, start_)
-            self.assertEquals(s2, stop_)
-            self.assertEquals(self.mapper.Retrieve(p2), value)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(s1, start_)
+            self.assertEqual(s2, stop_)
+            self.assertEqual(self.mapper.Retrieve(p2), value)
             return self.result
         def Length(_):
             return 0
@@ -1249,10 +1249,10 @@ class SequenceMethodsTest(MethodConnectionTestCase):
     def testSetslice_NastyNumpyCase(self):
         value = object()
         def Setslice(p1, s1, s2, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(s1, -1)
-            self.assertEquals(s2, -1)
-            self.assertEquals(self.mapper.Retrieve(p2), value)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(s1, -1)
+            self.assertEqual(s2, -1)
+            self.assertEqual(self.mapper.Retrieve(p2), value)
             return self.result
         def Length(_):
             return 0
@@ -1274,7 +1274,7 @@ class MappingMethodsTest(MethodConnectionTestCase):
     def testLength(self):
         result = 0
         def Length(p1):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
             return result
         
         mapping, deallocMapping = MakeNumSeqMapMethods(PyMappingMethods, {'mp_length': Length})
@@ -1287,8 +1287,8 @@ class MappingMethodsTest(MethodConnectionTestCase):
         key = object()
         result = object()
         def Getitem(p1, p2):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), key)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), key)
             return self.mapper.Store(result)
         
         mapping, deallocMapping = MakeNumSeqMapMethods(PyMappingMethods, {'mp_subscript': Getitem})
@@ -1301,9 +1301,9 @@ class MappingMethodsTest(MethodConnectionTestCase):
         key = object()
         value = object()
         def Setitem(p1, p2, p3):
-            self.assertEquals(self.mapper.Retrieve(p1), self.instance)
-            self.assertEquals(self.mapper.Retrieve(p2), key)
-            self.assertEquals(self.mapper.Retrieve(p3), value)
+            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
+            self.assertEqual(self.mapper.Retrieve(p2), key)
+            self.assertEqual(self.mapper.Retrieve(p3), value)
             return self.result
         
         mapping, deallocMapping = MakeNumSeqMapMethods(PyMappingMethods, {'mp_ass_subscript': Setitem})

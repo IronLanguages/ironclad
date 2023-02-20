@@ -13,12 +13,12 @@ class ErrorsTest(TestCase):
 
     @WithMapper
     def testException(self, mapper, _):
-        self.assertEquals(mapper.LastException, None, "exception should default to nothing")
+        self.assertEqual(mapper.LastException, None, "exception should default to nothing")
 
         mapper.LastException = System.Exception("doozy")
-        self.assertEquals(type(mapper.LastException), Exception,
+        self.assertEqual(type(mapper.LastException), Exception,
                           "get should retrieve last set exception")
-        self.assertEquals(str(mapper.LastException), "doozy",
+        self.assertEqual(str(mapper.LastException), "doozy",
                           "get should retrieve last set exception")
     
     
@@ -27,7 +27,7 @@ class ErrorsTest(TestCase):
         for type_ in (TypeError, ValueError, IOError):
             excPtr = mapper.Store(type_('whatever'))
             typePtr = CPyMarshal.ReadPtrField(excPtr, PyObject, 'ob_type')
-            self.assertEquals(mapper.Retrieve(typePtr), type_)
+            self.assertEqual(mapper.Retrieve(typePtr), type_)
 
 
     @WithMapper
@@ -39,7 +39,7 @@ class ErrorsTest(TestCase):
         mapper.LastException = AttributeError("twaddle")
         mapper.PyErr_Print()
         
-        self.assertEquals(stderr_writes, [("twaddle",), ('\n',)])
+        self.assertEqual(stderr_writes, [("twaddle",), ('\n',)])
 
 
 suite = automakesuite(locals())

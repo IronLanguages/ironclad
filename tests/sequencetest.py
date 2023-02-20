@@ -27,22 +27,22 @@ class SequenceFunctionsTest(TestCase):
         notSequences = map(mapper.Store, [tuple, list, object(), {'foo': 'bar'}])
         
         for x in sequences:
-            self.assertEquals(mapper.PySequence_Check(x), 1, "reported %r not sequence" % (mapper.Retrieve(x),))
+            self.assertEqual(mapper.PySequence_Check(x), 1, "reported %r not sequence" % (mapper.Retrieve(x),))
         for x in notSequences:
-            self.assertEquals(mapper.PySequence_Check(x), 0, "reported %r sequence" % (mapper.Retrieve(x),))
+            self.assertEqual(mapper.PySequence_Check(x), 0, "reported %r sequence" % (mapper.Retrieve(x),))
 
 
     @WithMapper
     def testPySequence_Size(self, mapper, _):
         for seq in ("hullo", tuple(), [1, 2, 3], {'foo': 'bar'}, set([1, 2])):
             seqPtr = mapper.Store(seq)
-            self.assertEquals(mapper.PySequence_Size(seqPtr), len(seq))
+            self.assertEqual(mapper.PySequence_Size(seqPtr), len(seq))
             mapper.DecRef(seqPtr)
         
         for notseq in (object, object(), 37):
             notseqPtr = mapper.Store(notseq)
             mapper.LastException = None
-            self.assertEquals(mapper.PySequence_Size(notseqPtr), -1)
+            self.assertEqual(mapper.PySequence_Size(notseqPtr), -1)
             self.assertMapperHasError(mapper, TypeError)
             mapper.DecRef(notseqPtr)
 
@@ -53,18 +53,18 @@ class SequenceFunctionsTest(TestCase):
             seqPtr = mapper.Store(seq)
             for i in range(3):
                 result = mapper.PySequence_GetItem(seqPtr, IntPtr(i))
-                self.assertEquals(mapper.Retrieve(result), seq[i])
+                self.assertEqual(mapper.Retrieve(result), seq[i])
 
             for i in (5, 66):
                 mapper.LastException = None
-                self.assertEquals(mapper.PySequence_GetItem(seqPtr, IntPtr(i)), IntPtr.Zero)
+                self.assertEqual(mapper.PySequence_GetItem(seqPtr, IntPtr(i)), IntPtr.Zero)
                 self.assertMapperHasError(mapper, IndexError)
             
             mapper.DecRef(seqPtr)
         
         for notseq in (object, object(), 37):
             notseqPtr = mapper.Store(notseq)
-            self.assertEquals(mapper.PySequence_GetItem(notseqPtr, IntPtr(0)), IntPtr.Zero)
+            self.assertEqual(mapper.PySequence_GetItem(notseqPtr, IntPtr(0)), IntPtr.Zero)
             self.assertMapperHasError(mapper, TypeError)
 
 
@@ -79,12 +79,12 @@ class SequenceFunctionsTest(TestCase):
         CPyMarshal.WritePtrField(tuplePtr, PyTupleObject, "ob_item", obj1Ptr)
         
         # check that GetItem returns correct object, increffed
-        self.assertEquals(mapper.PySequence_GetItem(tuplePtr, IntPtr(0)), obj1Ptr)
-        self.assertEquals(CPyMarshal.ReadIntField(obj1Ptr, PyObject, "ob_refcnt"), 2)
+        self.assertEqual(mapper.PySequence_GetItem(tuplePtr, IntPtr(0)), obj1Ptr)
+        self.assertEqual(CPyMarshal.ReadIntField(obj1Ptr, PyObject, "ob_refcnt"), 2)
         
         # replace item, check that correct object is retrieved
         CPyMarshal.WritePtrField(tuplePtr, PyTupleObject, "ob_item", obj2Ptr)
-        self.assertEquals(mapper.Retrieve(tuplePtr), (obj2,))
+        self.assertEqual(mapper.Retrieve(tuplePtr), (obj2,))
         
 
     @WithMapper
@@ -94,18 +94,18 @@ class SequenceFunctionsTest(TestCase):
         seqData = CPyMarshal.ReadPtrField(seqPtr, PyListObject, "ob_item")
         for i in range(3):
             itemPtr = mapper.Store(i)
-            self.assertEquals(mapper.PySequence_SetItem(seqPtr, IntPtr(i), itemPtr), 0)
-            self.assertEquals(mapper.RefCount(itemPtr), 2)
+            self.assertEqual(mapper.PySequence_SetItem(seqPtr, IntPtr(i), itemPtr), 0)
+            self.assertEqual(mapper.RefCount(itemPtr), 2)
             index = i
             if index < 0:
                 index += 3
             valData = CPyMarshal.Offset(seqData, index * CPyMarshal.PtrSize)
-            self.assertEquals(CPyMarshal.ReadPtr(valData), itemPtr)
-            self.assertEquals(seq[i], i)
+            self.assertEqual(CPyMarshal.ReadPtr(valData), itemPtr)
+            self.assertEqual(seq[i], i)
 
         for i in (5, 66):
             mapper.LastException = None
-            self.assertEquals(mapper.PySequence_SetItem(seqPtr, IntPtr(i), mapper.Store(i)), -1)
+            self.assertEqual(mapper.PySequence_SetItem(seqPtr, IntPtr(i), mapper.Store(i)), -1)
             self.assertMapperHasError(mapper, IndexError)
         
     @WithMapper
@@ -118,15 +118,15 @@ class SequenceFunctionsTest(TestCase):
         seqPtr = mapper.Store(seq)
         for (i, item) in ((3, 'abc'), (123, 999)):
             itemPtr = mapper.Store(item)
-            self.assertEquals(mapper.PySequence_SetItem(seqPtr, IntPtr(i), itemPtr), 0)
-            self.assertEquals(mapper.RefCount(itemPtr), 1)
-            self.assertEquals(calls[-1], (i, item))
+            self.assertEqual(mapper.PySequence_SetItem(seqPtr, IntPtr(i), itemPtr), 0)
+            self.assertEqual(mapper.RefCount(itemPtr), 1)
+            self.assertEqual(calls[-1], (i, item))
         
     @WithMapper
     def testPySequence_SetItem_Failure(self, mapper, _):
         for bad in (object, object(), 37, 'foo', (1, 2, 3)):
             badPtr = mapper.Store(bad)
-            self.assertEquals(mapper.PySequence_SetItem(badPtr, IntPtr(0), mapper.Store(123)), -1)
+            self.assertEqual(mapper.PySequence_SetItem(badPtr, IntPtr(0), mapper.Store(123)), -1)
             self.assertMapperHasError(mapper, TypeError)
         
     @WithMapper
@@ -135,12 +135,12 @@ class SequenceFunctionsTest(TestCase):
             seqPtr = mapper.Store(seq)
             for i, j in ((0, 2), (1, 4), (22, 347)):
                 resultPtr = mapper.PySequence_GetSlice(seqPtr, IntPtr(i), IntPtr(j))
-                self.assertEquals(mapper.Retrieve(resultPtr), seq[i:j])
+                self.assertEqual(mapper.Retrieve(resultPtr), seq[i:j])
             mapper.DecRef(seqPtr)
         
         for notseq in (object, object(), 37):
             notseqPtr = mapper.Store(notseq)
-            self.assertEquals(mapper.PySequence_GetSlice(notseqPtr, IntPtr(0), IntPtr(1)), IntPtr.Zero)
+            self.assertEqual(mapper.PySequence_GetSlice(notseqPtr, IntPtr(0), IntPtr(1)), IntPtr.Zero)
             self.assertMapperHasError(mapper, TypeError)
 
 
@@ -150,7 +150,7 @@ class SequenceFunctionsTest(TestCase):
             seqPtr = mapper.Store(seq)
             for i in range(3):
                 resultPtr = mapper.PySequence_Repeat(seqPtr, IntPtr(i))
-                self.assertEquals(mapper.Retrieve(resultPtr), seq * i)
+                self.assertEqual(mapper.Retrieve(resultPtr), seq * i)
 
 
     @WithMapper
@@ -180,8 +180,8 @@ class SequenceFunctionsTest(TestCase):
         instance = mapper.Retrieve(typePtr)()
         instancePtr = mapper.Store(instance)
         
-        self.assertEquals(mapper.PySequence_Repeat(instancePtr, IntPtr(3)), RESULT_PTR)
-        self.assertEquals(calls, [(instancePtr, 3)])
+        self.assertEqual(mapper.PySequence_Repeat(instancePtr, IntPtr(3)), RESULT_PTR)
+        self.assertEqual(calls, [(instancePtr, 3)])
 
 
     @WithMapper
@@ -191,7 +191,7 @@ class SequenceFunctionsTest(TestCase):
                 raise Exception("this is a number, not a sequence")
 
         numPtr = mapper.Store(Number())
-        self.assertEquals(mapper.PySequence_Repeat(numPtr, IntPtr(123)), IntPtr.Zero)
+        self.assertEqual(mapper.PySequence_Repeat(numPtr, IntPtr(123)), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
 
 
@@ -205,11 +205,11 @@ class SequenceFunctionsTest(TestCase):
                 try:
                     result = seq1 + seq2
                 except Exception, e:
-                    self.assertEquals(call(), IntPtr.Zero)
+                    self.assertEqual(call(), IntPtr.Zero)
                     self.assertMapperHasError(mapper, type(e))
                 else:
                     resultPtr = call()
-                    self.assertEquals(mapper.Retrieve(resultPtr), result)
+                    self.assertEqual(mapper.Retrieve(resultPtr), result)
 
 
     @WithMapper
@@ -223,26 +223,26 @@ class SequenceFunctionsTest(TestCase):
                 except Exception, e:
                     error = type(e)
                     result = -1
-                self.assertEquals(mapper.PySequence_Contains(mapper.Store(seq), mapper.Store(val)), result)
+                self.assertEqual(mapper.PySequence_Contains(mapper.Store(seq), mapper.Store(val)), result)
                 self.assertMapperHasError(mapper, error)
 
     @WithMapper
     def testPySequence_Tuple_withTuple(self, mapper, _):
         tuplePtr = mapper.Store((1, 2, 3))
-        self.assertEquals(mapper.PySequence_Tuple(tuplePtr), tuplePtr)
-        self.assertEquals(mapper.RefCount(tuplePtr), 2)
+        self.assertEqual(mapper.PySequence_Tuple(tuplePtr), tuplePtr)
+        self.assertEqual(mapper.RefCount(tuplePtr), 2)
         
     
     @WithMapper
     def testPySequence_Tuple_notTuple(self, mapper, _):
         listPtr = mapper.Store([4, 5, 6])
         tuplePtr = mapper.PySequence_Tuple(listPtr)
-        self.assertEquals(mapper.Retrieve(tuplePtr), (4, 5, 6))
+        self.assertEqual(mapper.Retrieve(tuplePtr), (4, 5, 6))
     
     
     @WithMapper
     def testPySequence_Tuple_notSequence(self, mapper, _):
-        self.assertEquals(mapper.PySequence_Tuple(mapper.Store(123)), IntPtr.Zero)
+        self.assertEqual(mapper.PySequence_Tuple(mapper.Store(123)), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
 
 

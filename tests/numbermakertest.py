@@ -11,8 +11,8 @@ class NumberMakerTest(TestCase):
     def testBigInteger(self):
         for cls in (NumberI, NumberL, NumberF):
             result = NumberMaker.MakeBigInteger(cls())
-            self.assertEquals(isinstance(result, long), True)
-            self.assertEquals(result, NUMBER_VALUE)
+            self.assertEqual(isinstance(result, long), True)
+            self.assertEqual(result, NUMBER_VALUE)
 
         self.assertRaises(TypeError, lambda: NumberMaker.MakeBigInteger(object()))
 
@@ -23,14 +23,14 @@ class NumberMakerTest(TestCase):
         self.assertRaises(TypeError, lambda: NumberMaker.MakeUnsignedBigInteger(NumberNeg()))
 
         result = NumberMaker.MakeBigInteger(NumberF())
-        self.assertEquals(isinstance(result, long), True)
-        self.assertEquals(result, NUMBER_VALUE)
+        self.assertEqual(isinstance(result, long), True)
+        self.assertEqual(result, NUMBER_VALUE)
 
     def testFloat(self):
         for cls in (NumberI, NumberL, NumberF):
             result = NumberMaker.MakeFloat(cls())
-            self.assertEquals(isinstance(result, float), True)
-            self.assertEquals(result, NUMBER_VALUE)
+            self.assertEqual(isinstance(result, float), True)
+            self.assertEqual(result, NUMBER_VALUE)
 
         self.assertRaises(TypeError, lambda: NumberMaker.MakeFloat(object()))
 

@@ -57,36 +57,36 @@ class Types_Test(TestCase):
     def testTypeMappings(self, mapper, _):
         for (k, v) in BUILTIN_TYPES.items():
             typePtr = getattr(mapper, k)
-            self.assertEquals(CPyMarshal.ReadCStringField(typePtr, PyTypeObject, 'tp_name'), v.__name__)
+            self.assertEqual(CPyMarshal.ReadCStringField(typePtr, PyTypeObject, 'tp_name'), v.__name__)
             
             if typePtr == mapper.PyFile_Type:
-                self.assertNotEquals(mapper.Retrieve(typePtr), v, "failed to map PyFile_Type to something-that-isn't file")
+                self.assertNotEqual(mapper.Retrieve(typePtr), v, "failed to map PyFile_Type to something-that-isn't file")
             else:
-                self.assertEquals(mapper.Retrieve(typePtr), v, "failed to map " + k)
+                self.assertEqual(mapper.Retrieve(typePtr), v, "failed to map " + k)
             
             if typePtr in (mapper.PyType_Type, mapper.PyBaseObject_Type):
                 # surprising refcount because of the unmanaged PyFile malarkey
-                self.assertEquals(mapper.RefCount(typePtr), 2, "failed to add reference to " + k)
+                self.assertEqual(mapper.RefCount(typePtr), 2, "failed to add reference to " + k)
             else:
-                self.assertEquals(mapper.RefCount(typePtr), 1, "failed to add reference to " + k)
+                self.assertEqual(mapper.RefCount(typePtr), 1, "failed to add reference to " + k)
             
             mapper.PyType_Ready(typePtr)
-            self.assertNotEquals(CPyMarshal.ReadIntField(typePtr, PyTypeObject, "tp_basicsize"), 0)
+            self.assertNotEqual(CPyMarshal.ReadIntField(typePtr, PyTypeObject, "tp_basicsize"), 0)
             basePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base")
             if k == "PyBaseObject_Type":
-                self.assertEquals(basePtr, IntPtr.Zero)
+                self.assertEqual(basePtr, IntPtr.Zero)
             elif k == "PyBool_Type":
-                self.assertEquals(basePtr, mapper.PyInt_Type)
+                self.assertEqual(basePtr, mapper.PyInt_Type)
             else:
-                self.assertEquals(basePtr, mapper.PyBaseObject_Type)
+                self.assertEqual(basePtr, mapper.PyBaseObject_Type)
 
     def assertTypeSubclassFlag(self, mapper, t, f):
         typeFlags = CPyMarshal.ReadIntField(mapper.Store(t), PyTypeObject, "tp_flags")
-        self.assertEquals(typeFlags & UInt32(f), UInt32(f), "did not have appropriate flag")
+        self.assertEqual(typeFlags & UInt32(f), UInt32(f), "did not have appropriate flag")
         
     def assertNoTypeSubclassFlag(self, mapper, t):
         typeFlags = CPyMarshal.ReadIntField(mapper.Store(t), PyTypeObject, "tp_flags")
-        self.assertEquals(typeFlags & SUBCLASS_FLAGS_MASK, 0, "had bad flag")
+        self.assertEqual(typeFlags & SUBCLASS_FLAGS_MASK, 0, "had bad flag")
         
 
     @WithMapper
@@ -150,20 +150,20 @@ class Types_Test(TestCase):
         CPyMarshal.Zero(typePtr, Marshal.SizeOf(PyTypeObject()))
         addToCleanUp(lambda: Marshal.FreeHGlobal(typePtr))
 
-        self.assertEquals(mapper.PyType_Ready(typePtr), 0, "wrong")
-        self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type"), mapper.PyType_Type, "failed to fill in missing ob_type")
-        self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to fill in missing tp_base")
+        self.assertEqual(mapper.PyType_Ready(typePtr), 0, "wrong")
+        self.assertEqual(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type"), mapper.PyType_Type, "failed to fill in missing ob_type")
+        self.assertEqual(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to fill in missing tp_base")
         tp_dict = mapper.Retrieve(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_dict"))
-        self.assertEquals(mapper.Retrieve(typePtr).__dict__, tp_dict)
+        self.assertEqual(mapper.Retrieve(typePtr).__dict__, tp_dict)
 
         typeFlags = CPyMarshal.ReadIntField(typePtr, PyTypeObject, "tp_flags")
-        self.assertEquals(typeFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready type")
-        self.assertEquals(typeFlags & UInt32(Py_TPFLAGS.HAVE_CLASS), UInt32(Py_TPFLAGS.HAVE_CLASS), 
+        self.assertEqual(typeFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready type")
+        self.assertEqual(typeFlags & UInt32(Py_TPFLAGS.HAVE_CLASS), UInt32(Py_TPFLAGS.HAVE_CLASS),
                           "we always set this flag, for no better reason than 'it makes ctypes kinda work'")
         
         CPyMarshal.WritePtrField(typePtr, PyTypeObject, "ob_type", IntPtr.Zero)
-        self.assertEquals(mapper.PyType_Ready(typePtr), 0, "wrong")
-        self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type"), IntPtr.Zero, "unexpectedly and unnecessarily rereadied type")        
+        self.assertEqual(mapper.PyType_Ready(typePtr), 0, "wrong")
+        self.assertEqual(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type"), IntPtr.Zero, "unexpectedly and unnecessarily rereadied type")
 
 
     @WithMapper
@@ -177,15 +177,15 @@ class Types_Test(TestCase):
             if typePtr != mapper.PySeqIter_Type:
                 # PySeqIter_Type is suprrisingly tedious to turn into a proper PythonType in C#
                 tp_dict = mapper.Retrieve(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_dict"))
-                self.assertEquals(mapper.Retrieve(typePtr).__dict__, tp_dict)
+                self.assertEqual(mapper.Retrieve(typePtr).__dict__, tp_dict)
 
             if typePtr not in (mapper.PyBaseObject_Type, mapper.PyBool_Type):
-                self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
+                self.assertEqual(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
             if typePtr == mapper.PyBool_Type:
-                self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyInt_Type)
+                self.assertEqual(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyInt_Type)
             typeTypePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type")
             if typePtr != mapper.PyType_Type:
-                self.assertEquals(typeTypePtr, mapper.PyType_Type)
+                self.assertEqual(typeTypePtr, mapper.PyType_Type)
 
 
     @WithMapper
@@ -214,41 +214,41 @@ class Types_Test(TestCase):
         for _type in numberTypes:
             typePtr = getattr(mapper, _type)
             nmPtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_as_number")
-            self.assertNotEquals(nmPtr, IntPtr.Zero)
+            self.assertNotEqual(nmPtr, IntPtr.Zero)
             for field in implementedFields:
                 fieldPtr = CPyMarshal.ReadPtrField(nmPtr, PyNumberMethods, field)
-                self.assertNotEquals(fieldPtr, IntPtr.Zero)
-                self.assertEquals(fieldPtr, implementedFields[field])
+                self.assertNotEqual(fieldPtr, IntPtr.Zero)
+                self.assertEqual(fieldPtr, implementedFields[field])
             
             flags = CPyMarshal.ReadIntField(typePtr, PyTypeObject, "tp_flags")
             hasIndex = bool(flags & int(Py_TPFLAGS.HAVE_INDEX))
             if (not _type in ("PyFloat_Type", "PyComplex_Type")):
-                self.assertEquals(hasIndex, True, _type)
+                self.assertEqual(hasIndex, True, _type)
                 fieldPtr = CPyMarshal.ReadPtrField(nmPtr, PyNumberMethods, "nb_index")
-                self.assertNotEquals(fieldPtr, IntPtr.Zero)
-                self.assertEquals(fieldPtr, mapper.GetFuncPtr("PyNumber_Index"))
+                self.assertNotEqual(fieldPtr, IntPtr.Zero)
+                self.assertEqual(fieldPtr, mapper.GetFuncPtr("PyNumber_Index"))
             else:
-                self.assertEquals(hasIndex, False)
+                self.assertEqual(hasIndex, False)
                 
 
     def assertMaps(self, mapper, func, ptr, refcnt):
         func(ptr)
         obj = mapper.Retrieve(ptr)
         ref = WeakReference(obj)
-        self.assertEquals(mapper.Store(obj), ptr)
-        self.assertEquals(mapper.RefCount(ptr), refcnt)
+        self.assertEqual(mapper.Store(obj), ptr)
+        self.assertEqual(mapper.RefCount(ptr), refcnt)
         
         while mapper.RefCount(ptr) > 2:
             mapper.DecRef(ptr)
         del obj
         gcwait()
-        self.assertEquals(ref.IsAlive, True)
+        self.assertEqual(ref.IsAlive, True)
         
         obj = ref.Target
         mapper.DecRef(ptr)
         del obj
         gcwait()
-        self.assertEquals(ref.IsAlive, False)
+        self.assertEqual(ref.IsAlive, False)
     
     
     def testExtensionTypesAutoActualisable(self):
@@ -286,25 +286,25 @@ class Types_Test(TestCase):
         class C(object):
             __name__ = "cantankerous.cochineal"
         cPtr = mapper.Store(C)
-        self.assertEquals(CPyMarshal.ReadIntField(cPtr, PyTypeObject, "ob_refcnt"), 2, "seems easiest to 'leak' types, and ensure they live forever")
-        self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "ob_type"), mapper.PyType_Type)
-        self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
-        self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_bases"), IntPtr.Zero)
-        self.assertEquals(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_as_number"), IntPtr.Zero)
+        self.assertEqual(CPyMarshal.ReadIntField(cPtr, PyTypeObject, "ob_refcnt"), 2, "seems easiest to 'leak' types, and ensure they live forever")
+        self.assertEqual(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "ob_type"), mapper.PyType_Type)
+        self.assertEqual(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
+        self.assertEqual(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_bases"), IntPtr.Zero)
+        self.assertEqual(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_as_number"), IntPtr.Zero)
 
         namePtr = CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_name")
-        self.assertEquals(mapper.Retrieve(namePtr), "cantankerous.cochineal")
+        self.assertEqual(mapper.Retrieve(namePtr), "cantankerous.cochineal")
 
         baseFlags = CPyMarshal.ReadIntField(cPtr, PyTypeObject, "tp_flags")
-        self.assertEquals(baseFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready newly-stored type")
+        self.assertEqual(baseFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready newly-stored type")
         
         instancePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject()))
         CPyMarshal.WritePtrField(instancePtr, PyObject, "ob_type", cPtr)
         CPyMarshal.WriteIntField(instancePtr, PyObject, "ob_refcnt", 2)
         
         instance = mapper.Retrieve(instancePtr)
-        self.assertEquals(isinstance(instance, C), True)
-        self.assertEquals(mapper.Store(instance), instancePtr)
+        self.assertEqual(isinstance(instance, C), True)
+        self.assertEqual(mapper.Store(instance), instancePtr)
 
 
     @WithMapper
@@ -315,12 +315,12 @@ class Types_Test(TestCase):
         
         ePtr = mapper.Store(E)
         basesPtr = CPyMarshal.ReadPtrField(ePtr, PyTypeObject, "tp_bases")
-        self.assertEquals(mapper.Retrieve(basesPtr), (C, D))
+        self.assertEqual(mapper.Retrieve(basesPtr), (C, D))
 
 
     def assertSizes(self, ptr, basic, item=0):
-        self.assertEquals(CPyMarshal.ReadIntField(ptr, PyTypeObject, "tp_basicsize"), basic)
-        self.assertEquals(CPyMarshal.ReadIntField(ptr, PyTypeObject, "tp_itemsize"), item)
+        self.assertEqual(CPyMarshal.ReadIntField(ptr, PyTypeObject, "tp_basicsize"), basic)
+        self.assertEqual(CPyMarshal.ReadIntField(ptr, PyTypeObject, "tp_itemsize"), item)
 
     @WithMapper
     def testSizes(self, mapper, _):
@@ -347,12 +347,12 @@ class OldStyle_Test(TestCase):
         basesPtr = mapper.Store(())
         
         klassPtr = mapper.PyClass_New(basesPtr, dictPtr, namePtr)
-        self.assertEquals(CPyMarshal.ReadPtrField(klassPtr, PyObject, "ob_type"), mapper.PyClass_Type)
+        self.assertEqual(CPyMarshal.ReadPtrField(klassPtr, PyObject, "ob_type"), mapper.PyClass_Type)
         klass = mapper.Retrieve(klassPtr)
         
-        self.assertEquals(klass.__name__, 'klass')
-        self.assertEquals(klass.wurble, 'burble')
-        self.assertEquals(klass.__bases__, ())
+        self.assertEqual(klass.__name__, 'klass')
+        self.assertEqual(klass.wurble, 'burble')
+        self.assertEqual(klass.__bases__, ())
     
     
     @WithMapper
@@ -361,12 +361,12 @@ class OldStyle_Test(TestCase):
         dictPtr = mapper.Store({'wurble': 'burble'})
         
         klassPtr = mapper.PyClass_New(IntPtr.Zero, dictPtr, namePtr)
-        self.assertEquals(CPyMarshal.ReadPtrField(klassPtr, PyObject, "ob_type"), mapper.PyClass_Type)
+        self.assertEqual(CPyMarshal.ReadPtrField(klassPtr, PyObject, "ob_type"), mapper.PyClass_Type)
         klass = mapper.Retrieve(klassPtr)
         
-        self.assertEquals(klass.__name__, 'klass')
-        self.assertEquals(klass.wurble, 'burble')
-        self.assertEquals(klass.__bases__, ())
+        self.assertEqual(klass.__name__, 'klass')
+        self.assertEqual(klass.wurble, 'burble')
+        self.assertEqual(klass.__bases__, ())
 
     
     @WithMapper
@@ -374,25 +374,25 @@ class OldStyle_Test(TestCase):
         class O():
             pass
         OPtr = mapper.Store(O)
-        self.assertEquals(CPyMarshal.ReadIntField(OPtr, PyObject, "ob_refcnt"), 2) # again, leak classes deliberately
-        self.assertEquals(CPyMarshal.ReadPtrField(OPtr, PyObject, "ob_type"), mapper.PyClass_Type)
+        self.assertEqual(CPyMarshal.ReadIntField(OPtr, PyObject, "ob_refcnt"), 2) # again, leak classes deliberately
+        self.assertEqual(CPyMarshal.ReadPtrField(OPtr, PyObject, "ob_type"), mapper.PyClass_Type)
         
-        self.assertEquals(mapper.Retrieve(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_bases")), ())
-        self.assertEquals(mapper.Retrieve(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_name")), "O")
-        self.assertEquals(mapper.Retrieve(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_dict")) is O.__dict__, True)
+        self.assertEqual(mapper.Retrieve(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_bases")), ())
+        self.assertEqual(mapper.Retrieve(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_name")), "O")
+        self.assertEqual(mapper.Retrieve(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_dict")) is O.__dict__, True)
         
-        self.assertEquals(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_getattr"), IntPtr.Zero)
-        self.assertEquals(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_setattr"), IntPtr.Zero)
-        self.assertEquals(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_delattr"), IntPtr.Zero)
+        self.assertEqual(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_getattr"), IntPtr.Zero)
+        self.assertEqual(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_setattr"), IntPtr.Zero)
+        self.assertEqual(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_delattr"), IntPtr.Zero)
         
         o = O()
         oPtr = mapper.Store(o)
-        self.assertEquals(CPyMarshal.ReadIntField(oPtr, PyObject, "ob_refcnt"), 1)
-        self.assertEquals(CPyMarshal.ReadPtrField(oPtr, PyObject, "ob_type"), mapper.PyInstance_Type)
+        self.assertEqual(CPyMarshal.ReadIntField(oPtr, PyObject, "ob_refcnt"), 1)
+        self.assertEqual(CPyMarshal.ReadPtrField(oPtr, PyObject, "ob_type"), mapper.PyInstance_Type)
         
-        self.assertEquals(CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, "in_class"), OPtr)
-        self.assertEquals(mapper.Retrieve(CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, "in_dict")) is o.__dict__, True)
-        self.assertEquals(CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, "in_weakreflist"), IntPtr.Zero)
+        self.assertEqual(CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, "in_class"), OPtr)
+        self.assertEqual(mapper.Retrieve(CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, "in_dict")) is o.__dict__, True)
+        self.assertEqual(CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, "in_weakreflist"), IntPtr.Zero)
     
     
     @WithMapper
@@ -407,7 +407,7 @@ class OldStyle_Test(TestCase):
         refcnt = mapper.RefCount(dictPtr)
         
         mapper.DecRef(oPtr)
-        self.assertEquals(mapper.RefCount(dictPtr), refcnt - 1)
+        self.assertEqual(mapper.RefCount(dictPtr), refcnt - 1)
 
 
 
@@ -425,18 +425,18 @@ class PyType_GenericAlloc_Test(TestCase):
         
         del allocs[:]
         result = mapper.PyType_GenericAlloc(typePtr, IntPtr(0))
-        self.assertEquals(allocs, [(result, 32)], "allocated wrong")
+        self.assertEqual(allocs, [(result, 32)], "allocated wrong")
 
         refcount = CPyMarshal.ReadIntField(result, PyObject, "ob_refcnt")
-        self.assertEquals(refcount, 1, "bad initialisation")
+        self.assertEqual(refcount, 1, "bad initialisation")
 
         instanceType = CPyMarshal.ReadPtrField(result, PyObject, "ob_type")
-        self.assertEquals(instanceType, typePtr, "bad type ptr")
+        self.assertEqual(instanceType, typePtr, "bad type ptr")
         
         headerSize = Marshal.SizeOf(PyObject())
         zerosPtr = OffsetPtr(result, headerSize)
         for i in range(32 - headerSize):
-            self.assertEquals(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
+            self.assertEqual(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
             zerosPtr = OffsetPtr(zerosPtr, 1)
  
         mapper.Dispose()
@@ -456,21 +456,21 @@ class PyType_GenericAlloc_Test(TestCase):
         
         del allocs[:]
         result = mapper.PyType_GenericAlloc(typePtr, IntPtr(3))
-        self.assertEquals(allocs, [(result, 224)], "allocated wrong")
+        self.assertEqual(allocs, [(result, 224)], "allocated wrong")
 
         refcount = CPyMarshal.ReadIntField(result, PyObject, "ob_refcnt")
-        self.assertEquals(refcount, 1, "bad initialisation")
+        self.assertEqual(refcount, 1, "bad initialisation")
 
         instanceType = CPyMarshal.ReadPtrField(result, PyObject, "ob_type")
-        self.assertEquals(instanceType, typePtr, "bad type ptr")
+        self.assertEqual(instanceType, typePtr, "bad type ptr")
 
         size = CPyMarshal.ReadIntField(result, PyVarObject, "ob_size")
-        self.assertEquals(size, 3, "bad ob_size")
+        self.assertEqual(size, 3, "bad ob_size")
         
         headerSize = Marshal.SizeOf(PyVarObject())
         zerosPtr = OffsetPtr(result, headerSize)
         for i in range(224 - headerSize):
-            self.assertEquals(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
+            self.assertEqual(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
             zerosPtr = OffsetPtr(zerosPtr, 1)
  
         mapper.Dispose()
@@ -494,8 +494,8 @@ class PyType_GenericNew_Test(TestCase):
         addToCleanUp(deallocType)
         
         result = mapper.PyType_GenericNew(typePtr, IntPtr(222), IntPtr(333))
-        self.assertEquals(result, IntPtr(999), "did not use type's tp_alloc function")
-        self.assertEquals(calls, [(typePtr, 0)], "passed wrong args")
+        self.assertEqual(result, IntPtr(999), "did not use type's tp_alloc function")
+        self.assertEqual(calls, [(typePtr, 0)], "passed wrong args")
 
 
 class IC_PyType_New_Test(TestCase):
@@ -512,9 +512,9 @@ class IC_PyType_New_Test(TestCase):
         typePtr = IC_PyType_New(IntPtr.Zero, mapper.Store(typeArgs), IntPtr.Zero)
         
         type_ = mapper.Retrieve(typePtr)
-        self.assertEquals(type_.__name__, "hello")
-        self.assertEquals(issubclass(type_, float), True)
-        self.assertEquals(type_.cheese, 27)
+        self.assertEqual(type_.__name__, "hello")
+        self.assertEqual(issubclass(type_, float), True)
+        self.assertEqual(type_.cheese, 27)
         
 
 
@@ -545,13 +545,13 @@ class PyType_Ready_InheritTest(TestCase):
     @WithMapper
     def testBaseTypeMissing(self, mapper, CallLater):
         mapper.PyType_Ready(mapper.PyBaseObject_Type)
-        self.assertEquals(CPyMarshal.ReadPtrField(mapper.PyBaseObject_Type, PyTypeObject, "tp_base"), IntPtr.Zero)
+        self.assertEqual(CPyMarshal.ReadPtrField(mapper.PyBaseObject_Type, PyTypeObject, "tp_base"), IntPtr.Zero)
         
         typePtr, deallocType = MakeTypePtr(mapper, {})
         CallLater(deallocType)
         CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_base", NO_VALUE)
         mapper.PyType_Ready(typePtr)
-        self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
+        self.assertEqual(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
         
 
     @WithMapper
@@ -578,9 +578,9 @@ class PyType_Ready_InheritTest(TestCase):
         
         mapper.PyType_Ready(typePtr)
         for field in INHERIT_FIELDS:
-            self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, field), SOME_VALUE)
+            self.assertEqual(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, field), SOME_VALUE)
         for field in DONT_INHERIT_FIELDS:
-            self.assertEquals(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, field), NO_VALUE)
+            self.assertEqual(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, field), NO_VALUE)
         
 
 

@@ -27,9 +27,9 @@ class PythonMapper_CreateDestroy_Test(TestCase):
     
     def testCreateDestroy(self):
         mapper = PythonMapper()
-        self.assertEquals(mapper.Alive, True)
+        self.assertEqual(mapper.Alive, True)
         mapper.Dispose()
-        self.assertEquals(mapper.Alive, False)
+        self.assertEqual(mapper.Alive, False)
         mapper.Dispose()
         # jolly good, didn't crash
         
@@ -37,16 +37,16 @@ class PythonMapper_CreateDestroy_Test(TestCase):
     def testLoadsStubWhenPassedPathAndUnloadsOnDispose(self):
         mapper = PythonMapper(DLL_PATH)
         try:
-            self.assertNotEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+            self.assertNotEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                                  "library not mapped by construction")
-            self.assertNotEquals(PythonMapper._Py_NoneStruct, IntPtr.Zero,
+            self.assertNotEqual(PythonMapper._Py_NoneStruct, IntPtr.Zero,
                                  "mapping not set up")
 
             # weak side-effect test to hopefully prove that ReadyBuiltinTypes has been called
-            self.assertEquals(CPyMarshal.ReadPtrField(mapper.PyLong_Type, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
+            self.assertEqual(CPyMarshal.ReadPtrField(mapper.PyLong_Type, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
 
             mapper.Dispose()
-            self.assertEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+            self.assertEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                               "library not unmapped by Dispose")
         finally:
             mapper.Dispose()
@@ -57,14 +57,14 @@ class PythonMapper_CreateDestroy_Test(TestCase):
         try:
             origcwd = os.getcwd()
             mapper.LoadModule(os.path.join("tests", "data", "setvalue.pyd"), "some.module")
-            self.assertEquals(os.getcwd(), origcwd, "failed to restore working directory")
-            self.assertNotEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
+            self.assertEqual(os.getcwd(), origcwd, "failed to restore working directory")
+            self.assertNotEqual(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                                  "library not mapped by construction")
 
             mapper.Dispose()
-            self.assertEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
+            self.assertEqual(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                               "library not unmapped by Dispose")
-            self.assertEquals(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+            self.assertEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
                               "library not unmapped by Dispose")
         finally:
             mapper.Dispose()
@@ -103,11 +103,11 @@ class PythonMapper_CreateDestroy_Test(TestCase):
                 dgt_void_void(lambda: calls.append(arg)))
         
         mapper = PythonMapper()
-        self.assertEquals(mapper.Py_AtExit(MangleCall('foo')), 0)
-        self.assertEquals(mapper.Py_AtExit(MangleCall('bar')), 0)
-        self.assertEquals(calls, [])
+        self.assertEqual(mapper.Py_AtExit(MangleCall('foo')), 0)
+        self.assertEqual(mapper.Py_AtExit(MangleCall('bar')), 0)
+        self.assertEqual(calls, [])
         mapper.Dispose()
-        self.assertEquals(calls, ['bar', 'foo'])
+        self.assertEqual(calls, ['bar', 'foo'])
     
     
     def testDestroysObjectsOfUnmanagedTypesFirst(self):
@@ -136,8 +136,8 @@ class PythonMapper_CreateDestroy_Test(TestCase):
         CPyMarshal.WritePtrField(brokenptr, PyObject, 'ob_type', IntPtr.Zero)
         
         mapper.Dispose()
-        self.assertEquals(frees.index(hardptr) < frees.index(easyptr), True, "failed to dealloc in correct order")
-        self.assertEquals(calls, [('del', hardptr)], "failed to clean up klass instance")
+        self.assertEqual(frees.index(hardptr) < frees.index(easyptr), True, "failed to dealloc in correct order")
+        self.assertEqual(calls, [('del', hardptr)], "failed to clean up klass instance")
         
         deallocType()
         deallocTypes()
@@ -165,20 +165,20 @@ class PythonMapper_References_Test(TestCase):
         del allocs[:]
         obj1 = object()
         ptr = mapper.Store(obj1)
-        self.assertEquals(len(allocs), 1, "unexpected number of allocations")
-        self.assertEquals(allocs[0], (ptr, Marshal.SizeOf(PyObject())), "unexpected result")
-        self.assertNotEquals(ptr, IntPtr.Zero, "did not store reference")
-        self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
-        self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), 
+        self.assertEqual(len(allocs), 1, "unexpected number of allocations")
+        self.assertEqual(allocs[0], (ptr, Marshal.SizeOf(PyObject())), "unexpected result")
+        self.assertNotEqual(ptr, IntPtr.Zero, "did not store reference")
+        self.assertEqual(mapper.RefCount(ptr), 1, "unexpected refcount")
+        self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), 
                           mapper.PyBaseObject_Type, 
                           "nearly-opaque pointer had wrong type")
 
         obj2 = mapper.Retrieve(ptr)
         self.assertTrue(obj1 is obj2, "retrieved wrong object")
 
-        self.assertEquals(frees, [], "unexpected deallocations")
+        self.assertEqual(frees, [], "unexpected deallocations")
         mapper.PyObject_Free(ptr)
-        self.assertEquals(frees, [ptr], "unexpected deallocations")
+        self.assertEqual(frees, [ptr], "unexpected deallocations")
         self.assertRaises(KeyError, lambda: mapper.PyObject_Free(ptr))
         
         mapper.Dispose()
@@ -193,7 +193,7 @@ class PythonMapper_References_Test(TestCase):
         CPyMarshal.WriteIntField(objPtr, PyObject, "ob_refcnt", 0)
         
         mapper.PyObject_Free(objPtr)
-        self.assertEquals(frees, [objPtr], "didn't actually release memory")
+        self.assertEqual(frees, [objPtr], "didn't actually release memory")
         mapper.Dispose()
         
 
@@ -208,18 +208,18 @@ class PythonMapper_References_Test(TestCase):
         result1 = mapper.Store(obj1)
         result2 = mapper.Store(obj1)
         
-        self.assertEquals(allocs, [(result1, Marshal.SizeOf(PyObject()))], "unexpected result")
-        self.assertEquals(result1, result2, "did not return same ptr")
-        self.assertEquals(mapper.RefCount(result1), 2, "did not incref")
+        self.assertEqual(allocs, [(result1, Marshal.SizeOf(PyObject()))], "unexpected result")
+        self.assertEqual(result1, result2, "did not return same ptr")
+        self.assertEqual(mapper.RefCount(result1), 2, "did not incref")
         
         mapper.DecRef(result1)
         
         del frees[:]
         mapper.DecRef(result1)
-        self.assertEquals(frees, [result1], "did not free memory")
+        self.assertEqual(frees, [result1], "did not free memory")
         
         result3 = mapper.Store(obj1)
-        self.assertEquals(allocs, 
+        self.assertEqual(allocs, 
                           [(result1, Marshal.SizeOf(PyObject())), (result3, Marshal.SizeOf(PyObject()))], 
                           "unexpected result -- failed to clear reverse mapping?")
         mapper.Dispose()
@@ -231,9 +231,9 @@ class PythonMapper_References_Test(TestCase):
         result1 = mapper.Store([1, 2, 3])
         result2 = mapper.Store([1, 2, 3])
         
-        self.assertNotEquals(result1, result2, "confused separate objects")
-        self.assertEquals(mapper.RefCount(result1), 1, "wrong")
-        self.assertEquals(mapper.RefCount(result2), 1, "wrong")
+        self.assertNotEqual(result1, result2, "confused separate objects")
+        self.assertEqual(mapper.RefCount(result1), 1, "wrong")
+        self.assertEqual(mapper.RefCount(result2), 1, "wrong")
 
 
     @WithMapper
@@ -241,9 +241,9 @@ class PythonMapper_References_Test(TestCase):
         result1 = mapper.Store(0)
         result2 = mapper.Store(0.0)
         
-        self.assertNotEquals(result1, result2, "confused separate objects")
-        self.assertEquals(mapper.RefCount(result1), 1, "wrong")
-        self.assertEquals(mapper.RefCount(result2), 1, "wrong")
+        self.assertNotEqual(result1, result2, "confused separate objects")
+        self.assertEqual(mapper.RefCount(result1), 1, "wrong")
+        self.assertEqual(mapper.RefCount(result2), 1, "wrong")
 
 
     def testDecRefObjectWithZeroRefCountFails(self):
@@ -280,9 +280,9 @@ class PythonMapper_References_Test(TestCase):
         
         mapper.IncRef(objPtr)
         mapper.DecRef(objPtr)
-        self.assertEquals(calls, [], "called prematurely")
+        self.assertEqual(calls, [], "called prematurely")
         mapper.DecRef(objPtr)
-        self.assertEquals(calls, [objPtr], "not called when refcount hit 0")
+        self.assertEqual(calls, [objPtr], "not called when refcount hit 0")
 
 
     def testFinalDecRefComplainsAboutMissing_tp_dealloc(self):
@@ -301,7 +301,7 @@ class PythonMapper_References_Test(TestCase):
 
         del frees [:]
         mapper.DecRef(objPtr)
-        self.assertEquals(frees, [], "freed prematurely")
+        self.assertEqual(frees, [], "freed prematurely")
         self.assertRaisesClr(CannotInterpretException, mapper.DecRef, objPtr)
 
         mapper.Dispose()
@@ -324,8 +324,8 @@ class PythonMapper_References_Test(TestCase):
                 CPyMarshal.WritePtrField(ptr, PyObject, "ob_type", mapper.PyBaseObject_Type)
                 mapper.StoreBridge(ptr, obj)
 
-                self.assertEquals(mapper.Retrieve(ptr), obj, "object not stored")
-                self.assertEquals(mapper.Store(obj), ptr, "object not reverse-mapped")
+                self.assertEqual(mapper.Retrieve(ptr), obj, "object not stored")
+                self.assertEqual(mapper.Store(obj), ptr, "object not reverse-mapped")
 
                 mapper.Weaken(obj)
                 CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
@@ -335,11 +335,11 @@ class PythonMapper_References_Test(TestCase):
                 return ref
             ref = do()
             gcwait()
-            self.assertEquals(ref.IsAlive, True, "was not strengthened by IncRef")
+            self.assertEqual(ref.IsAlive, True, "was not strengthened by IncRef")
 
             mapper.DecRef(ptr)
             gcwait()
-            self.assertEquals(ref.IsAlive, False, "was not weakened by DecRef")
+            self.assertEqual(ref.IsAlive, False, "was not weakened by DecRef")
 
         finally:
             # need to dealloc ptr ourselves, it doesn't happen automatically
@@ -370,7 +370,7 @@ class PythonMapper_References_Test(TestCase):
                 return ref
             ref = do1()
             gcwait()
-            self.assertEquals(ref.IsAlive, True, "was not strongly referenced")
+            self.assertEqual(ref.IsAlive, True, "was not strongly referenced")
 
             def do2():
                 obj = ref.Target
@@ -411,7 +411,7 @@ class PythonMapper_References_Test(TestCase):
             return ref, ptr
         ref, ptr = do1()
         gcwait()
-        self.assertEquals(ref.IsAlive, True, "was reaped unexpectedly (refcount was 2)")
+        self.assertEqual(ref.IsAlive, True, "was reaped unexpectedly (refcount was 2)")
 
         CPyMarshal.WriteIntField(ptr, PyObject, "ob_refcnt", 1)
         mapper.EnsureGIL()
@@ -443,21 +443,21 @@ class PythonMapper_References_Test(TestCase):
 
         obj1 = object()
         ptr = mapper.Store(obj1)
-        self.assertEquals(mapper.HasPtr(ptr), True)
+        self.assertEqual(mapper.HasPtr(ptr), True)
 
         mapper.IncRef(ptr)
-        self.assertEquals(mapper.RefCount(ptr), 2, "unexpected refcount")
-        self.assertEquals(mapper.HasPtr(ptr), True)
+        self.assertEqual(mapper.RefCount(ptr), 2, "unexpected refcount")
+        self.assertEqual(mapper.HasPtr(ptr), True)
 
         del frees[:]
         mapper.DecRef(ptr)
-        self.assertEquals(mapper.RefCount(ptr), 1, "unexpected refcount")
-        self.assertEquals(mapper.HasPtr(ptr), True)
-        self.assertEquals(frees, [], "unexpected deallocations")
+        self.assertEqual(mapper.RefCount(ptr), 1, "unexpected refcount")
+        self.assertEqual(mapper.HasPtr(ptr), True)
+        self.assertEqual(frees, [], "unexpected deallocations")
 
         mapper.DecRef(ptr)
-        self.assertEquals(mapper.HasPtr(ptr), False)
-        self.assertEquals(frees, [ptr], "unexpected deallocations")
+        self.assertEqual(mapper.HasPtr(ptr), False)
+        self.assertEqual(frees, [ptr], "unexpected deallocations")
         self.assertRaises(KeyError, lambda: mapper.PyObject_Free(ptr))
 
         mapper.Dispose()
@@ -467,7 +467,7 @@ class PythonMapper_References_Test(TestCase):
     def testNullPointers(self):
         allocator = GetDoNothingTestAllocator([])
         mapper = PythonMapper(allocator)
-        self.assertEquals(mapper.HasPtr(IntPtr.Zero), False)
+        self.assertEqual(mapper.HasPtr(IntPtr.Zero), False)
         self.assertRaisesClr(CannotInterpretException, lambda: mapper.IncRef(IntPtr.Zero))
         self.assertRaisesClr(CannotInterpretException, lambda: mapper.DecRef(IntPtr.Zero))
         self.assertRaisesClr(CannotInterpretException, lambda: mapper.Retrieve(IntPtr.Zero))
@@ -483,25 +483,25 @@ class PythonMapper_References_Test(TestCase):
         mapper.DecRefLater(tempObject1)
         mapper.DecRefLater(tempObject2)
 
-        self.assertEquals(mapper.RefCount(tempObject1), 1,
+        self.assertEqual(mapper.RefCount(tempObject1), 1,
                           "DecRefLater should not change refcnt")
-        self.assertEquals(mapper.RefCount(tempObject2), 1,
+        self.assertEqual(mapper.RefCount(tempObject2), 1,
                           "DecRefLater should not change refcnt")
 
         mapper.IncRef(tempObject1)
         mapper.IncRef(tempObject2)
 
         mapper.ReleaseGIL()
-        self.assertEquals(mapper.RefCount(tempObject1), 1,
+        self.assertEqual(mapper.RefCount(tempObject1), 1,
                           "ReleaseGIL should decref temp objects rather than freeing them")
-        self.assertEquals(mapper.RefCount(tempObject2), 1,
+        self.assertEqual(mapper.RefCount(tempObject2), 1,
                           "ReleaseGIL should decref temp objects rather than freeing them")
                           
         mapper.EnsureGIL()
         mapper.ReleaseGIL()
-        self.assertEquals(mapper.RefCount(tempObject1), 1,
+        self.assertEqual(mapper.RefCount(tempObject1), 1,
                           "ReleaseGIL should clear list once called")
-        self.assertEquals(mapper.RefCount(tempObject2), 1,
+        self.assertEqual(mapper.RefCount(tempObject2), 1,
                           "ReleaseGIL should clear list once called")
         mapper.EnsureGIL()
 
@@ -584,7 +584,7 @@ class PythonMapper_References_Test(TestCase):
             ptrs[ptr] = obj
         
         for k, v in ptrs.iteritems():
-            self.assertEquals(mapper.Retrieve(k), v, "failed to retrieve")
+            self.assertEqual(mapper.Retrieve(k), v, "failed to retrieve")
             mapper.DecRef(k)
 
 
@@ -595,8 +595,8 @@ class PythonMapper_GetFuncPtr_NonApi_Test(TestCase):
     def assertGetFuncPtrWorks(self, name, mapper, _):
         fp1 = mapper.GetFuncPtr(name)
         fp2 = mapper.GetFuncPtr(name)
-        self.assertNotEquals(fp1, IntPtr.Zero, "did not get address")
-        self.assertEquals(fp1, fp2, "did not remember func ptrs")
+        self.assertNotEqual(fp1, IntPtr.Zero, "did not get address")
+        self.assertEqual(fp1, fp2, "did not remember func ptrs")
 
 
     def testMethods(self):
@@ -627,16 +627,16 @@ class PythonMapper_NoneTest(TestCase):
     def testFillNone(self, mapper, _):
         nonePtr = mapper._Py_NoneStruct
         noneStruct = PtrToStructure(nonePtr, PyObject)
-        self.assertEquals(noneStruct.ob_refcnt, 1, "bad refcount")
-        self.assertEquals(noneStruct.ob_type, mapper.PyNone_Type, "unexpected type")
+        self.assertEqual(noneStruct.ob_refcnt, 1, "bad refcount")
+        self.assertEqual(noneStruct.ob_type, mapper.PyNone_Type, "unexpected type")
 
 
     @WithMapper
     def testStoreNone(self, mapper, _):
         resultPtr = mapper.Store(None)
-        self.assertEquals(resultPtr, mapper._Py_NoneStruct, "wrong")
-        self.assertEquals(mapper.RefCount(resultPtr), 2, "did not incref")
-        self.assertEquals(mapper.Retrieve(resultPtr), None, "not mapped properly")
+        self.assertEqual(resultPtr, mapper._Py_NoneStruct, "wrong")
+        self.assertEqual(mapper.RefCount(resultPtr), 2, "did not incref")
+        self.assertEqual(mapper.Retrieve(resultPtr), None, "not mapped properly")
 
 
 class PythonMapper_NotImplementedTest(TestCase):
@@ -645,16 +645,16 @@ class PythonMapper_NotImplementedTest(TestCase):
     def testFillNotImplemented(self, mapper, _):
         niPtr = mapper._Py_NotImplementedStruct
         niStruct = PtrToStructure(niPtr, PyObject)
-        self.assertEquals(niStruct.ob_refcnt, 1, "bad refcount")
-        self.assertEquals(niStruct.ob_type, mapper.PyNotImplemented_Type, "unexpected type")
+        self.assertEqual(niStruct.ob_refcnt, 1, "bad refcount")
+        self.assertEqual(niStruct.ob_type, mapper.PyNotImplemented_Type, "unexpected type")
 
 
     @WithMapper
     def testStoreNotImplemented(self, mapper, _):
         resultPtr = mapper.Store(NotImplemented)
-        self.assertEquals(resultPtr, mapper._Py_NotImplementedStruct, "wrong")
-        self.assertEquals(mapper.RefCount(resultPtr), 2, "did not incref")
-        self.assertEquals(mapper.Retrieve(resultPtr), NotImplemented, "not mapped properly")
+        self.assertEqual(resultPtr, mapper._Py_NotImplementedStruct, "wrong")
+        self.assertEqual(mapper.RefCount(resultPtr), 2, "did not incref")
+        self.assertEqual(mapper.Retrieve(resultPtr), NotImplemented, "not mapped properly")
 
 
 
@@ -669,7 +669,7 @@ class PythonMapper_Py_OptimizeFlag_Test(TestCase):
         addToCleanUp(lambda: Marshal.FreeHGlobal(flagPtr))
         mapper.RegisterData("Py_OptimizeFlag", flagPtr)
         
-        self.assertEquals(CPyMarshal.ReadInt(flagPtr), 2)
+        self.assertEqual(CPyMarshal.ReadInt(flagPtr), 2)
 
 
 

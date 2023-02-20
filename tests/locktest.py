@@ -11,39 +11,39 @@ class LockTest(TestCase):
     
     def testSingleThreaded(self):
         lock = Lock()
-        self.assertEquals(lock.IsAcquired, False)
+        self.assertEqual(lock.IsAcquired, False)
         
-        self.assertEquals(lock.Acquire(), 1)
-        self.assertEquals(lock.IsAcquired, True)
-        self.assertEquals(lock.CountAcquired, 1)
+        self.assertEqual(lock.Acquire(), 1)
+        self.assertEqual(lock.IsAcquired, True)
+        self.assertEqual(lock.CountAcquired, 1)
         
-        self.assertEquals(lock.Acquire(), 2)
-        self.assertEquals(lock.IsAcquired, True)
-        self.assertEquals(lock.CountAcquired, 2)
+        self.assertEqual(lock.Acquire(), 2)
+        self.assertEqual(lock.IsAcquired, True)
+        self.assertEqual(lock.CountAcquired, 2)
 
         lock.Release()
-        self.assertEquals(lock.IsAcquired, True)
-        self.assertEquals(lock.CountAcquired, 1)
+        self.assertEqual(lock.IsAcquired, True)
+        self.assertEqual(lock.CountAcquired, 1)
         
-        self.assertEquals(lock.Acquire(), 2)
-        self.assertEquals(lock.IsAcquired, True)
-        self.assertEquals(lock.CountAcquired, 2)
+        self.assertEqual(lock.Acquire(), 2)
+        self.assertEqual(lock.IsAcquired, True)
+        self.assertEqual(lock.CountAcquired, 2)
 
         lock.Release()
-        self.assertEquals(lock.IsAcquired, True)
-        self.assertEquals(lock.CountAcquired, 1)
+        self.assertEqual(lock.IsAcquired, True)
+        self.assertEqual(lock.CountAcquired, 1)
 
         lock.Release()
-        self.assertEquals(lock.IsAcquired, False)
-        self.assertEquals(lock.CountAcquired, 0)
+        self.assertEqual(lock.IsAcquired, False)
+        self.assertEqual(lock.CountAcquired, 0)
 
 
     def testMultiThreaded(self):
         lock = Lock()
         
         def TestCanAcquire():
-            self.assertEquals(lock.Acquire(), 1)
-            self.assertEquals(lock.IsAcquired, True)
+            self.assertEqual(lock.Acquire(), 1)
+            self.assertEqual(lock.IsAcquired, True)
             lock.Release()
         t = Thread(ThreadStart(TestCanAcquire))
         t.Start()
@@ -52,8 +52,8 @@ class LockTest(TestCase):
         lock.Acquire()
         
         def TestCannotAcquire():
-            self.assertEquals(lock.TryAcquire(), False)
-            self.assertEquals(lock.IsAcquired, False)
+            self.assertEqual(lock.TryAcquire(), False)
+            self.assertEqual(lock.IsAcquired, False)
         t = Thread(ThreadStart(TestCannotAcquire))
         t.Start()
         t.Join()

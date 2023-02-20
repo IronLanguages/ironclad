@@ -20,8 +20,8 @@ class Py_InitModule4_SetupTest(TestCase):
         module = mapper.Retrieve(modulePtr)
         _dispatcher = module._dispatcher
         
-        self.assertEquals(isinstance(_dispatcher, Dispatcher), True, "wrong dispatcher class")
-        self.assertEquals(_dispatcher.mapper, mapper, "dispatcher had wrong mapper")
+        self.assertEqual(isinstance(_dispatcher, Dispatcher), True, "wrong dispatcher class")
+        self.assertEqual(_dispatcher.mapper, mapper, "dispatcher had wrong mapper")
         
 
 MODULE_PTR = IntPtr(54321)
@@ -42,7 +42,7 @@ class Py_InitModule4_Test(TestCase):
             test_module = sys.modules['test_module']
 
             for item in dir(test_module):
-                self.assertEquals(getattr(module, item) is getattr(test_module, item),
+                self.assertEqual(getattr(module, item) is getattr(test_module, item),
                                   True, "%s didn't match" % item)
             TestModule(test_module, mapper)
         finally:
@@ -56,13 +56,13 @@ class Py_InitModule4_Test(TestCase):
             "harold", lambda _, __: IntPtr.Zero, METH.VARARGS, "harold's documentation")
         
         def testModule(test_module, _):
-            self.assertEquals(test_module.__doc__, 'test_docstring',
+            self.assertEqual(test_module.__doc__, 'test_docstring',
                               'module docstring not remembered')
             self.assertTrue(callable(test_module.harold),
                             'function not remembered')
             self.assertTrue(callable(test_module._dispatcher.table['harold']),
                             'delegate not remembered')
-            self.assertEquals(test_module.harold.__doc__, "harold's documentation",
+            self.assertEqual(test_module.harold.__doc__, "harold's documentation",
                               'function docstring not remembered')
 
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
@@ -77,12 +77,12 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, __):
-            self.assertEquals((_, __), (MODULE_PTR, IntPtr.Zero))
+            self.assertEqual((_, __), (MODULE_PTR, IntPtr.Zero))
             return resultPtr
         method, deallocMethod = MakeMethodDef("func", func, METH.NOARGS)
         
         def testModule(module, mapper):
-            self.assertEquals(module.func(), result, "not hooked up")
+            self.assertEqual(module.func(), result, "not hooked up")
             
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
         deallocMethod()
@@ -98,13 +98,13 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, argPtr):
-            self.assertEquals(_, MODULE_PTR)
-            self.assertEquals(mapper.Retrieve(argPtr), arg)
+            self.assertEqual(_, MODULE_PTR)
+            self.assertEqual(mapper.Retrieve(argPtr), arg)
             return resultPtr
         method, deallocMethod = MakeMethodDef("func", func, METH.OLDARGS)
         
         def testModule(module, mapper):
-            self.assertEquals(module.func(arg), result, "not hooked up")
+            self.assertEqual(module.func(arg), result, "not hooked up")
             
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
         deallocMethod()
@@ -120,13 +120,13 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, argsPtr):
-            self.assertEquals(_, MODULE_PTR)
-            self.assertEquals(mapper.Retrieve(argsPtr), args)
+            self.assertEqual(_, MODULE_PTR)
+            self.assertEqual(mapper.Retrieve(argsPtr), args)
             return resultPtr
         method, deallocMethod = MakeMethodDef("func", func, METH.OLDARGS)
         
         def testModule(module, mapper):
-            self.assertEquals(module.func(*args), result, "not hooked up")
+            self.assertEqual(module.func(*args), result, "not hooked up")
             
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
         deallocMethod()
@@ -142,13 +142,13 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, argPtr):
-            self.assertEquals(_, MODULE_PTR)
-            self.assertEquals(mapper.Retrieve(argPtr), arg)
+            self.assertEqual(_, MODULE_PTR)
+            self.assertEqual(mapper.Retrieve(argPtr), arg)
             return resultPtr
         method, deallocMethod = MakeMethodDef("func", func, METH.O)
         
         def testModule(module, mapper):
-            self.assertEquals(module.func(arg), result, "not hooked up")
+            self.assertEqual(module.func(arg), result, "not hooked up")
             
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
         deallocMethod()
@@ -164,13 +164,13 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, argsPtr):
-            self.assertEquals(_, MODULE_PTR)
-            self.assertEquals(mapper.Retrieve(argsPtr), args)
+            self.assertEqual(_, MODULE_PTR)
+            self.assertEqual(mapper.Retrieve(argsPtr), args)
             return resultPtr
         method, deallocMethod = MakeMethodDef("func", func, METH.VARARGS)
         
         def testModule(module, mapper):
-            self.assertEquals(module.func(*args), result, "not hooked up")
+            self.assertEqual(module.func(*args), result, "not hooked up")
             
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
         deallocMethod()
@@ -187,14 +187,14 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, argsPtr, kwargsPtr):
-            self.assertEquals(_, MODULE_PTR)
-            self.assertEquals(mapper.Retrieve(argsPtr), args)
-            self.assertEquals(mapper.Retrieve(kwargsPtr), kwargs)
+            self.assertEqual(_, MODULE_PTR)
+            self.assertEqual(mapper.Retrieve(argsPtr), args)
+            self.assertEqual(mapper.Retrieve(kwargsPtr), kwargs)
             return resultPtr
         method, deallocMethod = MakeMethodDef("func", func, METH.VARARGS | METH.KEYWORDS)
         
         def testModule(module, mapper):
-            self.assertEquals(module.func(*args, **kwargs), result, "not hooked up")
+            self.assertEqual(module.func(*args, **kwargs), result, "not hooked up")
             
         self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
         deallocMethod()
@@ -211,7 +211,7 @@ class PyModule_Functions_Test(TestCase):
         moduleDict = mapper.Retrieve(mapper.PyModule_GetDict(modulePtr))
         moduleDict['random'] = 4
         
-        self.assertEquals(module.random, 4, 'modified wrong dict')
+        self.assertEqual(module.random, 4, 'modified wrong dict')
         
     
     @WithMapper
@@ -219,16 +219,16 @@ class PyModule_Functions_Test(TestCase):
         modulePtr = MakeAndAddEmptyModule(mapper)
         module = mapper.Retrieve(modulePtr)
         
-        self.assertEquals(mapper.PyModule_AddIntConstant(modulePtr, "i_am_an_int", -31000), 0, "reported failure")
-        self.assertEquals(module.i_am_an_int, -31000)
+        self.assertEqual(mapper.PyModule_AddIntConstant(modulePtr, "i_am_an_int", -31000), 0, "reported failure")
+        self.assertEqual(module.i_am_an_int, -31000)
         
-        self.assertEquals(mapper.PyModule_AddStringConstant(modulePtr, "i_am_a_string", "how_long"), 0, "reported failure")
-        self.assertEquals(module.i_am_a_string, "how_long")
+        self.assertEqual(mapper.PyModule_AddStringConstant(modulePtr, "i_am_a_string", "how_long"), 0, "reported failure")
+        self.assertEqual(module.i_am_a_string, "how_long")
         
 
     @WithMapper
     def testAddObjectToUnknownModuleFails(self, mapper, _):
-        self.assertEquals(mapper.PyModule_AddObject(IntPtr.Zero, "zorro", IntPtr.Zero), -1,
+        self.assertEqual(mapper.PyModule_AddObject(IntPtr.Zero, "zorro", IntPtr.Zero), -1,
                           "bad return on failure")
 
 
@@ -241,9 +241,9 @@ class PyModule_Functions_Test(TestCase):
         module = mapper.Retrieve(modulePtr)
 
         result = mapper.PyModule_AddObject(modulePtr, "testObject", testPtr)
-        self.assertEquals(result, 0, "bad value for success")
-        self.assertEquals(mapper.RefCount(testPtr), 1)
-        self.assertEquals(module.testObject, testObject, "did not store real object")
+        self.assertEqual(result, 0, "bad value for success")
+        self.assertEqual(mapper.RefCount(testPtr), 1)
+        self.assertEqual(module.testObject, testObject, "did not store real object")
 
 
     @WithMapper
@@ -258,16 +258,16 @@ class PyModule_Functions_Test(TestCase):
         typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
         addDealloc(deallocType)
         result = mapper.PyModule_AddObject(modulePtr, itemName, typePtr)
-        self.assertEquals(result, 0, "reported failure")
+        self.assertEqual(result, 0, "reported failure")
 
         mappedClass = mapper.Retrieve(typePtr)
         generatedClass = getattr(module, itemName)
-        self.assertEquals(mappedClass, generatedClass,
+        self.assertEqual(mappedClass, generatedClass,
                           "failed to add new type to module")
 
-        self.assertEquals(mappedClass.__doc__, class__doc__, "unexpected docstring")
-        self.assertEquals(mappedClass.__name__, class__name__, "unexpected __name__")
-        self.assertEquals(mappedClass.__module__, class__module__, "unexpected __module__")
+        self.assertEqual(mappedClass.__doc__, class__doc__, "unexpected docstring")
+        self.assertEqual(mappedClass.__name__, class__name__, "unexpected __name__")
+        self.assertEqual(mappedClass.__module__, class__module__, "unexpected __module__")
 
 
     def testAddModule(self):
@@ -291,8 +291,8 @@ class PyModule_Functions_Test(TestCase):
     def testPyModule_New(self, mapper, _):
         modulePtr = mapper.PyModule_New("forsooth")
         module = mapper.Retrieve(modulePtr)
-        self.assertEquals(module.__name__, "forsooth")
-        self.assertEquals(module.__doc__, "")
+        self.assertEqual(module.__name__, "forsooth")
+        self.assertEqual(module.__doc__, "")
         
 
 
@@ -307,8 +307,8 @@ class ImportTest(TestCase):
             IntPtr.Zero,
             12345)
         
-        self.assertEquals(mapper.PyImport_ImportModule("test_module"), modulePtr)
-        self.assertEquals(mapper.RefCount(modulePtr), 2, "did not incref")
+        self.assertEqual(mapper.PyImport_ImportModule("test_module"), modulePtr)
+        self.assertEqual(mapper.RefCount(modulePtr), 2, "did not incref")
     
     @WithMapper
     def testPyImport_Import(self, mapper, _):
@@ -319,8 +319,8 @@ class ImportTest(TestCase):
             IntPtr.Zero,
             12345)
         
-        self.assertEquals(mapper.PyImport_Import(mapper.Store("test_module")), modulePtr)
-        self.assertEquals(mapper.RefCount(modulePtr), 2, "did not incref")
+        self.assertEqual(mapper.PyImport_Import(mapper.Store("test_module")), modulePtr)
+        self.assertEqual(mapper.RefCount(modulePtr), 2, "did not incref")
     
     @WithMapper
     def testPyImport_AddModule(self, mapper, _):
@@ -328,31 +328,31 @@ class ImportTest(TestCase):
         modules = mapper.Retrieve(sysPtr).modules
         
         foobarbazPtr = mapper.PyImport_AddModule("foo.bar.baz")
-        self.assertEquals(mapper.Retrieve(foobarbazPtr), modules['foo.bar.baz'])
-        self.assertEquals('foo.bar' in modules, True)
-        self.assertEquals(modules['foo.bar'].baz, modules['foo.bar.baz'])
-        self.assertEquals('foo' in modules, True)
-        self.assertEquals(modules['foo'].bar, modules['foo.bar'])
+        self.assertEqual(mapper.Retrieve(foobarbazPtr), modules['foo.bar.baz'])
+        self.assertEqual('foo.bar' in modules, True)
+        self.assertEqual(modules['foo.bar'].baz, modules['foo.bar.baz'])
+        self.assertEqual('foo' in modules, True)
+        self.assertEqual(modules['foo'].bar, modules['foo.bar'])
 
     
     @WithMapper
     def testPyImport_GetModuleDict(self, mapper, _):
         modulesPtr = mapper.PyImport_GetModuleDict()
         modules = mapper.Retrieve(modulesPtr)
-        self.assertEquals(modules is sys.modules, True)
+        self.assertEqual(modules is sys.modules, True)
         
         mapper.IncRef(modulesPtr)
         mapper.ReleaseGIL()
-        self.assertEquals(mapper.RefCount(modulesPtr), 1, 'borrowed reference not cleaned up')
+        self.assertEqual(mapper.RefCount(modulesPtr), 1, 'borrowed reference not cleaned up')
         mapper.EnsureGIL()
 
 
     @WithMapper
     def testPyImport_ImportFunctions_Failure(self, mapper, _):
-        self.assertEquals(mapper.PyImport_Import(mapper.Store('this_module_does_not_exist')), IntPtr.Zero)
+        self.assertEqual(mapper.PyImport_Import(mapper.Store('this_module_does_not_exist')), IntPtr.Zero)
         self.assertMapperHasError(mapper, ImportError)
         
-        self.assertEquals(mapper.PyImport_ImportModule('this_module_does_not_exist'), IntPtr.Zero)
+        self.assertEqual(mapper.PyImport_ImportModule('this_module_does_not_exist'), IntPtr.Zero)
         self.assertMapperHasError(mapper, ImportError)
 
 
@@ -364,8 +364,8 @@ class NastyImportDetailsTest(TestCase):
         mapper.importNames.Push('hungry.hungry.hippo')
         mapper.PyImport_AddModule("hippo")
         
-        self.assertEquals(sys.modules.has_key("hippo"), False)
-        self.assertEquals(sys.modules.has_key('hungry.hungry.hippo'), True)
+        self.assertEqual(sys.modules.has_key("hippo"), False)
+        self.assertEqual(sys.modules.has_key('hungry.hungry.hippo'), True)
         
         for key in sys.modules.keys():
             if key.startswith('hungry'):
@@ -378,8 +378,8 @@ class NastyImportDetailsTest(TestCase):
         mapper.importNames.Push('angry.angry.alligator')
         mapper.PyImport_AddModule("hippo")
         
-        self.assertEquals(sys.modules.has_key("hippo"), True)
-        self.assertEquals(sys.modules.has_key('angry.angry.alligator'), False)
+        self.assertEqual(sys.modules.has_key("hippo"), True)
+        self.assertEqual(sys.modules.has_key('angry.angry.alligator'), False)
     
         del sys.modules['hippo']
         
@@ -390,9 +390,9 @@ class NastyImportDetailsTest(TestCase):
         mapper.importNames.Push('hungry.hungry.hippo')
         mapper.Py_InitModule4("hippo", IntPtr.Zero, "test_docstring", IntPtr.Zero, 12345)
         
-        self.assertEquals(sys.modules.has_key("hippo"), False)
-        self.assertEquals(sys.modules['hungry.hungry.hippo'].__doc__, 'test_docstring')
-        self.assertEquals(sys.modules['hungry.hungry.hippo'].__file__, 'hippo_file')
+        self.assertEqual(sys.modules.has_key("hippo"), False)
+        self.assertEqual(sys.modules['hungry.hungry.hippo'].__doc__, 'test_docstring')
+        self.assertEqual(sys.modules['hungry.hungry.hippo'].__file__, 'hippo_file')
         
         for key in sys.modules.keys():
             if key.startswith('hungry'):
@@ -404,8 +404,8 @@ class NastyImportDetailsTest(TestCase):
         mapper.importName = 'angry.angry.alligator'
         mapper.Py_InitModule4("hippo", IntPtr.Zero, "test_docstring", IntPtr.Zero, 12345)
         
-        self.assertEquals(sys.modules.has_key("hippo"), True)
-        self.assertEquals(sys.modules.has_key('angry.angry.alligator'), False)
+        self.assertEqual(sys.modules.has_key("hippo"), True)
+        self.assertEqual(sys.modules.has_key('angry.angry.alligator'), False)
     
         del sys.modules['hippo']
         
@@ -419,7 +419,7 @@ class BuiltinsTest(TestCase):
     def testPyEval_GetBuiltins(self, mapper, _):
         builtinsPtr = mapper.PyEval_GetBuiltins()
         import __builtin__
-        self.assertEquals(mapper.Retrieve(builtinsPtr), __builtin__.__dict__)
+        self.assertEqual(mapper.Retrieve(builtinsPtr), __builtin__.__dict__)
         
         
         
@@ -429,7 +429,7 @@ class SysTest(TestCase):
     def testPySys_GetObject(self, mapper, _):
         modulesPtr = mapper.PySys_GetObject('modules')
         modules = mapper.Retrieve(modulesPtr)
-        self.assertEquals(modules is sys.modules, True)
+        self.assertEqual(modules is sys.modules, True)
 
 
 suite = makesuite(

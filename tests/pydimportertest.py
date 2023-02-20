@@ -16,7 +16,7 @@ class PydImporterTest(TestCase):
         try:
             pValue = Unmanaged.GetProcAddress(l, "value")
             value = CPyMarshal.ReadInt(pValue)
-            self.assertEquals(value, 1, "bad setup")
+            self.assertEqual(value, 1, "bad setup")
 
             pi = PydImporter()
             pi.Load("tests\\data\\setvalue.pyd")
@@ -26,10 +26,10 @@ class PydImporterTest(TestCase):
             Unmanaged.FreeLibrary(l)
 
         value = CPyMarshal.ReadInt(pValue)
-        self.assertEquals(value, 2, "PydImporter didn't call correct function")
+        self.assertEqual(value, 2, "PydImporter didn't call correct function")
 
         pi.Dispose()
-        self.assertEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
+        self.assertEqual(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                           "failed to unload on dispose")
 
         pi.Dispose()
@@ -41,7 +41,7 @@ class PydImporterTest(TestCase):
         pi.Load("tests\\data\\setvalue.pyd")
         del pi
         gcwait()
-        self.assertEquals(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
+        self.assertEqual(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                           "failed to unload on dispose")
     
 

@@ -92,7 +92,7 @@ class PythonApiTest(TestCase):
         mapper = mapperSubclass()
         mapper.RegisterData(dataSymbol, dataPtr)
         memoryTest(dataPtr)
-        self.assertEquals(getattr(mapper, dataSymbol), dataPtr, "failed to remember pointer")
+        self.assertEqual(getattr(mapper, dataSymbol), dataPtr, "failed to remember pointer")
         
         Marshal.FreeHGlobal(dataPtr)
 
@@ -136,11 +136,11 @@ class PythonApiTest(TestCase):
     def testUninitialisedTypesAreNull(self):
         pa = PythonApi()
         for _type in TYPES:
-            self.assertEquals(getattr(pa, _type), IntPtr.Zero, "unexpected")
+            self.assertEqual(getattr(pa, _type), IntPtr.Zero, "unexpected")
 
 
     def testAddressGetterFailsCleanly(self):
-        self.assertEquals(PythonApi().GetFuncPtr("_nonsenx%vQ#*7&"), IntPtr.Zero)
+        self.assertEqual(PythonApi().GetFuncPtr("_nonsenx%vQ#*7&"), IntPtr.Zero)
 
 
 suite = makesuite(

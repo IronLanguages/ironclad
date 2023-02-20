@@ -52,8 +52,8 @@ class PyTuple_Type_Test(TypeTestCase):
     
         def TestConsequences(mapper, tuplePtr, calls):
             for itemPtr in itemPtrs:
-                self.assertEquals(itemPtr in frees, True, "did not decref item")
-            self.assertEquals(calls, [('tp_free', tuplePtr)], "did not call tp_free")
+                self.assertEqual(itemPtr in frees, True, "did not decref item")
+            self.assertEqual(calls, [('tp_free', tuplePtr)], "did not call tp_free")
             
         self.assertTypeDeallocWorks("PyTuple_Type", CreateMapper, CreateInstance, TestConsequences)
         
@@ -75,8 +75,8 @@ class PyTuple_Type_Test(TypeTestCase):
         mapper.IC_PyTuple_Dealloc(tuplePtr)
 
         for itemPtr in itemPtrs:
-            self.assertEquals(itemPtr in frees, True, "did not decref item")
-        self.assertEquals(calls, [tuplePtr], "did not call type's free function")
+            self.assertEqual(itemPtr in frees, True, "did not decref item")
+        self.assertEqual(calls, [tuplePtr], "did not call type's free function")
         mapper.PyObject_Free(tuplePtr)
 
         mapper.Dispose()
@@ -94,27 +94,27 @@ class TupleTest(TestCase):
         mapper.RegisterData("PyTuple_Type", typeBlock)
         tuplePtr = mapper.PyTuple_New(IntPtr(length))
         expectedSize = Marshal.SizeOf(PyTupleObject()) + CPyMarshal.PtrSize * max(0, length - 1)
-        self.assertEquals(allocs, [(tuplePtr, expectedSize)], "bad alloc")
+        self.assertEqual(allocs, [(tuplePtr, expectedSize)], "bad alloc")
         tupleStruct = PtrToStructure(tuplePtr, PyTupleObject)
-        self.assertEquals(tupleStruct.ob_refcnt, 1, "bad refcount")
-        self.assertEquals(tupleStruct.ob_type, mapper.PyTuple_Type, "bad type")
-        self.assertEquals(tupleStruct.ob_size, length, "bad size")
-        self.assertEquals(mapper.PyTuple_Size(tuplePtr), length, "should still work with uninitialised tuple imo")
+        self.assertEqual(tupleStruct.ob_refcnt, 1, "bad refcount")
+        self.assertEqual(tupleStruct.ob_type, mapper.PyTuple_Type, "bad type")
+        self.assertEqual(tupleStruct.ob_size, length, "bad size")
+        self.assertEqual(mapper.PyTuple_Size(tuplePtr), length, "should still work with uninitialised tuple imo")
         dataPtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_item"))
         itemPtrs = []
         for i in range(length):
-            self.assertEquals(CPyMarshal.ReadPtr(dataPtr), IntPtr.Zero, "item memory not zeroed")
+            self.assertEqual(CPyMarshal.ReadPtr(dataPtr), IntPtr.Zero, "item memory not zeroed")
             itemPtr = mapper.Store(i + 100)
             CPyMarshal.WritePtr(dataPtr, itemPtr)
             itemPtrs.append(itemPtr)
             dataPtr = OffsetPtr(dataPtr, CPyMarshal.PtrSize)
 
         immutableTuple = mapper.Retrieve(tuplePtr)
-        self.assertEquals(immutableTuple, tuple(i + 100 for i in range(length)), "broken")
+        self.assertEqual(immutableTuple, tuple(i + 100 for i in range(length)), "broken")
 
         tuplePtr2 = mapper.Store(immutableTuple)
-        self.assertEquals(tuplePtr2, tuplePtr, "didn't realise already had this object stored")
-        self.assertEquals(mapper.RefCount(tuplePtr), 2, "didn't incref")
+        self.assertEqual(tuplePtr2, tuplePtr, "didn't realise already had this object stored")
+        self.assertEqual(mapper.RefCount(tuplePtr), 2, "didn't incref")
         
         mapper.Dispose()
         Marshal.FreeHGlobal(typeBlock)
@@ -139,16 +139,16 @@ class TupleTest(TestCase):
         oldTuplePtr = mapper.PyTuple_New(IntPtr(1))
         del allocs[:]
         CPyMarshal.WritePtr(tuplePtrPtr, oldTuplePtr)
-        self.assertEquals(mapper._PyTuple_Resize(tuplePtrPtr, IntPtr(100)), 0)
+        self.assertEqual(mapper._PyTuple_Resize(tuplePtrPtr, IntPtr(100)), 0)
 
         newTuplePtr = CPyMarshal.ReadPtr(tuplePtrPtr)
         expectedSize = Marshal.SizeOf(PyTupleObject()) + (CPyMarshal.PtrSize * (99))
-        self.assertEquals(allocs, [(newTuplePtr, expectedSize)])
+        self.assertEqual(allocs, [(newTuplePtr, expectedSize)])
         
         tupleStruct = PtrToStructure(newTuplePtr, PyTupleObject)
-        self.assertEquals(tupleStruct.ob_refcnt, 1)
-        self.assertEquals(tupleStruct.ob_type, mapper.PyTuple_Type)
-        self.assertEquals(tupleStruct.ob_size, 100)
+        self.assertEqual(tupleStruct.ob_refcnt, 1)
+        self.assertEqual(tupleStruct.ob_type, mapper.PyTuple_Type)
+        self.assertEqual(tupleStruct.ob_size, 100)
         
         mapper.Dispose()
         Marshal.FreeHGlobal(tuplePtrPtr)
@@ -161,8 +161,8 @@ class TupleTest(TestCase):
         
         tuplePtr = mapper.PyTuple_New(IntPtr(1))
         CPyMarshal.WritePtr(tuplePtrPtr, tuplePtr)
-        self.assertEquals(mapper._PyTuple_Resize(tuplePtrPtr, IntPtr(2000000000)), -1)
-        self.assertEquals(CPyMarshal.ReadPtr(tuplePtrPtr), IntPtr.Zero)
+        self.assertEqual(mapper._PyTuple_Resize(tuplePtrPtr, IntPtr(2000000000)), -1)
+        self.assertEqual(CPyMarshal.ReadPtr(tuplePtrPtr), IntPtr.Zero)
         
 
     def testStoreTupleCreatesTupleType(self):
@@ -174,17 +174,17 @@ class TupleTest(TestCase):
 
         theTuple = (0, 1, 2)
         tuplePtr = mapper.Store(theTuple)
-        self.assertEquals(CPyMarshal.ReadPtrField(tuplePtr, PyTupleObject, "ob_type"), typeBlock, "wrong type")
+        self.assertEqual(CPyMarshal.ReadPtrField(tuplePtr, PyTupleObject, "ob_type"), typeBlock, "wrong type")
 
         dataPtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_item"))
         for i in range(3):
             item = mapper.Retrieve(CPyMarshal.ReadPtr(dataPtr))
-            self.assertEquals(item, i, "did not store data")
+            self.assertEqual(item, i, "did not store data")
             dataPtr = OffsetPtr(dataPtr, CPyMarshal.PtrSize)
 
         tuplePtr2 = mapper.Store(theTuple)
-        self.assertEquals(tuplePtr2, tuplePtr, "didn't realise already had this tuple")
-        self.assertEquals(mapper.RefCount(tuplePtr), 2, "didn't incref")
+        self.assertEqual(tuplePtr2, tuplePtr, "didn't realise already had this tuple")
+        self.assertEqual(mapper.RefCount(tuplePtr), 2, "didn't incref")
 
         mapper.Dispose()
         Marshal.FreeHGlobal(typeBlock)
@@ -195,7 +195,7 @@ class TupleTest(TestCase):
         def TestSlice(originalTuplePtr, start, stop):
             newTuplePtr = mapper.PyTuple_GetSlice(originalTuplePtr, IntPtr(start), IntPtr(stop))
             self.assertMapperHasError(mapper, None)
-            self.assertEquals(mapper.Retrieve(newTuplePtr), mapper.Retrieve(originalTuplePtr)[start:stop], "bad slice")
+            self.assertEqual(mapper.Retrieve(newTuplePtr), mapper.Retrieve(originalTuplePtr)[start:stop], "bad slice")
             mapper.DecRef(newTuplePtr)
         
         tuplePtr = mapper.Store((0, 1, 2, 3, 4, 5, 6, 7))
@@ -208,7 +208,7 @@ class TupleTest(TestCase):
          
     @WithMapper
     def testPyTuple_GetSlice_error(self, mapper, _):
-        self.assertEquals(mapper.PyTuple_GetSlice(mapper.Store(object()), IntPtr(1), IntPtr(2)), IntPtr.Zero)
+        self.assertEqual(mapper.PyTuple_GetSlice(mapper.Store(object()), IntPtr(1), IntPtr(2)), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
 
 

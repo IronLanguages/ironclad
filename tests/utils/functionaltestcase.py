@@ -77,4 +77,4 @@ class FunctionalTestCase(TestCase):
 
     def assertRuns(self, code, interpreter=None, insert_args=''):
         exit_code, output, error = self.runCode(code, interpreter, insert_args)
-        self.assertEquals(exit_code, 0, "Execution failed: >>>%s<<<\n>>>%s<<<" % (output, error))
+        self.assertEqual(exit_code, 0, "Execution failed: >>>%s<<<\n>>>%s<<<" % (output, error))

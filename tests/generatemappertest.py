@@ -24,11 +24,11 @@ class GenerateMapperTest(TestCase):
 
         dst = tempfile.mkdtemp()
         result = spawn(sys.executable, 'tools/generatemapper.py', src, dst)
-        self.assertEquals(result, 0, 'process ended badly')
+        self.assertEqual(result, 0, 'process ended badly')
 
         def assertFinds(name, expected):
             text = read(dst, '%s.Generated.cs' % name)
-            self.assertNotEquals(text.find(expected), -1, 'generated: >>>%s<<<' % text)
+            self.assertNotEqual(text.find(expected), -1, 'generated: >>>%s<<<' % text)
         
         assertFinds('PythonMapper_register_exceptions', EXPECTED_REGISTER_EXCEPTIONS)
         assertFinds('PythonMapper_register_types', EXPECTED_REGISTER_TYPES)

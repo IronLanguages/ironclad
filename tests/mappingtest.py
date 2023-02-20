@@ -24,15 +24,15 @@ class MappingTest(TestCase):
         mappings = ([], (), {}, "", Mapping())
         for mapping in mappings:
             ptr = mapper.Store(mapping)
-            self.assertEquals(mapper.PyMapping_Check(ptr), 1)
+            self.assertEqual(mapper.PyMapping_Check(ptr), 1)
             mapper.DecRef(ptr)
         
         
         notmappings = (12, object(), slice(1, 2, 3), Mapping)
         for notmapping in notmappings:
             ptr = mapper.Store(notmapping)
-            self.assertEquals(mapper.PyMapping_Check(ptr), 0)
-            self.assertEquals(mapper.LastException, None)
+            self.assertEqual(mapper.PyMapping_Check(ptr), 0)
+            self.assertEqual(mapper.LastException, None)
             mapper.DecRef(ptr)
 
     
@@ -45,9 +45,9 @@ class MappingTest(TestCase):
         
         mptr = mapper.Store(Mapping())
         fooresult = mapper.PyMapping_GetItemString(mptr, 'foo')
-        self.assertEquals(mapper.Retrieve(fooresult), 'bar')
+        self.assertEqual(mapper.Retrieve(fooresult), 'bar')
         
-        self.assertEquals(mapper.PyMapping_GetItemString(mptr, 'baz'), IntPtr.Zero)
+        self.assertEqual(mapper.PyMapping_GetItemString(mptr, 'baz'), IntPtr.Zero)
         self.assertMapperHasError(mapper, KeyError)
         
         

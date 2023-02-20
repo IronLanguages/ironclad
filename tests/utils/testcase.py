@@ -61,10 +61,10 @@ class TestCase(unittest.TestCase):
         
     def assertMapperHasError(self, mapper, error):
         if error:
-            self.assertEquals(isinstance(mapper.LastException, error), True, "wrong error set on mapper")
+            self.assertEqual(isinstance(mapper.LastException, error), True, "wrong error set on mapper")
             mapper.LastException = None
         else:
-            self.assertEquals(mapper.LastException, None)
+            self.assertEqual(mapper.LastException, None)
 
     def assertRaisesClr(self, ClrException, callable, *args, **kwargs):
         # clr based exception without explicit python equivalent surface as Exception

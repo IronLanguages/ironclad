@@ -23,14 +23,14 @@ class DictTest(TestCase):
         try:
             del allocs[:]
             dictPtr = mapper.PyDict_New()
-            self.assertEquals(mapper.RefCount(dictPtr), 1, "bad refcount")
-            self.assertEquals(allocs, [(dictPtr, Marshal.SizeOf(PyObject()))], "did not allocate as expected")
-            self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), mapper.PyDict_Type, "wrong type")
+            self.assertEqual(mapper.RefCount(dictPtr), 1, "bad refcount")
+            self.assertEqual(allocs, [(dictPtr, Marshal.SizeOf(PyObject()))], "did not allocate as expected")
+            self.assertEqual(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), mapper.PyDict_Type, "wrong type")
             dictObj = mapper.Retrieve(dictPtr)
-            self.assertEquals(dictObj, {}, "retrieved unexpected value")
+            self.assertEqual(dictObj, {}, "retrieved unexpected value")
             
             mapper.DecRef(dictPtr)
-            self.assertEquals(frees, [dictPtr], "did not release memory")
+            self.assertEqual(frees, [dictPtr], "did not release memory")
         finally:
             mapper.Dispose()
             deallocTypes()
@@ -40,7 +40,7 @@ class DictTest(TestCase):
     def testIC_PyDict_Init(self, mapper, _):
         IC_PyDict_Init = CPyMarshal.ReadFunctionPtrField(mapper.PyDict_Type, PyTypeObject, "tp_init", dgt_int_ptrptrptr)
         # really, this function does *nothing*. and certainly doesn't follow the pointers passed in
-        self.assertEquals(IC_PyDict_Init(IntPtr(123), IntPtr(456), IntPtr(789)), 0)
+        self.assertEqual(IC_PyDict_Init(IntPtr(123), IntPtr(456), IntPtr(789)), 0)
         
 
     @WithMapper
@@ -50,7 +50,7 @@ class DictTest(TestCase):
         mapper.RegisterData("PyDict_Type", typeBlock)
         
         dictPtr = mapper.Store({0: 1, 2: 3})
-        self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), typeBlock, "wrong type")
+        self.assertEqual(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), typeBlock, "wrong type")
 
 
     @WithMapper
@@ -63,15 +63,15 @@ class DictTest(TestCase):
             pass
         
         dictPtr = mapper.Store(klass.__dict__)
-        self.assertEquals(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), typeBlock, "wrong type")
+        self.assertEqual(CPyMarshal.ReadPtrField(dictPtr, PyObject, "ob_type"), typeBlock, "wrong type")
         
-        self.assertEquals(mapper.PyDict_SetItemString(dictPtr, 'foo', mapper.Store('bar')), 0)
-        self.assertEquals(mapper.PyDict_SetItem(dictPtr, mapper.Store('baz'), mapper.Store('qux')), 0)
-        self.assertEquals(mapper.Retrieve(mapper.PyDict_GetItemString(dictPtr, 'foo')), 'bar')
-        self.assertEquals(mapper.Retrieve(mapper.PyDict_GetItem(dictPtr, mapper.Store('baz'))), 'qux')
-        self.assertEquals(klass.foo, 'bar')
-        self.assertEquals(klass.baz, 'qux')
-        self.assertEquals(mapper.PyDict_Size(dictPtr), len(klass.__dict__))
+        self.assertEqual(mapper.PyDict_SetItemString(dictPtr, 'foo', mapper.Store('bar')), 0)
+        self.assertEqual(mapper.PyDict_SetItem(dictPtr, mapper.Store('baz'), mapper.Store('qux')), 0)
+        self.assertEqual(mapper.Retrieve(mapper.PyDict_GetItemString(dictPtr, 'foo')), 'bar')
+        self.assertEqual(mapper.Retrieve(mapper.PyDict_GetItem(dictPtr, mapper.Store('baz'))), 'qux')
+        self.assertEqual(klass.foo, 'bar')
+        self.assertEqual(klass.baz, 'qux')
+        self.assertEqual(mapper.PyDict_Size(dictPtr), len(klass.__dict__))
     
     
     @WithMapper
@@ -84,9 +84,9 @@ class DictTest(TestCase):
         self.assertRaises(TypeError, Set, 1, 5)
         self.assertRaises(TypeError, Set, 'foo', 'bar')
         
-        self.assertEquals(dp[1], 2)
-        self.assertEquals(dp[3], 4)
-        self.assertEquals(len(dp), 2)
+        self.assertEqual(dp[1], 2)
+        self.assertEqual(dp[3], 4)
+        self.assertEqual(len(dp), 2)
         
         for key in dp:
             self.assertTrue(key in d)
@@ -97,8 +97,8 @@ class DictTest(TestCase):
         dict0 = mapper.Store({})
         dict3 = mapper.Store({1:2, 3:4, 5:6})
         
-        self.assertEquals(mapper.PyDict_Size(dict0), 0, "wrong")
-        self.assertEquals(mapper.PyDict_Size(dict3), 3, "wrong")
+        self.assertEqual(mapper.PyDict_Size(dict0), 0, "wrong")
+        self.assertEqual(mapper.PyDict_Size(dict3), 3, "wrong")
 
 
     def testPyDict_GetItemStringSuccess(self):
@@ -109,10 +109,10 @@ class DictTest(TestCase):
         
         mapper.EnsureGIL()
         itemPtr = mapper.PyDict_GetItemString(dictPtr, "abcde")
-        self.assertEquals(mapper.Retrieve(itemPtr), 12345, "failed to get item")
-        self.assertEquals(mapper.RefCount(itemPtr), 1, "something is wrong")
+        self.assertEqual(mapper.Retrieve(itemPtr), 12345, "failed to get item")
+        self.assertEqual(mapper.RefCount(itemPtr), 1, "something is wrong")
         mapper.ReleaseGIL()
-        self.assertEquals(itemPtr in frees, True)
+        self.assertEqual(itemPtr in frees, True)
         
         mapper.Dispose()
         deallocTypes()
@@ -123,8 +123,8 @@ class DictTest(TestCase):
         dictPtr = mapper.Store({"abcde": 12345})
         
         itemPtr = mapper.PyDict_GetItemString(dictPtr, "bwahahaha!")
-        self.assertEquals(itemPtr, IntPtr.Zero, "bad return for missing key")
-        self.assertEquals(mapper.LastException, None, "should not set exception")
+        self.assertEqual(itemPtr, IntPtr.Zero, "bad return for missing key")
+        self.assertEqual(mapper.LastException, None, "should not set exception")
 
 
     def testPyDict_GetItemSuccess(self):
@@ -135,10 +135,10 @@ class DictTest(TestCase):
         
         mapper.EnsureGIL()
         itemPtr = mapper.PyDict_GetItem(dictPtr, mapper.Store(12345))
-        self.assertEquals(mapper.Retrieve(itemPtr), 67890, "failed to get item")
-        self.assertEquals(mapper.RefCount(itemPtr), 1, "something is wrong")
+        self.assertEqual(mapper.Retrieve(itemPtr), 67890, "failed to get item")
+        self.assertEqual(mapper.RefCount(itemPtr), 1, "something is wrong")
         mapper.ReleaseGIL()
-        self.assertEquals(itemPtr in frees, True)
+        self.assertEqual(itemPtr in frees, True)
         
         mapper.Dispose()
         deallocTypes()
@@ -149,8 +149,8 @@ class DictTest(TestCase):
         dictPtr = mapper.Store({12345: 67890})
         
         itemPtr = mapper.PyDict_GetItem(dictPtr, mapper.Store("something"))
-        self.assertEquals(itemPtr, IntPtr.Zero, "bad return for missing key")
-        self.assertEquals(mapper.LastException, None, "should not set exception")
+        self.assertEqual(itemPtr, IntPtr.Zero, "bad return for missing key")
+        self.assertEqual(mapper.LastException, None, "should not set exception")
 
 
     @WithMapper
@@ -159,9 +159,9 @@ class DictTest(TestCase):
         dictPtr = mapper.Store(_dict)
         keyPtr = mapper.Store(123)
         itemPtr = mapper.Store(456)
-        self.assertEquals(mapper.PyDict_SetItem(dictPtr, keyPtr, itemPtr), 0, "reported failure")
-        self.assertEquals(mapper.RefCount(itemPtr), 1, "does not need to incref item")
-        self.assertEquals(_dict, {123: 456}, "failed")
+        self.assertEqual(mapper.PyDict_SetItem(dictPtr, keyPtr, itemPtr), 0, "reported failure")
+        self.assertEqual(mapper.RefCount(itemPtr), 1, "does not need to incref item")
+        self.assertEqual(_dict, {123: 456}, "failed")
 
 
     @WithMapper
@@ -170,8 +170,8 @@ class DictTest(TestCase):
         dictPtr = mapper.Store(_dict)
         keyPtr = mapper.Store({})
         itemPtr = mapper.Store(456)
-        self.assertEquals(mapper.PyDict_SetItem(dictPtr, keyPtr, itemPtr), -1, "failed to report failure")
-        self.assertEquals(_dict, {}, 'dictionary changed')
+        self.assertEqual(mapper.PyDict_SetItem(dictPtr, keyPtr, itemPtr), -1, "failed to report failure")
+        self.assertEqual(_dict, {}, 'dictionary changed')
         self.assertMapperHasError(mapper, TypeError)
 
 
@@ -180,9 +180,9 @@ class DictTest(TestCase):
         _dict = {}
         dictPtr = mapper.Store(_dict)
         itemPtr = mapper.Store(123)
-        self.assertEquals(mapper.PyDict_SetItemString(dictPtr, 'blob', itemPtr), 0, "reported failure")
-        self.assertEquals(mapper.RefCount(itemPtr), 1, "does not need to incref item")
-        self.assertEquals(_dict, {'blob': 123}, "failed")
+        self.assertEqual(mapper.PyDict_SetItemString(dictPtr, 'blob', itemPtr), 0, "reported failure")
+        self.assertEqual(mapper.RefCount(itemPtr), 1, "does not need to incref item")
+        self.assertEqual(_dict, {'blob': 123}, "failed")
 
 
     @WithMapper
@@ -192,9 +192,9 @@ class DictTest(TestCase):
         
         _dict = {}
         dictPtr = mapper.Store(_dict)
-        self.assertEquals(mapper.PyDict_SetItemString(dictPtr, 'klass', typePtr), 0, "reported failure")
+        self.assertEqual(mapper.PyDict_SetItemString(dictPtr, 'klass', typePtr), 0, "reported failure")
         klass = _dict['klass']
-        self.assertEquals(klass.__name__, 'klass', "failed")
+        self.assertEqual(klass.__name__, 'klass', "failed")
 
 
     @WithMapper
@@ -202,45 +202,45 @@ class DictTest(TestCase):
         key = object()
         _dict = {key: 1}
         dictPtr = mapper.Store(_dict)
-        self.assertEquals(mapper.PyDict_DelItem(dictPtr, mapper.Store(key)), 0)
+        self.assertEqual(mapper.PyDict_DelItem(dictPtr, mapper.Store(key)), 0)
         self.assertMapperHasError(mapper, None)
-        self.assertEquals(_dict, {})
+        self.assertEqual(_dict, {})
 
 
     @WithMapper
     def testPyDict_DelItem_ExistsNot(self, mapper, _):
         _dict = {}
         dictPtr = mapper.Store(_dict)
-        self.assertEquals(mapper.PyDict_DelItem(dictPtr, mapper.Store(object())), -1)
+        self.assertEqual(mapper.PyDict_DelItem(dictPtr, mapper.Store(object())), -1)
         self.assertMapperHasError(mapper, None)
-        self.assertEquals(_dict, {})
+        self.assertEqual(_dict, {})
 
 
     @WithMapper
     def testPyDict_DelItem_Unhashable(self, mapper, _):
         _dict = {}
         dictPtr = mapper.Store(_dict)
-        self.assertEquals(mapper.PyDict_DelItem(dictPtr, mapper.Store({})), -1)
+        self.assertEqual(mapper.PyDict_DelItem(dictPtr, mapper.Store({})), -1)
         self.assertMapperHasError(mapper, TypeError)
-        self.assertEquals(_dict, {})
+        self.assertEqual(_dict, {})
 
 
     @WithMapper
     def testPyDict_DelItemString_Exists(self, mapper, _):
         _dict = {'clef': 1}
         dictPtr = mapper.Store(_dict)
-        self.assertEquals(mapper.PyDict_DelItemString(dictPtr, 'clef'), 0)
+        self.assertEqual(mapper.PyDict_DelItemString(dictPtr, 'clef'), 0)
         self.assertMapperHasError(mapper, None)
-        self.assertEquals(_dict, {})
+        self.assertEqual(_dict, {})
 
 
     @WithMapper
     def testPyDict_DelItemString_ExistsNot(self, mapper, _):
         _dict = {}
         dictPtr = mapper.Store(_dict)
-        self.assertEquals(mapper.PyDict_DelItemString(dictPtr, 'clef'), -1)
+        self.assertEqual(mapper.PyDict_DelItemString(dictPtr, 'clef'), -1)
         self.assertMapperHasError(mapper, None)
-        self.assertEquals(_dict, {})
+        self.assertEqual(_dict, {})
 
 
     @WithMapper
@@ -248,7 +248,7 @@ class DictTest(TestCase):
         _dict = {1: 2, 3: 4, 5: 6}
         dictPtr = mapper.Store(_dict)
         listPtr = mapper.PyDict_Values(dictPtr)
-        self.assertEquals(set(mapper.Retrieve(listPtr)), set(_dict.values()))
+        self.assertEqual(set(mapper.Retrieve(listPtr)), set(_dict.values()))
 
 
     @WithMapper
@@ -256,11 +256,11 @@ class DictTest(TestCase):
         d1 = {1:2, 3:4}
         d2 = {1:5, 6:7}
         
-        self.assertEquals(mapper.PyDict_Update(mapper.Store(d1), mapper.Store(d2)), 0)
+        self.assertEqual(mapper.PyDict_Update(mapper.Store(d1), mapper.Store(d2)), 0)
         self.assertMapperHasError(mapper, None)
-        self.assertEquals(d1, {1:5, 3:4, 6:7})
+        self.assertEqual(d1, {1:5, 3:4, 6:7})
         
-        self.assertEquals(mapper.PyDict_Update(mapper.Store(d1), mapper.Store(object)), -1)
+        self.assertEqual(mapper.PyDict_Update(mapper.Store(d1), mapper.Store(object)), -1)
         self.assertMapperHasError(mapper, TypeError)
     
     
@@ -268,11 +268,11 @@ class DictTest(TestCase):
     def testPyDict_Copy(self, mapper, _):
         d1 = {1:2, 3:4}
         d2 = mapper.Retrieve(mapper.PyDict_Copy(mapper.Store(d1)))
-        self.assertEquals(d1, d2)
+        self.assertEqual(d1, d2)
         d1[5] = 6
-        self.assertEquals(d2, {1:2, 3:4})
+        self.assertEqual(d2, {1:2, 3:4})
         
-        self.assertEquals(mapper.PyDict_Copy(mapper.Store(object())), IntPtr.Zero)
+        self.assertEqual(mapper.PyDict_Copy(mapper.Store(object())), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
 
 
@@ -284,7 +284,7 @@ class PyDict_Next_Test(TestCase):
         addDealloc(lambda: Marshal.FreeHGlobal(posPtr))
         CPyMarshal.WriteInt(posPtr, 0)
         
-        self.assertEquals(mapper.PyDict_Next(mapper.Store({}), posPtr, IntPtr.Zero, IntPtr.Zero), 0)
+        self.assertEqual(mapper.PyDict_Next(mapper.Store({}), posPtr, IntPtr.Zero, IntPtr.Zero), 0)
         self.assertMapperHasError(mapper, None)
     
     @WithMapper
@@ -293,7 +293,7 @@ class PyDict_Next_Test(TestCase):
         addDealloc(lambda: Marshal.FreeHGlobal(posPtr))
         CPyMarshal.WriteInt(posPtr, 0)
         
-        self.assertEquals(mapper.PyDict_Next(mapper.Store(object()), posPtr, IntPtr.Zero, IntPtr.Zero), 0)
+        self.assertEqual(mapper.PyDict_Next(mapper.Store(object()), posPtr, IntPtr.Zero, IntPtr.Zero), 0)
         self.assertMapperHasError(mapper, TypeError)
     
     @WithMapper
@@ -312,7 +312,7 @@ class PyDict_Next_Test(TestCase):
             value = mapper.Retrieve(CPyMarshal.ReadPtr(valuePtrPtr))
             result[key] = value
         
-        self.assertEquals(result, d)
+        self.assertEqual(result, d)
           
     @WithMapper
     def testCanChangeValuesDuringIteration(self, mapper, addDealloc):
@@ -329,7 +329,7 @@ class PyDict_Next_Test(TestCase):
             value = mapper.Retrieve(CPyMarshal.ReadPtr(valuePtrPtr))
             d[key] = value * 10
         
-        self.assertEquals(d, dict(a=10, b=20, c=30))
+        self.assertEqual(d, dict(a=10, b=20, c=30))
           
     @WithMapper
     def testReferencesAreBorrowed(self, mapper, addDealloc):
@@ -354,8 +354,8 @@ class PyDict_Next_Test(TestCase):
         mapper.ReleaseGIL()
         
         # check refcount has dropped back to 1
-        self.assertEquals(mapper.RefCount(keyPtr), 1)
-        self.assertEquals(mapper.RefCount(valuePtr), 1)
+        self.assertEqual(mapper.RefCount(keyPtr), 1)
+        self.assertEqual(mapper.RefCount(valuePtr), 1)
 
 
 

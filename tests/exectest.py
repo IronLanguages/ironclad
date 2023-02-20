@@ -15,10 +15,10 @@ class ExecTest(TestCase):
         globals_ = {'foo': 'bar'}
         resultPtr = mapper.PyRun_StringFlags(
             "baz = 123\nqux = foo", int(EvalToken.Py_file_input), mapper.Store(globals_), IntPtr.Zero, IntPtr.Zero)
-        self.assertEquals(resultPtr, mapper._Py_NoneStruct)
-        self.assertEquals(globals_['foo'], 'bar')
-        self.assertEquals(globals_['baz'], 123)
-        self.assertEquals(globals_['qux'], 'bar')
+        self.assertEqual(resultPtr, mapper._Py_NoneStruct)
+        self.assertEqual(globals_['foo'], 'bar')
+        self.assertEqual(globals_['baz'], 123)
+        self.assertEqual(globals_['qux'], 'bar')
     
     @WithMapper
     def testPyRun_StringFlags_Locals(self, mapper, _):
@@ -26,17 +26,17 @@ class ExecTest(TestCase):
         locals_ = {'baz': 'qux'}
         resultPtr = mapper.PyRun_StringFlags(
             "baz = 123\nqux = foo", int(EvalToken.Py_file_input), mapper.Store(globals_), mapper.Store(locals_), IntPtr.Zero)
-        self.assertEquals(resultPtr, mapper._Py_NoneStruct)
-        self.assertEquals(globals_['foo'], 'bar')
-        self.assertEquals(locals_['baz'], 123)
-        self.assertEquals(locals_['qux'], 'bar')
+        self.assertEqual(resultPtr, mapper._Py_NoneStruct)
+        self.assertEqual(globals_['foo'], 'bar')
+        self.assertEqual(locals_['baz'], 123)
+        self.assertEqual(locals_['qux'], 'bar')
 
 
     @WithMapper
     def testPyRun_StringFlags_Error(self, mapper, _):
         resultPtr = mapper.PyRun_StringFlags(
             "raise ValueError('amoral')", int(EvalToken.Py_file_input), mapper.Store({}), IntPtr.Zero, IntPtr.Zero)
-        self.assertEquals(resultPtr, IntPtr.Zero)
+        self.assertEqual(resultPtr, IntPtr.Zero)
         self.assertMapperHasError(mapper, ValueError)
 
 

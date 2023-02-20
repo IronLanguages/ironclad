@@ -27,16 +27,16 @@ class FunctionTest(TestCase):
         fPtr = mapper.Store(f)
         
         stored = PtrToStructure(fPtr, PyFunctionObject)
-        self.assertEquals(stored.ob_refcnt, 1)
-        self.assertEquals(stored.ob_type, mapper.PyFunction_Type)
+        self.assertEqual(stored.ob_refcnt, 1)
+        self.assertEqual(stored.ob_type, mapper.PyFunction_Type)
         
         for attr in attrs:
-            self.assertEquals(getattr(stored, attr), IntPtr.Zero)
+            self.assertEqual(getattr(stored, attr), IntPtr.Zero)
     
     @WithMapper
     def testStoreType(self, mapper, _):
-        self.assertEquals(mapper.Retrieve(mapper.PyFunction_Type), FunctionType)
-        self.assertEquals(CPyMarshal.ReadIntField(mapper.PyFunction_Type, PyTypeObject, 'tp_basicsize'), Marshal.SizeOf(PyFunctionObject()))
+        self.assertEqual(mapper.Retrieve(mapper.PyFunction_Type), FunctionType)
+        self.assertEqual(CPyMarshal.ReadIntField(mapper.PyFunction_Type, PyTypeObject, 'tp_basicsize'), Marshal.SizeOf(PyFunctionObject()))
 
 suite = makesuite(FunctionTest)
 if __name__ == '__main__':

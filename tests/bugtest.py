@@ -21,7 +21,7 @@ class BugTest(TestCase):
         class C(object):
             def __len__(self):
                 return UInt32(123)
-        self.assertEquals(len(C()), 123, "uint len bug is back (are you using ipy 2.0 instead of 2.0.1?)")
+        self.assertEqual(len(C()), 123, "uint len bug is back (are you using ipy 2.0 instead of 2.0.1?)")
 
 suite = makesuite(BugTest)
 if __name__ == '__main__':

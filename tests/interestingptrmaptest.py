@@ -48,11 +48,11 @@ class InterestingPtrMapTest(TestCase):
         map, ptr, ref = do()
         gcwait()
         
-        self.assertEquals(ref.IsAlive, True, "unexpected GC")
-        self.assertEquals(map.HasObj(ref.Target), True, "wrong")
-        self.assertEquals(map.GetObj(ptr), ref.Target, "not mapped")
-        self.assertEquals(map.HasPtr(ptr), True, "wrong")
-        self.assertEquals(map.GetPtr(ref.Target), ptr, "not mapped")
+        self.assertEqual(ref.IsAlive, True, "unexpected GC")
+        self.assertEqual(map.HasObj(ref.Target), True, "wrong")
+        self.assertEqual(map.GetObj(ptr), ref.Target, "not mapped")
+        self.assertEqual(map.HasPtr(ptr), True, "wrong")
+        self.assertEqual(map.GetPtr(ref.Target), ptr, "not mapped")
         
         
     def testAssociateCanWeaken(self):
@@ -61,8 +61,8 @@ class InterestingPtrMapTest(TestCase):
             map, ptr, obj, ref = self.getVars()
             map.Associate(ptr, obj)
 
-            self.assertEquals(map.HasPtr(ptr), True)
-            self.assertEquals(ref.IsAlive, True, "unexpected GC")
+            self.assertEqual(map.HasPtr(ptr), True)
+            self.assertEqual(ref.IsAlive, True, "unexpected GC")
 
             del obj
             map.Release(ptr)
@@ -70,8 +70,8 @@ class InterestingPtrMapTest(TestCase):
         map, ptr, ref = do()
         gcwait()
     
-        self.assertEquals(map.HasPtr(ptr), False)
-        self.assertEquals(ref.IsAlive, False, "failed to GC")
+        self.assertEqual(map.HasPtr(ptr), False)
+        self.assertEqual(ref.IsAlive, False, "failed to GC")
         self.assertRaisesClr(BadMappingException, map.GetObj, ptr)
         # can't really try to get the ptr, because we don't have the obj any more
     
@@ -86,11 +86,11 @@ class InterestingPtrMapTest(TestCase):
         map, ptr, ref = do()
         gcwait()
         
-        self.assertEquals(ref.IsAlive, True, "unexpected GC")
-        self.assertEquals(map.HasObj(ref.Target), True, "wrong")
-        self.assertEquals(map.GetPtr(ref.Target), ptr, "not mapped")
-        self.assertEquals(map.HasPtr(ptr), True, "wrong")
-        self.assertEquals(map.GetObj(ptr), ref.Target, "not mapped")
+        self.assertEqual(ref.IsAlive, True, "unexpected GC")
+        self.assertEqual(map.HasObj(ref.Target), True, "wrong")
+        self.assertEqual(map.GetPtr(ref.Target), ptr, "not mapped")
+        self.assertEqual(map.HasPtr(ptr), True, "wrong")
+        self.assertEqual(map.GetObj(ptr), ref.Target, "not mapped")
         map.Release(ptr)
     
     
@@ -105,7 +105,7 @@ class InterestingPtrMapTest(TestCase):
         map, ptr, ref = do()
         gcwait()
         
-        self.assertEquals(ref.IsAlive, False, "failed to GC")
+        self.assertEqual(ref.IsAlive, False, "failed to GC")
         self.assertRaisesClr(NullReferenceException, map.GetObj, ptr)
         map.Release(ptr)
     
@@ -128,7 +128,7 @@ class InterestingPtrMapTest(TestCase):
         ref = do()
         gcwait()
         
-        self.assertEquals(ref.IsAlive, True, "unexpected GC")
+        self.assertEqual(ref.IsAlive, True, "unexpected GC")
     
     
     def testCheckBridgePtrsShouldUpdateAll(self):
@@ -150,8 +150,8 @@ class InterestingPtrMapTest(TestCase):
         map, ref1, ref2 = do()
         gcwait()
         
-        self.assertEquals(ref1.IsAlive, False, "failed to GC")
-        self.assertEquals(ref2.IsAlive, False, "failed to GC")
+        self.assertEqual(ref1.IsAlive, False, "failed to GC")
+        self.assertEqual(ref2.IsAlive, False, "failed to GC")
     
     
     def testMapOverBridgePtrs(self):
@@ -164,8 +164,8 @@ class InterestingPtrMapTest(TestCase):
         def MapFunc(ptr):
             ptrs.append(ptr)
         map.MapOverBridgePtrs(PtrFunc(MapFunc))
-        self.assertEquals(len(ptrs), 2)
-        self.assertEquals(set(ptrs), set([ptr1, ptr2]))
+        self.assertEqual(len(ptrs), 2)
+        self.assertEqual(set(ptrs), set([ptr1, ptr2]))
         
         
 

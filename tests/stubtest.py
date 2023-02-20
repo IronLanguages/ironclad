@@ -23,7 +23,7 @@ class PythonStubTest(TestCase):
         path = os.path.join('tests', 'data', 'python27-pexports')
         python27exports = read_set(path)
         generatedExports = GetPexportsLines("build/ironclad/python27.dll")
-        self.assertEquals(python27exports - generatedExports, set())
+        self.assertEqual(python27exports - generatedExports, set())
 
 suite = automakesuite(locals())
 if __name__ == '__main__':

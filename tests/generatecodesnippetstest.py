@@ -20,11 +20,11 @@ class GenerateCodeSnippetsTest(TestCase):
 
         dst = tempfile.mkdtemp()
         result = spawn(sys.executable, "tools/generatecodesnippets.py", src, dst)
-        self.assertEquals(result, 0, "process ended badly")
+        self.assertEqual(result, 0, "process ended badly")
 
         def assertFinds(name, expected):
             text = read(dst, '%s.Generated.cs' % name)
-            self.assertNotEquals(text.find(expected), -1, "generated: >>>%s<<<" % text)
+            self.assertNotEqual(text.find(expected), -1, "generated: >>>%s<<<" % text)
         
         assertFinds('CodeSnippets', EXPECTED_SNIPPETS)
 

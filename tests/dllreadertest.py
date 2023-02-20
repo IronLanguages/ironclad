@@ -9,8 +9,8 @@ class DllReaderTest(TestCase):
 
     def testInit(self):
         sm = DllReader('tests/data/exportsymbols.dll')
-        self.assertEquals(sm.functions, ['Func', 'Funk', 'Jazz'])
-        self.assertEquals(sm.data, ['Alphabetised', 'AnotherExportedSymbol', 'ExportedSymbol'])
+        self.assertEqual(sm.functions, ['Func', 'Funk', 'Jazz'])
+        self.assertEqual(sm.data, ['Alphabetised', 'AnotherExportedSymbol', 'ExportedSymbol'])
 
 
 

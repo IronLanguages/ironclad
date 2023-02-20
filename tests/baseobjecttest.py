@@ -33,11 +33,11 @@ class ObjectFunctionsTest(TestCase):
         kallablePtr = mapper.Store(lambda x, y=2: x * y)
         argsPtr = mapper.Store((4,))
         resultPtr = mapper.PyObject_Call(kallablePtr, argsPtr, IntPtr.Zero)
-        self.assertEquals(mapper.Retrieve(resultPtr), 8, "didn't call")
+        self.assertEqual(mapper.Retrieve(resultPtr), 8, "didn't call")
         
         kwargsPtr = mapper.Store({'y': 4})
         resultPtr = mapper.PyObject_Call(kallablePtr, argsPtr, kwargsPtr)
-        self.assertEquals(mapper.Retrieve(resultPtr), 16, "didn't call with kwargs")
+        self.assertEqual(mapper.Retrieve(resultPtr), 16, "didn't call with kwargs")
     
     @WithMapper
     def testPyObject_Call_Error(self, mapper, _):
@@ -45,7 +45,7 @@ class ObjectFunctionsTest(TestCase):
             raise ValueError('arrgh!')
         kallablePtr = mapper.Store(Blam)
         
-        self.assertEquals(mapper.PyObject_Call(kallablePtr, IntPtr.Zero, IntPtr.Zero), IntPtr.Zero)
+        self.assertEqual(mapper.PyObject_Call(kallablePtr, IntPtr.Zero, IntPtr.Zero), IntPtr.Zero)
         self.assertMapperHasError(mapper, ValueError)
 
 
@@ -53,7 +53,7 @@ class ObjectFunctionsTest(TestCase):
     def testPyObject_Call_noargs(self, mapper, _):
         kallablePtr = mapper.Store(lambda: 2)
         resultPtr = mapper.PyObject_Call(kallablePtr, IntPtr.Zero, IntPtr.Zero)
-        self.assertEquals(mapper.Retrieve(resultPtr), 2, "didn't call")
+        self.assertEqual(mapper.Retrieve(resultPtr), 2, "didn't call")
 
 
     @WithMapper
@@ -62,9 +62,9 @@ class ObjectFunctionsTest(TestCase):
         notCallables = map(mapper.Store, ["hullo", 33, ])
         
         for x in callables:
-            self.assertEquals(mapper.PyCallable_Check(x), 1, "reported not callable")
+            self.assertEqual(mapper.PyCallable_Check(x), 1, "reported not callable")
         for x in notCallables:
-            self.assertEquals(mapper.PyCallable_Check(x), 0, "reported callable")
+            self.assertEqual(mapper.PyCallable_Check(x), 0, "reported callable")
 
 
     @WithMapper
@@ -73,7 +73,7 @@ class ObjectFunctionsTest(TestCase):
         
         for obj1 in objects:
             for obj2 in objects:
-                self.assertEquals(mapper.PyObject_Compare(mapper.Store(obj1), mapper.Store(obj2)),
+                self.assertEqual(mapper.PyObject_Compare(mapper.Store(obj1), mapper.Store(obj2)),
                                   cmp(obj1, obj2), "%r, %r" % (obj1, obj2))
 
 
@@ -87,15 +87,15 @@ class ObjectFunctionsTest(TestCase):
             error = e.__class__
 
         resultint = mapper.PyObject_RichCompareBool(mapper.Store(ob1), mapper.Store(ob2), int(opid))
-        self.assertEquals(resultint, expectint, "%r: %r %r" % (op.__name__, ob1, ob2))
+        self.assertEqual(resultint, expectint, "%r: %r %r" % (op.__name__, ob1, ob2))
         self.assertMapperHasError(mapper, error)
 
         resultptr = mapper.PyObject_RichCompare(mapper.Store(ob1), mapper.Store(ob2), int(opid))
         self.assertMapperHasError(mapper, error)
         if error:
-            self.assertEquals(resultptr, IntPtr.Zero)
+            self.assertEqual(resultptr, IntPtr.Zero)
         else:
-            self.assertEquals(mapper.Retrieve(resultptr), expectint, "%r: %r %r" % (op.__name__, ob1, ob2))
+            self.assertEqual(mapper.Retrieve(resultptr), expectint, "%r: %r %r" % (op.__name__, ob1, ob2))
 
     @WithMapper
     def testPyObject_RichCompare(self, mapper, _):
@@ -126,8 +126,8 @@ class ObjectFunctionsTest(TestCase):
         for opid in COMPARISONS:
             expectobj = COMPARISONS[opid](obj, obj)
             expectint = int(bool(expectobj))
-            self.assertEquals(mapper.PyObject_RichCompareBool(objPtr, objPtr, int(opid)), expectint)
-            self.assertEquals(mapper.Retrieve(mapper.PyObject_RichCompare(objPtr, objPtr, int(opid))), expectobj)
+            self.assertEqual(mapper.PyObject_RichCompareBool(objPtr, objPtr, int(opid)), expectint)
+            self.assertEqual(mapper.Retrieve(mapper.PyObject_RichCompare(objPtr, objPtr, int(opid))), expectobj)
         
  
 
@@ -139,7 +139,7 @@ class ObjectFunctionsTest(TestCase):
                 
         objPtr = mapper.Store(Thingum("Poe"))
         resultPtr = mapper.PyObject_GetAttrString(objPtr, "bob")
-        self.assertEquals(mapper.Retrieve(resultPtr), "Poe", "wrong")
+        self.assertEqual(mapper.Retrieve(resultPtr), "Poe", "wrong")
 
 
     @WithMapper
@@ -150,8 +150,8 @@ class ObjectFunctionsTest(TestCase):
                 
         objPtr = mapper.Store(Thingum("Poe"))
         resultPtr = mapper.PyObject_GetAttrString(objPtr, "ben")
-        self.assertEquals(resultPtr, IntPtr.Zero, "wrong")
-        self.assertEquals(mapper.LastException, None, "no need to set exception, according to spec")
+        self.assertEqual(resultPtr, IntPtr.Zero, "wrong")
+        self.assertEqual(mapper.LastException, None, "no need to set exception, according to spec")
 
 
     @WithMapper
@@ -162,7 +162,7 @@ class ObjectFunctionsTest(TestCase):
                 
         objPtr = mapper.Store(Thingum("Poe"))
         resultPtr = mapper.PyObject_GetAttr(objPtr, mapper.Store("bob"))
-        self.assertEquals(mapper.Retrieve(resultPtr), "Poe", "wrong")
+        self.assertEqual(mapper.Retrieve(resultPtr), "Poe", "wrong")
 
 
     @WithMapper
@@ -173,8 +173,8 @@ class ObjectFunctionsTest(TestCase):
                 
         objPtr = mapper.Store(Thingum("Poe"))
         resultPtr = mapper.PyObject_GetAttr(objPtr, mapper.Store("ben"))
-        self.assertEquals(resultPtr, IntPtr.Zero, "wrong")
-        self.assertEquals(mapper.LastException, None, "no need to set exception, assuming this matches GetAttrString")
+        self.assertEqual(resultPtr, IntPtr.Zero, "wrong")
+        self.assertEqual(mapper.LastException, None, "no need to set exception, assuming this matches GetAttrString")
 
 
     @WithMapper
@@ -183,14 +183,14 @@ class ObjectFunctionsTest(TestCase):
             pass
         obj = C()
         objPtr = mapper.Store(obj)
-        self.assertEquals(mapper.PyObject_SetAttrString(objPtr, "bob", mapper.Store(123)), 0)
-        self.assertEquals(obj.bob, 123)
+        self.assertEqual(mapper.PyObject_SetAttrString(objPtr, "bob", mapper.Store(123)), 0)
+        self.assertEqual(obj.bob, 123)
 
 
     @WithMapper
     def testPyObject_SetAttrString_Failure(self, mapper, _):
         objPtr = mapper.Store(object())
-        self.assertEquals(mapper.PyObject_SetAttrString(objPtr, "bob", mapper.Store(123)), -1)
+        self.assertEqual(mapper.PyObject_SetAttrString(objPtr, "bob", mapper.Store(123)), -1)
         self.assertMapperHasError(mapper, AttributeError)
 
 
@@ -200,13 +200,13 @@ class ObjectFunctionsTest(TestCase):
             pass
         obj = C()
         objPtr = mapper.Store(obj)
-        self.assertEquals(mapper.PyObject_SetAttr(objPtr, mapper.Store("bob"), mapper.Store(123)), 0)
-        self.assertEquals(obj.bob, 123)
+        self.assertEqual(mapper.PyObject_SetAttr(objPtr, mapper.Store("bob"), mapper.Store(123)), 0)
+        self.assertEqual(obj.bob, 123)
 
 
     @WithMapper
     def testPyObject_SetAttr_Failure(self, mapper, _):
-        self.assertEquals(mapper.PyObject_SetAttr(mapper.Store(object()), mapper.Store("bob"), mapper.Store(123)), -1)
+        self.assertEqual(mapper.PyObject_SetAttr(mapper.Store(object()), mapper.Store("bob"), mapper.Store(123)), -1)
         self.assertMapperHasError(mapper, AttributeError)
 
 
@@ -217,10 +217,10 @@ class ObjectFunctionsTest(TestCase):
                 self.bob = bob
                 
         objPtr = mapper.Store(Thingum("Poe"))
-        self.assertEquals(mapper.PyObject_HasAttrString(objPtr, "bob"), 1)
-        self.assertEquals(mapper.PyObject_HasAttr(objPtr, mapper.Store("bob")), 1)
-        self.assertEquals(mapper.PyObject_HasAttrString(objPtr, "jim"), 0)
-        self.assertEquals(mapper.PyObject_HasAttr(objPtr, mapper.Store("jim")), 0)
+        self.assertEqual(mapper.PyObject_HasAttrString(objPtr, "bob"), 1)
+        self.assertEqual(mapper.PyObject_HasAttr(objPtr, mapper.Store("bob")), 1)
+        self.assertEqual(mapper.PyObject_HasAttrString(objPtr, "jim"), 0)
+        self.assertEqual(mapper.PyObject_HasAttr(objPtr, mapper.Store("jim")), 0)
 
 
     @WithMapper
@@ -234,8 +234,8 @@ class ObjectFunctionsTest(TestCase):
         keyPtr = mapper.Store(object())
         resultPtr = mapper.Store(result)
         
-        self.assertEquals(mapper.PyObject_GetItem(objPtr, keyPtr), resultPtr)
-        self.assertEquals(mapper.RefCount(resultPtr), 2, "failed to incref return value")
+        self.assertEqual(mapper.PyObject_GetItem(objPtr, keyPtr), resultPtr)
+        self.assertEqual(mapper.RefCount(resultPtr), 2, "failed to incref return value")
 
 
     @WithMapper
@@ -243,7 +243,7 @@ class ObjectFunctionsTest(TestCase):
         obj = object()
         objPtr = mapper.Store(obj)
         
-        self.assertEquals(mapper.PyObject_GetItem(objPtr, mapper.Store(1)), IntPtr.Zero)
+        self.assertEqual(mapper.PyObject_GetItem(objPtr, mapper.Store(1)), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
 
 
@@ -260,8 +260,8 @@ class ObjectFunctionsTest(TestCase):
         keyPtr = mapper.Store(key)
         valuePtr = mapper.Store(value)
         
-        self.assertEquals(mapper.PyObject_SetItem(objPtr, keyPtr, valuePtr), 0)
-        self.assertEquals(sets, {key: value})
+        self.assertEqual(mapper.PyObject_SetItem(objPtr, keyPtr, valuePtr), 0)
+        self.assertEqual(sets, {key: value})
 
 
     @WithMapper
@@ -269,7 +269,7 @@ class ObjectFunctionsTest(TestCase):
         obj = object()
         objPtr = mapper.Store(obj)
         
-        self.assertEquals(mapper.PyObject_SetItem(objPtr, mapper.Store(1), mapper.Store(2)), -1)
+        self.assertEqual(mapper.PyObject_SetItem(objPtr, mapper.Store(1), mapper.Store(2)), -1)
         self.assertMapperHasError(mapper, TypeError)
 
 
@@ -282,20 +282,20 @@ class ObjectFunctionsTest(TestCase):
                 del contents[key]
         
         objPtr = mapper.Store(Subscriptable())
-        self.assertEquals(mapper.PyObject_DelItemString(objPtr, "foo"), 0)
+        self.assertEqual(mapper.PyObject_DelItemString(objPtr, "foo"), 0)
         self.assertMapperHasError(mapper, None)
-        self.assertEquals(contents, {})
+        self.assertEqual(contents, {})
         
-        self.assertEquals(mapper.PyObject_DelItemString(objPtr, "foo"), -1)
+        self.assertEqual(mapper.PyObject_DelItemString(objPtr, "foo"), -1)
         self.assertMapperHasError(mapper, KeyError)
         
 
     @WithMapper
     def testPyObject_Hash(self, mapper, _):
-        self.assertEquals(mapper.PyObject_Hash(mapper.Store("fooble")), hash("fooble"))
+        self.assertEqual(mapper.PyObject_Hash(mapper.Store("fooble")), hash("fooble"))
         self.assertMapperHasError(mapper, None)
         
-        self.assertEquals(mapper.PyObject_Hash(mapper.Store({})), -1)
+        self.assertEqual(mapper.PyObject_Hash(mapper.Store({})), -1)
         self.assertMapperHasError(mapper, TypeError)
 
 
@@ -303,14 +303,14 @@ class ObjectFunctionsTest(TestCase):
     def testPyObject_IsTrue(self, mapper, _):
         for trueval in ("hullo", 33, -1.5, True, [0], (0,), {1:2}, object()):
             ptr = mapper.Store(trueval)
-            self.assertEquals(mapper.PyObject_IsTrue(ptr), 1)
-            self.assertEquals(mapper.LastException, None)
+            self.assertEqual(mapper.PyObject_IsTrue(ptr), 1)
+            self.assertEqual(mapper.LastException, None)
             mapper.DecRef(ptr)
         
         for falseval in ('', 0, 0.0, False, [], tuple(), {}):
             ptr = mapper.Store(falseval)
-            self.assertEquals(mapper.PyObject_IsTrue(ptr), 0)
-            self.assertEquals(mapper.LastException, None)
+            self.assertEqual(mapper.PyObject_IsTrue(ptr), 0)
+            self.assertEqual(mapper.LastException, None)
             mapper.DecRef(ptr)
             
         class MyError(Exception):
@@ -320,7 +320,7 @@ class ObjectFunctionsTest(TestCase):
                 raise MyError()
                 
         ptr = mapper.Store(ErrorBool())
-        self.assertEquals(mapper.PyObject_IsTrue(ptr), -1)
+        self.assertEqual(mapper.PyObject_IsTrue(ptr), -1)
         self.assertMapperHasError(mapper, MyError)
         mapper.DecRef(ptr)
 
@@ -329,14 +329,14 @@ class ObjectFunctionsTest(TestCase):
     def testPyObject_Size(self, mapper, _):
         for okval in ("hullo", [0, 3, 5], (0,), {1:2}, set([1, 2])):
             ptr = mapper.Store(okval)
-            self.assertEquals(mapper.PyObject_Size(ptr), len(okval))
-            self.assertEquals(mapper.LastException, None)
+            self.assertEqual(mapper.PyObject_Size(ptr), len(okval))
+            self.assertEqual(mapper.LastException, None)
             mapper.DecRef(ptr)
         
         for badval in (0, 0.0, False, object, object()):
             ptr = mapper.Store(badval)
             mapper.LastException = None
-            self.assertEquals(mapper.PyObject_Size(ptr), -1)
+            self.assertEqual(mapper.PyObject_Size(ptr), -1)
             self.assertMapperHasError(mapper, TypeError)
             mapper.DecRef(ptr)
 
@@ -346,11 +346,11 @@ class ObjectFunctionsTest(TestCase):
         for okval in ("hullo", [0, 3, 5], (0,), {1:2}, set([1, 2])):
             ptr = mapper.Store(okval)
             strptr = mapper.PyObject_Str(ptr)
-            self.assertEquals(mapper.Retrieve(strptr), str(okval))
-            self.assertEquals(mapper.LastException, None)
+            self.assertEqual(mapper.Retrieve(strptr), str(okval))
+            self.assertEqual(mapper.LastException, None)
             reprptr = mapper.PyObject_Repr(ptr)
-            self.assertEquals(mapper.Retrieve(reprptr), repr(okval))
-            self.assertEquals(mapper.LastException, None)
+            self.assertEqual(mapper.Retrieve(reprptr), repr(okval))
+            self.assertEqual(mapper.LastException, None)
             mapper.DecRef(ptr)
             mapper.DecRef(strptr)
             mapper.DecRef(reprptr)
@@ -362,10 +362,10 @@ class ObjectFunctionsTest(TestCase):
                 raise TypeError('this object cannot be represented in your puny alphabet')
         
         badptr = mapper.Store(BadStr())
-        self.assertEquals(mapper.PyObject_Str(badptr), IntPtr.Zero)
+        self.assertEqual(mapper.PyObject_Str(badptr), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
         
-        self.assertEquals(mapper.PyObject_Repr(badptr), IntPtr.Zero)
+        self.assertEqual(mapper.PyObject_Repr(badptr), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
         mapper.DecRef(badptr)
 
@@ -400,7 +400,7 @@ class ObjectFunctionsTest(TestCase):
             
             instPtr = mapper.Store(inst)
             clsPtr = mapper.Store(cls)
-            self.assertEquals(mapper.PyObject_IsInstance(instPtr, clsPtr), expectResult)
+            self.assertEqual(mapper.PyObject_IsInstance(instPtr, clsPtr), expectResult)
             self.assertMapperHasError(mapper, expectException)
             mapper.DecRef(instPtr)
             mapper.DecRef(clsPtr)
@@ -440,7 +440,7 @@ class ObjectFunctionsTest(TestCase):
             
             subPtr = mapper.Store(sub)
             clsPtr = mapper.Store(cls)
-            self.assertEquals(mapper.PyObject_IsSubclass(subPtr, clsPtr), expectResult)
+            self.assertEqual(mapper.PyObject_IsSubclass(subPtr, clsPtr), expectResult)
             self.assertMapperHasError(mapper, expectException)
             mapper.DecRef(subPtr)
             mapper.DecRef(clsPtr)
@@ -453,8 +453,8 @@ class PyBaseObject_Type_Test(TypeTestCase):
     def testPyBaseObject_Type_fields(self, mapper, _):
         def AssertPtrField(name, value):
             field = CPyMarshal.ReadPtrField(mapper.PyBaseObject_Type, PyTypeObject, name)
-            self.assertNotEquals(field, IntPtr.Zero)
-            self.assertEquals(field, value)
+            self.assertNotEqual(field, IntPtr.Zero)
+            self.assertEqual(field, value)
         
         AssertPtrField("tp_new", mapper.GetFuncPtr("PyType_GenericNew"))
         AssertPtrField("tp_alloc", mapper.GetFuncPtr("PyType_GenericAlloc"))
@@ -490,7 +490,7 @@ class PyBaseObject_Type_Test(TypeTestCase):
         gcwait() # this should make the function pointers invalid if we forgot to store references to the delegates
 
         mapper.IC_PyBaseObject_Dealloc(objPtr)
-        self.assertEquals(calls, [objPtr], "wrong calls")
+        self.assertEqual(calls, [objPtr], "wrong calls")
 
 
 class NewInitFunctionsTest(TestCase):
@@ -503,10 +503,10 @@ class NewInitFunctionsTest(TestCase):
         objPtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyObject()))
         addToCleanUp(lambda: Marshal.FreeHGlobal(objPtr))
         
-        self.assertEquals(mapper.PyObject_Init(objPtr, typePtr), objPtr, 'did not return the "new instance"')
-        self.assertEquals(CPyMarshal.ReadPtrField(objPtr, PyObject, "ob_type"), typePtr, "wrong type")
-        self.assertEquals(CPyMarshal.ReadIntField(objPtr, PyObject, "ob_refcnt"), 1, "wrong refcount")
-        self.assertEquals(mapper.HasPtr(objPtr), False)
+        self.assertEqual(mapper.PyObject_Init(objPtr, typePtr), objPtr, 'did not return the "new instance"')
+        self.assertEqual(CPyMarshal.ReadPtrField(objPtr, PyObject, "ob_type"), typePtr, "wrong type")
+        self.assertEqual(CPyMarshal.ReadIntField(objPtr, PyObject, "ob_refcnt"), 1, "wrong refcount")
+        self.assertEqual(mapper.HasPtr(objPtr), False)
         
 
     @WithMapper
@@ -515,7 +515,7 @@ class NewInitFunctionsTest(TestCase):
         mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         
-        self.assertEquals(mapper.IC_PyBaseObject_Init(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero), 0)
+        self.assertEqual(mapper.IC_PyBaseObject_Init(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero), 0)
         
         mapper.Dispose()
         deallocTypes()
@@ -534,10 +534,10 @@ class NewInitFunctionsTest(TestCase):
         
         del allocs[:]
         objPtr = mapper._PyObject_New(typePtr)
-        self.assertEquals(allocs, [(objPtr, 31337)])
-        self.assertEquals(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_type'), typePtr)
-        self.assertEquals(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_refcnt'), 1)
-        self.assertEquals(mapper.HasPtr(objPtr), False)
+        self.assertEqual(allocs, [(objPtr, 31337)])
+        self.assertEqual(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_type'), typePtr)
+        self.assertEqual(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_refcnt'), 1)
+        self.assertEqual(mapper.HasPtr(objPtr), False)
         
         mapper.Dispose()
         deallocTypes()
@@ -557,10 +557,10 @@ class NewInitFunctionsTest(TestCase):
         
         del allocs[:]
         objPtr = mapper._PyObject_NewVar(typePtr, IntPtr(123))
-        self.assertEquals(allocs, [(objPtr, 31337 + (1337 * 123))])
-        self.assertEquals(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_type'), typePtr)
-        self.assertEquals(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_refcnt'), 1)
-        self.assertEquals(mapper.HasPtr(objPtr), False)
+        self.assertEqual(allocs, [(objPtr, 31337 + (1337 * 123))])
+        self.assertEqual(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_type'), typePtr)
+        self.assertEqual(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_refcnt'), 1)
+        self.assertEqual(mapper.HasPtr(objPtr), False)
         
         mapper.Dispose()
         deallocTypes()

@@ -16,8 +16,8 @@ class IterationTest(TestCase):
     def testPyObject_SelfIter(self, mapper, _):
         objPtr = mapper.Store(object())
         resultPtr = mapper.PyObject_SelfIter(objPtr)
-        self.assertEquals(resultPtr, objPtr)
-        self.assertEquals(mapper.RefCount(objPtr), 2)
+        self.assertEqual(resultPtr, objPtr)
+        self.assertEqual(mapper.RefCount(objPtr), 2)
     
     
     @WithMapper
@@ -26,7 +26,7 @@ class IterationTest(TestCase):
         listPtr = mapper.Store(testList)
         iterPtr = mapper.PyObject_GetIter(listPtr)
         iter = mapper.Retrieve(iterPtr)
-        self.assertEquals(list(iter), testList, "bad iterator")
+        self.assertEqual(list(iter), testList, "bad iterator")
 
 
     @WithMapper
@@ -40,10 +40,10 @@ class IterationTest(TestCase):
         objPtr = mapper.Store(obj)
         iterPtr = mapper.PyObject_GetIter(objPtr)
         _iter = mapper.Retrieve(iterPtr)
-        self.assertEquals(list(_iter), range(10))
+        self.assertEqual(list(_iter), range(10))
         
         classPtr = mapper.Store(iterclass)
-        self.assertEquals(mapper.PyObject_GetIter(classPtr), IntPtr.Zero)
+        self.assertEqual(mapper.PyObject_GetIter(classPtr), IntPtr.Zero)
         self.assertMapperHasError(mapper, TypeError)
 
 
@@ -52,7 +52,7 @@ class IterationTest(TestCase):
         testObj = object()
         objPtr = mapper.Store(testObj)
         iterPtr = mapper.PyObject_GetIter(objPtr)
-        self.assertEquals(iterPtr, IntPtr.Zero, "returned iterator inappropriately")
+        self.assertEqual(iterPtr, IntPtr.Zero, "returned iterator inappropriately")
         self.assertMapperHasError(mapper, TypeError)
 
 
@@ -64,18 +64,18 @@ class IterationTest(TestCase):
         
         for i in range(3):
             itemPtr = mapper.PyIter_Next(iterPtr)
-            self.assertEquals(mapper.Retrieve(itemPtr), testList[i])
-            self.assertEquals(mapper.RefCount(itemPtr), 2)
+            self.assertEqual(mapper.Retrieve(itemPtr), testList[i])
+            self.assertEqual(mapper.RefCount(itemPtr), 2)
             mapper.DecRef(itemPtr)
         
         noItemPtr = mapper.PyIter_Next(iterPtr)
-        self.assertEquals(noItemPtr, IntPtr.Zero)
+        self.assertEqual(noItemPtr, IntPtr.Zero)
 
 
     @WithMapper
     def testPyIter_Next_NotAnIterator(self, mapper, _):
         notIterPtr = mapper.Store(object())
-        self.assertEquals(mapper.PyIter_Next(notIterPtr), IntPtr.Zero, "bad return")
+        self.assertEqual(mapper.PyIter_Next(notIterPtr), IntPtr.Zero, "bad return")
         self.assertMapperHasError(mapper, TypeError)
 
 
@@ -88,15 +88,15 @@ class IterationTest(TestCase):
         explodingIterator = (GetNext() for _ in range(3))
         
         iterPtr = mapper.Store(explodingIterator)
-        self.assertEquals(mapper.PyIter_Next(iterPtr), IntPtr.Zero, "bad return")
-        self.assertNotEquals(mapper.LastException, None, "failed to set exception")
+        self.assertEqual(mapper.PyIter_Next(iterPtr), IntPtr.Zero, "bad return")
+        self.assertNotEqual(mapper.LastException, None, "failed to set exception")
         
         def Raise():
             raise mapper.LastException
         try:
             Raise()
         except BorkedException, e:
-            self.assertEquals(str(e), "Release the hounds!", "unexpected message")
+            self.assertEqual(str(e), "Release the hounds!", "unexpected message")
         else:
             self.fail("wrong exception")
 

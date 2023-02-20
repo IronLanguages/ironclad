@@ -19,33 +19,33 @@ class PyBool_Test(TestCase):
         truePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
         mapper.RegisterData("_Py_TrueStruct", truePtr)
         self.assertTrue(mapper.Retrieve(truePtr) is True)
-        self.assertEquals(CPyMarshal.ReadPtrField(truePtr, PyIntObject, 'ob_type'), mapper.PyBool_Type)
-        self.assertEquals(CPyMarshal.ReadPtrField(truePtr, PyIntObject, 'ob_refcnt'), 1)
-        self.assertEquals(CPyMarshal.ReadIntField(truePtr, PyIntObject, 'ob_ival'), 1)
+        self.assertEqual(CPyMarshal.ReadPtrField(truePtr, PyIntObject, 'ob_type'), mapper.PyBool_Type)
+        self.assertEqual(CPyMarshal.ReadPtrField(truePtr, PyIntObject, 'ob_refcnt'), 1)
+        self.assertEqual(CPyMarshal.ReadIntField(truePtr, PyIntObject, 'ob_ival'), 1)
         truePtr2 = mapper.Store(True)
-        self.assertEquals(truePtr2, truePtr)
-        self.assertEquals(mapper.RefCount(truePtr), 2)
+        self.assertEqual(truePtr2, truePtr)
+        self.assertEqual(mapper.RefCount(truePtr), 2)
         
         falsePtr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
         mapper.RegisterData("_Py_ZeroStruct", falsePtr)
         self.assertTrue(mapper.Retrieve(falsePtr) is False)
-        self.assertEquals(CPyMarshal.ReadPtrField(falsePtr, PyIntObject, 'ob_type'), mapper.PyBool_Type)
-        self.assertEquals(CPyMarshal.ReadPtrField(falsePtr, PyIntObject, 'ob_refcnt'), 1)
-        self.assertEquals(CPyMarshal.ReadIntField(falsePtr, PyIntObject, 'ob_ival'), 0)
+        self.assertEqual(CPyMarshal.ReadPtrField(falsePtr, PyIntObject, 'ob_type'), mapper.PyBool_Type)
+        self.assertEqual(CPyMarshal.ReadPtrField(falsePtr, PyIntObject, 'ob_refcnt'), 1)
+        self.assertEqual(CPyMarshal.ReadIntField(falsePtr, PyIntObject, 'ob_ival'), 0)
         falsePtr2 = mapper.Store(False)
-        self.assertEquals(falsePtr2, falsePtr)
-        self.assertEquals(mapper.RefCount(falsePtr), 2)
+        self.assertEqual(falsePtr2, falsePtr)
+        self.assertEqual(mapper.RefCount(falsePtr), 2)
 
 
     @WithMapper
     def testPyBool_FromLong(self, mapper, _):
         truePtr = mapper.PyBool_FromLong(23151)
-        self.assertEquals(truePtr, mapper._Py_TrueStruct)
-        self.assertEquals(mapper.RefCount(truePtr), 2)
+        self.assertEqual(truePtr, mapper._Py_TrueStruct)
+        self.assertEqual(mapper.RefCount(truePtr), 2)
         
         falsePtr = mapper.PyBool_FromLong(0)
-        self.assertEquals(falsePtr, mapper._Py_ZeroStruct)
-        self.assertEquals(mapper.RefCount(falsePtr), 2)
+        self.assertEqual(falsePtr, mapper._Py_ZeroStruct)
+        self.assertEqual(mapper.RefCount(falsePtr), 2)
         
 
 class PyInt_Test(TestCase):
@@ -54,9 +54,9 @@ class PyInt_Test(TestCase):
     def testStoreInt(self, mapper, _):
         for value in (0, Int32.MaxValue, Int32.MinValue):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
-            self.assertEquals(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
+            self.assertEqual(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
+            self.assertEqual(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
             mapper.DecRef(ptr)
     
     
@@ -64,9 +64,9 @@ class PyInt_Test(TestCase):
     def testPyInt_FromLong(self, mapper, _):
         for value in (0, Int32.MaxValue, Int32.MinValue):
             ptr = mapper.PyInt_FromLong(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
-            self.assertEquals(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
+            self.assertEqual(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
+            self.assertEqual(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
             mapper.DecRef(ptr)
                 
     
@@ -74,9 +74,9 @@ class PyInt_Test(TestCase):
     def testPyInt_FromSsize_t(self, mapper, _):
         for value in (0, Int32.MaxValue, Int32.MinValue):
             ptr = mapper.PyInt_FromSsize_t(IntPtr(value))
-            self.assertEquals(mapper.Retrieve(ptr), value)
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
-            self.assertEquals(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
+            self.assertEqual(mapper.Retrieve(ptr), value)
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyIntObject, "ob_type"), mapper.PyInt_Type)
+            self.assertEqual(CPyMarshal.ReadIntField(ptr, PyIntObject, "ob_ival"), value)
             mapper.DecRef(ptr)
                 
     
@@ -84,7 +84,7 @@ class PyInt_Test(TestCase):
     def testPyInt_FromSize_t(self, mapper, _):
         for value in (0, UInt32.MaxValue):
             ptr = mapper.PyInt_FromSize_t(UIntPtr(value))
-            self.assertEquals(mapper.Retrieve(ptr), value)
+            self.assertEqual(mapper.Retrieve(ptr), value)
             # don't bother to check type, could be an int or a long
             mapper.DecRef(ptr)
 
@@ -93,59 +93,59 @@ class PyInt_Test(TestCase):
     def testPyInt_AsSsize_t(self, mapper, _):
         for value in (0, Int32.MaxValue, Int32.MinValue):
             result = mapper.PyInt_AsSsize_t(mapper.Store(value))
-            self.assertEquals(result, value, "failed to map back")
+            self.assertEqual(result, value, "failed to map back")
             self.assertMapperHasError(mapper, None)
             
         for (value, error) in ((Int32.MaxValue + 1, OverflowError), (Int32.MinValue - 1, OverflowError), (object(), TypeError)):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.PyInt_AsSsize_t(ptr), -1)
+            self.assertEqual(mapper.PyInt_AsSsize_t(ptr), -1)
             self.assertMapperHasError(mapper, error)
 
         for cls in (NumberI, NumberL, NumberF):
             ptr = mapper.Store(cls())
             result = mapper.PyInt_AsSsize_t(ptr)
             self.assertMapperHasError(mapper, None)
-            self.assertEquals(result, NUMBER_VALUE)
+            self.assertEqual(result, NUMBER_VALUE)
         
         
     @WithMapper
     def testPyInt_AsLong(self, mapper, _):
         for value in (0, Int32.MaxValue, Int32.MinValue):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.PyInt_AsLong(ptr), value, "failed to map back")
+            self.assertEqual(mapper.PyInt_AsLong(ptr), value, "failed to map back")
             self.assertMapperHasError(mapper, None)
             
         for (value, error) in ((Int32.MaxValue + 1, OverflowError), (Int32.MinValue - 1, OverflowError), (object(), TypeError)):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.PyInt_AsLong(ptr), -1)
+            self.assertEqual(mapper.PyInt_AsLong(ptr), -1)
             self.assertMapperHasError(mapper, error)
 
         for cls in (NumberI, NumberL, NumberF):
             ptr = mapper.Store(cls())
             result = mapper.PyInt_AsLong(ptr)
             self.assertMapperHasError(mapper, None)
-            self.assertEquals(result, NUMBER_VALUE)
+            self.assertEqual(result, NUMBER_VALUE)
         
         
     @WithMapper
     def testPyInt_AsUnsignedLongMask(self, mapper, _):
         for value in (0, UInt32.MaxValue):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.PyInt_AsUnsignedLongMask(ptr), value)
+            self.assertEqual(mapper.PyInt_AsUnsignedLongMask(ptr), value)
             self.assertMapperHasError(mapper, None)
             
         for (value, result) in ((UInt32.MaxValue + 1, 0), (-1, UInt32.MaxValue)):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.PyInt_AsUnsignedLongMask(ptr), result)
+            self.assertEqual(mapper.PyInt_AsUnsignedLongMask(ptr), result)
             self.assertMapperHasError(mapper, None)
 
         for cls in (NumberI, NumberL, NumberF):
             ptr = mapper.Store(cls())
             result = mapper.PyInt_AsUnsignedLongMask(ptr)
             self.assertMapperHasError(mapper, None)
-            self.assertEquals(result, NUMBER_VALUE)
+            self.assertEqual(result, NUMBER_VALUE)
 
-        self.assertEquals(mapper.PyInt_AsUnsignedLongMask(mapper.Store(object())), UInt32.MaxValue)
+        self.assertEqual(mapper.PyInt_AsUnsignedLongMask(mapper.Store(object())), UInt32.MaxValue)
         self.assertMapperHasError(mapper, TypeError)
 
         
@@ -155,12 +155,12 @@ class PyInt_Test(TestCase):
         for value in (0, 1, -1, "17"):
             unmanaged_int = tp_new(mapper.PyInt_Type, mapper.Store((value,)), IntPtr.Zero)
             actualType = CPyMarshal.ReadPtrField(unmanaged_int, PyObject, "ob_type")
-            self.assertEquals(actualType, mapper.PyInt_Type)
-            self.assertEquals(mapper.Retrieve(unmanaged_int), int(value))
+            self.assertEqual(actualType, mapper.PyInt_Type)
+            self.assertEqual(mapper.Retrieve(unmanaged_int), int(value))
             
         for bad_value in ("hello", object(), object):
             unmanaged_int = tp_new(mapper.PyInt_Type, mapper.Store((bad_value,)), IntPtr.Zero)
-            self.assertEquals(unmanaged_int, IntPtr.Zero)
+            self.assertEqual(unmanaged_int, IntPtr.Zero)
             error = None
             try:
                 int(bad_value)
@@ -175,8 +175,8 @@ class PyLong_Test(TestCase):
     def testStoreLong(self, mapper, _):
         for value in (5555555555, -5555555555, long(0), UInt32.MaxValue):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
+            self.assertEqual(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
             mapper.DecRef(ptr)
                 
     
@@ -184,130 +184,130 @@ class PyLong_Test(TestCase):
     def testPyLong_FromDouble(self, mapper, _):
         for value in (0.0, 1.0, 12345678.9, -123456.789):
             ptr = mapper.PyLong_FromDouble(value)
-            self.assertEquals(mapper.Retrieve(ptr), long(value), "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
+            self.assertEqual(mapper.Retrieve(ptr), long(value), "stored/retrieved wrong")
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
                 
     
     @WithMapper
     def testPyLong_FromLong(self, mapper, _):
         for value in (1555555555, -1555555555, 0):
             ptr = mapper.PyLong_FromLong(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
+            self.assertEqual(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
                 
     
     @WithMapper
     def testPyLong_FromLongLong(self, mapper, _):
         for value in map(Int64, (5555555555, -5555555555, 0)):
             ptr = mapper.PyLong_FromLongLong(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
+            self.assertEqual(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
                 
     
     @WithMapper
     def testPyLong_FromUnsignedLong(self, mapper, _):
         for value in map(UInt32, (4000000000, 0)):
             ptr = mapper.PyLong_FromUnsignedLong(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
+            self.assertEqual(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
                 
                 
     @WithMapper
     def testPyLong_FromUnsignedLongLong(self, mapper, _):
         for value in map(UInt64, (18000000000000000000, 0)):
             ptr = mapper.PyLong_FromUnsignedLongLong(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
+            self.assertEqual(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyObject, "ob_type"), mapper.PyLong_Type, "bad type")
                 
 
     @WithMapper
     def testPyLong_AsLongLong(self, mapper, _):
         for value in (0, 9223372036854775807, -9223372036854775808):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.PyLong_AsLongLong(ptr), value)
+            self.assertEqual(mapper.PyLong_AsLongLong(ptr), value)
         
         for value in (9223372036854775808, -9223372036854775809):
             ptr = mapper.Store(value)
             mapper.LastException = None
-            self.assertEquals(mapper.PyLong_AsLongLong(ptr), -1)
+            self.assertEqual(mapper.PyLong_AsLongLong(ptr), -1)
             self.assertMapperHasError(mapper, OverflowError)
 
         for cls in (NumberI, NumberL, NumberF):
             ptr = mapper.Store(cls())
             result = mapper.PyLong_AsLongLong(ptr)
             self.assertMapperHasError(mapper, None)
-            self.assertEquals(result, NUMBER_VALUE)
+            self.assertEqual(result, NUMBER_VALUE)
                 
 
     @WithMapper
     def testPyLong_AsUnsignedLongLong(self, mapper, _):
         for value in (0, 2**64-1):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.PyLong_AsUnsignedLongLong(ptr), value)
+            self.assertEqual(mapper.PyLong_AsUnsignedLongLong(ptr), value)
             self.assertMapperHasError(mapper, None)
       
         ptr = mapper.Store(2**64)
-        self.assertEquals(mapper.PyLong_AsUnsignedLongLong(ptr), UInt64.MaxValue)
+        self.assertEqual(mapper.PyLong_AsUnsignedLongLong(ptr), UInt64.MaxValue)
         self.assertMapperHasError(mapper, OverflowError)
         
         ptr = mapper.Store(-1)
-        self.assertEquals(mapper.PyLong_AsUnsignedLongLong(ptr), UInt64.MaxValue)
+        self.assertEqual(mapper.PyLong_AsUnsignedLongLong(ptr), UInt64.MaxValue)
         self.assertMapperHasError(mapper, TypeError)
 
         for cls in (NumberI, NumberL, NumberF):
             ptr = mapper.Store(cls())
             result = mapper.PyLong_AsUnsignedLongLong(ptr)
             self.assertMapperHasError(mapper, None)
-            self.assertEquals(result, NUMBER_VALUE)
+            self.assertEqual(result, NUMBER_VALUE)
                 
 
     @WithMapper
     def testPyLong_AsLong(self, mapper, _):
         for value in (0, 2147483647, -2147483648):
             ptr = mapper.Store(long(value))
-            self.assertEquals(mapper.PyLong_AsLong(ptr), value)
+            self.assertEqual(mapper.PyLong_AsLong(ptr), value)
         
         for value in (2147483648, -2147483649):
             ptr = mapper.Store(long(value))
             mapper.LastException = None
-            self.assertEquals(mapper.PyLong_AsLong(ptr), -1)
+            self.assertEqual(mapper.PyLong_AsLong(ptr), -1)
             self.assertMapperHasError(mapper, OverflowError)
 
         for cls in (NumberI, NumberL, NumberF):
             ptr = mapper.Store(cls())
             result = mapper.PyLong_AsLong(ptr)
             self.assertMapperHasError(mapper, None)
-            self.assertEquals(result, NUMBER_VALUE)
+            self.assertEqual(result, NUMBER_VALUE)
                 
 
     @WithMapper
     def testPyLong_AsUnsignedLong(self, mapper, _):
         for value in (0, (2**31) + 1):
             ptr = mapper.Store(long(value))
-            self.assertEquals(mapper.PyLong_AsUnsignedLong(ptr), value)
+            self.assertEqual(mapper.PyLong_AsUnsignedLong(ptr), value)
         
         for value in (-2, 2**33):
             ptr = mapper.Store(long(value))
             mapper.LastException = None
-            self.assertEquals(mapper.PyLong_AsUnsignedLong(ptr), UInt32.MaxValue)
+            self.assertEqual(mapper.PyLong_AsUnsignedLong(ptr), UInt32.MaxValue)
             self.assertMapperHasError(mapper, OverflowError)
 
         for cls in (NumberI, NumberL, NumberF):
             ptr = mapper.Store(cls())
             result = mapper.PyLong_AsUnsignedLong(ptr)
             self.assertMapperHasError(mapper, None)
-            self.assertEquals(result, NUMBER_VALUE)
+            self.assertEqual(result, NUMBER_VALUE)
 
 
     @WithMapper
     def test_PyLong_Sign(self, mapper, _):
         def GetSign(x):
             return mapper._PyLong_Sign(mapper.Store(long(x)))
-        self.assertEquals(GetSign(0), 0)
-        self.assertEquals(GetSign(1), 1)
-        self.assertEquals(GetSign(2147483648), 1)
-        self.assertEquals(GetSign(-1), -1)
-        self.assertEquals(GetSign(-2147483649), -1)
+        self.assertEqual(GetSign(0), 0)
+        self.assertEqual(GetSign(1), 1)
+        self.assertEqual(GetSign(2147483648), 1)
+        self.assertEqual(GetSign(-1), -1)
+        self.assertEqual(GetSign(-2147483649), -1)
 
 
 class PyFloat_Test(TestCase):
@@ -316,10 +316,10 @@ class PyFloat_Test(TestCase):
     def testStoreFloat(self, mapper, _):
         for value in (0.0, 3.3e33, -3.3e-33):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyFloatObject, "ob_refcnt"), 1)
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyFloatObject, "ob_type"), mapper.PyFloat_Type)
-            self.assertEquals(CPyMarshal.ReadDoubleField(ptr, PyFloatObject, "ob_fval"), value)
+            self.assertEqual(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyFloatObject, "ob_refcnt"), 1)
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyFloatObject, "ob_type"), mapper.PyFloat_Type)
+            self.assertEqual(CPyMarshal.ReadDoubleField(ptr, PyFloatObject, "ob_fval"), value)
             mapper.DecRef(ptr)
     
 
@@ -327,10 +327,10 @@ class PyFloat_Test(TestCase):
     def testPyFloat_FromDouble(self, mapper, _):
         for value in (0.0, 3.3e33, -3.3e-33):
             ptr = mapper.PyFloat_FromDouble(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyFloatObject, "ob_refcnt"), 1)
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyFloatObject, "ob_type"), mapper.PyFloat_Type)
-            self.assertEquals(CPyMarshal.ReadDoubleField(ptr, PyFloatObject, "ob_fval"), value)
+            self.assertEqual(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyFloatObject, "ob_refcnt"), 1)
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyFloatObject, "ob_type"), mapper.PyFloat_Type)
+            self.assertEqual(CPyMarshal.ReadDoubleField(ptr, PyFloatObject, "ob_fval"), value)
             mapper.DecRef(ptr)
 
 
@@ -338,13 +338,13 @@ class PyFloat_Test(TestCase):
     def testPyFloat_AsDouble(self, mapper, _):
         for value in (0.0, 3.3e33, -3.3e-33):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.PyFloat_AsDouble(ptr), value, "stored/retrieved wrong")
+            self.assertEqual(mapper.PyFloat_AsDouble(ptr), value, "stored/retrieved wrong")
             mapper.DecRef(ptr)
         
         for value in ("cheese", object, object()):
             ptr = mapper.Store(value)
             mapper.LastException = None
-            self.assertEquals(mapper.PyFloat_AsDouble(ptr), -1, "did not return expected 'error' value")
+            self.assertEqual(mapper.PyFloat_AsDouble(ptr), -1, "did not return expected 'error' value")
             self.assertMapperHasError(mapper, TypeError)
             mapper.DecRef(ptr)
 
@@ -352,7 +352,7 @@ class PyFloat_Test(TestCase):
             ptr = mapper.Store(cls())
             result = mapper.PyFloat_AsDouble(ptr)
             self.assertMapperHasError(mapper, None)
-            self.assertEquals(result, NUMBER_VALUE)
+            self.assertEqual(result, NUMBER_VALUE)
 
 
     @WithMapper
@@ -361,12 +361,12 @@ class PyFloat_Test(TestCase):
         for value in (0, 1, 1.5, "1.0"):
             unmanaged_float = tp_new(mapper.PyFloat_Type, mapper.Store((value,)), IntPtr.Zero)
             actualType = CPyMarshal.ReadPtrField(unmanaged_float, PyObject, "ob_type")
-            self.assertEquals(actualType, mapper.PyFloat_Type)
-            self.assertEquals(mapper.Retrieve(unmanaged_float), float(value))
+            self.assertEqual(actualType, mapper.PyFloat_Type)
+            self.assertEqual(mapper.Retrieve(unmanaged_float), float(value))
             
         for bad_value in ("hello", object(), object):
             unmanaged_float = tp_new(mapper.PyFloat_Type, mapper.Store((bad_value,)), IntPtr.Zero)
-            self.assertEquals(unmanaged_float, IntPtr.Zero)
+            self.assertEqual(unmanaged_float, IntPtr.Zero)
             error = None
             try:
                 float(bad_value)
@@ -383,7 +383,7 @@ class PyFloat_Test(TestCase):
         CPyMarshal.WritePtrField(fptr, PyFloatObject, "ob_type", mapper.PyFloat_Type)
         CPyMarshal.WriteIntField(fptr, PyFloatObject, "ob_refcnt", 1)
         CPyMarshal.WriteDoubleField(fptr, PyFloatObject, "ob_fval", 1.234)
-        self.assertEquals(mapper.Retrieve(fptr), 1.234)
+        self.assertEqual(mapper.Retrieve(fptr), 1.234)
 
 
 class PyComplex_Test(TestCase):
@@ -392,12 +392,12 @@ class PyComplex_Test(TestCase):
     def testStoreComplex(self, mapper, _):
         for value in (0 + 0j, 1 + 3.3e33j, -3.3e-33 - 1j):
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
-            self.assertEquals(CPyMarshal.ReadIntField(ptr, PyComplexObject, "ob_refcnt"), 1)
-            self.assertEquals(CPyMarshal.ReadPtrField(ptr, PyComplexObject, "ob_type"), mapper.PyComplex_Type)
+            self.assertEqual(mapper.Retrieve(ptr), value, "stored/retrieved wrong")
+            self.assertEqual(CPyMarshal.ReadIntField(ptr, PyComplexObject, "ob_refcnt"), 1)
+            self.assertEqual(CPyMarshal.ReadPtrField(ptr, PyComplexObject, "ob_type"), mapper.PyComplex_Type)
             cpxptr = CPyMarshal.GetField(ptr, PyComplexObject, "cval")
-            self.assertEquals(CPyMarshal.ReadDoubleField(cpxptr, Py_complex, "real"), value.real)
-            self.assertEquals(CPyMarshal.ReadDoubleField(cpxptr, Py_complex, "imag"), value.imag)
+            self.assertEqual(CPyMarshal.ReadDoubleField(cpxptr, Py_complex, "real"), value.real)
+            self.assertEqual(CPyMarshal.ReadDoubleField(cpxptr, Py_complex, "imag"), value.imag)
             mapper.DecRef(ptr)
 
 
@@ -412,14 +412,14 @@ class PyComplex_Test(TestCase):
         for (value, info) in values:
             Py_complex_ = mapper.PyComplex_AsCComplex(mapper.Store(value))
             real_, imag_, error = info
-            self.assertEquals(Py_complex_.real, real_)
-            self.assertEquals(Py_complex_.imag, imag_)
+            self.assertEqual(Py_complex_.real, real_)
+            self.assertEqual(Py_complex_.imag, imag_)
             self.assertMapperHasError(mapper, error)
 
  
     @WithMapper
     def testPyComplex_FromDoubles(self, mapper, _):
-        self.assertEquals(mapper.Retrieve(mapper.PyComplex_FromDoubles(1, 2)), 1 + 2j)
+        self.assertEqual(mapper.Retrieve(mapper.PyComplex_FromDoubles(1, 2)), 1 + 2j)
         
         
 
@@ -439,10 +439,10 @@ class PyNumber_Test(TestCase):
             resultPtr = getattr(mapper, cpyName)(valuePtr)
             
             if error:
-                self.assertEquals(resultPtr, IntPtr.Zero)
+                self.assertEqual(resultPtr, IntPtr.Zero)
                 self.assertMapperHasError(mapper, error)
             else:
-                self.assertEquals(mapper.Retrieve(resultPtr), result)
+                self.assertEqual(mapper.Retrieve(resultPtr), result)
                 mapper.DecRef(resultPtr)
             
             mapper.DecRef(valuePtr)
@@ -465,10 +465,10 @@ class PyNumber_Test(TestCase):
                 resultPtr = getattr(mapper, cpyName)(iptr, jptr)
                 
                 if error:
-                    self.assertEquals(resultPtr, IntPtr.Zero)
+                    self.assertEqual(resultPtr, IntPtr.Zero)
                     self.assertMapperHasError(mapper, error)
                 else:
-                    self.assertEquals(mapper.Retrieve(resultPtr), result)
+                    self.assertEqual(mapper.Retrieve(resultPtr), result)
                     mapper.DecRef(resultPtr)
                 
                 mapper.DecRef(iptr)
@@ -529,14 +529,14 @@ class PyNumber_Test(TestCase):
         
         for number in (-1, 32.3, NumberLike(), 4+5j):
             ptr = mapper.Store(number)
-            self.assertEquals(mapper.PyNumber_Check(ptr), 1)
-            self.assertEquals(mapper.LastException, None)
+            self.assertEqual(mapper.PyNumber_Check(ptr), 1)
+            self.assertEqual(mapper.LastException, None)
             mapper.DecRef(ptr)
             
         for notnumber in ("foo", NumberLike, [1, 2, 3]):
             ptr = mapper.Store(notnumber)
-            self.assertEquals(mapper.PyNumber_Check(ptr), 0)
-            self.assertEquals(mapper.LastException, None)
+            self.assertEqual(mapper.PyNumber_Check(ptr), 0)
+            self.assertEqual(mapper.LastException, None)
             mapper.DecRef(ptr)
         
     
@@ -547,7 +547,7 @@ class PyNumber_Test(TestCase):
         for value in values:
             ptr = mapper.Store(value)
             _long = mapper.Retrieve(mapper.PyNumber_Long(ptr))
-            self.assertEquals(_long, long(value), "converted wrong")
+            self.assertEqual(_long, long(value), "converted wrong")
             self.assertMapperHasError(mapper, None)
             mapper.DecRef(ptr)
         
@@ -555,7 +555,7 @@ class PyNumber_Test(TestCase):
         for value in badvalues:
             ptr = mapper.Store(value)
             mapper.LastException = None
-            self.assertEquals(mapper.PyNumber_Long(ptr), IntPtr.Zero)
+            self.assertEqual(mapper.PyNumber_Long(ptr), IntPtr.Zero)
             
             error = None
             try:
@@ -566,10 +566,10 @@ class PyNumber_Test(TestCase):
             mapper.DecRef(ptr)
         
         # work around ipy bug
-        self.assertEquals(mapper.PyNumber_Long(mapper.Store('')), IntPtr.Zero)
+        self.assertEqual(mapper.PyNumber_Long(mapper.Store('')), IntPtr.Zero)
         self.assertMapperHasError(mapper, ValueError)
         
-        self.assertEquals(mapper.PyNumber_Long(mapper.Store('   ')), IntPtr.Zero)
+        self.assertEqual(mapper.PyNumber_Long(mapper.Store('   ')), IntPtr.Zero)
         self.assertMapperHasError(mapper, ValueError)
         
         
@@ -581,7 +581,7 @@ class PyNumber_Test(TestCase):
         for value in values:
             ptr = mapper.Store(value)
             _float = mapper.Retrieve(mapper.PyNumber_Float(ptr))
-            self.assertEquals(_float, float(value), "converted wrong")
+            self.assertEqual(_float, float(value), "converted wrong")
             self.assertMapperHasError(mapper, None)
             mapper.DecRef(ptr)
         
@@ -589,7 +589,7 @@ class PyNumber_Test(TestCase):
         for value in badvalues:
             ptr = mapper.Store(value)
             mapper.LastException = None
-            self.assertEquals(mapper.PyNumber_Float(ptr), IntPtr.Zero)
+            self.assertEqual(mapper.PyNumber_Float(ptr), IntPtr.Zero)
             
             error = None
             try:
@@ -607,15 +607,15 @@ class PyNumber_Test(TestCase):
         for value in values:
             ptr = mapper.Store(value)
             _int = mapper.Retrieve(mapper.PyNumber_Int(ptr))
-            self.assertEquals(type(_int) in (int, long), True, "returned inappropriate type")
-            self.assertEquals(_int, int(value), "converted wrong")
+            self.assertEqual(type(_int) in (int, long), True, "returned inappropriate type")
+            self.assertEqual(_int, int(value), "converted wrong")
             self.assertMapperHasError(mapper, None)
             mapper.DecRef(ptr)
         
         badvalues = ['foo', object, object(), "123.45"]
         for value in badvalues:
             ptr = mapper.Store(value)
-            self.assertEquals(mapper.PyNumber_Int(ptr), IntPtr.Zero)
+            self.assertEqual(mapper.PyNumber_Int(ptr), IntPtr.Zero)
             
             error = None
             try:

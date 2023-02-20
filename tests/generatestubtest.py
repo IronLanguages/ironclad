@@ -12,7 +12,7 @@ class StubGeneratorTest(TestCase):
     def testRun(self):
         gen = StubGenerator()
         output = gen.run(INPUTS)
-        self.assertEquals(output, EXPECT_OUTPUT)
+        self.assertEqual(output, EXPECT_OUTPUT)
 
 
 INPUTS = {
