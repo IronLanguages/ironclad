@@ -51,9 +51,9 @@ namespace Ironclad
             }
             set
             {
-                if ((value as Exception) != null)
+                if (value is Exception ex)
                 {
-                    value = InappropriateReflection.GetPythonException((Exception)value);
+                    value = InappropriateReflection.GetPythonException(ex);
                 }
                 
                 IntPtr typePtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyThreadState), nameof(PyThreadState.curexc_type));

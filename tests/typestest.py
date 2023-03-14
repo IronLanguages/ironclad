@@ -25,22 +25,21 @@ BUILTIN_TYPES = {
     "PyList_Type": list,
     "PyDict_Type": dict,
     "PyTuple_Type": tuple,
-    "PyLong_Type": long,
-    "PyInt_Type": int,
+    "PyLong_Type": int,
     "PyBool_Type": bool,
     "PyFloat_Type": float,
     "PyComplex_Type": complex,
     "PySlice_Type": slice,
-    "PyEllipsis_Type": types.EllipsisType,
-    "PyNone_Type": types.NoneType,
-    "PyNotImplemented_Type": types.NotImplementedType,
+    "PyEllipsis_Type": type(Ellipsis),
+    "PyNone_Type": type(None),
+    "PyNotImplemented_Type": type(NotImplemented),
     "PyFunction_Type": types.FunctionType,
     "PyMethod_Type": types.MethodType,
 }
 
 TYPE_SUBCLASS_FLAGS = {
-    int: Py_TPFLAGS.INT_SUBCLASS,
-    long: Py_TPFLAGS.LONG_SUBCLASS,
+    int: Py_TPFLAGS.LONG_SUBCLASS,
+    #long: Py_TPFLAGS.LONG_SUBCLASS, # TODO
     list: Py_TPFLAGS.LIST_SUBCLASS,
     tuple: Py_TPFLAGS.TUPLE_SUBCLASS,
     str: Py_TPFLAGS.STRING_SUBCLASS,
@@ -58,11 +57,8 @@ class Types_Test(TestCase):
             typePtr = getattr(mapper, k)
             self.assertEqual(CPyMarshal.ReadCStringField(typePtr, PyTypeObject, 'tp_name'), v.__name__)
             
-            if typePtr == mapper.PyFile_Type:
-                self.assertNotEqual(mapper.Retrieve(typePtr), v, "failed to map PyFile_Type to something-that-isn't file")
-            else:
-                self.assertEqual(mapper.Retrieve(typePtr), v, "failed to map " + k)
-            
+            self.assertEqual(mapper.Retrieve(typePtr), v, "failed to map " + k)
+
             self.assertEqual(mapper.RefCount(typePtr), 1, "failed to add reference to " + k)
             
             mapper.PyType_Ready(typePtr)

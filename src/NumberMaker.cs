@@ -15,30 +15,16 @@ namespace Ironclad
         public static BigInteger
         MakeBigInteger(CodeContext ctx, object obj)
         {
-            try
+            var index = PythonOps.Index(obj);
+            switch (index)
             {
-                return Converter.ConvertToBigInteger(obj);
+                case int i:
+                    return i;
+                case BigInteger bi:
+                    return bi;
+                default:
+                    throw new InvalidOperationException();
             }
-            catch
-            {
-                // one of the following fallbacks *might* work
-            }
-            
-            if ((!Builtin.isinstance(obj, TypeCache.PythonType)) &&
-                Builtin.hasattr(ctx, obj, "__int__"))
-            {
-                object probablyInt = PythonCalls.Call(TypeCache.Int32, new object[] {obj});
-                return MakeBigInteger(ctx, probablyInt);
-            }
-            
-            if ((!Builtin.isinstance(obj, TypeCache.PythonType)) &&
-                Builtin.hasattr(ctx, obj, "__float__"))
-            {
-                object probablyFloat = PythonCalls.Call(TypeCache.Double, new object[] {obj});
-                return MakeBigInteger(ctx, probablyFloat);
-            }
-            
-            throw PythonOps.TypeError("could not make number sufficiently integeresque");
         }
         
         public static BigInteger
@@ -75,7 +61,7 @@ namespace Ironclad
             }
             
             if ((!Builtin.isinstance(obj, TypeCache.PythonType)) &&
-                Builtin.hasattr(ctx, obj, "__long__"))
+                Builtin.hasattr(ctx, obj, "__index__"))
             {
                 object probablyLong = PythonCalls.Call(TypeCache.BigInteger, new object[] {obj});
                 return MakeFloat(ctx, probablyLong);

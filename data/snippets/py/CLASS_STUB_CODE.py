@@ -19,7 +19,10 @@ def __del__(self):
 def __setattr__(self, name, value):
     # not directly tested: if you can work out how to, be my guest
     # numpy fromrecords test will overflow stack if this breaks
-    object.__setattr__(self, name, value)
+    if isinstance(self, type):
+        type.__setattr__(self, name, value)
+    else:
+        object.__setattr__(self, name, value)
 
 _ironclad_class_stub = _ironclad_metaclass('_ironclad_class_stub', _ironclad_bases, {
     '__new__': __new__,

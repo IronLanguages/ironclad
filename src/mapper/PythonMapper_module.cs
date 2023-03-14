@@ -129,8 +129,8 @@ namespace Ironclad
         public override IntPtr
         PyEval_GetBuiltins()
         {
-            PythonModule __builtin__ = this.GetModule("__builtin__");
-            return this.Store(__builtin__.Get__dict__());
+            PythonModule builtins = this.GetModule("builtins");
+            return this.Store(builtins.Get__dict__());
         }
         
         public override IntPtr

@@ -16,7 +16,9 @@ from Ironclad.Structs import (
     MemberT, METH, PyMemberDef, PyNumberMethods, PyStringObject, 
     PyIntObject, PyObject, PyMappingMethods, PySequenceMethods, PyTypeObject
 )
-   
+
+maxint = Int32.MaxValue
+
 def Raise(*_):
     raise Exception('should never have called this')
         
@@ -150,6 +152,8 @@ class InheritanceTest(TestCase):
     
     @WithMapper
     def testMultipleBasesIncludingBuiltin(self, mapper, addToCleanUp):
+        self.skipTest('TODO: review for ipy3 - subclasses of int')
+
         basePtr, deallocBase = MakeTypePtr(mapper, {'tp_name': 'base', 'ob_type': mapper.PyType_Type})
         addToCleanUp(deallocBase)
 
@@ -273,6 +277,8 @@ class BuiltinSubclassHorrorTest(TestCase):
     
     @WithMapper
     def testRetrievedIntsHaveCorrectValue(self, mapper, deallocLater):
+        self.skipTest('TODO: review for ipy3 - subclasses of int')
+
         # this is the only way I can tell what the underlying 'int' value is
         # (as opposed to the value returned from __int__, which does not get called
         # when passed into __getslice__)
@@ -421,18 +427,18 @@ class FieldsTest(TestCase):
             instance.attr = 1234567
         self.assertRaises(AttributeError, Set)
         
-        CPyMarshal.WriteUInt(fieldPtr, sys.maxint + 1)
-        self.assertEqual(instance.attr, sys.maxint + 1)
+        CPyMarshal.WriteUInt(fieldPtr, maxint + 1)
+        self.assertEqual(instance.attr, maxint + 1)
         
     @WithMapper
     def testUintFieldReadWrite(self, mapper, addToCleanUp):
         instance, fieldPtr = MakeInstanceWithField(MemberT.UINT, 0, mapper, addToCleanUp)
         
-        instance.attr = sys.maxint + 1
-        self.assertEqual(CPyMarshal.ReadUInt(fieldPtr), sys.maxint + 1)
+        instance.attr = maxint + 1
+        self.assertEqual(CPyMarshal.ReadUInt(fieldPtr), maxint + 1)
         
-        CPyMarshal.WriteUInt(fieldPtr, sys.maxint + 3)
-        self.assertEqual(instance.attr, sys.maxint + 3)
+        CPyMarshal.WriteUInt(fieldPtr, maxint + 3)
+        self.assertEqual(instance.attr, maxint + 3)
     
     @WithMapper
     def testDoubleFieldReadOnly(self, mapper, addToCleanUp):

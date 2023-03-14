@@ -121,7 +121,7 @@ namespace Ironclad
         {
             try
             {
-                object result = PythonCalls.Call(TypeCache.Int32, new object[] {this.Retrieve(numberPtr)});
+                object result = PythonCalls.Call(TypeCache.BigInteger, new object[] {this.Retrieve(numberPtr)});
                 if (!(result is Int32))
                 {
                     result = Converter.ConvertToBigInteger(result);

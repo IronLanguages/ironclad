@@ -156,7 +156,7 @@ namespace Ironclad
                     args.CopyTo(argsArray, 0);
                 }
 
-                PythonDictionary builtins = this.GetModule("__builtin__").Get__dict__();
+                PythonDictionary builtins = this.GetModule("builtins").Get__dict__();
                 if (obj == builtins["__import__"])
                 {
                     // I really, really wish that Pyrex used the C API for importing things,
@@ -251,16 +251,9 @@ namespace Ironclad
             {
                 object derived = this.Retrieve(derivedPtr);
                 object cls = this.Retrieve(clsPtr);
-
-                // stupid casting rigmarole is because Builtin.issubclass gets
-                // issubclass(object, object) wrong if I don't force a more
-                // specific call.
-                if (derived is PythonType subType && Builtin.issubclass(this.scratchContext, subType, cls))
-                {
-                    return 1;
-                }
-
-                return 0;
+                var res = Builtin.issubclass(this.scratchContext, derived, cls);
+                LightExceptions.CheckAndThrow(res);
+                return (bool)res ? 1 : 0;
             }
             catch (Exception e)
             {

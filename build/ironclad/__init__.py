@@ -4,7 +4,7 @@
 __version__ = '2.7.0A1'
 
 import sys
-if sys.platform != 'cli':
+if sys.implementation.name != 'ironpython':
     raise ImportError("If you're running CPython, you don't need ironclad. If you're running Jython, ironclad won't work.")
 
 import os
@@ -84,10 +84,10 @@ class _NativeFilenoPatch(object):
         return (modname, name, oldvalue)
 
     def _patch_all(self):
-        oldopen = sys.modules['__builtin__'].open
+        oldopen = sys.modules['builtins'].open
         
         patch = lambda *args: self._patches.append(self._apply_patch(*args))
-        patch('__builtin__', 'open', open)
+        patch('builtins', 'open', open)
         
         import os, posix
         for name in 'close fdopen fstat open read tmpfile write'.split():

@@ -67,16 +67,6 @@ class ObjectFunctionsTest(TestCase):
             self.assertEqual(mapper.PyCallable_Check(x), 0, "reported callable")
 
 
-    @WithMapper
-    def testPyObject_Compare(self, mapper, _):
-        objects = (1, 1, 1.0, -1, 3.4e5, object, object(), 'hello', [1], (2,), {3: 'four'})
-        
-        for obj1 in objects:
-            for obj2 in objects:
-                self.assertEqual(mapper.PyObject_Compare(mapper.Store(obj1), mapper.Store(obj2)),
-                                  cmp(obj1, obj2), "%r, %r" % (obj1, obj2))
-
-
     def assertRichCmp(self, mapper, opid, ob1, ob2):
         op = COMPARISONS[opid]
         expectint = -1

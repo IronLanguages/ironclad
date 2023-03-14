@@ -2,17 +2,16 @@
 
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase
-from tests.utils.numbers import NumberI, NumberL, NumberF, NUMBER_VALUE
+from tests.utils.numbers import NumberI, NumberF, NUMBER_VALUE
 
 from Ironclad import NumberMaker
 
 class NumberMakerTest(TestCase):
 
     def testBigInteger(self):
-        for cls in (NumberI, NumberL, NumberF):
-            result = NumberMaker.MakeBigInteger(cls())
-            self.assertEqual(isinstance(result, long), True)
-            self.assertEqual(result, NUMBER_VALUE)
+        result = NumberMaker.MakeBigInteger(NumberI())
+        self.assertEqual(isinstance(result, int), True)
+        self.assertEqual(result, NUMBER_VALUE)
 
         self.assertRaises(TypeError, lambda: NumberMaker.MakeBigInteger(object()))
 
@@ -22,12 +21,12 @@ class NumberMakerTest(TestCase):
                 return -1
         self.assertRaises(TypeError, lambda: NumberMaker.MakeUnsignedBigInteger(NumberNeg()))
 
-        result = NumberMaker.MakeBigInteger(NumberF())
-        self.assertEqual(isinstance(result, long), True)
+        result = NumberMaker.MakeUnsignedBigInteger(NumberI())
+        self.assertEqual(isinstance(result, int), True)
         self.assertEqual(result, NUMBER_VALUE)
 
     def testFloat(self):
-        for cls in (NumberI, NumberL, NumberF):
+        for cls in (NumberI, NumberF):
             result = NumberMaker.MakeFloat(cls())
             self.assertEqual(isinstance(result, float), True)
             self.assertEqual(result, NUMBER_VALUE)

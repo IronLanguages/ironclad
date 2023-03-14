@@ -38,7 +38,7 @@ DELEGATE_TYPES = {
     METH.KEYWORDS: Ironclad.dgt_ptr_ptrptrptr,
     METH.VARARGS | METH.KEYWORDS: Ironclad.dgt_ptr_ptrptrptr,
 }
-for (k, v) in DELEGATE_TYPES.items():
+for (k, v) in list(DELEGATE_TYPES.items()):
     DELEGATE_TYPES[k | METH.COEXIST] = v
 def MakeMethodDef(name, implementation, flags, doc="doc"):
     dgt = DELEGATE_TYPES[flags](implementation)
@@ -57,7 +57,7 @@ def MakeGetSetDef(name, get, set, doc, closure=IntPtr.Zero):
         setdgt = Ironclad.dgt_int_ptrptrptr(set)
         _set = Marshal.GetFunctionPointerForDelegate(setdgt)
         deallocs.append(GC_NotYet(setdgt))
-    return new_PyGetSetDef(name, _get, _set, doc, closure), lambda: list(map(apply, deallocs))
+    return new_PyGetSetDef(name, _get, _set, doc, closure), lambda: [f() for f in deallocs]
 
 
 def MakeMemberDef(name, type_, offset, flags, doc="doc"):

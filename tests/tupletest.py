@@ -161,7 +161,7 @@ class TupleTest(TestCase):
         
         tuplePtr = mapper.PyTuple_New(IntPtr(1))
         CPyMarshal.WritePtr(tuplePtrPtr, tuplePtr)
-        self.assertEqual(mapper._PyTuple_Resize(tuplePtrPtr, IntPtr(2000000000)), -1)
+        self.assertEqual(mapper._PyTuple_Resize(tuplePtrPtr, IntPtr(1<<40)), -1)
         self.assertEqual(CPyMarshal.ReadPtr(tuplePtrPtr), IntPtr.Zero)
         
 

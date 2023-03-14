@@ -367,7 +367,7 @@ class NastyImportDetailsTest(TestCase):
         self.assertNotIn("hippo", sys.modules)
         self.assertIn('hungry.hungry.hippo', sys.modules)
         
-        for key in sys.modules.keys():
+        for key in list(sys.modules.keys()):
             if key.startswith('hungry'):
                 del sys.modules[key]
     
@@ -394,7 +394,7 @@ class NastyImportDetailsTest(TestCase):
         self.assertEqual(sys.modules['hungry.hungry.hippo'].__doc__, 'test_docstring')
         self.assertEqual(sys.modules['hungry.hungry.hippo'].__file__, 'hippo_file')
         
-        for key in sys.modules.keys():
+        for key in list(sys.modules.keys()):
             if key.startswith('hungry'):
                 del sys.modules[key]
     
@@ -418,8 +418,8 @@ class BuiltinsTest(TestCase):
     @WithMapper
     def testPyEval_GetBuiltins(self, mapper, _):
         builtinsPtr = mapper.PyEval_GetBuiltins()
-        import __builtin__
-        self.assertEqual(mapper.Retrieve(builtinsPtr), __builtin__.__dict__)
+        import builtins
+        self.assertEqual(mapper.Retrieve(builtinsPtr), builtins.__dict__)
         
         
         

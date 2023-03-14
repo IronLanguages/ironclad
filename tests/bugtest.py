@@ -6,8 +6,8 @@ from tests.utils.testcase import TestCase
 from System import UInt32
 
 class Number(object):
-    def __long__(self):
-        return 0L
+    def __index__(self):
+        return 0
     def __float__(self):
         return 0.0001
 

@@ -23,7 +23,7 @@ class SequenceFunctionsTest(TestCase):
             def __rmul__(self, _): raise Exception("fooled you!")
         
         # yes, an xrange object really should be treated as a sequence here.
-        sequences = map(mapper.Store, [(1, 2, 3), ['a'], Sequence(), "foo", xrange(5)])
+        sequences = map(mapper.Store, [(1, 2, 3), ['a'], Sequence(), "foo", range(5)])
         notSequences = map(mapper.Store, [tuple, list, object(), {'foo': 'bar'}])
         
         for x in sequences:

@@ -12,7 +12,7 @@ from Ironclad.Structs import Py_complex, PyObject, PyTypeObject
 TEST_NUMBER = 1359
 
 def GetTestWroteBytes(bytes):
-    intCount = bytes / CPyMarshal.IntSize
+    intCount = bytes // CPyMarshal.IntSize
     def TestWroteBytes(address):
         for a in range(intCount):
             ptr = OffsetPtr(address, a * CPyMarshal.IntSize)
@@ -22,7 +22,7 @@ def GetTestWroteBytes(bytes):
     return TestWroteBytes
 
 def GetWriteBytes(bytes):
-    intCount = bytes / CPyMarshal.IntSize
+    intCount = bytes // CPyMarshal.IntSize
     def WriteBytes(address):
         for a in range(intCount):
             ptr = OffsetPtr(address, a * CPyMarshal.IntSize)

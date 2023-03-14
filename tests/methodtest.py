@@ -16,18 +16,18 @@ class MethodTest(TestCase):
     @WithMapper
     def testPyMethod_New(self, mapper, _):
         # if Python doesn't care what you put in a bound method, nor do I
-        methPtr = mapper.PyMethod_New(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)
-        self.assertEqual(mapper.Retrieve(methPtr), MethodType(None, None, None))
+        methPtr = mapper.PyMethod_New(IntPtr.Zero, mapper.Store(0), IntPtr.Zero)
+        self.assertEqual(mapper.Retrieve(methPtr), MethodType(None, 0))
         self.assertMapperHasError(mapper, None)
 
         methPtr = mapper.PyMethod_New(mapper.Store(1), mapper.Store(2), mapper.Store(3))
-        self.assertEqual(mapper.Retrieve(methPtr), MethodType(1, 2, 3))
+        self.assertEqual(mapper.Retrieve(methPtr), MethodType(1, 2))
         self.assertMapperHasError(mapper, None)
 
 
     @WithMapper
     def testStoreMethod(self, mapper, _):
-        meth = MethodType('foo', 'bar', 'baz')
+        meth = MethodType('foo', 'bar')
         methPtr = mapper.Store(meth)
         
         stored = PtrToStructure(methPtr, PyMethodObject)
@@ -38,7 +38,6 @@ class MethodTest(TestCase):
         attrs = {
             'im_func': 'foo',
             'im_self': 'bar',
-            'im_class': 'baz',
         }
         attrPtrs = []
         for (attr, expected) in attrs.items():

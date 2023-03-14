@@ -3,14 +3,16 @@ import operator
 
 from tests.utils.runtest import makesuite, run
 from tests.utils.testcase import TestCase, WithMapper
-from tests.utils.numbers import NumberI, NumberL, NumberF, NUMBER_VALUE
+from tests.utils.numbers import NumberI, NumberF, NUMBER_VALUE
 
 from System import Int32, Int64, IntPtr, UInt32, UInt64, UIntPtr
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, dgt_ptr_ptrptrptr, PythonMapper
 from Ironclad.Structs import Py_complex, PyObject, PyIntObject, PyFloatObject, PyComplexObject, PyTypeObject
-        
+
+def long(x):
+    return int(x).ToBigInteger()
 
 class PyBool_Test(TestCase):
     
@@ -101,7 +103,7 @@ class PyInt_Test(TestCase):
             self.assertEqual(mapper.PyInt_AsSsize_t(ptr), -1)
             self.assertMapperHasError(mapper, error)
 
-        for cls in (NumberI, NumberL, NumberF):
+        for cls in (NumberI,):
             ptr = mapper.Store(cls())
             result = mapper.PyInt_AsSsize_t(ptr)
             self.assertMapperHasError(mapper, None)
@@ -120,7 +122,7 @@ class PyInt_Test(TestCase):
             self.assertEqual(mapper.PyInt_AsLong(ptr), -1)
             self.assertMapperHasError(mapper, error)
 
-        for cls in (NumberI, NumberL, NumberF):
+        for cls in (NumberI,):
             ptr = mapper.Store(cls())
             result = mapper.PyInt_AsLong(ptr)
             self.assertMapperHasError(mapper, None)
@@ -139,7 +141,7 @@ class PyInt_Test(TestCase):
             self.assertEqual(mapper.PyInt_AsUnsignedLongMask(ptr), result)
             self.assertMapperHasError(mapper, None)
 
-        for cls in (NumberI, NumberL, NumberF):
+        for cls in (NumberI,):
             ptr = mapper.Store(cls())
             result = mapper.PyInt_AsUnsignedLongMask(ptr)
             self.assertMapperHasError(mapper, None)
@@ -232,7 +234,7 @@ class PyLong_Test(TestCase):
             self.assertEqual(mapper.PyLong_AsLongLong(ptr), -1)
             self.assertMapperHasError(mapper, OverflowError)
 
-        for cls in (NumberI, NumberL, NumberF):
+        for cls in (NumberI,):
             ptr = mapper.Store(cls())
             result = mapper.PyLong_AsLongLong(ptr)
             self.assertMapperHasError(mapper, None)
@@ -254,7 +256,7 @@ class PyLong_Test(TestCase):
         self.assertEqual(mapper.PyLong_AsUnsignedLongLong(ptr), UInt64.MaxValue)
         self.assertMapperHasError(mapper, TypeError)
 
-        for cls in (NumberI, NumberL, NumberF):
+        for cls in (NumberI,):
             ptr = mapper.Store(cls())
             result = mapper.PyLong_AsUnsignedLongLong(ptr)
             self.assertMapperHasError(mapper, None)
@@ -273,7 +275,7 @@ class PyLong_Test(TestCase):
             self.assertEqual(mapper.PyLong_AsLong(ptr), -1)
             self.assertMapperHasError(mapper, OverflowError)
 
-        for cls in (NumberI, NumberL, NumberF):
+        for cls in (NumberI,):
             ptr = mapper.Store(cls())
             result = mapper.PyLong_AsLong(ptr)
             self.assertMapperHasError(mapper, None)
@@ -292,7 +294,7 @@ class PyLong_Test(TestCase):
             self.assertEqual(mapper.PyLong_AsUnsignedLong(ptr), UInt32.MaxValue)
             self.assertMapperHasError(mapper, OverflowError)
 
-        for cls in (NumberI, NumberL, NumberF):
+        for cls in (NumberI,):
             ptr = mapper.Store(cls())
             result = mapper.PyLong_AsUnsignedLong(ptr)
             self.assertMapperHasError(mapper, None)
@@ -348,7 +350,7 @@ class PyFloat_Test(TestCase):
             self.assertMapperHasError(mapper, TypeError)
             mapper.DecRef(ptr)
 
-        for cls in (NumberI, NumberL, NumberF):
+        for cls in (NumberI, NumberF):
             ptr = mapper.Store(cls())
             result = mapper.PyFloat_AsDouble(ptr)
             self.assertMapperHasError(mapper, None)
@@ -489,10 +491,7 @@ class PyNumber_Test(TestCase):
     
     def testPyNumber_Multiply(self):
         self.assertBinaryOp("PyNumber_Multiply", operator.mul)
-    
-    def testPyNumber_Divide(self):
-        self.assertBinaryOp("PyNumber_Divide", operator.div)
-    
+
     def testPyNumber_TrueDivide(self):
         self.assertBinaryOp("PyNumber_TrueDivide", operator.truediv)
     

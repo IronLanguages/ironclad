@@ -2,13 +2,8 @@
 NUMBER_VALUE = 12345
 
 class NumberI(object):
-    def __int__(self):
+    def __index__(self):
         return int(NUMBER_VALUE)
-
-
-class NumberL(object):
-    def __long__(self):
-        return long(NUMBER_VALUE)
 
 
 class NumberF(object):
