@@ -140,26 +140,6 @@ namespace Ironclad
         }
 
         public override IntPtr
-        PyClass_New(IntPtr basesPtr, IntPtr dictPtr, IntPtr namePtr)
-        {
-            try
-            {
-                PythonTuple bases = new PythonTuple();
-                if (basesPtr != IntPtr.Zero)
-                {
-                    bases = (PythonTuple)this.Retrieve(basesPtr);
-                }
-                return this.Store(OldClass.__new__(this.scratchContext, 
-                    TypeCache.OldClass, (string)this.Retrieve(namePtr), bases, (PythonDictionary)this.Retrieve(dictPtr)));
-            }
-            catch (Exception e)
-            {
-                this.LastException = e;
-                return IntPtr.Zero;
-            }
-        }
-        
-        public override IntPtr
         IC_PyType_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
         {
             try
@@ -200,8 +180,6 @@ namespace Ironclad
             this.PyType_Ready(this.PyNotImplemented_Type);
             this.PyType_Ready(this.PyMethod_Type);
             this.PyType_Ready(this.PyFunction_Type);
-            this.PyType_Ready(this.PyClass_Type);
-            this.PyType_Ready(this.PyInstance_Type);
 
             this.actualisableTypes[this.PyType_Type] = new ActualiseDelegate(this.ActualiseType);
             this.actualisableTypes[this.PyFloat_Type] = new ActualiseDelegate(this.ActualiseFloat);
@@ -288,46 +266,6 @@ namespace Ironclad
             return typePtr;
         }
         
-        private IntPtr
-        StoreTyped(OldClass cls)
-        {
-            int size = Marshal.SizeOf<PyClassObject>();
-            IntPtr ptr = this.allocator.Alloc(size);
-            CPyMarshal.Zero(ptr, size);
-            
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_refcnt), 2); // leak classes deliberately
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_type), this.PyClass_Type);
-            
-            CPyMarshal.WritePtrField(ptr, typeof(PyClassObject), nameof(PyClassObject.cl_bases), 
-                this.Store(Builtin.getattr(this.scratchContext, cls, "__bases__")));
-            CPyMarshal.WritePtrField(ptr, typeof(PyClassObject), nameof(PyClassObject.cl_dict), 
-                this.Store(Builtin.getattr(this.scratchContext, cls, "__dict__")));
-            CPyMarshal.WritePtrField(ptr, typeof(PyClassObject), nameof(PyClassObject.cl_name), 
-                this.Store(Builtin.getattr(this.scratchContext, cls, "__name__")));
-            
-            this.map.Associate(ptr, cls);
-            return ptr;
-        }
-        
-        private IntPtr
-        StoreTyped(OldInstance inst)
-        {
-            int size = Marshal.SizeOf<PyInstanceObject>();
-            IntPtr ptr = this.allocator.Alloc(size);
-            CPyMarshal.Zero(ptr, size);
-            
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_refcnt), 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_type), this.PyInstance_Type);
-
-            CPyMarshal.WritePtrField(ptr, typeof(PyInstanceObject), nameof(PyInstanceObject.in_class), 
-                this.Store(Builtin.getattr(this.scratchContext, inst, "__class__")));
-            CPyMarshal.WritePtrField(ptr, typeof(PyInstanceObject), nameof(PyInstanceObject.in_dict), 
-                this.Store(Builtin.getattr(this.scratchContext, inst, "__dict__")));
-            
-            this.map.Associate(ptr, inst);
-            return ptr;
-        }
-
         private void
         ActualiseFloat(IntPtr fptr)
         {

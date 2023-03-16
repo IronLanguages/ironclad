@@ -5,7 +5,6 @@
 # inclusion by C code, and in PythonApi generation.
 
 destructor IC_PyBaseObject_Dealloc;
-destructor IC_PyInstance_Dealloc;
 destructor IC_PyList_Dealloc;
 destructor IC_PyMethod_Dealloc;
 destructor IC_PySlice_Dealloc;

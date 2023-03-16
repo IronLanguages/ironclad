@@ -36,8 +36,6 @@ BUILTIN_TYPES = {
     "PyNotImplemented_Type": types.NotImplementedType,
     "PyFunction_Type": types.FunctionType,
     "PyMethod_Type": types.MethodType,
-    "PyClass_Type": types.ClassType,
-    "PyInstance_Type": types.InstanceType,
 }
 
 TYPE_SUBCLASS_FLAGS = {
@@ -331,81 +329,6 @@ class Types_Test(TestCase):
         self.assertSizes(mapper.PyInt_Type, Marshal.SizeOf(PyIntObject()))
         self.assertSizes(mapper.PyFloat_Type, Marshal.SizeOf(PyFloatObject()))
         self.assertSizes(mapper.PyComplex_Type, Marshal.SizeOf(PyComplexObject()))
-        self.assertSizes(mapper.PyClass_Type, Marshal.SizeOf(PyClassObject()))
-        self.assertSizes(mapper.PyInstance_Type, Marshal.SizeOf(PyInstanceObject()))
-
-
-class OldStyle_Test(TestCase):
-        
-    @WithMapper
-    def testPyClass_New(self, mapper, _):
-        namePtr = mapper.Store('klass')
-        dictPtr = mapper.Store({'wurble': 'burble'})
-        basesPtr = mapper.Store(())
-        
-        klassPtr = mapper.PyClass_New(basesPtr, dictPtr, namePtr)
-        self.assertEqual(CPyMarshal.ReadPtrField(klassPtr, PyObject, "ob_type"), mapper.PyClass_Type)
-        klass = mapper.Retrieve(klassPtr)
-        
-        self.assertEqual(klass.__name__, 'klass')
-        self.assertEqual(klass.wurble, 'burble')
-        self.assertEqual(klass.__bases__, ())
-    
-    
-    @WithMapper
-    def testPyClass_New_NullBases(self, mapper, _):
-        namePtr = mapper.Store('klass')
-        dictPtr = mapper.Store({'wurble': 'burble'})
-        
-        klassPtr = mapper.PyClass_New(IntPtr.Zero, dictPtr, namePtr)
-        self.assertEqual(CPyMarshal.ReadPtrField(klassPtr, PyObject, "ob_type"), mapper.PyClass_Type)
-        klass = mapper.Retrieve(klassPtr)
-        
-        self.assertEqual(klass.__name__, 'klass')
-        self.assertEqual(klass.wurble, 'burble')
-        self.assertEqual(klass.__bases__, ())
-
-    
-    @WithMapper
-    def testStoreOldStyle(self, mapper, _):
-        class O():
-            pass
-        OPtr = mapper.Store(O)
-        self.assertEqual(CPyMarshal.ReadIntField(OPtr, PyObject, "ob_refcnt"), 2) # again, leak classes deliberately
-        self.assertEqual(CPyMarshal.ReadPtrField(OPtr, PyObject, "ob_type"), mapper.PyClass_Type)
-        
-        self.assertEqual(mapper.Retrieve(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_bases")), ())
-        self.assertEqual(mapper.Retrieve(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_name")), "O")
-        self.assertEqual(mapper.Retrieve(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_dict")) is O.__dict__, True)
-        
-        self.assertEqual(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_getattr"), IntPtr.Zero)
-        self.assertEqual(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_setattr"), IntPtr.Zero)
-        self.assertEqual(CPyMarshal.ReadPtrField(OPtr, PyClassObject, "cl_delattr"), IntPtr.Zero)
-        
-        o = O()
-        oPtr = mapper.Store(o)
-        self.assertEqual(CPyMarshal.ReadIntField(oPtr, PyObject, "ob_refcnt"), 1)
-        self.assertEqual(CPyMarshal.ReadPtrField(oPtr, PyObject, "ob_type"), mapper.PyInstance_Type)
-        
-        self.assertEqual(CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, "in_class"), OPtr)
-        self.assertEqual(mapper.Retrieve(CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, "in_dict")) is o.__dict__, True)
-        self.assertEqual(CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, "in_weakreflist"), IntPtr.Zero)
-    
-    
-    @WithMapper
-    def testDestroyOldInstance(self, mapper, _):
-        # don't care about destroying OldClasses: leaked intentionally
-        class O(): pass
-        o = O()
-        oPtr = mapper.Store(o)
-        
-        dictPtr = CPyMarshal.ReadPtrField(oPtr, PyInstanceObject, 'in_dict')
-        mapper.IncRef(dictPtr)
-        refcnt = mapper.RefCount(dictPtr)
-        
-        mapper.DecRef(oPtr)
-        self.assertEqual(mapper.RefCount(dictPtr), refcnt - 1)
-
 
 
 class PyType_GenericAlloc_Test(TestCase):
@@ -583,7 +506,6 @@ class PyType_Ready_InheritTest(TestCase):
 
 suite = makesuite(
     Types_Test,
-    OldStyle_Test,
     PyType_GenericNew_Test,
     IC_PyType_New_Test,
     PyType_GenericAlloc_Test,
