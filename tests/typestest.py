@@ -25,7 +25,6 @@ BUILTIN_TYPES = {
     "PyList_Type": list,
     "PyDict_Type": dict,
     "PyTuple_Type": tuple,
-    "PyFile_Type": file,
     "PyLong_Type": long,
     "PyInt_Type": int,
     "PyBool_Type": bool,
@@ -66,11 +65,7 @@ class Types_Test(TestCase):
             else:
                 self.assertEqual(mapper.Retrieve(typePtr), v, "failed to map " + k)
             
-            if typePtr in (mapper.PyType_Type, mapper.PyBaseObject_Type):
-                # surprising refcount because of the unmanaged PyFile malarkey
-                self.assertEqual(mapper.RefCount(typePtr), 2, "failed to add reference to " + k)
-            else:
-                self.assertEqual(mapper.RefCount(typePtr), 1, "failed to add reference to " + k)
+            self.assertEqual(mapper.RefCount(typePtr), 1, "failed to add reference to " + k)
             
             mapper.PyType_Ready(typePtr)
             self.assertNotEqual(CPyMarshal.ReadIntField(typePtr, PyTypeObject, "tp_basicsize"), 0)

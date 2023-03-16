@@ -148,17 +148,6 @@ namespace Ironclad
             this.map.Associate(address, TypeCache.String);
         }
 
-        public override void
-        Register_PyFile_Type(IntPtr address)
-        {
-            // not worth autogenerating
-            // we're using the cpy file type by default, with methods patched in C
-            // to redirect into C# when ipy files turn up
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.ob_refcnt), 1);
-            CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_name), "file");
-            this.map.Associate(address, TypeCache.PythonFile);
-        }
-
         private void
         AddNumberMethodsWithoutIndex(IntPtr typePtr)
         {

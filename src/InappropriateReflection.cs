@@ -15,14 +15,6 @@ namespace Ironclad
 {
     internal class InappropriateReflection
     {
-        public static FileStream
-        StreamFromPythonFile(PythonFile pyFile)
-        {
-            FieldInfo streamField = (FieldInfo)(pyFile.GetType().GetMember(
-                "_stream", BindingFlags.NonPublic | BindingFlags.Instance)[0]);
-            return (FileStream)streamField.GetValue(pyFile);
-        }
-        
         public static PythonType
         PythonTypeFromDictProxy(DictProxy proxy)
         {

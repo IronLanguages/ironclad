@@ -86,9 +86,9 @@ class InheritanceTest(TestCase):
         
         klass = mapper.Retrieve(klassPtr)
         self.assertEqual(issubclass(klass, mapper.Retrieve(basePtr)), True, "didn't notice klass's base class")
-        self.assertEqual(mapper.RefCount(mapper.PyType_Type), 5, "types did not keep references to TypeType")
+        self.assertEqual(mapper.RefCount(mapper.PyType_Type), 4, "types did not keep references to TypeType")
         self.assertEqual(mapper.RefCount(basePtr), 4, "subtype did not keep reference to base")
-        self.assertEqual(mapper.RefCount(mapper.PyBaseObject_Type), 3, "base type did not keep reference to its base (even if it wasn't set explicitly)")
+        self.assertEqual(mapper.RefCount(mapper.PyBaseObject_Type), 2, "base type did not keep reference to its base (even if it wasn't set explicitly)")
         self.assertEqual(CPyMarshal.ReadPtrField(basePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type, "failed to ready base type")
 
     

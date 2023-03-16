@@ -476,24 +476,6 @@ class HashlibTest(ModuleTestCase('_hashlib')):
             """))
 
 
-class PyFileTest(FunctionalTestCase):
-    
-    def testPyFile(self):
-        return # TODO: for some reason this is blocking on 64-bit...
-
-        # this is the CPython file type, interpreted just like an extension type
-        mapper = PythonMapper(DLL_PATH)
-        try:
-            f1 = mapper.CPyFileClass(os.path.join(self.testDir, 'newFile'), 'w')
-            f1.write("hello!")
-            f1.close()
-            
-            f2 = mapper.CPyFileClass(os.path.join(self.testDir, 'newFile'), 'r')
-            assert f2.read() == 'hello!'
-            f2.close()
-        finally:
-            mapper.Dispose()
-
 # TODO: crashes test run
 # Sqlite3Test = TrivialModuleTestCase('sqlite3') # test PATH manipulation in LoadModule
 PySVNTest = TrivialModuleTestCase('pysvn') # test misleading names passed to Py_InitModule4

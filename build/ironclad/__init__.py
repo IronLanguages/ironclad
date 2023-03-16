@@ -72,10 +72,6 @@ sys.path.extend(extrapaths)
 ###############################################################################
 #### native fileno patches (optional)
 
-file = _mapper.CPyFileClass
-def open(*args, **kwargs):
-    return file(*args, **kwargs)
-
 class _NativeFilenoPatch(object):
     
     def __init__(self):
@@ -92,7 +88,6 @@ class _NativeFilenoPatch(object):
         
         patch = lambda *args: self._patches.append(self._apply_patch(*args))
         patch('__builtin__', 'open', open)
-        patch('__builtin__', 'file', _mapper.CPyFileClass)
         
         import os, posix
         for name in 'close fdopen fstat open read tmpfile write'.split():

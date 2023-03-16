@@ -55,7 +55,6 @@ namespace Ironclad
 
         private object removeSysHacks;
         private object kindaDictProxy;
-        private object cFileClass;
         private Lock GIL;
 
         private bool alive = false;
@@ -276,12 +275,6 @@ namespace Ironclad
             set { this.logErrors = value; }
         }
 
-        public object
-        CPyFileClass
-        {
-            get { return this.cFileClass; }
-        }
-        
         public void
         LogMappingInfo(object id)
         {

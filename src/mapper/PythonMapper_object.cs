@@ -166,12 +166,6 @@ namespace Ironclad
             {
                 object obj = this.Retrieve(objPtr);
 
-                PythonDictionary builtins = this.GetModule("__builtin__").Get__dict__();
-                if (obj == TypeCache.PythonFile || obj == builtins["open"])
-                {
-                    obj = this.cFileClass;
-                }
-                
                 object[] argsArray = null;
 
                 if (argsPtr == IntPtr.Zero)
@@ -185,6 +179,7 @@ namespace Ironclad
                     args.CopyTo(argsArray, 0);
                 }
 
+                PythonDictionary builtins = this.GetModule("__builtin__").Get__dict__();
                 if (obj == builtins["__import__"])
                 {
                     // I really, really wish that Pyrex used the C API for importing things,
