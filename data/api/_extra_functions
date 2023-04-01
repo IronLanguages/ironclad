@@ -45,3 +45,45 @@ int IC_PyFile_SetEncodingAndErrors(PyObject *f, const char *enc, char* errors);
 int IC_PyFile_WriteObject(PyObject *v, PyObject *f, int flags);
 int IC_PyFile_WriteString(const char *s, PyObject *f);
 
+# TODO: get rid of these - they are dummy stubs to compile python34.dll
+
+PyObject * Py_InitModule4_64(const char *name, PyMethodDef *methods, const char *doc, PyObject *self, int apiver);
+
+PyObject * _PyObject_Str(PyObject *);
+int PyObject_Compare(PyObject *, PyObject *);
+
+PyObject * PyNumber_Int(PyObject *o);
+
+PyObject* PyUnicodeUCS2_FromUnicode(const Py_UNICODE *u, Py_ssize_t size);
+PyObject* PyUnicodeUCS2_AsEncodedString(PyObject *unicode, const char *encoding, const char *errors);
+PyObject* PyUnicodeUCS2_FromObject(register PyObject *obj);
+PyObject* _PyUnicodeUCS2_AsDefaultEncodedString(PyObject *, const char *);
+PyObject* PyUnicodeUCS2_Concat(PyObject *left, PyObject *right);
+PyObject* PyUnicodeUCS2_Decode(const char *s, Py_ssize_t size, const char *encoding, const char *errors);
+PyObject* PyUnicodeUCS2_Format(PyObject *format, PyObject *args);
+int PyUnicodeUCS2_Resize(PyObject **unicode, Py_ssize_t length);
+PyObject* PyUnicodeUCS2_DecodeASCII(const char *string, Py_ssize_t length, const char *errors);
+PyObject* PyUnicodeUCS2_AsUnicodeEscapeString(PyObject *unicode);
+Py_UNICODE * PyUnicodeUCS2_AsUnicode(PyObject *unicode);
+PyObject* PyUnicodeUCS2_FromEncodedObject(register PyObject *obj, const char *encoding, const char *errors);
+
+PyObject * PyString_FromStringAndSize(const char *, Py_ssize_t);
+PyObject * PyString_FromString(const char *);
+char * PyString_AsString(PyObject *);
+Py_ssize_t PyString_Size(PyObject *);
+void PyString_Concat(PyObject **, PyObject *);
+int _PyString_Resize(PyObject **, Py_ssize_t);
+PyObject * PyString_InternFromString(const char *);
+void PyString_InternInPlace(PyObject **);
+
+int PyString_AsStringAndSize(register PyObject *obj, register char **s, register Py_ssize_t *len);
+int _PyString_InsertThousandsGrouping(char *buffer, Py_ssize_t n_buffer, Py_ssize_t n_digits, Py_ssize_t buf_size, Py_ssize_t *count, int append_zero_char);
+
+PyObject * PyInt_FromString(char*, char**, int);
+long PyInt_GetMax(void);
+PyObject * PyInt_FromLong(long);
+PyObject * PyInt_FromSize_t(size_t);
+PyObject * PyInt_FromSsize_t(Py_ssize_t);
+long PyInt_AsLong(PyObject *);
+Py_ssize_t PyInt_AsSsize_t(PyObject *);
+unsigned long PyInt_AsUnsignedLongMask(PyObject *);

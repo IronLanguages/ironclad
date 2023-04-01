@@ -59,13 +59,12 @@ if WIN32:
     IPY = r'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
     IPY_DIR = r'"C:\ProgramData\chocolatey\lib\ironpython"'
     # private build
-    # IPY = r'"C:\github\IronLanguages\bin\Debug\ipy.exe"'
-    # IPY_DIR = r'"C:\github\IronLanguages\bin\Debug"'
+    IPY = r'"C:\ironclad\IronPython.3.4.0\net462\ipy.exe"'
+    IPY_DIR = r'"ironclad\IronPython.3.4.0\net462"'
 
     IPY_REF_TEMPLATE = r'/r:$IPY_DIR\%s.dll'
     NATIVE_TOOLS = ['mingw', 'nasm']
-    PYTHON_DLL = r'C:\Windows\SysWOW64\python27.dll'
-    PYTHON_DLL = r'C:\Windows\System32\python27.dll'
+    PYTHON_DLL = r'C:\Python34\python34.dll'
     
     OBJ_SUFFIX = '.o'
     DLL_SUFFIX = '.dll'
@@ -77,7 +76,6 @@ if WIN32:
     COPY_CMD = 'copy $SOURCE $TARGET'
     DLLTOOL_CMD = 'dlltool -D $NAME -d $SOURCE -l $TARGET'
     LINK_MSVCR90_FLAGS = '-specs=stub/use-msvcr90.spec'
-    MSVCR90_DLL = r'C:\Windows\WinSxS\x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.9518_none_508db366bcbd18c4\msvcr90.dll'
     MSVCR90_DLL = r'C:\Windows\WinSxS\amd64_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.9518_none_08e07c8fa840efbe\msvcr90.dll'
     PEXPORTS_CMD = 'pexports $SOURCE > $TARGET'
     RES_CMD = 'windres --input $SOURCE --output $TARGET --output-format=coff'
@@ -89,8 +87,8 @@ if WIN32:
     GCCXML_INSERT = ''
 
     # Root of CPython installation, used to find DLLs/packages for testing
-    # Note: this has to be 32bit version of cpython
-    CPYTHON_ROOT = r'C:\Python27'
+    # Note: this has to be 64bit version of cpython
+    CPYTHON_ROOT = r'C:\Python34'
 
 
 #===============================================================================
@@ -105,8 +103,8 @@ COMPILE_IRONCLAD_FLAGS = '-DIRONCLAD -DPy_BUILD_CORE -D__MSVCRT_VERSION__=0x0900
 OBJ_CMD = '$CC -m64 -fcommon $CCFLAGS -o $TARGET -c $SOURCE' # TODO: get rid of -fcommon
 DLL_CMD = '$CC -m64 $CCFLAGS -shared -o $TARGET $SOURCES'
 GCCXML_CMD = ' '.join((CASTXML, COMPILE_IRONCLAD_FLAGS, '-v -I$CPPPATH -D__GNUC__ %s $SOURCE -o "$TARGET" --castxml-output=1' % GCCXML_INSERT))
-PYTHON27OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
-PYTHON27DLL_CMD = DLL_CMD + ' -Xlinker --export-all-symbols'
+PYTHON34OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
+PYTHON34DLL_CMD = DLL_CMD + ' -Xlinker --export-all-symbols'
 COMMON = dict(IPY=IPY, IPY_DIR=IPY_DIR)
 
 test_deps = []
@@ -116,15 +114,15 @@ before_test = test_deps.append
 #===============================================================================
 #===============================================================================
 # This section builds all the unmanaged parts
-# (python27.dll, ic_msvcr90.dll, several test files)
+# (python34.dll, ic_msvcr90.dll, several test files)
 #===============================================================================
 
 native = Environment(ENV=env_with_ippath, tools=NATIVE_TOOLS, ASFLAGS=ASFLAGS, CPYTHON=CPYTHON, PYTHON_DLL=PYTHON_DLL, **COMMON)
 c_obj_kwargs = dict(source_scanner=CScanner(), suffix=OBJ_SUFFIX)
 native['BUILDERS']['Obj'] = Builder(action=OBJ_CMD, **c_obj_kwargs)
-native['BUILDERS']['Python27Obj'] = Builder(action=PYTHON27OBJ_CMD, CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include', **c_obj_kwargs)
+native['BUILDERS']['Python34Obj'] = Builder(action=PYTHON34OBJ_CMD, CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include', **c_obj_kwargs)
 native['BUILDERS']['Dll'] = Builder(action=DLL_CMD, suffix=DLL_SUFFIX)
-native['BUILDERS']['Python27Dll'] = native['BUILDERS']['Dll']
+native['BUILDERS']['Python34Dll'] = native['BUILDERS']['Dll']
 native['BUILDERS']['GccXml'] = Builder(action=GCCXML_CMD, CPPPATH='stub/Include', source_scanner=CScanner())
 
 if WIN32:
@@ -160,8 +158,8 @@ if WIN32:
         return target, source + depend_msvcr90
     native['BUILDERS']['Msvcr90Dll'] = Builder(
         action=DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR90_FLAGS)
-    native['BUILDERS']['Python27Dll'] = Builder(
-        action=PYTHON27DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR90_FLAGS)
+    native['BUILDERS']['Python34Dll'] = Builder(
+        action=PYTHON34DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR90_FLAGS)
 
 #===============================================================================
 # Unmanaged libraries for build/ironclad
@@ -179,16 +177,16 @@ native.Command(buildstub_out, buildstub_src,
 
 # Compile stub code
 jumps_obj = native.Object('stub/jumps.generated.asm')
-stubmain_obj = native.Python27Obj('stub/stubmain.c')
+stubmain_obj = native.Python34Obj('stub/stubmain.c')
 
 # Generate information from python headers etc
 stubmain_xml = native.GccXml('data/api/_stubmain.generated.xml', 'stub/stubmain.c')
 
-# Build and link python27.dll
+# Build and link python34.dll
 cpy_src_dirs = 'Modules Objects Parser Python'
 cpy_srcs = glommap(lambda x: native.Glob('stub/%s/*.c' % x), cpy_src_dirs)
-cpy_objs = glommap(native.Python27Obj, cpy_srcs)
-before_test(native.Python27Dll('build/ironclad/python27', stubmain_obj + jumps_obj + cpy_objs))
+cpy_objs = glommap(native.Python34Obj, cpy_srcs)
+before_test(native.Python34Dll('build/ironclad/python34', stubmain_obj + jumps_obj + cpy_objs))
 
 if WIN32:
     # This dll redirects various msvcr90 functions so we can DllImport them in C#

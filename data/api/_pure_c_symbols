@@ -113,6 +113,7 @@ PyFile_WriteString
 PyObject_AsFileDescriptor
 PyFile_IncUseCount
 PyFile_DecUseCount
+Py_UniversalNewlineFgets
 
 # Objects/frameobject.c
 _PyFrame_Init
@@ -269,5 +270,3 @@ Py_Initialize
 Py_InitializeEx
 Py_IsInitialized
 Py_Finalize
-
-

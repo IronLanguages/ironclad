@@ -28,5 +28,5 @@ RUN Set-ExecutionPolicy Bypass -Scope Process -Force; \
 
 RUN py -m pip install scons castxml pygccxml
 
-RUN choco install -y python2; \
+RUN choco install -y python3 --version 3.4.4.20200110 --side-by-side; \
     choco install -y ironpython --version 3.4.0
