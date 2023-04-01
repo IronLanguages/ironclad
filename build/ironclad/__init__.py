@@ -21,7 +21,7 @@ if Marshal.SizeOf(Int64()) != Marshal.SizeOf(IntPtr()):
 clr.AddReference(Assembly.LoadFile(os.path.join(_dirname, "ironclad.dll")))
 from Ironclad import CPyMarshal, PythonMapper
 from Ironclad.Structs import PyObject, PyVarObject, PyTypeObject
-_mapper = PythonMapper(os.path.join(_dirname, "python27.dll"))
+_mapper = PythonMapper(os.path.join(_dirname, "python34.dll"))
 
 def gcwait():
     """

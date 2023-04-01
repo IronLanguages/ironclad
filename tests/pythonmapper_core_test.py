@@ -20,7 +20,7 @@ from Ironclad import (
 )
 from Ironclad.Structs import PyObject, PyTypeObject
 
-PYTHON_DLL = "python27.dll"
+PYTHON_DLL = "python34.dll"
 DLL_PATH = os.path.join("build", "ironclad", PYTHON_DLL)
 
 class PythonMapper_CreateDestroy_Test(TestCase):

@@ -4,65 +4,77 @@
 
 // various types
 
-PyTypeObject PyType_Type;
 PyTypeObject PyBaseObject_Type;
-PyTypeObject PyClass_Type;
-PyTypeObject PyInstance_Type;
-PyTypeObject PyMethod_Type;
+PyTypeObject PyBool_Type;
+PyTypeObject PyByteArrayIter_Type;
+PyTypeObject PyByteArray_Type;
+PyTypeObject PyBytesIter_Type;
+PyTypeObject PyBytes_Type;
+PyTypeObject PyCFunction_Type;
+PyTypeObject PyCallIter_Type;
+PyTypeObject PyCapsule_Type;
+PyTypeObject PyCell_Type;
+PyTypeObject PyClassMethodDescr_Type;
+PyTypeObject PyClassMethod_Type;
 PyTypeObject PyCode_Type;
 PyTypeObject PyComplex_Type;
-PyTypeObject PyWrapperDescr_Type;
-PyTypeObject PyGetSetDescr_Type;
-PyTypeObject PyMemberDescr_Type;
-PyTypeObject PyProperty_Type;
-PyTypeObject PyDict_Type;
+PyTypeObject PyDictItems_Type;
 PyTypeObject PyDictIterItem_Type;
-PyTypeObject PyDictValues_Type;
-PyTypeObject PyDictProxy_Type;
 PyTypeObject PyDictIterKey_Type;
 PyTypeObject PyDictIterValue_Type;
 PyTypeObject PyDictKeys_Type;
-PyTypeObject PyDictItems_Type;
+PyTypeObject PyDictProxy_Type;
+PyTypeObject PyDictValues_Type;
+PyTypeObject PyDict_Type;
+PyTypeObject PyEllipsis_Type;
 PyTypeObject PyEnum_Type;
-PyTypeObject PyReversed_Type;
-PyTypeObject PyFile_Type;
+PyTypeObject PyFilter_Type;
 PyTypeObject PyFloat_Type;
 PyTypeObject PyFrame_Type;
-PyTypeObject PyFunction_Type;
-PyTypeObject PyClassMethod_Type;
-PyTypeObject PyStaticMethod_Type;
-PyTypeObject PyGen_Type;
-PyTypeObject PyInt_Type;
-PyTypeObject PyBool_Type;
-PyTypeObject PySeqIter_Type;
-PyTypeObject PyCallIter_Type;
-PyTypeObject PyList_Type;
-PyTypeObject PyLong_Type;
-PyTypeObject PyCFunction_Type;
-PyTypeObject PyModule_Type;
-PyTypeObject PyMemoryView_Type;
-PyTypeObject PySuper_Type;
-PyTypeObject PyRange_Type;
-PyTypeObject PySet_Type;
 PyTypeObject PyFrozenSet_Type;
-PyTypeObject PySlice_Type;
-PyTypeObject PyBaseString_Type;
+PyTypeObject PyFunction_Type;
+PyTypeObject PyGen_Type;
+PyTypeObject PyGetSetDescr_Type;
+PyTypeObject PyInstanceMethod_Type;
+PyTypeObject PyListIter_Type;
+PyTypeObject PyListRevIter_Type;
+PyTypeObject PyList_Type;
+PyTypeObject PyLongRangeIter_Type;
+PyTypeObject PyLong_Type;
+PyTypeObject PyMap_Type;
+PyTypeObject PyMemberDescr_Type;
+PyTypeObject PyMemoryView_Type;
+PyTypeObject PyMethodDescr_Type;
+PyTypeObject PyMethod_Type;
+PyTypeObject PyModule_Type;
+PyTypeObject PyProperty_Type;
+PyTypeObject PyRangeIter_Type;
+PyTypeObject PyRange_Type;
+PyTypeObject PyReversed_Type;
 PyTypeObject PySTEntry_Type;
-PyTypeObject PyString_Type;
-PyTypeObject PySymtableEntry_Type;
+PyTypeObject PySeqIter_Type;
+PyTypeObject PySetIter_Type;
+PyTypeObject PySet_Type;
+PyTypeObject PySlice_Type;
+PyTypeObject PyStaticMethod_Type;
+PyTypeObject PyStdPrinter_Type;
+PyTypeObject PySuper_Type;
 PyTypeObject PyTraceBack_Type;
+PyTypeObject PyTupleIter_Type;
 PyTypeObject PyTuple_Type;
+PyTypeObject PyType_Type;
+PyTypeObject PyUnicodeIter_Type;
 PyTypeObject PyUnicode_Type;
-PyTypeObject PyNone_Type;
-PyTypeObject PyEllipsis_Type;
-PyTypeObject PyNotImplemented_Type;
-PyTypeObject _PyWeakref_RefType;
+PyTypeObject PyWrapperDescr_Type;
+PyTypeObject PyZip_Type;
+PyTypeObject _PyManagedBuffer_Type;
+PyTypeObject _PyMethodWrapper_Type;
+PyTypeObject _PyNamespace_Type;
+PyTypeObject _PyNone_Type;
+PyTypeObject _PyNotImplemented_Type;
 PyTypeObject _PyWeakref_ProxyType;
+PyTypeObject _PyWeakref_RefType;
 PyTypeObject _PyWeakref_CallableProxyType;
-PyTypeObject PyNullImporter_Type;
-PyTypeObject PyByteArray_Type;
-PyTypeObject PyByteArrayIter_Type;
-
 
 // Parser/graminit.c
 void* _PyParser_Grammar[100];
@@ -82,6 +94,7 @@ _Py_HashSecret_t _Py_HashSecret;
 // Objects/boolobject.c
 PyIntObject _Py_ZeroStruct;
 PyIntObject _Py_TrueStruct;
+PyIntObject _Py_FalseStruct;
 
 // Objects/bytearray.h
 char _PyByteArray_empty_string[2] = {0,0};
@@ -148,19 +161,18 @@ struct _inittab _PyImport_Inittab[1000];
 struct _inittab *PyImport_Inittab = _PyImport_Inittab;
 
 // replacements for stuff defined in Objects/exceptions.c
+// TODO: can we use definitions from pyerrors.h instead?
 PyObject * PyExc_BaseException;
 PyObject * PyExc_Exception;
 PyObject * PyExc_StopIteration;
 PyObject * PyExc_GeneratorExit;
-PyObject * PyExc_StandardError;
 PyObject * PyExc_ArithmeticError;
 PyObject * PyExc_LookupError;
 PyObject * PyExc_AssertionError;
 PyObject * PyExc_AttributeError;
+PyObject * PyExc_BufferError;
 PyObject * PyExc_EOFError;
 PyObject * PyExc_FloatingPointError;
-PyObject * PyExc_EnvironmentError;
-PyObject * PyExc_IOError;
 PyObject * PyExc_OSError;
 PyObject * PyExc_ImportError;
 PyObject * PyExc_IndexError;
@@ -185,14 +197,26 @@ PyObject * PyExc_UnicodeDecodeError;
 PyObject * PyExc_UnicodeTranslateError;
 PyObject * PyExc_ValueError;
 PyObject * PyExc_ZeroDivisionError;
+PyObject * PyExc_BlockingIOError;
+PyObject * PyExc_BrokenPipeError;
+PyObject * PyExc_ChildProcessError;
+PyObject * PyExc_ConnectionError;
+PyObject * PyExc_ConnectionAbortedError;
+PyObject * PyExc_ConnectionRefusedError;
+PyObject * PyExc_ConnectionResetError;
+PyObject * PyExc_FileExistsError;
+PyObject * PyExc_FileNotFoundError;
+PyObject * PyExc_InterruptedError;
+PyObject * PyExc_IsADirectoryError;
+PyObject * PyExc_NotADirectoryError;
+PyObject * PyExc_PermissionError;
+PyObject * PyExc_ProcessLookupError;
+PyObject * PyExc_TimeoutError;
+PyObject * PyExc_EnvironmentError;
+PyObject * PyExc_IOError;
 #ifdef MS_WINDOWS
 PyObject * PyExc_WindowsError;
 #endif
-#ifdef __VMS
-PyObject * PyExc_VMSError;
-#endif
-PyObject * PyExc_BufferError;
-PyObject * PyExc_MemoryErrorInst;
 PyObject * PyExc_RecursionErrorInst;
 PyObject * PyExc_Warning;
 PyObject * PyExc_UserWarning;
@@ -204,3 +228,27 @@ PyObject * PyExc_FutureWarning;
 PyObject * PyExc_ImportWarning;
 PyObject * PyExc_UnicodeWarning;
 PyObject * PyExc_BytesWarning;
+PyObject * PyExc_ResourceWarning;
+
+// TODO: get rid of these - not in 3.4
+
+PyTypeObject PyNone_Type; // renamed to _PyNone_Type
+PyTypeObject PyNotImplemented_Type; // renamed to _PyNotImplemented_Type
+PyTypeObject PySymtableEntry_Type; // renamed to PySTEntry_Type
+PyTypeObject PyClass_Type; // removed
+PyTypeObject PyInt_Type; // removed
+PyTypeObject PyInstance_Type; // removed
+PyTypeObject PyBaseString_Type; // removed
+PyObject * PyExc_MemoryErrorInst;
+
+// TODO: sort these out
+
+int Py_UnbufferedStdioFlag;
+int Py_IsolatedFlag;
+int Py_QuietFlag;
+PyObject * _PySet_Dummy;
+int Py_HasFileSystemDefaultEncoding;
+int _PyOS_opterr;
+int _PyOS_optind;
+char * _PyOS_optarg;
+const char * Py_hexdigits;

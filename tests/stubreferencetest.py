@@ -8,7 +8,7 @@ from tests.utils.testcase import TestCase
 from Ironclad import dgt_getfuncptr, dgt_registerdata, Unmanaged, StubReference
 from System import IntPtr
 
-PYTHON_DLL = "python27.dll"
+PYTHON_DLL = "python34.dll"
 DLL_PATH = os.path.join("build", "ironclad", PYTHON_DLL)
 
 class StubReferenceTest(TestCase):
