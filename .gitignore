@@ -1,8 +1,6 @@
 # project specific
 *.[Gg]enerated*
 .sconsign.dblite
-stub/depend-msvcr90.res
-stub/msvcr90.def
 stub/stubmain.s
 
 # intermediary or final

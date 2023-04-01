@@ -75,8 +75,7 @@ if WIN32:
     
     COPY_CMD = 'copy $SOURCE $TARGET'
     DLLTOOL_CMD = 'dlltool -D $NAME -d $SOURCE -l $TARGET'
-    LINK_MSVCR90_FLAGS = '-specs=stub/use-msvcr90.spec'
-    MSVCR90_DLL = r'C:\Windows\WinSxS\amd64_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.9518_none_08e07c8fa840efbe\msvcr90.dll'
+    LINK_MSVCR100_FLAGS = '-specs=stub/use-msvcr100.spec'
     PEXPORTS_CMD = 'pexports $SOURCE > $TARGET'
     RES_CMD = 'windres --input $SOURCE --output $TARGET --output-format=coff'
     
@@ -99,7 +98,7 @@ env_with_ippath['IRONPYTHONPATH'] = os.getcwd()
 env_with_ippath['PYTHONPATH'] = os.getcwd()
 # TODO: it should not be necessary to pollute execution with entire os environment
 
-COMPILE_IRONCLAD_FLAGS = '-DIRONCLAD -DPy_BUILD_CORE -D__MSVCRT_VERSION__=0x0900 -DMS_WIN64'
+COMPILE_IRONCLAD_FLAGS = '-DIRONCLAD -DPy_BUILD_CORE -D__MSVCRT_VERSION__=0x1000 -DMS_WIN64'
 OBJ_CMD = '$CC -m64 -fcommon $CCFLAGS -o $TARGET -c $SOURCE' # TODO: get rid of -fcommon
 DLL_CMD = '$CC -m64 $CCFLAGS -shared -o $TARGET $SOURCES'
 GCCXML_CMD = ' '.join((CASTXML, COMPILE_IRONCLAD_FLAGS, '-v -I$CPPPATH -D__GNUC__ %s $SOURCE -o "$TARGET" --castxml-output=1' % GCCXML_INSERT))
@@ -126,40 +125,13 @@ native['BUILDERS']['Python34Dll'] = native['BUILDERS']['Dll']
 native['BUILDERS']['GccXml'] = Builder(action=GCCXML_CMD, CPPPATH='stub/Include', source_scanner=CScanner())
 
 if WIN32:
-    # If, RIGHT NOW*, no backup of libmsvcr90.a exists, create one
-    # * That is to say: at runtime, not at build time
-    
-    # TODO: the path is wrong, do we actually need the hack?
-    in_mingw_lib = lambda x: os.path.join(MINGW_LIB, x)
-    original, backup = list(map(in_mingw_lib, ['libmsvcr90.a', 'libmsvcr90.a.orig']))
-    if os.path.exists(original) and not os.path.exists(backup):
-        print()
-        print('Hi! Building Ironclad will patch your MinGW install. The affected file will be moved safely out of the way.')
-        print('Should you ever need to restore your MinGW install to its original state, just execute the following command:')
-        print()
-        print('  copy "%s" "%s"' % (backup, original))
-        print()
-        input('Enter to accept, ^C to cancel:')
-        import shutil
-        shutil.move(original, backup)
-        
-    # Brutally patch mingw/lib/libmsvcr90.a
-    native.Command('stub/msvcr90.def', MSVCR90_DLL, PEXPORTS_CMD)
-    patch_importlib = native.Command(original, 'stub/msvcr90.def', DLLTOOL_CMD, NAME='msvcr90.dll')
-    native.NoClean(patch_importlib)
-    
-    # This resource needs to be embedded in several C libraries, so winsxs doesn't get huffy at runtime
-    depend_msvcr90 = native.Command('stub/depend-msvcr90.res', 'stub/depend-msvcr90.rc', RES_CMD)
-    native.Depends(depend_msvcr90, 'stub/depend-msvcr90.manifest')
-    native.Depends(depend_msvcr90, patch_importlib)
-    
-    # These builders should ensure that their targets correctly link with msvcr90.dll
+    # These builders should ensure that their targets correctly link with msvcr100.dll
     def append_depend(target, source, env):
-        return target, source + depend_msvcr90
-    native['BUILDERS']['Msvcr90Dll'] = Builder(
-        action=DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR90_FLAGS)
+        return target, source
+    native['BUILDERS']['Msvcr100Dll'] = Builder(
+        action=DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR100_FLAGS)
     native['BUILDERS']['Python34Dll'] = Builder(
-        action=PYTHON34DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR90_FLAGS)
+        action=PYTHON34DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR100_FLAGS)
 
 #===============================================================================
 # Unmanaged libraries for build/ironclad
@@ -191,7 +163,7 @@ before_test(native.Python34Dll('build/ironclad/python34', stubmain_obj + jumps_o
 if WIN32:
     # This dll redirects various msvcr90 functions so we can DllImport them in C#
     #pass
-    before_test(native.Msvcr90Dll('build/ironclad/ic_msvcr90', native.Obj('stub/ic_msvcr90.c')))
+    before_test(native.Msvcr100Dll('build/ironclad/ic_msvcr90', native.Obj('stub/ic_msvcr90.c')))
 
 #===============================================================================
 # Unmanaged test data
@@ -204,7 +176,7 @@ if WIN32:
     # Some tests will load and unload dlls which depend on msvcr90; if msvcr90's ref count
     # hits 0 and it gets reloaded, bad things happen. The test framework loads this dll, and
     # keeps it loaded, to prevent aforesaid bad things.
-    before_test(native.Msvcr90Dll('tests/data/implicit-load-msvcr90', native.Obj('tests/data/src/empty.c')))
+    before_test(native.Msvcr100Dll('tests/data/implicit-load-msvcr90', native.Obj('tests/data/src/empty.c')))
 
 #===============================================================================
 #===============================================================================
