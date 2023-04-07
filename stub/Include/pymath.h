@@ -3,18 +3,14 @@
 
 #include "pyconfig.h" /* include for defines */
 
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-
 /**************************************************************************
 Symbols and macros to supply platform-independent interfaces to mathematical
 functions and constants
 **************************************************************************/
 
-/* Python provides implementations for copysign, acosh, asinh, atanh, 
- * log1p and hypot in Python/pymath.c just in case your math library doesn't
- * provide the functions.
+/* Python provides implementations for copysign, round and hypot in
+ * Python/pymath.c just in case your math library doesn't provide the
+ * functions.
  *
  *Note: PC/pyconfig.h defines copysign as _copysign
  */
@@ -22,20 +18,8 @@ functions and constants
 extern double copysign(double, double);
 #endif
 
-#ifndef HAVE_ACOSH
-extern double acosh(double);
-#endif
-
-#ifndef HAVE_ASINH
-extern double asinh(double);
-#endif
-
-#ifndef HAVE_ATANH
-extern double atanh(double);
-#endif
-
-#ifndef HAVE_LOG1P
-extern double log1p(double);
+#ifndef HAVE_ROUND
+extern double round(double);
 #endif
 
 #ifndef HAVE_HYPOT
@@ -52,12 +36,6 @@ extern double modf (double, double *);
 extern double pow(double, double);
 #endif /* __STDC__ */
 #endif /* _MSC_VER */
-
-#ifdef _OSF_SOURCE
-/* OSF1 5.1 doesn't make these available with XOPEN_SOURCE_EXTENDED defined */
-extern int finite(double);
-extern double copysign(double, double);
-#endif
 
 /* High precision defintion of pi and e (Euler)
  * The values are taken from libc6's math.h.
@@ -77,6 +55,30 @@ extern double copysign(double, double);
 #define Py_MATH_E 2.7182818284590452354
 #endif
 
+/* On x86, Py_FORCE_DOUBLE forces a floating-point number out of an x87 FPU
+   register and into a 64-bit memory location, rounding from extended
+   precision to double precision in the process.  On other platforms it does
+   nothing. */
+
+/* we take double rounding as evidence of x87 usage */
+#ifndef Py_LIMITED_API
+#ifndef Py_FORCE_DOUBLE
+#  ifdef X87_DOUBLE_ROUNDING
+PyAPI_FUNC(double) _Py_force_double(double);
+#    define Py_FORCE_DOUBLE(X) (_Py_force_double(X))
+#  else
+#    define Py_FORCE_DOUBLE(X) (X)
+#  endif
+#endif
+#endif
+
+#ifndef Py_LIMITED_API
+#ifdef HAVE_GCC_ASM_FOR_X87
+PyAPI_FUNC(unsigned short) _Py_get_387controlword(void);
+PyAPI_FUNC(void) _Py_set_387controlword(unsigned short);
+#endif
+#endif
+
 /* Py_IS_NAN(X)
  * Return 1 if float or double arg is a NaN, else 0.
  * Caution:
@@ -87,7 +89,7 @@ extern double copysign(double, double);
  * Note: PC/pyconfig.h defines Py_IS_NAN as _isnan
  */
 #ifndef Py_IS_NAN
-#ifdef HAVE_ISNAN
+#if defined HAVE_DECL_ISNAN && HAVE_DECL_ISNAN == 1
 #define Py_IS_NAN(X) isnan(X)
 #else
 #define Py_IS_NAN(X) ((X) != (X))
@@ -101,14 +103,18 @@ extern double copysign(double, double);
  *    This implementation may set the underflow flag if |X| is very small;
  *    it really can't be implemented correctly (& easily) before C99.
  *    Override in pyconfig.h if you have a better spelling on your platform.
+ *  Py_FORCE_DOUBLE is used to avoid getting false negatives from a
+ *    non-infinite value v sitting in an 80-bit x87 register such that
+ *    v becomes infinite when spilled from the register to 64-bit memory.
  * Note: PC/pyconfig.h defines Py_IS_INFINITY as _isinf
  */
 #ifndef Py_IS_INFINITY
-#ifdef HAVE_ISINF
-#define Py_IS_INFINITY(X) isinf(X)
-#else
-#define Py_IS_INFINITY(X) ((X) && (X)*0.5 == (X))
-#endif
+#  if defined HAVE_DECL_ISINF && HAVE_DECL_ISINF == 1
+#    define Py_IS_INFINITY(X) isinf(X)
+#  else
+#    define Py_IS_INFINITY(X) ((X) &&                                   \
+                               (Py_FORCE_DOUBLE(X)*0.5 == Py_FORCE_DOUBLE(X)))
+#  endif
 #endif
 
 /* Py_IS_FINITE(X)
@@ -118,7 +124,9 @@ extern double copysign(double, double);
  * Note: PC/pyconfig.h defines Py_IS_FINITE as _finite
  */
 #ifndef Py_IS_FINITE
-#ifdef HAVE_FINITE
+#if defined HAVE_DECL_ISFINITE && HAVE_DECL_ISFINITE == 1
+#define Py_IS_FINITE(X) isfinite(X)
+#elif defined HAVE_FINITE
 #define Py_IS_FINITE(X) finite(X)
 #else
 #define Py_IS_FINITE(X) (!Py_IS_INFINITY(X) && !Py_IS_NAN(X))
@@ -142,7 +150,29 @@ extern double copysign(double, double);
  * doesn't support NaNs.
  */
 #if !defined(Py_NAN) && !defined(Py_NO_NAN)
-#define Py_NAN (Py_HUGE_VAL * 0.)
+#if !defined(__INTEL_COMPILER)
+    #define Py_NAN (Py_HUGE_VAL * 0.)
+#else /* __INTEL_COMPILER */
+    #if defined(ICC_NAN_STRICT)
+        #pragma float_control(push)
+        #pragma float_control(precise, on)
+        #pragma float_control(except,  on)
+        #if defined(_MSC_VER)
+            __declspec(noinline)
+        #else /* Linux */
+            __attribute__((noinline))
+        #endif /* _MSC_VER */
+        static double __icc_nan()
+        {
+            return sqrt(-1.0);
+        }
+        #pragma float_control (pop)
+        #define Py_NAN __icc_nan()
+    #else /* ICC_NAN_RELAXED as default for Intel Compiler */
+        static union { unsigned char buf[8]; double __icc_nan; } __nan_store = {0,0,0,0,0,0,0xf8,0x7f};
+        #define Py_NAN (__nan_store.__icc_nan)
+    #endif /* ICC_NAN_STRICT */
+#endif /* __INTEL_COMPILER */
 #endif
 
 /* Py_OVERFLOWED(X)

@@ -10,7 +10,12 @@
 #ifdef	_BSD_WCHAR_T_DEFINED_
 #define _WCHAR_T
 #endif
-#endif
+
+/* the following define is necessary for OS X 10.6; without it, the
+   Apple-supplied ncurses.h sets NCURSES_OPAQUE to 1, and then Python
+   can't get at the WINDOW flags field. */
+#define NCURSES_OPAQUE 0
+#endif /* __APPLE__ */
 
 #ifdef __FreeBSD__
 /*
@@ -71,9 +76,13 @@ extern "C" {
 typedef struct {
 	PyObject_HEAD
 	WINDOW *win;
+	char *encoding;
 } PyCursesWindowObject;
 
 #define PyCursesWindow_Check(v)	 (Py_TYPE(v) == &PyCursesWindow_Type)
+
+#define PyCurses_CAPSULE_NAME "_curses._C_API"
+
 
 #ifdef CURSES_MODULE
 /* This section is used when compiling _cursesmodule.c */
@@ -89,16 +98,8 @@ static void **PyCurses_API;
 #define PyCursesInitialisedColor {if (! ((int (*)(void))PyCurses_API[3]) () ) return NULL;}
 
 #define import_curses() \
-{ \
-  PyObject *module = PyImport_ImportModuleNoBlock("_curses"); \
-  if (module != NULL) { \
-    PyObject *module_dict = PyModule_GetDict(module); \
-    PyObject *c_api_object = PyDict_GetItemString(module_dict, "_C_API"); \
-    if (PyCObject_Check(c_api_object)) { \
-      PyCurses_API = (void **)PyCObject_AsVoidPtr(c_api_object); \
-    } \
-  } \
-}
+    PyCurses_API = (void **)PyCapsule_Import(PyCurses_CAPSULE_NAME, 1);
+
 #endif
 
 /* general error messages */
@@ -139,14 +140,14 @@ static PyObject *PyCurses_ ## X (PyObject *self, PyObject *args) \
 static PyObject *PyCurses_ ## X (PyObject *self) \
 { \
  PyCursesInitialised \
- return PyInt_FromLong((long) X()); }
+ return PyLong_FromLong((long) X()); }
 
 
 #define NoArgReturnStringFunction(X) \
 static PyObject *PyCurses_ ## X (PyObject *self) \
 { \
   PyCursesInitialised \
-  return PyString_FromString(X()); }
+  return PyBytes_FromString(X()); }
 
 #define NoArgTrueFalseFunction(X) \
 static PyObject *PyCurses_ ## X (PyObject *self) \
@@ -172,6 +173,5 @@ static PyObject *PyCurses_ ## X (PyObject *self) \
 #endif
 
 #endif /* !defined(Py_CURSES_H) */
-
 
 

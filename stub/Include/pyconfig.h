@@ -74,13 +74,11 @@ WIN32 is still required for the locale module.
 #define DONT_HAVE_SIG_PAUSE
 #define LONG_BIT	32
 #define WORD_BIT 32
-#define PREFIX ""
-#define EXEC_PREFIX ""
 
 #define MS_WIN32 /* only support win32 and greater. */
 #define MS_WINDOWS
 #ifndef PYTHONPATH
-#	define PYTHONPATH ".\\DLLs;.\\lib;.\\lib\\plat-win;.\\lib\\lib-tk"
+#	define PYTHONPATH L".\\DLLs;.\\lib"
 #endif
 #define NT_THREADS
 #define WITH_THREAD
@@ -95,12 +93,6 @@ WIN32 is still required for the locale module.
 #endif
 
 #ifdef MS_WINCE
-/* Python uses GetVersion() to distinguish between
- * Windows NT and 9x/ME where OS Unicode support is concerned.
- * Windows CE supports Unicode in the same way as NT so we
- * define the missing GetVersion() accordingly.
- */
-#define GetVersion() (4)
 /* Windows CE does not support environment variables */
 #define getenv(v) (NULL)
 #define environ (NULL)
@@ -162,19 +154,9 @@ WIN32 is still required for the locale module.
 #endif /* MS_WIN64 */
 
 /* set the version macros for the windows headers */
-#ifdef MS_WINX64
-/* 64 bit only runs on XP or greater */
-#define Py_WINVER _WIN32_WINNT_WINXP
+/* Python 3.4+ requires Windows XP or greater */
+#define Py_WINVER 0x0501 /* _WIN32_WINNT_WINXP */
 #define Py_NTDDI NTDDI_WINXP
-#else
-/* Python 2.6+ requires Windows 2000 or greater */
-#ifdef _WIN32_WINNT_WIN2K
-#define Py_WINVER _WIN32_WINNT_WIN2K
-#else
-#define Py_WINVER 0x0500
-#endif
-#define Py_NTDDI NTDDI_WIN2KSP4
-#endif
 
 /* We only set these values when building Python - we don't want to force
    these values on extensions, as that will affect the prototypes and
@@ -209,8 +191,10 @@ typedef _W64 int ssize_t;
 #define HAVE_SSIZE_T 1
 
 #if defined(MS_WIN32) && !defined(MS_WIN64)
-#ifdef _M_IX86
+#if defined(_M_IX86)
 #define COMPILER _Py_PASTE_VERSION("32 bit (Intel)")
+#elif defined(_M_ARM)
+#define COMPILER _Py_PASTE_VERSION("32 bit (ARM)")
 #else
 #define COMPILER _Py_PASTE_VERSION("32 bit (Unknown)")
 #endif
@@ -223,15 +207,24 @@ typedef int pid_t;
 #define Py_IS_INFINITY(X) (!_finite(X) && !_isnan(X))
 #define Py_IS_FINITE(X) _finite(X)
 #define copysign _copysign
-#define hypot _hypot
 
-#endif /* _MSC_VER */
+/* VS 2010 and above already defines hypot as _hypot */
+#if _MSC_VER < 1600
+#define hypot _hypot
+#endif
+
+/* Side by Side assemblies supported in VS 2005 and VS 2008 but not 2010*/
+#if _MSC_VER >= 1400 && _MSC_VER < 1600
+#define HAVE_SXS 1
+#endif
 
 /* define some ANSI types that are not defined in earlier Win headers */
-#if defined(_MSC_VER) && _MSC_VER >= 1200
+#if _MSC_VER >= 1200
 /* This file only exists in VC 6.0 or higher */
 #include <basetsd.h>
 #endif
+
+#endif /* _MSC_VER */
 
 /* ------------------------------------------------------------------------*/
 /* The Borland compiler defines __BORLANDC__ */
@@ -328,10 +321,12 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 			/* So MSVC users need not specify the .lib file in
 			their Makefile (other compilers are generally
 			taken care of by distutils.) */
-#			ifdef _DEBUG
-#				pragma comment(lib,"python26_d.lib")
+#			if defined(_DEBUG)
+#				pragma comment(lib,"python34_d.lib")
+#			elif defined(Py_LIMITED_API)
+#				pragma comment(lib,"python3.lib")
 #			else
-#				pragma comment(lib,"python26.lib")
+#				pragma comment(lib,"python34.lib")
 #			endif /* _DEBUG */
 #		endif /* _MSC_VER */
 #	endif /* Py_BUILD_CORE */
@@ -348,7 +343,7 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 #	define SIZEOF_FPOS_T 8
 #	define SIZEOF_HKEY 8
 #	define SIZEOF_SIZE_T 8
-/* configure.in defines HAVE_LARGEFILE_SUPPORT iff HAVE_LONG_LONG,
+/* configure.ac defines HAVE_LARGEFILE_SUPPORT iff HAVE_LONG_LONG,
    sizeof(off_t) > sizeof(long), and sizeof(PY_LONG_LONG) >= sizeof(off_t).
    On Win64 the second condition is not true, but if fpos_t replaces off_t
    then this is true. The uses of HAVE_LARGEFILE_SUPPORT imply that Win64
@@ -395,9 +390,45 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 #else
 /* VC6, VS 2002 and eVC4 don't support the C99 LL suffix for 64-bit integer literals */
 #define Py_LL(x) x##I64
-#endif  /* _MSC_VER > 1200  */
+#endif  /* _MSC_VER > 1300  */
 #endif  /* _MSC_VER */
 
+#endif
+
+/* define signed and unsigned exact-width 32-bit and 64-bit types, used in the
+   implementation of Python integers. */
+#ifndef PY_UINT32_T
+#if SIZEOF_INT == 4
+#define HAVE_UINT32_T 1
+#define PY_UINT32_T unsigned int
+#elif SIZEOF_LONG == 4
+#define HAVE_UINT32_T 1
+#define PY_UINT32_T unsigned long
+#endif
+#endif
+
+#ifndef PY_UINT64_T
+#if SIZEOF_LONG_LONG == 8
+#define HAVE_UINT64_T 1
+#define PY_UINT64_T unsigned PY_LONG_LONG
+#endif
+#endif
+
+#ifndef PY_INT32_T
+#if SIZEOF_INT == 4
+#define HAVE_INT32_T 1
+#define PY_INT32_T int
+#elif SIZEOF_LONG == 4
+#define HAVE_INT32_T 1
+#define PY_INT32_T long
+#endif
+#endif
+
+#ifndef PY_INT64_T
+#if SIZEOF_LONG_LONG == 8
+#define HAVE_INT64_T 1
+#define PY_INT64_T PY_LONG_LONG
+#endif
 #endif
 
 /* Fairly standard from here! */
@@ -405,11 +436,16 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 /* Define to 1 if you have the `copysign' function. */
 #define HAVE_COPYSIGN 1
 
-/* Define to 1 if you have the `isinf' function. */
-#define HAVE_ISINF 1
+/* Define to 1 if you have the `round' function. */
+#if _MSC_VER >= 1800
+#define HAVE_ROUND 1
+#endif
+
+/* Define to 1 if you have the `isinf' macro. */
+#define HAVE_DECL_ISINF 1
 
 /* Define to 1 if you have the `isnan' function. */
-#define HAVE_ISNAN 1
+#define HAVE_DECL_ISNAN 1
 
 /* Define if on AIX 3.
    System headers sometimes define this.
@@ -522,17 +558,6 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 /* Define if you want to use the GNU readline library */
 /* #define WITH_READLINE 1 */
 
-/* Define if you want to have a Unicode type. */
-#define Py_USING_UNICODE
-
-/* Define as the size of the unicode type. */
-/* This is enough for unicodeobject.h to do the "right thing" on Windows. */
-#define Py_UNICODE_SIZE 2
-
-/* Define to indicate that the Python Unicode representation can be passed
-   as-is to Win32 Wide API.  */
-#define Py_WIN_WIDE_FILENAMES
-
 /* Use Python's own small-block memory-allocator. */
 #define WITH_PYMALLOC 1
 
@@ -612,10 +637,23 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 /* Define if you have waitpid.  */
 /* #undef HAVE_WAITPID */
 
+/* Define to 1 if you have the `wcsftime' function. */
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#define HAVE_WCSFTIME 1
+#endif
+
 /* Define to 1 if you have the `wcscoll' function. */
 #ifndef MS_WINCE
 #define HAVE_WCSCOLL 1
 #endif
+
+/* Define to 1 if you have the `wcsxfrm' function. */
+#ifndef MS_WINCE
+#define HAVE_WCSXFRM 1
+#endif
+
+/* Define if the zlib library has inflateCopy */
+#define HAVE_ZLIB_COPY 1
 
 /* Define if you have the <dlfcn.h> header file.  */
 /* #undef HAVE_DLFCN_H */
@@ -680,9 +718,6 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 /* Define if you have the <sys/utsname.h> header file.  */
 /* #define HAVE_SYS_UTSNAME_H 1 */
 
-/* Define if you have the <thread.h> header file.  */
-/* #undef HAVE_THREAD_H */
-
 /* Define if you have the <unistd.h> header file.  */
 /* #define HAVE_UNISTD_H 1 */
 
@@ -691,6 +726,12 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 
 /* Define if the compiler provides a wchar.h header file. */
 #define HAVE_WCHAR_H 1
+
+/* The size of `wchar_t', as computed by sizeof. */
+#define SIZEOF_WCHAR_T 2
+
+/* The size of `pid_t', as computed by sizeof. */
+#define SIZEOF_PID_T SIZEOF_INT
 
 /* Define if you have the dl library (-ldl).  */
 /* #undef HAVE_LIBDL */
@@ -722,5 +763,9 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 /* WinSock does not use a bitmask in select, and uses
    socket handles greater than FD_SETSIZE */
 #define Py_SOCKET_FD_CAN_BE_GE_FD_SETSIZE
+
+/* Define if C doubles are 64-bit IEEE 754 binary format, stored with the
+   least significant byte first */
+#define DOUBLE_IS_LITTLE_ENDIAN_IEEE754 1
 
 #endif /* !Py_CONFIG_H */
