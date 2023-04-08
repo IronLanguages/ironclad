@@ -99,20 +99,10 @@ PyCapsule_SetContext
 PyCapsule_Import
 
 # Objects/fileobject.c
-PyFile_FromString
-PyFile_SetBufSize
-PyFile_SetEncoding
-PyFile_SetEncodingAndErrors
-PyFile_FromFile
-PyFile_AsFile
-PyFile_Name
 PyFile_GetLine
 PyFile_WriteObject
-PyFile_SoftSpace
 PyFile_WriteString
 PyObject_AsFileDescriptor
-PyFile_IncUseCount
-PyFile_DecUseCount
 Py_UniversalNewlineFgets
 
 # Objects/frameobject.c

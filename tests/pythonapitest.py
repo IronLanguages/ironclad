@@ -49,7 +49,6 @@ TYPES = (
     "PyDict_Type",
     "PyEnum_Type",
     "PyReversed_Type",
-    "PyFile_Type",
     "PyFloat_Type",
     "PyFunction_Type",
     "PyClassMethod_Type",

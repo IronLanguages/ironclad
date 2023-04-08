@@ -81,7 +81,7 @@ void* _PyParser_Grammar[100];
 
 
 // Parser/myreadline.c
-char *(*PyOS_ReadlineFunctionPointer)(FILE *, FILE *, char *) = NULL;
+char *(*PyOS_ReadlineFunctionPointer)(FILE *, FILE *, const char *) = NULL;
 PyThreadState* _PyOS_ReadlineTState;
 
 // Objects/object.c

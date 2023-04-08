@@ -24,27 +24,6 @@ segcountproc IC_str_getsegcount;
 reprfunc IC_PyString_Str;
 binaryfunc IC_PyString_Concat_Core;
 
-# the rest are related to the awful hacks in Objects/fileobject.c
-
-PyObject *IC_file_close(PyFileObject *f);
-void IC_file_dealloc(PyFileObject *f);
-PyObject *IC_file_flush(PyFileObject *f);
-PyObject *IC_file_iternext(PyFileObject *f);
-PyObject *IC_file_read(PyFileObject *f, PyObject *args);
-PyObject *IC_file_readinto(PyFileObject *f, PyObject *args);
-PyObject *IC_file_readline(PyFileObject *f, PyObject *args);
-PyObject *IC_file_readlines(PyFileObject *f, PyObject *args);
-PyObject *IC_file_seek(PyFileObject *f, PyObject *args);
-PyObject *IC_file_tell(PyFileObject *f);
-PyObject *IC_file_truncate(PyFileObject *f, PyObject *args);
-PyObject *IC_file_write(PyFileObject *f, PyObject *args);
-PyObject *IC_file_writelines(PyFileObject *f, PyObject *args);
-
-FILE *IC_PyFile_AsFile(PyObject *f);
-int IC_PyFile_SetEncodingAndErrors(PyObject *f, const char *enc, char* errors);
-int IC_PyFile_WriteObject(PyObject *v, PyObject *f, int flags);
-int IC_PyFile_WriteString(const char *s, PyObject *f);
-
 # TODO: get rid of these - they are dummy stubs to compile python34.dll
 
 PyObject * Py_InitModule4_64(const char *name, PyMethodDef *methods, const char *doc, PyObject *self, int apiver);

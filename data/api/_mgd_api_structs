@@ -15,7 +15,6 @@ PyBufferProcs
 
 PyObject
 PyTypeObject
-PyFileObject
 PyVarObject
 PyIntObject
 PyFloatObject
