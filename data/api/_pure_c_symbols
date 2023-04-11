@@ -66,6 +66,10 @@ PyBuffer_FromMemory
 PyBuffer_FromReadWriteMemory
 PyBuffer_New
 
+# Objects/bytesobject.c
+PyBytes_FromFormat
+PyBytes_FromFormatV
+
 # Objects/cellobject.c
 PyCell_New
 PyCell_Get
@@ -134,13 +138,6 @@ PyCFunction_New
 # Objects/object.c
 _Py_HashPointer
 _PyObject_GetDictPtr
-
-# Objects/stringobject.c
-PyString_FromFormat
-PyString_FromFormatV
-_PyString_Eq
-PyString_Format
-_PyString_FormatLong
 
 # Objects/structseq.c
 PyStructSequence_New

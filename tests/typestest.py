@@ -21,7 +21,8 @@ from Ironclad.Structs import *
 BUILTIN_TYPES = {
     "PyType_Type": type,
     "PyBaseObject_Type": object,
-    "PyString_Type": str,
+    "PyBytes_Type": bytes,
+    "PyUnicode_Type": str,
     "PyList_Type": list,
     "PyDict_Type": dict,
     "PyTuple_Type": tuple,
@@ -97,7 +98,7 @@ class Types_Test(TestCase):
         self.assertFalse(mapper.PyType_IsSubtype(IntPtr.Zero, mapper.PyType_Type))
         
         self.assertTrue(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyType_Type))
-        self.assertTrue(mapper.PyType_IsSubtype(mapper.PyString_Type, mapper.PyString_Type))
+        self.assertTrue(mapper.PyType_IsSubtype(mapper.PyBytes_Type, mapper.PyBytes_Type))
         self.assertTrue(mapper.PyType_IsSubtype(mapper.PyBaseObject_Type, mapper.PyBaseObject_Type))
         self.assertTrue(mapper.PyType_IsSubtype(mapper.PyList_Type, mapper.PyList_Type))
         
@@ -107,20 +108,27 @@ class Types_Test(TestCase):
         self.assertFalse(mapper.PyType_IsSubtype(mapper.PyList_Type, mapper.PyType_Type))
         self.assertFalse(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyList_Type))
         
-        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyString_Type, mapper.PyType_Type))
-        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyString_Type))
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyBytes_Type, mapper.PyType_Type))
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyType_Type, mapper.PyBytes_Type))
         
-        self.assertFalse(mapper.PyType_IsSubtype(mapper.Store("foo"), mapper.PyString_Type))
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.Store(b"foo"), mapper.PyBytes_Type))
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.Store("foo"), mapper.PyUnicode_Type))
         
         class T(type): pass
         Tptr = mapper.Store(T)
         self.assertTrue(mapper.PyType_IsSubtype(Tptr, mapper.PyType_Type))
         self.assertFalse(mapper.PyType_IsSubtype(mapper.PyType_Type, Tptr))
         
+        class B(bytes): pass
+        Bptr = mapper.Store(B)
+        self.assertTrue(mapper.PyType_IsSubtype(Bptr, mapper.PyBytes_Type))
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyBytes_Type, Bptr))
+        self.assertFalse(mapper.PyType_IsSubtype(Bptr, mapper.PyType_Type))
+
         class S(str): pass
         Sptr = mapper.Store(S)
-        self.assertTrue(mapper.PyType_IsSubtype(Sptr, mapper.PyString_Type))
-        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyString_Type, Sptr))
+        self.assertTrue(mapper.PyType_IsSubtype(Sptr, mapper.PyUnicode_Type))
+        self.assertFalse(mapper.PyType_IsSubtype(mapper.PyUnicode_Type, Sptr))
         self.assertFalse(mapper.PyType_IsSubtype(Sptr, mapper.PyType_Type))
 
 
@@ -181,7 +189,7 @@ class Types_Test(TestCase):
 
     @WithMapper
     def testNotAutoActualisableTypes(self, mapper, _):
-        safeTypes = "PyString_Type PyList_Type PyTuple_Type PyType_Type PyFloat_Type".split()
+        safeTypes = "PyBytes_Type PyList_Type PyTuple_Type PyType_Type PyFloat_Type".split()
         discoveryModes = ("IncRef", "Retrieve", "DecRef", "RefCount")
         for _type in (s for s in BUILTIN_TYPES if s not in safeTypes):
             for mode in discoveryModes:
@@ -318,7 +326,7 @@ class Types_Test(TestCase):
         self.assertSizes(mapper.PyBaseObject_Type, Marshal.SizeOf(PyObject()))
         self.assertSizes(mapper.PyType_Type, Marshal.SizeOf(PyTypeObject()))
         self.assertSizes(mapper.PyTuple_Type, Marshal.SizeOf(PyTupleObject()), Marshal.SizeOf(IntPtr())) # bigger than necessary
-        self.assertSizes(mapper.PyString_Type, Marshal.SizeOf(PyStringObject()) - 1, Marshal.SizeOf(Byte()))
+        self.assertSizes(mapper.PyBytes_Type, Marshal.SizeOf(PyBytesObject()) - 1, Marshal.SizeOf(Byte()))
         self.assertSizes(mapper.PyList_Type, Marshal.SizeOf(PyListObject()))
         self.assertSizes(mapper.PySlice_Type, Marshal.SizeOf(PySliceObject()))
         self.assertSizes(mapper.PyMethod_Type, Marshal.SizeOf(PyMethodObject()))

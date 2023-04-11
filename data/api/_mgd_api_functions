@@ -13,7 +13,7 @@
 _PyLong_Sign                    
 _PyObject_New               
 _PyObject_NewVar       
-_PyString_Resize           
+_PyBytes_Resize
 _PyTuple_Resize    
     
 Py_AtExit               
@@ -163,16 +163,16 @@ PySequence_Tuple
     
 PySlice_New
     
-PyString_AsString                       {'unstring': True}
-PyString_AsStringAndSize
-PyString_Concat
-PyString_ConcatAndDel
-PyString_FromString                     {'unstring': True}
-PyString_FromStringAndSize              {'unstring': True}
-PyString_InternFromString               {'unstring': True}
-PyString_InternInPlace
-PyString_Repr
-PyString_Size
+PyBytes_AsString                        {'unstring': True}
+PyBytes_AsStringAndSize
+PyBytes_Concat
+PyBytes_ConcatAndDel
+PyBytes_FromString                      {'unstring': True}
+PyBytes_FromStringAndSize               {'unstring': True}
+PyBytes_InternFromString                {'unstring': True}
+PyBytes_InternInPlace
+PyBytes_Repr
+PyBytes_Size
     
 PySys_GetObject
     

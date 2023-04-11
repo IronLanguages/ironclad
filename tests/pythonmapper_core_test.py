@@ -430,7 +430,7 @@ class PythonMapper_References_Test(TestCase):
 
     @WithMapper
     def testCannotStoreUnmanagedDataMarker(self, mapper, _):
-        self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyStringObject))
+        self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyBytesObject))
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyTupleObject))
         self.assertRaises(TypeError, lambda: mapper.Store(UnmanagedDataMarker.PyListObject))
 
@@ -608,8 +608,8 @@ class PythonMapper_GetFuncPtr_NonApi_Test(TestCase):
             "IC_PyBaseObject_Init",
             "IC_PyDict_Init",
             
-            "IC_PyString_Str",
-            "IC_PyString_Concat_Core",
+            "IC_PyBytes_Str",
+            "IC_PyBytes_Concat_Core",
             
             "IC_PyBaseObject_Dealloc",
             "IC_PyList_Dealloc",

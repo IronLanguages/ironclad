@@ -172,7 +172,6 @@ _PyThreadState_Current
 PyBaseString_Type
 PyClass_Type
 PyInstance_Type
-PyString_Type
 PySymtableEntry_Type
 
 

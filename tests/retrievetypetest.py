@@ -13,7 +13,7 @@ from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, HGlobalAllocator, PythonMapper
 from Ironclad.Structs import (
-    MemberT, METH, PyMemberDef, PyNumberMethods, PyStringObject, 
+    MemberT, METH, PyMemberDef, PyNumberMethods, PyBytesObject,
     PyIntObject, PyObject, PyMappingMethods, PySequenceMethods, PyTypeObject
 )
 
@@ -314,24 +314,24 @@ class BuiltinSubclassHorrorTest(TestCase):
     
     
     @WithMapper
-    def testRetrievedStringsHaveCorrectValue(self, mapper, deallocLater):
+    def testRetrievedBytesHaveCorrectValue(self, mapper, deallocLater):
         typeSpec = {
             'tp_name': 'klass',
-            'tp_base': mapper.PyString_Type,
-            'tp_basicsize': Marshal.SizeOf(PyStringObject()) - 1,
+            'tp_base': mapper.PyBytes_Type,
+            'tp_basicsize': Marshal.SizeOf(PyBytesObject()) - 1,
             'tp_itemsize': 1,
         }
         klassPtr, deallocType = MakeTypePtr(mapper, typeSpec)
         deallocLater(deallocType)
         
-        _f0oSize = Marshal.SizeOf(PyStringObject()) + 3
+        _f0oSize = Marshal.SizeOf(PyBytesObject()) + 3
         _f0oPtr = Marshal.AllocHGlobal(_f0oSize)
         CPyMarshal.Zero(_f0oPtr, _f0oSize)
         deallocLater(lambda: Marshal.FreeHGlobal(_f0oPtr))
-        CPyMarshal.WriteIntField(_f0oPtr, PyStringObject, "ob_refcnt", 1)
-        CPyMarshal.WritePtrField(_f0oPtr, PyStringObject, "ob_type", klassPtr)
-        CPyMarshal.WriteIntField(_f0oPtr, PyStringObject, "ob_size", 3)
-        dataPtr = CPyMarshal.Offset(_f0oPtr, Marshal.OffsetOf(PyStringObject, "ob_sval"))
+        CPyMarshal.WriteIntField(_f0oPtr, PyBytesObject, "ob_refcnt", 1)
+        CPyMarshal.WritePtrField(_f0oPtr, PyBytesObject, "ob_type", klassPtr)
+        CPyMarshal.WriteIntField(_f0oPtr, PyBytesObject, "ob_size", 3)
+        dataPtr = CPyMarshal.Offset(_f0oPtr, Marshal.OffsetOf(PyBytesObject, "ob_sval"))
         for char in 'f\0o\0':
             CPyMarshal.WriteByte(dataPtr, ord(char))
             dataPtr = CPyMarshal.Offset(dataPtr, 1)

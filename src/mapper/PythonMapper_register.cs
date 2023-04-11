@@ -117,30 +117,30 @@ namespace Ironclad
         }
 
         public override void
-        Register_PyString_Type(IntPtr address)
+        Register_PyBytes_Type(IntPtr address)
         {
             // not quite trivial to autogenerate
             CPyMarshal.Zero(address, Marshal.SizeOf<PyTypeObject>());
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.ob_refcnt), 1);
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_basicsize), (nint)Marshal.SizeOf<PyStringObject>() - 1);
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_basicsize), (nint)Marshal.SizeOf<PyBytesObject>() - 1);
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_itemsize), 1);
             CPyMarshal.WriteCStringField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_name), "str");
-            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_str), this.GetFuncPtr(nameof(IC_PyString_Str)));
+            CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_str), this.GetFuncPtr(nameof(IC_PyBytes_Str)));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_repr), this.GetFuncPtr(nameof(PyObject_Repr)));
 
             int sqSize = Marshal.SizeOf<PySequenceMethods>();
             IntPtr sqPtr = this.allocator.Alloc(sqSize);
             CPyMarshal.Zero(sqPtr, sqSize);
-            CPyMarshal.WritePtrField(sqPtr, typeof(PySequenceMethods), nameof(PySequenceMethods.sq_concat), this.GetFuncPtr(nameof(IC_PyString_Concat_Core)));
+            CPyMarshal.WritePtrField(sqPtr, typeof(PySequenceMethods), nameof(PySequenceMethods.sq_concat), this.GetFuncPtr(nameof(IC_PyBytes_Concat_Core)));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_as_sequence), sqPtr);
 
             int bfSize = Marshal.SizeOf<PyBufferProcs>();
             IntPtr bfPtr = this.allocator.Alloc(bfSize);
             CPyMarshal.Zero(bfPtr, bfSize);
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getreadbuffer), this.GetFuncPtr(nameof(IC_str_getreadbuffer)));
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getwritebuffer), this.GetFuncPtr(nameof(IC_str_getwritebuffer)));
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getsegcount), this.GetFuncPtr(nameof(IC_str_getsegcount)));
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getcharbuffer), this.GetFuncPtr(nameof(IC_str_getreadbuffer)));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getreadbuffer), this.GetFuncPtr(nameof(IC_bytes_getreadbuffer)));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getwritebuffer), this.GetFuncPtr(nameof(IC_bytes_getwritebuffer)));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getsegcount), this.GetFuncPtr(nameof(IC_bytes_getsegcount)));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getcharbuffer), this.GetFuncPtr(nameof(IC_bytes_getreadbuffer)));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_as_buffer), bfPtr);
 
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags), (Int32)Py_TPFLAGS.HAVE_GETCHARBUFFER);

@@ -170,7 +170,7 @@ namespace Ironclad
             this.PyType_Ready(this.PyLong_Type);
             this.PyType_Ready(this.PyFloat_Type);
             this.PyType_Ready(this.PyComplex_Type);
-            this.PyType_Ready(this.PyString_Type);
+            this.PyType_Ready(this.PyBytes_Type);
             this.PyType_Ready(this.PyTuple_Type);
             this.PyType_Ready(this.PyList_Type);
             this.PyType_Ready(this.PyDict_Type);
@@ -224,7 +224,7 @@ namespace Ironclad
             if (this.PyType_IsSubtype(typePtr, this.PyLong_Type) != 0) { flags |= Py_TPFLAGS.LONG_SUBCLASS; }
             if (this.PyType_IsSubtype(typePtr, this.PyList_Type) != 0) { flags |= Py_TPFLAGS.LIST_SUBCLASS; }
             if (this.PyType_IsSubtype(typePtr, this.PyTuple_Type) != 0) { flags |= Py_TPFLAGS.TUPLE_SUBCLASS; }
-            if (this.PyType_IsSubtype(typePtr, this.PyString_Type) != 0) { flags |= Py_TPFLAGS.STRING_SUBCLASS; }
+            if (this.PyType_IsSubtype(typePtr, this.PyBytes_Type) != 0) { flags |= Py_TPFLAGS.BYTES_SUBCLASS; }
             if (this.PyType_IsSubtype(typePtr, this.PyDict_Type) != 0) { flags |= Py_TPFLAGS.DICT_SUBCLASS; }
             if (this.PyType_IsSubtype(typePtr, this.PyType_Type) != 0) { flags |= Py_TPFLAGS.TYPE_SUBCLASS; }
             // TODO: PyExc_BaseException is tedious
@@ -299,9 +299,9 @@ namespace Ironclad
             {
                 args = new object[] { CPyMarshal.ReadDoubleField(ptr, typeof(PyFloatObject), nameof(PyFloatObject.ob_fval)) };
             }
-            if (Builtin.issubclass(this.scratchContext, type_, TypeCache.String))
+            if (Builtin.issubclass(this.scratchContext, type_, TypeCache.Bytes))
             {
-                args = new object[] { this.ReadPyString(ptr) };
+                args = new object[] { this.ReadPyBytes(ptr) };
             }
             if (Builtin.issubclass(this.scratchContext, type_, TypeCache.PythonType))
             {

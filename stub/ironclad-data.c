@@ -250,5 +250,5 @@ PyObject * _PySet_Dummy;
 int Py_HasFileSystemDefaultEncoding;
 int _PyOS_opterr;
 int _PyOS_optind;
-char * _PyOS_optarg;
+wchar_t * _PyOS_optarg;
 const char * Py_hexdigits;

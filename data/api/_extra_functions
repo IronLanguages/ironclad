@@ -17,12 +17,12 @@ newfunc IC_PyType_New;
 initproc IC_PyBaseObject_Init;
 initproc IC_PyDict_Init;
 
-readbufferproc IC_str_getreadbuffer;
-writebufferproc IC_str_getwritebuffer;
-segcountproc IC_str_getsegcount;
+readbufferproc IC_bytes_getreadbuffer;
+writebufferproc IC_bytes_getwritebuffer;
+segcountproc IC_bytes_getsegcount;
 
-reprfunc IC_PyString_Str;
-binaryfunc IC_PyString_Concat_Core;
+reprfunc IC_PyBytes_Str;
+binaryfunc IC_PyBytes_Concat_Core;
 
 # TODO: get rid of these - they are dummy stubs to compile python34.dll
 
@@ -45,18 +45,6 @@ PyObject* PyUnicodeUCS2_DecodeASCII(const char *string, Py_ssize_t length, const
 PyObject* PyUnicodeUCS2_AsUnicodeEscapeString(PyObject *unicode);
 Py_UNICODE * PyUnicodeUCS2_AsUnicode(PyObject *unicode);
 PyObject* PyUnicodeUCS2_FromEncodedObject(register PyObject *obj, const char *encoding, const char *errors);
-
-PyObject * PyString_FromStringAndSize(const char *, Py_ssize_t);
-PyObject * PyString_FromString(const char *);
-char * PyString_AsString(PyObject *);
-Py_ssize_t PyString_Size(PyObject *);
-void PyString_Concat(PyObject **, PyObject *);
-int _PyString_Resize(PyObject **, Py_ssize_t);
-PyObject * PyString_InternFromString(const char *);
-void PyString_InternInPlace(PyObject **);
-
-int PyString_AsStringAndSize(register PyObject *obj, register char **s, register Py_ssize_t *len);
-int _PyString_InsertThousandsGrouping(char *buffer, Py_ssize_t n_buffer, Py_ssize_t n_digits, Py_ssize_t buf_size, Py_ssize_t *count, int append_zero_char);
 
 PyObject * PyInt_FromString(char*, char**, int);
 long PyInt_GetMax(void);

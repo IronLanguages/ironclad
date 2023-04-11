@@ -48,7 +48,7 @@ _types = (
     "PySlice_Type",
     "PyBaseString_Type",
     "PySTEntry_Type",
-    "PyString_Type",
+    "PyBytes_Type",
     "PySymtableEntry_Type",
     "PyTuple_Type",
     "PyUnicode_Type",

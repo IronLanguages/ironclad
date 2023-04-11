@@ -22,7 +22,7 @@ namespace Ironclad
 {
     public enum UnmanagedDataMarker
     {
-        PyStringObject,
+        PyBytesObject,
         PyTupleObject,
         PyListObject,
     }
@@ -405,8 +405,8 @@ namespace Ironclad
             {
                 switch (this.incompleteObjects[ptr])
                 {
-                    case UnmanagedDataMarker.PyStringObject:
-                        this.ActualiseString(ptr);
+                    case UnmanagedDataMarker.PyBytesObject:
+                        this.ActualiseBytes(ptr);
                         break;
 
                     case UnmanagedDataMarker.PyTupleObject:

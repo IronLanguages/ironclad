@@ -22,7 +22,7 @@ PyComplexObject
 PyTupleObject
 PySliceObject
 PyListObject
-PyStringObject
+PyBytesObject
 PyFunctionObject
 PyMethodObject
 
