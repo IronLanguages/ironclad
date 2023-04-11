@@ -15,8 +15,8 @@ namespace Ironclad
             int size = Marshal.SizeOf<PyFunctionObject>();
             IntPtr ptr = this.allocator.Alloc(size);
             CPyMarshal.Zero(ptr, size);
-            CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), nameof(PyIntObject.ob_refcnt), 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), nameof(PyIntObject.ob_type), this.PyFunction_Type);
+            CPyMarshal.WritePtrField(ptr, typeof(PyFunctionObject), nameof(PyFunctionObject.ob_refcnt), 1);
+            CPyMarshal.WritePtrField(ptr, typeof(PyFunctionObject), nameof(PyFunctionObject.ob_type), this.PyFunction_Type);
             this.map.Associate(ptr, func);
             return ptr;
         }

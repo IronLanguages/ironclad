@@ -16,20 +16,33 @@ def _generate_field_code(fieldspec):
         # ...but it has been in all the cases we've seen
         ictype = 'ptr'
     
+    if name in {"readonly", "internal"}:
+        name = "@" + name
+
     return STRUCT_FIELD_TEMPLATE % {
         'name': name,
         'type': ICTYPE_2_MGDTYPE[native_ictype(ictype)], 
     }
 
-def _generate_struct_code(structspec):
+def _expand_fields(fields, structspecs):
+    if not fields: return fields
+    name, ictype = fields[0]
+    if "base" in name and ictype[0] == "?" and ictype[-1] == "?" and ictype[1:-1] in structspecs:
+        return _expand_fields(structspecs[ictype[1:-1]], structspecs) + fields[1:]
+    return fields
+
+def _generate_struct_code(structspec, structspecs):
     name, fields = structspec
+
+    fields = _expand_fields(fields, structspecs)
+
     fields_code = '\n'.join(
         map(_generate_field_code, fields))
     return STRUCT_TEMPLATE % {
         'name': name, 
         'fields': fields_code
     }
-    
+
 
 #==========================================================================
 
@@ -44,8 +57,8 @@ class PythonStructsGenerator(CodeGenerator):
             self.STUBMAIN.classes(in_set(self.MGD_API_STRUCTS)),
             self.STUBMAIN.typedefs(in_set(self.MGD_API_STRUCTS)))
         
-        return STRUCTS_FILE_TEMPLATE % '\n\n'.join(
-            map(_generate_struct_code, sorted(structspecs)))
-    
+        d = dict(structspecs)
+        return STRUCTS_FILE_TEMPLATE % '\n\n'.join(_generate_struct_code(x, d) for x in sorted(structspecs))
+
 
 #==========================================================================
