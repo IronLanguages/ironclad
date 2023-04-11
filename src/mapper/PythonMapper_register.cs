@@ -155,8 +155,7 @@ namespace Ironclad
             IntPtr nmPtr = this.allocator.Alloc(nmSize);
             CPyMarshal.Zero(nmPtr, nmSize);
 
-            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), nameof(PyNumberMethods.nb_int), this.GetFuncPtr(nameof(PyNumber_Int)));
-            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), nameof(PyNumberMethods.nb_long), this.GetFuncPtr(nameof(PyNumber_Long)));
+            CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), nameof(PyNumberMethods.nb_int), this.GetFuncPtr(nameof(PyNumber_Long)));
             CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), nameof(PyNumberMethods.nb_float), this.GetFuncPtr(nameof(PyNumber_Float)));
             CPyMarshal.WritePtrField(nmPtr, typeof(PyNumberMethods), nameof(PyNumberMethods.nb_multiply), this.GetFuncPtr(nameof(PyNumber_Multiply)));
 

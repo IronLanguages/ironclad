@@ -113,7 +113,6 @@ FUNC_ARGS = {
     "tp_str": Ironclad.dgt_ptr_ptr,
     "tp_repr": Ironclad.dgt_ptr_ptr,
     "tp_richcompare": Ironclad.dgt_ptr_ptrptrint,
-    "tp_compare": Ironclad.dgt_int_ptrptr,
     "tp_hash": Ironclad.dgt_int_ptr,
 }
 
@@ -189,16 +188,12 @@ NUMSEQMAP_METHODS = {
     "nb_absolute": Ironclad.dgt_ptr_ptr, 
     "nb_invert": Ironclad.dgt_ptr_ptr, 
     "nb_int": Ironclad.dgt_ptr_ptr, 
-    "nb_long": Ironclad.dgt_ptr_ptr, 
     "nb_float": Ironclad.dgt_ptr_ptr, 
-    "nb_oct": Ironclad.dgt_ptr_ptr, 
-    "nb_hex": Ironclad.dgt_ptr_ptr, 
     "nb_index": Ironclad.dgt_ptr_ptr, 
     
     "nb_add": Ironclad.dgt_ptr_ptrptr, 
     "nb_subtract": Ironclad.dgt_ptr_ptrptr, 
     "nb_multiply": Ironclad.dgt_ptr_ptrptr, 
-    "nb_divide": Ironclad.dgt_ptr_ptrptr, 
     "nb_floor_divide": Ironclad.dgt_ptr_ptrptr, 
     "nb_true_divide": Ironclad.dgt_ptr_ptrptr, 
     "nb_remainder": Ironclad.dgt_ptr_ptrptr, 
@@ -212,7 +207,6 @@ NUMSEQMAP_METHODS = {
     "nb_inplace_add": Ironclad.dgt_ptr_ptrptr, 
     "nb_inplace_subtract": Ironclad.dgt_ptr_ptrptr, 
     "nb_inplace_multiply": Ironclad.dgt_ptr_ptrptr, 
-    "nb_inplace_divide": Ironclad.dgt_ptr_ptrptr, 
     "nb_inplace_floor_divide": Ironclad.dgt_ptr_ptrptr, 
     "nb_inplace_true_divide": Ironclad.dgt_ptr_ptrptr, 
     "nb_inplace_remainder": Ironclad.dgt_ptr_ptrptr, 
@@ -222,16 +216,14 @@ NUMSEQMAP_METHODS = {
     "nb_inplace_xor": Ironclad.dgt_ptr_ptrptr, 
     "nb_inplace_or": Ironclad.dgt_ptr_ptrptr, 
     
-    "nb_nonzero": Ironclad.dgt_int_ptr,
+    "nb_bool": Ironclad.dgt_int_ptr,
     "nb_power": Ironclad.dgt_ptr_ptrptrptr, 
     "nb_inplace_power": Ironclad.dgt_ptr_ptrptrptr, 
     
     "sq_item": Ironclad.dgt_ptr_ptrssize,
     "sq_concat": Ironclad.dgt_ptr_ptrptr,
     "sq_repeat": Ironclad.dgt_ptr_ptrssize,
-    "sq_slice": Ironclad.dgt_ptr_ptrssizessize,
     "sq_ass_item": Ironclad.dgt_int_ptrssizeptr,
-    "sq_ass_slice": Ironclad.dgt_int_ptrssizessizeptr,
     "sq_length": Ironclad.dgt_ssize_ptr,
     "sq_contains": Ironclad.dgt_int_ptrptr,
     

@@ -202,10 +202,9 @@ class Types_Test(TestCase):
     
     @WithMapper
     def testNumberMethods(self, mapper, _):
-        numberTypes = ("PyInt_Type", "PyLong_Type", "PyFloat_Type", "PyComplex_Type")
+        numberTypes = ("PyLong_Type", "PyFloat_Type", "PyComplex_Type")
         implementedFields = {
-            "nb_int": mapper.GetFuncPtr("PyNumber_Int"),
-            "nb_long": mapper.GetFuncPtr("PyNumber_Long"),
+            "nb_int": mapper.GetFuncPtr("PyNumber_Long"),
             "nb_float": mapper.GetFuncPtr("PyNumber_Float"),
             "nb_multiply": mapper.GetFuncPtr("PyNumber_Multiply")
         }

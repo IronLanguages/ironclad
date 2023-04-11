@@ -21,7 +21,7 @@ namespace Ironclad
 
         private readonly string[] EASY_TYPE_FIELDS = new string[] { 
             nameof(PyTypeObject.tp_init), nameof(PyTypeObject.tp_call), nameof(PyTypeObject.tp_repr),
-            nameof(PyTypeObject.tp_str), nameof(PyTypeObject.tp_compare), nameof(PyTypeObject.tp_hash), 
+            nameof(PyTypeObject.tp_str), nameof(PyTypeObject.tp_hash),
             nameof(PyTypeObject.tp_getattr), nameof(PyTypeObject.tp_iter), nameof(PyTypeObject.tp_iternext),
         };
         private readonly string[] MP_FIELDS = new string[] { 
@@ -29,22 +29,20 @@ namespace Ironclad
         };
         private readonly string[] SQ_FIELDS = new string[] { 
             nameof(PySequenceMethods.sq_item), nameof(PySequenceMethods.sq_concat), nameof(PySequenceMethods.sq_ass_item),
-            nameof(PySequenceMethods.sq_length), nameof(PySequenceMethods.sq_slice), nameof(PySequenceMethods.sq_ass_slice),
-            nameof(PySequenceMethods.sq_contains),
+            nameof(PySequenceMethods.sq_length), nameof(PySequenceMethods.sq_contains),
         };
         private readonly string[] NB_FIELDS = new string[] { 
             nameof(PyNumberMethods.nb_add), nameof(PyNumberMethods.nb_subtract), nameof(PyNumberMethods.nb_multiply),
-            nameof(PyNumberMethods.nb_divide), nameof(PyNumberMethods.nb_true_divide), nameof(PyNumberMethods.nb_floor_divide),
+            nameof(PyNumberMethods.nb_true_divide), nameof(PyNumberMethods.nb_floor_divide),
             nameof(PyNumberMethods.nb_remainder), nameof(PyNumberMethods.nb_divmod), nameof(PyNumberMethods.nb_lshift),
             nameof(PyNumberMethods.nb_rshift), nameof(PyNumberMethods.nb_and), nameof(PyNumberMethods.nb_xor),
             nameof(PyNumberMethods.nb_or), nameof(PyNumberMethods.nb_inplace_add), nameof(PyNumberMethods.nb_inplace_subtract),
-            nameof(PyNumberMethods.nb_inplace_multiply), nameof(PyNumberMethods.nb_inplace_divide), nameof(PyNumberMethods.nb_inplace_true_divide),
+            nameof(PyNumberMethods.nb_inplace_multiply), nameof(PyNumberMethods.nb_inplace_true_divide),
             nameof(PyNumberMethods.nb_inplace_floor_divide), nameof(PyNumberMethods.nb_inplace_remainder), nameof(PyNumberMethods.nb_inplace_lshift),
             nameof(PyNumberMethods.nb_inplace_rshift), nameof(PyNumberMethods.nb_inplace_and), nameof(PyNumberMethods.nb_inplace_xor),
             nameof(PyNumberMethods.nb_inplace_or), nameof(PyNumberMethods.nb_negative), nameof(PyNumberMethods.nb_positive),
             nameof(PyNumberMethods.nb_absolute), nameof(PyNumberMethods.nb_invert), nameof(PyNumberMethods.nb_int),
-            nameof(PyNumberMethods.nb_long), nameof(PyNumberMethods.nb_float), nameof(PyNumberMethods.nb_oct),
-            nameof(PyNumberMethods.nb_hex), nameof(PyNumberMethods.nb_index), nameof(PyNumberMethods.nb_nonzero),
+            nameof(PyNumberMethods.nb_float), nameof(PyNumberMethods.nb_index), nameof(PyNumberMethods.nb_bool),
             nameof(PyNumberMethods.nb_power), nameof(PyNumberMethods.nb_inplace_power),
         };
 

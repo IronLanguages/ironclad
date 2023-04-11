@@ -886,18 +886,7 @@ class TypeMethodsTest(MethodConnectionTestCase):
         
         typeSpec = {"tp_repr": Call}
         self.assertTypeMethodCall(typeSpec, "__repr__", (), {}, result)
-    
-    def testCompare(self):
-        arg = object()
-        def Compare(p1, p2):
-            # note: assertEquals inside __cmp__ causes stack overflow
-            self.assertEqual(self.mapper.Retrieve(p1) is self.instance, True)
-            self.assertEqual(self.mapper.Retrieve(p2), arg)
-            return 0
-        
-        typeSpec = {"tp_compare": Compare}
-        self.assertTypeMethodCall(typeSpec, "__cmp__", (arg,), {}, 0)
-        
+
     def testRichCompare(self):
         arg = object()
         result = object()
@@ -979,10 +968,7 @@ class NumberMethodsTest(MethodConnectionTestCase):
         self.assertUnaryFunc('nb_absolute', '__abs__')
         self.assertUnaryFunc('nb_invert', '__invert__')
         self.assertUnaryFunc('nb_int', '__int__')
-        self.assertUnaryFunc('nb_long', '__long__')
         self.assertUnaryFunc('nb_float', '__float__')
-        self.assertUnaryFunc('nb_oct', '__oct__')
-        self.assertUnaryFunc('nb_hex', '__hex__')
         self.assertUnaryFunc('nb_index', '__index__')
     
     def assertBinaryFunc(self, cpyname, ipyname, swapped=None):
@@ -1018,7 +1004,6 @@ class NumberMethodsTest(MethodConnectionTestCase):
         self.assertBinaryFunc('nb_add', '__add__', '__radd__')
         self.assertBinaryFunc('nb_subtract', '__sub__', '__rsub__')
         self.assertBinaryFunc('nb_multiply', '__mul__', '__rmul__')
-        self.assertBinaryFunc('nb_divide', '__div__', '__rdiv__')
         self.assertBinaryFunc('nb_remainder', '__mod__', '__rmod__')
         self.assertBinaryFunc('nb_divmod', '__divmod__', '__rdivmod__')
         
@@ -1031,7 +1016,6 @@ class NumberMethodsTest(MethodConnectionTestCase):
         self.assertBinaryFunc('nb_inplace_add', '__iadd__')
         self.assertBinaryFunc('nb_inplace_subtract', '__isub__')
         self.assertBinaryFunc('nb_inplace_multiply', '__imul__')
-        self.assertBinaryFunc('nb_inplace_divide', '__idiv__')
         self.assertBinaryFunc('nb_inplace_remainder', '__imod__')
         self.assertBinaryFunc('nb_inplace_lshift', '__ilshift__')
         self.assertBinaryFunc('nb_inplace_rshift', '__irshift__')
@@ -1044,15 +1028,15 @@ class NumberMethodsTest(MethodConnectionTestCase):
         self.assertBinaryFunc('nb_inplace_floor_divide', '__ifloordiv__')
         self.assertBinaryFunc('nb_inplace_true_divide', '__itruediv__')
     
-    def testNonzero(self):
+    def testBool(self):
         result = 0
-        def Nonzero(p1):
+        def Bool(p1):
             self.assertEqual(self.mapper.Retrieve(p1), self.instance)
             return result
         
-        numbers, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {'nb_nonzero': Nonzero})
+        numbers, deallocNumbers = MakeNumSeqMapMethods(PyNumberMethods, {'nb_bool': Bool})
         typeSpec = {"tp_as_number": numbers}
-        self.assertTypeMethodCall(typeSpec, "__nonzero__", (), {}, result)
+        self.assertTypeMethodCall(typeSpec, "__bool__", (), {}, result)
         deallocNumbers()
         
     def assertPowerFunc(self, cpyname, ipyname):
@@ -1189,88 +1173,6 @@ class SequenceMethodsTest(MethodConnectionTestCase):
 
         self.result = -1
         self.assertTypeMethodRaises(typeSpec, "__setitem__", (idx, value,), {}, Exception)
-
-        deallocSeq()
-
-
-    def testGetslice(self):
-        start_ = 123
-        stop_ = 456
-        result = object()
-        def Getslice(p1, s1, s2):
-            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
-            self.assertEqual(s1, start_)
-            self.assertEqual(s2, stop_)
-            return self.mapper.Store(result)
-        def Length(_):
-            return 0
-        
-        seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_slice': Getslice, 'sq_length': Length})
-        typeSpec = {"tp_as_sequence": seq}
-        self.assertTypeMethodCall(typeSpec, "__getslice__", (start_, stop_), {}, result)
-        deallocSeq()
-
-
-    def testGetslice_NastyNumpyCase(self):
-        result = object()
-        def Getslice(p1, s1, s2):
-            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
-            self.assertEqual(s1, -1)
-            self.assertEqual(s2, -1)
-            return self.mapper.Store(result)
-        def Length(_):
-            return 0
-        
-        seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_slice': Getslice, 'sq_length': Length})
-        typeSpec = {"tp_as_sequence": seq}
-        self.assertTypeMethodCall(typeSpec, "__getslice__", (-1, -1), {}, result)
-        deallocSeq()
-
-
-    def testSetslice(self):
-        start_ = 123
-        stop_ = 456
-        value = object()
-        def Setslice(p1, s1, s2, p2):
-            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
-            self.assertEqual(s1, start_)
-            self.assertEqual(s2, stop_)
-            self.assertEqual(self.mapper.Retrieve(p2), value)
-            return self.result
-        def Length(_):
-            return 0
-        
-        seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_ass_slice': Setslice, 'sq_length': Length})
-        typeSpec = {"tp_as_sequence": seq}
-
-        self.result = 0
-        self.assertTypeMethodCall(typeSpec, "__setslice__", (start_, stop_, value,), {}, self.result)
-
-        self.result = -1
-        self.assertTypeMethodRaises(typeSpec, "__setslice__", (start_, stop_, value,), {}, Exception)
-
-        deallocSeq()
-
-
-    def testSetslice_NastyNumpyCase(self):
-        value = object()
-        def Setslice(p1, s1, s2, p2):
-            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
-            self.assertEqual(s1, -1)
-            self.assertEqual(s2, -1)
-            self.assertEqual(self.mapper.Retrieve(p2), value)
-            return self.result
-        def Length(_):
-            return 0
-        
-        seq, deallocSeq = MakeNumSeqMapMethods(PySequenceMethods, {'sq_ass_slice': Setslice, 'sq_length': Length})
-        typeSpec = {"tp_as_sequence": seq}
-
-        self.result = 0
-        self.assertTypeMethodCall(typeSpec, "__setslice__", (-1, -1, value,), {}, self.result)
-
-        self.result = -1
-        self.assertTypeMethodRaises(typeSpec, "__setslice__", (-1, -1, value,), {}, Exception)
 
         deallocSeq()
 
