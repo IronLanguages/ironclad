@@ -8,7 +8,7 @@ from System import IntPtr, Int32, UInt32
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal, dgt_int_ptrptrptr, DoubleStruct
-from Ironclad.Structs import PyObject, PyFloatObject, PyIntObject, PyListObject, PyTypeObject
+from Ironclad.Structs import PyObject, PyFloatObject, PyListObject, PyTypeObject
 
 
 class CPyMarshalTest_32(TestCase):
@@ -72,6 +72,7 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testWriteIntField(self):
+        raise NotImplementedError("PyLongObject") # https://github.com/IronLanguages/ironclad/issues/14
         data = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
         CPyMarshal.Zero(data, Marshal.SizeOf(PyIntObject()))
         
@@ -84,6 +85,7 @@ class CPyMarshalTest_32(TestCase):
     
     
     def testReadIntField(self):
+        raise NotImplementedError("PyLongObject") # https://github.com/IronLanguages/ironclad/issues/14
         data = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
         CPyMarshal.Zero(data, Marshal.SizeOf(PyIntObject()))
         

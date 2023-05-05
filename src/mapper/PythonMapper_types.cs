@@ -133,7 +133,7 @@ namespace Ironclad
             }
 
             flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags));
-            flags |= Py_TPFLAGS.READY | Py_TPFLAGS.HAVE_CLASS;
+            flags |= Py_TPFLAGS.READY;
             flags &= ~Py_TPFLAGS.READYING;
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags), (Int32)flags);
             return 0;
@@ -165,19 +165,18 @@ namespace Ironclad
         {
             this.PyType_Ready(this.PyType_Type);
             this.PyType_Ready(this.PyBaseObject_Type);
-            this.PyType_Ready(this.PyInt_Type);
-            this.PyType_Ready(this.PyBool_Type); // note: bool should come after int, because bools are ints
             this.PyType_Ready(this.PyLong_Type);
+            this.PyType_Ready(this.PyBool_Type); // note: bool should come after int, because bools are ints
             this.PyType_Ready(this.PyFloat_Type);
             this.PyType_Ready(this.PyComplex_Type);
             this.PyType_Ready(this.PyBytes_Type);
             this.PyType_Ready(this.PyTuple_Type);
             this.PyType_Ready(this.PyList_Type);
             this.PyType_Ready(this.PyDict_Type);
-            this.PyType_Ready(this.PyNone_Type);
+            this.PyType_Ready(this._PyNone_Type);
             this.PyType_Ready(this.PySlice_Type);
             this.PyType_Ready(this.PyEllipsis_Type);
-            this.PyType_Ready(this.PyNotImplemented_Type);
+            this.PyType_Ready(this._PyNotImplemented_Type);
             this.PyType_Ready(this.PyMethod_Type);
             this.PyType_Ready(this.PyFunction_Type);
 
@@ -220,11 +219,11 @@ namespace Ironclad
         {
             Py_TPFLAGS flags = (Py_TPFLAGS)CPyMarshal.ReadIntField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags));
             
-            if (this.PyType_IsSubtype(typePtr, this.PyInt_Type) != 0) { flags |= Py_TPFLAGS.INT_SUBCLASS; }
             if (this.PyType_IsSubtype(typePtr, this.PyLong_Type) != 0) { flags |= Py_TPFLAGS.LONG_SUBCLASS; }
             if (this.PyType_IsSubtype(typePtr, this.PyList_Type) != 0) { flags |= Py_TPFLAGS.LIST_SUBCLASS; }
             if (this.PyType_IsSubtype(typePtr, this.PyTuple_Type) != 0) { flags |= Py_TPFLAGS.TUPLE_SUBCLASS; }
             if (this.PyType_IsSubtype(typePtr, this.PyBytes_Type) != 0) { flags |= Py_TPFLAGS.BYTES_SUBCLASS; }
+            if (this.PyType_IsSubtype(typePtr, this.PyUnicode_Type) != 0) { flags |= Py_TPFLAGS.UNICODE_SUBCLASS; }
             if (this.PyType_IsSubtype(typePtr, this.PyDict_Type) != 0) { flags |= Py_TPFLAGS.DICT_SUBCLASS; }
             if (this.PyType_IsSubtype(typePtr, this.PyType_Type) != 0) { flags |= Py_TPFLAGS.TYPE_SUBCLASS; }
             // TODO: PyExc_BaseException is tedious
@@ -293,7 +292,7 @@ namespace Ironclad
             object[] args = new object[]{};
             if (Builtin.issubclass(this.scratchContext, type_, TypeCache.Int32))
             {
-                args = new object[] { CPyMarshal.ReadIntField(ptr, typeof(PyIntObject), nameof(PyIntObject.ob_ival)) };
+                throw new InvalidOperationException(); // TODO: get rid of TypeCache.Int32? https://github.com/IronLanguages/ironclad/issues/14
             }
             if (Builtin.issubclass(this.scratchContext, type_, TypeCache.Double))
             {

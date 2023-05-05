@@ -4,10 +4,10 @@
 # API function name | coerce input | return type | error value | (optional) coerce output - changed to cast
 # TODO: error value, coerce output are annoying platform-specific
 
-PyInt_AsLong                MakeBigInteger              int     -1                  (int)
-PyInt_AsSsize_t             MakeBigInteger              nint    -1                  (int)
 PyFloat_AsDouble            MakeFloat                   double  -1.0
-PyLong_AsLong               MakeBigInteger              int     -1                  (int)
-PyLong_AsUnsignedLong       MakeBigInteger              uint    UInt32.MaxValue     (uint)
-PyLong_AsLongLong           MakeBigInteger              long    -1                  (long)
-PyLong_AsUnsignedLongLong   MakeUnsignedBigInteger      ulong   UInt64.MaxValue     (ulong)
+PyLong_AsLong               MakeBigInteger              int     -1                      (int)
+PyLong_AsUnsignedLong       MakeBigInteger              uint    UInt32.MaxValue         (uint)
+PyLong_AsLongLong           MakeBigInteger              long    -1                      (long)
+PyLong_AsSize_t             MakeBigInteger              nuint   unchecked((nuint)(-1))  (nuint)(ulong)
+PyLong_AsSsize_t            MakeBigInteger              nint    -1                      (nint)(long)
+PyLong_AsUnsignedLongLong   MakeUnsignedBigInteger      ulong   UInt64.MaxValue         (ulong)

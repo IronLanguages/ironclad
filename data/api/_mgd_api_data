@@ -10,19 +10,18 @@
 PyType_Type
 PyBaseObject_Type
 
-PyInt_Type
+PyLong_Type
 PyBool_Type
 _Py_TrueStruct
 _Py_FalseStruct
-_Py_ZeroStruct
 
 PyEllipsis_Type
 _Py_EllipsisObject
 
-PyNone_Type
+_PyNone_Type
 _Py_NoneStruct
 
-PyNotImplemented_Type
+_PyNotImplemented_Type
 _Py_NotImplementedStruct
 
 PyExc_BaseException
@@ -157,8 +156,6 @@ PyZip_Type
 _PyManagedBuffer_Type
 _PyMethodWrapper_Type
 _PyNamespace_Type
-_PyNone_Type
-_PyNotImplemented_Type
 _PyWeakref_ProxyType
 _PyWeakref_RefType
 _PyWeakref_CallableProxyType
@@ -166,17 +163,3 @@ _PyWeakref_CallableProxyType
 Py_OptimizeFlag
 
 _PyThreadState_Current 
-
-# TODO: get rid of these
-
-PyBaseString_Type
-PyClass_Type
-PyInstance_Type
-PySymtableEntry_Type
-
-
-
-
-
-
-

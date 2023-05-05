@@ -23,14 +23,6 @@ namespace Ironclad
         [Flags]
         public enum Py_TPFLAGS : uint
         {
-            HAVE_GETCHARBUFFER = 0x00000001,
-            HAVE_SEQUENCE_IN = 0x00000002,
-            HAVE_INPLACEOPS = 0x00000008,
-            CHECKTYPES = 0x00000010,
-            HAVE_RICHCOMPARE = 0x00000020,
-            HAVE_WEAKREFS = 0x00000040,
-            HAVE_ITER = 0x00000080,
-            HAVE_CLASS = 0x00000100,
             HEAPTYPE = 0x00000200,
             BASETYPE = 0x00000400,
             READY = 0x00001000,
@@ -40,12 +32,10 @@ namespace Ironclad
             HAVE_VERSION_TAG = 0x00040000,
             VALID_VERSION_TAG = 0x00080000,
             IS_ABSTRACT = 0x00100000,
-            HAVE_NEWBUFFER = 0x00200000,
-            INT_SUBCLASS = 0x00800000,
             LONG_SUBCLASS = 0x01000000,
             LIST_SUBCLASS = 0x02000000,
             TUPLE_SUBCLASS = 0x04000000,
-            STRING_SUBCLASS = 0x08000000,
+            BYTES_SUBCLASS = 0x08000000,
             UNICODE_SUBCLASS = 0x10000000,
             DICT_SUBCLASS = 0x20000000,
             BASE_EXC_SUBCLASS = 0x40000000,

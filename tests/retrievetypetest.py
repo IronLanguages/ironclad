@@ -14,7 +14,7 @@ from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, HGlobalAllocator, PythonMapper
 from Ironclad.Structs import (
     MemberT, METH, PyMemberDef, PyNumberMethods, PyBytesObject,
-    PyIntObject, PyObject, PyMappingMethods, PySequenceMethods, PyTypeObject
+    PyObject, PyMappingMethods, PySequenceMethods, PyTypeObject
 )
 
 maxint = Int32.MaxValue
@@ -298,13 +298,13 @@ class BuiltinSubclassHorrorTest(TestCase):
         
         _12Ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
         deallocLater(lambda: Marshal.FreeHGlobal(_12Ptr))
-        CPyMarshal.WriteIntField(_12Ptr, PyIntObject, "ob_refcnt", 1)
+        CPyMarshal.WritePtrField(_12Ptr, PyIntObject, "ob_refcnt", 1)
         CPyMarshal.WritePtrField(_12Ptr, PyIntObject, "ob_type", klassPtr)
         CPyMarshal.WriteIntField(_12Ptr, PyIntObject, "ob_ival", 12)
         
         _44Ptr = Marshal.AllocHGlobal(Marshal.SizeOf(PyIntObject()))
         deallocLater(lambda: Marshal.FreeHGlobal(_44Ptr))
-        CPyMarshal.WriteIntField(_44Ptr, PyIntObject, "ob_refcnt", 1)
+        CPyMarshal.WritePtrField(_44Ptr, PyIntObject, "ob_refcnt", 1)
         CPyMarshal.WritePtrField(_44Ptr, PyIntObject, "ob_type", klassPtr)
         CPyMarshal.WriteIntField(_44Ptr, PyIntObject, "ob_ival", 44)
         
@@ -328,17 +328,17 @@ class BuiltinSubclassHorrorTest(TestCase):
         _f0oPtr = Marshal.AllocHGlobal(_f0oSize)
         CPyMarshal.Zero(_f0oPtr, _f0oSize)
         deallocLater(lambda: Marshal.FreeHGlobal(_f0oPtr))
-        CPyMarshal.WriteIntField(_f0oPtr, PyBytesObject, "ob_refcnt", 1)
+        CPyMarshal.WritePtrField(_f0oPtr, PyBytesObject, "ob_refcnt", 1)
         CPyMarshal.WritePtrField(_f0oPtr, PyBytesObject, "ob_type", klassPtr)
-        CPyMarshal.WriteIntField(_f0oPtr, PyBytesObject, "ob_size", 3)
+        CPyMarshal.WritePtrField(_f0oPtr, PyBytesObject, "ob_size", 3)
         dataPtr = CPyMarshal.Offset(_f0oPtr, Marshal.OffsetOf(PyBytesObject, "ob_sval"))
-        for char in 'f\0o\0':
-            CPyMarshal.WriteByte(dataPtr, ord(char))
+        for b in b'f\0o\0':
+            CPyMarshal.WriteByte(dataPtr, b)
             dataPtr = CPyMarshal.Offset(dataPtr, 1)
             
         _f0o = mapper.Retrieve(_f0oPtr)
-        self.assertEqual(_f0o == 'f\0o', True)
-        self.assertEqual('f\0o' == _f0o, True)
+        self.assertEqual(_f0o == b'f\0o', True)
+        self.assertEqual(b'f\0o' == _f0o, True)
 
 
     @WithMapper
@@ -906,10 +906,10 @@ class TypeMethodsTest(MethodConnectionTestCase):
     def testHash(self):
         def Hash(p1):
             self.assertEqual(self.mapper.Retrieve(p1), self.instance)
-            return -1
+            return IntPtr(-1)
         
         typeSpec = {"tp_hash": Hash}
-        self.assertTypeMethodCall(typeSpec, "__hash__", (), {}, -1)
+        self.assertTypeMethodCall(typeSpec, "__hash__", (), {}, IntPtr(-1))
 
     def testGetattr(self):
         arg = "hugs_tiem"

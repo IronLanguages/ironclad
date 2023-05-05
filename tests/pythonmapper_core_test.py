@@ -602,7 +602,6 @@ class PythonMapper_GetFuncPtr_NonApi_Test(TestCase):
     def testMethods(self):
         methods = (
             "IC_PyFloat_New",
-            "IC_PyInt_New",
             "IC_PyType_New",
             
             "IC_PyBaseObject_Init",
@@ -627,7 +626,7 @@ class PythonMapper_NoneTest(TestCase):
         nonePtr = mapper._Py_NoneStruct
         noneStruct = PtrToStructure(nonePtr, PyObject)
         self.assertEqual(noneStruct.ob_refcnt, 1, "bad refcount")
-        self.assertEqual(noneStruct.ob_type, mapper.PyNone_Type, "unexpected type")
+        self.assertEqual(noneStruct.ob_type, mapper._PyNone_Type, "unexpected type")
 
 
     @WithMapper
@@ -645,7 +644,7 @@ class PythonMapper_NotImplementedTest(TestCase):
         niPtr = mapper._Py_NotImplementedStruct
         niStruct = PtrToStructure(niPtr, PyObject)
         self.assertEqual(niStruct.ob_refcnt, 1, "bad refcount")
-        self.assertEqual(niStruct.ob_type, mapper.PyNotImplemented_Type, "unexpected type")
+        self.assertEqual(niStruct.ob_type, mapper._PyNotImplemented_Type, "unexpected type")
 
 
     @WithMapper

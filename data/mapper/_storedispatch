@@ -9,7 +9,7 @@ bool
 double
 BigInteger
 Complex
-string
+Bytes
 IDictionary
 PythonType
 PythonTuple

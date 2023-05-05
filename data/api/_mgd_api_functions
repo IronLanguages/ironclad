@@ -61,12 +61,6 @@ PyImport_GetModuleDict
 PyImport_Import          
 PyImport_ImportModule     
     
-PyInt_AsLong            
-PyInt_AsSsize_t           
-PyInt_AsUnsignedLongMask      
-PyInt_FromLong              
-PyInt_FromSize_t              
-PyInt_FromSsize_t        
     
 PyIter_Next              
     
@@ -79,11 +73,16 @@ PyList_SetItem
     
 PyLong_AsLong        
 PyLong_AsLongLong      
+PyLong_AsSize_t
+PyLong_AsSsize_t
 PyLong_AsUnsignedLong      
 PyLong_AsUnsignedLongLong    
+PyLong_AsUnsignedLongMask
 PyLong_FromDouble       
 PyLong_FromLong         
 PyLong_FromLongLong        
+PyLong_FromSize_t
+PyLong_FromSsize_t
 PyLong_FromUnsignedLong    
 PyLong_FromUnsignedLongLong   
     

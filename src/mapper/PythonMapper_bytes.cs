@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 using Ironclad.Structs;
@@ -20,10 +21,8 @@ namespace Ironclad
         {
             try
             {
-                throw new NotImplementedException(); // TODO: can we use retrieve here?
-                // why read them, not retrieve them? can't cast bytes subtypes to bytes.
-                Bytes str1 = this.ReadPyBytes(str1Ptr);
-                Bytes str2 = this.ReadPyBytes(str2Ptr);
+                Bytes str1 = (Bytes)this.Retrieve(str1Ptr);
+                Bytes str2 = (Bytes)this.Retrieve(str2Ptr);
                 return this.Store(str1 + str2);
             }
             catch (Exception e)
@@ -97,41 +96,7 @@ namespace Ironclad
                 return this.Store(this.BytesFromBytes(bytes));
             }
         }
-/*
-        public override IntPtr
-        PyUnicode_InternFromString(IntPtr stringData)
-        {
-            IntPtr newStrPtr = PyString_FromString(stringData);
-            IntPtr newStrPtrPtr = this.allocator.Alloc(Marshal.SizeOf<IntPtr>());
-            CPyMarshal.WritePtr(newStrPtrPtr, newStrPtr);
-            this.PyString_InternInPlace(newStrPtrPtr);
-            IntPtr newNewStrPtr = CPyMarshal.ReadPtr(newStrPtrPtr);
-            this.allocator.Free(newStrPtrPtr);
-            return newNewStrPtr;
-        }
 
-        public override void
-        PyUnicode_InternInPlace(IntPtr strPtrPtr)
-        {
-            IntPtr intStrPtr = IntPtr.Zero;
-            IntPtr strPtr = CPyMarshal.ReadPtr(strPtrPtr);
-            string str = (string)this.Retrieve(strPtr);
-
-            if (this.internedStrings.ContainsKey(str))
-            {
-                intStrPtr = this.internedStrings[str];
-            }
-            else
-            {
-                intStrPtr = strPtr;
-                this.internedStrings[str] = intStrPtr;
-                this.IncRef(intStrPtr);
-            }
-            this.IncRef(intStrPtr);
-            this.DecRef(strPtr);
-            CPyMarshal.WritePtr(strPtrPtr, intStrPtr);
-        }
-*/
         public override IntPtr
         PyBytes_AsString(IntPtr strPtr)
         {
@@ -268,7 +233,6 @@ namespace Ironclad
             s.ob_type = this.PyBytes_Type;
             s.ob_size = length;
             s.ob_shash = -1;
-            s.ob_sstate = 0;
             Marshal.StructureToPtr(s, data, false);
             
             nint terminator_offset = Marshal.OffsetOf<PyBytesObject>(nameof(PyBytesObject.ob_sval)) + length;
@@ -298,22 +262,18 @@ namespace Ironclad
         private IntPtr
         CreatePyBytesWithBytes(byte[] bytes)
         {
-            IntPtr strPtr = this.AllocPyBytes(bytes.Length);
-            IntPtr bufPtr = CPyMarshal.Offset(
-                strPtr, Marshal.OffsetOf(typeof(PyBytesObject), nameof(PyBytesObject.ob_sval)));
+            IntPtr bytesPtr = this.AllocPyBytes(bytes.Length);
+            IntPtr bufPtr = CPyMarshal.Offset(bytesPtr, Marshal.OffsetOf(typeof(PyBytesObject), nameof(PyBytesObject.ob_sval)));
             Marshal.Copy(bytes, 0, bufPtr, bytes.Length);
-            return strPtr;
+            return bytesPtr;
         }
         
         private IntPtr
-        StoreTyped(Bytes str)
+        StoreTyped(Bytes bytes)
         {
-            char[] chars = str.ToCharArray();
-            byte[] bytes = Array.ConvertAll<char, byte>(
-                chars, new Converter<char, byte>(ByteFromChar));
-            IntPtr strPtr = this.CreatePyBytesWithBytes(bytes);
-            this.map.Associate(strPtr, str);
-            return strPtr;
+            IntPtr bytesPtr = this.CreatePyBytesWithBytes(bytes.ToArray());
+            this.map.Associate(bytesPtr, bytes);
+            return bytesPtr;
         }
 
         private Bytes
@@ -352,40 +312,17 @@ namespace Ironclad
                 return IntPtr.Zero;
             }
         }
-        
-        
-        public override nint
-        IC_bytes_getreadbuffer(IntPtr strPtr, nint seg, IntPtr bufPtrPtr)
+
+        public override int
+        IC_bytes_getbuffer(IntPtr objPtr, IntPtr viewPtr, int flags)
         {
-            if (seg != 0)
-            {
-                this.LastException = PythonOps.SystemError("bytes buffers have only 1 segment");
-                return -1;
-            }
-            
-            IntPtr bufPtr = CPyMarshal.GetField(strPtr, typeof(PyBytesObject), nameof(PyBytesObject.ob_sval));
-            CPyMarshal.WritePtr(bufPtrPtr, bufPtr);
-            
-            return this.PyBytes_Size(strPtr);
+            throw new NotImplementedException(); // https://github.com/IronLanguages/ironclad/issues/15
         }
-        
-        
-        public override nint
-        IC_bytes_getwritebuffer(IntPtr strPtr, nint seg, IntPtr bufPtrPtr)
+
+        public override void
+        IC_bytes_releasebuffer(IntPtr objPtr, IntPtr viewPtr)
         {
-            this.LastException = PythonOps.SystemError("bytes buffers are not writable");
-            return -1;
-        }
-        
-        
-        public override nint
-        IC_bytes_getsegcount(IntPtr strPtr, IntPtr lenPtr)
-        {
-            if (lenPtr != IntPtr.Zero)
-            {
-                CPyMarshal.WritePtr(lenPtr, this.PyBytes_Size(strPtr));
-            }
-            return 1;
+            throw new NotImplementedException(); // https://github.com/IronLanguages/ironclad/issues/15
         }
     }
 }

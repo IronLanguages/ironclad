@@ -385,7 +385,7 @@ namespace Ironclad
             }
         }
         
-        public override int
+        public override nint
         PyObject_Hash(IntPtr objPtr)
         {
             try

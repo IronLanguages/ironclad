@@ -1,11 +1,13 @@
 
 def __new__(cls, *args, **kwargs):
     if issubclass(cls, int):
-        return int.__new__(cls, args[0])
+        raise NotImplementedError # https://github.com/IronLanguages/ironclad/issues/14
     if issubclass(cls, float):
         return float.__new__(cls, args[0])
     if issubclass(cls, str):
-        return str.__new__(cls, args[0])
+        raise NotImplementedError # https://github.com/IronLanguages/ironclad/issues/13
+    if issubclass(cls, bytes):
+        return bytes.__new__(cls, args[0])
     if issubclass(cls, type):
         return type.__new__(cls, *args, **kwargs)
     return object.__new__(cls)

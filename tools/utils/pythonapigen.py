@@ -45,8 +45,8 @@ class PythonApiGenerator(CodeGenerator):
         mgd_api_function_names, unstring_names = _unpack_mgd_api_functions(self.MGD_API_FUNCTIONS)
         all_mgd_functions = get_funcspecs(
             self.STUBMAIN.free_functions(in_set(mgd_api_function_names)),
-            self.STUBMAIN.free_functions(prefixed('IC_')),
-            self.STUBMAIN.variables(prefixed('IC_')))
+            self.STUBMAIN.free_functions(prefixed('IC_'), allow_empty=True),
+            self.STUBMAIN.variables(prefixed('IC_'), allow_empty=True))
         all_mgd_functions = _unstring_mgd_api_functions(all_mgd_functions, unstring_names)
     
         method_infos = []

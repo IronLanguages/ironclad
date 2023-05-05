@@ -4,12 +4,11 @@
 # API function name | input type | (optional) cast for Store
 
 
-PyInt_FromLong                  int 
-PyInt_FromSize_t                nuint           (uint)
-PyInt_FromSsize_t               nint            (int)
 PyLong_FromDouble               double          (BigInteger)
 PyLong_FromLong                 int             (BigInteger)
 PyLong_FromLongLong             long            (BigInteger)
+PyLong_FromSize_t               nuint           (BigInteger)(ulong)
+PyLong_FromSsize_t              nint            (BigInteger)(long)
 PyLong_FromUnsignedLong         uint            (BigInteger)
 PyLong_FromUnsignedLongLong     ulong           (BigInteger)
 PyFloat_FromDouble              double

@@ -17,7 +17,7 @@ namespace Ironclad
         public override IntPtr
         PyBool_FromLong(int value)
         {
-            IntPtr ptr = this._Py_ZeroStruct;
+            IntPtr ptr = this._Py_FalseStruct;
             if (value != 0)
             {
                 ptr = this._Py_TrueStruct;
@@ -66,7 +66,7 @@ namespace Ironclad
         }
         
         public override uint
-        PyInt_AsUnsignedLongMask(IntPtr valuePtr)
+        PyLong_AsUnsignedLongMask(IntPtr valuePtr)
         {
             try
             {
@@ -209,25 +209,10 @@ namespace Ironclad
             }
         }
 
-        public override IntPtr
-        IC_PyInt_New(IntPtr typePtr, IntPtr argsPtr, IntPtr kwargsPtr)
-        {
-            try
-            {
-                PythonTuple args = (PythonTuple) this.Retrieve(argsPtr);
-                return this.Store(PythonCalls.Call(this.scratchContext, TypeCache.Int32, new object[] {args[0]}));
-            }
-            catch(Exception e)
-            {
-                this.LastException = e;
-                return IntPtr.Zero;
-            }
-        }
-
         private IntPtr
         StoreTyped(bool value)
         {
-            IntPtr ptr = this._Py_ZeroStruct;
+            IntPtr ptr = this._Py_FalseStruct;
             if (value)
             {
                 ptr = this._Py_TrueStruct;
@@ -239,12 +224,7 @@ namespace Ironclad
         private IntPtr
         StoreTyped(int value)
         {
-            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyIntObject>());
-            CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), nameof(PyIntObject.ob_refcnt), 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyIntObject), nameof(PyIntObject.ob_type), this.PyInt_Type);
-            CPyMarshal.WriteIntField(ptr, typeof(PyIntObject), nameof(PyIntObject.ob_ival), value);
-            this.map.Associate(ptr, value);
-            return ptr;
+            return StoreTyped((BigInteger)value);
         }
 
         private IntPtr

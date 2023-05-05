@@ -16,7 +16,7 @@ PyBufferProcs
 PyObject
 PyTypeObject
 PyVarObject
-PyIntObject
+PyLongObject
 PyFloatObject
 PyComplexObject
 PyTupleObject
@@ -25,5 +25,3 @@ PyListObject
 PyBytesObject
 PyFunctionObject
 PyMethodObject
-
-_Py_HashSecret_t

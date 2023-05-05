@@ -92,9 +92,8 @@ PyObject *_PyTrash_delete_later = NULL;
 _Py_HashSecret_t _Py_HashSecret;
 
 // Objects/boolobject.c
-PyIntObject _Py_ZeroStruct;
-PyIntObject _Py_TrueStruct;
-PyIntObject _Py_FalseStruct;
+PyLongObject _Py_TrueStruct;
+PyLongObject _Py_FalseStruct;
 
 // Objects/bytearray.h
 char _PyByteArray_empty_string[2] = {0,0};
@@ -105,7 +104,7 @@ PyObject _Py_EllipsisObject;
 
 // Python/pystate.c
 int (*PyOS_InputHook)(void) = NULL;
-PyThreadState *_PyThreadState_Current;
+_Py_atomic_address _PyThreadState_Current;
 PyThreadFrameGetter _PyThreadState_GetFrame = NULL;
 
 
@@ -129,7 +128,7 @@ PyThreadState *_Py_Finalizing;
 
 // Python/frozen.c
 static struct _frozen _PyImport_FrozenModules[] = { {0, 0, 0} };
-struct _frozen *PyImport_FrozenModules = _PyImport_FrozenModules;
+const struct _frozen *PyImport_FrozenModules = _PyImport_FrozenModules;
 
 
 // whole bunch of flags, mostly from pythonrun:
@@ -229,17 +228,6 @@ PyObject * PyExc_ImportWarning;
 PyObject * PyExc_UnicodeWarning;
 PyObject * PyExc_BytesWarning;
 PyObject * PyExc_ResourceWarning;
-
-// TODO: get rid of these - not in 3.4
-
-PyTypeObject PyNone_Type; // renamed to _PyNone_Type
-PyTypeObject PyNotImplemented_Type; // renamed to _PyNotImplemented_Type
-PyTypeObject PySymtableEntry_Type; // renamed to PySTEntry_Type
-PyTypeObject PyClass_Type; // removed
-PyTypeObject PyInt_Type; // removed
-PyTypeObject PyInstance_Type; // removed
-PyTypeObject PyBaseString_Type; // removed
-PyObject * PyExc_MemoryErrorInst;
 
 // TODO: sort these out
 

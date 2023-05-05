@@ -22,7 +22,7 @@ BUILTIN_TYPES = {
     "PyType_Type": type,
     "PyBaseObject_Type": object,
     "PyBytes_Type": bytes,
-    "PyUnicode_Type": str,
+    #"PyUnicode_Type": str, # TODO... # https://github.com/IronLanguages/ironclad/issues/13
     "PyList_Type": list,
     "PyDict_Type": dict,
     "PyTuple_Type": tuple,
@@ -32,18 +32,18 @@ BUILTIN_TYPES = {
     "PyComplex_Type": complex,
     "PySlice_Type": slice,
     "PyEllipsis_Type": type(Ellipsis),
-    "PyNone_Type": type(None),
-    "PyNotImplemented_Type": type(NotImplemented),
+    "_PyNone_Type": type(None),
+    "_PyNotImplemented_Type": type(NotImplemented),
     "PyFunction_Type": types.FunctionType,
     "PyMethod_Type": types.MethodType,
 }
 
 TYPE_SUBCLASS_FLAGS = {
+    bytes: Py_TPFLAGS.BYTES_SUBCLASS,
     int: Py_TPFLAGS.LONG_SUBCLASS,
-    #long: Py_TPFLAGS.LONG_SUBCLASS, # TODO
     list: Py_TPFLAGS.LIST_SUBCLASS,
     tuple: Py_TPFLAGS.TUPLE_SUBCLASS,
-    str: Py_TPFLAGS.STRING_SUBCLASS,
+    #str: Py_TPFLAGS.UNICODE_SUBCLASS, # TODO... # https://github.com/IronLanguages/ironclad/issues/13
     dict: Py_TPFLAGS.DICT_SUBCLASS,
 # TODO    BaseException: Py_TPFLAGS.BASE_EXC_SUBCLASS, # this is a little tricky
     type: Py_TPFLAGS.TYPE_SUBCLASS,
@@ -68,7 +68,7 @@ class Types_Test(TestCase):
             if k == "PyBaseObject_Type":
                 self.assertEqual(basePtr, IntPtr.Zero)
             elif k == "PyBool_Type":
-                self.assertEqual(basePtr, mapper.PyInt_Type)
+                self.assertEqual(basePtr, mapper.PyLong_Type)
             else:
                 self.assertEqual(basePtr, mapper.PyBaseObject_Type)
 
@@ -125,6 +125,7 @@ class Types_Test(TestCase):
         self.assertFalse(mapper.PyType_IsSubtype(mapper.PyBytes_Type, Bptr))
         self.assertFalse(mapper.PyType_IsSubtype(Bptr, mapper.PyType_Type))
 
+        raise NotImplementedError # https://github.com/IronLanguages/ironclad/issues/13
         class S(str): pass
         Sptr = mapper.Store(S)
         self.assertTrue(mapper.PyType_IsSubtype(Sptr, mapper.PyUnicode_Type))
@@ -157,8 +158,6 @@ class Types_Test(TestCase):
 
         typeFlags = CPyMarshal.ReadIntField(typePtr, PyTypeObject, "tp_flags")
         self.assertEqual(typeFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready type")
-        self.assertEqual(typeFlags & UInt32(Py_TPFLAGS.HAVE_CLASS), UInt32(Py_TPFLAGS.HAVE_CLASS),
-                          "we always set this flag, for no better reason than 'it makes ctypes kinda work'")
         
         CPyMarshal.WritePtrField(typePtr, PyTypeObject, "ob_type", IntPtr.Zero)
         self.assertEqual(mapper.PyType_Ready(typePtr), 0, "wrong")
@@ -181,7 +180,7 @@ class Types_Test(TestCase):
             if typePtr not in (mapper.PyBaseObject_Type, mapper.PyBool_Type):
                 self.assertEqual(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
             if typePtr == mapper.PyBool_Type:
-                self.assertEqual(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyInt_Type)
+                self.assertEqual(CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "tp_base"), mapper.PyLong_Type)
             typeTypePtr = CPyMarshal.ReadPtrField(typePtr, PyTypeObject, "ob_type")
             if typePtr != mapper.PyType_Type:
                 self.assertEqual(typeTypePtr, mapper.PyType_Type)
@@ -329,7 +328,7 @@ class Types_Test(TestCase):
         self.assertSizes(mapper.PyList_Type, Marshal.SizeOf(PyListObject()))
         self.assertSizes(mapper.PySlice_Type, Marshal.SizeOf(PySliceObject()))
         self.assertSizes(mapper.PyMethod_Type, Marshal.SizeOf(PyMethodObject()))
-        self.assertSizes(mapper.PyInt_Type, Marshal.SizeOf(PyIntObject()))
+        self.assertSizes(mapper.PyLong_Type, Marshal.SizeOf(PyLongObject()))
         self.assertSizes(mapper.PyFloat_Type, Marshal.SizeOf(PyFloatObject()))
         self.assertSizes(mapper.PyComplex_Type, Marshal.SizeOf(PyComplexObject()))
 
@@ -491,7 +490,7 @@ class PyType_Ready_InheritTest(TestCase):
         # check that it gets inherited (or not)
         mapper.Retrieve(basePtr)
         mapper.Retrieve(typePtr)
-        CPyMarshal.WriteIntField(typePtr, PyTypeObject, "tp_flags", int(Py_TPFLAGS.HAVE_CLASS))
+        CPyMarshal.WriteIntField(typePtr, PyTypeObject, "tp_flags", 0)
         # end rigmarole
         
         CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_base", basePtr)

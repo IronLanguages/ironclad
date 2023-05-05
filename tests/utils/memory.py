@@ -3,7 +3,7 @@ from System import IntPtr, Type
 from System.Runtime.InteropServices import Marshal
 
 from Ironclad import CPyMarshal
-from Ironclad.Structs import PyIntObject, PyObject, PyTypeObject
+from Ironclad.Structs import PyObject, PyLongObject, PyTypeObject
 
 def OffsetPtr(ptr, offset):
     if type(offset) == IntPtr:
@@ -19,13 +19,12 @@ _types = (
     "PyType_Type",
     "PyBaseObject_Type",
     "PyCell_Type",
-    "PyClass_Type",
-    "PyInstance_Type",
     "PyMethod_Type",
     "PyComplex_Type",
     "PyWrapperDescr_Type",
     "PyProperty_Type",
     "PyDict_Type",
+    "PyEllipsis_Type",
     "PyEnum_Type",
     "PyReversed_Type",
     "PyFloat_Type",
@@ -33,12 +32,11 @@ _types = (
     "PyClassMethod_Type",
     "PyStaticMethod_Type",
     "PyGen_Type",
-    "PyInt_Type",
-    "PyBool_Type", # needs to come after PyInt_Type, if it's to have tp_base filled in correctly
+    "PyLong_Type",
+    "PyBool_Type", # needs to come after PyLong_Type, if it's to have tp_base filled in correctly
     "PySeqIter_Type",
     "PyCallIter_Type",
     "PyList_Type",
-    "PyLong_Type",
     "PyCFunction_Type",
     "PyModule_Type",
     "PySuper_Type",
@@ -46,15 +44,12 @@ _types = (
     "PySet_Type",
     "PyFrozenSet_Type",
     "PySlice_Type",
-    "PyBaseString_Type",
     "PySTEntry_Type",
     "PyBytes_Type",
-    "PySymtableEntry_Type",
     "PyTuple_Type",
     "PyUnicode_Type",
-    "PyNone_Type", # not exported, for some reason
-    "PyEllipsis_Type", # not exported, for some reason
-    "PyNotImplemented_Type", # not exported, for some reason
+    "_PyNone_Type",
+    "_PyNotImplemented_Type",
     "_PyWeakref_RefType",
     "_PyWeakref_ProxyType",
     "_PyWeakref_CallableProxyType"
@@ -67,8 +62,8 @@ _others = {
     "_Py_NoneStruct": sizeOfType(PyObject),
     "_Py_NotImplementedStruct": sizeOfType(PyObject),
     "_Py_EllipsisObject": sizeOfType(PyObject),
-    "_Py_ZeroStruct": sizeOfType(PyIntObject),
-    "_Py_TrueStruct": sizeOfType(PyIntObject),
+    "_Py_FalseStruct": sizeOfType(PyLongObject),
+    "_Py_TrueStruct": sizeOfType(PyLongObject),
     "_PyThreadState_Current": sizeOfType(IntPtr),
 }
 def CreateTypes(mapper, readyTypes=True):

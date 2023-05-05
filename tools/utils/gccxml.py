@@ -49,6 +49,7 @@ _DECL_HANDLERS = {
     'PyThread_type_lock':   'ptr', # has worked well enough so far
     'size_t':               'size',
     'Py_ssize_t':           'ssize',
+    'Py_hash_t':            'ssize',
 }
 
 def _handle_declarated(dec):

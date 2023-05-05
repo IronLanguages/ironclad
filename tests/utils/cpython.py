@@ -72,7 +72,7 @@ MAKETYPEPTR_DEFAULTS = {
     "ob_refcnt": 1,
     "tp_basicsize": 2 * IntPtr.Size,
     "tp_itemsize": IntPtr.Size,
-    "tp_flags": Py_TPFLAGS.HAVE_CLASS,
+    "tp_flags": 0,
     
     "tp_methods": None,
     "tp_members": None,
@@ -113,7 +113,7 @@ FUNC_ARGS = {
     "tp_str": Ironclad.dgt_ptr_ptr,
     "tp_repr": Ironclad.dgt_ptr_ptr,
     "tp_richcompare": Ironclad.dgt_ptr_ptrptrint,
-    "tp_hash": Ironclad.dgt_int_ptr,
+    "tp_hash": Ironclad.dgt_ssize_ptr,
 }
 
 def WriteTypeField(typePtr, name, value):

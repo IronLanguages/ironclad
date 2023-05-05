@@ -140,9 +140,9 @@ namespace Ironclad
                 this.removeSysHacks = this.CreateFromSnippet(CodeSnippets.INSTALL_IMPORT_HOOK_CODE, "remove_sys_hacks");
                 
                 // TODO: load builtin modules only on demand?
-                this.stub.LoadBuiltinModule("posix");
-                this.stub.LoadBuiltinModule("mmap");
-                this.stub.LoadBuiltinModule("_csv");
+                //this.stub.LoadBuiltinModule("posix");
+                //this.stub.LoadBuiltinModule("mmap");
+                //this.stub.LoadBuiltinModule("_csv");
             }
             this.alive = true;
         }

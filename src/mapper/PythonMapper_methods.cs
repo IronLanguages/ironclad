@@ -10,7 +10,7 @@ namespace Ironclad
     public partial class PythonMapper : PythonApi
     {
         public override IntPtr
-        PyMethod_New(IntPtr funcPtr, IntPtr selfPtr, IntPtr klassPtr)
+        PyMethod_New(IntPtr funcPtr, IntPtr selfPtr)
         {
             object func = null;
             if (funcPtr != IntPtr.Zero)

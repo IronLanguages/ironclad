@@ -7,19 +7,16 @@ from tests.utils.testcase import TestCase, WithMapper
 from tests.utils.typetestcase import TypeTestCase
 
 from System import Array, Byte, Char, IntPtr, Type, UInt32
+from System.Collections.Generic import List
 from System.Runtime.InteropServices import Marshal
 from Ironclad import CPyMarshal, dgt_int_ptrssizeptr, dgt_int_ptrptr, dgt_ptr_ptrptr, PythonMapper
-from Ironclad.Structs import PyBytesObject, PyTypeObject, PyBufferProcs, PySequenceMethods, Py_TPFLAGS
+from Ironclad.Structs import PyBytesObject, PyTypeObject, PyBufferProcs, PySequenceMethods
 
 
 class PyBytes_TestCase(TestCase):
 
     def byteArrayFromBytes(self, testBytes):
-        raise NotImplementedError
-        testLength = len(testBytes)
-        chars = testString.ToCharArray()
-        return Array.ConvertAll[Char, Byte](chars, lambda c: ord(c))
-
+        return List[Byte](testBytes).ToArray()
 
     def ptrFromByteArray(self, bytes):
         testData = Marshal.AllocHGlobal(bytes.Length + 1)
@@ -38,7 +35,7 @@ class PyBytes_TestCase(TestCase):
 
 
     def getBytesWithValues(self, start, pastEnd):
-        return b"".join(range(start, pastEnd))
+        return bytes(range(start, pastEnd))
 
 
     def assertHasBytesType(self, ptr, mapper):
@@ -50,7 +47,6 @@ class PyBytes_TestCase(TestCase):
         self.assertEqual(bytesObject.ob_refcnt, 1, "unexpected refcount")
         self.assertEqual(bytesObject.ob_size, length, "unexpected ob_size")
         self.assertEqual(bytesObject.ob_shash, -1, "unexpected currently-useless-field")
-        self.assertEqual(bytesObject.ob_sstate, 0, "unexpected currently-useless-field")
         
         strDataPtr = self.dataPtrFromStrPtr(strPtr)
         terminatorPtr = OffsetPtr(strDataPtr, length)
@@ -76,12 +72,6 @@ class PyBytes_Type_Test(TypeTestCase):
     def testBytes_tp_dealloc(self):
         self.assertUsual_tp_dealloc("PyBytes_Type")
 
-
-    @WithMapper
-    def testFlags(self, mapper, _):
-        flags = CPyMarshal.ReadUIntField(mapper.PyBytes_Type, PyTypeObject, "tp_flags")
-        self.assertEqual(flags & UInt32(Py_TPFLAGS.HAVE_GETCHARBUFFER), UInt32(Py_TPFLAGS.HAVE_GETCHARBUFFER))
-        
 
     @WithMapper
     def testSizes(self, mapper, _):
@@ -121,10 +111,9 @@ class PyBytes_Type_Test(TypeTestCase):
         
         bufPtr = CPyMarshal.ReadPtrField(strPtr, PyTypeObject, 'tp_as_buffer')
         self.assertNotEqual(bufPtr, IntPtr.Zero)
-        getreadbuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getreadbuffer', dgt_int_ptrssizeptr)
-        getwritebuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getwritebuffer', dgt_int_ptrssizeptr)
-        getcharbuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getcharbuffer', dgt_int_ptrssizeptr)
-        getsegcount = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getsegcount', dgt_int_ptrptr)
+        getbuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getbuffer', dgt_int_ptrssizeptr)
+        releasebuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_releasebuffer', dgt_int_ptrssizeptr)
+        raise NotImplementedError("buffer protocol...") # https://github.com/IronLanguages/ironclad/issues/15
         
         ptrptr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr()))
         later(lambda: Marshal.FreeHGlobal(ptrptr))
@@ -183,7 +172,6 @@ class PyBytes_Concat_Test(PyBytes_TestCase):
         mapper.PyBytes_Concat(bytesPtrPtr, part2Ptr)
         self.assertMapperHasError(mapper, None)
         
-
         newBytesPtr = Marshal.ReadIntPtr(bytesPtrPtr)
         self.assertEqual(mapper.Retrieve(newBytesPtr), b"one two three")
 
@@ -246,7 +234,7 @@ class PyBytes_ConcatAndDel_Test(PyBytes_TestCase):
         self.assertMapperHasError(mapper, None)
 
         newBytesPtr = Marshal.ReadIntPtr(bytesPtrPtr)
-        self.assertEqual(mapper.Retrieve(newBytesPtr), "one two three")
+        self.assertEqual(mapper.Retrieve(newBytesPtr), b"one two three")
 
         self.assertEqual(startingPart1RefCnt - mapper.RefCount(part1Ptr), 1)
         self.assertEqual(startingPart2RefCnt - mapper.RefCount(part2Ptr), 1)
@@ -257,7 +245,7 @@ class InternTest(PyBytes_TestCase):
         
     @WithMapper
     def testInternExisting(self, mapper, addToCleanUp):
-        raise NotImplementedError
+        raise NotImplementedError("PyUnicode_InternFromString") # https://github.com/IronLanguages/ironclad/issues/13
         
         testString = "mars needs women" + self.getStringWithValues(1, 256)
         bytes = self.byteArrayFromString(testString)
@@ -295,7 +283,7 @@ class PyBytes_FromStringAndSize_Test(PyBytes_TestCase):
         del allocs[:]
 
         try:
-            testBytes = "we run the grease racket in this town" + self.getBytesWithValues(0, 256)
+            testBytes = b"we run the grease racket in this town" + self.getBytesWithValues(0, 256)
             testLength = len(testBytes)
             strPtr = mapper.PyBytes_FromStringAndSize(IntPtr.Zero, IntPtr(testLength))
             baseSize = Marshal.SizeOf(PyBytesObject())

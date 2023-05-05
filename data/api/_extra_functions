@@ -11,15 +11,13 @@ destructor IC_PySlice_Dealloc;
 destructor IC_PyTuple_Dealloc;
 
 newfunc IC_PyFloat_New;
-newfunc IC_PyInt_New;
 newfunc IC_PyType_New;
 
 initproc IC_PyBaseObject_Init;
 initproc IC_PyDict_Init;
 
-readbufferproc IC_bytes_getreadbuffer;
-writebufferproc IC_bytes_getwritebuffer;
-segcountproc IC_bytes_getsegcount;
+getbufferproc IC_bytes_getbuffer;
+releasebufferproc IC_bytes_releasebuffer;
 
 reprfunc IC_PyBytes_Str;
 binaryfunc IC_PyBytes_Concat_Core;
@@ -45,12 +43,3 @@ PyObject* PyUnicodeUCS2_DecodeASCII(const char *string, Py_ssize_t length, const
 PyObject* PyUnicodeUCS2_AsUnicodeEscapeString(PyObject *unicode);
 Py_UNICODE * PyUnicodeUCS2_AsUnicode(PyObject *unicode);
 PyObject* PyUnicodeUCS2_FromEncodedObject(register PyObject *obj, const char *encoding, const char *errors);
-
-PyObject * PyInt_FromString(char*, char**, int);
-long PyInt_GetMax(void);
-PyObject * PyInt_FromLong(long);
-PyObject * PyInt_FromSize_t(size_t);
-PyObject * PyInt_FromSsize_t(Py_ssize_t);
-long PyInt_AsLong(PyObject *);
-Py_ssize_t PyInt_AsSsize_t(PyObject *);
-unsigned long PyInt_AsUnsignedLongMask(PyObject *);
