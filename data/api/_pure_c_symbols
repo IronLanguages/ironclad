@@ -13,10 +13,8 @@
 # these types, we can just interpret it as we would any other: there's
 # no obvious ipy type to map to (buffer exists but isn't good for much yet).
 
-PyBuffer_Type
 PyCell_Type 
 PyCFunction_Type
-PyCObject_Type
 PyCapsule_Type
 PyCode_Type
 PyFrame_Type
@@ -36,7 +34,6 @@ _PyLong_DigitValue
 # (could we/should be be generating them..?)
 
 # Objects/abstract.c
-PyObject_Cmp
 PyObject_Type
 PyObject_AsCharBuffer
 PyObject_CheckReadBuffer
@@ -59,13 +56,6 @@ PyBuffer_Release
 PySequence_Fast
 PySequence_List
 
-# Objects/bufferobject.c
-PyBuffer_FromObject
-PyBuffer_FromReadWriteObject
-PyBuffer_FromMemory
-PyBuffer_FromReadWriteMemory
-PyBuffer_New
-
 # Objects/bytesobject.c
 PyBytes_FromFormat
 PyBytes_FromFormatV
@@ -75,18 +65,9 @@ PyCell_New
 PyCell_Get
 PyCell_Set
 
-# Objects/cobject.c
-PyCObject_FromVoidPtr
-PyCObject_FromVoidPtrAndDesc
-PyCObject_AsVoidPtr
-PyCObject_GetDesc
-PyCObject_Import
-PyCObject_SetVoidPtr
-PyCFunction_ClearFreeList
-
 # Objects/codeobject.c
 PyCode_Addr2Line
-PyCode_CheckLineNumber
+_PyCode_CheckLineNumber
 PyCode_New
 
 # Objects/pycapsule.c
@@ -130,8 +111,6 @@ PyCFunction_GetFlags
 PyCFunction_GetSelf
 PyCFunction_GetFunction
 PyCFunction_NewEx
-Py_FindMethodInChain
-Py_FindMethod
 PyCFunction_Fini
 PyCFunction_New
 
@@ -214,7 +193,7 @@ _PyArg_VaParseTupleAndKeywords_SizeT
 PyArg_UnpackTuple
 _PyArg_NoKeywords
 
-# Python/moduspport.c
+# Python/modsupport.c
 _Py_VaBuildValue_SizeT
 Py_VaBuildValue
 _Py_BuildValue_SizeT
@@ -229,11 +208,6 @@ PyOS_vsnprintf
 # Python/mystrtoul.c
 PyOS_strtoul
 PyOS_strtol
-
-# Python/pystrtod.c
-PyOS_ascii_strtod
-PyOS_ascii_formatd
-PyOS_ascii_atof
 
 # Python/pystate.c
 PyThreadState_Get

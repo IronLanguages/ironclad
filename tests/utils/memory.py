@@ -10,7 +10,7 @@ def OffsetPtr(ptr, offset):
         offset = offset.ToInt64()
     return IntPtr(ptr.ToInt64() + offset)
 
-# note: PyBuffer_Type, PyCObject_Type, PyCode_Type, PyFrame_Type PyTraceBack_Type and PyCFunction_Type
+# note: PyCode_Type, PyFrame_Type PyTraceBack_Type and PyCFunction_Type
 # are not included, because they are implemented in pure C.
 # This means that, should an extension end up actually using (say) a buffer type
 # and passing it up to IronPython, it will be treated like any other type 
