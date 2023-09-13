@@ -23,46 +23,5 @@ namespace Ironclad
                 "type", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)[0]);
             return (PythonType)_typeField.GetValue(proxy);
         }
-        
-        public static object
-        GetPythonException(System.Exception clrException)
-        {
-            MethodInfo _toPythonMethod = typeof(PythonExceptions).GetMethod(
-                "ToPython", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-            try
-            {
-                return _toPythonMethod.Invoke(null, new object[] { clrException });
-            }
-            catch (Exception e)
-            {
-                throw e.GetBaseException();
-            }
-        }
-
-        public static void PrintWithDest(CodeContext context, object dest, object o)
-        {
-            MethodInfo _printWithDestMethod = typeof(PythonOps).GetMethod("PrintWithDest", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-            try
-            {
-                _printWithDestMethod.Invoke(null, new object[] { context, dest, o });
-            }
-            catch (Exception e)
-            {
-                throw e.GetBaseException();
-            }
-        }
-
-        public static bool IsInstance(CodeContext context, object o, object typeinfo)
-        {
-            MethodInfo _isInstanceMethod = typeof(PythonOps).GetMethod("IsInstance", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static, null, new [] {typeof(CodeContext), typeof(object), typeof(object)}, null);
-            try
-            {
-                return (bool)_isInstanceMethod.Invoke(null, new object[] { context, o, typeinfo });
-            }
-            catch (Exception e)
-            {
-                throw e.GetBaseException();
-            }
-        }
     }
 }

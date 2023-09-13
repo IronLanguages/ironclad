@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="IronPython" Version="3.4.0" IncludeAssets="compile" />
+    <PackageReference Include="IronPython" Version="3.4.1" IncludeAssets="compile" />
   </ItemGroup>
 
 </Project>

@@ -231,7 +231,7 @@ namespace Ironclad
             {
                 object inst = this.Retrieve(instPtr);
                 object cls = this.Retrieve(clsPtr);
-                if (InappropriateReflection.IsInstance(this.scratchContext, inst, cls))
+                if (PythonOps.IsInstance(this.scratchContext, inst, cls))
                 {
                     return 1;
                 }

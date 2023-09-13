@@ -29,7 +29,7 @@ void PyObject_GC_Track(void *_) {}
 void PyObject_GC_UnTrack(void *_) {}
 
 
-// originaly defined in Python/pythonrun.c; entirely faked-up here
+// originally defined in Python/pythonrun.c; entirely faked-up here
 
 void Py_Initialize(void) {}
 void Py_InitializeEx(int _) {}

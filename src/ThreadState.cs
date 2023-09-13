@@ -4,6 +4,7 @@ using System.Threading;
 
 using IronPython.Modules;
 using IronPython.Runtime;
+using IronPython.Runtime.Exceptions;
 using IronPython.Runtime.Operations;
 
 using Ironclad.Structs;
@@ -53,7 +54,7 @@ namespace Ironclad
             {
                 if (value is Exception ex)
                 {
-                    value = InappropriateReflection.GetPythonException(ex);
+                    value = PythonExceptions.ToPython(ex);
                 }
                 
                 IntPtr typePtr = CPyMarshal.ReadPtrField(this.ptr, typeof(PyThreadState), nameof(PyThreadState.curexc_type));

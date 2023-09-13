@@ -59,8 +59,8 @@ if WIN32:
     IPY = r'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
     IPY_DIR = r'"C:\ProgramData\chocolatey\lib\ironpython"'
     # private build
-    IPY = r'"C:\ironclad\IronPython.3.4.0\net462\ipy.exe"'
-    IPY_DIR = r'"ironclad\IronPython.3.4.0\net462"'
+    IPY = r'"C:\ironclad\IronPython.3.4.1\net462\ipy.exe"'
+    IPY_DIR = r'"ironclad\IronPython.3.4.1\net462"'
 
     IPY_REF_TEMPLATE = r'/r:$IPY_DIR\%s.dll'
     NATIVE_TOOLS = ['mingw', 'nasm']
