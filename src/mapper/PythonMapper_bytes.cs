@@ -314,15 +314,13 @@ namespace Ironclad
         }
 
         public override int
-        IC_bytes_getbuffer(IntPtr objPtr, IntPtr viewPtr, int flags)
+        IC_bytes_buffer_getbuffer(IntPtr self, IntPtr view, int flags)
         {
-            throw new NotImplementedException(); // https://github.com/IronLanguages/ironclad/issues/15
-        }
+            IntPtr data = CPyMarshal.GetField(self, typeof(PyBytesObject), nameof(PyBytesObject.ob_sval));
+            nint length = CPyMarshal.ReadPtrField(self, typeof(PyBytesObject), nameof(PyBytesObject.ob_size));
 
-        public override void
-        IC_bytes_releasebuffer(IntPtr objPtr, IntPtr viewPtr)
-        {
-            throw new NotImplementedException(); // https://github.com/IronLanguages/ironclad/issues/15
+            var del = Marshal.GetDelegateForFunctionPointer<PyBuffer_FillInfoDelegate>(PyBuffer_FillInfo);
+            return del(view, self, data, length, 1, flags);
         }
     }
 }

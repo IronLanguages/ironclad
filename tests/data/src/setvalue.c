@@ -1,6 +1,6 @@
 int value = 1;
 
-void initsetvalue(void)
+void PyInit_setvalue(void)
 {
 	value = 2;
 }

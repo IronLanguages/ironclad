@@ -26,7 +26,7 @@ namespace Ironclad
             if (this.library == IntPtr.Zero)
             {
                 throw new Exception(
-                    String.Format("Could not load library '{0}' . Error code:{1}", dllPath, Unmanaged.GetLastError()));
+                    String.Format("Could not load library '{0}'. Error code:{1}", dllPath, Unmanaged.GetLastError()));
             }
         }
         

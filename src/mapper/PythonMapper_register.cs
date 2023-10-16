@@ -141,8 +141,7 @@ namespace Ironclad
             int bfSize = Marshal.SizeOf<PyBufferProcs>();
             IntPtr bfPtr = this.allocator.Alloc(bfSize);
             CPyMarshal.Zero(bfPtr, bfSize);
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getbuffer), this.GetFuncPtr(nameof(IC_bytes_getbuffer)));
-            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_releasebuffer), this.GetFuncPtr(nameof(IC_bytes_releasebuffer)));
+            CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getbuffer), this.GetFuncPtr(nameof(IC_bytes_buffer_getbuffer)));
             CPyMarshal.WritePtrField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_as_buffer), bfPtr);
 
             CPyMarshal.WriteIntField(address, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags), 0);

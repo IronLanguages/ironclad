@@ -116,6 +116,12 @@ namespace Ironclad
             return this.IC_PyDict_Get(dictPtr, key);
         }
 
+        public override IntPtr
+        PyDict_GetItemWithError(IntPtr dictPtr, IntPtr keyPtr)
+        {
+            // TODO: WithError...
+            return this.IC_PyDict_Get(dictPtr, this.Retrieve(keyPtr));
+        }
 
         private int 
         IC_PyDict_Set(IntPtr dictPtr, object key, object item)
@@ -236,5 +242,11 @@ namespace Ironclad
             }
         }
         
+        public override IntPtr _PyDict_GetItemId(IntPtr arg0, IntPtr arg1)
+        {
+            var id = Marshal.PtrToStructure<_Py_Identifier>(arg1);
+            var key = Marshal.PtrToStringAnsi(id.@string);
+            return PyDict_GetItemString(arg0, key);
+        }
     }
 }

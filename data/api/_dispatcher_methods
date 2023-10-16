@@ -42,6 +42,8 @@ objobjproc
 
 getattrfunc
 setattrfunc
+getattrofunc
+setattrofunc
 reprfunc
 hashfunc
 richcmpfunc

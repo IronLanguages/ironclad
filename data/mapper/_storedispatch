@@ -7,9 +7,11 @@ int
 uint
 bool
 double
+string
 BigInteger
 Complex
 Bytes
+ByteArray
 IDictionary
 PythonType
 PythonTuple

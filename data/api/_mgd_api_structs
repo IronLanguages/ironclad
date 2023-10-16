@@ -2,9 +2,12 @@
 
 # names of C structs we want to translate to managed code
 
+Py_buffer
 Py_complex
 PyThreadState
 
+PyModuleDef_Base
+PyModuleDef
 PyMethodDef
 PyGetSetDef
 PyMemberDef
@@ -25,3 +28,11 @@ PyListObject
 PyBytesObject
 PyFunctionObject
 PyMethodObject
+
+PyASCIIObject
+PyCompactUnicodeObject
+PyUnicodeObject
+
+PyByteArrayObject
+
+_Py_Identifier

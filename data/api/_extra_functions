@@ -16,11 +16,18 @@ newfunc IC_PyType_New;
 initproc IC_PyBaseObject_Init;
 initproc IC_PyDict_Init;
 
-getbufferproc IC_bytes_getbuffer;
-releasebufferproc IC_bytes_releasebuffer;
+getbufferproc IC_getbuffer;
+releasebufferproc IC_releasebuffer;
+
+getbufferproc IC_bytes_buffer_getbuffer;
+
+getbufferproc IC_bytearray_getbuffer;
+releasebufferproc IC_bytearray_releasebuffer;
 
 reprfunc IC_PyBytes_Str;
 binaryfunc IC_PyBytes_Concat_Core;
+
+getiterfunc IC_tuple_iter;
 
 # TODO: get rid of these - they are dummy stubs to compile python34.dll
 

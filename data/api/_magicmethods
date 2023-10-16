@@ -14,12 +14,12 @@
 
 PyTypeObject.tp_init                    initproc                __init__        {'template2': SQUISHKWARGS_TEMPLATE2}
 PyTypeObject.tp_iter                    getiterfunc             __iter__
-PyTypeObject.tp_iternext                iternextfunc            next
+PyTypeObject.tp_iternext                iternextfunc            __next__
 PyTypeObject.tp_str                     reprfunc                __str__
 PyTypeObject.tp_repr                    reprfunc                __repr__
 PyTypeObject.tp_call                    ternaryfunc             __call__        {'template2': SQUISHKWARGS_TEMPLATE2}
 PyTypeObject.tp_hash                    hashfunc                __hash__
-PyTypeObject.tp_getattr                 getattrfunc             __getattr__     # tweaks needed eventually? (getattro)
+PyTypeObject.tp_getattro                getattrofunc             __getattr__     # tweaks needed eventually? (getattro)
 
 
 #================================================================================================
@@ -75,5 +75,5 @@ PySequenceMethods.sq_contains           objobjproc              __contains__
 
 PyMappingMethods.mp_length              lenfunc                 __len__
 PyMappingMethods.mp_subscript           binaryfunc              __getitem__
-PyMappingMethods.mp_ass_subscript       objobjargproc           __setitem__
+PyMappingMethods.mp_ass_subscript       objobjargproc           __setitem__     {'py_swapped_field': '__delitem__', 'swapped_template2': DELITEM_TEMPLATE2}
 

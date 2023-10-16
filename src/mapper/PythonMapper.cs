@@ -332,9 +332,16 @@ namespace Ironclad
         private IntPtr
         StoreObject(object obj)
         {
+            IntPtr typePtr = this.PyBaseObject_Type;
+            if (obj is IBufferProtocol)
+            {
+                var t = DynamicHelpers.GetPythonType(obj);
+                typePtr = Store(t);
+            }
+
             IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyObject>());
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_refcnt), 1);
-            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_type), this.PyBaseObject_Type);
+            CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_type), typePtr);
             this.map.Associate(ptr, obj);
             return ptr;
         }

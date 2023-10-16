@@ -22,7 +22,7 @@ namespace Ironclad
         private readonly string[] EASY_TYPE_FIELDS = new string[] { 
             nameof(PyTypeObject.tp_init), nameof(PyTypeObject.tp_call), nameof(PyTypeObject.tp_repr),
             nameof(PyTypeObject.tp_str), nameof(PyTypeObject.tp_hash),
-            nameof(PyTypeObject.tp_getattr), nameof(PyTypeObject.tp_iter), nameof(PyTypeObject.tp_iternext),
+            nameof(PyTypeObject.tp_getattro), nameof(PyTypeObject.tp_iter), nameof(PyTypeObject.tp_iternext),
         };
         private readonly string[] MP_FIELDS = new string[] { 
             nameof(PyMappingMethods.mp_subscript), nameof(PyMappingMethods.mp_ass_subscript), nameof(PyMappingMethods.mp_length),
@@ -131,6 +131,13 @@ namespace Ironclad
             this.GenerateNamedProtocolMagicMethods(nameof(PyTypeObject.tp_as_number), typeof(PyNumberMethods), NB_FIELDS);
             this.GenerateRichcmpMethods();
             this.UglyComplexHack();
+
+            if (CPyMarshal.ReadPtrField(this.ptr, typeof(PyTypeObject), nameof(PyTypeObject.tp_getattro)) != IntPtr.Zero)
+            {
+                this.code.Append(String.Format(CodeSnippets.RICHCMP_METHOD_TEMPLATE, tablePrefix));
+                this.ConnectTypeField("tp_richcompare", typeof(dgt_ptr_ptrptrint));
+            }
+
         }
 
         private void
@@ -171,6 +178,9 @@ namespace Ironclad
         {
             switch (type)
             {
+                case MemberT.BOOL:
+                    suffix = "bool";
+                    return true;
                 case MemberT.INT:
                     suffix = "int";
                     return true;
@@ -189,6 +199,9 @@ namespace Ironclad
                 case MemberT.CHAR:
                     suffix = "char";
                     return true;
+                case MemberT.BYTE:
+                    suffix = "byte";
+                    return true;
                 case MemberT.UBYTE:
                     suffix = "ubyte";
                     return true;
@@ -196,6 +209,9 @@ namespace Ironclad
                     suffix = "string";
                     return true;
                 case MemberT.OBJECT:
+                    suffix = "object";
+                    return true;
+                case MemberT.OBJECT_EX:
                     suffix = "object";
                     return true;
                 default:

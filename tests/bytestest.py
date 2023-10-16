@@ -112,7 +112,7 @@ class PyBytes_Type_Test(TypeTestCase):
         bufPtr = CPyMarshal.ReadPtrField(strPtr, PyTypeObject, 'tp_as_buffer')
         self.assertNotEqual(bufPtr, IntPtr.Zero)
         getbuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_getbuffer', dgt_int_ptrssizeptr)
-        releasebuffer = CPyMarshal.ReadFunctionPtrField(bufPtr, PyBufferProcs, 'bf_releasebuffer', dgt_int_ptrssizeptr)
+        self.assertEqual(CPyMarshal.ReadPtrField(bufPtr, PyBufferProcs, 'bf_releasebuffer'), IntPtr.Zero)
         raise NotImplementedError("buffer protocol...") # https://github.com/IronLanguages/ironclad/issues/15
         
         ptrptr = Marshal.AllocHGlobal(Marshal.SizeOf(IntPtr()))

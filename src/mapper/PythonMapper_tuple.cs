@@ -38,6 +38,13 @@ namespace Ironclad
             freeDgt(tuplePtr);
         }
         
+        public override IntPtr
+        IC_tuple_iter(IntPtr tuplePtr)
+        {
+            var tuple = (PythonTuple)this.Retrieve(tuplePtr);
+            return this.Store(tuple.__iter__());
+        }
+
         public override int
         _PyTuple_Resize(IntPtr tuplePtrPtr, nint length)
         {

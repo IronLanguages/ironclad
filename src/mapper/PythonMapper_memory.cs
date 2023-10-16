@@ -48,14 +48,22 @@ namespace Ironclad
 
         public override IntPtr
         PyObject_Malloc(nuint size)
-        {
-            return this.PyMem_Malloc(size);
-        }
+        => this.PyMem_Malloc(size);
 
         public override IntPtr
         PyObject_Realloc(IntPtr oldPtr, nuint size)
-        {
-            return this.PyMem_Realloc(oldPtr, size);
-        }
+        => this.PyMem_Realloc(oldPtr, size);
+
+        public override IntPtr
+        PyMem_RawMalloc(nuint n)
+        => this.PyMem_Malloc(n);
+
+        public override IntPtr
+        PyMem_RawRealloc(IntPtr p, nuint n)
+        => this.PyMem_Realloc(p, n);
+
+        public override void
+        PyMem_RawFree(IntPtr p)
+        => this.PyMem_Free(p);        
     }
 }

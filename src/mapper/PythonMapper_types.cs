@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 
 using IronPython.Modules;
 using IronPython.Runtime;
@@ -10,7 +12,6 @@ using IronPython.Runtime.Types;
 using Microsoft.Scripting;
 
 using Ironclad.Structs;
-
 
 namespace Ironclad
 {
@@ -170,6 +171,7 @@ namespace Ironclad
             this.PyType_Ready(this.PyFloat_Type);
             this.PyType_Ready(this.PyComplex_Type);
             this.PyType_Ready(this.PyBytes_Type);
+            this.PyType_Ready(this.PyUnicode_Type);
             this.PyType_Ready(this.PyTuple_Type);
             this.PyType_Ready(this.PyList_Type);
             this.PyType_Ready(this.PyDict_Type);
@@ -182,6 +184,7 @@ namespace Ironclad
 
             this.actualisableTypes[this.PyType_Type] = new ActualiseDelegate(this.ActualiseType);
             this.actualisableTypes[this.PyFloat_Type] = new ActualiseDelegate(this.ActualiseFloat);
+            this.actualisableTypes[this.PyUnicode_Type] = new ActualiseDelegate(this.ActualiseUnicode);
         }
                 
         private void
@@ -227,6 +230,10 @@ namespace Ironclad
             if (this.PyType_IsSubtype(typePtr, this.PyDict_Type) != 0) { flags |= Py_TPFLAGS.DICT_SUBCLASS; }
             if (this.PyType_IsSubtype(typePtr, this.PyType_Type) != 0) { flags |= Py_TPFLAGS.TYPE_SUBCLASS; }
             // TODO: PyExc_BaseException is tedious
+            if (this.Retrieve(typePtr) is PythonType pt && Builtin.issubclass(this.scratchContext, pt, Builtin.BaseException))
+            {
+                flags |= Py_TPFLAGS.BASE_EXC_SUBCLASS;
+            }
             
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags), (Int32)flags);
         }
@@ -254,6 +261,17 @@ namespace Ironclad
                 CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_bases), this.Store(tp_bases));
             }
 
+            Type t = _type;
+            if (typeof(IBufferProtocol).IsAssignableFrom(t))
+            {
+                int bfSize = Marshal.SizeOf<PyBufferProcs>();
+                IntPtr bfPtr = this.allocator.Alloc(bfSize);
+                CPyMarshal.Zero(bfPtr, bfSize);
+                CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_getbuffer), this.GetFuncPtr(nameof(IC_getbuffer)));
+                CPyMarshal.WritePtrField(bfPtr, typeof(PyBufferProcs), nameof(PyBufferProcs.bf_releasebuffer), this.GetFuncPtr(nameof(IC_releasebuffer)));
+                CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_as_buffer), bfPtr);
+            }
+
             this.scratchModule.Get__dict__()["_ironclad_bases"] = tp_bases;
             this.scratchModule.Get__dict__()["_ironclad_metaclass"] = ob_type;
             this.ExecInModule(CodeSnippets.CLASS_STUB_CODE, this.scratchModule);
@@ -271,7 +289,30 @@ namespace Ironclad
             double value = CPyMarshal.ReadDoubleField(fptr, typeof(PyFloatObject), nameof(PyFloatObject.ob_fval));
             this.map.Associate(fptr, value);
         }
+
+        private void
+        ActualiseUnicode(IntPtr fptr)
+        {
+            var tmp = Marshal.PtrToStructure<PyASCIIObject>(fptr);
+            var state = unchecked((ulong)tmp.state);
+            switch ((state >> 5) & 0b111)
+            {
+                case 7:
+                    Debug.Assert(((state >> 2) & 0b111) == 1);
+                    var tmp2 = Marshal.SizeOf<PyASCIIObject>();
+                    byte[] bytes = new byte[checked((int)tmp.length)];
+                    Marshal.Copy(fptr + tmp2, bytes, 0, bytes.Length);
+                    var zzz = Encoding.ASCII.GetString(bytes);
+                    this.map.Associate(fptr, zzz);
+                    return;
+                default:
+                    break;
+            }
+            throw new NotImplementedException("ActualiseUnicode");
+            //this.map.Associate(fptr, value);
+        }
         
+
         private void 
         ActualiseType(IntPtr typePtr)
         {

@@ -85,7 +85,50 @@ namespace Ironclad
                 return 0xFFFFFFFF;
             }
         }
+
+        public override int PyLong_AsLongAndOverflow(IntPtr obj, IntPtr overflow)
+        {
+            try
+            {
+                var value = NumberMaker.MakeBigInteger(this.scratchContext, this.Retrieve(obj));
+                if (value > Int32.MaxValue)
+                {
+                    Marshal.WriteInt32(overflow, 1);
+                    return -1;
+                }
+                if (value < Int32.MinValue)
+                {
+                    Marshal.WriteInt32(overflow, -1);
+                    return -1;
+                }
+                return (int)value;
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return -1;
+            }
+        }
         
+        public override IntPtr PyLong_FromString(string str, IntPtr pend, int @base)
+        {
+            if (pend != IntPtr.Zero)
+            {
+                Console.WriteLine("Error: PyLong_FromString is not yet implemented");
+                throw new NotImplementedException("PyLong_FromString");
+            }
+
+            try
+            {
+                return Store(LiteralParser.ParseIntegerSign(str, @base));
+            }
+            catch (Exception e)
+            {
+                this.LastException = e;
+                return IntPtr.Zero;
+            }
+        }
+
         public override int
         _PyLong_Sign(IntPtr valuePtr)
         {
@@ -240,7 +283,7 @@ namespace Ironclad
         private IntPtr
         StoreTyped(BigInteger value)
         {
-            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyObject>());
+            IntPtr ptr = this.allocator.Alloc(Marshal.SizeOf<PyLongObject>());
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_refcnt), 1);
             CPyMarshal.WritePtrField(ptr, typeof(PyObject), nameof(PyObject.ob_type), this.PyLong_Type);
             this.map.Associate(ptr, value);

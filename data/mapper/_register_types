@@ -13,6 +13,11 @@ PyFloat_Type        TypeCache.Double        {"tp_as_number": "AddNumberMethodsWi
 PyComplex_Type      TypeCache.Complex       {"tp_as_number": "AddNumberMethodsWithoutIndex", "tp_basicsize": "PyComplexObject"}
 PyDict_Type         TypeCache.Dict          {"tp_init": "IC_PyDict_Init"}
 PyList_Type         TypeCache.PythonList    {"tp_dealloc": "IC_PyList_Dealloc", "tp_basicsize": "PyListObject"}
-PyTuple_Type        TypeCache.PythonTuple   {"tp_dealloc": "IC_PyTuple_Dealloc", "tp_basicsize": "PyTupleObject", "tp_itemsize": "IntPtr"}
+PyTuple_Type        TypeCache.PythonTuple   {"tp_dealloc": "IC_PyTuple_Dealloc", "tp_basicsize": "PyTupleObject", "tp_itemsize": "IntPtr", "tp_iter": "IC_tuple_iter"}
 PyMethod_Type       TypeCache.Method        {"tp_dealloc": "IC_PyMethod_Dealloc", "tp_basicsize": "PyMethodObject"}
 PyFunction_Type     TypeCache.Function      {"tp_basicsize": "PyFunctionObject"}
+PySet_Type          TypeCache.Set
+PyFrozenSet_Type    TypeCache.FrozenSet
+PyMemoryView_Type   Builtin.memoryview
+PyByteArray_Type    Builtin.bytearray
+PyUnicode_Type      TypeCache.String

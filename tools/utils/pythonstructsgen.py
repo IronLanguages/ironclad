@@ -16,8 +16,11 @@ def _generate_field_code(fieldspec):
         # ...but it has been in all the cases we've seen
         ictype = 'ptr'
     
-    if name in {"readonly", "internal"}:
+    if name in {"readonly", "internal", "string", "object"}:
         name = "@" + name
+
+    if ictype == "str" and not ("name" in name or "doc" in name):
+        ictype = 'ptr'
 
     return STRUCT_FIELD_TEMPLATE % {
         'name': name,
@@ -27,8 +30,13 @@ def _generate_field_code(fieldspec):
 def _expand_fields(fields, structspecs):
     if not fields: return fields
     name, ictype = fields[0]
-    if "base" in name and ictype[0] == "?" and ictype[-1] == "?" and ictype[1:-1] in structspecs:
-        return _expand_fields(structspecs[ictype[1:-1]], structspecs) + fields[1:]
+
+    if ictype[0] == "?" and ictype[-1] == "?":
+        if "base" in name:
+            if ictype[1:-1] not in structspecs:
+                raise NotImplementedError(name)
+            return _expand_fields(structspecs[ictype[1:-1]], structspecs) + fields[1:]
+
     return fields
 
 def _generate_struct_code(structspec, structspecs):

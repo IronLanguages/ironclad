@@ -75,5 +75,11 @@ def {0}(self, other):
     return self._dispatcher.%(functype)s('{2}{0}', other, self, None)
 _ironclad_class_attrs['{0}'] = {0}"""
 
+DELITEM_TEMPLATE2 = """
+def {0}(_0, _1):
+    '''{1}'''
+    return _0._dispatcher.objobjargproc('{2}{0}', _0, _1, None)
+_ironclad_class_attrs['{0}'] = {0}"""
+
 
 #================================================================================================

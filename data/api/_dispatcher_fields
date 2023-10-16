@@ -12,3 +12,4 @@ ulong               uint                UInt
 double              double              Double
 ubyte               byte                Byte
 char                string              Byte            {'get_tweak': '(string)Builtin.chr', 'set_tweak': '(byte)Builtin.ord'}
+bool                bool                Byte            {'get_tweak': 'Convert.ToBoolean', 'set_tweak': 'Convert.ToByte'}

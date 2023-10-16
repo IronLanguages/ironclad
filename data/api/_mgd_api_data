@@ -7,6 +7,8 @@
 # implemented in C: we could just use the Register_ method to set up an
 # appropriate association.
 
+PyBuffer_FillInfo # implemented in C
+
 PyType_Type
 PyBaseObject_Type
 

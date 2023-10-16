@@ -14,6 +14,8 @@ using Microsoft.Scripting.Hosting;
 using Microsoft.Scripting.Hosting.Providers;
 using Microsoft.Scripting.Runtime;
 
+using Ironclad.Structs;
+
 namespace Ironclad
 {
     class DictionaryWrapper : IDictionary<string, object>
@@ -148,6 +150,49 @@ namespace Ironclad
         }
 
         public override IntPtr
+        PyModule_Create2(IntPtr def, int module_api_version)
+        {
+            var moduleDef = Marshal.PtrToStructure<PyModuleDef>(def);
+            var name = moduleDef.m_name;
+            var doc = moduleDef.m_doc;
+            var methodsPtr = moduleDef.m_methods;
+
+            if (moduleDef.m_size != -1)
+            {
+                throw new NotImplementedException("PyModuleDef.m_size != -1");
+            }
+
+            name = this.FixImportName(name);
+            
+            PythonDictionary methodTable = new PythonDictionary();
+            PythonModule module = new PythonModule();
+            var selfPtr = this.Store(module);
+
+            this.AddModule(name, module);
+            this.CreateModulesContaining(name);
+
+            PythonDictionary __dict__ = module.Get__dict__();
+            __dict__["__doc__"] = doc;
+            __dict__["__name__"] = name;
+            string __file__ = this.importFiles.Peek();
+            __dict__["__file__"] = __file__;
+            PythonList __path__ = new PythonList();
+            if (__file__ != null)
+            {
+                __path__.append(Path.GetDirectoryName(__file__));
+            }
+            __dict__["__path__"] = __path__;
+            __dict__["_dispatcher"] = new Dispatcher(this, methodTable, selfPtr);
+
+            StringBuilder moduleCode = new StringBuilder();
+            moduleCode.Append(CodeSnippets.USEFUL_IMPORTS);
+            CallableBuilder.GenerateFunctions(moduleCode, methodsPtr, methodTable);
+            this.ExecInModule(moduleCode.ToString(), module);
+            
+            return selfPtr;
+        }
+
+        public override IntPtr
         PyModule_New(string name)
         {
             PythonModule module = new PythonModule();
@@ -161,6 +206,12 @@ namespace Ironclad
         {
             PythonModule module = (PythonModule)this.Retrieve(modulePtr);
             return this.Store(module.Get__dict__());
+        }
+
+        public override IntPtr
+        PyModule_GetState(IntPtr modulePtr)
+        {
+            return IntPtr.Zero;
         }
 
         private int 
@@ -183,8 +234,12 @@ namespace Ironclad
                 return -1;
             }
             object value = this.Retrieve(valuePtr);
-            this.DecRef(valuePtr);
-            return this.IC_PyModule_Add(modulePtr, name, value);
+            if (this.IC_PyModule_Add(modulePtr, name, value) != 0)
+            {
+                return -1;
+            }
+            //this.DecRef(valuePtr); // TODO: adding to a module should increase the ref count but doesn't...
+            return 0;
         }
         
         public override int
