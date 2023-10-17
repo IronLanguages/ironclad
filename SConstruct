@@ -55,14 +55,12 @@ if WIN32:
     CSC_CMD += '--nologo --output build/ironclad src/Ironclad.csproj'
     CASTXML = r'castxml'
 
-    # standard location
-    IPY = r'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
-    IPY_DIR = r'"C:\ProgramData\chocolatey\lib\ironpython"'
     # private build
     IPY = r'"C:\ironclad\IronPython.3.4.1\net462\ipy.exe"'
-    IPY_DIR = r'"ironclad\IronPython.3.4.1\net462"'
+    if not os.path.exists(IPY):
+        # standard location
+        IPY = r'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
 
-    IPY_REF_TEMPLATE = r'/r:$IPY_DIR\%s.dll'
     NATIVE_TOOLS = ['mingw', 'nasm']
     PYTHON_DLL = r'C:\Python34\python34.dll'
     
@@ -104,7 +102,7 @@ DLL_CMD = '$CC -m64 $CCFLAGS -shared -o $TARGET $SOURCES'
 GCCXML_CMD = ' '.join((CASTXML, COMPILE_IRONCLAD_FLAGS, '-v -I$CPPPATH -D__GNUC__ %s $SOURCE -o "$TARGET" --castxml-output=1' % GCCXML_INSERT))
 PYTHON34OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
 PYTHON34DLL_CMD = DLL_CMD + ' -Xlinker --export-all-symbols'
-COMMON = dict(IPY=IPY, IPY_DIR=IPY_DIR)
+COMMON = dict(IPY=IPY)
 
 test_deps = []
 before_test = test_deps.append
