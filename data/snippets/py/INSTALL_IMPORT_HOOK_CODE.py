@@ -12,9 +12,10 @@ class Loader(object):
     def load_module(self, name):
         import os, sys
         
+        abspath = os.path.abspath(self.path)
         for m in sys.modules.values():
-            if hasattr(m, '__file__'):
-                if os.path.abspath(m.__file__) == os.path.abspath(self.path):
+            if type(m).__name__ != 'namespace#' and hasattr(m, '__file__'):
+                if os.path.abspath(m.__file__) == abspath:
                     return m
         
         if name not in sys.modules:
@@ -23,13 +24,14 @@ class Loader(object):
         return sys.modules[name]
 
 
-class MetaImporter(object):
+class PydImporter(object):
 
     def __init__(self, loader, mapper):
         self.loader = loader
         self.mapper = mapper
         self.patched_for_h5py = False
         
+    # TODO: Python 3.4: find_module is obsolete; replace with find_spec
     def find_module(self, fullname, path=None):
         matches = lambda partialname: fullname == partialname or fullname.startswith(partialname + '.')
         if matches('h5py'):
@@ -64,7 +66,7 @@ class Lifetime(object):
     
     def __init__(self, loader, mapper):
         import sys
-        self.meta_importer = MetaImporter(loader, mapper)
+        self.meta_importer = PydImporter(loader, mapper)
         sys.meta_path.append(self.meta_importer)
 
     def remove_sys_hacks(self):
