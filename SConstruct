@@ -1,11 +1,12 @@
-from __future__ import print_function
-
 #===============================================================================
 # Various useful functions
 
 import functools
 import operator, os, sys
+import subprocess
 from SCons.Scanner.C import CScanner
+# The next import is not necessary, it's just to make linters work
+from SCons.Script import ARGUMENTS, Exit, Environment, Builder
 
 def splitstring(f):
     def g(_, s):
@@ -39,7 +40,7 @@ if not (mode in ['debug', 'release']):
 
 WIN32 = sys.platform == 'win32'
 
-CPYTHON = '"' + sys.executable + '"'
+CPYTHON = '"' + sys.executable + '"'  # Python used to run generators from "./tools"
 
 if WIN32:
     #==================================================================
@@ -71,7 +72,6 @@ if WIN32:
     #==================================================================
     # These variables should only be necessary on win32
     
-    COPY_CMD = 'copy $SOURCE $TARGET'
     DLLTOOL_CMD = 'dlltool -D $NAME -d $SOURCE -l $TARGET'
     LINK_MSVCR100_FLAGS = '-specs=stub/use-msvcr100.spec'
     PEXPORTS_CMD = 'pexports $SOURCE > $TARGET'
@@ -83,15 +83,17 @@ if WIN32:
     MINGW_INCLUDE = os.path.join(MINGW_DIR, 'include')
     GCCXML_INSERT = ''
 
-    # Root of CPython installation, used to find DLLs/packages for testing
-    # Note: this has to be 64bit version of cpython
-    CPYTHON_ROOT = r'C:\Python34'
+    # Find root of CPython installation, used to find DLLs/packages for testing
+    # Note: this has to be 64-bit version of CPython 3.4
+    CPYTHON_ROOT = subprocess.check_output(['py.exe', '-3.4-64', '-c', 'import sys, os; print(os.path.dirname(os.path.abspath(sys.executable)))'], universal_newlines=True).strip()
+    # If it fails, change to match your installation; by default it is C:\Python34
+    #CPYTHON_ROOT = r'C:\Python34'
 
 
 #===============================================================================
 # PLATFORM-AGNOSTIC GLOBALS
 # If any turn out to need to be platform-specific, please move them
-env_with_ippath = os.environ
+env_with_ippath = os.environ.copy()
 env_with_ippath['IRONPYTHONPATH'] = os.getcwd()
 env_with_ippath['PYTHONPATH'] = os.getcwd()
 # TODO: it should not be necessary to pollute execution with entire os environment
