@@ -63,7 +63,6 @@ if WIN32:
         IPY = r'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
 
     NATIVE_TOOLS = ['mingw', 'nasm']
-    PYTHON_DLL = r'C:\Python34\python34.dll'
     
     OBJ_SUFFIX = '.o'
     DLL_SUFFIX = '.dll'
@@ -83,11 +82,12 @@ if WIN32:
     MINGW_INCLUDE = os.path.join(MINGW_DIR, 'include')
     GCCXML_INSERT = ''
 
-    # Find root of CPython installation, used to find DLLs/packages for testing
+    # Find root of CPython installation, used for exports generation and to find DLLs/packages for testing
     # Note: this has to be 64-bit version of CPython 3.4
-    CPYTHON_ROOT = subprocess.check_output(['py.exe', '-3.4-64', '-c', 'import sys, os; print(os.path.dirname(os.path.abspath(sys.executable)))'], universal_newlines=True).strip()
+    CPYTHON34_ROOT = subprocess.check_output(['py.exe', '-3.4-64', '-c', 'import sys, os; print(os.path.dirname(os.path.abspath(sys.executable)))'], universal_newlines=True).strip()
     # If it fails, change to match your installation; by default it is C:\Python34
-    #CPYTHON_ROOT = r'C:\Python34'
+    #CPYTHON34_ROOT = r'C:\Python34'
+    CPYTHON34_DLL = os.path.join(CPYTHON34_ROOT, 'python34.dll')
 
 
 #===============================================================================
@@ -116,7 +116,7 @@ before_test = test_deps.append
 # (python34.dll, ic_msvcr90.dll, several test files)
 #===============================================================================
 
-native = Environment(ENV=env_with_ippath, tools=NATIVE_TOOLS, ASFLAGS=ASFLAGS, CPYTHON=CPYTHON, PYTHON_DLL=PYTHON_DLL, **COMMON)
+native = Environment(ENV=env_with_ippath, tools=NATIVE_TOOLS, ASFLAGS=ASFLAGS, CPYTHON=CPYTHON, CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
 c_obj_kwargs = dict(source_scanner=CScanner(), suffix=OBJ_SUFFIX)
 native['BUILDERS']['Obj'] = Builder(action=OBJ_CMD, **c_obj_kwargs)
 native['BUILDERS']['Python34Obj'] = Builder(action=PYTHON34OBJ_CMD, CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include', **c_obj_kwargs)
@@ -138,7 +138,7 @@ if WIN32:
 
 # Generate data from prebuilt python dll
 exports = native.Command('data/api/_exported_functions.generated', [],
-    '$CPYTHON tools/generateexports.py $PYTHON_DLL data/api')
+    '$CPYTHON tools/generateexports.py $CPYTHON34_DLL data/api')
 
 # Generate stub code
 buildstub_names = '_extra_functions _mgd_api_data _pure_c_symbols'
@@ -218,8 +218,8 @@ before_test(managed.Dll('build/ironclad/ironclad', ironclad_dll_src))
 
 testenv = os.environ
 testenv['IRONPYTHONPATH'] = "."
-testenv['IRONPYTHONPATH'] += ";" + os.path.join(CPYTHON_ROOT, "DLLs") # required to import/access dlls
-testenv['IRONPYTHONPATH'] += ";" + os.path.join(CPYTHON_ROOT, "Lib/site-packages") # pysvn test
+testenv['IRONPYTHONPATH'] += ";" + os.path.join(CPYTHON34_ROOT, "DLLs") # required to import/access dlls
+testenv['IRONPYTHONPATH'] += ";" + os.path.join(CPYTHON34_ROOT, "Lib/site-packages") # pysvn test
 tests = Environment(ENV=testenv, **COMMON)
 tests.AlwaysBuild(tests.Alias('test', test_deps,
     '$IPY runtests.py'))
