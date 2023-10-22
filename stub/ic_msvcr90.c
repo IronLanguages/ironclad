@@ -37,6 +37,8 @@ int IC_fclose(FILE *file)
 }
 
 // and this lot is copied (with tiny changes) from PC/nt_dl.c, to enable exactly what the following comment describes
+// In CPython 3.5 it has been conditionally disabled
+// and removed completely in 3.9 (https://github.com/python/cpython/issues/83734)
 
 #include <Windows.h>
 
@@ -51,12 +53,14 @@ int IC_fclose(FILE *file)
 // As an added complication, this magic only works on XP or later - we simply
 // use the existence (or not) of the relevant function pointers from kernel32.
 // See bug 4566 (http://python.org/sf/4566) for more details.
+// In Visual Studio 2010, side by side assemblies are no longer used by
+// default.
 
 typedef BOOL (WINAPI * PFN_GETCURRENTACTCTX)(HANDLE *);
 typedef BOOL (WINAPI * PFN_ACTIVATEACTCTX)(HANDLE, ULONG_PTR *);
 typedef BOOL (WINAPI * PFN_DEACTIVATEACTCTX)(DWORD, ULONG_PTR);
-typedef BOOL (WINAPI * PFN_ADDREFACTCTX)(HANDLE);
-typedef BOOL (WINAPI * PFN_RELEASEACTCTX)(HANDLE);
+typedef void (WINAPI * PFN_ADDREFACTCTX)(HANDLE);
+typedef void (WINAPI * PFN_RELEASEACTCTX)(HANDLE);
 
 // locals and function pointers for this activation context magic.
 static HANDLE PyWin_DLLhActivationContext = NULL; // one day it might be public
@@ -108,9 +112,13 @@ BOOL	WINAPI	DllMain (HINSTANCE hInst,
 			// capture our activation context for use when loading extensions.
 			_LoadActCtxPointers();
 			if (pfnGetCurrentActCtx && pfnAddRefActCtx)
-				if ((*pfnGetCurrentActCtx)(&PyWin_DLLhActivationContext))
-					if (!(*pfnAddRefActCtx)(PyWin_DLLhActivationContext))
-						printf("Python failed to load the default activation context\n");
+				if ((*pfnGetCurrentActCtx)(&PyWin_DLLhActivationContext)) {
+					(*pfnAddRefActCtx)(PyWin_DLLhActivationContext);
+				}
+				else {
+					printf("Python failed to load the default activation context\n");
+					return FALSE;
+				}
 			break;
 
 		case DLL_PROCESS_DETACH:
