@@ -1,22 +1,21 @@
 ###############################################################################
 #### initialise mapper
 
-__version__ = '2.7.0A1'
+__version__ = '3.4.0A1'
 
 import sys
 if sys.implementation.name != 'ironpython':
     raise ImportError("If you're running CPython, you don't need ironclad. If you're running Jython, ironclad won't work.")
 
 import os
-_dirname = os.path.dirname(__file__)
+_dirname = os.path.abspath(os.path.dirname(__file__))
 
 import clr
-from System import GC, Int64, IntPtr
+from System import GC, IntPtr
 from System.Reflection import Assembly
-from System.Runtime.InteropServices import Marshal
 
-if Marshal.SizeOf(Int64()) != Marshal.SizeOf(IntPtr()):
-    raise ImportError("Ironclad is currently 64-bit only")
+if IntPtr.Size != 8:
+    raise ImportError("Ironclad is 64-bit only")
 
 clr.AddReference(Assembly.LoadFile(os.path.join(_dirname, "ironclad.dll")))
 from Ironclad import CPyMarshal, PythonMapper
@@ -47,9 +46,6 @@ def _shutdown():
     # out their source. mostly useful for functional tests.
     gcwait()
 atexit.register(_shutdown)
-
-def shutdown():
-    print('shutdown no longer does anything')
 
 ###############################################################################
 #### basic attempt to respect .pth files
