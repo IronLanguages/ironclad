@@ -5,14 +5,16 @@ compiled CPython extensions.
 
 The original project https://code.google.com/p/ironclad is no longer
 active. The last known version works with Python 2.6. The idea here is
-to make it work with current version (2.7.x) of CPython and IronPython.
+to make it work with current version of IronPython (3.4.x)
+and the corresponding version of CPython (3.4.4).
 
 At the moment it does compile using up to date components and passes
-almost all internal tests.
+most of internal tests. Most of the remaining work is tracked under Issues.
 
 ```
-Ran 479 tests in 135.893s
-FAILED (failures=2)
+Ran 428 tests in 46.569s
+
+FAILED (failures=1, errors=8, skipped=2)
 scons: done building targets.
 ```
 
@@ -21,16 +23,23 @@ numpy is still failing on import.
 == Building ==
 
 === Building using Docker ===
+
 This repo contains a Dockerfile that sets up a dockerized build environment
-(requires Windows). Using PowerShell:
+(requires Windows; Docker has to be set to use Windows containers).
+
+Using PowerShell:
 ```
-docker build -t ironclad-build:latest -m 2GB .
-docker run -it -v ${pwd}:C:\ironclad ironclad-build
+docker build -t ironclad-build:v3.4 -m 2GB .
+docker run -it -v ${pwd}:C:\ironclad ironclad-build:v3.4
 ```
 In the container shell:
 ```
 cd C:\ironclad
 scons
+```
+To run all tests:
+```
+scons test
 ```
 
 === Previous build instructions ===

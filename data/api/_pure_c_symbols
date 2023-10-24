@@ -218,7 +218,7 @@ PyThreadState_Swap
 PyTraceBack_Here
 
 ##################################################
-# in ironclad-hacks.c for various reasons, alluded to therein
+# in ironclad-functions.c for various reasons, alluded to therein
 
 _PyObject_GC_Malloc
 _PyObject_GC_New

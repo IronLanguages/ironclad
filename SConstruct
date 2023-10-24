@@ -188,7 +188,9 @@ managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX)
 #===============================================================================
 # Generated C#
 
-api_src = stubmain_xml + exports + managed.Glob('data/api/*') # TODO: why doesn't Glob pick up items in stubmain_xml, exports?
+api_src = managed.Glob('data/api/*')
+# Glob runs before the build so during a clean build it won't pick up generated files
+api_src += stubmain_xml + exports
 api_out_names = 'Delegates Dispatcher MagicMethods PythonApi PythonStructs'
 api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
 managed.Command(api_out, api_src,

@@ -20,7 +20,7 @@ def _extract_funcname(c_func):
 @return_dict('symbol offset')
 def _jump_info(index_name):
     (index, name) = index_name
-    return name, index * 8 # FIXME: 32-bit
+    return name, index * 8 # assumes 64-bit adresses
 
 def generate_jumps(functions):
     jump_infos = list(map(_jump_info, enumerate(functions)))
