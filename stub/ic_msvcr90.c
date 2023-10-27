@@ -2,6 +2,10 @@
 #include <io.h>
 #include <stdio.h>
 
+#define DLLEXPORT __declspec(dllexport)
+
+#pragma clang attribute push (DLLEXPORT, apply_to=function)
+
 // these are here because:
 // (1) I can't DllImport from msvcr90.dll (sxs is ignored, apparently)
 // (2) this is slightly easier than forwarding to msvcr90
@@ -37,9 +41,13 @@ int IC_fclose(FILE *file)
     return fclose(file);
 }
 
+#pragma clang attribute pop
+
 // and this lot is copied (with tiny changes) from PC/nt_dl.c, to enable exactly what the following comment describes
-// In CPython 3.5 it has been conditionally disabled
+// In CPython 3.4 it has been conditionally disabled (for __MSC_VER >= 1600, see PC/pyconfig.h)
 // and removed completely in 3.9 (https://github.com/python/cpython/issues/83734)
+// Disabling the dangling else warning (rather than fixing it) to keep the code the same as in CPython
+#pragma clang diagnostic ignored "-Wdangling-else"
 
 #include <Windows.h>
 
@@ -54,8 +62,7 @@ int IC_fclose(FILE *file)
 // As an added complication, this magic only works on XP or later - we simply
 // use the existence (or not) of the relevant function pointers from kernel32.
 // See bug 4566 (http://python.org/sf/4566) for more details.
-// In Visual Studio 2010, side by side assemblies are no longer used by
-// default.
+// In Visual Studio 2010, side by side assemblies are no longer used.
 
 typedef BOOL (WINAPI * PFN_GETCURRENTACTCTX)(HANDLE *);
 typedef BOOL (WINAPI * PFN_ACTIVATEACTCTX)(HANDLE, ULONG_PTR *);
@@ -85,6 +92,7 @@ void _LoadActCtxPointers()
 	}
 }
 
+DLLEXPORT
 ULONG_PTR _Py_ActivateActCtx()
 {
 	ULONG_PTR ret = 0;
@@ -96,6 +104,7 @@ ULONG_PTR _Py_ActivateActCtx()
 	return ret;
 }
 
+DLLEXPORT
 void _Py_DeactivateActCtx(ULONG_PTR cookie)
 {
 	if (cookie && pfnDeactivateActCtx)

@@ -41,6 +41,7 @@ stub/stubmain.s
 *.ilk
 *.log
 *.lib
+*.def
 *.sbr
 *.sdf
 *.opensdf

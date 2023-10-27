@@ -70,7 +70,10 @@ if WIN32:
     
     #==================================================================
     # These variables should only be necessary on win32
+
+    MSVCR100_DLL = r'C:\Windows\System32\msvcr100.dll'
     
+    GENDEF_CMD = 'gendef - $SOURCE >$TARGET'
     DLLTOOL_CMD = 'dlltool -D $NAME -d $SOURCE -l $TARGET'
     LINK_MSVCR100_FLAGS = '-specs=stub/use-msvcr100.spec'
     PEXPORTS_CMD = 'pexports $SOURCE > $TARGET'
@@ -161,9 +164,25 @@ cpy_objs = glommap(native.Python34Obj, cpy_srcs)
 before_test(native.Python34Dll('build/ironclad/python34', stubmain_obj + jumps_obj + cpy_objs))
 
 if WIN32:
-    # This dll redirects various msvcr90 functions so we can DllImport them in C#
-    #pass
-    before_test(native.Msvcr100Dll('build/ironclad/ic_msvcr90', native.Obj('stub/ic_msvcr90.c')))
+    # Build and link ic_msvcr90.dll using Clang
+    native_clang = Environment(ENV=env_with_ippath, tools=['msvc', 'nasm', 'mslink'], CC='clang-cl', LINK='lld-link')
+                               #ASFLAGS=ASFLAGS, CPYTHON=CPYTHON, CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
+    native_clang.Append(
+        CPPDEFINES='__MSVCRT_VERSION__=0x1000 _MSC_VER=1600 _MSC_FULL_VER=160040219 _NO_CRT_STDIO_INLINE',
+        CCFLAGS='/GS- -fuse-ld=lld -Wno-macro-redefined',
+        LINKFLAGS='/subsystem:windows /NODEFAULTLIB:libucrt /NODEFAULTLIB:libcmt /ENTRY:DllMain -export-all-symbols',
+        SHLINKFLAGS='/noimplib', no_import_lib=1,
+        LIBS='kernel32',
+    )
+    if mode == 'debug':
+        native_clang['PDB'] = '${TARGET.base}.pdb'
+        native_clang.Append(LINKFLAGS='/debug:full')
+    #print(native_clang.Dump())
+
+    msvcrt_def = native_clang.Command('stub/msvcr100.def', MSVCR100_DLL, GENDEF_CMD)
+    msvcrt_lib = native_clang.Command('stub/msvcr100.lib', msvcrt_def, DLLTOOL_CMD, NAME='msvcr100.dll')
+    msvcrt_obj = native_clang.SharedObject('stub/ic_msvcr90.c', CCFLAGS=["$CCFLAGS", "-Wno-dangling-else"])
+    before_test(native_clang.SharedLibrary('build/ironclad/ic_msvcr90', [msvcrt_obj, msvcrt_lib]))
 
 #===============================================================================
 # Unmanaged test data
