@@ -322,7 +322,7 @@ class Types_Test(TestCase):
     @WithMapper
     def testSizes(self, mapper, _):
         self.assertSizes(mapper.PyBaseObject_Type, Marshal.SizeOf(PyObject()))
-        self.assertSizes(mapper.PyType_Type, Marshal.SizeOf(PyTypeObject()))
+        self.assertSizes(mapper.PyType_Type, Marshal.SizeOf(PyHeapTypeObject()))
         self.assertSizes(mapper.PyTuple_Type, Marshal.SizeOf(PyTupleObject()), Marshal.SizeOf(IntPtr())) # bigger than necessary
         self.assertSizes(mapper.PyBytes_Type, Marshal.SizeOf(PyBytesObject()) - 1, Marshal.SizeOf(Byte()))
         self.assertSizes(mapper.PyList_Type, Marshal.SizeOf(PyListObject()))

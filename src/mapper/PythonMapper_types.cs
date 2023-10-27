@@ -234,6 +234,9 @@ namespace Ironclad
             {
                 flags |= Py_TPFLAGS.BASE_EXC_SUBCLASS;
             }
+
+            // TODO: is there a better place to do this?
+            if (typePtr == PyBaseObject_Type) flags |= Py_TPFLAGS.BASETYPE;
             
             CPyMarshal.WriteIntField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_flags), (Int32)flags);
         }

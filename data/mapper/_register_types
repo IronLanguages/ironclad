@@ -5,7 +5,7 @@
 # optional dict in 3rd col allows for customisation
 
 PyBaseObject_Type   TypeCache.Object        {"tp_alloc": "PyType_GenericAlloc", "tp_new": "PyType_GenericNew", "tp_init": "IC_PyBaseObject_Init", "tp_dealloc": "IC_PyBaseObject_Dealloc", "tp_free": "PyObject_Free", "tp_str": "PyObject_Str", "tp_repr": "PyObject_Repr", "tp_basicsize": "PyObject"}
-PyType_Type         TypeCache.PythonType    {"tp_new": "IC_PyType_New", "tp_basicsize": "PyTypeObject"}
+PyType_Type         TypeCache.PythonType    {"tp_new": "IC_PyType_New", "tp_basicsize": "PyHeapTypeObject"}
 _PyNone_Type        TypeCache.Null
 PySlice_Type        Builtin.slice           {"tp_dealloc": "IC_PySlice_Dealloc", "tp_basicsize": "PySliceObject"}
 PyLong_Type         TypeCache.BigInteger    {"tp_as_number": "AddNumberMethodsWithIndex", "tp_basicsize": "PyLongObject"}
