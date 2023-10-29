@@ -663,34 +663,6 @@ class MethodsTest(MethodConnectionTestCase):
         deallocMethod()
 
 
-    def testOldArgsMethod_OneArg(self):
-        result = object()
-        arg = object()
-        def OldArgs(p1, p2):
-            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
-            self.assertEqual(self.mapper.Retrieve(p2), arg)
-            return self.mapper.Store(result)
-        
-        methodDef, deallocMethod = MakeMethodDef("method", OldArgs, METH.OLDARGS)
-        typeSpec = {"tp_methods": [methodDef]}
-        self.assertTypeMethodCall(typeSpec, "method", (arg,), {}, result)
-        deallocMethod()
-
-
-    def testOldArgsMethod_SomeArgs(self):
-        result = object()
-        args = (object(), object())
-        def OldArgs(p1, p2):
-            self.assertEqual(self.mapper.Retrieve(p1), self.instance)
-            self.assertEqual(self.mapper.Retrieve(p2), args)
-            return self.mapper.Store(result)
-        
-        methodDef, deallocMethod = MakeMethodDef("method", OldArgs, METH.OLDARGS)
-        typeSpec = {"tp_methods": [methodDef]}
-        self.assertTypeMethodCall(typeSpec, "method", args, {}, result)
-        deallocMethod()
-    
-
     def testObjArgMethod(self):
         result = object()
         arg = object()
@@ -745,9 +717,7 @@ class MethodsTest(MethodConnectionTestCase):
             self.assertEqual(self.mapper.Retrieve(p3), kwargs)
             return self.mapper.Store(result)
         
-        # OLDARGS == 0, so it appears to just be KEYWORDS,
-        # but this is how it's specified in CPython
-        methodDef, deallocMethod = MakeMethodDef("method", Kwargs, METH.OLDARGS | METH.KEYWORDS)
+        methodDef, deallocMethod = MakeMethodDef("method", Kwargs, METH.KEYWORDS)
         typeSpec = {"tp_methods": [methodDef]}
         self.assertTypeMethodCall(typeSpec, "method", args, kwargs, result)
         deallocMethod()
@@ -938,7 +908,7 @@ class TypeMethodsTest(MethodConnectionTestCase):
             return self.mapper.Store(result)
         
         typeSpec = {"tp_iternext": Iternext}
-        self.assertTypeMethodCall(typeSpec, "next", (), {}, result)
+        self.assertTypeMethodCall(typeSpec, "__next__", (), {}, result)
 
     def testIternext_Finished(self):
         def Iternext(p1):
@@ -946,7 +916,7 @@ class TypeMethodsTest(MethodConnectionTestCase):
             return IntPtr.Zero
         
         typeSpec = {"tp_iternext": Iternext}
-        self.assertTypeMethodRaises(typeSpec, "next", (), {}, StopIteration)
+        self.assertTypeMethodRaises(typeSpec, "__next__", (), {}, StopIteration)
 
 
 class NumberMethodsTest(MethodConnectionTestCase):

@@ -15,7 +15,6 @@ namespace Ironclad
         {
             GenerateCallablesFromMethodDefs(
                 code, methods, methodTable, "",
-                CodeSnippets.OLDARGS_FUNCTION_TEMPLATE,
                 CodeSnippets.NOARGS_FUNCTION_TEMPLATE,
                 CodeSnippets.OBJARG_FUNCTION_TEMPLATE,
                 CodeSnippets.VARARGS_FUNCTION_TEMPLATE,
@@ -49,7 +48,6 @@ namespace Ironclad
         {
             GenerateCallablesFromMethodDefs(
                 code, methods, methodTable, tablePrefix,
-                CodeSnippets.OLDARGS_METHOD_TEMPLATE,
                 CodeSnippets.NOARGS_METHOD_TEMPLATE,
                 CodeSnippets.OBJARG_METHOD_TEMPLATE,
                 CodeSnippets.VARARGS_METHOD_TEMPLATE,
@@ -61,7 +59,6 @@ namespace Ironclad
                         IntPtr methods,
                         PythonDictionary methodTable,
                         string tablePrefix,
-                        string oldargsTemplate,
                         string noargsTemplate,
                         string objargTemplate,
                         string varargsTemplate,
@@ -83,16 +80,9 @@ namespace Ironclad
 
                 // COEXIST flag ignored; which method is chosen depends on order of calls in ClassBuilder.
                 bool unsupportedFlags = false;
-                METH flags = (METH)thisMethod.ml_flags & ~METH.COEXIST;
+                METH flags = (METH)thisMethod.ml_flags & ~(METH.COEXIST | METH.CLASS | METH.STATIC); // TODO: ignoring CLASS and STATIC is not correct...
                 switch (flags)
                 {
-                    case METH.OLDARGS:
-                        template = oldargsTemplate;
-                        dgt = Marshal.GetDelegateForFunctionPointer(
-                            thisMethod.ml_meth,
-                            typeof(dgt_ptr_ptrptr));
-                        break;
-
                     case METH.NOARGS:
                         template = noargsTemplate;
                         dgt = Marshal.GetDelegateForFunctionPointer(

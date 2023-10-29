@@ -89,50 +89,6 @@ class Py_InitModule4_Test(TestCase):
         deallocTypes()
 
 
-    def test_Py_InitModule4_OldargsFunction_OneArg(self):
-        mapper = PythonMapper()
-        deallocTypes = CreateTypes(mapper)
-        arg = object()
-        result = object()
-        resultPtr = mapper.Store(result)
-        mapper.IncRef(resultPtr)
-        
-        def func(_, argPtr):
-            self.assertEqual(_, MODULE_PTR)
-            self.assertEqual(mapper.Retrieve(argPtr), arg)
-            return resultPtr
-        method, deallocMethod = MakeMethodDef("func", func, METH.OLDARGS)
-        
-        def testModule(module, mapper):
-            self.assertEqual(module.func(arg), result, "not hooked up")
-            
-        self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
-        deallocMethod()
-        deallocTypes()
-
-
-    def test_Py_InitModule4_OldargsFunction_SomeArgs(self):
-        mapper = PythonMapper()
-        deallocTypes = CreateTypes(mapper)
-        args = (object(), object())
-        result = object()
-        resultPtr = mapper.Store(result)
-        mapper.IncRef(resultPtr)
-        
-        def func(_, argsPtr):
-            self.assertEqual(_, MODULE_PTR)
-            self.assertEqual(mapper.Retrieve(argsPtr), args)
-            return resultPtr
-        method, deallocMethod = MakeMethodDef("func", func, METH.OLDARGS)
-        
-        def testModule(module, mapper):
-            self.assertEqual(module.func(*args), result, "not hooked up")
-            
-        self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
-        deallocMethod()
-        deallocTypes()
-
-
     def test_Py_InitModule4_ObjargFunction(self):
         mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)

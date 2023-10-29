@@ -8,9 +8,32 @@ namespace Ironclad
     namespace Structs
     {
         [Flags]
+        public enum PyBUF : uint
+        {
+            SIMPLE = 0x0000,
+            WRITABLE = 0x0001,
+            FORMAT = 0x0004,
+            ND = 0x0008,
+            STRIDES = 0x0010 | ND,
+            C_CONTIGUOUS = 0x0020 | STRIDES,
+            F_CONTIGUOUS = 0x0040 | STRIDES,
+            ANY_CONTIGUOUS = 0x0080 | STRIDES,
+            INDIRECT = 0x0100 | STRIDES,
+            CONTIG = ND | WRITABLE,
+            CONTIG_RO = ND,
+            STRIDED = STRIDES | WRITABLE,
+            STRIDED_RO = STRIDES,
+            RECORDS = STRIDES | WRITABLE | FORMAT,
+            RECORDS_RO = STRIDES | FORMAT,
+            FULL = INDIRECT | WRITABLE | FORMAT,
+            FULL_RO = INDIRECT | FORMAT,
+            READ = 0x100,
+            WRITE = 0x200,
+        }
+
+        [Flags]
         public enum METH : uint
         {
-            OLDARGS = 0,
             VARARGS = 0x00000001,
             KEYWORDS = 0x00000002,
             NOARGS = 0x00000004,
@@ -75,9 +98,12 @@ namespace Ironclad
             UINT = 11,
             ULONG = 12,
             STRING_INPLACE = 13,
+            BOOL = 14,
             OBJECT_EX = 16,
             LONGLONG = 17,
             ULONGLONG = 18,
+            PYSSIZET = 19,
+            NONE = 20,
         }
     }
 }
