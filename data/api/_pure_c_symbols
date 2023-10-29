@@ -34,43 +34,46 @@ _PyLong_DigitValue
 # (could we/should be be generating them..?)
 
 # Objects/abstract.c
-PyObject_Type
-PyObject_AsCharBuffer
-PyObject_CheckReadBuffer
-PyObject_AsReadBuffer
-PyObject_AsWriteBuffer
-PyNumber_AsSsize_t
-PyMapping_HasKey
-PyMapping_HasKeyString
-PyMapping_Size
+#PyObject_Type
+#PyObject_AsCharBuffer
+#PyObject_CheckReadBuffer
+#PyObject_AsReadBuffer
+#PyObject_AsWriteBuffer
+#PyNumber_AsSsize_t
+#PyMapping_HasKey
+#PyMapping_HasKeyString
+#PyMapping_Size
 PyObject_CallObject
 PyObject_CallFunction
-_PyObject_CallFunction_SizeT
+#_PyObject_CallFunction_SizeT
 PyObject_CallFunctionObjArgs
 PyObject_CallMethod
-_PyObject_CallMethod_SizeT
-PyObject_CallMethodObjArgs
-PyBuffer_FillContiguousStrides
+#_PyObject_CallMethod_SizeT
+#PyObject_CallMethodObjArgs
+#PyBuffer_FillContiguousStrides
+PyBuffer_IsContiguous
 PyBuffer_FillInfo
-PyBuffer_Release
+#PyBuffer_Release
 PySequence_Fast
-PySequence_List
+#PySequence_List
+#PyObject_GetBuffer
 
 # Objects/bytesobject.c
 PyBytes_FromFormat
 PyBytes_FromFormatV
 
 # Objects/cellobject.c
-PyCell_New
-PyCell_Get
-PyCell_Set
+#PyCell_New
+#PyCell_Get
+#PyCell_Set
 
 # Objects/codeobject.c
 PyCode_Addr2Line
 _PyCode_CheckLineNumber
 PyCode_New
+PyCode_NewEmpty
 
-# Objects/pycapsule.c
+# Objects/capsule.c
 PyCapsule_New
 PyCapsule_GetPointer
 PyCapsule_GetDestructor
@@ -83,44 +86,52 @@ PyCapsule_SetName
 PyCapsule_SetContext
 PyCapsule_Import
 
+# Objects/dictobject.c
+_PyDict_SetItemId
+
 # Objects/fileobject.c
-PyFile_GetLine
-PyFile_WriteObject
-PyFile_WriteString
-PyObject_AsFileDescriptor
-Py_UniversalNewlineFgets
+#PyFile_GetLine
+#PyFile_WriteObject
+#PyFile_WriteString
+#PyObject_AsFileDescriptor
+#Py_UniversalNewlineFgets
 
 # Objects/frameobject.c
 _PyFrame_Init
+PyFrame_GetLineNumber
 PyFrame_New
 
 # Objects/iterobject.c
-PySeqIter_New
-PyCallIter_New
+#PySeqIter_New
+#PyCallIter_New
 
 # Objects/listobject.c
 PyList_Size
 
 # Objects/longobject.c
-PyLong_FromVoidPtr
-PyLong_AsVoidPtr
+#PyLong_FromVoidPtr
+#PyLong_AsVoidPtr
 
 # Objects/methodobject.c
-PyCFunction_Call
-PyCFunction_GetFlags
-PyCFunction_GetSelf
-PyCFunction_GetFunction
-PyCFunction_NewEx
-PyCFunction_Fini
-PyCFunction_New
+#PyCFunction_Call
+#PyCFunction_GetFlags
+#PyCFunction_GetSelf
+#PyCFunction_GetFunction
+#PyCFunction_NewEx
+#PyCFunction_Fini
+#PyCFunction_New
 
 # Objects/object.c
-_Py_HashPointer
-_PyObject_GetDictPtr
+#_Py_HashPointer
+#_PyObject_GetDictPtr
+_PyObject_GenericGetAttrWithDict
+PyObject_GenericGetAttr
+Py_ReprEnter
+Py_ReprLeave
 
 # Objects/structseq.c
-PyStructSequence_New
-PyStructSequence_InitType
+#PyStructSequence_New
+#PyStructSequence_InitType
 
 # Objects/tupleobject.c
 PyTuple_GetItem
@@ -129,55 +140,239 @@ PyTuple_Pack
 
 # Objects/typeobject.c
 PyType_Modified
+PyType_FromSpec
+PyType_FromSpecWithBases
 
-# Objects/unicodeobject.c, sorry about the mangling, not sure how to deal with that
-PyUnicodeUCS2_GetDefaultEncoding
-PyUnicodeUCS2_SetDefaultEncoding
+# Objects/unicodeobject.c
+_Py_ReleaseInternedUnicodeStrings
+_PyUnicode_AsASCIIString
+_PyUnicode_AsKind
+_PyUnicode_AsLatin1String
+_PyUnicode_AsUTF8String
+_PyUnicode_ClearStaticStrings
+_PyUnicode_CompareWithId
+_PyUnicode_Copy
+_PyUnicode_EncodeCharmap
+_PyUnicode_EncodeUTF16
+_PyUnicode_EncodeUTF32
+_PyUnicode_EncodeUTF7
+_PyUnicode_FastCopyCharacters
+_PyUnicode_FastFill
+_PyUnicode_FindMaxChar
+_PyUnicode_FromASCII
+_PyUnicode_FromId
+_PyUnicode_HasNULChars
+_PyUnicode_InsertThousandsGrouping
+_PyUnicode_Ready
+_PyUnicode_TransformDecimalAndSpaceToASCII
+_PyUnicode_XStrip
+_PyUnicode_XStrip
+_PyUnicodeWriter_Dealloc
+_PyUnicodeWriter_Finish
+_PyUnicodeWriter_Init
+_PyUnicodeWriter_PrepareInternal
+_PyUnicodeWriter_WriteASCIIString
+_PyUnicodeWriter_WriteChar
+_PyUnicodeWriter_WriteLatin1String
+_PyUnicodeWriter_WriteStr
+_PyUnicodeWriter_WriteSubstring
+Py_UNICODE_strcat
+Py_UNICODE_strchr
+Py_UNICODE_strcmp
+Py_UNICODE_strcpy
+Py_UNICODE_strlen
+Py_UNICODE_strncmp
+Py_UNICODE_strncpy
+Py_UNICODE_strrchr
+PyUnicode_Append
+PyUnicode_Append
+PyUnicode_AppendAndDel
+PyUnicode_AppendAndDel
+PyUnicode_AsASCIIString
+PyUnicode_AsCharmapString
+PyUnicode_AsDecodedObject
+PyUnicode_AsDecodedUnicode
+PyUnicode_AsEncodedObject
+PyUnicode_AsEncodedString
+PyUnicode_AsEncodedUnicode
+PyUnicode_AsLatin1String
+PyUnicode_AsMBCSString
+PyUnicode_AsRawUnicodeEscapeString
+PyUnicode_AsUCS4
+PyUnicode_AsUCS4Copy
+PyUnicode_AsUnicode
+PyUnicode_AsUnicodeAndSize
+PyUnicode_AsUnicodeCopy
+PyUnicode_AsUnicodeCopy
+PyUnicode_AsUnicodeEscapeString
+PyUnicode_AsUTF16String
+PyUnicode_AsUTF32String
+PyUnicode_AsUTF8
+PyUnicode_AsUTF8AndSize
+PyUnicode_AsUTF8String
+PyUnicode_AsWideChar
+PyUnicode_AsWideCharString
+PyUnicode_BuildEncodingMap
+PyUnicode_ClearFreeList
+PyUnicode_ClearFreeList
+PyUnicode_Compare
+PyUnicode_CompareWithASCIIString
+PyUnicode_Concat
+PyUnicode_Concat
+PyUnicode_Contains
+PyUnicode_Contains
+PyUnicode_CopyCharacters
+PyUnicode_Count
+PyUnicode_Count
+PyUnicode_Decode
+PyUnicode_DecodeASCII
+PyUnicode_DecodeCharmap
+PyUnicode_DecodeCodePageStateful
+PyUnicode_DecodeFSDefault
+PyUnicode_DecodeFSDefaultAndSize
+PyUnicode_DecodeLatin1
+PyUnicode_DecodeLocale
+PyUnicode_DecodeLocaleAndSize
+PyUnicode_DecodeMBCS
+PyUnicode_DecodeMBCSStateful
+PyUnicode_DecodeRawUnicodeEscape
+PyUnicode_DecodeUnicodeEscape
+PyUnicode_DecodeUTF16
+PyUnicode_DecodeUTF16Stateful
+PyUnicode_DecodeUTF32
+PyUnicode_DecodeUTF32Stateful
+PyUnicode_DecodeUTF7
+PyUnicode_DecodeUTF7Stateful
+PyUnicode_DecodeUTF8
+PyUnicode_DecodeUTF8Stateful
+PyUnicode_Encode
+PyUnicode_EncodeASCII
+PyUnicode_EncodeCharmap
+PyUnicode_EncodeCodePage
+PyUnicode_EncodeDecimal
+PyUnicode_EncodeFSDefault
+PyUnicode_EncodeLatin1
+PyUnicode_EncodeLocale
+PyUnicode_EncodeMBCS
+PyUnicode_EncodeRawUnicodeEscape
+PyUnicode_EncodeUnicodeEscape
+PyUnicode_EncodeUTF16
+PyUnicode_EncodeUTF32
+PyUnicode_EncodeUTF7
+PyUnicode_EncodeUTF8
+PyUnicode_Fill
+PyUnicode_Find
+PyUnicode_FindChar
+PyUnicode_Format
+PyUnicode_Format
+PyUnicode_FromEncodedObject
+PyUnicode_FromFormat
+PyUnicode_FromFormat
+PyUnicode_FromFormatV
+PyUnicode_FromFormatV
+PyUnicode_FromKindAndData
+PyUnicode_FromObject
+PyUnicode_FromOrdinal
+PyUnicode_FromString
+PyUnicode_FromStringAndSize
+PyUnicode_FromUnicode
+PyUnicode_FromWideChar
+PyUnicode_FSConverter
+PyUnicode_FSDecoder
+PyUnicode_GetDefaultEncoding
+PyUnicode_GetLength
+PyUnicode_GetMax
+PyUnicode_GetSize
+PyUnicode_InternFromString
+PyUnicode_InternFromString
+PyUnicode_InternImmortal
+PyUnicode_InternImmortal
+PyUnicode_InternInPlace
+PyUnicode_InternInPlace
+PyUnicode_IsIdentifier
+PyUnicode_IsIdentifier
+PyUnicode_Join
+PyUnicode_New
+PyUnicode_Partition
+PyUnicode_Partition
+PyUnicode_ReadChar
+PyUnicode_Replace
+PyUnicode_Replace
+PyUnicode_Resize
+PyUnicode_RichCompare
+PyUnicode_RPartition
+PyUnicode_RPartition
+PyUnicode_RSplit
+PyUnicode_RSplit
+PyUnicode_Split
+PyUnicode_Split
+PyUnicode_Splitlines
+PyUnicode_Substring
+PyUnicode_Substring
+PyUnicode_Tailmatch
+PyUnicode_TransformDecimalToASCII
+PyUnicode_Translate
+PyUnicode_TranslateCharmap
+PyUnicode_WriteChar
 
 # Parser/intrcheck.c
-PyErr_SetInterrupt
-PyErr_CheckSignals
-PyOS_InitInterrupts
-PyOS_FiniInterrupts
+#PyErr_SetInterrupt
+#PyOS_InitInterrupts
+#PyOS_FiniInterrupts
 PyOS_InterruptOccurred
-PyOS_AfterFork
+#PyOS_AfterFork
 
 # Python/ceval.c
-PyEval_CallObject
 PyEval_CallObjectWithKeywords
-PyEval_GetRestricted
 
 # Python/errors.c
 _PyErr_BadInternalCall
+_PyErr_ChainExceptions
+_PyErr_SetKeyError
 PyErr_BadArgument
 PyErr_BadInternalCall
 PyErr_Clear
 PyErr_ExceptionMatches
 PyErr_Fetch
 PyErr_Format
+PyErr_GetExcInfo
 PyErr_GivenExceptionMatches
 PyErr_NewException
+PyErr_NewExceptionWithDoc
 PyErr_NoMemory
 PyErr_NormalizeException
 PyErr_Occurred
 PyErr_ProgramText
+PyErr_ProgramTextObject
 PyErr_Restore
 PyErr_SetExcFromWindowsErr
 PyErr_SetExcFromWindowsErrWithFilename
 PyErr_SetExcFromWindowsErrWithFilenameObject
+PyErr_SetExcFromWindowsErrWithFilenameObjects
 PyErr_SetExcFromWindowsErrWithUnicodeFilename
+PyErr_SetExcInfo
 PyErr_SetFromErrno
 PyErr_SetFromErrnoWithFilename
 PyErr_SetFromErrnoWithFilenameObject
+PyErr_SetFromErrnoWithFilenameObjects
 PyErr_SetFromErrnoWithUnicodeFilename
 PyErr_SetFromWindowsErr
 PyErr_SetFromWindowsErrWithFilename
 PyErr_SetFromWindowsErrWithUnicodeFilename
+PyErr_SetImportError
 PyErr_SetNone
 PyErr_SetObject
 PyErr_SetString
 PyErr_SyntaxLocation
+PyErr_SyntaxLocationEx
+PyErr_SyntaxLocationObject
 PyErr_WriteUnraisable
+
+# Python/formatter_unicode.c
+_PyUnicode_FormatAdvancedWriter
+_PyLong_FormatAdvancedWriter
+_PyFloat_FormatAdvancedWriter
+_PyComplex_FormatAdvancedWriter
 
 # Python/getargs.c
 PyArg_Parse
@@ -190,29 +385,38 @@ PyArg_ParseTupleAndKeywords
 _PyArg_ParseTupleAndKeywords_SizeT
 PyArg_VaParseTupleAndKeywords
 _PyArg_VaParseTupleAndKeywords_SizeT
+PyArg_ValidateKeywordArguments
 PyArg_UnpackTuple
 _PyArg_NoKeywords
+_PyArg_NoPositional
 
 # Python/modsupport.c
 _Py_VaBuildValue_SizeT
 Py_VaBuildValue
 _Py_BuildValue_SizeT
 Py_BuildValue
-PyEval_CallFunction
-PyEval_CallMethod
+#PyEval_CallFunction
+#PyEval_CallMethod
 
 # Python/mysnprintf.c
 PyOS_snprintf
 PyOS_vsnprintf
 
 # Python/mystrtoul.c
-PyOS_strtoul
-PyOS_strtol
+#PyOS_strtoul
+#PyOS_strtol
 
 # Python/pystate.c
 PyThreadState_Get
 PyThreadState_GetDict
 PyThreadState_Swap
+
+# Python/pythonrun.c
+Py_GetProgramName
+Py_SetProgramName
+
+# Python/sigcheck.c
+PyErr_CheckSignals
 
 # Python/traceback.c
 PyTraceBack_Here

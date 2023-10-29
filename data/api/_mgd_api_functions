@@ -28,11 +28,13 @@ PyClass_New
 PyComplex_AsCComplex    
 PyComplex_FromDoubles   
 
+_PyDict_GetItemId
 PyDict_Copy
 PyDict_DelItem         
 PyDict_DelItemString    
 PyDict_GetItem       
-PyDict_GetItemString  
+PyDict_GetItemString
+PyDict_GetItemWithError
 PyDict_New        
 PyDict_Next               
 PyDict_SetItem       
@@ -72,7 +74,8 @@ PyList_New
 PyList_SetItem        
     
 PyLong_AsLong        
-PyLong_AsLongLong      
+PyLong_AsLongAndOverflow
+PyLong_AsLongLong
 PyLong_AsSize_t
 PyLong_AsSsize_t
 PyLong_AsUnsignedLong      
@@ -83,6 +86,7 @@ PyLong_FromLong
 PyLong_FromLongLong        
 PyLong_FromSize_t
 PyLong_FromSsize_t
+PyLong_FromString
 PyLong_FromUnsignedLong    
 PyLong_FromUnsignedLongLong   
     
@@ -91,15 +95,20 @@ PyMapping_GetItemString
     
 PyMem_Free        
 PyMem_Malloc      
-PyMem_Realloc 
+PyMem_Realloc
+PyMem_RawFree
+PyMem_RawMalloc
+PyMem_RawRealloc
     
 PyMethod_New   
         
 PyModule_AddIntConstant  
 PyModule_AddObject      
-PyModule_AddStringConstant 
+PyModule_AddStringConstant
+PyModule_Create2
 PyModule_GetDict   
-PyModule_New     
+PyModule_GetState
+PyModule_New
     
 PyNumber_Absolute  
 PyNumber_Add     
@@ -127,6 +136,7 @@ PyObject_DelItemString
 PyObject_Free       
 PyObject_GetAttr       
 PyObject_GetAttrString     
+PyObject_GenericGetAttr
 PyObject_GetItem        
 PyObject_GetIter     
 PyObject_HasAttr   
@@ -147,6 +157,8 @@ PyObject_SetAttrString
 PyObject_SetItem  
 PyObject_Size
 PyObject_Str
+PyObject_GetBuffer
+PyBuffer_Release
     
 PyRun_StringFlags
     
@@ -188,3 +200,12 @@ PyType_GenericAlloc
 PyType_GenericNew
 PyType_IsSubtype
 PyType_Ready
+
+PyFrozenSet_New
+PySet_Add
+
+PyMemoryView_FromObject
+
+Py_GetVersion
+
+PyErr_WarnEx

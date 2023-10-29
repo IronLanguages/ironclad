@@ -369,7 +369,6 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 #	define Py_DEBUG
 #endif
 
-
 #ifdef MS_WIN32
 
 #define SIZEOF_SHORT 2

@@ -36,14 +36,6 @@ void Py_InitializeEx(int _) {}
 void Py_Finalize(void) {}
 int Py_IsInitialized(void) { return 1; }
 
-// Python/ceval.c
-
-int
-PyEval_GetRestricted(void)
-{
-	return 0;
-}
-
 // Objects/typeobject.c
 void
 PyType_Modified(PyTypeObject *type)
@@ -53,11 +45,13 @@ PyType_Modified(PyTypeObject *type)
 	// with itself.
 }
 
+/*
 PyObject**
 _PyObject_GetDictPtr(PyObject *obj)
 {
     return NULL;
 }
+*/
 
 
 // TODO: this will break, when you least expect it, because it assumes that
@@ -70,3 +64,10 @@ _PyObject_GetDictPtr(PyObject *obj)
 	return _fstat32(fd, buffer);
 }
 */
+
+// Modules/signalmodule.c
+int
+PyOS_InterruptOccurred(void)
+{
+    return 0;
+}

@@ -98,8 +98,88 @@ PyLongObject _Py_FalseStruct;
 // Objects/bytearray.h
 char _PyByteArray_empty_string[2] = {0,0};
 
+// Objects/longobject.c
+unsigned char _PyLong_DigitValue[256] = {
+    37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
+    37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
+    37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
+    0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  37, 37, 37, 37, 37, 37,
+    37, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+    25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 37, 37, 37, 37, 37,
+    37, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+    25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 37, 37, 37, 37, 37,
+    37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
+    37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
+    37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
+    37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
+    37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
+    37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
+    37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
+    37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
+};
+
 // Objects/sliceobject.c
 PyObject _Py_EllipsisObject;
+
+// Parser/tokenizer.c
+const char *_PyParser_TokenNames[] = {
+    "ENDMARKER",
+    "NAME",
+    "NUMBER",
+    "STRING",
+    "NEWLINE",
+    "INDENT",
+    "DEDENT",
+    "LPAR",
+    "RPAR",
+    "LSQB",
+    "RSQB",
+    "COLON",
+    "COMMA",
+    "SEMI",
+    "PLUS",
+    "MINUS",
+    "STAR",
+    "SLASH",
+    "VBAR",
+    "AMPER",
+    "LESS",
+    "GREATER",
+    "EQUAL",
+    "DOT",
+    "PERCENT",
+    "LBRACE",
+    "RBRACE",
+    "EQEQUAL",
+    "NOTEQUAL",
+    "LESSEQUAL",
+    "GREATEREQUAL",
+    "TILDE",
+    "CIRCUMFLEX",
+    "LEFTSHIFT",
+    "RIGHTSHIFT",
+    "DOUBLESTAR",
+    "PLUSEQUAL",
+    "MINEQUAL",
+    "STAREQUAL",
+    "SLASHEQUAL",
+    "PERCENTEQUAL",
+    "AMPEREQUAL",
+    "VBAREQUAL",
+    "CIRCUMFLEXEQUAL",
+    "LEFTSHIFTEQUAL",
+    "RIGHTSHIFTEQUAL",
+    "DOUBLESTAREQUAL",
+    "DOUBLESLASH",
+    "DOUBLESLASHEQUAL",
+    "AT",
+    "RARROW",
+    "ELLIPSIS",
+    /* This table must match the #defines in token.h! */
+    "OP",
+    "<ERRORTOKEN>",
+    "<N_TOKENS>"
+};
 
 
 // Python/pystate.c
@@ -109,7 +189,7 @@ PyThreadFrameGetter _PyThreadState_GetFrame = NULL;
 
 
 // Python/modsupport.c
-char *_Py_PackageContext = NULL;
+//char *_Py_PackageContext = NULL;
 
 
 // Python/ceval.c
@@ -129,6 +209,10 @@ PyThreadState *_Py_Finalizing;
 // Python/frozen.c
 static struct _frozen _PyImport_FrozenModules[] = { {0, 0, 0} };
 const struct _frozen *PyImport_FrozenModules = _PyImport_FrozenModules;
+
+
+// Python/codecs.c
+const char *Py_hexdigits = "0123456789abcdef";
 
 
 // whole bunch of flags, mostly from pythonrun:
@@ -239,4 +323,3 @@ int Py_HasFileSystemDefaultEncoding;
 int _PyOS_opterr;
 int _PyOS_optind;
 wchar_t * _PyOS_optarg;
-const char * Py_hexdigits;
