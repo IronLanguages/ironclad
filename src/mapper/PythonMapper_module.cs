@@ -238,7 +238,7 @@ namespace Ironclad
             {
                 return -1;
             }
-            //this.DecRef(valuePtr); // TODO: adding to a module should increase the ref count but doesn't...
+            this.DecRef(valuePtr);
             return 0;
         }
         
