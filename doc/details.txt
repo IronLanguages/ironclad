@@ -25,7 +25,7 @@ but at least it's self-contained.
 * ironclad.dll
 
 This managed assembly contains "everything else" -- all the logic that isn't
-already implemented in python27.dll, and all the parts that handle object
+already implemented in python34.dll, and all the parts that handle object
 marshalling and suchlike.
 
 * __init__.py

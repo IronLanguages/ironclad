@@ -7,7 +7,10 @@
    */
 
 /* enable more aggressive intra-module optimizations, where available */
+/* Clang currently does not support individual options to pragma optimize; rely on command-line switches for optimization levels */
+#ifndef __clang__
 #define PY_LOCAL_AGGRESSIVE
+#endif
 
 #include "Python.h"
 

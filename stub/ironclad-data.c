@@ -12,11 +12,11 @@ PyTypeObject PyBytesIter_Type;
 PyTypeObject PyBytes_Type;
 PyTypeObject PyCFunction_Type;
 PyTypeObject PyCallIter_Type;
-PyTypeObject PyCapsule_Type;
+extern PyTypeObject PyCapsule_Type;  // defined at stub/Objects/capsule.c
 PyTypeObject PyCell_Type;
 PyTypeObject PyClassMethodDescr_Type;
 PyTypeObject PyClassMethod_Type;
-PyTypeObject PyCode_Type;
+extern PyTypeObject PyCode_Type;  //defined at stub/Objects/codeobject.c
 PyTypeObject PyComplex_Type;
 PyTypeObject PyDictItems_Type;
 PyTypeObject PyDictIterItem_Type;
@@ -30,7 +30,7 @@ PyTypeObject PyEllipsis_Type;
 PyTypeObject PyEnum_Type;
 PyTypeObject PyFilter_Type;
 PyTypeObject PyFloat_Type;
-PyTypeObject PyFrame_Type;
+extern PyTypeObject PyFrame_Type;  // defined at stub/Objects/frameobject.c
 PyTypeObject PyFrozenSet_Type;
 PyTypeObject PyFunction_Type;
 PyTypeObject PyGen_Type;
@@ -59,12 +59,12 @@ PyTypeObject PySlice_Type;
 PyTypeObject PyStaticMethod_Type;
 PyTypeObject PyStdPrinter_Type;
 PyTypeObject PySuper_Type;
-PyTypeObject PyTraceBack_Type;
+extern PyTypeObject PyTraceBack_Type;  // defined at stub\Python\traceback.c
 PyTypeObject PyTupleIter_Type;
 PyTypeObject PyTuple_Type;
 PyTypeObject PyType_Type;
-PyTypeObject PyUnicodeIter_Type;
-PyTypeObject PyUnicode_Type;
+extern PyTypeObject PyUnicodeIter_Type;  // defined at stub\Objects\unicodeobject.c
+extern PyTypeObject PyUnicode_Type;  // defined at stub\Objects\unicodeobject.c
 PyTypeObject PyWrapperDescr_Type;
 PyTypeObject PyZip_Type;
 PyTypeObject _PyManagedBuffer_Type;

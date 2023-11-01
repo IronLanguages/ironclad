@@ -9,15 +9,17 @@ from SCons.Scanner.C import CScanner
 from SCons.Script import ARGUMENTS, Exit, Environment, Builder
 
 def splitstring(f):
-    def g(_, s):
+    def g(_, s, **kwargs):
         if isinstance(s, str):
             s = s.split()
-        return f(_, s)
+        return f(_, s, **kwargs)
     return g
 
 @splitstring
-def glommap(f, inputs):
-    return list(functools.reduce(operator.add, map(f, inputs), []))
+def glommap(f, inputs, **kwargs):
+    def g(input):
+        return f(input, **kwargs)
+    return list(functools.reduce(operator.add, map(g, inputs), []))
 
 @splitstring
 def pathmap(base, files):
@@ -40,8 +42,6 @@ if not (mode in ['debug', 'release']):
 
 WIN32 = sys.platform == 'win32'
 
-CPYTHON = '"' + sys.executable + '"'  # Python used to run generators from "./tools"
-
 if WIN32:
     #==================================================================
     # These variables will be needed on any platform, I think
@@ -63,22 +63,22 @@ if WIN32:
         IPY = r'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
 
     NATIVE_TOOLS = ['mingw', 'nasm']
-    
+
     OBJ_SUFFIX = '.o'
     DLL_SUFFIX = '.dll'
     MGD_DLL_SUFFIX = '.dll'
-    
+
     #==================================================================
     # These variables should only be necessary on win32
 
     MSVCR100_DLL = r'C:\Windows\System32\msvcr100.dll'
-    
+
     GENDEF_CMD = 'gendef - $SOURCE >$TARGET'
     DLLTOOL_CMD = 'dlltool -D $NAME -d $SOURCE -l $TARGET'
     LINK_MSVCR100_FLAGS = '-specs=stub/use-msvcr100.spec'
     PEXPORTS_CMD = 'pexports $SOURCE > $TARGET'
     RES_CMD = 'windres --input $SOURCE --output $TARGET --output-format=coff'
-    
+
     # TODO: can we find MINGW_DIR from the environment..?
     MINGW_DIR = r'C:\mingw64'
     MINGW_LIB = os.path.join(MINGW_DIR, 'lib')
@@ -91,22 +91,29 @@ if WIN32:
     # If it fails, change to match your installation; by default it is C:\Python34
     #CPYTHON34_ROOT = r'C:\Python34'
     CPYTHON34_DLL = os.path.join(CPYTHON34_ROOT, 'python34.dll')
+else:
+    NATIVE_TOOLS = ['default']
 
 
 #===============================================================================
 # PLATFORM-AGNOSTIC GLOBALS
 # If any turn out to need to be platform-specific, please move them
+
+CPYTHON = '"' + sys.executable + '"'  # Python used to run generators from "./tools"
+
 env_with_ippath = os.environ.copy()
 env_with_ippath['IRONPYTHONPATH'] = os.getcwd()
 env_with_ippath['PYTHONPATH'] = os.getcwd()
 # TODO: it should not be necessary to pollute execution with entire os environment
 
-COMPILE_IRONCLAD_FLAGS = '-DIRONCLAD -DPy_BUILD_CORE -D__MSVCRT_VERSION__=0x1000 -DMS_WIN64'
+COMPILE_IRONCLAD_FLAGS = '-DIRONCLAD -DPy_BUILD_CORE -D__MSVCRT_VERSION__=0x1000 -DMS_WIN64'  # TODO: should be in CPPDEFINES
 OBJ_CMD = '$CC -m64 -fcommon $CCFLAGS -o $TARGET -c $SOURCE' # TODO: get rid of -fcommon
 DLL_CMD = '$CC -m64 $CCFLAGS -shared -o $TARGET $SOURCES'
 GCCXML_CMD = ' '.join((CASTXML, COMPILE_IRONCLAD_FLAGS, '-v -I$CPPPATH -D__GNUC__ %s $SOURCE -o "$TARGET" --castxml-output=1' % GCCXML_INSERT))
 PYTHON34OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
 PYTHON34DLL_CMD = DLL_CMD + ' -Xlinker --export-all-symbols'
+
+# COMMON are globals in all used environments (native, native_clang, managed, tests)
 COMMON = dict(IPY=IPY)
 
 test_deps = []
@@ -124,7 +131,6 @@ c_obj_kwargs = dict(source_scanner=CScanner(), suffix=OBJ_SUFFIX)
 native['BUILDERS']['Obj'] = Builder(action=OBJ_CMD, **c_obj_kwargs)
 native['BUILDERS']['Python34Obj'] = Builder(action=PYTHON34OBJ_CMD, CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include', **c_obj_kwargs)
 native['BUILDERS']['Dll'] = Builder(action=DLL_CMD, suffix=DLL_SUFFIX)
-native['BUILDERS']['Python34Dll'] = native['BUILDERS']['Dll']
 native['BUILDERS']['GccXml'] = Builder(action=GCCXML_CMD, CPPPATH='stub/Include', source_scanner=CScanner())
 
 if WIN32:
@@ -133,56 +139,67 @@ if WIN32:
         return target, source
     native['BUILDERS']['Msvcr100Dll'] = Builder(
         action=DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR100_FLAGS)
-    native['BUILDERS']['Python34Dll'] = Builder(
-        action=PYTHON34DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR100_FLAGS)
+
+if WIN32:
+    native_clang = Environment(ENV=env_with_ippath, tools=['msvc', 'mslink', 'nasm'], CC='clang-cl', LINK='lld-link',
+                               CPYTHON=CPYTHON, CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
+    native_clang.Append(
+        ASFLAGS=ASFLAGS,
+        CPPDEFINES='''__MSVCRT_VERSION__=0x1000 _NO_CRT_STDIO_INLINE Py_ENABLE_SHARED Py_BUILD_CORE IRONCLAD ''',
+        CPPPATH='stub/Include',
+        CCFLAGS='/GS- --target=x86_64-pc-windows-msvc -fuse-ld=lld -fms-compatibility-version=16.00.40219',
+        LINKFLAGS='/subsystem:windows /nodefaultlib:libucrt /nodefaultlib:libcmt /entry:DllMain',
+        SHLINKFLAGS='/noimplib', no_import_lib=1,
+        LIBS='kernel32 user32'.split(),
+    )
+
+    if mode == 'debug':
+        native_clang['PDB'] = '${TARGET.base}.pdb'
+        native_clang.Append(ASFLAGS='-g')
+        native_clang.Append(LINKFLAGS='/debug:full')
+    #print(native_clang.Dump())
+else:
+    native_clang = native
 
 #===============================================================================
 # Unmanaged libraries for build/ironclad
 
+if WIN32:
+    # Create implib for msvcrt
+    msvcrt_def = native_clang.Command('stub/msvcr100.def', MSVCR100_DLL, GENDEF_CMD)
+    msvcrt_lib = native_clang.Command('stub/msvcr100.lib', msvcrt_def, DLLTOOL_CMD, NAME='msvcr100.dll')
+
+    # Build and link ic_msvcr90.dll
+    msvcrt_obj = native_clang.SharedObject('stub/ic_msvcr90.c')
+    before_test(native_clang.SharedLibrary('build/ironclad/ic_msvcr90', [msvcrt_obj, msvcrt_lib]))
+else:
+    msvcrt_lib = []
+
 # Generate data from prebuilt python dll
-exports = native.Command('data/api/_exported_functions.generated', [],
-    '$CPYTHON tools/generateexports.py $CPYTHON34_DLL data/api')
+exports, python_def = native.Command(['data/api/_exported_functions.generated', 'stub/python34.def'], [],
+    '$CPYTHON tools/generateexports.py $CPYTHON34_DLL data/api stub')
 
 # Generate stub code
 buildstub_names = '_extra_functions _mgd_api_data _pure_c_symbols'
-buildstub_src = exports + pathmap('data/api', buildstub_names)
+buildstub_src = [exports] + pathmap('data/api', buildstub_names)
 buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_extra_functions.generated.h')
 native.Command(buildstub_out, buildstub_src,
     '$CPYTHON tools/generatestub.py data/api stub')
 
 # Compile stub code
-jumps_obj = native.Object('stub/jumps.generated.asm')
-stubmain_obj = native.Python34Obj('stub/stubmain.c')
+# SharedObject builder does not support assembly code
+# since whether the code is position-independent (shareable) or not depends on assembly instructions used, not assembler flags
+jumps_obj = native_clang.Object('stub/jumps.generated.asm')
+stubmain_obj = native_clang.SharedObject('stub/stubmain.c')
 
 # Generate information from python headers etc
 stubmain_xml = native.GccXml('data/api/_stubmain.generated.xml', 'stub/stubmain.c')
 
 # Build and link python34.dll
 cpy_src_dirs = 'Modules Objects Parser Python'
-cpy_srcs = glommap(lambda x: native.Glob('stub/%s/*.c' % x), cpy_src_dirs)
-cpy_objs = glommap(native.Python34Obj, cpy_srcs)
-before_test(native.Python34Dll('build/ironclad/python34', stubmain_obj + jumps_obj + cpy_objs))
-
-if WIN32:
-    # Build and link ic_msvcr90.dll using Clang
-    native_clang = Environment(ENV=env_with_ippath, tools=['msvc', 'nasm', 'mslink'], CC='clang-cl', LINK='lld-link')
-                               #ASFLAGS=ASFLAGS, CPYTHON=CPYTHON, CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
-    native_clang.Append(
-        CPPDEFINES='__MSVCRT_VERSION__=0x1000 _MSC_VER=1600 _MSC_FULL_VER=160040219 _NO_CRT_STDIO_INLINE',
-        CCFLAGS='/GS- -fuse-ld=lld -Wno-macro-redefined',
-        LINKFLAGS='/subsystem:windows /NODEFAULTLIB:libucrt /NODEFAULTLIB:libcmt /ENTRY:DllMain -export-all-symbols',
-        SHLINKFLAGS='/noimplib', no_import_lib=1,
-        LIBS='kernel32',
-    )
-    if mode == 'debug':
-        native_clang['PDB'] = '${TARGET.base}.pdb'
-        native_clang.Append(LINKFLAGS='/debug:full')
-    #print(native_clang.Dump())
-
-    msvcrt_def = native_clang.Command('stub/msvcr100.def', MSVCR100_DLL, GENDEF_CMD)
-    msvcrt_lib = native_clang.Command('stub/msvcr100.lib', msvcrt_def, DLLTOOL_CMD, NAME='msvcr100.dll')
-    msvcrt_obj = native_clang.SharedObject('stub/ic_msvcr90.c', CCFLAGS=["$CCFLAGS", "-Wno-dangling-else"])
-    before_test(native_clang.SharedLibrary('build/ironclad/ic_msvcr90', [msvcrt_obj, msvcrt_lib]))
+cpy_srcs = glommap(lambda x: native_clang.Glob('stub/%s/*.c' % x), cpy_src_dirs)
+cpy_objs = glommap(native_clang.SharedObject, cpy_srcs)
+before_test(native_clang.SharedLibrary('build/ironclad/python34', [cpy_objs, jumps_obj, stubmain_obj, msvcrt_lib, python_def]))
 
 #===============================================================================
 # Unmanaged test data
@@ -209,7 +226,7 @@ managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX)
 
 api_src = managed.Glob('data/api/*')
 # Glob runs before the build so during a clean build it won't pick up generated files
-api_src += stubmain_xml + exports
+api_src += [stubmain_xml, exports]
 api_out_names = 'Delegates Dispatcher MagicMethods PythonApi PythonStructs'
 api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
 managed.Command(api_out, api_src,
@@ -239,8 +256,8 @@ before_test(managed.Dll('build/ironclad/ironclad', ironclad_dll_src))
 
 testenv = os.environ
 testenv['IRONPYTHONPATH'] = "."
-testenv['IRONPYTHONPATH'] += ";" + os.path.join(CPYTHON34_ROOT, "DLLs") # required to import/access dlls
-testenv['IRONPYTHONPATH'] += ";" + os.path.join(CPYTHON34_ROOT, "Lib/site-packages") # pysvn test
+testenv['IRONPYTHONPATH'] += os.path.pathsep + os.path.join(CPYTHON34_ROOT, "DLLs") # required to import/access dlls
+testenv['IRONPYTHONPATH'] += os.path.pathsep + os.path.join(CPYTHON34_ROOT, "Lib/site-packages") # pysvn test
 tests = Environment(ENV=testenv, **COMMON)
 tests.AlwaysBuild(tests.Alias('test', test_deps,
     '$IPY runtests.py'))

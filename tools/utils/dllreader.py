@@ -9,6 +9,7 @@ from tools.utils.subprocess import popen
 class DllReader(object):
     
     def __init__(self, sourceLibrary):
+        self.lines = []
         self.data = []
         self.functions = []
         self._read_symbol_table(sourceLibrary)
@@ -30,9 +31,11 @@ class DllReader(object):
         f = popen("pexports", source)
         try:
             for line in f:
+                self.lines.append(line)
                 if line.strip() == 'EXPORTS':
                     break
             for line in f:
+                self.lines.append(line)
                 line = line.strip()
                 parts = line.split(' ')
                 if len(parts) == 1:

@@ -54,7 +54,7 @@ def generate_stubinit(functions, data):
 #==========================================================================
 
 def generate_header(prototypes):
-    return '\n'.join(prototypes) + '\n'
+    return 'extern ' + '\nextern '.join(prototypes) + '\n'
 
 
 #==========================================================================
