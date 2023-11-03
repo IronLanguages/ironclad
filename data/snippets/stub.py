@@ -14,6 +14,12 @@ section .code
 
 JUMP_DECLARE_TEMPLATE = 'global %(symbol)s'
 
+# This ensures that the first symbol is not exported as DATA
+JUMP_START_DEFINE_TEMPLATE = """\
+
+    nop
+    nop"""
+
 JUMP_DEFINE_TEMPLATE = """\
 %(symbol)s:
     jmp [jumptable+%(offset)d]"""
