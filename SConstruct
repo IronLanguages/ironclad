@@ -67,6 +67,7 @@ if WIN32:
     OBJ_SUFFIX = '.o'
     DLL_SUFFIX = '.dll'
     MGD_DLL_SUFFIX = '.dll'
+    PYD_SUFFIX = '.pyd'
 
     #==================================================================
     # These variables should only be necessary on win32
@@ -93,6 +94,8 @@ if WIN32:
     CPYTHON34_DLL = os.path.join(CPYTHON34_ROOT, 'python34.dll')
 else:
     NATIVE_TOOLS = ['default']
+    PYD_SUFFIX = '.so'
+    # TODO: linux, darwin
 
 
 #===============================================================================
@@ -148,9 +151,11 @@ if WIN32:
         CPPDEFINES='''__MSVCRT_VERSION__=0x1000 _NO_CRT_STDIO_INLINE Py_ENABLE_SHARED Py_BUILD_CORE IRONCLAD ''',
         CPPPATH='stub/Include',
         CCFLAGS='/GS- --target=x86_64-pc-windows-msvc -fuse-ld=lld -fms-compatibility-version=16.00.40219',
-        LINKFLAGS='/subsystem:windows /nodefaultlib:libucrt /nodefaultlib:libcmt /entry:DllMain',
-        SHLINKFLAGS='/noimplib', no_import_lib=1,
-        LIBS='kernel32 user32'.split(),
+        LINKFLAGS='/subsystem:windows /nodefaultlib:libucrt /nodefaultlib:libcmt',
+        SHLINKFLAGS='$_DLL_ENTRYPOINT /noimplib', no_import_lib=1,
+        LIBS=['kernel32', 'user32'],
+        _DLL_ENTRYPOINT='${"/entry:" + entry if entry else "/noentry"}',
+        entry=''
     )
 
     if mode == 'debug':
@@ -171,7 +176,7 @@ if WIN32:
 
     # Build and link ic_msvcr90.dll
     msvcrt_obj = native_clang.SharedObject('stub/ic_msvcr90.c')
-    before_test(native_clang.SharedLibrary('build/ironclad/ic_msvcr90', [msvcrt_obj, msvcrt_lib]))
+    before_test(native_clang.SharedLibrary('build/ironclad/ic_msvcr90', [msvcrt_obj, msvcrt_lib], entry='DllMain'))
 else:
     msvcrt_lib = []
 
@@ -199,20 +204,20 @@ stubmain_xml = native.GccXml('data/api/_stubmain.generated.xml', 'stub/stubmain.
 cpy_src_dirs = 'Modules Objects Parser Python'
 cpy_srcs = glommap(lambda x: native_clang.Glob('stub/%s/*.c' % x), cpy_src_dirs)
 cpy_objs = glommap(native_clang.SharedObject, cpy_srcs)
-before_test(native_clang.SharedLibrary('build/ironclad/python34', [cpy_objs, jumps_obj, stubmain_obj, msvcrt_lib, python_def]))
+before_test(native_clang.SharedLibrary('build/ironclad/python34', [cpy_objs, jumps_obj, stubmain_obj, msvcrt_lib, python_def], entry='DllMain'))
 
 #===============================================================================
 # Unmanaged test data
 
-before_test(native.Dll('tests/data/setvalue.pyd', native.Obj('tests/data/src/setvalue.c')))
-before_test(native.Dll('tests/data/exportsymbols', native.Obj('tests/data/src/exportsymbols.c')))
-before_test(native.Dll('tests/data/fakepython', native.Obj('tests/data/src/fakepython.c')))
+before_test(native_clang.SharedLibrary('tests/data/setvalue', 'tests/data/src/setvalue.c', SHLIBSUFFIX=PYD_SUFFIX))
+before_test(native_clang.SharedLibrary('tests/data/exportsymbols', 'tests/data/src/exportsymbols.c'))
+before_test(native_clang.SharedLibrary('tests/data/fakepython', 'tests/data/src/fakepython.c',))
 
 if WIN32:
     # Some tests will load and unload dlls which depend on msvcr90; if msvcr90's ref count
     # hits 0 and it gets reloaded, bad things happen. The test framework loads this dll, and
     # keeps it loaded, to prevent aforesaid bad things.
-    before_test(native.Msvcr100Dll('tests/data/implicit-load-msvcr90', native.Obj('tests/data/src/empty.c')))
+    before_test(native_clang.SharedLibrary('tests/data/implicit-load-msvcr90', 'tests/data/src/empty.c'))
 
 #===============================================================================
 #===============================================================================
