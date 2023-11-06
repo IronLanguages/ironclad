@@ -1,14 +1,9 @@
+from tests.utils.cpython import MakeModuleDef
 
 from System import IntPtr
-from Ironclad import PythonMapper
-
 
 def MakeAndAddEmptyModule(mapper):
-    modulePtr = mapper.Py_InitModule4(
-        "test_module",
-        IntPtr.Zero,
-        "test_docstring",
-        IntPtr.Zero,
-        12345
-    )
+    moduleDef, deallocDef = MakeModuleDef("test_module", IntPtr.Zero, "test_docstring")
+    modulePtr = mapper.PyModule_Create2(moduleDef, 12345)
+    deallocDef()
     return modulePtr

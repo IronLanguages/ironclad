@@ -151,7 +151,7 @@ the C API directly).
 
 Responsible for creating normal method code, and free function code, and is used 
 both by ClassBuilder and by PythonMapper directly when reading PyMethodDefs in 
-Py_InitModule4.
+PyModule_Create2.
 
 * Dispatcher (mostly generated)
 

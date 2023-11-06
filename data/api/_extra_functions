@@ -31,8 +31,6 @@ getiterfunc IC_tuple_iter;
 
 # TODO: get rid of these - they are dummy stubs to compile python34.dll
 
-PyObject * Py_InitModule4_64(const char *name, PyMethodDef *methods, const char *doc, PyObject *self, int apiver);
-
 PyObject * _PyObject_Str(PyObject *);
 int PyObject_Compare(PyObject *, PyObject *);
 

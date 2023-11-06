@@ -4,7 +4,7 @@ from System.Runtime.InteropServices import Marshal
 
 import Ironclad
 from Ironclad import CPyMarshal
-from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMemberDef, PyMethodDef, PyTypeObject
+from Ironclad.Structs import METH, Py_TPFLAGS, PyGetSetDef, PyMemberDef, PyMethodDef, PyModuleDef, PyTypeObject
 
 from tests.utils.memory import OffsetPtr
         
@@ -22,6 +22,9 @@ new_PyGetSetDef = lambda *args: _new_struct(PyGetSetDef, _getset_fields, *args)
 
 _member_fields = 'name type offset flags doc'.split()
 new_PyMemberDef = lambda *args: _new_struct(PyMemberDef, _member_fields, *args)
+
+_module_fields = 'ob_refcnt m_name m_doc m_size m_methods'.split()
+new_PyModuleDef = lambda *args: _new_struct(PyModuleDef, _module_fields, *args)
 
 gc_fooler = []
 def GC_NotYet(dgt):
@@ -61,7 +64,19 @@ def MakeGetSetDef(name, get, set, doc, closure=IntPtr.Zero):
 
 def MakeMemberDef(name, type_, offset, flags, doc="doc"):
     return new_PyMemberDef(name, int(type_), offset, flags, doc), lambda: None
-    
+
+
+def MakeModuleDef(name, methods, doc):
+    moduleDef = new_PyModuleDef(1, name, doc, -1, methods)
+    ptr = Marshal.AllocHGlobal(Marshal.SizeOf(moduleDef))
+    Marshal.StructureToPtr(moduleDef, ptr, False)
+
+    # TODO: maybe we shouldn't dealloc, the module is supposed to keep a reference to the module def...
+    def dealloc():
+        Marshal.DestroyStructure(ptr, PyModuleDef)
+        Marshal.FreeHGlobal(ptr)
+
+    return ptr, dealloc
 
 
 MAKETYPEPTR_DEFAULTS = {

@@ -93,41 +93,6 @@ namespace Ironclad
 
     public partial class PythonMapper : PythonApi
     {
-        // uniform entry point for 32/64 bit testing
-        public IntPtr Py_InitModule4(string name, IntPtr methodsPtr, string doc, IntPtr selfPtr, int apiver)
-            => this.Py_InitModule4_64(name, methodsPtr, doc, selfPtr, apiver);
-
-        public override IntPtr 
-        Py_InitModule4_64(string name, IntPtr methodsPtr, string doc, IntPtr selfPtr, int apiver)
-        {
-            name = this.FixImportName(name);
-            
-            PythonDictionary methodTable = new PythonDictionary();
-            PythonModule module = new PythonModule();
-            this.AddModule(name, module);
-            this.CreateModulesContaining(name);
-
-            PythonDictionary __dict__ = module.Get__dict__();
-            __dict__["__doc__"] = doc;
-            __dict__["__name__"] = name;
-            string __file__ = this.importFiles.Peek();
-            __dict__["__file__"] = __file__;
-            PythonList __path__ = new PythonList();
-            if (__file__ != null)
-            {
-                __path__.append(Path.GetDirectoryName(__file__));
-            }
-            __dict__["__path__"] = __path__;
-            __dict__["_dispatcher"] = new Dispatcher(this, methodTable, selfPtr);
-
-            StringBuilder moduleCode = new StringBuilder();
-            moduleCode.Append(CodeSnippets.USEFUL_IMPORTS);
-            CallableBuilder.GenerateFunctions(moduleCode, methodsPtr, methodTable);
-            this.ExecInModule(moduleCode.ToString(), module);
-            
-            return this.Store(module);
-        }
-        
         public override IntPtr
         PyEval_GetBuiltins()
         {

@@ -1,7 +1,7 @@
 import sys
 from tests.utils.runtest import makesuite, run
 
-from tests.utils.cpython import MakeItemsTablePtr, MakeMethodDef, MakeTypePtr
+from tests.utils.cpython import MakeItemsTablePtr, MakeMethodDef, MakeModuleDef, MakeTypePtr
 from tests.utils.memory import CreateTypes
 from tests.utils.pythonmapper import MakeAndAddEmptyModule
 from tests.utils.testcase import TestCase, WithMapper, WithMapperSubclass
@@ -12,7 +12,7 @@ from Ironclad import Dispatcher, PythonMapper
 from Ironclad.Structs import METH
 
 
-class Py_InitModule4_SetupTest(TestCase):
+class PyModule_Create2_SetupTest(TestCase):
     
     @WithMapper
     def testNewModuleHasDispatcher(self, mapper, _):
@@ -22,21 +22,17 @@ class Py_InitModule4_SetupTest(TestCase):
         
         self.assertEqual(isinstance(_dispatcher, Dispatcher), True, "wrong dispatcher class")
         self.assertEqual(_dispatcher.mapper, mapper, "dispatcher had wrong mapper")
-        
 
-MODULE_PTR = IntPtr(54321)
+class PyModule_Create2_Test(TestCase):
 
-class Py_InitModule4_Test(TestCase):
-
-    def assert_Py_InitModule4_withSingleMethod(self, mapper, methodDef, TestModule):
+    def assert_PyModule_Create2_withSingleMethod(self, mapper, methodDef, TestModule):
         methods, deallocMethods = MakeItemsTablePtr([methodDef])
         try:
-            modulePtr = mapper.Py_InitModule4(
-                "test_module",
+            moduleDef, deallocDef = MakeModuleDef("test_module",
                 methods,
-                "test_docstring",
-                MODULE_PTR,
-                12345)
+                "test_docstring")
+            modulePtr = mapper.PyModule_Create2(moduleDef, 12345)
+            deallocDef()
 
             module = mapper.Retrieve(modulePtr)
             test_module = sys.modules['test_module']
@@ -50,7 +46,7 @@ class Py_InitModule4_Test(TestCase):
             deallocMethods()
 
 
-    def test_Py_InitModule4_CreatesPopulatedModule(self):
+    def test_PyModule_Create2_CreatesPopulatedModule(self):
         mapper = PythonMapper()
         method, deallocMethod = MakeMethodDef(
             "harold", lambda _, __: IntPtr.Zero, METH.VARARGS, "harold's documentation")
@@ -65,11 +61,11 @@ class Py_InitModule4_Test(TestCase):
             self.assertEqual(test_module.harold.__doc__, "harold's documentation",
                               'function docstring not remembered')
 
-        self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
+        self.assert_PyModule_Create2_withSingleMethod(mapper, method, testModule)
         deallocMethod()
         
 
-    def test_Py_InitModule4_NoArgsFunction(self):
+    def test_PyModule_Create2_NoArgsFunction(self):
         mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         result = object()
@@ -77,19 +73,18 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, __):
-            self.assertEqual((_, __), (MODULE_PTR, IntPtr.Zero))
             return resultPtr
         method, deallocMethod = MakeMethodDef("func", func, METH.NOARGS)
         
         def testModule(module, mapper):
             self.assertEqual(module.func(), result, "not hooked up")
             
-        self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
+        self.assert_PyModule_Create2_withSingleMethod(mapper, method, testModule)
         deallocMethod()
         deallocTypes()
 
 
-    def test_Py_InitModule4_ObjargFunction(self):
+    def test_PyModule_Create2_ObjargFunction(self):
         mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         arg = object()
@@ -98,7 +93,6 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, argPtr):
-            self.assertEqual(_, MODULE_PTR)
             self.assertEqual(mapper.Retrieve(argPtr), arg)
             return resultPtr
         method, deallocMethod = MakeMethodDef("func", func, METH.O)
@@ -106,12 +100,12 @@ class Py_InitModule4_Test(TestCase):
         def testModule(module, mapper):
             self.assertEqual(module.func(arg), result, "not hooked up")
             
-        self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
+        self.assert_PyModule_Create2_withSingleMethod(mapper, method, testModule)
         deallocMethod()
         deallocTypes()
 
 
-    def test_Py_InitModule4_VarargsFunction(self):
+    def test_PyModule_Create2_VarargsFunction(self):
         mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         args = (object(), object())
@@ -120,7 +114,6 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, argsPtr):
-            self.assertEqual(_, MODULE_PTR)
             self.assertEqual(mapper.Retrieve(argsPtr), args)
             return resultPtr
         method, deallocMethod = MakeMethodDef("func", func, METH.VARARGS)
@@ -128,12 +121,12 @@ class Py_InitModule4_Test(TestCase):
         def testModule(module, mapper):
             self.assertEqual(module.func(*args), result, "not hooked up")
             
-        self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
+        self.assert_PyModule_Create2_withSingleMethod(mapper, method, testModule)
         deallocMethod()
         deallocTypes()
 
 
-    def test_Py_InitModule4_VarargsKwargsFunction(self):
+    def test_PyModule_Create2_VarargsKwargsFunction(self):
         mapper = PythonMapper()
         deallocTypes = CreateTypes(mapper)
         args = (object(), object())
@@ -143,7 +136,6 @@ class Py_InitModule4_Test(TestCase):
         mapper.IncRef(resultPtr)
         
         def func(_, argsPtr, kwargsPtr):
-            self.assertEqual(_, MODULE_PTR)
             self.assertEqual(mapper.Retrieve(argsPtr), args)
             self.assertEqual(mapper.Retrieve(kwargsPtr), kwargs)
             return resultPtr
@@ -152,7 +144,7 @@ class Py_InitModule4_Test(TestCase):
         def testModule(module, mapper):
             self.assertEqual(module.func(*args, **kwargs), result, "not hooked up")
             
-        self.assert_Py_InitModule4_withSingleMethod(mapper, method, testModule)
+        self.assert_PyModule_Create2_withSingleMethod(mapper, method, testModule)
         deallocMethod()
         deallocTypes()
         
@@ -256,24 +248,14 @@ class ImportTest(TestCase):
     
     @WithMapper
     def testPyImport_ImportModule(self, mapper, _):
-        modulePtr = mapper.Py_InitModule4(
-            "test_module",
-            IntPtr.Zero,
-            "test_docstring",
-            IntPtr.Zero,
-            12345)
+        modulePtr = MakeAndAddEmptyModule(mapper)
         
         self.assertEqual(mapper.PyImport_ImportModule("test_module"), modulePtr)
         self.assertEqual(mapper.RefCount(modulePtr), 2, "did not incref")
     
     @WithMapper
     def testPyImport_Import(self, mapper, _):
-        modulePtr = mapper.Py_InitModule4(
-            "test_module",
-            IntPtr.Zero,
-            "test_docstring",
-            IntPtr.Zero,
-            12345)
+        modulePtr = MakeAndAddEmptyModule(mapper)
         
         self.assertEqual(mapper.PyImport_Import(mapper.Store("test_module")), modulePtr)
         self.assertEqual(mapper.RefCount(modulePtr), 2, "did not incref")
@@ -341,10 +323,12 @@ class NastyImportDetailsTest(TestCase):
         
     
     @WithMapperSubclass
-    def testNameFixing_Py_InitModule4_NamesMatch(self, mapper, _):
+    def testNameFixing_PyModule_Create2_NamesMatch(self, mapper, _):
         mapper.importFiles.Push('hippo_file')
         mapper.importNames.Push('hungry.hungry.hippo')
-        mapper.Py_InitModule4("hippo", IntPtr.Zero, "test_docstring", IntPtr.Zero, 12345)
+        moduleDef, deallocDef = MakeModuleDef("hippo", IntPtr.Zero, "test_docstring")
+        mapper.PyModule_Create2(moduleDef, 12345)
+        deallocDef()
         
         self.assertNotIn("hippo", sys.modules)
         self.assertEqual(sys.modules['hungry.hungry.hippo'].__doc__, 'test_docstring')
@@ -356,9 +340,11 @@ class NastyImportDetailsTest(TestCase):
     
     
     @WithMapperSubclass
-    def testNameFixing_Py_InitModule4_NoMatch(self, mapper, _):
+    def testNameFixing_PyModule_Create2_NoMatch(self, mapper, _):
         mapper.importName = 'angry.angry.alligator'
-        mapper.Py_InitModule4("hippo", IntPtr.Zero, "test_docstring", IntPtr.Zero, 12345)
+        moduleDef, deallocDef = MakeModuleDef("hippo", IntPtr.Zero, "test_docstring")
+        mapper.PyModule_Create2(moduleDef, 12345)
+        deallocDef()
         
         self.assertIn("hippo", sys.modules)
         self.assertNotIn('angry.angry.alligator', sys.modules)
@@ -389,8 +375,8 @@ class SysTest(TestCase):
 
 
 suite = makesuite(
-    Py_InitModule4_SetupTest,
-    Py_InitModule4_Test,
+    PyModule_Create2_SetupTest,
+    PyModule_Create2_Test,
     PyModule_Functions_Test,
     ImportTest,
     NastyImportDetailsTest,
