@@ -83,6 +83,7 @@ class TestCase(unittest.TestCase):
         if isinstance(first, System.UIntPtr): first = first.ToUInt64()
         if isinstance(second, System.UIntPtr): second = second.ToUInt64()
         if type(first) is type(second) and isinstance(first, (tuple, list)):
+            self.assertEqual(len(first), len(second), msg)
             for i in range(len(first)):
                 self.assertEqual(first[i], second[i], msg)
             return
