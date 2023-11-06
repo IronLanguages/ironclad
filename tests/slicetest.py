@@ -41,24 +41,23 @@ class SliceTest(TestCase):
 
     def testPySlice_DeallocDecRefsItemsAndCallsCorrectFreeFunction(self):
         frees = []
-        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
-        deallocTypes = CreateTypes(mapper)
-        
-        calls = []
-        def CustomFree(ptr):
-            calls.append(ptr)
-        freeDgt = dgt_void_ptr(CustomFree)
-        
-        CPyMarshal.WriteFunctionPtrField(mapper.PySlice_Type, PyTypeObject, "tp_free", freeDgt)
-        slicePtr = mapper.Store(slice(1, 2, 3))
-        
-        del frees[:]
-        mapper.IC_PySlice_Dealloc(slicePtr)
-        self.assertEqual(len(frees), 3, "did not dealloc each item")
-        self.assertEqual(calls, [slicePtr], "did not call type's free function")
-        mapper.PyObject_Free(slicePtr)
+        with PythonMapper(GetAllocatingTestAllocator([], frees)) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            
+            calls = []
+            def CustomFree(ptr):
+                calls.append(ptr)
+            freeDgt = dgt_void_ptr(CustomFree)
+            
+            CPyMarshal.WriteFunctionPtrField(mapper.PySlice_Type, PyTypeObject, "tp_free", freeDgt)
+            slicePtr = mapper.Store(slice(1, 2, 3))
+            
+            del frees[:]
+            mapper.IC_PySlice_Dealloc(slicePtr)
+            self.assertEqual(len(frees), 3, "did not dealloc each item")
+            self.assertEqual(calls, [slicePtr], "did not call type's free function")
+            mapper.PyObject_Free(slicePtr)
 
-        mapper.Dispose()
         deallocTypes()
 
 

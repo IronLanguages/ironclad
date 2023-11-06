@@ -502,57 +502,54 @@ class NewInitFunctionsTest(TestCase):
     @WithMapper
     def testIC_PyBaseObject_Init(self, mapper, _):
         "this function shouldn't do anything..."
-        mapper = PythonMapper()
-        deallocTypes = CreateTypes(mapper)
-        
-        self.assertEqual(mapper.IC_PyBaseObject_Init(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero), 0)
-        
-        mapper.Dispose()
+        with PythonMapper() as mapper:
+            deallocTypes = CreateTypes(mapper)
+            
+            self.assertEqual(mapper.IC_PyBaseObject_Init(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero), 0)
+            
         deallocTypes()
 
     
     def test_PyObject_New(self):
         allocs = []
         allocator = GetAllocatingTestAllocator(allocs, [])
-        mapper = PythonMapper(allocator)
-        deallocTypes = CreateTypes(mapper)
+        with PythonMapper(allocator) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            
+            typeObjSize = Marshal.SizeOf(PyTypeObject())
+            typePtr = Marshal.AllocHGlobal(typeObjSize)
+            CPyMarshal.Zero(typePtr, typeObjSize)
+            CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_basicsize", 31337)
+            
+            del allocs[:]
+            objPtr = mapper._PyObject_New(typePtr)
+            self.assertEqual(allocs, [(objPtr, 31337)])
+            self.assertEqual(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_type'), typePtr)
+            self.assertEqual(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_refcnt'), 1)
+            self.assertEqual(mapper.HasPtr(objPtr), False)
         
-        typeObjSize = Marshal.SizeOf(PyTypeObject())
-        typePtr = Marshal.AllocHGlobal(typeObjSize)
-        CPyMarshal.Zero(typePtr, typeObjSize)
-        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_basicsize", 31337)
-        
-        del allocs[:]
-        objPtr = mapper._PyObject_New(typePtr)
-        self.assertEqual(allocs, [(objPtr, 31337)])
-        self.assertEqual(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_type'), typePtr)
-        self.assertEqual(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_refcnt'), 1)
-        self.assertEqual(mapper.HasPtr(objPtr), False)
-        
-        mapper.Dispose()
         deallocTypes()
 
     
     def test_PyObject_NewVar(self):
         allocs = []
         allocator = GetAllocatingTestAllocator(allocs, [])
-        mapper = PythonMapper(allocator)
-        deallocTypes = CreateTypes(mapper)
-        
-        typeObjSize = Marshal.SizeOf(PyTypeObject())
-        typePtr = Marshal.AllocHGlobal(typeObjSize)
-        CPyMarshal.Zero(typePtr, typeObjSize)
-        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_basicsize", 31337)
-        CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_itemsize", 1337)
-        
-        del allocs[:]
-        objPtr = mapper._PyObject_NewVar(typePtr, IntPtr(123))
-        self.assertEqual(allocs, [(objPtr, 31337 + (1337 * 123))])
-        self.assertEqual(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_type'), typePtr)
-        self.assertEqual(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_refcnt'), 1)
-        self.assertEqual(mapper.HasPtr(objPtr), False)
-        
-        mapper.Dispose()
+        with PythonMapper(allocator) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            
+            typeObjSize = Marshal.SizeOf(PyTypeObject())
+            typePtr = Marshal.AllocHGlobal(typeObjSize)
+            CPyMarshal.Zero(typePtr, typeObjSize)
+            CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_basicsize", 31337)
+            CPyMarshal.WritePtrField(typePtr, PyTypeObject, "tp_itemsize", 1337)
+            
+            del allocs[:]
+            objPtr = mapper._PyObject_NewVar(typePtr, IntPtr(123))
+            self.assertEqual(allocs, [(objPtr, 31337 + (1337 * 123))])
+            self.assertEqual(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_type'), typePtr)
+            self.assertEqual(CPyMarshal.ReadPtrField(objPtr, PyObject, 'ob_refcnt'), 1)
+            self.assertEqual(mapper.HasPtr(objPtr), False)
+            
         deallocTypes()
         
 

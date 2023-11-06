@@ -103,18 +103,17 @@ class DictTest(TestCase):
 
     def testPyDict_GetItemStringSuccess(self):
         frees = []
-        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
-        deallocTypes = CreateTypes(mapper)
-        dictPtr = mapper.Store({"abcde": 12345})
-        
-        mapper.EnsureGIL()
-        itemPtr = mapper.PyDict_GetItemString(dictPtr, "abcde")
-        self.assertEqual(mapper.Retrieve(itemPtr), 12345, "failed to get item")
-        self.assertEqual(mapper.RefCount(itemPtr), 1, "something is wrong")
-        mapper.ReleaseGIL()
-        self.assertEqual(itemPtr in frees, True)
-        
-        mapper.Dispose()
+        with PythonMapper(GetAllocatingTestAllocator([], frees)) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            dictPtr = mapper.Store({"abcde": 12345})
+            
+            mapper.EnsureGIL()
+            itemPtr = mapper.PyDict_GetItemString(dictPtr, "abcde")
+            self.assertEqual(mapper.Retrieve(itemPtr), 12345, "failed to get item")
+            self.assertEqual(mapper.RefCount(itemPtr), 1, "something is wrong")
+            mapper.ReleaseGIL()
+            self.assertEqual(itemPtr in frees, True)
+            
         deallocTypes()
 
 
@@ -129,18 +128,17 @@ class DictTest(TestCase):
 
     def testPyDict_GetItemSuccess(self):
         frees = []
-        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
-        deallocTypes = CreateTypes(mapper)
-        dictPtr = mapper.Store({12345: 67890})
-        
-        mapper.EnsureGIL()
-        itemPtr = mapper.PyDict_GetItem(dictPtr, mapper.Store(12345))
-        self.assertEqual(mapper.Retrieve(itemPtr), 67890, "failed to get item")
-        self.assertEqual(mapper.RefCount(itemPtr), 1, "something is wrong")
-        mapper.ReleaseGIL()
-        self.assertEqual(itemPtr in frees, True)
-        
-        mapper.Dispose()
+        with PythonMapper(GetAllocatingTestAllocator([], frees)) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            dictPtr = mapper.Store({12345: 67890})
+            
+            mapper.EnsureGIL()
+            itemPtr = mapper.PyDict_GetItem(dictPtr, mapper.Store(12345))
+            self.assertEqual(mapper.Retrieve(itemPtr), 67890, "failed to get item")
+            self.assertEqual(mapper.RefCount(itemPtr), 1, "something is wrong")
+            mapper.ReleaseGIL()
+            self.assertEqual(itemPtr in frees, True)
+            
         deallocTypes()
 
 

@@ -19,19 +19,17 @@ def GetMallocTest(MALLOC_NAME):
         
         def testNonZero(self):
             allocs = []
-            mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
-            
-            resultPtr = getattr(mapper, MALLOC_NAME)(UIntPtr(123))
-            self.assertEqual(allocs, [(resultPtr, 123)], "bad alloc")
-            mapper.Dispose()
+            with PythonMapper(GetAllocatingTestAllocator(allocs, [])) as mapper:
+                
+                resultPtr = getattr(mapper, MALLOC_NAME)(UIntPtr(123))
+                self.assertEqual(allocs, [(resultPtr, 123)], "bad alloc")
             
         def testZero(self):
             allocs = []
-            mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
-            
-            resultPtr = getattr(mapper, MALLOC_NAME)(UIntPtr(0))
-            self.assertEqual(allocs, [(resultPtr, 1)], "bad alloc")
-            mapper.Dispose()
+            with PythonMapper(GetAllocatingTestAllocator(allocs, [])) as mapper:
+                
+                resultPtr = getattr(mapper, MALLOC_NAME)(UIntPtr(0))
+                self.assertEqual(allocs, [(resultPtr, 1)], "bad alloc")
 
         @WithMapper
         def testFailure(self, mapper, _):
@@ -49,60 +47,57 @@ def GetReallocTest(MALLOC_NAME, REALLOC_NAME):
         def testNullPtr(self):
             allocs = []
             frees = []
-            mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
-            
-            mem = getattr(mapper, REALLOC_NAME)(IntPtr.Zero, UIntPtr(4))
-            self.assertEqual(frees, [])
-            self.assertEqual(allocs, [(mem, 4)])
-            mapper.Dispose()
+            with PythonMapper(GetAllocatingTestAllocator(allocs, frees)) as mapper:
+                
+                mem = getattr(mapper, REALLOC_NAME)(IntPtr.Zero, UIntPtr(4))
+                self.assertEqual(frees, [])
+                self.assertEqual(allocs, [(mem, 4)])
             
             
         def testZeroBytes(self):
             allocs = []
             frees = []
-            mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
-            
-            mem1 = getattr(mapper, MALLOC_NAME)(UIntPtr(4))
-            del allocs[:]
-            mem2 = getattr(mapper, REALLOC_NAME)(mem1, UIntPtr(0))
-            
-            self.assertEqual(frees, [mem1])
-            self.assertEqual(allocs, [(mem2, 1)])
-            mapper.Dispose()
+            with PythonMapper(GetAllocatingTestAllocator(allocs, frees)) as mapper:
+                
+                mem1 = getattr(mapper, MALLOC_NAME)(UIntPtr(4))
+                del allocs[:]
+                mem2 = getattr(mapper, REALLOC_NAME)(mem1, UIntPtr(0))
+                
+                self.assertEqual(frees, [mem1])
+                self.assertEqual(allocs, [(mem2, 1)])
             
             
         def testTooBig(self):
             allocs = []
             frees = []
-            mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
-            
-            deallocTypes = CreateTypes(mapper)
-            mapper.EnsureGIL()
-            mapper.ReleaseGIL()
-            
-            mem1 = getattr(mapper, MALLOC_NAME)(UIntPtr(4))
-            del allocs[:]
-            self.assertEqual(getattr(mapper, REALLOC_NAME)(mem1, UIntPtr(MAXSIZE)), IntPtr.Zero)
-            self.assertMapperHasError(mapper, None)
-            
-            self.assertEqual(frees, [])
-            self.assertEqual(allocs, [])
-            mapper.Dispose()
+            with PythonMapper(GetAllocatingTestAllocator(allocs, frees)) as mapper:
+                
+                deallocTypes = CreateTypes(mapper)
+                mapper.EnsureGIL()
+                mapper.ReleaseGIL()
+                
+                mem1 = getattr(mapper, MALLOC_NAME)(UIntPtr(4))
+                del allocs[:]
+                self.assertEqual(getattr(mapper, REALLOC_NAME)(mem1, UIntPtr(MAXSIZE)), IntPtr.Zero)
+                self.assertMapperHasError(mapper, None)
+                
+                self.assertEqual(frees, [])
+                self.assertEqual(allocs, [])
+
             deallocTypes()
             
             
         def testEasy(self):
             allocs = []
             frees = []
-            mapper = PythonMapper(GetAllocatingTestAllocator(allocs, frees))
+            with PythonMapper(GetAllocatingTestAllocator(allocs, frees)) as mapper:
             
-            mem1 = getattr(mapper, MALLOC_NAME)(UIntPtr(4))
-            del allocs[:]
-            mem2 = getattr(mapper, REALLOC_NAME)(mem1, UIntPtr(8))
-            
-            self.assertEqual(frees, [mem1])
-            self.assertEqual(allocs, [(mem2, 8)])
-            mapper.Dispose()
+                mem1 = getattr(mapper, MALLOC_NAME)(UIntPtr(4))
+                del allocs[:]
+                mem2 = getattr(mapper, REALLOC_NAME)(mem1, UIntPtr(8))
+                
+                self.assertEqual(frees, [mem1])
+                self.assertEqual(allocs, [(mem2, 8)])
     return ReallocTest
 
 
@@ -110,21 +105,19 @@ class PyMem_Free_Test(TestCase):
     
     def testPyMem_Free_NonNull(self):
         frees = []
-        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
-        
-        ptr = mapper.PyMem_Malloc(UIntPtr(123))
-        mapper.PyMem_Free(ptr)
-        self.assertEqual(frees, [ptr], "did not free")
-        mapper.Dispose()
+        with PythonMapper(GetAllocatingTestAllocator([], frees)) as mapper:
+            
+            ptr = mapper.PyMem_Malloc(UIntPtr(123))
+            mapper.PyMem_Free(ptr)
+            self.assertEqual(frees, [ptr], "did not free")
     
 
     def testPyMem_Free_Null(self):
         frees = []
-        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
-        
-        mapper.PyMem_Free(IntPtr.Zero)
-        self.assertEqual(frees, [], "freed inappropriately")
-        mapper.Dispose()
+        with PythonMapper(GetAllocatingTestAllocator([], frees)) as mapper:
+            
+            mapper.PyMem_Free(IntPtr.Zero)
+            self.assertEqual(frees, [], "freed inappropriately")
 
 
 suite = makesuite(

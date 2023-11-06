@@ -337,65 +337,63 @@ class PyType_GenericAlloc_Test(TestCase):
 
     def testNoItems(self):
         allocs = []
-        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
-        deallocTypes = CreateTypes(mapper)
-        typeSpec = {
-            "tp_basicsize": 32,
-            "tp_itemsize": 64,
-        }
-        typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
-        
-        del allocs[:]
-        result = mapper.PyType_GenericAlloc(typePtr, IntPtr(0))
-        self.assertEqual(allocs, [(result, 32)], "allocated wrong")
+        with PythonMapper(GetAllocatingTestAllocator(allocs, [])) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            typeSpec = {
+                "tp_basicsize": 32,
+                "tp_itemsize": 64,
+            }
+            typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
+            
+            del allocs[:]
+            result = mapper.PyType_GenericAlloc(typePtr, IntPtr(0))
+            self.assertEqual(allocs, [(result, 32)], "allocated wrong")
 
-        refcount = CPyMarshal.ReadIntField(result, PyObject, "ob_refcnt")
-        self.assertEqual(refcount, 1, "bad initialisation")
+            refcount = CPyMarshal.ReadIntField(result, PyObject, "ob_refcnt")
+            self.assertEqual(refcount, 1, "bad initialisation")
 
-        instanceType = CPyMarshal.ReadPtrField(result, PyObject, "ob_type")
-        self.assertEqual(instanceType, typePtr, "bad type ptr")
-        
-        headerSize = Marshal.SizeOf(PyObject())
-        zerosPtr = OffsetPtr(result, headerSize)
-        for i in range(32 - headerSize):
-            self.assertEqual(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
-            zerosPtr = OffsetPtr(zerosPtr, 1)
- 
-        mapper.Dispose()
+            instanceType = CPyMarshal.ReadPtrField(result, PyObject, "ob_type")
+            self.assertEqual(instanceType, typePtr, "bad type ptr")
+            
+            headerSize = Marshal.SizeOf(PyObject())
+            zerosPtr = OffsetPtr(result, headerSize)
+            for i in range(32 - headerSize):
+                self.assertEqual(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
+                zerosPtr = OffsetPtr(zerosPtr, 1)
+
         deallocTypes()
         deallocType()
 
 
     def testSomeItems(self):
         allocs = []
-        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
-        deallocTypes = CreateTypes(mapper)
-        typeSpec = {
-            "tp_basicsize": 32,
-            "tp_itemsize": 64,
-        }
-        typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
-        
-        del allocs[:]
-        result = mapper.PyType_GenericAlloc(typePtr, IntPtr(3))
-        self.assertEqual(allocs, [(result, 224)], "allocated wrong")
+        with PythonMapper(GetAllocatingTestAllocator(allocs, [])) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            typeSpec = {
+                "tp_basicsize": 32,
+                "tp_itemsize": 64,
+            }
+            typePtr, deallocType = MakeTypePtr(mapper, typeSpec)
+            
+            del allocs[:]
+            result = mapper.PyType_GenericAlloc(typePtr, IntPtr(3))
+            self.assertEqual(allocs, [(result, 224)], "allocated wrong")
 
-        refcount = CPyMarshal.ReadIntField(result, PyObject, "ob_refcnt")
-        self.assertEqual(refcount, 1, "bad initialisation")
+            refcount = CPyMarshal.ReadIntField(result, PyObject, "ob_refcnt")
+            self.assertEqual(refcount, 1, "bad initialisation")
 
-        instanceType = CPyMarshal.ReadPtrField(result, PyObject, "ob_type")
-        self.assertEqual(instanceType, typePtr, "bad type ptr")
+            instanceType = CPyMarshal.ReadPtrField(result, PyObject, "ob_type")
+            self.assertEqual(instanceType, typePtr, "bad type ptr")
 
-        size = CPyMarshal.ReadIntField(result, PyVarObject, "ob_size")
-        self.assertEqual(size, 3, "bad ob_size")
-        
-        headerSize = Marshal.SizeOf(PyVarObject())
-        zerosPtr = OffsetPtr(result, headerSize)
-        for i in range(224 - headerSize):
-            self.assertEqual(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
-            zerosPtr = OffsetPtr(zerosPtr, 1)
- 
-        mapper.Dispose()
+            size = CPyMarshal.ReadIntField(result, PyVarObject, "ob_size")
+            self.assertEqual(size, 3, "bad ob_size")
+            
+            headerSize = Marshal.SizeOf(PyVarObject())
+            zerosPtr = OffsetPtr(result, headerSize)
+            for i in range(224 - headerSize):
+                self.assertEqual(CPyMarshal.ReadByte(zerosPtr), 0, "not zeroed")
+                zerosPtr = OffsetPtr(zerosPtr, 1)
+
         deallocTypes()
         deallocType()
 

@@ -187,16 +187,15 @@ class InheritanceTest(TestCase):
         # to dealloc klass, and will complain if it wasn't allocated in the first place. this is 
         # probably not going to work in the long term
         allocator = HGlobalAllocator()
-        mapper = PythonMapper(allocator)
-        deallocTypes = CreateTypes(mapper)
-        
-        metaclassPtr, deallocMC = MakeTypePtr(mapper, {'tp_name': 'metaclass'})
-        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': metaclassPtr}, allocator)
-        
-        klass = mapper.Retrieve(klassPtr)
-        self.assertEqual(type(klass), mapper.Retrieve(metaclassPtr), "didn't notice klass's type")
-        
-        mapper.Dispose()
+        with PythonMapper(allocator) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            
+            metaclassPtr, deallocMC = MakeTypePtr(mapper, {'tp_name': 'metaclass'})
+            klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': metaclassPtr}, allocator)
+            
+            klass = mapper.Retrieve(klassPtr)
+            self.assertEqual(type(klass), mapper.Retrieve(metaclassPtr), "didn't notice klass's type")
+            
         deallocType()
         deallocMC()
         deallocTypes()
@@ -208,18 +207,17 @@ class InheritanceTest(TestCase):
         # to dealloc klass, and will complain if it wasn't allocated in the first place. this is 
         # probably not going to work in the long term
         allocator = HGlobalAllocator()
-        mapper = PythonMapper(allocator)
-        deallocTypes = CreateTypes(mapper)
-        
-        metaclassPtr, deallocMC = MakeTypePtr(mapper, {'tp_name': 'metaclass'})
-        klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': metaclassPtr}, allocator)
+        with PythonMapper(allocator) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            
+            metaclassPtr, deallocMC = MakeTypePtr(mapper, {'tp_name': 'metaclass'})
+            klassPtr, deallocType = MakeTypePtr(mapper, {'tp_name': 'klass', 'ob_type': metaclassPtr}, allocator)
 
-        klass = mapper.Retrieve(klassPtr)
-        metaclass = mapper.Retrieve(metaclassPtr)
-        for k, v in metaclass._dispatcher.table.items():
-            self.assertEqual(klass._dispatcher.table[k], v)
+            klass = mapper.Retrieve(klassPtr)
+            metaclass = mapper.Retrieve(metaclassPtr)
+            for k, v in metaclass._dispatcher.table.items():
+                self.assertEqual(klass._dispatcher.table[k], v)
 
-        mapper.Dispose()
         deallocType()
         deallocMC()
         deallocTypes()

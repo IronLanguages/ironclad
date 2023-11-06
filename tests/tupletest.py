@@ -61,25 +61,24 @@ class PyTuple_Type_Test(TypeTestCase):
 
     def testPyTuple_DeallocDecRefsItemsAndCallsCorrectFreeFunction(self):
         frees = []
-        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
-        deallocTypes = CreateTypes(mapper)
-        
-        calls = []
-        def CustomFree(ptr):
-            calls.append(ptr)
-        freeDgt = dgt_void_ptr(CustomFree)
-        
-        CPyMarshal.WriteFunctionPtrField(mapper.PyTuple_Type, PyTypeObject, "tp_free", freeDgt)
-        tuplePtr, itemPtrs = MakeTuple(mapper, (1, 2, 3))
+        with PythonMapper(GetAllocatingTestAllocator([], frees)) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            
+            calls = []
+            def CustomFree(ptr):
+                calls.append(ptr)
+            freeDgt = dgt_void_ptr(CustomFree)
+            
+            CPyMarshal.WriteFunctionPtrField(mapper.PyTuple_Type, PyTypeObject, "tp_free", freeDgt)
+            tuplePtr, itemPtrs = MakeTuple(mapper, (1, 2, 3))
 
-        mapper.IC_PyTuple_Dealloc(tuplePtr)
+            mapper.IC_PyTuple_Dealloc(tuplePtr)
 
-        for itemPtr in itemPtrs:
-            self.assertEqual(itemPtr in frees, True, "did not decref item")
-        self.assertEqual(calls, [tuplePtr], "did not call type's free function")
-        mapper.PyObject_Free(tuplePtr)
+            for itemPtr in itemPtrs:
+                self.assertEqual(itemPtr in frees, True, "did not decref item")
+            self.assertEqual(calls, [tuplePtr], "did not call type's free function")
+            mapper.PyObject_Free(tuplePtr)
 
-        mapper.Dispose()
         deallocTypes()
     
 
@@ -88,35 +87,34 @@ class TupleTest(TestCase):
     
     def assertPyTuple_New_Works(self, length):
         allocs = []
-        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
+        with PythonMapper(GetAllocatingTestAllocator(allocs, [])) as mapper:
 
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
-        mapper.RegisterData("PyTuple_Type", typeBlock)
-        tuplePtr = mapper.PyTuple_New(IntPtr(length))
-        expectedSize = Marshal.SizeOf(PyTupleObject()) + CPyMarshal.PtrSize * max(0, length - 1)
-        self.assertEqual(allocs, [(tuplePtr, expectedSize)], "bad alloc")
-        tupleStruct = PtrToStructure(tuplePtr, PyTupleObject)
-        self.assertEqual(tupleStruct.ob_refcnt, 1, "bad refcount")
-        self.assertEqual(tupleStruct.ob_type, mapper.PyTuple_Type, "bad type")
-        self.assertEqual(tupleStruct.ob_size, length, "bad size")
-        self.assertEqual(mapper.PyTuple_Size(tuplePtr), length, "should still work with uninitialised tuple imo")
-        dataPtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_item"))
-        itemPtrs = []
-        for i in range(length):
-            self.assertEqual(CPyMarshal.ReadPtr(dataPtr), IntPtr.Zero, "item memory not zeroed")
-            itemPtr = mapper.Store(i + 100)
-            CPyMarshal.WritePtr(dataPtr, itemPtr)
-            itemPtrs.append(itemPtr)
-            dataPtr = OffsetPtr(dataPtr, CPyMarshal.PtrSize)
+            typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
+            mapper.RegisterData("PyTuple_Type", typeBlock)
+            tuplePtr = mapper.PyTuple_New(IntPtr(length))
+            expectedSize = Marshal.SizeOf(PyTupleObject()) + CPyMarshal.PtrSize * max(0, length - 1)
+            self.assertEqual(allocs, [(tuplePtr, expectedSize)], "bad alloc")
+            tupleStruct = PtrToStructure(tuplePtr, PyTupleObject)
+            self.assertEqual(tupleStruct.ob_refcnt, 1, "bad refcount")
+            self.assertEqual(tupleStruct.ob_type, mapper.PyTuple_Type, "bad type")
+            self.assertEqual(tupleStruct.ob_size, length, "bad size")
+            self.assertEqual(mapper.PyTuple_Size(tuplePtr), length, "should still work with uninitialised tuple imo")
+            dataPtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_item"))
+            itemPtrs = []
+            for i in range(length):
+                self.assertEqual(CPyMarshal.ReadPtr(dataPtr), IntPtr.Zero, "item memory not zeroed")
+                itemPtr = mapper.Store(i + 100)
+                CPyMarshal.WritePtr(dataPtr, itemPtr)
+                itemPtrs.append(itemPtr)
+                dataPtr = OffsetPtr(dataPtr, CPyMarshal.PtrSize)
 
-        immutableTuple = mapper.Retrieve(tuplePtr)
-        self.assertEqual(immutableTuple, tuple(i + 100 for i in range(length)), "broken")
+            immutableTuple = mapper.Retrieve(tuplePtr)
+            self.assertEqual(immutableTuple, tuple(i + 100 for i in range(length)), "broken")
 
-        tuplePtr2 = mapper.Store(immutableTuple)
-        self.assertEqual(tuplePtr2, tuplePtr, "didn't realise already had this object stored")
-        self.assertEqual(mapper.RefCount(tuplePtr), 2, "didn't incref")
-        
-        mapper.Dispose()
+            tuplePtr2 = mapper.Store(immutableTuple)
+            self.assertEqual(tuplePtr2, tuplePtr, "didn't realise already had this object stored")
+            self.assertEqual(mapper.RefCount(tuplePtr), 2, "didn't incref")
+            
         Marshal.FreeHGlobal(typeBlock)
     
     
@@ -133,24 +131,23 @@ class TupleTest(TestCase):
 
     def test_PyTuple_Resize(self):
         allocs = []
-        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
-        tuplePtrPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
-        
-        oldTuplePtr = mapper.PyTuple_New(IntPtr(1))
-        del allocs[:]
-        CPyMarshal.WritePtr(tuplePtrPtr, oldTuplePtr)
-        self.assertEqual(mapper._PyTuple_Resize(tuplePtrPtr, IntPtr(100)), 0)
+        with PythonMapper(GetAllocatingTestAllocator(allocs, [])) as mapper:
+            tuplePtrPtr = Marshal.AllocHGlobal(CPyMarshal.PtrSize)
+            
+            oldTuplePtr = mapper.PyTuple_New(IntPtr(1))
+            del allocs[:]
+            CPyMarshal.WritePtr(tuplePtrPtr, oldTuplePtr)
+            self.assertEqual(mapper._PyTuple_Resize(tuplePtrPtr, IntPtr(100)), 0)
 
-        newTuplePtr = CPyMarshal.ReadPtr(tuplePtrPtr)
-        expectedSize = Marshal.SizeOf(PyTupleObject()) + (CPyMarshal.PtrSize * (99))
-        self.assertEqual(allocs, [(newTuplePtr, expectedSize)])
-        
-        tupleStruct = PtrToStructure(newTuplePtr, PyTupleObject)
-        self.assertEqual(tupleStruct.ob_refcnt, 1)
-        self.assertEqual(tupleStruct.ob_type, mapper.PyTuple_Type)
-        self.assertEqual(tupleStruct.ob_size, 100)
-        
-        mapper.Dispose()
+            newTuplePtr = CPyMarshal.ReadPtr(tuplePtrPtr)
+            expectedSize = Marshal.SizeOf(PyTupleObject()) + (CPyMarshal.PtrSize * (99))
+            self.assertEqual(allocs, [(newTuplePtr, expectedSize)])
+            
+            tupleStruct = PtrToStructure(newTuplePtr, PyTupleObject)
+            self.assertEqual(tupleStruct.ob_refcnt, 1)
+            self.assertEqual(tupleStruct.ob_type, mapper.PyTuple_Type)
+            self.assertEqual(tupleStruct.ob_size, 100)
+            
         Marshal.FreeHGlobal(tuplePtrPtr)
         
 
@@ -167,26 +164,25 @@ class TupleTest(TestCase):
 
     def testStoreTupleCreatesTupleType(self):
         allocs = []
-        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
-        
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
-        mapper.RegisterData("PyTuple_Type", typeBlock)
+        with PythonMapper(GetAllocatingTestAllocator(allocs, [])) as mapper:
+            
+            typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
+            mapper.RegisterData("PyTuple_Type", typeBlock)
 
-        theTuple = (0, 1, 2)
-        tuplePtr = mapper.Store(theTuple)
-        self.assertEqual(CPyMarshal.ReadPtrField(tuplePtr, PyTupleObject, "ob_type"), typeBlock, "wrong type")
+            theTuple = (0, 1, 2)
+            tuplePtr = mapper.Store(theTuple)
+            self.assertEqual(CPyMarshal.ReadPtrField(tuplePtr, PyTupleObject, "ob_type"), typeBlock, "wrong type")
 
-        dataPtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_item"))
-        for i in range(3):
-            item = mapper.Retrieve(CPyMarshal.ReadPtr(dataPtr))
-            self.assertEqual(item, i, "did not store data")
-            dataPtr = OffsetPtr(dataPtr, CPyMarshal.PtrSize)
+            dataPtr = OffsetPtr(tuplePtr, Marshal.OffsetOf(PyTupleObject, "ob_item"))
+            for i in range(3):
+                item = mapper.Retrieve(CPyMarshal.ReadPtr(dataPtr))
+                self.assertEqual(item, i, "did not store data")
+                dataPtr = OffsetPtr(dataPtr, CPyMarshal.PtrSize)
 
-        tuplePtr2 = mapper.Store(theTuple)
-        self.assertEqual(tuplePtr2, tuplePtr, "didn't realise already had this tuple")
-        self.assertEqual(mapper.RefCount(tuplePtr), 2, "didn't incref")
+            tuplePtr2 = mapper.Store(theTuple)
+            self.assertEqual(tuplePtr2, tuplePtr, "didn't realise already had this tuple")
+            self.assertEqual(mapper.RefCount(tuplePtr), 2, "didn't incref")
 
-        mapper.Dispose()
         Marshal.FreeHGlobal(typeBlock)
 
 

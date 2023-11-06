@@ -22,17 +22,16 @@ class PyList_Type_Test(TypeTestCase):
             def IC_PyList_Dealloc(self, listPtr):
                 calls.append(listPtr)
         
-        mapper = MyPM()
+        with MyPM() as mapper:
         
-        typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
-        mapper.RegisterData("PyList_Type", typeBlock)
-        gcwait() # this will make the function pointers invalid if we forgot to store references to the delegates
+            typeBlock = Marshal.AllocHGlobal(Marshal.SizeOf(PyTypeObject()))
+            mapper.RegisterData("PyList_Type", typeBlock)
+            gcwait() # this will make the function pointers invalid if we forgot to store references to the delegates
 
-        deallocDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_dealloc", dgt_void_ptr)
-        deallocDgt(IntPtr(12345))
-        self.assertEqual(calls, [IntPtr(12345)], "wrong calls")
-        
-        mapper.Dispose()
+            deallocDgt = CPyMarshal.ReadFunctionPtrField(typeBlock, PyTypeObject, "tp_dealloc", dgt_void_ptr)
+            deallocDgt(IntPtr(12345))
+            self.assertEqual(calls, [IntPtr(12345)], "wrong calls")
+            
         Marshal.FreeHGlobal(typeBlock)
 
 
@@ -64,31 +63,30 @@ class PyList_Type_Test(TypeTestCase):
 
     def testPyList_DeallocDecRefsItemsAndCallsCorrectFreeFunction(self):
         frees = []
-        mapper = PythonMapper(GetAllocatingTestAllocator([], frees))
-        deallocTypes = CreateTypes(mapper)
-        
-        calls = []
-        def CustomFree(ptr):
-            calls.append(ptr)
-            mapper.PyObject_Free(listPtr)
-        self.freeDgt = dgt_void_ptr(CustomFree)
-        
-        CPyMarshal.WriteFunctionPtrField(mapper.PyList_Type, PyTypeObject, "tp_free", self.freeDgt)
-        
-        listPtr = mapper.Store([1, 2, 3])
-        itemPtrs = []
-        dataStore = CPyMarshal.ReadPtrField(listPtr, PyListObject, "ob_item")
-        for _ in range(3):
-            itemPtrs.append(CPyMarshal.ReadPtr(dataStore))
-            dataStore = OffsetPtr(dataStore, CPyMarshal.PtrSize)
-        
-        mapper.IC_PyList_Dealloc(listPtr)
-        
-        for itemPtr in itemPtrs:
-            self.assertEqual(itemPtr in frees, True, "did not decref item")
-        self.assertEqual(calls, [listPtr], "did not call type's free function")
-        
-        mapper.Dispose()
+        with PythonMapper(GetAllocatingTestAllocator([], frees)) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            
+            calls = []
+            def CustomFree(ptr):
+                calls.append(ptr)
+                mapper.PyObject_Free(listPtr)
+            self.freeDgt = dgt_void_ptr(CustomFree)
+            
+            CPyMarshal.WriteFunctionPtrField(mapper.PyList_Type, PyTypeObject, "tp_free", self.freeDgt)
+            
+            listPtr = mapper.Store([1, 2, 3])
+            itemPtrs = []
+            dataStore = CPyMarshal.ReadPtrField(listPtr, PyListObject, "ob_item")
+            for _ in range(3):
+                itemPtrs.append(CPyMarshal.ReadPtr(dataStore))
+                dataStore = OffsetPtr(dataStore, CPyMarshal.PtrSize)
+            
+            mapper.IC_PyList_Dealloc(listPtr)
+            
+            for itemPtr in itemPtrs:
+                self.assertEqual(itemPtr in frees, True, "did not decref item")
+            self.assertEqual(calls, [listPtr], "did not call type's free function")
+            
         deallocTypes()
         
         
@@ -112,97 +110,94 @@ class ListFunctionsTest(TestCase):
     
     def testPyList_New_ZeroLength(self):
         allocs = []
-        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
-        deallocTypes = CreateTypes(mapper)
-        
-        del allocs[:]
-        listPtr = mapper.PyList_New(IntPtr(0))
-        self.assertEqual(allocs, [(listPtr, Marshal.SizeOf(PyListObject()))], "bad alloc")
+        with PythonMapper(GetAllocatingTestAllocator(allocs, [])) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            
+            del allocs[:]
+            listPtr = mapper.PyList_New(IntPtr(0))
+            self.assertEqual(allocs, [(listPtr, Marshal.SizeOf(PyListObject()))], "bad alloc")
 
-        listStruct = PtrToStructure(listPtr, PyListObject)
-        self.assertEqual(listStruct.ob_refcnt, 1, "bad refcount")
-        self.assertEqual(listStruct.ob_type, mapper.PyList_Type, "bad type")
-        self.assertEqual(listStruct.ob_size, 0, "bad ob_size")
-        self.assertEqual(listStruct.ob_item, IntPtr.Zero, "bad data pointer")
-        self.assertEqual(listStruct.allocated, 0, "bad allocated")
-        self.assertEqual(mapper.Retrieve(listPtr), [], "mapped to wrong object")
-        
-        mapper.Dispose()
+            listStruct = PtrToStructure(listPtr, PyListObject)
+            self.assertEqual(listStruct.ob_refcnt, 1, "bad refcount")
+            self.assertEqual(listStruct.ob_type, mapper.PyList_Type, "bad type")
+            self.assertEqual(listStruct.ob_size, 0, "bad ob_size")
+            self.assertEqual(listStruct.ob_item, IntPtr.Zero, "bad data pointer")
+            self.assertEqual(listStruct.allocated, 0, "bad allocated")
+            self.assertEqual(mapper.Retrieve(listPtr), [], "mapped to wrong object")
+            
         deallocTypes()
     
     
     def testPyList_New_NonZeroLength(self):
         allocs = []
-        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, []))
-        deallocTypes = CreateTypes(mapper)
-        del allocs[:]
-        
-        SIZE = 27
-        listPtr = mapper.PyList_New(IntPtr(SIZE))
-        
-        listStruct = PtrToStructure(listPtr, PyListObject)
-        self.assertEqual(listStruct.ob_refcnt, 1, "bad refcount")
-        self.assertEqual(listStruct.ob_type, mapper.PyList_Type, "bad type")
-        self.assertEqual(listStruct.ob_size, SIZE, "bad ob_size")
-        self.assertEqual(listStruct.allocated, SIZE, "bad allocated")
-        
-        dataPtr = listStruct.ob_item
-        self.assertNotEqual(dataPtr, IntPtr.Zero, "failed to allocate space for data")
-        
-        expectedAllocs = [(dataPtr, (SIZE * CPyMarshal.PtrSize)), (listPtr, Marshal.SizeOf(PyListObject()))]
-        self.assertEqual(allocs, expectedAllocs, "allocated wrong")
-        
-        for _ in range(SIZE):
-            self.assertEqual(CPyMarshal.ReadPtr(dataPtr), IntPtr.Zero, "failed to zero memory")
-            dataPtr = OffsetPtr(dataPtr, CPyMarshal.PtrSize)
-        
-        mapper.Dispose()
+        with PythonMapper(GetAllocatingTestAllocator(allocs, [])) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            del allocs[:]
+            
+            SIZE = 27
+            listPtr = mapper.PyList_New(IntPtr(SIZE))
+            
+            listStruct = PtrToStructure(listPtr, PyListObject)
+            self.assertEqual(listStruct.ob_refcnt, 1, "bad refcount")
+            self.assertEqual(listStruct.ob_type, mapper.PyList_Type, "bad type")
+            self.assertEqual(listStruct.ob_size, SIZE, "bad ob_size")
+            self.assertEqual(listStruct.allocated, SIZE, "bad allocated")
+            
+            dataPtr = listStruct.ob_item
+            self.assertNotEqual(dataPtr, IntPtr.Zero, "failed to allocate space for data")
+            
+            expectedAllocs = [(dataPtr, (SIZE * CPyMarshal.PtrSize)), (listPtr, Marshal.SizeOf(PyListObject()))]
+            self.assertEqual(allocs, expectedAllocs, "allocated wrong")
+            
+            for _ in range(SIZE):
+                self.assertEqual(CPyMarshal.ReadPtr(dataPtr), IntPtr.Zero, "failed to zero memory")
+                dataPtr = OffsetPtr(dataPtr, CPyMarshal.PtrSize)
+            
         deallocTypes()
     
     
     def testPyList_Append(self):
         allocs = []
         deallocs = []
-        mapper = PythonMapper(GetAllocatingTestAllocator(allocs, deallocs))
-        deallocTypes = CreateTypes(mapper)
-        
-        del allocs[:]
-        listPtr = mapper.PyList_New(IntPtr(0))
-        self.assertEqual(allocs, [(listPtr, Marshal.SizeOf(PyListObject()))], "bad alloc")
+        with PythonMapper(GetAllocatingTestAllocator(allocs, deallocs)) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            
+            del allocs[:]
+            listPtr = mapper.PyList_New(IntPtr(0))
+            self.assertEqual(allocs, [(listPtr, Marshal.SizeOf(PyListObject()))], "bad alloc")
 
-        item1 = object()
-        item2 = object()
-        itemPtr1 = mapper.Store(item1)
-        itemPtr2 = mapper.Store(item2)
-        
-        self.assertEqual(mapper.PyList_Append(listPtr, itemPtr1), 0, "failed to report success")
-        self.assertEqual(len(allocs), 4, "didn't allocate memory for data store (list; item1; item2; data store comes 4th)")
+            item1 = object()
+            item2 = object()
+            itemPtr1 = mapper.Store(item1)
+            itemPtr2 = mapper.Store(item2)
+            
+            self.assertEqual(mapper.PyList_Append(listPtr, itemPtr1), 0, "failed to report success")
+            self.assertEqual(len(allocs), 4, "didn't allocate memory for data store (list; item1; item2; data store comes 4th)")
 
-        dataPtrAfterFirstAppend = CPyMarshal.ReadPtrField(listPtr, PyListObject, "ob_item")
-        self.assertEqual(allocs[3], (dataPtrAfterFirstAppend, CPyMarshal.PtrSize), "allocated wrong amount of memory")
-        self.assertEqual(CPyMarshal.ReadPtr(dataPtrAfterFirstAppend), itemPtr1, "failed to fill memory")
-        self.assertEqual(mapper.RefCount(itemPtr1), 2, "failed to incref new contents")
-        self.assertEqual(mapper.Retrieve(listPtr), [item1], "retrieved wrong list")
-        
-        # make refcount 1, to prove that references are not lost when reallocing data
-        mapper.DecRef(itemPtr1)
+            dataPtrAfterFirstAppend = CPyMarshal.ReadPtrField(listPtr, PyListObject, "ob_item")
+            self.assertEqual(allocs[3], (dataPtrAfterFirstAppend, CPyMarshal.PtrSize), "allocated wrong amount of memory")
+            self.assertEqual(CPyMarshal.ReadPtr(dataPtrAfterFirstAppend), itemPtr1, "failed to fill memory")
+            self.assertEqual(mapper.RefCount(itemPtr1), 2, "failed to incref new contents")
+            self.assertEqual(mapper.Retrieve(listPtr), [item1], "retrieved wrong list")
+            
+            # make refcount 1, to prove that references are not lost when reallocing data
+            mapper.DecRef(itemPtr1)
 
-        self.assertEqual(mapper.PyList_Append(listPtr, itemPtr2), 0, "failed to report success")
-        self.assertEqual(len(allocs), 5, "didn't allocate memory for new, larger data store")
-        self.assertEqual(deallocs, [dataPtrAfterFirstAppend])
+            self.assertEqual(mapper.PyList_Append(listPtr, itemPtr2), 0, "failed to report success")
+            self.assertEqual(len(allocs), 5, "didn't allocate memory for new, larger data store")
+            self.assertEqual(deallocs, [dataPtrAfterFirstAppend])
 
-        dataPtrAfterSecondAppend = CPyMarshal.ReadPtrField(listPtr, PyListObject, "ob_item")
-        self.assertEqual(allocs[4], (dataPtrAfterSecondAppend, (CPyMarshal.PtrSize * 2)), 
-                          "allocated wrong amount of memory")
-        self.assertEqual(CPyMarshal.ReadPtr(dataPtrAfterSecondAppend), itemPtr1, 
-                          "failed to keep reference to first item")
-        self.assertEqual(CPyMarshal.ReadPtr(OffsetPtr(dataPtrAfterSecondAppend, CPyMarshal.PtrSize)), itemPtr2, 
-                          "failed to keep reference to first item")
-        self.assertEqual(mapper.RefCount(itemPtr1), 1, "wrong refcount for item existing only in list")
-        self.assertEqual(mapper.RefCount(itemPtr2), 2, "wrong refcount newly-added item")
-        self.assertEqual(mapper.Retrieve(listPtr), [item1, item2], "retrieved wrong list")
-        
-        mapper.Dispose()
+            dataPtrAfterSecondAppend = CPyMarshal.ReadPtrField(listPtr, PyListObject, "ob_item")
+            self.assertEqual(allocs[4], (dataPtrAfterSecondAppend, (CPyMarshal.PtrSize * 2)), 
+                            "allocated wrong amount of memory")
+            self.assertEqual(CPyMarshal.ReadPtr(dataPtrAfterSecondAppend), itemPtr1, 
+                            "failed to keep reference to first item")
+            self.assertEqual(CPyMarshal.ReadPtr(OffsetPtr(dataPtrAfterSecondAppend, CPyMarshal.PtrSize)), itemPtr2, 
+                            "failed to keep reference to first item")
+            self.assertEqual(mapper.RefCount(itemPtr1), 1, "wrong refcount for item existing only in list")
+            self.assertEqual(mapper.RefCount(itemPtr2), 2, "wrong refcount newly-added item")
+            self.assertEqual(mapper.Retrieve(listPtr), [item1, item2], "retrieved wrong list")
+            
         deallocTypes()
     
     
@@ -318,32 +313,31 @@ class ListFunctionsTest(TestCase):
 
     def testDeleteList(self):
         deallocs = []
-        mapper = PythonMapper(GetAllocatingTestAllocator([], deallocs))
-        deallocTypes = CreateTypes(mapper)
-        
-        item1 = object()
-        item2 = object()
-        itemPtr1 = mapper.Store(item1)
-        itemPtr2 = mapper.Store(item2)
-        
-        listPtr = mapper.PyList_New(IntPtr(0))
-        
-        mapper.PyList_Append(listPtr, itemPtr1)
-        mapper.PyList_Append(listPtr, itemPtr2)
+        with PythonMapper(GetAllocatingTestAllocator([], deallocs)) as mapper:
+            deallocTypes = CreateTypes(mapper)
+            
+            item1 = object()
+            item2 = object()
+            itemPtr1 = mapper.Store(item1)
+            itemPtr2 = mapper.Store(item2)
+            
+            listPtr = mapper.PyList_New(IntPtr(0))
+            
+            mapper.PyList_Append(listPtr, itemPtr1)
+            mapper.PyList_Append(listPtr, itemPtr2)
 
-        mapper.DecRef(itemPtr1)
-        mapper.DecRef(itemPtr2)
+            mapper.DecRef(itemPtr1)
+            mapper.DecRef(itemPtr2)
 
-        self.assertEqual(len(deallocs), 1, "should have deallocated original data block only at this point")
-        dataStore = CPyMarshal.ReadPtrField(listPtr, PyListObject, "ob_item")
+            self.assertEqual(len(deallocs), 1, "should have deallocated original data block only at this point")
+            dataStore = CPyMarshal.ReadPtrField(listPtr, PyListObject, "ob_item")
 
-        mapper.DecRef(listPtr)
-        listDeallocs = deallocs[1:]
-        self.assertEqual(len(listDeallocs), 4, "should dealloc list object; data store; both items")
-        expectedDeallocs = [listPtr, dataStore, itemPtr1, itemPtr2]
-        self.assertEqual(set(listDeallocs), set(expectedDeallocs), "deallocated wrong stuff")
-        
-        mapper.Dispose()
+            mapper.DecRef(listPtr)
+            listDeallocs = deallocs[1:]
+            self.assertEqual(len(listDeallocs), 4, "should dealloc list object; data store; both items")
+            expectedDeallocs = [listPtr, dataStore, itemPtr1, itemPtr2]
+            self.assertEqual(set(listDeallocs), set(expectedDeallocs), "deallocated wrong stuff")
+            
         deallocTypes()
         
         
