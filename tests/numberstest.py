@@ -506,11 +506,11 @@ class PyNumber_Test(TestCase):
         for value in values:
             ptr = mapper.Store(value)
             _long = mapper.Retrieve(mapper.PyNumber_Long(ptr))
-            self.assertEqual(_long, long(value), "converted wrong")
+            self.assertEqual(_long, int(value), "converted wrong")
             self.assertMapperHasError(mapper, None)
             mapper.DecRef(ptr)
         
-        badvalues = ['foo', object, object(), '123.4']
+        badvalues = ['foo', object, object(), '123.45']
         for value in badvalues:
             ptr = mapper.Store(value)
             mapper.LastException = None
@@ -518,7 +518,7 @@ class PyNumber_Test(TestCase):
             
             error = None
             try:
-                long(value)
+                int(value)
             except Exception as e:
                 error = type(e)
             self.assertMapperHasError(mapper, error)
@@ -557,34 +557,7 @@ class PyNumber_Test(TestCase):
                 error = type(e)
             self.assertMapperHasError(mapper, error)
             mapper.DecRef(ptr)
-    
-    
-    @WithMapper
-    def testPyNumber_Int(self, mapper, _):        
-        values = [0, 12345, 123456789012345, 123.45, "123"]
-        values += list(map(float, values))
-        for value in values:
-            ptr = mapper.Store(value)
-            _int = mapper.Retrieve(mapper.PyNumber_Int(ptr))
-            self.assertEqual(type(_int) in (int, long), True, "returned inappropriate type")
-            self.assertEqual(_int, int(value), "converted wrong")
-            self.assertMapperHasError(mapper, None)
-            mapper.DecRef(ptr)
-        
-        badvalues = ['foo', object, object(), "123.45"]
-        for value in badvalues:
-            ptr = mapper.Store(value)
-            self.assertEqual(mapper.PyNumber_Int(ptr), IntPtr.Zero)
-            
-            error = None
-            try:
-                int(value)
-            except Exception as e:
-                error = type(e)
-            self.assertMapperHasError(mapper, error)
-            mapper.DecRef(ptr)
-        
-    
+
 
 suite = makesuite(
     PyBool_Test,

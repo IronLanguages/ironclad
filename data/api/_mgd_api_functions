@@ -118,7 +118,6 @@ PyNumber_Float
 PyNumber_FloorDivide    
 PyNumber_Index      
 PyNumber_InPlaceRemainder   
-PyNumber_Int # TODO: delete this - not in 3.4
 PyNumber_Long    
 PyNumber_Lshift      
 PyNumber_Multiply   
@@ -130,7 +129,6 @@ PyNumber_TrueDivide
 PyNumber_Xor      
     
 PyObject_Call        
-PyObject_Compare # TODO: delete this - not in 3.4
 PyObject_DelItemString  
 PyObject_Free       
 PyObject_GetAttr       

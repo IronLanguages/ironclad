@@ -160,25 +160,6 @@ namespace Ironclad
         }
 
         public override IntPtr
-        PyNumber_Int(IntPtr numberPtr)
-        {
-            try
-            {
-                object result = PythonCalls.Call(TypeCache.BigInteger, new object[] {this.Retrieve(numberPtr)});
-                if (!(result is Int32))
-                {
-                    result = Converter.ConvertToBigInteger(result);
-                }
-                return this.Store(result);
-            }
-            catch (Exception e)
-            {
-                this.LastException = e;
-                return IntPtr.Zero;
-            }
-        }
-
-        public override IntPtr
         PyNumber_Long(IntPtr numberPtr)
         {
             try

@@ -28,23 +28,3 @@ reprfunc IC_PyBytes_Str;
 binaryfunc IC_PyBytes_Concat_Core;
 
 getiterfunc IC_tuple_iter;
-
-# TODO: get rid of these - they are dummy stubs to compile python34.dll
-
-PyObject * _PyObject_Str(PyObject *);
-int PyObject_Compare(PyObject *, PyObject *);
-
-PyObject * PyNumber_Int(PyObject *o);
-
-PyObject* PyUnicodeUCS2_FromUnicode(const Py_UNICODE *u, Py_ssize_t size);
-PyObject* PyUnicodeUCS2_AsEncodedString(PyObject *unicode, const char *encoding, const char *errors);
-PyObject* PyUnicodeUCS2_FromObject(register PyObject *obj);
-PyObject* _PyUnicodeUCS2_AsDefaultEncodedString(PyObject *, const char *);
-PyObject* PyUnicodeUCS2_Concat(PyObject *left, PyObject *right);
-PyObject* PyUnicodeUCS2_Decode(const char *s, Py_ssize_t size, const char *encoding, const char *errors);
-PyObject* PyUnicodeUCS2_Format(PyObject *format, PyObject *args);
-int PyUnicodeUCS2_Resize(PyObject **unicode, Py_ssize_t length);
-PyObject* PyUnicodeUCS2_DecodeASCII(const char *string, Py_ssize_t length, const char *errors);
-PyObject* PyUnicodeUCS2_AsUnicodeEscapeString(PyObject *unicode);
-Py_UNICODE * PyUnicodeUCS2_AsUnicode(PyObject *unicode);
-PyObject* PyUnicodeUCS2_FromEncodedObject(register PyObject *obj, const char *encoding, const char *errors);
