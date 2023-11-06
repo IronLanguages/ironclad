@@ -200,43 +200,44 @@ class PyLong_Test(TestCase):
 
     @WithMapper
     def testPyLong_AsUnsignedLongMask(self, mapper, _):
-        raise NotImplementedError # https://github.com/IronLanguages/ironclad/issues/14
         for value in (0, UInt32.MaxValue):
             ptr = mapper.Store(value)
-            self.assertEqual(mapper.PyInt_AsUnsignedLongMask(ptr), value)
+            self.assertEqual(mapper.PyLong_AsUnsignedLongMask(ptr), value)
             self.assertMapperHasError(mapper, None)
 
         for (value, result) in ((UInt32.MaxValue + 1, 0), (-1, UInt32.MaxValue)):
             ptr = mapper.Store(value)
-            self.assertEqual(mapper.PyInt_AsUnsignedLongMask(ptr), result)
+            self.assertEqual(mapper.PyLong_AsUnsignedLongMask(ptr), result)
             self.assertMapperHasError(mapper, None)
 
         for cls in (NumberI,):
             ptr = mapper.Store(cls())
-            result = mapper.PyInt_AsUnsignedLongMask(ptr)
+            result = mapper.PyLong_AsUnsignedLongMask(ptr)
             self.assertMapperHasError(mapper, None)
             self.assertEqual(result, NUMBER_VALUE)
 
-        self.assertEqual(mapper.PyInt_AsUnsignedLongMask(mapper.Store(object())), UInt32.MaxValue)
+        self.assertEqual(mapper.PyLong_AsUnsignedLongMask(mapper.Store(object())), UInt32.MaxValue)
         self.assertMapperHasError(mapper, TypeError)
 
 
     @WithMapper
     def testPyLong_AsSsize_t(self, mapper, _):
-        raise NotImplementedError # https://github.com/IronLanguages/ironclad/issues/14
-        for value in (0, Int32.MaxValue, Int32.MinValue):
-            result = mapper.PyInt_AsSsize_t(mapper.Store(value))
+        maxValue = (1 << (IntPtr.Size * 8 - 1)) - 1
+        minValue = -(1 << (IntPtr.Size * 8 - 1))
+
+        for value in (0, maxValue, minValue):
+            result = mapper.PyLong_AsSsize_t(mapper.Store(value))
             self.assertEqual(result, value, "failed to map back")
             self.assertMapperHasError(mapper, None)
 
-        for (value, error) in ((Int32.MaxValue + 1, OverflowError), (Int32.MinValue - 1, OverflowError), (object(), TypeError)):
+        for (value, error) in ((maxValue + 1, OverflowError), (minValue - 1, OverflowError), (object(), TypeError)):
             ptr = mapper.Store(value)
-            self.assertEqual(mapper.PyInt_AsSsize_t(ptr), -1)
+            self.assertEqual(mapper.PyLong_AsSsize_t(ptr), -1)
             self.assertMapperHasError(mapper, error)
 
         for cls in (NumberI,):
             ptr = mapper.Store(cls())
-            result = mapper.PyInt_AsSsize_t(ptr)
+            result = mapper.PyLong_AsSsize_t(ptr)
             self.assertMapperHasError(mapper, None)
             self.assertEqual(result, NUMBER_VALUE)
 
