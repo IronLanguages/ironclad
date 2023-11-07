@@ -66,26 +66,12 @@ def read_args_kwargs(dir_, name, argcount, context=None):
 
 
 #===============================================================================
-# ugly but helpful
 
-def _ignore_gccxml_settings(f):
-    # we only care about reading, not generating
-    def g(*args, **kwargs):
-        from pygccxml.parser.config import xml_generator_configuration_t
-        orig = xml_generator_configuration_t.raise_on_wrong_settings
-        xml_generator_configuration_t.raise_on_wrong_settings = lambda _: None
-        try:
-            return f(*args, **kwargs)
-        finally:
-            xml_generator_configuration_t.raise_on_wrong_settings = orig
-    return g
-
-@_ignore_gccxml_settings
 def read_gccxml(*args):
     path = os.path.join(*args)
-    from pygccxml.parser.config import xml_generator_configuration_t
-    from pygccxml.parser.source_reader import source_reader_t
-    return source_reader_t(xml_generator_configuration_t()).read_xml_file(path)[0]
+    from pygccxml.parser.config import parser_configuration_t
+    from pygccxml.parser import parse_xml_file
+    return parse_xml_file(path, parser_configuration_t(xml_generator='castxml'))[0]
 
 
 #==========================================================================

@@ -115,6 +115,7 @@ DLL_CMD = '$CC -m64 $CCFLAGS -shared -o $TARGET $SOURCES'
 GCCXML_CMD = ' '.join((CASTXML, COMPILE_IRONCLAD_FLAGS, '-v -I$CPPPATH -D__GNUC__ %s $SOURCE -o "$TARGET" --castxml-output=1' % GCCXML_INSERT))
 PYTHON34OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
 PYTHON34DLL_CMD = DLL_CMD + ' -Xlinker --export-all-symbols'
+CASTXML_CMD = f'{CASTXML} "$SOURCE" -o "$TARGET" --castxml-output=1 $CLANGFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS'
 
 # COMMON are globals in all used environments (native, native_clang, managed, tests)
 COMMON = dict(IPY=IPY)
@@ -150,7 +151,8 @@ if WIN32:
         ASFLAGS=ASFLAGS,
         CPPDEFINES='''__MSVCRT_VERSION__=0x1000 _NO_CRT_STDIO_INLINE Py_ENABLE_SHARED Py_BUILD_CORE IRONCLAD ''',
         CPPPATH='stub/Include',
-        CCFLAGS='/GS- --target=x86_64-pc-windows-msvc -fuse-ld=lld -fms-compatibility-version=16.00.40219',
+        CLANGFLAGS='--target=x86_64-pc-windows-msvc -fuse-ld=lld -fms-compatibility-version=16.00.40219',
+        CCFLAGS='/GS- $CLANGFLAGS',
         LINKFLAGS='/subsystem:windows /nodefaultlib:libucrt /nodefaultlib:libcmt',
         SHLINKFLAGS='$_DLL_ENTRYPOINT /noimplib', no_import_lib=1,
         LIBS=['kernel32', 'user32'],
@@ -162,6 +164,8 @@ if WIN32:
         native_clang['PDB'] = '${TARGET.base}.pdb'
         native_clang.Append(ASFLAGS='-g')
         native_clang.Append(LINKFLAGS='/debug:full')
+
+    native_clang['BUILDERS']['CastXml'] = Builder(action=CASTXML_CMD, source_scanner=CScanner(), suffix='.xml', CPPDEFPREFIX='-D', INCPREFIX='-I')
     #print(native_clang.Dump())
 else:
     native_clang = native
@@ -181,14 +185,14 @@ else:
     msvcrt_lib = []
 
 # Generate data from prebuilt python dll
-exports, python_def = native.Command(['data/api/_exported_functions.generated', 'stub/python34.def'], [],
+exports, python_def = native_clang.Command(['data/api/_exported_functions.generated', 'stub/python34.def'], [],
     '$CPYTHON tools/generateexports.py $CPYTHON34_DLL data/api stub')
 
 # Generate stub code
 buildstub_names = '_extra_functions _mgd_api_data _pure_c_symbols'
 buildstub_src = [exports] + pathmap('data/api', buildstub_names)
 buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_extra_functions.generated.h')
-native.Command(buildstub_out, buildstub_src,
+native_clang.Command(buildstub_out, buildstub_src,
     '$CPYTHON tools/generatestub.py data/api stub')
 
 # Compile stub code
@@ -198,7 +202,7 @@ jumps_obj = native_clang.Object('stub/jumps.generated.asm')
 stubmain_obj = native_clang.SharedObject('stub/stubmain.c')
 
 # Generate information from python headers etc
-stubmain_xml = native.GccXml('data/api/_stubmain.generated.xml', 'stub/stubmain.c')
+stubmain_xml = native_clang.CastXml('data/api/_stubmain.generated.xml', 'stub/stubmain.c')
 
 # Build and link python34.dll
 cpy_src_dirs = 'Modules Objects Parser Python'
