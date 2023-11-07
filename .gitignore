@@ -39,6 +39,7 @@ stub/stubmain.s
 *.bak
 *.[Cc]ache
 *.ilk
+*.pdb
 *.log
 *.lib
 *.def
@@ -46,6 +47,8 @@ stub/stubmain.s
 *.sdf
 *.opensdf
 *.unsuccessfulbuild
+.vscode/
+.vs/
 ipch/
 [Oo]bj/
 [Bb]in

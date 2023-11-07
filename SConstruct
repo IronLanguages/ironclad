@@ -29,7 +29,7 @@ def pathmap(base, files):
 def submap(template, inserts):
     return list(map(lambda x: template % x, inserts))
 
-# to build in debug mode (for now c# only) use:
+# To build in debug mode use:
 # scons mode=debug
 mode = ARGUMENTS.get('mode', 'release')
 if not (mode in ['debug', 'release']):
@@ -45,29 +45,19 @@ WIN32 = sys.platform == 'win32'
 if WIN32:
     #==================================================================
     # These variables will be needed on any platform, I think
-    
-    ASFLAGS = '-f win64'
-    CSC = r'C:\windows\Microsoft.NET\Framework\v4.0.30319\csc.exe'
-    CSC_CMD = 'dotnet build '
-    if mode == 'debug':
-        CSC_CMD += '--configuration Debug '
-    else:
-        CSC_CMD += '--configuration Release '
-    CSC_CMD += '--nologo --output build/ironclad src/Ironclad.csproj'
-    CASTXML = r'castxml'
 
-    # private build
-    IPY = r'"C:\ironclad\IronPython.3.4.1\net462\ipy.exe"'
-    if not os.path.exists(IPY):
-        # standard location
-        IPY = r'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
-
-    NATIVE_TOOLS = ['mingw', 'nasm']
-
-    OBJ_SUFFIX = '.o'
-    DLL_SUFFIX = '.dll'
-    MGD_DLL_SUFFIX = '.dll'
+    NATIVE_TOOLS = ['msvc', 'mslink', 'nasm']
     PYD_SUFFIX = '.pyd'
+
+    ASFLAGS = '-f win64'
+
+    # where to find/how to invoke executables
+    CASTXML = r'castxml'
+    DOTNET = r'dotnet'
+    IPY = r'"C:\ironclad\IronPython.3.4.1\net462\ipy.exe"'  # try to use private build
+    if not os.path.exists(IPY):
+        # use standard location
+        IPY = r'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
 
     #==================================================================
     # These variables should only be necessary on win32
@@ -76,15 +66,8 @@ if WIN32:
 
     GENDEF_CMD = 'gendef - $SOURCE >$TARGET'
     DLLTOOL_CMD = 'dlltool -D $NAME -d $SOURCE -l $TARGET'
-    LINK_MSVCR100_FLAGS = '-specs=stub/use-msvcr100.spec'
     PEXPORTS_CMD = 'pexports $SOURCE > $TARGET'
     RES_CMD = 'windres --input $SOURCE --output $TARGET --output-format=coff'
-
-    # TODO: can we find MINGW_DIR from the environment..?
-    MINGW_DIR = r'C:\mingw64'
-    MINGW_LIB = os.path.join(MINGW_DIR, 'lib')
-    MINGW_INCLUDE = os.path.join(MINGW_DIR, 'include')
-    GCCXML_INSERT = ''
 
     # Find root of CPython installation, used for exports generation and to find DLLs/packages for testing
     # Note: this has to be 64-bit version of CPython 3.4
@@ -93,7 +76,7 @@ if WIN32:
     #CPYTHON34_ROOT = r'C:\Python34'
     CPYTHON34_DLL = os.path.join(CPYTHON34_ROOT, 'python34.dll')
 else:
-    NATIVE_TOOLS = ['default']
+    NATIVE_TOOLS = ['default', 'clang']
     PYD_SUFFIX = '.so'
     # TODO: linux, darwin
 
@@ -109,16 +92,16 @@ env_with_ippath['IRONPYTHONPATH'] = os.getcwd()
 env_with_ippath['PYTHONPATH'] = os.getcwd()
 # TODO: it should not be necessary to pollute execution with entire os environment
 
-COMPILE_IRONCLAD_FLAGS = '-DIRONCLAD -DPy_BUILD_CORE -D__MSVCRT_VERSION__=0x1000 -DMS_WIN64'  # TODO: should be in CPPDEFINES
-OBJ_CMD = '$CC -m64 -fcommon $CCFLAGS -o $TARGET -c $SOURCE' # TODO: get rid of -fcommon
-DLL_CMD = '$CC -m64 $CCFLAGS -shared -o $TARGET $SOURCES'
-GCCXML_CMD = ' '.join((CASTXML, COMPILE_IRONCLAD_FLAGS, '-v -I$CPPPATH -D__GNUC__ %s $SOURCE -o "$TARGET" --castxml-output=1' % GCCXML_INSERT))
-PYTHON34OBJ_CMD = OBJ_CMD + ' -I$CPPPATH'
-PYTHON34DLL_CMD = DLL_CMD + ' -Xlinker --export-all-symbols'
+MGD_DLL_SUFFIX = '.dll'
+PDB_SUFFIX = '.pdb'
+
+CPPDEFINES = 'Py_ENABLE_SHARED Py_BUILD_CORE IRONCLAD'
+CPPPATH = 'stub/Include'
+MGD_BUILD_CMD = f'{DOTNET} build --configuration {mode.title()} --nologo --output build/ironclad src/ironclad.csproj'
 CASTXML_CMD = f'{CASTXML} "$SOURCE" -o "$TARGET" --castxml-output=1 $CLANGFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS'
 
-# COMMON are globals in all used environments (native, native_clang, managed, tests)
-COMMON = dict(IPY=IPY)
+# COMMON are globals in all used environments (native, managed, tests)
+COMMON = dict(CPYTHON=CPYTHON, IPY=IPY)
 
 test_deps = []
 before_test = test_deps.append
@@ -130,105 +113,97 @@ before_test = test_deps.append
 # (python34.dll, ic_msvcr90.dll, several test files)
 #===============================================================================
 
-native = Environment(ENV=env_with_ippath, tools=NATIVE_TOOLS, ASFLAGS=ASFLAGS, CPYTHON=CPYTHON, CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
-c_obj_kwargs = dict(source_scanner=CScanner(), suffix=OBJ_SUFFIX)
-native['BUILDERS']['Obj'] = Builder(action=OBJ_CMD, **c_obj_kwargs)
-native['BUILDERS']['Python34Obj'] = Builder(action=PYTHON34OBJ_CMD, CCFLAGS=COMPILE_IRONCLAD_FLAGS, CPPPATH='stub/Include', **c_obj_kwargs)
-native['BUILDERS']['Dll'] = Builder(action=DLL_CMD, suffix=DLL_SUFFIX)
-native['BUILDERS']['GccXml'] = Builder(action=GCCXML_CMD, CPPPATH='stub/Include', source_scanner=CScanner())
-
 if WIN32:
-    # These builders should ensure that their targets correctly link with msvcr100.dll
-    def append_depend(target, source, env):
-        return target, source
-    native['BUILDERS']['Msvcr100Dll'] = Builder(
-        action=DLL_CMD, suffix=DLL_SUFFIX, emitter=append_depend, CCFLAGS=LINK_MSVCR100_FLAGS)
-
-if WIN32:
-    native_clang = Environment(ENV=env_with_ippath, tools=['msvc', 'mslink', 'nasm'], CC='clang-cl', LINK='lld-link',
-                               CPYTHON=CPYTHON, CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
-    native_clang.Append(
-        ASFLAGS=ASFLAGS,
-        CPPDEFINES='''__MSVCRT_VERSION__=0x1000 _NO_CRT_STDIO_INLINE Py_ENABLE_SHARED Py_BUILD_CORE IRONCLAD ''',
-        CPPPATH='stub/Include',
-        CLANGFLAGS='--target=x86_64-pc-windows-msvc -fuse-ld=lld -fms-compatibility-version=16.00.40219',
-        CCFLAGS='/GS- $CLANGFLAGS',
-        LINKFLAGS='/subsystem:windows /nodefaultlib:libucrt /nodefaultlib:libcmt',
-        SHLINKFLAGS='$_DLL_ENTRYPOINT /noimplib', no_import_lib=1,
-        LIBS=['kernel32', 'user32'],
-        _DLL_ENTRYPOINT='${"/entry:" + entry if entry else "/noentry"}',
-        entry=''
+    native = Environment(ENV=env_with_ippath, tools=NATIVE_TOOLS, CC='clang-cl', LINK='lld-link',
+                         CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
+    native.Append(
+        ASFLAGS         = ASFLAGS,
+        CPPDEFINES      = f'__MSVCRT_VERSION__=0x1000 _NO_CRT_STDIO_INLINE {CPPDEFINES}',
+        CPPPATH         = CPPPATH,
+        CLANGFLAGS      = '--target=x86_64-pc-windows-msvc -fuse-ld=lld -fms-compatibility-version=16.00.40219',  # used by clang-cl AND castxml
+        CCFLAGS         = '/GS- $CLANGFLAGS',
+        LINKFLAGS       = '/subsystem:windows /nodefaultlib:libucrt /nodefaultlib:libcmt',
+        SHLINKFLAGS     = '$_DLL_ENTRYPOINT /noimplib',
+        no_import_lib   = 1,  # undocumented SCons msvc tools flag; may be renamed in future
+        LIBS            = ['kernel32', 'user32'],
+        _DLL_ENTRYPOINT = '${"/entry:" + entry if entry else "/noentry"}',
+        entry           = '',  # override in SharedLibrary invocation to specify a DLL entry point if needed
     )
 
     if mode == 'debug':
-        native_clang['PDB'] = '${TARGET.base}.pdb'
-        native_clang.Append(ASFLAGS='-g')
-        native_clang.Append(LINKFLAGS='/debug:full')
+        native.Replace(PDB='${TARGET.base}' + PDB_SUFFIX)
+        native.Append(ASFLAGS='-g')
+        native.Append(LINKFLAGS='/debug:full')
 
-    native_clang['BUILDERS']['CastXml'] = Builder(action=CASTXML_CMD, source_scanner=CScanner(), suffix='.xml', CPPDEFPREFIX='-D', INCPREFIX='-I')
-    #print(native_clang.Dump())
+    native['BUILDERS']['CastXml'] = Builder(action=CASTXML_CMD, source_scanner=CScanner(), suffix='.xml', CPPDEFPREFIX='-D', INCPREFIX='-I')
 else:
-    native_clang = native
+    native = Environment(ENV=env_with_ippath, tools=NATIVE_TOOLS,
+                         CPYTHON=CPYTHON, CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
+    # TODO: linux, darwin
 
 #===============================================================================
 # Unmanaged libraries for build/ironclad
 
 if WIN32:
     # Create implib for msvcrt
-    msvcrt_def = native_clang.Command('stub/msvcr100.def', MSVCR100_DLL, GENDEF_CMD)
-    msvcrt_lib = native_clang.Command('stub/msvcr100.lib', msvcrt_def, DLLTOOL_CMD, NAME='msvcr100.dll')
+    msvcrt_def = native.Command('stub/msvcr100.def', MSVCR100_DLL, GENDEF_CMD)
+    msvcrt_lib = native.Command('stub/msvcr100.lib', msvcrt_def, DLLTOOL_CMD, NAME='msvcr100.dll')
 
     # Build and link ic_msvcr90.dll
-    msvcrt_obj = native_clang.SharedObject('stub/ic_msvcr90.c')
-    before_test(native_clang.SharedLibrary('build/ironclad/ic_msvcr90', [msvcrt_obj, msvcrt_lib], entry='DllMain'))
+    msvcrt_obj = native.SharedObject('stub/ic_msvcr90.c')
+    before_test(native.SharedLibrary('build/ironclad/ic_msvcr90', [msvcrt_obj, msvcrt_lib], entry='DllMain'))
 else:
     msvcrt_lib = []
 
 # Generate data from prebuilt python dll
-exports, python_def = native_clang.Command(['data/api/_exported_functions.generated', 'stub/python34.def'], [],
+exports, python_def = native.Command(['data/api/_exported_functions.generated', 'stub/python34.def'], [],
     '$CPYTHON tools/generateexports.py $CPYTHON34_DLL data/api stub')
 
 # Generate stub code
 buildstub_names = '_extra_functions _mgd_api_data _pure_c_symbols'
 buildstub_src = [exports] + pathmap('data/api', buildstub_names)
 buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_extra_functions.generated.h')
-native_clang.Command(buildstub_out, buildstub_src,
+native.Command(buildstub_out, buildstub_src,
     '$CPYTHON tools/generatestub.py data/api stub')
 
 # Compile stub code
 # SharedObject builder does not support assembly code
 # since whether the code is position-independent (shareable) or not depends on assembly instructions used, not assembler flags
-jumps_obj = native_clang.Object('stub/jumps.generated.asm')
-stubmain_obj = native_clang.SharedObject('stub/stubmain.c')
+jumps_obj = native.Object('stub/jumps.generated.asm')
+stubmain_obj = native.SharedObject('stub/stubmain.c')
 
 # Generate information from python headers etc
-stubmain_xml = native_clang.CastXml('data/api/_stubmain.generated.xml', 'stub/stubmain.c')
+stubmain_xml = native.CastXml('data/api/_stubmain.generated.xml', 'stub/stubmain.c')
 
 # Build and link python34.dll
 cpy_src_dirs = 'Modules Objects Parser Python'
-cpy_srcs = glommap(lambda x: native_clang.Glob('stub/%s/*.c' % x), cpy_src_dirs)
-cpy_objs = glommap(native_clang.SharedObject, cpy_srcs)
-before_test(native_clang.SharedLibrary('build/ironclad/python34', [cpy_objs, jumps_obj, stubmain_obj, msvcrt_lib, python_def], entry='DllMain'))
+cpy_srcs = glommap(lambda x: native.Glob('stub/%s/*.c' % x), cpy_src_dirs)
+cpy_objs = glommap(native.SharedObject, cpy_srcs)
+before_test(native.SharedLibrary('build/ironclad/python34', [cpy_objs, jumps_obj, stubmain_obj, msvcrt_lib, python_def], entry='DllMain'))
 
 #===============================================================================
 # Unmanaged test data
 
-before_test(native_clang.SharedLibrary('tests/data/setvalue', 'tests/data/src/setvalue.c', SHLIBSUFFIX=PYD_SUFFIX))
-before_test(native_clang.SharedLibrary('tests/data/exportsymbols', 'tests/data/src/exportsymbols.c'))
-before_test(native_clang.SharedLibrary('tests/data/fakepython', 'tests/data/src/fakepython.c',))
+before_test(native.SharedLibrary('tests/data/setvalue', 'tests/data/src/setvalue.c', SHLIBSUFFIX=PYD_SUFFIX))
+before_test(native.SharedLibrary('tests/data/exportsymbols', 'tests/data/src/exportsymbols.c'))
+before_test(native.SharedLibrary('tests/data/fakepython', 'tests/data/src/fakepython.c',))
 
 if WIN32:
     # Some tests will load and unload dlls which depend on msvcr90; if msvcr90's ref count
     # hits 0 and it gets reloaded, bad things happen. The test framework loads this dll, and
     # keeps it loaded, to prevent aforesaid bad things.
-    before_test(native_clang.SharedLibrary('tests/data/implicit-load-msvcr90', 'tests/data/src/empty.c'))
+    before_test(native.SharedLibrary('tests/data/implicit-load-msvcr90', 'tests/data/src/empty.c'))
 
 #===============================================================================
 #===============================================================================
 # This section builds the CLR part
 #===============================================================================
-managed = Environment(ENV=env_with_ippath, CSC=CSC, CPYTHON=CPYTHON, **COMMON)
-managed['BUILDERS']['Dll'] = Builder(action=CSC_CMD, suffix=MGD_DLL_SUFFIX)
+
+managed = Environment(ENV=env_with_ippath, **COMMON)
+
+def dotnet_emitter(target, source, env):
+    return [[t, str(t).removesuffix(MGD_DLL_SUFFIX) + PDB_SUFFIX] for t in target], source
+managed['BUILDERS']['Dll'] = Builder(action=MGD_BUILD_CMD, suffix=MGD_DLL_SUFFIX, emitter=dotnet_emitter)
 
 #===============================================================================
 # Generated C#
@@ -263,10 +238,9 @@ before_test(managed.Dll('build/ironclad/ironclad', ironclad_dll_src))
 # This section runs the tests, assuming you've run 'scons test'
 #===============================================================================
 
-testenv = os.environ
-testenv['IRONPYTHONPATH'] = "."
-testenv['IRONPYTHONPATH'] += os.path.pathsep + os.path.join(CPYTHON34_ROOT, "DLLs") # required to import/access dlls
-testenv['IRONPYTHONPATH'] += os.path.pathsep + os.path.join(CPYTHON34_ROOT, "Lib/site-packages") # pysvn test
-tests = Environment(ENV=testenv, **COMMON)
+tests = Environment(ENV=os.environ.copy(), **COMMON)
+tests['ENV']['IRONPYTHONPATH'] = "."
+tests.AppendENVPath('IRONPYTHONPATH', os.path.join(CPYTHON34_ROOT, "DLLs"))  # required to import/access dlls
+tests.AppendENVPath('IRONPYTHONPATH', os.path.join(CPYTHON34_ROOT, "Lib/site-packages"))  # pysvn test
 tests.AlwaysBuild(tests.Alias('test', test_deps,
     '$IPY runtests.py'))
