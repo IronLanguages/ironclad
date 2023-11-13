@@ -68,16 +68,5 @@ namespace Ironclad
         private static extern int IC_fclose(IntPtr file);
         public static int fclose(IntPtr file) { return IC_fclose(file); }
         
-        
-        // And these are here because it looked like an easy place to put them
-        // (I don't want them in python34.dll, because they are obsolete and will be removed
-        // and I don't want them anywhere else because I don't want yet another dll in the package.)
-        
-        [DllImport("python34.dll")]
-        public static extern IntPtr _Py_ActivateActCtx();
-        
-        [DllImport("python34.dll")]
-        public static extern void _Py_DeactivateActCtx(IntPtr cookie);
-        
     }
 }

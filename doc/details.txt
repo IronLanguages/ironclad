@@ -19,7 +19,7 @@ many CPython API calls into managed code.
 * ic_msvcr90.dll
 
 This dll used to allow ironclad.dll to DllImport functions from 
-msvcr90.dll and support SxS. It's tedious and ugly and slated for obsolescence
+msvcr90.dll. It's tedious and ugly and slated for obsolescence
 but at least it's self-contained.
 
 * ironclad.dll
