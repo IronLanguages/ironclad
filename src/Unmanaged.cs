@@ -70,13 +70,13 @@ namespace Ironclad
         
         
         // And these are here because it looked like an easy place to put them
-        // (I don't want them in python26.dll, because automatic loading screws up certain tests;
+        // (I don't want them in python34.dll, because they are obsolete and will be removed
         // and I don't want them anywhere else because I don't want yet another dll in the package.)
         
-        [DllImport("ic_msvcr90.dll")]
+        [DllImport("python34.dll")]
         public static extern IntPtr _Py_ActivateActCtx();
         
-        [DllImport("ic_msvcr90.dll")]
+        [DllImport("python34.dll")]
         public static extern void _Py_DeactivateActCtx(IntPtr cookie);
         
     }
