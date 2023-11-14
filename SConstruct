@@ -110,7 +110,7 @@ before_test = test_deps.append
 #===============================================================================
 #===============================================================================
 # This section builds all the unmanaged parts
-# (python34.dll, ic_msvcr90.dll, several test files)
+# (python34.dll and several test files)
 #===============================================================================
 
 if WIN32:
@@ -148,10 +148,6 @@ if WIN32:
     # Create implib for msvcrt
     msvcrt_def = native.Command('stub/msvcr100.def', MSVCR100_DLL, GENDEF_CMD)
     msvcrt_lib = native.Command('stub/msvcr100.lib', msvcrt_def, DLLTOOL_CMD, NAME='msvcr100.dll')
-
-    # Build and link ic_msvcr90.dll
-    msvcrt_obj = native.SharedObject('stub/ic_msvcr90.c')
-    before_test(native.SharedLibrary('build/ironclad/ic_msvcr90', [msvcrt_obj, msvcrt_lib], entry='DllMain'))
 else:
     msvcrt_lib = []
 
