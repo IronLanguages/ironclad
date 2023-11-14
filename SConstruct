@@ -152,14 +152,14 @@ else:
     msvcrt_lib = []
 
 # Generate data from prebuilt python dll
-exports, python_def = native.Command(['data/api/_exported_functions.generated', 'stub/python34.def'], [],
+exports, python_def = native.Command(['data/api/_exported_functions.generated', 'stub/python34.def'], ['tools/generateexports.py'],
     '$CPYTHON tools/generateexports.py $CPYTHON34_DLL data/api stub')
 
 # Generate stub code
 buildstub_names = '_extra_functions _mgd_api_data _pure_c_symbols'
 buildstub_src = [exports] + pathmap('data/api', buildstub_names)
 buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_extra_functions.generated.h')
-native.Command(buildstub_out, buildstub_src,
+native.Command(buildstub_out, buildstub_src + ['tools/generatestub.py'],
     '$CPYTHON tools/generatestub.py data/api stub')
 
 # Compile stub code
@@ -185,10 +185,10 @@ before_test(native.SharedLibrary('tests/data/exportsymbols', 'tests/data/src/exp
 before_test(native.SharedLibrary('tests/data/fakepython', 'tests/data/src/fakepython.c',))
 
 if WIN32:
-    # Some tests will load and unload dlls which depend on msvcr90; if msvcr90's ref count
+    # Some tests will load and unload dlls which depend on msvcr100; if msvcr100's ref count
     # hits 0 and it gets reloaded, bad things happen. The test framework loads this dll, and
     # keeps it loaded, to prevent aforesaid bad things.
-    before_test(native.SharedLibrary('tests/data/implicit-load-msvcr90', 'tests/data/src/empty.c'))
+    before_test(native.SharedLibrary('tests/data/implicit-load-msvcr100', 'tests/data/src/empty.c'))
 
 #===============================================================================
 #===============================================================================
@@ -209,18 +209,18 @@ api_src = managed.Glob('data/api/*')
 api_src += [stubmain_xml, exports]
 api_out_names = 'Delegates Dispatcher MagicMethods PythonApi PythonStructs'
 api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
-managed.Command(api_out, api_src,
+managed.Command(api_out, api_src + ['tools/generateapiplumbing.py'],
     '$CPYTHON tools/generateapiplumbing.py data/api src')
 
 mapper_names = [name for name in os.listdir('data/mapper') if name.startswith('_')]
 mapper_src = pathmap('data/mapper', mapper_names)
 mapper_out = submap('src/mapper/PythonMapper%s.Generated.cs', mapper_names)
-managed.Command(mapper_out, mapper_src,
+managed.Command(mapper_out, mapper_src + ['tools/generatemapper.py'],
     '$CPYTHON tools/generatemapper.py data/mapper src/mapper')
 
 snippets_src = managed.Glob('data/snippets/py/*.py')
 snippets_out = ['src/CodeSnippets.Generated.cs']
-managed.Command(snippets_out, snippets_src,
+managed.Command(snippets_out, snippets_src + ['tools/generatecodesnippets.py'],
     '$CPYTHON tools/generatecodesnippets.py data/snippets/py src')
 
 #===============================================================================
