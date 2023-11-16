@@ -100,7 +100,7 @@ CPPPATH = 'stub/Include'
 MGD_BUILD_CMD = f'{DOTNET} build --configuration {mode.title()} --nologo --output build/ironclad src/ironclad.csproj'
 CASTXML_CMD = f'{CASTXML} "$SOURCE" -o "$TARGET" --castxml-output=1 $CLANGFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS'
 
-# COMMON are globals in all used environments (native, managed, tests)
+# COMMON are globals in all used environments (native, managed, tests, etc.)
 COMMON = dict(CPYTHON=CPYTHON, IPY=IPY)
 
 test_deps = []
@@ -228,6 +228,16 @@ managed.Command(snippets_out, snippets_src + ['tools/generatecodesnippets.py'],
 
 ironclad_dll_src = list(map(managed.Glob, ('src/*.cs', 'src/mapper/*.cs')))
 before_test(managed.Dll('build/ironclad/ironclad', ironclad_dll_src))
+
+
+#===============================================================================
+#===============================================================================
+# This section installs the package initialization module (__init__.py)
+#===============================================================================
+
+pkginit = Environment(tools=['filesystem'], **COMMON)
+before_test(pkginit.CopyAs('build/ironclad/__init__.py', 'data/ironclad__init__.py'))
+
 
 #===============================================================================
 #===============================================================================
