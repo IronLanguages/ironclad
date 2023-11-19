@@ -53,7 +53,11 @@ def WithPatchedStdErr(func):
 
 
 class TestCase(unittest.TestCase):
-    
+
+    def setUp(self):
+        unittest.TestCase.setUp(self)
+        self.testDataBuildDir = tests.utils.loadassemblies.TESTDATA_BUILDDIR
+
     def tearDown(self):
         gcwait()
         unittest.TestCase.tearDown(self)

@@ -5,8 +5,8 @@ import functools
 import operator, os, sys
 import subprocess
 from SCons.Scanner.C import CScanner
-# The next import is not necessary, it's just to make linters work
-from SCons.Script import ARGUMENTS, Exit, Environment, Builder
+
+EnsurePythonVersion(3, 9)
 
 def splitstring(f):
     def g(_, s, **kwargs):
@@ -29,12 +29,20 @@ def pathmap(base, files):
 def submap(template, inserts):
     return list(map(lambda x: template % x, inserts))
 
+
+#===============================================================================
+# BUILD CONFIGURATION
+
 # To build in debug mode use:
 # scons mode=debug
 mode = ARGUMENTS.get('mode', 'release')
 if not (mode in ['debug', 'release']):
    print("Error: expected 'debug' or 'release', found: " + mode)
    Exit(1)
+
+PROJECT_DIR = Dir('#').abspath              # project root, where all commands are run
+BUILD_DIR = Dir('#').rel_path(Dir('.'))     # for intermediate build artifacts (in-source by default)
+OUT_DIR = 'build'                           # for build output (final) artifacts (default location)
 
 
 #===============================================================================
@@ -87,9 +95,9 @@ else:
 
 CPYTHON = '"' + sys.executable + '"'  # Python used to run generators from "./tools"
 
-env_with_ippath = os.environ.copy()
-env_with_ippath['IRONPYTHONPATH'] = os.getcwd()
-env_with_ippath['PYTHONPATH'] = os.getcwd()
+OS_ENV = os.environ.copy()
+OS_ENV['IRONPYTHONPATH'] = PROJECT_DIR
+OS_ENV['PYTHONPATH'] = PROJECT_DIR
 # TODO: it should not be necessary to pollute execution with entire os environment
 
 MGD_DLL_SUFFIX = '.dll'
@@ -97,11 +105,11 @@ PDB_SUFFIX = '.pdb'
 
 CPPDEFINES = 'Py_ENABLE_SHARED Py_BUILD_CORE IRONCLAD'
 CPPPATH = 'stub/Include'
-MGD_BUILD_CMD = f'{DOTNET} build --configuration {mode.title()} --nologo --output build/ironclad src/ironclad.csproj'
+MGD_BUILD_CMD = f'{DOTNET} build --configuration {mode.title()} --nologo --output ${{TARGET.dir}} $SOURCE'
 CASTXML_CMD = f'{CASTXML} "$SOURCE" -o "$TARGET" --castxml-output=1 $CLANGFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS'
 
 # COMMON are globals in all used environments (native, managed, tests, etc.)
-COMMON = dict(CPYTHON=CPYTHON, IPY=IPY)
+COMMON = dict(CPYTHON=CPYTHON, IPY=IPY, BUILD_DIR=BUILD_DIR, OUT_DIR=OUT_DIR)
 
 test_deps = []
 before_test = test_deps.append
@@ -114,7 +122,7 @@ before_test = test_deps.append
 #===============================================================================
 
 if WIN32:
-    native = Environment(ENV=env_with_ippath, tools=NATIVE_TOOLS, CC='clang-cl', LINK='lld-link',
+    native = Environment(ENV=OS_ENV, tools=NATIVE_TOOLS, CC='clang-cl', LINK='lld-link',
                          CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
     native.Append(
         ASFLAGS         = ASFLAGS,
@@ -137,9 +145,10 @@ if WIN32:
 
     native['BUILDERS']['CastXml'] = Builder(action=CASTXML_CMD, source_scanner=CScanner(), suffix='.xml', CPPDEFPREFIX='-D', INCPREFIX='-I')
 else:
-    native = Environment(ENV=env_with_ippath, tools=NATIVE_TOOLS,
+    native = Environment(ENV=OS_ENV, tools=NATIVE_TOOLS,
                          CPYTHON=CPYTHON, CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
     # TODO: linux, darwin
+
 
 #===============================================================================
 # Unmanaged libraries for build/ironclad
@@ -152,15 +161,17 @@ else:
     msvcrt_lib = []
 
 # Generate data from prebuilt python dll
-exports, python_def = native.Command(['data/api/_exported_functions.generated', 'stub/python34.def'], ['tools/generateexports.py'],
-    '$CPYTHON tools/generateexports.py $CPYTHON34_DLL data/api stub')
+exports, python_def = native.Command(['data/api/_exported_functions.generated', 'stub/python34.def'], [],
+    '$CPYTHON tools/generateexports.py $CPYTHON34_DLL $BUILD_DIR/data/api $BUILD_DIR/stub')
+native.Depends([exports, python_def], '#tools/generateexports.py')
 
 # Generate stub code
 buildstub_names = '_extra_functions _mgd_api_data _pure_c_symbols'
 buildstub_src = [exports] + pathmap('data/api', buildstub_names)
 buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_extra_functions.generated.h')
-native.Command(buildstub_out, buildstub_src + ['tools/generatestub.py'],
-    '$CPYTHON tools/generatestub.py data/api stub')
+native.Command(buildstub_out, buildstub_src,
+    '$CPYTHON tools/generatestub.py $BUILD_DIR/data/api $BUILD_DIR/stub')
+native.Depends(buildstub_out, '#tools/generatestub.py')
 
 # Compile stub code
 # SharedObject builder does not support assembly code
@@ -175,7 +186,7 @@ stubmain_xml = native.CastXml('data/api/_stubmain.generated.xml', 'stub/stubmain
 cpy_src_dirs = 'Modules Objects Parser Python'
 cpy_srcs = glommap(lambda x: native.Glob('stub/%s/*.c' % x), cpy_src_dirs)
 cpy_objs = glommap(native.SharedObject, cpy_srcs)
-before_test(native.SharedLibrary('build/ironclad/python34', [cpy_objs, jumps_obj, stubmain_obj, msvcrt_lib, python_def], entry='DllMain'))
+before_test(native.SharedLibrary('#$OUT_DIR/ironclad/python34', [cpy_objs, jumps_obj, stubmain_obj, msvcrt_lib, python_def], entry='DllMain'))
 
 #===============================================================================
 # Unmanaged test data
@@ -190,12 +201,13 @@ if WIN32:
     # keeps it loaded, to prevent aforesaid bad things.
     before_test(native.SharedLibrary('tests/data/implicit-load-msvcr100', 'tests/data/src/empty.c'))
 
+
 #===============================================================================
 #===============================================================================
 # This section builds the CLR part
 #===============================================================================
 
-managed = Environment(ENV=env_with_ippath, **COMMON)
+managed = Environment(ENV=OS_ENV, **COMMON)
 
 def dotnet_emitter(target, source, env):
     return [[t, str(t).removesuffix(MGD_DLL_SUFFIX) + PDB_SUFFIX] for t in target], source
@@ -205,29 +217,31 @@ managed['BUILDERS']['Dll'] = Builder(action=MGD_BUILD_CMD, suffix=MGD_DLL_SUFFIX
 # Generated C#
 
 api_src = managed.Glob('data/api/*')
-# Glob runs before the build so during a clean build it won't pick up generated files
-api_src += [stubmain_xml, exports]
 api_out_names = 'Delegates Dispatcher MagicMethods PythonApi PythonStructs'
 api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
-managed.Command(api_out, api_src + ['tools/generateapiplumbing.py'],
-    '$CPYTHON tools/generateapiplumbing.py data/api src')
+managed.Command(api_out, api_src,
+    '$CPYTHON tools/generateapiplumbing.py $BUILD_DIR/data/api $BUILD_DIR/src')
+managed.Depends(api_out, '#tools/generateapiplumbing.py')
 
-mapper_names = [name for name in os.listdir('data/mapper') if name.startswith('_')]
-mapper_src = pathmap('data/mapper', mapper_names)
-mapper_out = submap('src/mapper/PythonMapper%s.Generated.cs', mapper_names)
-managed.Command(mapper_out, mapper_src + ['tools/generatemapper.py'],
-    '$CPYTHON tools/generatemapper.py data/mapper src/mapper')
+mapper_src = managed.Glob('data/mapper/_*')
+mapper_out = submap('src/mapper/PythonMapper%s.Generated.cs', map(lambda x: x.name, mapper_src))
+managed.Command(mapper_out, mapper_src,
+    '$CPYTHON tools/generatemapper.py $BUILD_DIR/data/mapper $BUILD_DIR/src/mapper')
+managed.Depends(mapper_out, '#tools/generatemapper.py')
 
 snippets_src = managed.Glob('data/snippets/py/*.py')
 snippets_out = ['src/CodeSnippets.Generated.cs']
-managed.Command(snippets_out, snippets_src + ['tools/generatecodesnippets.py'],
-    '$CPYTHON tools/generatecodesnippets.py data/snippets/py src')
+managed.Command(snippets_out, snippets_src,
+    '$CPYTHON tools/generatecodesnippets.py $BUILD_DIR/data/snippets/py $BUILD_DIR/src')
+managed.Depends(snippets_out, '#tools/generatecodesnippets.py')
 
 #===============================================================================
 # Build the actual managed library
 
 ironclad_dll_src = list(map(managed.Glob, ('src/*.cs', 'src/mapper/*.cs')))
-before_test(managed.Dll('build/ironclad/ironclad', ironclad_dll_src))
+ironclad_dll = managed.Dll('#$OUT_DIR/ironclad/ironclad', 'src/ironclad.csproj')
+managed.Depends(ironclad_dll, ironclad_dll_src)
+before_test(ironclad_dll)
 
 
 #===============================================================================
@@ -236,7 +250,7 @@ before_test(managed.Dll('build/ironclad/ironclad', ironclad_dll_src))
 #===============================================================================
 
 pkginit = Environment(tools=['filesystem'], **COMMON)
-before_test(pkginit.CopyAs('build/ironclad/__init__.py', 'data/ironclad__init__.py'))
+before_test(pkginit.CopyAs('#$OUT_DIR/ironclad/__init__.py', 'data/ironclad__init__.py'))
 
 
 #===============================================================================
@@ -244,9 +258,11 @@ before_test(pkginit.CopyAs('build/ironclad/__init__.py', 'data/ironclad__init__.
 # This section runs the tests, assuming you've run 'scons test'
 #===============================================================================
 
-tests = Environment(ENV=os.environ.copy(), **COMMON)
-tests['ENV']['IRONPYTHONPATH'] = "."
+tests = Environment(ENV=OS_ENV, **COMMON)
+tests['ENV']['TESTDATA_BUILDDIR'] = os.path.join(BUILD_DIR, "tests", "data")
+tests.PrependENVPath('IRONPYTHONPATH', OUT_DIR)  # to find ironclad
 tests.AppendENVPath('IRONPYTHONPATH', os.path.join(CPYTHON34_ROOT, "DLLs"))  # required to import/access dlls
-tests.AppendENVPath('IRONPYTHONPATH', os.path.join(CPYTHON34_ROOT, "Lib/site-packages"))  # pysvn test
+tests.AppendENVPath('IRONPYTHONPATH', os.path.join(CPYTHON34_ROOT, "Lib", "site-packages"))  # pysvn test
+
 tests.AlwaysBuild(tests.Alias('test', test_deps,
     '$IPY runtests.py'))

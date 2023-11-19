@@ -8,7 +8,7 @@ from tools.utils.dllreader import DllReader
 class DllReaderTest(TestCase):
 
     def testInit(self):
-        sm = DllReader('tests/data/exportsymbols.dll')
+        sm = DllReader(self.testDataBuildDir + '/exportsymbols.dll')
         self.assertSequenceEqual(sm.functions, ['Func', 'Funk', 'Jazz'])
         self.assertSequenceEqual(sm.data, ['Alphabetised', 'AnotherExportedSymbol', 'ExportedSymbol'])
 

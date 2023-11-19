@@ -3,22 +3,22 @@ import os
 from tests.utils.runtest import makesuite, run
 
 from tests.utils.gc import gcwait
+from tests.utils.loadassemblies import CPYTHONSTUB_DLL
 from tests.utils.testcase import TestCase
 
 from Ironclad import dgt_getfuncptr, dgt_registerdata, Unmanaged, StubReference
 from System import IntPtr
 
-PYTHON_DLL = "python34.dll"
-DLL_PATH = os.path.join("build", "ironclad", PYTHON_DLL)
+CPYTHONSTUB_DLL_NAME = os.path.basename(CPYTHONSTUB_DLL)
 
 class StubReferenceTest(TestCase):
 
     def testMapInitUnmapLibrary(self):
-        self.assertEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+        self.assertEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
                           "library already mapped")
 
-        sr = StubReference(DLL_PATH)
-        self.assertNotEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+        sr = StubReference(CPYTHONSTUB_DLL)
+        self.assertNotEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
                           "library not mapped by construction")
 
         fpCalls = []
@@ -37,7 +37,7 @@ class StubReferenceTest(TestCase):
         self.assertEqual(len(dataCalls) > 0, True, "did not set any data")
 
         sr.Dispose()
-        self.assertEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+        self.assertEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
                           "library not unmapped on dispose")
 
         sr.Dispose()
@@ -45,17 +45,17 @@ class StubReferenceTest(TestCase):
         
         
     def testUnmapsAutomagically(self):
-        sr = StubReference(DLL_PATH)
-        self.assertNotEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+        sr = StubReference(CPYTHONSTUB_DLL)
+        self.assertNotEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
                           "library not mapped by construction")
         del sr
         gcwait()
-        self.assertEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+        self.assertEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
                           "library not unmapped on finalize")
         
 
     def testLoadBuiltinModule(self):
-        sr = StubReference(os.path.join("tests", "data", "fakepython.dll"))
+        sr = StubReference(os.path.join(self.testDataBuildDir, "fakepython.dll"))
         sr.LoadBuiltinModule('somecrazymodule') # if func not found and callable, error
         sr.Dispose()
         

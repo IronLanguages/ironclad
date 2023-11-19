@@ -12,14 +12,14 @@ from Ironclad import CPyMarshal, PydImporter, Unmanaged
 class PydImporterTest(TestCase):
 
     def testCallsAppropriatelyNamedInitFunctionAndUnloadsWhenDone(self):
-        l = Unmanaged.LoadLibrary("tests\\data\\setvalue.pyd")
+        l = Unmanaged.LoadLibrary(self.testDataBuildDir + "\\setvalue.pyd")
         try:
             pValue = Unmanaged.GetProcAddress(l, "value")
             value = CPyMarshal.ReadInt(pValue)
             self.assertEqual(value, 1, "bad setup")
 
             pi = PydImporter()
-            pi.Load("tests\\data\\setvalue.pyd")
+            pi.Load(self.testDataBuildDir + "\\setvalue.pyd")
         finally:
             # lose test reference to setvalue.pyd
             # only the PydImporter should still have a reference to it
@@ -38,7 +38,7 @@ class PydImporterTest(TestCase):
     
     def testUnloadsAutomagically(self):
         pi = PydImporter()
-        pi.Load("tests\\data\\setvalue.pyd")
+        pi.Load(self.testDataBuildDir + "\\setvalue.pyd")
         del pi
         gcwait()
         self.assertEqual(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,

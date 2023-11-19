@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 
+from tests.utils.loadassemblies import CPYTHONSTUB_DLL
 from tests.utils.process import spawn
 from tests.utils.runtest import automakesuite, run
 from tests.utils.testcase import TestCase
@@ -22,7 +23,7 @@ class PythonStubTest(TestCase):
     def testPythonStub(self):
         path = os.path.join('tests', 'data', 'python34-pexports')
         python34exports = read_set(path)
-        generatedExports = GetPexportsLines("build/ironclad/python34.dll")
+        generatedExports = GetPexportsLines(CPYTHONSTUB_DLL)
         if not generatedExports:
             self.skipTest("pexports not found")
         self.assertEqual(python34exports - generatedExports, set())

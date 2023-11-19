@@ -4,6 +4,7 @@ import sys
 import shutil
 import tempfile
 from textwrap import dedent
+from tests.utils.loadassemblies import CPYTHONSTUB_DLL
 from tests.utils.runtest import automakesuite, run
 from tests.utils.testcase import TestCase
 from tests.utils.functionaltestcase import FunctionalTestCase
@@ -41,8 +42,6 @@ bz2_test_data = 'BZh91AY&SYM\xf6FM\x00!\xd9\x95\x80@\x01\x00 \x06A\x90\xa0 \x00\
 
 bz2_test_line = "I wonder why. I wonder why. I wonder why I wonder why.\n"
 bz2_test_text_lines = bz2_test_line * 1000
-
-DLL_PATH = os.path.join("build", "ironclad", "python34.dll")
  
 
 def ModuleTestCase(module):
@@ -51,7 +50,7 @@ def ModuleTestCase(module):
     class _ModuleTestCase(TestCase):
         __name__ = module + 'Test'
         def assertRuns(self, test_code=''): 
-            mapper = PythonMapper(DLL_PATH)
+            mapper = PythonMapper(CPYTHONSTUB_DLL)
             try:
                 exec('\n'.join([import_code, test_code]), globals(), locals_)
             finally:

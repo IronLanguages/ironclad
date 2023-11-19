@@ -6,6 +6,7 @@ from tests.utils.runtest import makesuite, run
 from tests.utils.allocators import GetAllocatingTestAllocator, GetDoNothingTestAllocator
 from tests.utils.cpython import MakeTypePtr
 from tests.utils.gc import gcwait
+from tests.utils.loadassemblies import CPYTHONSTUB_DLL
 from tests.utils.memory import CreateTypes, PtrToStructure
 from tests.utils.pythonmapper import MakeAndAddEmptyModule
 from tests.utils.testcase import TestCase, WithMapper
@@ -20,8 +21,7 @@ from Ironclad import (
 )
 from Ironclad.Structs import PyObject, PyTypeObject
 
-PYTHON_DLL = "python34.dll"
-DLL_PATH = os.path.join("build", "ironclad", PYTHON_DLL)
+CPYTHONSTUB_DLL_NAME = os.path.basename(CPYTHONSTUB_DLL)
 
 class PythonMapper_CreateDestroy_Test(TestCase):
     
@@ -35,9 +35,9 @@ class PythonMapper_CreateDestroy_Test(TestCase):
         
     
     def testLoadsStubWhenPassedPathAndUnloadsOnDispose(self):
-        mapper = PythonMapper(DLL_PATH)
+        mapper = PythonMapper(CPYTHONSTUB_DLL)
         try:
-            self.assertNotEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+            self.assertNotEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
                                  "library not mapped by construction")
             self.assertNotEqual(PythonMapper._Py_NoneStruct, IntPtr.Zero,
                                  "mapping not set up")
@@ -46,17 +46,17 @@ class PythonMapper_CreateDestroy_Test(TestCase):
             self.assertEqual(CPyMarshal.ReadPtrField(mapper.PyLong_Type, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
 
             mapper.Dispose()
-            self.assertEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+            self.assertEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
                               "library not unmapped by Dispose")
         finally:
             mapper.Dispose()
         
     
     def testLoadsModuleAndUnloadsOnDispose(self):
-        mapper = PythonMapper(DLL_PATH)
+        mapper = PythonMapper(CPYTHONSTUB_DLL)
         try:
             origcwd = os.getcwd()
-            mapper.LoadModule(os.path.join("tests", "data", "setvalue.pyd"), "some.module")
+            mapper.LoadModule(os.path.join(self.testDataBuildDir, "setvalue.pyd"), "some.module")
             self.assertEqual(os.getcwd(), origcwd, "failed to restore working directory")
             self.assertNotEqual(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                                  "library not mapped by construction")
@@ -64,14 +64,14 @@ class PythonMapper_CreateDestroy_Test(TestCase):
             mapper.Dispose()
             self.assertEqual(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
                               "library not unmapped by Dispose")
-            self.assertEqual(Unmanaged.GetModuleHandle(PYTHON_DLL), IntPtr.Zero,
+            self.assertEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
                               "library not unmapped by Dispose")
         finally:
             mapper.Dispose()
     
     
     def testRemovesMmapOnDispose(self):
-        mapper = PythonMapper(DLL_PATH)
+        mapper = PythonMapper(CPYTHONSTUB_DLL)
         try:
             sys.modules['csv'] = object()
             mapper.Dispose()
