@@ -289,8 +289,7 @@ class Types_Test(TestCase):
         self.assertEqual(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_bases"), IntPtr.Zero)
         self.assertEqual(CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_as_number"), IntPtr.Zero)
 
-        namePtr = CPyMarshal.ReadPtrField(cPtr, PyTypeObject, "tp_name")
-        self.assertEqual(mapper.Retrieve(namePtr), "cantankerous.cochineal")
+        self.assertEqual(CPyMarshal.ReadCStringField(cPtr, PyTypeObject, "tp_name"), "cantankerous.cochineal")
 
         baseFlags = CPyMarshal.ReadIntField(cPtr, PyTypeObject, "tp_flags")
         self.assertEqual(baseFlags & UInt32(Py_TPFLAGS.READY), UInt32(Py_TPFLAGS.READY), "did not ready newly-stored type")

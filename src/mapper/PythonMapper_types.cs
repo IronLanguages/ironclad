@@ -254,8 +254,8 @@ namespace Ironclad
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.ob_type), this.Store(ob_type));
             
             string tp_name = (string)_type.__getattribute__(this.scratchContext, "__name__");
-            CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_name), this.Store(tp_name));
-            
+            CPyMarshal.WriteCStringField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_name), tp_name); // TODO: should it be UTF-8?
+
             PythonTuple tp_bases = (PythonTuple)_type.__getattribute__(this.scratchContext, "__bases__");
             object tp_base = tp_bases[0];
             CPyMarshal.WritePtrField(typePtr, typeof(PyTypeObject), nameof(PyTypeObject.tp_base), this.Store(tp_base));
