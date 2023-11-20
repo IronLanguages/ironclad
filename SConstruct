@@ -1,3 +1,14 @@
+# Main Ironclad build script
+#
+# Builds one configuration/framework/platform combination.
+# By default the build is in-source (intermediate build artifacts are placed next to source files).
+# The build output is placed in directory 'build'.
+# Recognizes one command-line build variable 'mode'
+# which can have values 'release' (default) or 'debug'
+# To build in-source in debug mode use:
+# scons mode=debug
+
+
 #===============================================================================
 # Various useful functions
 
@@ -33,8 +44,6 @@ def submap(template, inserts):
 #===============================================================================
 # BUILD CONFIGURATION
 
-# To build in debug mode use:
-# scons mode=debug
 mode = ARGUMENTS.get('mode', 'release')
 if not (mode in ['debug', 'release']):
    print("Error: expected 'debug' or 'release', found: " + mode)
@@ -43,6 +52,7 @@ if not (mode in ['debug', 'release']):
 PROJECT_DIR = Dir('#').abspath              # project root, where all commands are run
 BUILD_DIR = Dir('#').rel_path(Dir('.'))     # for intermediate build artifacts (in-source by default)
 OUT_DIR = 'build'                           # for build output (final) artifacts (default location)
+Import('*')                                 # can override aby of the variables above
 
 
 #===============================================================================
@@ -251,6 +261,7 @@ if managed.GetOption('clean'):
     managed.Execute(managed.subst(MGD_CLEAN_CMD,
                                   target=File('$PROJECT_DIR/$OUT_DIR/ironclad/ironclad'),
                                   source=File('src/ironclad.csproj')))
+
 
 #===============================================================================
 #===============================================================================
