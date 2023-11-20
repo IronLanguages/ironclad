@@ -105,11 +105,13 @@ PDB_SUFFIX = '.pdb'
 
 CPPDEFINES = 'Py_ENABLE_SHARED Py_BUILD_CORE IRONCLAD'
 CPPPATH = 'stub/Include'
-MGD_BUILD_CMD = f'{DOTNET} build --configuration {mode.title()} --nologo --output ${{TARGET.dir}} $SOURCE'
+DOTNET_CMD = f'{DOTNET} %(cmd)s --configuration {mode.title()} --nologo --output ${{TARGET.dir}} $SOURCE'
+MGD_BUILD_CMD = DOTNET_CMD % {'cmd' : 'build'}
+MGD_CLEAN_CMD = DOTNET_CMD % {'cmd' : 'clean'}
 CASTXML_CMD = f'{CASTXML} "$SOURCE" -o "$TARGET" --castxml-output=1 $CLANGFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS'
 
 # COMMON are globals in all used environments (native, managed, tests, etc.)
-COMMON = dict(CPYTHON=CPYTHON, IPY=IPY, BUILD_DIR=BUILD_DIR, OUT_DIR=OUT_DIR)
+COMMON = dict(CPYTHON=CPYTHON, IPY=IPY, BUILD_DIR=BUILD_DIR, OUT_DIR=OUT_DIR, PROJECT_DIR=PROJECT_DIR)
 
 test_deps = []
 before_test = test_deps.append
@@ -243,6 +245,12 @@ ironclad_dll = managed.Dll('#$OUT_DIR/ironclad/ironclad', 'src/ironclad.csproj')
 managed.Depends(ironclad_dll, ironclad_dll_src)
 before_test(ironclad_dll)
 
+if managed.GetOption('clean'):
+    # 'Execute' runs while reading the SCons script (before actual build)
+    # and in the variant dir (BUILD_DIR)
+    managed.Execute(managed.subst(MGD_CLEAN_CMD,
+                                  target=File('$PROJECT_DIR/$OUT_DIR/ironclad/ironclad'),
+                                  source=File('src/ironclad.csproj')))
 
 #===============================================================================
 #===============================================================================
