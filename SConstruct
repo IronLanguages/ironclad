@@ -48,6 +48,7 @@ mode = ARGUMENTS.get('mode', 'release')
 if not (mode in ['debug', 'release']):
    print("Error: expected 'debug' or 'release', found: " + mode)
    Exit(1)
+fmwk = 'net462'
 
 PROJECT_DIR = Dir('#').abspath              # project root, where all commands are run
 BUILD_DIR = Dir('#').rel_path(Dir('.'))     # for intermediate build artifacts (in-source by default)
@@ -72,10 +73,13 @@ if WIN32:
     # where to find/how to invoke executables
     CASTXML = r'castxml'
     DOTNET = r'dotnet'
-    IPY = r'"C:\ironclad\IronPython.3.4.1\net462\ipy.exe"'  # try to use private build
+    IPY = rf'"C:\ironclad\IronPython.3.4.1\{fmwk}\ipy.exe"'  # try to use private build
     if not os.path.exists(IPY):
         # use standard location
-        IPY = r'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
+        if fmwk.startswith('net4'):
+            IPY = r'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
+        else:
+            IPY = rf'"{os.environ["USERPROFILE"]}\.dotnet\tools\ipy.exe"'
 
     #==================================================================
     # These variables should only be necessary on win32
@@ -115,7 +119,7 @@ PDB_SUFFIX = '.pdb'
 
 CPPDEFINES = 'Py_ENABLE_SHARED Py_BUILD_CORE IRONCLAD'
 CPPPATH = 'stub/Include'
-DOTNET_CMD = f'{DOTNET} %(cmd)s --configuration {mode.title()} --nologo --output ${{TARGET.dir}} $SOURCE'
+DOTNET_CMD = f'{DOTNET} %(cmd)s --configuration {mode.title()} --framework {fmwk} --nologo --output ${{TARGET.dir}} $SOURCE'
 MGD_BUILD_CMD = DOTNET_CMD % {'cmd' : 'build'}
 MGD_CLEAN_CMD = DOTNET_CMD % {'cmd' : 'clean'}
 CASTXML_CMD = f'{CASTXML} "$SOURCE" -o "$TARGET" --castxml-output=1 $CLANGFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS'

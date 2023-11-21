@@ -35,6 +35,8 @@ RUN \
     choco install -y vcredist2010; \
     choco install -y python3 --version 3.4.4.20200110; \
     choco install -y ironpython --version 3.4.1; \
+    New-Item -Path C:\ProgramData\chocolatey\bin -Name ipyfmwk.exe -ItemType SymbolicLink -Value C:\ProgramData\chocolatey\bin\ipy.exe; \
+    dotnet tool install --global ironpython.console --version 3.4.1; \
     ;
 
 SHELL ["cmd.exe", "/C"]

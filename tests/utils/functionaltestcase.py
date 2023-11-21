@@ -3,8 +3,13 @@ import shutil
 import sys
 import tempfile
 
+from tests.utils.testenv import is_netcoreapp
+
+if is_netcoreapp:
+    import clr
+    clr.AddReference("System.Diagnostics.Process")
+
 from System.Diagnostics import Process
-from System.Threading import Thread
 
 from textwrap import dedent
 from tests.utils.testcase import TestCase
@@ -58,21 +63,21 @@ class FunctionalTestCase(TestCase):
             code = self.TEMPLATE % code
         self.write("test-code.py", code)
         
-        process = Process()
-        process.StartInfo.FileName = interpreter
-        process.StartInfo.Arguments = "%s test-code.py" % insert_args
-        process.StartInfo.WorkingDirectory = self.testDir
-        process.StartInfo.UseShellExecute = False
-        process.StartInfo.RedirectStandardOutput = process.StartInfo.RedirectStandardError = True
+        with Process() as process:
+            process.StartInfo.FileName = interpreter
+            process.StartInfo.Arguments = "%s test-code.py" % insert_args
+            process.StartInfo.WorkingDirectory = self.testDir
+            process.StartInfo.UseShellExecute = False
+            process.StartInfo.RedirectStandardOutput = process.StartInfo.RedirectStandardError = True
 
-        process.Start()
-        process.WaitForExit(600000)
-        if not process.HasExited:
-            process.Kill()
-        output = process.StandardOutput.ReadToEnd()
-        error = process.StandardError.ReadToEnd()
+            process.Start()
+            process.WaitForExit(600000)
+            if not process.HasExited:
+                process.Kill()
+            output = process.StandardOutput.ReadToEnd()
+            error = process.StandardError.ReadToEnd()
 
-        return process.ExitCode, output, error
+            return process.ExitCode, output, error
 
 
     def assertRuns(self, code, interpreter=None, insert_args=''):

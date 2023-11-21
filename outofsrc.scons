@@ -10,7 +10,7 @@ import os
 
 vars = Variables(None, ARGUMENTS)
 vars.Add(ListVariable('configuration', help='build configuration', default='release', names=['release', 'debug']))
-vars.Add(ListVariable('framework', help='.NET platform to target', default='net462', names=['net462']))
+vars.Add(ListVariable('framework', help='.NET platform to target', default='net462', names=['net462', 'net6.0']))
 
 env = Environment(variables=vars)
 unknown = vars.UnknownVariables()
@@ -31,4 +31,4 @@ for mode in env['configuration'].data:
         OUT_DIR = os.path.join(OUT_DIR_ROOT, TARGET_PATH)
         Help(f"\nOut dir: {OUT_DIR}\n")
         Help(f"Build dir: {BUILD_DIR}\n")
-        SConscript('SConstruct', variant_dir=BUILD_DIR, duplicate=True, exports='mode OUT_DIR')
+        SConscript('SConstruct', variant_dir=BUILD_DIR, duplicate=True, exports='mode fmwk OUT_DIR')
