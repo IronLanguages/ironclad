@@ -12,9 +12,9 @@ At the moment it does compile using up to date components and passes
 most of internal tests. Most of the remaining work is tracked under Issues.
 
 ```
-Ran 428 tests in 46.569s
+Ran 423 tests in 46.953s
 
-FAILED (failures=1, errors=8, skipped=2)
+FAILED (errors=7, skipped=2)
 scons: done building targets.
 ```
 
@@ -41,6 +41,7 @@ To run all tests:
 ```
 scons test
 ```
+Run `scons -h` for info on all supported build variables, options, and where the artifacts for the current build(s) are placed. Build variables on the command line are placed without leading dashes and with an equal sign, e.g. `scons framework=all`.
 
 === Previous build instructions ===
 
