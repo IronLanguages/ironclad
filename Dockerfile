@@ -20,17 +20,38 @@ RUN Invoke-WebRequest -UseBasicParsing https://github.com/brechtsanders/winlibs_
     Remove-Item winlibs.zip; \
     setx /M PATH $($env:PATH + ';C:\mingw64\bin')
 
+# Install Chocolatey and other tools bootstraping the rest of installation
 RUN Set-ExecutionPolicy Bypass -Scope Process -Force; \
     # ensure a minimum of TLS 1.2
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; \
-    iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')); \
-        choco install -y python311
+    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')); \
+        choco install -y python311; \
+        choco install -y 7zip; \
+        ;
 
+# Install "Windows® SDK for Windows® 7 and .NET Framework 4"
+RUN Invoke-WebRequest -UseBasicParsing https://download.microsoft.com/download/F/1/0/F10113F5-B750-4969-A255-274341AC6BCE/GRMSDKX_EN_DVD.iso -OutFile GRMSDKX_EN_DVD.iso; \
+    7z.exe x -oWin71SDK GRMSDKX_EN_DVD.iso; \
+    Remove-Item GRMSDKX_EN_DVD.iso; \
+    Write-Output 'Installing Windows 7 SDK, it can take a while...'; \
+    Start-Process \Win71SDK\setup.exe '-q -params:ADDLOCAL=ALL' -NoNewWindow -Wait; \
+    Remove-Item -Recurse Win71SDK; \
+    ;
+
+# Install "Microsoft Visual C++ 2010 Service Pack 1 Compiler Update for the Windows SDK 7.1"
+RUN Invoke-WebRequest -UseBasicParsing https://download.microsoft.com/download/7/5/0/75040801-126C-4591-BCE4-4CD1FD1499AA/VC-Compiler-KB2519277.exe -OutFile VC-Compiler-KB2519277.exe; \
+    Write-Output 'Installing MSVC 2010 SP1...'; \
+    Start-Process \VC-Compiler-KB2519277.exe '-q' -NoNewWindow -Wait; \
+    Remove-Item VC-Compiler-KB2519277.exe; \
+    ;
+
+# Install Python packages
 RUN py -m pip install --upgrade pip; \
     py -m pip install scons; \
     py -m pip install castxml pygccxml; \
     ;
 
+# Install IronPython and build dependencies
 RUN \
     choco install -y vcredist2010; \
     choco install -y python3 --version 3.4.4.20200110; \
@@ -40,4 +61,4 @@ RUN \
     ;
 
 SHELL ["cmd.exe", "/C"]
-CMD "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64 && powershell
+CMD powershell.exe
