@@ -94,10 +94,19 @@ if WIN32:
 
     # Find root of CPython installation, used for exports generation and to find DLLs/packages for testing
     # Note: this has to be 64-bit version of CPython 3.4
-    CPYTHON34_ROOT = subprocess.check_output(['py.exe', '-3.4-64', '-c', 'import sys, os; print(os.path.dirname(os.path.abspath(sys.executable)))'], universal_newlines=True).strip()
+    CPYTHON34_ROOT = Path(subprocess.check_output(['py.exe', '-3.4-64', '-c', 'import sys, os; print(os.path.dirname(os.path.abspath(sys.executable)))'], universal_newlines=True).strip())
     # If it fails, change to match your installation; by default it is C:\Python34
-    #CPYTHON34_ROOT = R'C:\Python34'
-    CPYTHON34_DLL = os.path.join(CPYTHON34_ROOT, 'python34.dll')
+    #CPYTHON34_ROOT = Path(R'C:\Python34')
+
+    # Find Python DLL
+    CPYTHON34_DLL_NAME = Path('python34.dll')
+    CPYTHON34_DLL = CPYTHON34_ROOT / CPYTHON34_DLL_NAME
+    if not CPYTHON34_DLL.exists():
+        # it can be somewhere else
+        CPYTHON34_DLL = Path(os.environ['SystemRoot']) / "System32" / CPYTHON34_DLL_NAME
+    if not CPYTHON34_DLL.exists():
+        print(f"error: {CPYTHON34_DLL_NAME} not found")
+        Exit(1)
 
     # Check if we have MSVC 16.0 and Win7 SDK
     VC16_INSTALLDIR = R'C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC'
@@ -325,8 +334,8 @@ before_test(pkginit.CopyAs('#$OUT_DIR/ironclad/__init__.py', 'data/ironclad__ini
 tests = Environment(ENV=OS_ENV, **COMMON)
 tests['ENV']['TESTDATA_BUILDDIR'] = os.path.join(BUILD_DIR, "tests", "data")
 tests.PrependENVPath('IRONPYTHONPATH', OUT_DIR)  # to find ironclad
-tests.AppendENVPath('IRONPYTHONPATH', os.path.join(CPYTHON34_ROOT, "DLLs"))  # required to import/access dlls
-tests.AppendENVPath('IRONPYTHONPATH', os.path.join(CPYTHON34_ROOT, "Lib", "site-packages"))  # pysvn test
+tests.AppendENVPath('IRONPYTHONPATH', CPYTHON34_ROOT / "DLLs")  # required to import/access dlls
+tests.AppendENVPath('IRONPYTHONPATH', CPYTHON34_ROOT / "Lib" / "site-packages")  # pysvn test
 
 tests.AlwaysBuild(tests.Alias('test', test_deps,
     '$IPY runtests.py'))
