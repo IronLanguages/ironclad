@@ -3,10 +3,10 @@
 # Builds one configuration/framework/platform combination.
 # By default the build is in-source (intermediate build artifacts are placed next to source files).
 # The build output is placed in directory 'build'.
-# Recognizes one command-line build variable 'mode'
+# Recognizes one command-line build variable 'MODE'
 # which can have values 'release' (default) or 'debug'
-# To build in-source in debug mode use:
-# scons -f main.scons mode=debug
+# To build in-source in debug MODE use:
+# scons -f main.scons MODE=debug
 
 
 #===============================================================================
@@ -45,11 +45,11 @@ def submap(template, inserts):
 #===============================================================================
 # BUILD CONFIGURATION
 
-mode = ARGUMENTS.get('mode', 'release')
-if not (mode in ['debug', 'release']):
-   print("Error: expected 'debug' or 'release', found: " + mode)
+MODE = ARGUMENTS.get('mode', 'release')
+if not (MODE in ['debug', 'release']):
+   print("Error: expected 'debug' or 'release', found: " + MODE)
    Exit(1)
-fmwk = 'net462'
+FMWK = 'net462'
 
 PROJECT_DIR = Dir('#').abspath              # project root, where all commands are run
 BUILD_DIR = Dir('#').rel_path(Dir('.'))     # for intermediate build artifacts (in-source by default)
@@ -74,10 +74,10 @@ if WIN32:
     # where to find/how to invoke executables
     CASTXML = R'castxml'
     DOTNET = R'dotnet'
-    IPY = Rf'"C:\ironclad\IronPython.3.4.1\{fmwk}\ipy.exe"'  # try to use private build
+    IPY = Rf'"C:\ironclad\IronPython.3.4.1\{FMWK}\ipy.exe"'  # try to use private build
     if not os.path.exists(IPY):
         # use standard location
-        if fmwk.startswith('net4'):
+        if FMWK.startswith('net4'):
             IPY = R'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
         else:
             IPY = Rf'"{os.environ["USERPROFILE"]}\.dotnet\tools\ipy.exe"'
@@ -111,7 +111,7 @@ if WIN32:
     # Check if we have MSVC 16.0 and Win7 SDK
     VC16_INSTALLDIR = R'C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC'
     WINDOWS7_SDKDIR = R'C:\Program Files\Microsoft SDKs\Windows\v7.1'
-    if use_msvc1600 and not (os.path.exists(VC16_INSTALLDIR + R'\bin\amd64') and os.path.exists(WINDOWS7_SDKDIR)):
+    if USE_MSVC1600 and not (os.path.exists(VC16_INSTALLDIR + R'\bin\amd64') and os.path.exists(WINDOWS7_SDKDIR)):
         print('Cannot build using MSVC v16.0: installation of MSVC 16.0 and/or Windows 7 SDK not found')
         Exit(1)
 else:
@@ -136,7 +136,7 @@ PDB_SUFFIX = '.pdb'
 
 CPPDEFINES = 'Py_ENABLE_SHARED Py_BUILD_CORE IRONCLAD'
 CPPPATH = 'stub/Include'
-DOTNET_CMD = f'{DOTNET} %(cmd)s --configuration {mode.title()} --framework {fmwk} --nologo --output ${{TARGET.dir}} $SOURCE'
+DOTNET_CMD = f'{DOTNET} %(cmd)s --configuration {MODE.title()} --framework {FMWK} --nologo --output ${{TARGET.dir}} $SOURCE'
 MGD_BUILD_CMD = DOTNET_CMD % {'cmd' : 'build'}
 MGD_CLEAN_CMD = DOTNET_CMD % {'cmd' : 'clean'}
 CASTXML_CMD = f'{CASTXML} "$SOURCE" -o "$TARGET" --castxml-output=1 $CLANGFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS'
@@ -170,7 +170,7 @@ if WIN32:
         _DLL_ENTRYPOINT = '${"/entry:" + entry if entry else "/noentry"}',
         entry           = '',  # override in SharedLibrary invocation to specify a DLL entry point if needed
     )
-    if use_msvc1600:
+    if USE_MSVC1600:
         # Reconfigure environment to use MSVC 16.0 (from VS 10.0 aka 2010)
         native.PrependENVPath('PATH', WINDOWS7_SDKDIR + R'\Bin\x64')
         native.PrependENVPath('PATH', VC16_INSTALLDIR + R'\bin\amd64')
@@ -197,7 +197,7 @@ if WIN32:
             SHLINKFLAGS=Split('/noimplib'),
         )
 
-    if mode == 'debug':
+    if MODE == 'debug':
         native.Replace(PDB='${TARGET.base}' + PDB_SUFFIX)
         native.Append(ASFLAGS='-g')
         native.Append(LINKFLAGS='/debug:full')
@@ -212,7 +212,7 @@ else:
 #===============================================================================
 # Unmanaged libraries for build/ironclad
 
-if WIN32 and not use_msvc1600:
+if WIN32 and not USE_MSVC1600:
     # Create implib for msvcrt
     msvcrt_def = native.Command('stub/msvcr100.def', MSVCR100_DLL, GENDEF_CMD)
     msvcrt_lib = native.Command('stub/msvcr100.lib', msvcrt_def, DLLTOOL_CMD, NAME='msvcr100.dll')
@@ -247,7 +247,7 @@ cpy_srcs = glommap(lambda x: native.Glob('stub/%s/*.c' % x), cpy_src_dirs)
 cpy_objs = glommap(native.SharedObject, cpy_srcs)
 before_test(native.SharedLibrary('#$OUT_DIR/ironclad/python34', [cpy_objs, jumps_obj, stubmain_obj, msvcrt_lib, python_def], entry='DllMain'))
 
-if use_msvc1600:
+if USE_MSVC1600:
     import atexit
     @atexit.register
     def remove_implib_files():

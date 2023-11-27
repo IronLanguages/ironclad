@@ -21,17 +21,17 @@ if unknown:
     print("For help, run: scons -h")
     Exit(1)
 Help(vars.GenerateHelpText(env))
-use_msvc1600 = env['use_msvc1600']
+USE_MSVC1600 = env['use_msvc1600']
 
 OUT_DIR_ROOT = 'out'            # for build output (final) artifacts
 BUILD_DIR_ROOT = 'build'        # for intermediate build artifacts
 
 
-for mode in env['configuration'].data:
-    for fmwk in env['framework'].data:
-        TARGET_PATH = os.path.join(mode, fmwk)
+for MODE in env['configuration'].data:
+    for FMWK in env['framework'].data:
+        TARGET_PATH = os.path.join(MODE, FMWK)
         BUILD_DIR = os.path.join(BUILD_DIR_ROOT, TARGET_PATH)
         OUT_DIR = os.path.join(OUT_DIR_ROOT, TARGET_PATH)
         Help(f"\nOut dir: {OUT_DIR}\n")
         Help(f"Build dir: {BUILD_DIR}\n")
-        SConscript('main.scons', variant_dir=BUILD_DIR, duplicate=True, exports='mode fmwk use_msvc1600 OUT_DIR')
+        SConscript('main.scons', variant_dir=BUILD_DIR, duplicate=True, exports='MODE FMWK USE_MSVC1600 OUT_DIR')
