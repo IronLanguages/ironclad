@@ -23,11 +23,17 @@ INPUTS = {
 }
 
 EXPECT_STUBINIT = """\
+#ifdef _MSC_VER
+    #define DLLEXPORT __declspec(dllexport)
+#else
+    #define DLLEXPORT
+#endif
+
 void *jumptable[4];
 
 typedef void *(*getfuncptr_fp)(const char*);
 typedef void (*registerdata_fp)(const char*, const void*);
-void init(getfuncptr_fp getfuncptr, registerdata_fp registerdata)
+DLLEXPORT void init(getfuncptr_fp getfuncptr, registerdata_fp registerdata)
 {
     registerdata("DATA3", &DATA3);
     registerdata("DATA2", &DATA2);

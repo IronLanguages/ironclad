@@ -15,6 +15,7 @@
 import functools
 import operator, os, sys
 import subprocess
+from pathlib import Path
 from SCons.Scanner.C import CScanner
 
 EnsurePythonVersion(3, 9)
@@ -71,20 +72,20 @@ if WIN32:
     ASFLAGS = '-f win64'
 
     # where to find/how to invoke executables
-    CASTXML = r'castxml'
-    DOTNET = r'dotnet'
-    IPY = rf'"C:\ironclad\IronPython.3.4.1\{fmwk}\ipy.exe"'  # try to use private build
+    CASTXML = R'castxml'
+    DOTNET = R'dotnet'
+    IPY = Rf'"C:\ironclad\IronPython.3.4.1\{fmwk}\ipy.exe"'  # try to use private build
     if not os.path.exists(IPY):
         # use standard location
         if fmwk.startswith('net4'):
-            IPY = r'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
+            IPY = R'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
         else:
-            IPY = rf'"{os.environ["USERPROFILE"]}\.dotnet\tools\ipy.exe"'
+            IPY = Rf'"{os.environ["USERPROFILE"]}\.dotnet\tools\ipy.exe"'
 
     #==================================================================
     # These variables should only be necessary on win32
 
-    MSVCR100_DLL = r'C:\Windows\System32\msvcr100.dll'
+    MSVCR100_DLL = R'C:\Windows\System32\msvcr100.dll'
 
     GENDEF_CMD = 'gendef - $SOURCE >$TARGET'
     DLLTOOL_CMD = 'dlltool -D $NAME -d $SOURCE -l $TARGET'
@@ -95,8 +96,15 @@ if WIN32:
     # Note: this has to be 64-bit version of CPython 3.4
     CPYTHON34_ROOT = subprocess.check_output(['py.exe', '-3.4-64', '-c', 'import sys, os; print(os.path.dirname(os.path.abspath(sys.executable)))'], universal_newlines=True).strip()
     # If it fails, change to match your installation; by default it is C:\Python34
-    #CPYTHON34_ROOT = r'C:\Python34'
+    #CPYTHON34_ROOT = R'C:\Python34'
     CPYTHON34_DLL = os.path.join(CPYTHON34_ROOT, 'python34.dll')
+
+    # Check if we have MSVC 16.0 and Win7 SDK
+    VC16_INSTALLDIR = R'C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC'
+    WINDOWS7_SDKDIR = R'C:\Program Files\Microsoft SDKs\Windows\v7.1'
+    if use_msvc1600 and not (os.path.exists(VC16_INSTALLDIR + R'\bin\amd64') and os.path.exists(WINDOWS7_SDKDIR)):
+        print('Cannot build using MSVC v16.0: installation of MSVC 16.0 and/or Windows 7 SDK not found')
+        Exit(1)
 else:
     NATIVE_TOOLS = ['default', 'clang']
     PYD_SUFFIX = '.so'
@@ -138,21 +146,47 @@ before_test = test_deps.append
 #===============================================================================
 
 if WIN32:
-    native = Environment(ENV=OS_ENV, tools=NATIVE_TOOLS, CC='clang-cl', LINK='lld-link',
+    native = Environment(ENV=OS_ENV, tools=NATIVE_TOOLS,
                          CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
     native.Append(
-        ASFLAGS         = ASFLAGS,
-        CPPDEFINES      = f'__MSVCRT_VERSION__=0x1000 _NO_CRT_STDIO_INLINE {CPPDEFINES}',
-        CPPPATH         = CPPPATH,
+        ASFLAGS         = Split(ASFLAGS),
+        CPPDEFINES      = Split(CPPDEFINES),
+        CPPPATH         = Split(CPPPATH),
         CLANGFLAGS      = '--target=x86_64-pc-windows-msvc -fuse-ld=lld -fms-compatibility-version=16.00.40219',  # used by clang-cl AND castxml
-        CCFLAGS         = '/GS- $CLANGFLAGS',
-        LINKFLAGS       = '/subsystem:windows /nodefaultlib:libucrt /nodefaultlib:libcmt',
-        SHLINKFLAGS     = '$_DLL_ENTRYPOINT /noimplib',
+        CCFLAGS         = Split('/GS-'),
+        LINKFLAGS       = Split('/subsystem:windows'),
+        SHLINKFLAGS     = Split('$_DLL_ENTRYPOINT'),
         no_import_lib   = 1,  # undocumented SCons msvc tools flag; may be renamed in future
-        LIBS            = ['kernel32', 'user32'],
+        LIBS            = Split('kernel32 user32'),
         _DLL_ENTRYPOINT = '${"/entry:" + entry if entry else "/noentry"}',
         entry           = '',  # override in SharedLibrary invocation to specify a DLL entry point if needed
     )
+    if use_msvc1600:
+        # Reconfigure environment to use MSVC 16.0 (from VS 10.0 aka 2010)
+        native.PrependENVPath('PATH', WINDOWS7_SDKDIR + R'\Bin\x64')
+        native.PrependENVPath('PATH', VC16_INSTALLDIR + R'\bin\amd64')
+        native['ENV']['INCLUDE'] = ';'.join([
+            VC16_INSTALLDIR + R'\include',
+            WINDOWS7_SDKDIR + R'\Include',
+        ])
+        native['ENV']['LIB'] = ';'.join([
+            VC16_INSTALLDIR + R'\lib\amd64',
+            WINDOWS7_SDKDIR + R'\Lib\x64',
+        ])
+        native['ENV']['LIBPATH'] = VC16_INSTALLDIR + R'\lib\amd64'
+        native.Append(
+            LIBS=Split('msvcrt'),
+            SHLINKFLAGS=Split('/ignore:4197'),
+        )
+    else:
+        # Use Clang & lld
+        native.Replace(CC='clang-cl', LINK='lld-link')
+        native.Append(
+            CCFLAGS=Split('$CLANGFLAGS'),
+            CPPDEFINES=Split('__MSVCRT_VERSION__=0x1000 _NO_CRT_STDIO_INLINE'),
+            LINKFLAGS=Split('/nodefaultlib:libucrt /nodefaultlib:libcmt'),
+            SHLINKFLAGS=Split('/noimplib'),
+        )
 
     if mode == 'debug':
         native.Replace(PDB='${TARGET.base}' + PDB_SUFFIX)
@@ -169,7 +203,7 @@ else:
 #===============================================================================
 # Unmanaged libraries for build/ironclad
 
-if WIN32:
+if WIN32 and not use_msvc1600:
     # Create implib for msvcrt
     msvcrt_def = native.Command('stub/msvcr100.def', MSVCR100_DLL, GENDEF_CMD)
     msvcrt_lib = native.Command('stub/msvcr100.lib', msvcrt_def, DLLTOOL_CMD, NAME='msvcr100.dll')
@@ -203,6 +237,13 @@ cpy_src_dirs = 'Modules Objects Parser Python'
 cpy_srcs = glommap(lambda x: native.Glob('stub/%s/*.c' % x), cpy_src_dirs)
 cpy_objs = glommap(native.SharedObject, cpy_srcs)
 before_test(native.SharedLibrary('#$OUT_DIR/ironclad/python34', [cpy_objs, jumps_obj, stubmain_obj, msvcrt_lib, python_def], entry='DllMain'))
+
+if use_msvc1600:
+    import atexit
+    @atexit.register
+    def remove_implib_files():
+        Path(f"{OUT_DIR}/ironclad/python34.lib").unlink(missing_ok=True)
+        Path(f"{OUT_DIR}/ironclad/python34.exp").unlink(missing_ok=True)
 
 #===============================================================================
 # Unmanaged test data

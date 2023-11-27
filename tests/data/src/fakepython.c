@@ -1,12 +1,10 @@
-#pragma clang attribute push (__declspec(dllexport), apply_to=function)
+#include "dllexport.h"
 
-void init(void*f1, void*f2)
+DLLEXPORT void init(void*f1, void*f2)
 	{
 	}
 
 
-void initsomecrazymodule()
+DLLEXPORT void initsomecrazymodule()
 	{
 	}
-
-#pragma clang attribute pop

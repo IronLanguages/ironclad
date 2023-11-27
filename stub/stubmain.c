@@ -19,17 +19,12 @@
 // definitions for missing data
 #include "ironclad-data.c"
 
-#define DLLEXPORT __declspec(dllexport)
-
-#pragma clang attribute push (DLLEXPORT, apply_to=function)
-
 // alternative C implementations of various functions
 #include "ironclad-functions.c"
 
 // init function
 #include "stubinit.generated.c"
 
-#pragma clang attribute pop
 
 // miscellaneous holes filled
 #ifdef _MSC_VER

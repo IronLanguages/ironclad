@@ -1,10 +1,8 @@
-#pragma clang attribute push (__declspec(dllexport), apply_to=any(function, variable(is_global)))
+#include "dllexport.h"
 
-int value = 1;
+DLLEXPORT int value = 1;
 
-void PyInit_setvalue(void)
+DLLEXPORT void PyInit_setvalue(void)
 {
 	value = 2;
 }
-
-#pragma clang attribute pop

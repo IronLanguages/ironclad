@@ -12,6 +12,7 @@ import os
 vars = Variables(None, ARGUMENTS)
 vars.Add(ListVariable('configuration', help='build configuration', default='release', names=['release', 'debug']))
 vars.Add(ListVariable('framework', help='.NET platform to target', default='net462', names=['net462', 'net6.0']))
+vars.Add(BoolVariable('use_msvc1600', help='Set to use MSVC v16.0 in place of Clang', default=False))
 
 env = Environment(variables=vars)
 unknown = vars.UnknownVariables()
@@ -20,6 +21,7 @@ if unknown:
     print("For help, run: scons -h")
     Exit(1)
 Help(vars.GenerateHelpText(env))
+use_msvc1600 = env['use_msvc1600']
 
 OUT_DIR_ROOT = 'out'            # for build output (final) artifacts
 BUILD_DIR_ROOT = 'build'        # for intermediate build artifacts
@@ -32,4 +34,4 @@ for mode in env['configuration'].data:
         OUT_DIR = os.path.join(OUT_DIR_ROOT, TARGET_PATH)
         Help(f"\nOut dir: {OUT_DIR}\n")
         Help(f"Build dir: {BUILD_DIR}\n")
-        SConscript('main.scons', variant_dir=BUILD_DIR, duplicate=True, exports='mode fmwk OUT_DIR')
+        SConscript('main.scons', variant_dir=BUILD_DIR, duplicate=True, exports='mode fmwk use_msvc1600 OUT_DIR')
