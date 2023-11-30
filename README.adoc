@@ -41,12 +41,12 @@ To run all tests:
 ```
 scons test
 ```
-Run `scons -h` for info on all supported build variables, options, and where the artifacts for the current build(s) are placed. Build variables on the command line are placed without leading dashes and with an equal sign, e.g. `scons framework=all`.
+Run `scons -h` for info on all supported build parameters, options, and where the artifacts for the current build(s) are placed. Build parameters on the command line are placed without leading dashes and with an equal sign, e.g. `scons framework=all`.
 
-=== Previous build instructions ===
+=== Other build instructions ===
 
-Previous building instructions can be found at:
-https://github.com/IronLanguages/ironclad/wiki/building
+Detailed building instructions covering how to build for different configurations, frameworks, without Docker, other Ironclad versions, etc. can be found on the
+https://github.com/IronLanguages/ironclad/wiki/Building[building wiki page].
 
 == Releases ==
 

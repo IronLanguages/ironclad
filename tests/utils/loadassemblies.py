@@ -3,15 +3,39 @@ import os
 
 from tests.utils.testenv import is_ironpython, is_windows, is_netcoreapp
 
-if is_ironpython and 'IRONPYTHONPATH' not in os.environ:
-    print("*"*80)
-    print("WARNING: your IRONPYTHONPATH is not defined.")
-    print("As absolute minimum, please set IRONPYTHONPATH to the directory")
-    print("containing the ironclad package to test.")
-    print("The tests will assume it is in directory 'build'.")
-    print("Some of ironclad test assume DLLs dir of cpython is present in IRONPYTHONPATH.")
-    print("*"*80)
-    sys.path.insert(0, os.path.abspath('build'))
+if len(sys.argv) >= 2 and '/' in sys.argv[-1]:
+    _configuration, _framework = sys.argv.pop().split('/', 1)
+
+if '_configuration' in globals():
+    TESTDATA_BUILDDIR = os.path.join("build", _configuration, _framework, "tests", "data")
+else:
+    if 'TESTDATA_BUILDDIR' not in os.environ:
+        print("*"*80)
+        print("WARNING: TESTDATA_BUILDDIR is not defined.")
+        print("This should be the path to the directory containing test data created during build.")
+        print("Some of Ironclad tests load DLLs and PYDs from this directory.")
+        print("The tests will assume in-source build location.")
+        print("*"*80)
+
+    TESTDATA_BUILDDIR = os.environ.get('TESTDATA_BUILDDIR', os.path.join("tests", "data"))
+
+
+if is_ironpython:
+    if 'IRONPYTHONPATH' not in os.environ:
+        print("*"*80)
+        print("WARNING: your IRONPYTHONPATH is not defined.")
+        if '_configuration' not in globals():
+            print("Please set IRONPYTHONPATH to the directory")
+            print("containing the ironclad package to test.")
+            print("The tests will assume it is in directory 'build'.")
+        print("Some of Ironclad tests assume DLLs dir of CPython is present in IRONPYTHONPATH.")
+        print("*"*80)
+    if '_configuration' in globals():
+        _ironclad_path = os.path.abspath(os.path.join("out", _configuration, _framework))
+    else:
+        _ironclad_path = os.path.abspath('build')
+    if _ironclad_path not in sys.path:
+        sys.path.insert(0, _ironclad_path)
 
 for _ironclad_path in sys.path:
     IRONCLAD_DLL = os.path.join(_ironclad_path, "ironclad" , "ironclad.dll")
@@ -25,16 +49,6 @@ else:
     if is_ironpython:
         raise ImportError("Cannot find ironclad.dll with python34.dll")
     _ironclad_path = None
-
-if 'TESTDATA_BUILDDIR' not in os.environ:
-    print("*"*80)
-    print("WARNING: TESTDATA_BUILDDIR is not defined.")
-    print("This should be the path to the directory containing test data created during build.")
-    print("Some of ironclad test load DLLs and PYDs from this directory.")
-    print("The tests will assume in-source build location.")
-    print("*"*80)
-
-TESTDATA_BUILDDIR = os.environ.get('TESTDATA_BUILDDIR', os.path.join("tests", "data"))
 
 if is_netcoreapp:
     import clr

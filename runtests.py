@@ -24,14 +24,23 @@ def CreateSuite():
                 suite.addTest(GetFailedImportTestSuite(name, e))
     return suite
 
-# if run with a parameter, try to use it as a test selection (as
-# specified in unittest, loadTestsFromName)
+# If run with a parameter, try to use it as a test selection
+# (as specified in unittest, loadTestsFromName)
 #
 # Example 1 - run an individual test
 # ipy runtests.py tests.baseobjecttest.NewInitFunctionsTest.test_PyObject_Newrun
 #
-# Example 2 - run all test from a module
+# Example 2 - run all tests from a module
 # ipy runtests.py tests.itertest
+#
+# If testing out-of-source builds, add argument «configuration»/«framework»
+# as last argument on the command line
+#
+# Example 3 - run an individual test for configuration 'release', framework 'net462'
+# ipy runtests.py tests.dicttest.DictTest release/net462
+#
+# Example 4 - run all tests for configuration 'release', framework 'net462'
+# ipy runtests.py release/net462
 #
 # TODO: selecting decorated function does not work
 if __name__ == '__main__':
