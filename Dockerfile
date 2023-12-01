@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/windows:ltsc2019
+FROM mcr.microsoft.com/dotnet/framework/runtime:4.8.1
 
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
