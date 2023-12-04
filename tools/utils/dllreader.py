@@ -1,4 +1,4 @@
-
+import sys
 import os
 
 from tools.utils.subprocess import popen
@@ -28,8 +28,7 @@ class DllReader(object):
 
 
     def _read_symbol_table_pexports(self, source):
-        f = popen("pexports", source)
-        try:
+        with popen("pexports", source) as f:
             for line in f:
                 self.lines.append(line)
                 if line.strip() == 'EXPORTS':
@@ -42,13 +41,13 @@ class DllReader(object):
                     self.functions.append(parts[0])
                 else:
                     self.data.append(parts[0])
-        finally:
-            f.close()
 
 
     def _read_symbol_table_objdump(self, source):
-        f = popen('objdump', '-T %s' % source)
-        try:
+        bitness = 64
+        addrlen = bitness // 4
+        flagpos = addrlen + 7 # skip a space and first 6 flags
+        with popen('objdump', '-T %s' % source) as f:
             for line in f:
                 if line.strip() == 'DYNAMIC SYMBOL TABLE:':
                     break
@@ -56,8 +55,8 @@ class DllReader(object):
                 line = line.strip()
                 if not line:
                     break
-                flag = line[15]
-                fields = line[17:].split()
+                flag = line[flagpos]
+                fields = line[flagpos+2:].split() # flagpos + skip the flag and a space (or tab)
                 if len(fields) == 3:
                     section, size, name = fields
                 if len(fields) == 4:
@@ -68,8 +67,6 @@ class DllReader(object):
                     self.functions.append(name)
                 if flag == 'O':
                     self.data.append(name)
-        finally:
-            f.close()
-    
+
 
 #==========================================================================
