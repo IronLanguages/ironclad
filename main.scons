@@ -74,13 +74,15 @@ if WIN32:
     # where to find/how to invoke executables
     CASTXML = R'castxml'
     DOTNET = R'dotnet'
-    IPY = Rf'"C:\ironclad\IronPython.3.4.1\{FMWK}\ipy.exe"'  # try to use private build
-    if not os.path.exists(IPY):
+
+    IPY = Path(f"{PROJECT_DIR}/IronPython.3.4.1/{FMWK}/ipy.exe")  # try to use private debug build
+    if not IPY.exists():
         # use standard location
         if FMWK.startswith('net4'):
-            IPY = R'"C:\ProgramData\chocolatey\lib\ironpython\ipy.exe"'
+            IPY = Path("C:/ProgramData/chocolatey/lib/ironpython/ipy.exe")
         else:
-            IPY = Rf'"{os.environ["USERPROFILE"]}\.dotnet\tools\ipy.exe"'
+            IPY = Path("~/.dotnet/tools/ipy.exe").expanduser()
+    IPY = f'"{IPY.resolve()}"'
 
     #==================================================================
     # These variables should only be necessary on win32
