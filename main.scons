@@ -160,7 +160,7 @@ if WIN32:
     native.Append(
         ASFLAGS         = Split(ASFLAGS),
         CPPDEFINES      = Split(CPPDEFINES),
-        CPPPATH         = Split(CPPPATH),
+        CPPPATH         = Split(R'stub\Include\PC') + Split(CPPPATH),
         CLANGFLAGS      = '--target=x86_64-pc-windows-msvc -fuse-ld=lld -fms-compatibility-version=16.00.40219',  # used by clang-cl AND castxml
         CCFLAGS         = Split('/GS-'),
         LINKFLAGS       = Split('/subsystem:windows'),
