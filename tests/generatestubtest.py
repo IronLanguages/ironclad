@@ -16,10 +16,11 @@ class StubGeneratorTest(TestCase):
 
 
 INPUTS = {
-    'PURE_C_SYMBOLS': set('FUNC1 DATA1 DATA2'.split()),
-    'EXPORTED_FUNCTIONS': 'FUNC1 FUNC2'.split(),
+    'PURE_C_SYMBOLS': set('FUNC1 FUNCEX FUNCNEX DATA1 DATA2'.split()),
+    'EXPORTED_FUNCTIONS': 'FUNC1 FUNC2 FUNCEX'.split(),
+    'EXPORTED_DATA': 'DATA2 DATA3'.split(),
     'EXTRA_FUNCTIONS': ['void FUNC3(void);', 'int FUNC4(void);', 'binaryfunc OPER;'],
-    'MGD_API_DATA': 'DATA3 DATA2'.split()
+    'MGD_API_DATA': 'FUNCEX FUNCNEX DATA3 DATA2 DATA4'.split()
 }
 
 EXPECT_STUBINIT = """\
@@ -35,6 +36,7 @@ typedef void *(*getfuncptr_fp)(const char*);
 typedef void (*registerdata_fp)(const char*, const void*);
 DLLEXPORT void init(getfuncptr_fp getfuncptr, registerdata_fp registerdata)
 {
+    registerdata("FUNCEX", &FUNCEX);
     registerdata("DATA3", &DATA3);
     registerdata("DATA2", &DATA2);
     jumptable[0] = getfuncptr("FUNC2");

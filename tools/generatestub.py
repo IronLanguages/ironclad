@@ -9,6 +9,7 @@ from tools.utils.stubgen import StubGenerator
 
 INPUTS = (
     ('_exported_functions.generated',           read_lines),
+    ('_exported_data.generated',                read_lines),
     ('_extra_functions',                        read_lines),
     ('_pure_c_symbols',                         read_set),
     ('_mgd_api_data',                           read_lines),

@@ -62,14 +62,16 @@ def generate_header(prototypes):
 
 class StubGenerator(CodeGenerator):
 
-    INPUTS = 'EXPORTED_FUNCTIONS EXTRA_FUNCTIONS PURE_C_SYMBOLS MGD_API_DATA'
+    INPUTS = 'EXPORTED_FUNCTIONS EXPORTED_DATA EXTRA_FUNCTIONS PURE_C_SYMBOLS MGD_API_DATA'
 
     def _run(self):
         needs_jump = lambda f: f not in self.PURE_C_SYMBOLS
         functions = list(filter(needs_jump, self.EXPORTED_FUNCTIONS))
         functions += list(map(_extract_funcname, self.EXTRA_FUNCTIONS))
+        all_exports = set(self.EXPORTED_DATA) | set(self.EXPORTED_FUNCTIONS)
+        data = filter(lambda d: d in all_exports, self.MGD_API_DATA)
         return {
-            'STUBINIT':     generate_stubinit(functions, self.MGD_API_DATA),
+            'STUBINIT':     generate_stubinit(functions, data),
             'HEADER':       generate_header(self.EXTRA_FUNCTIONS),
             'JUMPS':        generate_jumps(functions),
         }

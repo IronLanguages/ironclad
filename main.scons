@@ -222,13 +222,13 @@ else:
     msvcrt_lib = []
 
 # Generate data from prebuilt python dll
-exports, python_def = native.Command(['data/api/_exported_functions.generated', 'stub/python34.def'], [],
+*exports, python_def = native.Command(['data/api/_exported_functions.generated', 'data/api/_exported_data.generated', 'stub/python34.def'], [],
     '$CPYTHON tools/generateexports.py $CPYTHON34_DLL $BUILD_DIR/data/api $BUILD_DIR/stub')
-native.Depends([exports, python_def], '#tools/generateexports.py')
+native.Depends([*exports, python_def], '#tools/generateexports.py')
 
 # Generate stub code
 buildstub_names = '_extra_functions _mgd_api_data _pure_c_symbols'
-buildstub_src = [exports] + pathmap('data/api', buildstub_names)
+buildstub_src = exports + pathmap('data/api', buildstub_names)
 buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_extra_functions.generated.h')
 native.Command(buildstub_out, buildstub_src,
     '$CPYTHON tools/generatestub.py $BUILD_DIR/data/api $BUILD_DIR/stub')
