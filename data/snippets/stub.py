@@ -5,9 +5,12 @@ JUMPS_FILE_TEMPLATE = """\
 default rel
 bits 64
 
-extern jumptable
+section .bss
 
-section .code
+global jumptable_addr
+jumptable_addr resq 1
+
+section .text
 
 %s
 """
@@ -22,7 +25,7 @@ JUMP_START_DEFINE_TEMPLATE = """\
 
 JUMP_DEFINE_TEMPLATE = """\
 %(symbol)s:
-    jmp [jumptable+%(offset)d]"""
+    jmp [jumptable_addr+%(offset)d]"""
 
 
 #================================================================================================
@@ -35,11 +38,13 @@ STUBINIT_FILE_TEMPLATE = """\
 #endif
 
 void *jumptable[%(funccount)d];
+extern void *jumptable_addr;
 
 typedef void *(*getfuncptr_fp)(const char*);
 typedef void (*registerdata_fp)(const char*, const void*);
 DLLEXPORT void init(getfuncptr_fp getfuncptr, registerdata_fp registerdata)
 {
+    jumptable_addr = jumptable;
 %(registerdatas)s
 %(getfuncptrs)s
 }

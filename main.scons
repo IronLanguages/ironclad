@@ -66,12 +66,13 @@ if WIN32:
     #==================================================================
     # These variables will be needed on any platform, I think
 
-    NATIVE_TOOLS = ['msvc', 'mslink', 'nasm']
+    NATIVE_TOOLS = 'msvc mslink as'
     PYD_SUFFIX = '.pyd'
 
     ASFLAGS = '-f win64'
 
     # where to find/how to invoke executables
+    NASM = R'nasm'
     CASTXML = R'castxml'
     DOTNET = R'dotnet'
 
@@ -86,6 +87,7 @@ if WIN32:
 
     #==================================================================
     # These variables should only be necessary on win32
+    # (except for CPYTHON34_DLL, which is needed on any plaftorm)
 
     MSVCR100_DLL = R'C:\Windows\System32\msvcr100.dll'
 
@@ -136,6 +138,7 @@ OS_ENV['PYTHONPATH'] = PROJECT_DIR
 MGD_DLL_SUFFIX = '.dll'
 PDB_SUFFIX = '.pdb'
 
+ASFLAGS = f'{ASFLAGS} -wall'
 CPPDEFINES = 'Py_ENABLE_SHARED Py_BUILD_CORE IRONCLAD'
 CPPPATH = 'stub/Include'
 DOTNET_CMD = f'{DOTNET} %(cmd)s --configuration {MODE.title()} --framework {FMWK} --nologo --output ${{TARGET.dir}} $SOURCE'
@@ -156,14 +159,14 @@ before_test = test_deps.append
 # (python34.dll and several test files)
 #===============================================================================
 
+native = Environment(ENV=OS_ENV, tools=Split(NATIVE_TOOLS), AS=NASM, CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
+
 if WIN32:
-    native = Environment(ENV=OS_ENV, tools=NATIVE_TOOLS,
-                         CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
     native.Append(
         ASFLAGS         = Split(ASFLAGS),
         CPPDEFINES      = Split(CPPDEFINES),
         CPPPATH         = Split(R'stub\Include\PC') + Split(CPPPATH),
-        CLANGFLAGS      = '--target=x86_64-pc-windows-msvc -fuse-ld=lld -fms-compatibility-version=16.00.40219',  # used by clang-cl AND castxml
+        CLANGFLAGS      = Split('--target=x86_64-pc-windows-msvc -fms-compatibility-version=16.00.40219'),  # used by clang-cl AND castxml
         CCFLAGS         = Split('/GS-'),
         LINKFLAGS       = Split('/subsystem:windows'),
         SHLINKFLAGS     = Split('$_DLL_ENTRYPOINT'),
@@ -193,7 +196,7 @@ if WIN32:
         # Use Clang & lld
         native.Replace(CC='clang-cl', LINK='lld-link')
         native.Append(
-            CCFLAGS=Split('$CLANGFLAGS'),
+            CCFLAGS=Split('$CLANGFLAGS') + Split('-fuse-ld=lld'),
             CPPDEFINES=Split('__MSVCRT_VERSION__=0x1000 _NO_CRT_STDIO_INLINE'),
             LINKFLAGS=Split('/nodefaultlib:libucrt /nodefaultlib:libcmt'),
             SHLINKFLAGS=Split('/noimplib'),
@@ -235,9 +238,7 @@ native.Command(buildstub_out, buildstub_src,
 native.Depends(buildstub_out, '#tools/generatestub.py')
 
 # Compile stub code
-# SharedObject builder does not support assembly code
-# since whether the code is position-independent (shareable) or not depends on assembly instructions used, not assembler flags
-jumps_obj = native.Object('stub/jumps.generated.asm')
+jumps_obj = native.SharedObject('stub/jumps.generated.asm')
 stubmain_obj = native.SharedObject('stub/stubmain.c')
 
 # Generate information from python headers etc
@@ -246,8 +247,10 @@ stubmain_xml = native.CastXml('data/api/_stubmain.generated.xml', 'stub/stubmain
 # Build and link python34.dll
 cpy_src_dirs = 'Modules Objects Parser Python'
 cpy_srcs = glommap(lambda x: native.Glob('stub/%s/*.c' % x), cpy_src_dirs)
-cpy_objs = glommap(native.SharedObject, cpy_srcs)
-before_test(native.SharedLibrary('#$OUT_DIR/ironclad/python34', [cpy_objs, jumps_obj, stubmain_obj, msvcrt_lib, python_def], entry='DllMain'))
+cpy_objs = glommap(native.SharedObject, cpy_srcs) + [jumps_obj, stubmain_obj]
+if WIN32:
+    cpy_objs += [msvcrt_lib, python_def]
+before_test(native.SharedLibrary('#$OUT_DIR/ironclad/python34', cpy_objs, entry='DllMain'))
 
 if USE_MSVC1600:
     import atexit

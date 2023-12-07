@@ -31,11 +31,13 @@ EXPECT_STUBINIT = """\
 #endif
 
 void *jumptable[4];
+extern void *jumptable_addr;
 
 typedef void *(*getfuncptr_fp)(const char*);
 typedef void (*registerdata_fp)(const char*, const void*);
 DLLEXPORT void init(getfuncptr_fp getfuncptr, registerdata_fp registerdata)
 {
+    jumptable_addr = jumptable;
     registerdata("FUNCEX", &FUNCEX);
     registerdata("DATA3", &DATA3);
     registerdata("DATA2", &DATA2);
@@ -50,9 +52,12 @@ EXPECT_JUMPS = """\
 default rel
 bits 64
 
-extern jumptable
+section .bss
 
-section .code
+global jumptable_addr
+jumptable_addr resq 1
+
+section .text
 
 global FUNC2
 global FUNC3
@@ -62,13 +67,13 @@ global OPER
     nop
     nop
 FUNC2:
-    jmp [jumptable+0]
+    jmp [jumptable_addr+0]
 FUNC3:
-    jmp [jumptable+8]
+    jmp [jumptable_addr+8]
 FUNC4:
-    jmp [jumptable+16]
+    jmp [jumptable_addr+16]
 OPER:
-    jmp [jumptable+24]
+    jmp [jumptable_addr+24]
 """
 
 EXPECT_HEADER = """\
