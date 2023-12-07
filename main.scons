@@ -202,7 +202,7 @@ before_test = test_deps.append
 # (python34.dll and several test files)
 #===============================================================================
 
-native = Environment(ENV=OS_ENV, tools=Split(NATIVE_TOOLS), AS=NASM, CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
+native = Environment(ENV=OS_ENV, tools=Split(NATIVE_TOOLS) + ['python'], AS=NASM, CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
 
 if WIN32:
     native.Append(
@@ -286,17 +286,15 @@ else:
     msvcrt_lib = []
 
 # Generate data from prebuilt python dll
-*exports, python_def = native.Command(['data/api/_exported_functions.generated', 'data/api/_exported_data.generated', 'stub/python.def'], [],
-    '$CPYTHON tools/generateexports.py $CPYTHON34_DLL $BUILD_DIR/data/api $BUILD_DIR/stub')
-native.Depends([*exports, python_def], '#tools/generateexports.py')
+*exports, python_def = native.Command(['data/api/_exported_functions.generated', 'data/api/_exported_data.generated', 'stub/python.def'], ['tools/generateexports.py'],
+    '$CPYTHON $SOURCE $CPYTHON34_DLL $BUILD_DIR/data/api $BUILD_DIR/stub')
 
 # Generate stub code
 buildstub_names = '_extra_functions _mgd_api_data _pure_c_symbols'
 buildstub_src = exports + pathmap('data/api', buildstub_names)
 buildstub_out = pathmap('stub', 'jumps.generated.asm stubinit.generated.c Include/_extra_functions.generated.h')
-native.Command(buildstub_out, buildstub_src,
-    '$CPYTHON tools/generatestub.py $BUILD_DIR/data/api $BUILD_DIR/stub')
-native.Depends(buildstub_out, '#tools/generatestub.py')
+native.Command(buildstub_out, ['tools/generatestub.py'] + buildstub_src,
+    '$CPYTHON $SOURCE $BUILD_DIR/data/api $BUILD_DIR/stub')
 
 # Compile stub code
 jumps_obj = native.SharedObject('stub/jumps.generated.asm')
@@ -339,7 +337,7 @@ if WIN32:
 # This section builds the CLR part
 #===============================================================================
 
-managed = Environment(ENV=OS_ENV, **COMMON)
+managed = Environment(ENV=OS_ENV, tools=['python'], **COMMON)
 
 def dotnet_emitter(target, source, env):
     return [[t, str(t).removesuffix(MGD_DLL_SUFFIX) + PDB_SUFFIX] for t in target], source
@@ -351,21 +349,18 @@ managed['BUILDERS']['Dll'] = Builder(action=MGD_BUILD_CMD, suffix=MGD_DLL_SUFFIX
 api_src = managed.Glob('data/api/*')
 api_out_names = 'Delegates Dispatcher MagicMethods PythonApi PythonStructs'
 api_out = pathmap('src', submap('%s.Generated.cs', api_out_names))
-managed.Command(api_out, api_src,
-    '$CPYTHON tools/generateapiplumbing.py $BUILD_DIR/data/api $BUILD_DIR/src')
-managed.Depends(api_out, '#tools/generateapiplumbing.py')
+managed.Command(api_out, ['tools/generateapiplumbing.py'] + api_src,
+    '$CPYTHON $SOURCE $BUILD_DIR/data/api $BUILD_DIR/src')
 
 mapper_src = managed.Glob('data/mapper/_*')
 mapper_out = submap('src/mapper/PythonMapper%s.Generated.cs', map(lambda x: x.name, mapper_src))
-managed.Command(mapper_out, mapper_src,
-    '$CPYTHON tools/generatemapper.py $BUILD_DIR/data/mapper $BUILD_DIR/src/mapper')
-managed.Depends(mapper_out, '#tools/generatemapper.py')
+managed.Command(mapper_out, ['tools/generatemapper.py'] + mapper_src,
+    '$CPYTHON $SOURCE $BUILD_DIR/data/mapper $BUILD_DIR/src/mapper')
 
 snippets_src = managed.Glob('data/snippets/py/*.py')
 snippets_out = ['src/CodeSnippets.Generated.cs']
-managed.Command(snippets_out, snippets_src,
-    '$CPYTHON tools/generatecodesnippets.py $BUILD_DIR/data/snippets/py $BUILD_DIR/src')
-managed.Depends(snippets_out, '#tools/generatecodesnippets.py')
+managed.Command(snippets_out, ['tools/generatecodesnippets.py'] + snippets_src,
+    '$CPYTHON $SOURCE $BUILD_DIR/data/snippets/py $BUILD_DIR/src')
 
 #===============================================================================
 # Build the actual managed library
