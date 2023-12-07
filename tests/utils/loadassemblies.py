@@ -39,15 +39,18 @@ if is_ironpython:
 
 for _ironclad_path in sys.path:
     IRONCLAD_DLL = os.path.join(_ironclad_path, "ironclad" , "ironclad.dll")
-    CPYTHONSTUB_DLL = os.path.join(_ironclad_path, "ironclad" , "python34.dll")
-    if os.path.exists(IRONCLAD_DLL) and os.path.exists(CPYTHONSTUB_DLL):
-        if is_ironpython:
-            import clr
-            clr.AddReferenceToFileAndPath(IRONCLAD_DLL)
-        break
+    for CPYTHONSTUB_DLL in [os.path.join(_ironclad_path, "ironclad", stubname) for stubname in ["python34.dll", "libpython3.4.so", "libpython3.4m.so"]]:
+        if os.path.exists(IRONCLAD_DLL) and os.path.exists(CPYTHONSTUB_DLL):
+            if is_ironpython:
+                import clr
+                clr.AddReferenceToFileAndPath(IRONCLAD_DLL)
+            break
+    else:
+        continue
+    break
 else:
     if is_ironpython:
-        raise ImportError("Cannot find ironclad.dll with python34.dll")
+        raise ImportError("Cannot find ironclad.dll with python34.dll | libpython3.4.so")
     _ironclad_path = None
 
 if is_netcoreapp:

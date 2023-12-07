@@ -62,6 +62,21 @@ PySequence_Fast
 PyBytes_FromFormat
 PyBytes_FromFormatV
 
+# Objects/bytes_methods.c
+_Py_bytes_capitalize
+_Py_bytes_isalnum
+_Py_bytes_isalpha
+_Py_bytes_isdigit
+_Py_bytes_islower
+_Py_bytes_isspace
+_Py_bytes_istitle
+_Py_bytes_isupper
+_Py_bytes_lower
+_Py_bytes_maketrans
+_Py_bytes_swapcase
+_Py_bytes_title
+_Py_bytes_upper
+
 # Objects/cellobject.c
 #PyCell_New
 #PyCell_Get
@@ -145,6 +160,7 @@ PyType_FromSpecWithBases
 
 # Objects/unicodeobject.c
 _Py_ReleaseInternedUnicodeStrings
+_Py_normalize_encoding
 _PyUnicode_AsASCIIString
 _PyUnicode_AsKind
 _PyUnicode_AsLatin1String
@@ -152,6 +168,7 @@ _PyUnicode_AsUTF8String
 _PyUnicode_ClearStaticStrings
 _PyUnicode_CompareWithId
 _PyUnicode_Copy
+_PyUnicode_DecodeUnicodeInternal
 _PyUnicode_EncodeCharmap
 _PyUnicode_EncodeUTF16
 _PyUnicode_EncodeUTF32
@@ -159,12 +176,15 @@ _PyUnicode_EncodeUTF7
 _PyUnicode_FastCopyCharacters
 _PyUnicode_FastFill
 _PyUnicode_FindMaxChar
+_PyUnicode_Fini
 _PyUnicode_FromASCII
 _PyUnicode_FromId
 _PyUnicode_HasNULChars
+_PyUnicode_Init
 _PyUnicode_InsertThousandsGrouping
 _PyUnicode_Ready
 _PyUnicode_TransformDecimalAndSpaceToASCII
+_PyUnicode_TranslateCharmap
 _PyUnicode_XStrip
 _PyUnicode_XStrip
 _PyUnicodeWriter_Dealloc
@@ -184,6 +204,7 @@ Py_UNICODE_strlen
 Py_UNICODE_strncmp
 Py_UNICODE_strncpy
 Py_UNICODE_strrchr
+PyInit__string
 PyUnicode_Append
 PyUnicode_Append
 PyUnicode_AppendAndDel

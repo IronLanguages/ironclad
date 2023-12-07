@@ -21,6 +21,7 @@ from SCons.Scanner.C import CScanner
 EnsurePythonVersion(3, 9)
 
 def splitstring(f):
+    """if f decorated by @splitstring: f(x, "a b c", k=v) == f(x, ["a", "b", "c"], k=v)"""
     def g(_, s, **kwargs):
         if isinstance(s, str):
             s = s.split()
@@ -29,16 +30,19 @@ def splitstring(f):
 
 @splitstring
 def glommap(f, inputs, **kwargs):
+    """glommap(f, "a b c", k=v) == [*f("a", k=v), *f("b", k=v), *f("c", k=v)]"""
     def g(input):
-        return f(input, **kwargs)
+        return list(f(input, **kwargs))
     return list(functools.reduce(operator.add, map(g, inputs), []))
 
 @splitstring
 def pathmap(base, files):
+    """pathmap("path/to", "a b c") == ["path/to/a", "path/to/b", "path/to/c"]"""
     return list(map(lambda x: os.path.join(base, x), files))
 
 @splitstring
 def submap(template, inserts):
+    """submap("klm %s xyz", "a b c") == ["klm a xyz", "klm b xyz", "klm c xyz"]"""
     return list(map(lambda x: template % x, inserts))
 
 
@@ -60,11 +64,13 @@ Import('*')                                 # can override aby of the variables 
 #===============================================================================
 # PLATFORM-SPECIFIC GLOBALS
 
-WIN32 = sys.platform == 'win32'
+WIN32  = sys.platform == 'win32'
+LINUX  = sys.platform == 'linux'
+DARWIN = sys.platform == 'darwin'
 
 if WIN32:
     #==================================================================
-    # These variables will be needed on any platform, I think
+    # These variables are needed on any platform
 
     NATIVE_TOOLS = 'msvc mslink as'
     PYD_SUFFIX = '.pyd'
@@ -87,7 +93,7 @@ if WIN32:
 
     #==================================================================
     # These variables should only be necessary on win32
-    # (except for CPYTHON34_DLL, which is needed on any plaftorm)
+    # (except for CPYTHON34_DLL and CPYTHON34_DLL_NAME, which are needed on any plaftorm)
 
     MSVCR100_DLL = R'C:\Windows\System32\msvcr100.dll'
 
@@ -118,10 +124,47 @@ if WIN32:
     if USE_MSVC1600 and not (os.path.exists(VC16_INSTALLDIR + R'\bin\amd64') and os.path.exists(WINDOWS7_SDKDIR)):
         print('Cannot build using MSVC v16.0: installation of MSVC 16.0 and/or Windows 7 SDK not found')
         Exit(1)
-else:
-    NATIVE_TOOLS = ['default', 'clang']
+
+elif LINUX:
+    NATIVE_TOOLS = 'clang link as'
     PYD_SUFFIX = '.so'
-    # TODO: linux, darwin
+
+    ASFLAGS = '-f elf64'
+
+    # where to find/how to invoke executables
+    NASM = 'nasm'
+    CASTXML = 'castxml'
+    DOTNET = 'dotnet'
+    IPY = Path(f"/usr/src/ironpython-3.4.1/{FMWK}/ipy")  # try to use private build
+    if not IPY.exists():
+        # use standard location
+        IPY = Path("~/.dotnet/tools/ipy").expanduser()
+    if not IPY.exists():
+        # try VSCode devcontainer location
+        try: IPY = Path("~vscode/.dotnet/tools/ipy").expanduser()
+        except RuntimeError: pass
+    if not IPY.exists():
+        # maybe it is on the executables' search path
+        IPY = 'ipy'
+
+    # Find CPython dynamic load library
+    # Note: this has to be 64-bit version of CPython 3.4
+    for CPYTHON34_LIBROOT in map(Path, '/usr/local/lib /opt/anaconda3/lib /usr/lib/x86_64-linux-gnu'.split()):
+        for CPYTHON34_DLL_NAME in map(Path, 'libpython3.4.so libpython3.4m.so'.split()):
+            CPYTHON34_DLL = CPYTHON34_LIBROOT / CPYTHON34_DLL_NAME
+            if CPYTHON34_DLL.exists():
+                break
+        else:
+            continue
+        break
+    else:
+        print(f"error: shared library for CPython 3.4 not found")
+        Exit(1)
+
+else:
+    # TODO: darwin
+    print("Platform", sys.platform, "not supported")
+    Exit(1)
 
 
 #===============================================================================
@@ -207,12 +250,30 @@ if WIN32:
         native.Append(ASFLAGS='-g')
         native.Append(LINKFLAGS='/debug:full')
 
-    native['BUILDERS']['CastXml'] = Builder(action=CASTXML_CMD, source_scanner=CScanner(), suffix='.xml', CPPDEFPREFIX='-D', INCPREFIX='-I')
 else:
-    native = Environment(ENV=OS_ENV, tools=NATIVE_TOOLS,
-                         CPYTHON=CPYTHON, CPYTHON34_DLL=CPYTHON34_DLL, **COMMON)
-    # TODO: linux, darwin
+    native.Append(
+        ASFLAGS         = Split(ASFLAGS),
+        CPPDEFINES      = Split(CPPDEFINES),
+        CPPPATH         = Split('stub/Include/Linux') + Split(CPPPATH),
+        CLANGFLAGS      = Split('--target=x86_64-pc-linux-gnu'),  # used by clang AND castxml
+        CCFLAGS         = Split('$CLANGFLAGS') + Split('-pthread -fwrapv'),
+        LINKFLAGS       = Split('-fuse-ld=lld'),
+    )
 
+    # Uncommenmt the following line to temporarily silence multiple definition errors
+    # which can happen if new CPython code is added to the stub but _pure_c_sybols is not updated yet.
+    # In such case, the code from the CPython stub files overrides the jumptable exports.
+    #native.Append(LINKFLAGS='-Xlinker --allow-multiple-definition')
+
+    if MODE == 'debug':
+        native.Append(ASFLAGS='-g')
+        native.Append(CCFLAGS='-g')
+    else:
+        native.Append(CCFLAGS='-O3')
+
+    # TODO: darwin
+
+native['BUILDERS']['CastXml'] = Builder(action=CASTXML_CMD, source_scanner=CScanner(), suffix='.xml', CPPDEFPREFIX='-D', INCPREFIX='-I')
 
 #===============================================================================
 # Unmanaged libraries for build/ironclad
@@ -225,7 +286,7 @@ else:
     msvcrt_lib = []
 
 # Generate data from prebuilt python dll
-*exports, python_def = native.Command(['data/api/_exported_functions.generated', 'data/api/_exported_data.generated', 'stub/python34.def'], [],
+*exports, python_def = native.Command(['data/api/_exported_functions.generated', 'data/api/_exported_data.generated', 'stub/python.def'], [],
     '$CPYTHON tools/generateexports.py $CPYTHON34_DLL $BUILD_DIR/data/api $BUILD_DIR/stub')
 native.Depends([*exports, python_def], '#tools/generateexports.py')
 
@@ -250,7 +311,7 @@ cpy_srcs = glommap(lambda x: native.Glob('stub/%s/*.c' % x), cpy_src_dirs)
 cpy_objs = glommap(native.SharedObject, cpy_srcs) + [jumps_obj, stubmain_obj]
 if WIN32:
     cpy_objs += [msvcrt_lib, python_def]
-before_test(native.SharedLibrary('#$OUT_DIR/ironclad/python34', cpy_objs, entry='DllMain'))
+before_test(native.SharedLibrary(f'#$OUT_DIR/ironclad/{CPYTHON34_DLL_NAME}', cpy_objs, entry='DllMain'))
 
 if USE_MSVC1600:
     import atexit
@@ -339,8 +400,12 @@ before_test(pkginit.CopyAs('#$OUT_DIR/ironclad/__init__.py', 'data/ironclad__ini
 tests = Environment(ENV=OS_ENV, **COMMON)
 tests['ENV']['TESTDATA_BUILDDIR'] = os.path.join(BUILD_DIR, "tests", "data")
 tests.PrependENVPath('IRONPYTHONPATH', OUT_DIR)  # to find ironclad
-tests.AppendENVPath('IRONPYTHONPATH', CPYTHON34_ROOT / "DLLs")  # required to import/access dlls
-tests.AppendENVPath('IRONPYTHONPATH', CPYTHON34_ROOT / "Lib" / "site-packages")  # pysvn test
+if WIN32:
+    tests.AppendENVPath('IRONPYTHONPATH', CPYTHON34_ROOT / "DLLs")  # required to import/access dlls
+    tests.AppendENVPath('IRONPYTHONPATH', CPYTHON34_ROOT / "Lib" / "site-packages")  # pysvn test
+else:
+    tests.AppendENVPath('IRONPYTHONPATH', CPYTHON34_LIBROOT / "python3.4" / "lib-dynload")
+    tests.AppendENVPath('IRONPYTHONPATH', CPYTHON34_LIBROOT / "python3.4" / "site-packages")
 
 tests.AlwaysBuild(tests.Alias('test', test_deps,
     '$IPY runtests.py'))

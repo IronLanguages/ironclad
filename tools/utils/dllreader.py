@@ -49,9 +49,11 @@ class DllReader(object):
         flagpos = addrlen + 7 # skip a space and first 6 flags
         with popen('objdump', '-T %s' % source) as f:
             for line in f:
+                self.lines.append(line)
                 if line.strip() == 'DYNAMIC SYMBOL TABLE:':
                     break
             for line in f:
+                self.lines.append(line)
                 line = line.strip()
                 if not line:
                     break
