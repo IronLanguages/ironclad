@@ -53,7 +53,7 @@ MODE = ARGUMENTS.get('mode', 'release')
 if not (MODE in ['debug', 'release']):
    print("Error: expected 'debug' or 'release', found: " + MODE)
    Exit(1)
-FMWK = 'net462'
+FMWK = 'net462' if sys.platform == 'win32' else 'net6.0'
 
 PROJECT_DIR = Dir('#').abspath              # project root, where all commands are run
 BUILD_DIR = Dir('#').rel_path(Dir('.'))     # for intermediate build artifacts (in-source by default)

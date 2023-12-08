@@ -9,9 +9,14 @@
 
 import os
 
+if os.name == 'nt':
+    supported_frameworks = ['net462', 'net6.0']
+else:
+    supported_frameworks = ['net6.0']
+
 vars = Variables(None, ARGUMENTS)
 vars.Add(ListVariable('configuration', help='build configuration', default='release', names=['release', 'debug']))
-vars.Add(ListVariable('framework', help='.NET platform to target', default='net462', names=['net462', 'net6.0']))
+vars.Add(ListVariable('framework', help='.NET platform to target', default=supported_frameworks[0], names=supported_frameworks))
 vars.Add(BoolVariable('use_msvc1600', help='Set to use MSVC v16.0 in place of Clang', default=False))
 
 env = Environment(variables=vars)
