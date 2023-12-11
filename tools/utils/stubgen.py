@@ -24,11 +24,13 @@ def _jump_info(index_name):
 
 def generate_jumps(functions):
     jump_infos = list(map(_jump_info, enumerate(functions)))
-    return JUMPS_FILE_TEMPLATE % glom_templates('\n', 
-        (JUMP_DECLARE_TEMPLATE, jump_infos),
-        (JUMP_START_DEFINE_TEMPLATE, [{}]),
-        (JUMP_DEFINE_TEMPLATE, jump_infos))
-    
+    return JUMPS_FILE_TEMPLATE % {
+        'funccount': len(functions),
+        'code': glom_templates('\n', 
+            (JUMP_DECLARE_TEMPLATE, jump_infos),
+            (JUMP_START_DEFINE_TEMPLATE, [{}]),
+            (JUMP_DEFINE_TEMPLATE, jump_infos)),
+    }
 
 #==========================================================================
 
