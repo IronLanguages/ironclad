@@ -66,6 +66,42 @@ namespace Ironclad
         [DllImport("msvcr100.dll")]
         public static extern int fclose(IntPtr file);
 
+#else
+
+        public static IntPtr LoadLibrary(string soPath)
+        {
+            return FromPythonInt(CTypes.dlopen(soPath));
+        }
+
+        public static void FreeLibrary(IntPtr handle)
+        {
+            // TODO: implement in IPY: void CTypes.dlclose(IntPtr handle);
+            // void return, throws on error "OSError: shared object not open" (args = ('shared object not open',), errno none)
+            // segfault on handle values that were never created
+            // here we silently ignore error codes returned, since this is how 
+            if (dlclose(handle) != 0)
+            {
+                throw new IOException("shared object not open");
+            }
+        }
+
+        public static IntPtr GetProcAddress(IntPtr handle, string funcName)
+        {
+            // This is basically POSIX part of IronPython.Modules.NativeFunctions.LoadFunction(h, s) but NativeFunctions is not public
+            // TODO: implement in IPY: object CTypes.dlsym(int, string) and use that
+            return dlsym(handle, funcName);
+        }
+
+        public static int fclose(IntPtr file)
+            => throw new NotImplementedException();  // if this is needed, then a whole slew of other file functions are needed too
+
+
+        // Temporary workaround for holes in CTypes implementation
+        [DllImport("libc")]
+        private static extern int dlclose(IntPtr handle);
+
+        [DllImport("libc")]
+        private static extern IntPtr dlsym(IntPtr handle, string symbol);
 
 #endif
 
