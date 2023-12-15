@@ -72,6 +72,7 @@ if WIN32:
     #==================================================================
     # These variables are needed on any platform
 
+    RID = 'win-x64'
     NATIVE_TOOLS = 'msvc mslink as'
     PYD_SUFFIX = '.pyd'
 
@@ -126,6 +127,7 @@ if WIN32:
         Exit(1)
 
 elif LINUX:
+    RID = 'linux-x64'
     NATIVE_TOOLS = 'clang link as'
     PYD_SUFFIX = '.so'
 
@@ -161,8 +163,13 @@ elif LINUX:
         print(f"error: shared library for CPython 3.4 not found")
         Exit(1)
 
-else:
+elif DARWIN:
     # TODO: darwin
+    # RID = 'osx-x64' or 'osx-arm64'
+    print("Platform", sys.platform, "not supported yet")
+    Exit(1)
+
+else:
     print("Platform", sys.platform, "not supported")
     Exit(1)
 
@@ -184,7 +191,7 @@ PDB_SUFFIX = '.pdb'
 ASFLAGS = f'{ASFLAGS} -wall'
 CPPDEFINES = 'Py_ENABLE_SHARED Py_BUILD_CORE IRONCLAD'
 CPPPATH = 'stub/Include'
-DOTNET_CMD = f'{DOTNET} %(cmd)s --configuration {MODE.title()} --framework {FMWK} --nologo --output ${{TARGET.dir}} $SOURCE'
+DOTNET_CMD = f'{DOTNET} %(cmd)s --configuration {MODE.title()} --framework {FMWK} --runtime {RID} --no-self-contained --output ${{TARGET.dir}} $SOURCE'
 MGD_BUILD_CMD = DOTNET_CMD % {'cmd' : 'build'}
 MGD_CLEAN_CMD = DOTNET_CMD % {'cmd' : 'clean'}
 CASTXML_CMD = f'{CASTXML} "$SOURCE" -o "$TARGET" --castxml-output=1 $CLANGFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS'
