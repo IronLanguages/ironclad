@@ -1,25 +1,36 @@
 using System;
+using System.IO;
+using System.Numerics;
 using System.Runtime.InteropServices;
+using IronPython.Modules;
 
 namespace Ironclad
 {
     public class Unmanaged
     {
-        [DllImport("kernel32.dll")]
-        public static extern IntPtr LoadLibrary(string s);
-        
-        [DllImport("kernel32.dll")]
-        public static extern bool FreeLibrary(IntPtr l);
-        
-        [DllImport("kernel32.dll")]
-        public static extern IntPtr GetProcAddress(IntPtr l, string s);
-        
-        [DllImport("kernel32.dll")]
-        public static extern IntPtr GetModuleHandle(string s);
+#if WINDOWS
+        /// <summary>
+        /// Load a DLL library into the process memory space and return its handle.
+        /// </summary>
+        /// <param name="dllPath">The path to the DLL file to load.</param>
+        /// <returns>Handle of the library in memory. Never null if no exception thrown.</returns>
+        /// <exception cref="Exception">OSError if loading of the library failed.</exception>
+        public static IntPtr LoadLibrary(string dllPath)
+        {
+            // according to MSDN, LoadLibrary requires "\"
+            dllPath = dllPath.Replace("/", @"\");
+            return FromPythonInt(CTypes.LoadLibrary(dllPath));
+        }
+
+        public static void FreeLibrary(IntPtr handle)
+            => CTypes.FreeLibrary(handle);
 
         [DllImport("kernel32.dll")]
-        public static extern uint GetLastError();
-        
+        public static extern IntPtr GetProcAddress(IntPtr handle, string funcName);
+
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetModuleHandle(string s); // For testing purposes only
+
 
         [DllImport("kernel32.dll")]
         public static extern IntPtr CreateMutex(IntPtr lpMutexAttributes, int bInitialOwner, IntPtr lpName);
@@ -54,5 +65,18 @@ namespace Ironclad
 
         [DllImport("msvcr100.dll")]
         public static extern int fclose(IntPtr file);
+
+
+#endif
+
+        private static IntPtr FromPythonInt(object o)
+        {
+            return o switch
+            {
+                int i => new IntPtr(i),
+                BigInteger bi => new IntPtr(checked((long)bi)),
+                _ => throw new InvalidCastException()
+            };
+        }
     }
 }

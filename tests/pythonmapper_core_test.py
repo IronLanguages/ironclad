@@ -21,8 +21,6 @@ from Ironclad import (
 )
 from Ironclad.Structs import PyObject, PyTypeObject
 
-CPYTHONSTUB_DLL_NAME = os.path.basename(CPYTHONSTUB_DLL)
-
 class PythonMapper_CreateDestroy_Test(TestCase):
     
     def testCreateDestroy(self):
@@ -37,7 +35,7 @@ class PythonMapper_CreateDestroy_Test(TestCase):
     def testLoadsStubWhenPassedPathAndUnloadsOnDispose(self):
         mapper = PythonMapper(CPYTHONSTUB_DLL)
         try:
-            self.assertNotEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
+            self.assertIsLibraryLoaded(CPYTHONSTUB_DLL,
                                  "library not mapped by construction")
             self.assertNotEqual(PythonMapper._Py_NoneStruct, IntPtr.Zero,
                                  "mapping not set up")
@@ -46,7 +44,7 @@ class PythonMapper_CreateDestroy_Test(TestCase):
             self.assertEqual(CPyMarshal.ReadPtrField(mapper.PyLong_Type, PyTypeObject, "tp_base"), mapper.PyBaseObject_Type)
 
             mapper.Dispose()
-            self.assertEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
+            self.assertIsLibraryNotLoaded(CPYTHONSTUB_DLL,
                               "library not unmapped by Dispose")
         finally:
             mapper.Dispose()
@@ -56,15 +54,16 @@ class PythonMapper_CreateDestroy_Test(TestCase):
         mapper = PythonMapper(CPYTHONSTUB_DLL)
         try:
             origcwd = os.getcwd()
-            mapper.LoadModule(os.path.join(self.testDataBuildDir, "setvalue.pyd"), "some.module")
+            some_module = os.path.join(self.testDataBuildDir, "setvalue.pyd")
+            mapper.LoadModule(some_module, "some.module")
             self.assertEqual(os.getcwd(), origcwd, "failed to restore working directory")
-            self.assertNotEqual(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
+            self.assertIsLibraryLoaded(some_module,
                                  "library not mapped by construction")
 
             mapper.Dispose()
-            self.assertEqual(Unmanaged.GetModuleHandle("setvalue.pyd"), IntPtr.Zero,
+            self.assertIsLibraryNotLoaded(some_module,
                               "library not unmapped by Dispose")
-            self.assertEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
+            self.assertIsLibraryNotLoaded(CPYTHONSTUB_DLL,
                               "library not unmapped by Dispose")
         finally:
             mapper.Dispose()

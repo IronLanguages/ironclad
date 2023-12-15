@@ -20,11 +20,6 @@ namespace Ironclad
         Load(string path)
         {
             IntPtr l = Unmanaged.LoadLibrary(path);
-            if (l == IntPtr.Zero)
-            {
-                throw new Exception(
-                    String.Format("Could not load library '{0}'. Error code:{1}", path, Unmanaged.GetLastError()));
-            }
 
             this.handles.Add(l);
             string funcName = "PyInit_" + Path.GetFileNameWithoutExtension(path);

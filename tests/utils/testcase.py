@@ -7,7 +7,7 @@ import System
 from tests.utils.gc import gcwait
 from tests.utils.memory import CreateTypes
 
-from Ironclad import PythonMapper
+from Ironclad import PythonMapper, Unmanaged
 
 class TrivialMapperSubclass(PythonMapper):
     pass
@@ -96,3 +96,12 @@ class TestCase(unittest.TestCase):
 
     def assertEquals(self, first, second, msg=None):
         self.assertEqual(first, second, msg)
+
+    def assertIsLibraryLoaded(self, name, message=None):
+        self.assertTrue(self._isLibraryLoaded(name), message)
+
+    def assertIsLibraryNotLoaded(self, name, message=None):
+        self.assertFalse(self._isLibraryLoaded(name), message)
+
+    def _isLibraryLoaded(self, name):
+        return Unmanaged.GetModuleHandle(name) != System.IntPtr.Zero;

@@ -9,16 +9,14 @@ from tests.utils.testcase import TestCase
 from Ironclad import dgt_getfuncptr, dgt_registerdata, Unmanaged, StubReference
 from System import IntPtr
 
-CPYTHONSTUB_DLL_NAME = os.path.basename(CPYTHONSTUB_DLL)
-
 class StubReferenceTest(TestCase):
 
     def testMapInitUnmapLibrary(self):
-        self.assertEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
+        self.assertIsLibraryNotLoaded(CPYTHONSTUB_DLL,
                           "library already mapped")
 
         sr = StubReference(CPYTHONSTUB_DLL)
-        self.assertNotEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
+        self.assertIsLibraryLoaded(CPYTHONSTUB_DLL,
                           "library not mapped by construction")
 
         fpCalls = []
@@ -37,7 +35,7 @@ class StubReferenceTest(TestCase):
         self.assertEqual(len(dataCalls) > 0, True, "did not set any data")
 
         sr.Dispose()
-        self.assertEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
+        self.assertIsLibraryNotLoaded(CPYTHONSTUB_DLL,
                           "library not unmapped on dispose")
 
         sr.Dispose()
@@ -46,11 +44,11 @@ class StubReferenceTest(TestCase):
         
     def testUnmapsAutomagically(self):
         sr = StubReference(CPYTHONSTUB_DLL)
-        self.assertNotEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
+        self.assertIsLibraryLoaded(CPYTHONSTUB_DLL,
                           "library not mapped by construction")
         del sr
         gcwait()
-        self.assertEqual(Unmanaged.GetModuleHandle(CPYTHONSTUB_DLL_NAME), IntPtr.Zero,
+        self.assertIsLibraryNotLoaded(CPYTHONSTUB_DLL,
                           "library not unmapped on finalize")
         
 

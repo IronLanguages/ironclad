@@ -20,14 +20,7 @@ namespace Ironclad
     
         public StubReference(string dllPath)
         {
-            // according to MSDN, LoadLibrary requires "\"
-            dllPath = dllPath.Replace("/", @"\");
             this.library = Unmanaged.LoadLibrary(dllPath);
-            if (this.library == IntPtr.Zero)
-            {
-                throw new Exception(
-                    String.Format("Could not load library '{0}'. Error code:{1}", dllPath, Unmanaged.GetLastError()));
-            }
         }
         
         ~StubReference()
