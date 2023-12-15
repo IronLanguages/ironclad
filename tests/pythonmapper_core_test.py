@@ -526,8 +526,9 @@ class PythonMapper_References_Test(TestCase):
         mapper.tempObjects.Push(None)
         try:
             mapper.ReleaseGIL()
-        except SystemError:
-            self.fail('ReleaseGIL should not throw NullReference if tempObjects contains None')
+        except SystemError as ex:
+            if ex.clsException is NullReferenceException:
+                self.fail('ReleaseGIL should not throw NullReference if tempObjects contains None')
         except Exception:
             pass
         finally:

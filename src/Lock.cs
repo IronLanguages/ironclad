@@ -4,15 +4,9 @@ using System.Threading;
 
 namespace Ironclad
 {
-    
-    public class LockException : Exception
-    {
-        public LockException(string message): base(message)
-        {
-        }
-    }
-    
-    public class Lock
+#if WINDOWS
+
+    public class Lock : IDisposable
     {
         private IntPtr hMutex;
         private int count;
@@ -117,7 +111,7 @@ namespace Ironclad
         {
             if (!this.IsAcquired)
             {
-                throw new LockException("you can't release a lock you don't own");
+                throw new SynchronizationLockException("you can't release a lock you don't own");
             }
             this.count -= 1;
             if (this.count == 0)
@@ -126,8 +120,82 @@ namespace Ironclad
             }
             if (Unmanaged.ReleaseMutex(this.hMutex) == 0)
             {
-                throw new LockException("ReleaseMutex failed, even though we're pretty certain we do own this lock");
+                throw new SynchronizationLockException("ReleaseMutex failed, even though we're pretty certain we do own this lock");
             }
         }
     }
+
+#else
+
+    public sealed class Lock : IDisposable
+    {
+        private object _mutex;
+        private int _count;
+
+        public Lock()
+        {
+            _mutex = new();
+            _count = 0;
+        }
+
+        ~Lock()
+        {
+            Console.WriteLine("warning: mutex not properly disposed\n{0}", System.Environment.StackTrace);
+            try
+            {
+                Dispose(false);
+            }
+            catch
+            {
+                Console.WriteLine("warning: finalizing mutex failed");
+            }
+        }
+
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
+            Dispose(true);
+        }
+        
+        private void Dispose(bool disposing)
+        {
+            if (_mutex is null) return;
+
+            if (_count > 0)
+            {
+                Monitor.PulseAll(_mutex);
+                _count = 0;
+            }
+            _mutex = null;
+        }
+
+
+        public int Acquire()
+        {
+            Monitor.Enter(_mutex);
+            _count += 1;
+            return _count;
+        }
+        
+        public bool TryAcquire()
+        {
+            bool result = Monitor.TryEnter(_mutex);
+            if (!result) return false;
+
+            _count += 1;
+            return true;
+        }
+
+        public bool IsAcquired => Monitor.IsEntered(_mutex);
+
+        public int CountAcquired => Monitor.IsEntered(_mutex) ? _count : 0;
+
+        public void Release()
+        {
+            Monitor.Exit(_mutex);
+            _count -= 1;
+        }
+    }
+
+#endif
 }

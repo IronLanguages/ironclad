@@ -4,7 +4,7 @@ from tests.utils.testcase import TestCase
 
 from System.Threading import Thread, ThreadStart
 
-from Ironclad import Lock, LockException
+from Ironclad import Lock
 
 
 class LockTest(TestCase):
