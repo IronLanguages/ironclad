@@ -37,6 +37,7 @@ if is_ironpython:
     if _ironclad_path not in sys.path:
         sys.path.insert(0, _ironclad_path)
 
+_is_anaconda = False
 for _ironclad_path in sys.path:
     IRONCLAD_DLL = os.path.join(_ironclad_path, "ironclad" , "ironclad.dll")
     for CPYTHONSTUB_DLL in [os.path.join(_ironclad_path, "ironclad", stubname) for stubname in ["python34.dll", "libpython3.4.so", "libpython3.4m.so"]]:
@@ -47,11 +48,18 @@ for _ironclad_path in sys.path:
             break
     else:
         continue
+    _is_anaconda = CPYTHONSTUB_DLL.endswith('m.so')
     break
 else:
     if is_ironpython:
         raise ImportError("Cannot find ironclad.dll with python34.dll | libpython3.4.so")
     _ironclad_path = None
+
+DLL_PREFIX, DLL_SUFFIX, PYD_SUFFIX = {
+    'win32': ('', '.dll', '.pyd'),
+    'linux': ('lib', '.so', '.cpython-34m.so' if _is_anaconda else '.cpython-34-x86_64-linux-gnu.so'),
+    #'darwin': ('lib', '.dylib', '.cpython-34-darwin.so'),  # TODO: verify
+}[sys.platform]
 
 if is_netcoreapp:
     import clr

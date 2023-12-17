@@ -53,7 +53,7 @@ class StubReferenceTest(TestCase):
         
 
     def testLoadBuiltinModule(self):
-        sr = StubReference(os.path.join(self.testDataBuildDir, "fakepython.dll"))
+        sr = StubReference(os.path.join(self.testDataBuildDir, self.libPre + "fakepython" + self.dllExt))
         sr.LoadBuiltinModule('somecrazymodule') # if func not found and callable, error
         sr.Dispose()
         

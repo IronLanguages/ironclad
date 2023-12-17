@@ -4,6 +4,7 @@
     <DefineConstants Condition = "$(RuntimeIdentifier.StartsWith('win-'))" >WINDOWS</DefineConstants>
     <DefineConstants Condition = "$(RuntimeIdentifier.StartsWith('linux-'))" >LINUX</DefineConstants>
     <DefineConstants Condition = "$(RuntimeIdentifier.StartsWith('osx-'))" >MACOS</DefineConstants>
+    <DefineConstants Condition = " '$(IsAnaconda)' == 'True' " >$(DefineConstants);ANACONDA</DefineConstants>
     <TargetFrameworks>net462;net6.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

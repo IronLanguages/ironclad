@@ -75,6 +75,7 @@ if WIN32:
     RID = 'win-x64'
     NATIVE_TOOLS = 'msvc mslink as'
     PYD_SUFFIX = '.pyd'
+    DOTNET_FLAGS = ''
 
     ASFLAGS = '-f win64'
 
@@ -129,7 +130,6 @@ if WIN32:
 elif LINUX:
     RID = 'linux-x64'
     NATIVE_TOOLS = 'clang link as'
-    PYD_SUFFIX = '.so'
 
     ASFLAGS = '-f elf64'
 
@@ -158,10 +158,14 @@ elif LINUX:
                 break
         else:
             continue
+        IS_ANACONDA = CPYTHON34_DLL_NAME.stem[-1] == 'm'
         break
     else:
         print(f"error: shared library for CPython 3.4 not found")
         Exit(1)
+
+    PYD_SUFFIX =  '.cpython-34m.so' if IS_ANACONDA else '.cpython-34-x86_64-linux-gnu.so';
+    DOTNET_FLAGS = f'--property:IsAnaconda={IS_ANACONDA}'
 
 elif DARWIN:
     # TODO: darwin
@@ -191,8 +195,8 @@ PDB_SUFFIX = '.pdb'
 ASFLAGS = f'{ASFLAGS} -wall'
 CPPDEFINES = 'Py_ENABLE_SHARED Py_BUILD_CORE IRONCLAD'
 CPPPATH = 'stub/Include'
-DOTNET_CMD = f'{DOTNET} %(cmd)s --configuration {MODE.title()} --framework {FMWK} --runtime {RID} --no-self-contained --output ${{TARGET.dir}} $SOURCE'
-MGD_BUILD_CMD = DOTNET_CMD % {'cmd' : 'build'}
+DOTNET_CMD = f'{DOTNET} %(cmd)s {DOTNET_FLAGS} --configuration {MODE.title()} --framework {FMWK} --output ${{TARGET.dir}} $SOURCE'
+MGD_BUILD_CMD = DOTNET_CMD % {'cmd' : f'build --runtime {RID} --no-self-contained'}
 MGD_CLEAN_CMD = DOTNET_CMD % {'cmd' : 'clean'}
 CASTXML_CMD = f'{CASTXML} "$SOURCE" -o "$TARGET" --castxml-output=1 $CLANGFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS'
 
@@ -328,7 +332,7 @@ if USE_MSVC1600:
 #===============================================================================
 # Unmanaged test data
 
-before_test(native.SharedLibrary('tests/data/setvalue', 'tests/data/src/setvalue.c', SHLIBSUFFIX=PYD_SUFFIX))
+before_test(native.SharedLibrary('tests/data/setvalue', 'tests/data/src/setvalue.c', SHLIBPREFIX='', SHLIBSUFFIX=PYD_SUFFIX))
 before_test(native.SharedLibrary('tests/data/exportsymbols', 'tests/data/src/exportsymbols.c'))
 before_test(native.SharedLibrary('tests/data/fakepython', 'tests/data/src/fakepython.c',))
 

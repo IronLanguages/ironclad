@@ -54,7 +54,7 @@ class PythonMapper_CreateDestroy_Test(TestCase):
         mapper = PythonMapper(CPYTHONSTUB_DLL)
         try:
             origcwd = os.getcwd()
-            some_module = os.path.join(self.testDataBuildDir, "setvalue.pyd")
+            some_module = os.path.join(self.testDataBuildDir, "setvalue" + self.pydExt)
             mapper.LoadModule(some_module, "some.module")
             self.assertEqual(os.getcwd(), origcwd, "failed to restore working directory")
             self.assertIsLibraryLoaded(some_module,

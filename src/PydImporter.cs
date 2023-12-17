@@ -13,6 +13,18 @@ namespace Ironclad
 
     public class PydImporter : IDisposable
      {
+#if WINDOWS
+        public const string PydExtension = ".pyd";
+#elif LINUX
+  #if ANACONDA
+        public const string PydExtension = ".cpython-34m.so";
+  #else
+        public const string PydExtension = ".cpython-34-x86_64-linux-gnu.so";
+  #endif
+#else
+    #error Unsupported OS platform
+#endif
+
         private List<IntPtr> handles = new List<IntPtr>();
         private bool alive = true;
         
@@ -20,14 +32,19 @@ namespace Ironclad
         Load(string path)
         {
             IntPtr l = Unmanaged.LoadLibrary(path);
-
             this.handles.Add(l);
-            string funcName = "PyInit_" + Path.GetFileNameWithoutExtension(path);
+
+            string libname = Path.GetFileName(path);
+            if (libname.EndsWith(PydExtension))
+            {
+                libname = libname.Substring(0, libname.Length - PydExtension.Length);
+            }
+            string funcName = "PyInit_" + libname;
             IntPtr funcPtr = Unmanaged.GetProcAddress(l, funcName);
             if (funcPtr == IntPtr.Zero)
             {
                 throw new Exception( 
-                    String.Format("Could not find module init function {0} in dll {1}", funcName, path));
+                    String.Format("Could not find module init function {0} in PYD {1}", funcName, libname));
             }
 
             PydInit_Delegate initmodule = (PydInit_Delegate)Marshal.GetDelegateForFunctionPointer(

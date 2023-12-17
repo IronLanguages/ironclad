@@ -10,6 +10,15 @@ if sys.implementation.name != 'ironpython':
 import os
 _dirname = os.path.abspath(os.path.dirname(__file__))
 
+if sys.platform == 'win32':
+    _python_dll = "python34.dll"
+elif sys.platform == 'linux':
+    _python_dll = "libpython3.4.so"
+    if not os.path.exists(os.path.join(_dirname, _python_dll)):
+        _python_dll = "libpython3.4m.so"  # Anaconda
+else:
+    raise ImportError("Unsupported OS platform.")
+
 import clr
 from System import GC, IntPtr
 from System.Reflection import Assembly
@@ -20,7 +29,7 @@ if IntPtr.Size != 8:
 clr.AddReference(Assembly.LoadFile(os.path.join(_dirname, "ironclad.dll")))
 from Ironclad import CPyMarshal, PythonMapper
 from Ironclad.Structs import PyObject, PyVarObject, PyTypeObject
-_mapper = PythonMapper(os.path.join(_dirname, "python34.dll"))
+_mapper = PythonMapper(os.path.join(_dirname, _python_dll))
 
 def gcwait():
     """

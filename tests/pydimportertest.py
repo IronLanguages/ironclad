@@ -12,7 +12,7 @@ from Ironclad import CPyMarshal, PydImporter, Unmanaged
 class PydImporterTest(TestCase):
 
     def testCallsAppropriatelyNamedInitFunctionAndUnloadsWhenDone(self):
-        setvalue_mod = os.path.join(self.testDataBuildDir, "setvalue.pyd")
+        setvalue_mod = os.path.join(self.testDataBuildDir, "setvalue" + self.pydExt)
         l = Unmanaged.LoadLibrary(setvalue_mod)
         try:
             pValue = Unmanaged.GetProcAddress(l, "value")
@@ -39,7 +39,7 @@ class PydImporterTest(TestCase):
     
     def testUnloadsAutomagically(self):
         pi = PydImporter()
-        setvalue_mod = os.path.join(self.testDataBuildDir, "setvalue.pyd")
+        setvalue_mod = os.path.join(self.testDataBuildDir, "setvalue" + self.pydExt)
         pi.Load(setvalue_mod)
         del pi
         gcwait()

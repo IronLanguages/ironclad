@@ -248,21 +248,31 @@ namespace Ironclad
         LoadModule(string path, string name)
         {
             this.EnsureGIL();
-            this.importNames.Push(name);
-            this.importFiles.Push(path);
-
-            string dir = Path.GetDirectoryName(path);
-            string library = Path.GetFileName(path);
-            string previousDir = Environment.CurrentDirectory;
-
-            Environment.CurrentDirectory = dir;
             try
             {
-                this.importer.Load(library);
+                this.importNames.Push(name);
+                this.importFiles.Push(path);
+
+#if WINDOWS
+                string dir = Path.GetDirectoryName(path);
+                string library = Path.GetFileName(path);
+                string previousDir = Environment.CurrentDirectory;
+
+                Environment.CurrentDirectory = dir;
+                try
+                {
+                    this.importer.Load(library);
+                }
+                finally
+                {
+                    Environment.CurrentDirectory = previousDir;
+                }
+#else
+                this.importer.Load(path);
+#endif
             }
             finally
             {
-                Environment.CurrentDirectory = previousDir;
                 this.importNames.Pop();
                 this.importFiles.Pop();
                 this.ReleaseGIL();

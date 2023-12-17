@@ -59,6 +59,9 @@ class TestCase(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
         self.testDataBuildDir = tests.utils.loadassemblies.TESTDATA_BUILDDIR
+        self.libPre = tests.utils.loadassemblies.DLL_PREFIX
+        self.dllExt = tests.utils.loadassemblies.DLL_SUFFIX
+        self.pydExt = tests.utils.loadassemblies.PYD_SUFFIX
 
     def tearDown(self):
         gcwait()

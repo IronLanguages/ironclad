@@ -30,7 +30,9 @@ class PydImporter(object):
         self.loader = loader
         self.mapper = mapper
         self.patched_for_h5py = False
-        
+        from Ironclad.PydImporter import PydExtension
+        self._ext = PydExtension
+
     # TODO: Python 3.4: find_module is obsolete; replace with find_spec
     def find_module(self, fullname, path=None):
         matches = lambda partialname: fullname == partialname or fullname.startswith(partialname + '.')
@@ -44,7 +46,7 @@ class PydImporter(object):
         import sys
         lastname = fullname.rsplit('.', 1)[-1]
         for d in (path or sys.path):
-            pyd = os.path.join(d, lastname + '.pyd')
+            pyd = os.path.join(d, lastname + self._ext)
             if os.path.isfile(pyd):
                 return self.loader(self.mapper, pyd)
 
