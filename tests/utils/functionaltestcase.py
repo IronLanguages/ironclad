@@ -58,7 +58,11 @@ class FunctionalTestCase(TestCase):
 
     def runCode(self, code, interpreter=None, insert_args=''):
         if interpreter is None:
-            interpreter = os.path.basename(sys.executable)
+            if os.path.splitext(sys.executable)[1] == '.dll':
+                interpreter = 'dotnet'
+                insert_args = f'"{sys.executable}" {insert_args}'
+            else:
+                interpreter = os.path.basename(sys.executable)
         if sys.implementation.name == "ironpython":
             code = self.TEMPLATE % code
         self.write("test-code.py", code)

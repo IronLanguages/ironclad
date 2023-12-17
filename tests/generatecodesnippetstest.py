@@ -19,7 +19,8 @@ class GenerateCodeSnippetsTest(TestCase):
             write(src, name, contents)
 
         dst = tempfile.mkdtemp()
-        result = spawn(sys.executable, "tools/generatecodesnippets.py", src, dst)
+        exe = ('dotnet', sys.executable) if sys.executable.endswith('.dll') else (sys.executable,)
+        result = spawn(*exe, "tools/generatecodesnippets.py", src, dst)
         self.assertEqual(result, 0, "process ended badly")
 
         def assertFinds(name, expected):
