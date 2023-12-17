@@ -1,5 +1,7 @@
-
+import locale
+import os
 import sys
+import subprocess
 import unittest
 import tests.utils.loadassemblies
 import System
@@ -104,4 +106,16 @@ class TestCase(unittest.TestCase):
         self.assertFalse(self._isLibraryLoaded(name), message)
 
     def _isLibraryLoaded(self, name):
-        return Unmanaged.GetModuleHandle(name) != System.IntPtr.Zero;
+        if os.name == 'nt':
+            return Unmanaged.GetModuleHandle(name) != System.IntPtr.Zero;
+
+        name = os.path.abspath(name)
+
+        ls = subprocess.check_output(['lsof', '-p', str(os.getpid())]).decode(locale.getpreferredencoding(False)).split(os.linesep)
+
+        pos = ls[0].index('NAME')
+        for l in ls[1:]:
+            if l[pos:] == name:
+                return True
+
+        return False
