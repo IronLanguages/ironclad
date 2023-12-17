@@ -131,9 +131,10 @@ namespace Ironclad
                 this.stub = new StubReference(stubPath);
                 this.stub.Init(new dgt_getfuncptr(this.GetFuncPtr), new dgt_registerdata(this.RegisterData));
 
-                string path = Environment.GetEnvironmentVariable("PATH");
-                string newpath = path + ";" + Path.Combine(Path.GetDirectoryName(stubPath), "support");
-                Environment.SetEnvironmentVariable("PATH", newpath);
+                // TODO: Is this still needed? If so, make platform-independent.
+                // string path = Environment.GetEnvironmentVariable("PATH");
+                // string newpath = path + ";" + Path.Combine(Path.GetDirectoryName(stubPath), "support");
+                // Environment.SetEnvironmentVariable("PATH", newpath);
 
                 this.ReadyBuiltinTypes();
                 this.importer = new PydImporter();
@@ -243,6 +244,12 @@ namespace Ironclad
         public void 
         Dispose()
         {
+            if (!this.alive)
+            {
+                GC.SuppressFinalize(this);
+                return;
+            }
+            
             this.GIL.Acquire();
             try
             {

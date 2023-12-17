@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using IronPython.Runtime.Exceptions;
 
 
 namespace Ironclad
@@ -169,9 +170,12 @@ namespace Ironclad
             _mutex = null;
         }
 
+        private bool IsDisposed => _mutex is null;
 
         public int Acquire()
         {
+            if (IsDisposed) throw new ObjectDisposedException(nameof(Lock));
+
             Monitor.Enter(_mutex);
             _count += 1;
             return _count;
@@ -179,6 +183,8 @@ namespace Ironclad
         
         public bool TryAcquire()
         {
+            if (IsDisposed) return false;
+
             bool result = Monitor.TryEnter(_mutex);
             if (!result) return false;
 
@@ -186,12 +192,14 @@ namespace Ironclad
             return true;
         }
 
-        public bool IsAcquired => Monitor.IsEntered(_mutex);
+        public bool IsAcquired => !IsDisposed && Monitor.IsEntered(_mutex);
 
-        public int CountAcquired => Monitor.IsEntered(_mutex) ? _count : 0;
+        public int CountAcquired => IsAcquired ? _count : 0;
 
         public void Release()
         {
+            if (IsDisposed) throw new ObjectDisposedException(nameof(Lock));
+
             Monitor.Exit(_mutex);
             _count -= 1;
         }
